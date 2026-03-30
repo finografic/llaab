@@ -1,0 +1,68 @@
+{
+  "npm.packageManager": "pnpm",
+
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  "eslint.enable": true,
+  "eslint.useFlatConfig": true,
+  "eslint.format.enable": true,
+
+  "prettier.enable": false,
+
+  "oxc.fmt.configPath": "oxfmt.config.ts",
+
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "javascript.suggestionActions.enabled": false,
+
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[toml]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "stylelint.enable": true,
+  "stylelint.validate": ["css"],
+  "css.validate": false,
+
+  "markdownlint.config": {
+    "default": true,
+    "MD001": false, // Heading levels should only increment by one level at a time
+    "MD013": false, // Line length
+    "MD024": false, // Duplicate headings
+    "MD025": false, // Allow multiple top-level headings (useful for TODO files)
+    "MD026": false, // Allow trailing punctuation in headings ':'
+    "MD036": false, // No emphasis as heading
+    "MD040": false, // Don't require language for code blocks
+    "MD041": false // Don't require first line to be a top-level heading
+  },
+
+  "markdown-preview-enhanced.scrollSync": false,
+  "markdown.styles": [".vscode/markdown-github-light.css"]
+}

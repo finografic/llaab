@@ -1,0 +1,22 @@
+{
+  "name": "@llaab/cli",
+  "version": "0.0.1",
+  "private": true,
+  "bin": {
+    "llaab": "./dist/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@llaab/core": "workspace:*",
+    "@llaab/schemas": "workspace:*",
+    "@llaab/skills": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0"
+  }
+}
