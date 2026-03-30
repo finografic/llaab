@@ -16,5 +16,6 @@
     "outDir": "dist",
     "rootDir": "src"
   },
+  "include": ["declarations.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
