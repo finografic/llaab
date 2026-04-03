@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "turbo dev",
+    "dev:cli": "bun packages/cli/src/index.ts",
     "build": "turbo build",
     "lint": "turbo lint",
     "format.check": "oxfmt --check",

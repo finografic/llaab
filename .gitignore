@@ -1,58 +1,68 @@
 # Dependencies
 node_modules/
+.pnpm-store/
 
 # Build outputs
-dist/
+**/dist/
 build/
 *.tgz
+*.tsbuildinfo
 
-# Environment files
+# Turborepo
+.turbo/
+
+# Environment and secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
-# Agents
+# Agent/editor config
 .claude/
 !.claude/settings.json
-
-# IDE
 .cursor/
 !.cursor/rules/
+.vscode/settings.json
 .idea/
 *.swp
 *.swo
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Runtime data
+# Runtime data and caches
 pids
 *.pid
 *.seed
 *.pid.lock
+.cache/
+.llm-cache/
 
 # Coverage
 coverage/
 
-# Turborepo
-.turbo/
+# Astro
+packages/web/.astro/
+packages/web/dist/
 
-# TypeScript
-*.tsbuildinfo
+# Vault scratch
+vault/.tmp/
 
-# macOS
+# Large local model binaries
+*.gguf
+*.bin
+
+# Debug / scratch
+*.local.*
+*.tmp.*
+
+# OS
 .DS_Store
 Thumbs.db
 Icon?
-
-# Windows
-Thumbs.db
 ehthumbs.db
 Desktop.ini
-
-# Linux
 *~
-

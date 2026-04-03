@@ -65,12 +65,6 @@ importers:
 
   packages/cli:
     dependencies:
-      '@llaab/core':
-        specifier: workspace:*
-        version: link:../core
-      '@llaab/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       '@llaab/skills':
         specifier: workspace:*
         version: link:../skills
@@ -80,6 +74,32 @@ importers:
         version: 25.5.0
 
   packages/core:
+    dependencies:
+      '@llaab/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+
+  packages/ingestion:
+    dependencies:
+      '@llaab/core':
+        specifier: workspace:*
+        version: link:../core
+      '@llaab/llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@llaab/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+
+  packages/llm:
     dependencies:
       '@llaab/schemas':
         specifier: workspace:*
@@ -100,6 +120,12 @@ importers:
       '@llaab/core':
         specifier: workspace:*
         version: link:../core
+      '@llaab/ingestion':
+        specifier: workspace:*
+        version: link:../ingestion
+      '@llaab/llm':
+        specifier: workspace:*
+        version: link:../llm
       '@llaab/schemas':
         specifier: workspace:*
         version: link:../schemas

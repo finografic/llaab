@@ -1,22 +1,26 @@
-import { createNode } from '@llaab/core';
+import { runIngestionPipeline } from '@llaab/ingestion';
+
+import { runSkill } from './runner.js';
 
 export interface IngestYouTubeInput {
   url: string;
   title: string;
-  transcript?: string;
   tags?: string[];
 }
 
 export async function ingestYouTube(input: IngestYouTubeInput): Promise<void> {
-  const body = input.transcript ? `## Transcript\n\n${input.transcript}` : '<!-- transcript pending -->';
+  const { record, result } = await runSkill(
+    'ingest-youtube',
+    () =>
+      runIngestionPipeline({
+        sourceType: 'youtube',
+        url: input.url,
+        title: input.title,
+        tags: input.tags,
+      }),
+    input,
+  );
 
-  const { id, path } = await createNode({
-    type: 'resource',
-    title: input.title,
-    body: `Source: ${input.url}\n\n${body}`,
-    tags: input.tags,
-  });
-
-  console.log(`YouTube resource ingested: ${id}`);
-  console.log(`  → ${path}`);
+  console.log(`YouTube source ingested (${record.status}): ${result.id}`);
+  console.log(`  -> ${result.path}`);
 }
