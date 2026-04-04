@@ -3,6 +3,8 @@ import { formatNodeFilename, nodeSchemaByType, now, toNodeId } from '@llaab/sche
 import { access, mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
 
+// ─── Config ───────────────────────────────────────────────────────────────────
+
 const VAULT_ROOT = join(process.cwd(), 'vault');
 
 const NODE_DIR_MAP: Record<NodeType, string> = {
@@ -17,15 +19,9 @@ const NODE_DIR_MAP: Record<NodeType, string> = {
   transcript: 'transcripts',
 };
 
-const FRONTMATTER_KEY_ORDER = ['id', 'type', 'title', 'status', 'tags', 'related', 'createdAt', 'updatedAt'];
+// ─── Frontmatter Serialization ────────────────────────────────────────────────
 
-export interface CreateNodeInput {
-  type: NodeType;
-  title: string;
-  body?: string;
-  tags?: string[];
-  extra?: Record<string, unknown>;
-}
+const FRONTMATTER_KEY_ORDER = ['id', 'type', 'title', 'status', 'tags', 'related', 'createdAt', 'updatedAt'];
 
 function serializeFrontmatterValue(value: unknown): string {
   if (Array.isArray(value)) {
@@ -44,7 +40,7 @@ function serializeFrontmatterValue(value: unknown): string {
   return String(value);
 }
 
-function toMarkdown(node: LabNode): string {
+function nodeToMarkdown(node: LabNode): string {
   const { body, ...frontmatter } = node;
   const orderedKeys = [
     ...FRONTMATTER_KEY_ORDER.filter((key) => key in frontmatter),
@@ -60,18 +56,14 @@ function toMarkdown(node: LabNode): string {
   return ['---', ...frontmatterLines, '---', '', body].join('\n').trimEnd() + '\n';
 }
 
-async function ensureFileDoesNotExist(filePath: string): Promise<void> {
-  try {
-    await access(filePath);
-    throw new Error(`Node already exists at ${filePath}`);
-  } catch (error) {
-    const errorCode =
-      typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : undefined;
+// ─── Create Node ──────────────────────────────────────────────────────────────
 
-    if (errorCode !== 'ENOENT') {
-      throw error;
-    }
-  }
+export interface CreateNodeInput {
+  type: NodeType;
+  title: string;
+  body?: string;
+  tags?: string[];
+  extra?: Record<string, unknown>;
 }
 
 export async function createNode(
@@ -79,6 +71,7 @@ export async function createNode(
 ): Promise<{ id: string; path: string; node: LabNode }> {
   const nodeId = toNodeId(input.title);
   const timestamp = now();
+
   const node = nodeSchemaByType[input.type].parse({
     id: nodeId,
     type: input.type,
@@ -97,7 +90,21 @@ export async function createNode(
 
   await mkdir(dirPath, { recursive: true });
   await ensureFileDoesNotExist(filePath);
-  await writeFile(filePath, toMarkdown(node), 'utf-8');
+  await writeFile(filePath, nodeToMarkdown(node), 'utf-8');
 
   return { id: node.id, path: filePath, node };
+}
+
+async function ensureFileDoesNotExist(filePath: string): Promise<void> {
+  try {
+    await access(filePath);
+    throw new Error(`Node already exists at ${filePath}`);
+  } catch (error) {
+    const errorCode =
+      typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : undefined;
+
+    if (errorCode !== 'ENOENT') {
+      throw error;
+    }
+  }
 }

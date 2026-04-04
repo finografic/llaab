@@ -1,4 +1,4 @@
-const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+const FRONTMATTER_REGEX = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 
 export interface ParsedFrontmatter {
   frontmatter: Record<string, unknown>;
@@ -78,7 +78,7 @@ function parseYamlLike(raw: string): Record<string, unknown> {
 }
 
 export function parseFrontmatter(content: string): ParsedFrontmatter {
-  const match = FRONTMATTER_RE.exec(content);
+  const match = FRONTMATTER_REGEX.exec(content);
   if (!match) {
     throw new Error('No frontmatter found in file');
   }

@@ -2,20 +2,12 @@ import { createNode } from '@llaab/core';
 import { appendFile, mkdir, stat, writeFile } from 'fs/promises';
 import { join } from 'path';
 
+// ─── Config ───────────────────────────────────────────────────────────────────
+
 const VAULT_ROOT = process.env.LLAAB_VAULT || './vault';
 const INBOX_FILE = join(VAULT_ROOT, 'INBOX.md');
 
-function suggestTags(title: string, body: string): string[] {
-  const text = `${title} ${body}`.toLowerCase();
-  const suggestions: Array<[string, RegExp]> = [
-    ['automation', /\bautomation\b|\bagent\b/],
-    ['ingestion', /\bingest\b|\btranscript\b|\byoutube\b/],
-    ['schema', /\bschema\b|\bzod\b/],
-    ['llm', /\bllm\b|\bollama\b|\banthropic\b|\bprompt\b/],
-  ];
-
-  return suggestions.filter(([, pattern]) => pattern.test(text)).map(([tag]) => tag);
-}
+// ─── Inbox ────────────────────────────────────────────────────────────────────
 
 async function appendToInbox(title: string, id: string, tags: string[]): Promise<void> {
   const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
@@ -33,9 +25,26 @@ async function appendToInbox(title: string, id: string, tags: string[]): Promise
   await appendFile(INBOX_FILE, line, 'utf-8');
 }
 
+// ─── Auto-tagging ─────────────────────────────────────────────────────────────
+
+function suggestTags(title: string, body: string): string[] {
+  const text = `${title} ${body}`.toLowerCase();
+  const suggestions: Array<[string, RegExp]> = [
+    ['automation', /\bautomation\b|\bagent\b/],
+    ['ingestion', /\bingest\b|\btranscript\b|\byoutube\b/],
+    ['schema', /\bschema\b|\bzod\b/],
+    ['llm', /\bllm\b|\bollama\b|\banthropic\b|\bprompt\b/],
+  ];
+
+  return suggestions.filter(([, pattern]) => pattern.test(text)).map(([tag]) => tag);
+}
+
+// ─── Capture Idea ─────────────────────────────────────────────────────────────
+
 export async function captureIdea(title: string, body?: string, tags?: string[]): Promise<void> {
   const inferredTags = suggestTags(title, body ?? '');
   const mergedTags = Array.from(new Set([...(tags ?? []), ...inferredTags]));
+
   const { id, path } = await createNode({
     type: 'idea',
     title,

@@ -4,7 +4,11 @@ import { join } from 'path';
 
 import { readNode } from './read-node.utils.js';
 
+// ─── Config ───────────────────────────────────────────────────────────────────
+
 const VAULT_ROOT = join(process.cwd(), 'vault');
+
+// ─── Vault Scanner ────────────────────────────────────────────────────────────
 
 async function scanMarkdownFiles(dirPath: string): Promise<string[]> {
   let entries;
@@ -26,6 +30,8 @@ async function scanMarkdownFiles(dirPath: string): Promise<string[]> {
 
   return [...files, ...nestedPaths.flat()];
 }
+
+// ─── List Nodes ───────────────────────────────────────────────────────────────
 
 export interface ListNodesOptions {
   type?: NodeType;
