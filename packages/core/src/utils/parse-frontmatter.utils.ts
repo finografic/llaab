@@ -1,8 +1,11 @@
+// ─── Parsing ─────────────────────────────────────────────────────────────────
+
 const FRONTMATTER_REGEX = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 
 export interface ParsedFrontmatter {
   frontmatter: Record<string, unknown>;
   body: string;
+  filePath?: string;
 }
 
 function parseScalar(rawValue: string): unknown {
@@ -77,7 +80,7 @@ function parseYamlLike(raw: string): Record<string, unknown> {
   return result;
 }
 
-export function parseFrontmatter(content: string): ParsedFrontmatter {
+export function parseFrontmatter(content: string, filePath?: string): ParsedFrontmatter {
   const match = FRONTMATTER_REGEX.exec(content);
   if (!match) {
     throw new Error('No frontmatter found in file');
@@ -86,5 +89,6 @@ export function parseFrontmatter(content: string): ParsedFrontmatter {
   return {
     frontmatter: parseYamlLike(match[1]),
     body: content.slice(match[0].length).trim(),
+    filePath,
   };
 }
