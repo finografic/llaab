@@ -1,3 +1,3 @@
 export { llmExtract } from './extract/llm-extract.js';
+export type { IngestionInput, IngestionResult, IngestionSourceType } from './pipeline.js';
 export { runIngestionPipeline } from './pipeline.js';
-export type { IngestionInput, IngestionSourceType } from './pipeline.js';

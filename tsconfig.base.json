@@ -3,6 +3,14 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@llaab/schemas": ["packages/schemas/src/index.ts"],
+      "@llaab/core": ["packages/core/src/index.ts"],
+      "@llaab/ingestion": ["packages/ingestion/src/index.ts"],
+      "@llaab/llm": ["packages/llm/src/index.ts"],
+      "@llaab/skills": ["packages/skills/src/index.ts"]
+    },
     "lib": ["ES2022"],
     "strict": true,
     "esModuleInterop": true,

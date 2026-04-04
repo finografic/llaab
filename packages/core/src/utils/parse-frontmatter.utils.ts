@@ -1,33 +1,90 @@
-import type { Frontmatter } from '@llaab/schemas';
-import { FrontmatterSchema } from '@llaab/schemas';
+const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 
-const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---/;
+export interface ParsedFrontmatter {
+  frontmatter: Record<string, unknown>;
+  body: string;
+}
+
+function parseScalar(rawValue: string): unknown {
+  const trimmedValue = rawValue.trim();
+
+  if (trimmedValue === 'true') return true;
+  if (trimmedValue === 'false') return false;
+  if (trimmedValue === 'null') return null;
+  if (/^-?\d+$/.test(trimmedValue)) return Number.parseInt(trimmedValue, 10);
+  if (/^-?\d+\.\d+$/.test(trimmedValue)) return Number.parseFloat(trimmedValue);
+
+  if (
+    (trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) ||
+    (trimmedValue.startsWith('[') && trimmedValue.endsWith(']'))
+  ) {
+    try {
+      return JSON.parse(trimmedValue);
+    } catch {
+      return trimmedValue.replace(/^['"]|['"]$/g, '');
+    }
+  }
+
+  return trimmedValue.replace(/^['"]|['"]$/g, '');
+}
 
 function parseYamlLike(raw: string): Record<string, unknown> {
   const result: Record<string, unknown> = {};
-  for (const line of raw.split('\n')) {
+  const lines = raw.split(/\r?\n/);
+  let currentKey: string | null = null;
+  let currentArray: unknown[] | null = null;
+
+  const flushArray = (): void => {
+    if (currentKey && currentArray) {
+      result[currentKey] = currentArray;
+    }
+    currentKey = null;
+    currentArray = null;
+  };
+
+  for (const line of lines) {
+    if (!line.trim()) {
+      continue;
+    }
+
+    const arrayMatch = line.match(/^\s+-\s+(.*)$/);
+    if (arrayMatch && currentKey) {
+      currentArray ??= [];
+      currentArray.push(parseScalar(arrayMatch[1]));
+      continue;
+    }
+
+    flushArray();
+
     const colonIndex = line.indexOf(':');
-    if (colonIndex === -1) continue;
+    if (colonIndex === -1) {
+      continue;
+    }
+
     const key = line.slice(0, colonIndex).trim();
     const rawValue = line.slice(colonIndex + 1).trim();
 
-    if (rawValue.startsWith('[') && rawValue.endsWith(']')) {
-      const inner = rawValue.slice(1, -1).trim();
-      result[key] = inner ? inner.split(',').map((s) => s.trim().replace(/^['"]|['"]$/g, '')) : [];
-    } else {
-      result[key] = rawValue.replace(/^['"]|['"]$/g, '');
+    if (!rawValue) {
+      currentKey = key;
+      currentArray = [];
+      continue;
     }
+
+    result[key] = parseScalar(rawValue);
   }
+
+  flushArray();
   return result;
 }
 
-export function parseFrontmatter(content: string): { frontmatter: Frontmatter; body: string } {
+export function parseFrontmatter(content: string): ParsedFrontmatter {
   const match = FRONTMATTER_RE.exec(content);
   if (!match) {
     throw new Error('No frontmatter found in file');
   }
-  const raw = parseYamlLike(match[1]);
-  const frontmatter = FrontmatterSchema.parse(raw);
-  const body = content.slice(match[0].length).trimStart();
-  return { frontmatter, body };
+
+  return {
+    frontmatter: parseYamlLike(match[1]),
+    body: content.slice(match[0].length).trim(),
+  };
 }

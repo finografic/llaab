@@ -1,42 +1,68 @@
-import type { AnyNode, NodeType } from '@llaab/schemas';
-import { readdir, readFile } from 'fs/promises';
+import type { LabNode, NodeStatus, NodeType } from '@llaab/schemas';
+import { readdir } from 'fs/promises';
 import { join } from 'path';
 
-import { parseFrontmatter } from './parse-frontmatter.utils.js';
+import { readNode } from './read-node.utils.js';
 
-const VAULT_ROOT = join(process.cwd(), 'vault', 'nodes');
+const VAULT_ROOT = join(process.cwd(), 'vault');
 
-const NODE_DIR_MAP: Record<NodeType, string> = {
-  idea: 'ideas',
-  decision: 'decisions',
-  prompt: 'prompts',
-  instruction: 'instructions',
-  resource: 'resources',
-};
-
-export async function listNodes(type?: NodeType): Promise<AnyNode[]> {
-  const types: NodeType[] = type ? [type] : (Object.keys(NODE_DIR_MAP) as NodeType[]);
-  const results: AnyNode[] = [];
-
-  for (const t of types) {
-    const dir = join(VAULT_ROOT, NODE_DIR_MAP[t]);
-    let files: string[];
-    try {
-      files = await readdir(dir);
-    } catch {
-      continue;
-    }
-
-    for (const file of files.filter((f) => f.endsWith('.md'))) {
-      const content = await readFile(join(dir, file), 'utf-8');
-      try {
-        const { frontmatter, body } = parseFrontmatter(content);
-        results.push({ ...frontmatter, body } as unknown as AnyNode);
-      } catch {
-        // skip malformed files
-      }
-    }
+async function scanMarkdownFiles(dirPath: string): Promise<string[]> {
+  let entries;
+  try {
+    entries = await readdir(dirPath, { withFileTypes: true });
+  } catch {
+    return [];
   }
 
-  return results;
+  const nestedPaths = await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+      .map((entry) => scanMarkdownFiles(join(dirPath, entry.name))),
+  );
+
+  const files = entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .map((entry) => join(dirPath, entry.name));
+
+  return [...files, ...nestedPaths.flat()];
+}
+
+export interface ListNodesOptions {
+  type?: NodeType;
+  status?: NodeStatus;
+  tags?: string[];
+  search?: string;
+  limit?: number;
+}
+
+export async function listNodes(options: ListNodesOptions = {}): Promise<LabNode[]> {
+  const files = await scanMarkdownFiles(VAULT_ROOT);
+  const nodes = await Promise.all(
+    files.map(async (filePath) => {
+      try {
+        return await readNode(filePath);
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  return nodes
+    .filter((node): node is LabNode => node !== null)
+    .filter((node) => (options.type ? node.type === options.type : true))
+    .filter((node) => (options.status ? node.status === options.status : true))
+    .filter((node) => {
+      if (!options.tags?.length) return true;
+      return options.tags.some((tag) => node.tags.includes(tag));
+    })
+    .filter((node) => {
+      if (!options.search) return true;
+      const searchValue = options.search.toLowerCase();
+      return (
+        node.title.toLowerCase().includes(searchValue) ||
+        node.tags.some((tag) => tag.toLowerCase().includes(searchValue)) ||
+        node.body.toLowerCase().includes(searchValue)
+      );
+    })
+    .slice(0, options.limit ?? Number.POSITIVE_INFINITY);
 }
