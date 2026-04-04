@@ -59,18 +59,21 @@ packages/schemas/src/
 ## Primitives
 
 **File:** `primitives.schema.ts`  
-**Import:** `import { NodeId, NodeType, NodeStatus, … } from '@llaab/schemas'`
+**Import:** `import { NodeIdSchema, NodeTypeSchema, NodeStatusSchema, RunStatusSchema, TimestampSchema } from '@llaab/schemas'`
 
 These are the atoms everything else is built from.
 
-| Name               | Type           | Description                                                                             |
-| ------------------ | -------------- | --------------------------------------------------------------------------------------- |
-| `NodeId`           | branded string | Slug-style ID: lowercase letters, numbers, hyphens (`a-z0-9-`), no leading/trailing `-` |
-| `NodeType`         | enum           | All nine node types (see below)                                                         |
-| `RelationshipType` | enum           | How two nodes can relate (see **Relationship** in the node-types doc)                   |
-| `NodeStatus`       | enum           | Lifecycle: `seed` → `growing` → `mature` → `archived`                                   |
-| `RunStatus`        | enum           | For `run` nodes: `pending`, `running`, `completed`, `failed`, `cancelled`               |
-| Timestamp          | ISO string     | Validated via `TimestampSchema` (parseable `Date`)                                      |
+| Name               | Type                     | Description                                                                             |
+| ------------------ | ------------------------ | --------------------------------------------------------------------------------------- |
+| `NodeIdSchema`     | Zod string schema        | Slug-style ID: lowercase letters, numbers, hyphens (`a-z0-9-`), no leading/trailing `-` |
+| `NodeTypeSchema`   | Zod enum schema          | All nine node types (see below)                                                         |
+| `NodeStatusSchema` | Zod enum schema          | Lifecycle: `seed` → `growing` → `mature` → `archived`                                   |
+| `RunStatusSchema`  | Zod enum schema          | For `run` nodes: `pending`, `running`, `completed`, `failed`, `cancelled`               |
+| `TimestampSchema`  | Zod string refinement    | Validated ISO-style timestamp string (parseable by `Date`)                              |
+| `NodeId`           | inferred TypeScript type | Type inferred from `NodeIdSchema`                                                       |
+| `NodeType`         | inferred TypeScript type | Type inferred from `NodeTypeSchema`                                                     |
+| `NodeStatus`       | inferred TypeScript type | Type inferred from `NodeStatusSchema`                                                   |
+| `RunStatus`        | inferred TypeScript type | Type inferred from `RunStatusSchema`                                                    |
 
 Field names in Zod schemas and typed nodes use **camelCase** (for example `createdAt`, `sourceUrl`), including in frontmatter keys as written by `createNode()`.
 

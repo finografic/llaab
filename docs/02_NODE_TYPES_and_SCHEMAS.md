@@ -10,10 +10,10 @@ Every node in the vault shares these fields (camelCase in typed nodes and in fro
 
 ```ts
 {
-  id: NodeId,
-  type: NodeType,
-  title: string,
-  tags: string[],           // default []
+  id: NodeId,               // slug, e.g. "youtube-ingestion-pipeline"
+  type: NodeType,           // discriminant
+  title: string,            // human-readable name
+  tags: string[],           // explicit cross-references (defaults [])
   related: NodeId[],        // default [] — lightweight links to other nodes
   createdAt: string,        // ISO timestamp
   updatedAt?: string,       // ISO timestamp (optional in schema; set by flows that write nodes)
@@ -28,7 +28,7 @@ There is no separate `meta` bag on the base node in the current schemas — exte
 
 ## Node types
 
-### Idea node
+### 💡 Idea Node
 
 The lowest-friction entry point. Captures a thought before it evaporates.
 
@@ -66,20 +66,20 @@ Need a system to scrape transcripts, clean timestamps, extract skills.
 
 ---
 
-### Skill node
+### ⚡ Skill Node
 
 Structured, executable knowledge.
 
 ```ts
 SkillNode = BaseNode & {
   type: 'skill'
-  inputs: string[]
-  outputs: string[]
-  tools: string[]
+  inputs: string[]           // what this skill expects
+  outputs: string[]          // what this skill produces
+  tools: string[]            // e.g. ['llm', 'bash', 'fetch']
   version?: string
-  derivedFromIds: NodeId[]
-  parentSkillId?: NodeId
-  generation: number        // default 0
+  derivedFromIds: NodeId[]   // transcript/idea it came from
+  parentSkillId?: NodeId     // if refined from another skill
+  generation: number         // refinement depth (0 = original)
 }
 ```
 
@@ -87,29 +87,29 @@ The prompt or procedure text for the skill lives in `body` unless you split it a
 
 ---
 
-### Prompt node
+### 📝 Prompt Node
 
 Reusable LLM prompt content. The main text is stored in **`body`**; metadata fields are:
 
 ```ts
 PromptNode = BaseNode & {
   type: 'prompt'
-  variables: string[]
-  modelHint?: string
-  outputSchema?: string
+  variables: string[]             // expected variable names
+  modelHint?: string              // suggested model, e.g. 'llama3'
+  outputSchema?: string           // Zod schema name for structured output
 }
 ```
 
 ---
 
-### Instruction node
+### 📋 Instruction Node
 
 Human-readable procedural guidance.
 
 ```ts
 InstructionNode = BaseNode & {
   type: 'instruction'
-  scope?: string
+  scope?: string                  // what context this applies to
 }
 ```
 
@@ -117,7 +117,7 @@ Steps and narrative live in `body`.
 
 ---
 
-### Transcript node
+### 🎙️ Transcript Node
 
 Ingested long-form content (for example from YouTube). The readable transcript text is carried in **`body`**; structured metrics and links use dedicated fields:
 
@@ -127,18 +127,18 @@ TranscriptNode = BaseNode & {
   sourceUrl: string         // URL
   sourceType: 'youtube' | 'article' | 'repo' | 'chat' | 'other'
   author?: string
-  summary?: string
-  rawLength?: number
+  summary?: string               // LLM-generated summary
+  rawLength?: number             // character count of original
   cleanLength?: number
   structuredParagraphs?: number
-  extractedIdeaIds: NodeId[]
-  extractedSkillIds: NodeId[]
+  extractedIdeaIds: NodeId[]     // ideas pulled from this
+  extractedSkillIds: NodeId[]    // skills pulled from this
 }
 ```
 
 ---
 
-### Resource node
+### 📦 Resource Node
 
 External references such as tools, libraries, articles, or repos.
 
@@ -153,7 +153,7 @@ ResourceNode = BaseNode & {
 
 ---
 
-### Source node
+### 👤 Source Node
 
 People, channels, repos, or other origins.
 
@@ -163,30 +163,30 @@ SourceNode = BaseNode & {
   sourceKind: 'person' | 'channel' | 'repo' | 'publication' | 'organization' | 'other'
   url?: string
   platforms: string[]
-  follow: boolean            // default false
+  follow: boolean            // actively monitoring? (default false)
 }
 ```
 
 ---
 
-### Decision node
+### 📓 Decision Node
 
 Architecture or design decision (ADR-style).
 
 ```ts
 DecisionNode = BaseNode & {
   type: 'decision'
-  context: string
-  decision: string
-  rationale: string
-  alternatives: string[]
-  consequences: string[]
+  context: string           // what situation prompted this
+  decision: string          // what was decided
+  rationale: string         // why
+  alternatives: string[]    // what else was considered
+  consequences: string[]    // known tradeoffs
 }
 ```
 
 ---
 
-### Run node
+### 🔁 Run Node
 
 Execution record for a skill or automation. **`RunNode` is part of the same discriminated union** as every other node (`NodeSchema` / `LabNode`).
 
@@ -194,11 +194,11 @@ Execution record for a skill or automation. **`RunNode` is part of the same disc
 RunNode = BaseNode & {
   type: 'run'
   skillId?: NodeId
-  runStatus: RunStatus      // default 'pending'
+  runStatus: RunStatus       // 'pending' (default), 'running', 'completed', 'failed', 'cancelled'
   inputSummary?: string
   outputSummary?: string
-  producedNodeIds: NodeId[]
-  modelUsed?: string
+  producedNodeIds: NodeId[]  // nodes created by this run
+  modelUsed?: string         // e.g. 'llama3', 'claude-sonnet'
   durationMs?: number
   error?: string
   startedAt?: string

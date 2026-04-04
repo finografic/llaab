@@ -4,16 +4,17 @@
 
 ## Utilities in `@llaab/core`
 
-### `parseFrontmatter(content)`
+### `parseFrontmatter(content, filePath?)`
 
 Extracts YAML-like frontmatter and body from a Markdown string. No heavy YAML engine — flat keys, scalars, inline arrays, and multi-line `- item` lists.
 
 ```ts
 import { parseFrontmatter } from '@llaab/core';
 
-const { frontmatter, body } = parseFrontmatter(fileContent);
+const { frontmatter, body, filePath } = parseFrontmatter(fileContent, absolutePath);
 // frontmatter: Record<string, unknown>
 // body: string — everything after the closing ---
+// filePath?: optional context for diagnostics / callers
 ```
 
 Throws if no `---` frontmatter block is found.

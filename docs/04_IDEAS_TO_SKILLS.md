@@ -33,12 +33,18 @@ await captureIdea('Expose vault as MCP server', 'Direct agent access to the know
 
 `captureIdea` infers a few tags from the title and body (regex-based), then unions them with tags you pass in:
 
-| When the text matches…                    | Tag suggested |
-| ----------------------------------------- | ------------- |
-| `automation` or `agent`                   | `automation`  |
-| `ingest`, `transcript`, or `youtube`      | `ingestion`   |
-| `schema` or `zod`                         | `schema`      |
-| `llm`, `ollama`, `anthropic`, or `prompt` | `llm`         |
+| When the text matches…                                           | Tag added     |
+| ---------------------------------------------------------------- | ------------- |
+| `llm`, `gpt`, `claude`, `ollama`, `anthropic`, `model`, `prompt` | `llm`         |
+| `agent`, `autonomous`, `workflow`, `automation`, `pipeline`      | `automation`  |
+| `ingest`, `ingestion`, `transcript`, `youtube`                   | `ingestion`   |
+| `schema`, `zod`, `validation`, `type`                            | `schema`      |
+| `cli`, `terminal`, `command`, `script`, `bash`                   | `tooling`     |
+| `mcp`, `cursor`, `tauri`, `astro`, `integration`                 | `integration` |
+| `ui`, `frontend`, `component`, `layout`, `design`                | `ui`          |
+| `graph`, `link`, `relationship`, `connection`                    | `graph`       |
+| `skill`, `execute`, `run`                                        | `execution`   |
+| `llaab`, `lab`, `self-referential`, `meta`                       | `meta`        |
 
 There is no `noInbox` / `noAutoTag` switch in the current API — adjust `capture-idea.ts` if you need those behaviors.
 
