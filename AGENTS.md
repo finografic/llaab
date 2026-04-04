@@ -28,18 +28,21 @@ Rules are canonical in `.github/instructions/` and shared across Claude Code, Cu
 
 ## Project-Specific
 
-Project-specific rules live in `.github/instructions/project/`. Add `*.instructions.md` files there and link them here.
+Project-specific rules live in `.github/instructions/project/*.instructions.md`.
 
-- This is a **standalone installable package** (`@finografic/design-system`), not a monorepo workspace.
 - Published to GitHub Packages (`https://npm.pkg.github.com`).
-- Do not include `Co-Authored-By` lines in commit messages.
-- Do not reference `@workspace/*` — all imports and deps must use published package names.
+- Do not reference `@workspace/*` -— all imports and deps must use published package names.
 
-## Learned User Preferences
+## Commit Message Policy (LLAAB)
 
-- Follow existing recipe patterns for naming, structure, and variant conventions
-- Apply recipes inside design-system components; client uses `<Button variant="..." />` without calling the recipe
-- Use cva for single-element components (e.g. Button); use sva for multi-slot components (Checkbox, Card, Dialog)
-- Use @stylistic/stylelint-plugin for Stylelint 17; stylelint-stylistic is deprecated and incompatible
-- Ignore .cursor/chats and .cursor/hooks; commit .cursor/mcp.json
-- Use Panda MCP for design-system questions (breakpoints, tokens, recipes) when relevant without explicit user ask
+Use this format for all commits unless the user says otherwise.
+
+- Subject: conventional commit style, e.g. `chore(scope): short action`.
+- Body: short bullet points only.
+- Keep bullets terse; prioritize brevity over grammar.
+- No paragraph-style prose blocks in commit bodies.
+- Do not include shell commands in commit bodies.
+- Verification section is allowed, but keep each line short, e.g. `- workspace typecheck OK`.
+- Preserve real newlines in commit bodies; never use escaped `\\n` literals.
+- Prefer writing commit messages via `git commit -F <message-file>` for multiline safety.
+- If a commit body format is wrong, amend immediately.
