@@ -38,7 +38,7 @@ Project-specific rules live in `.github/instructions/project/*.instructions.md`.
 
 Use this format for all commits unless the user says otherwise.
 
-- Subject: conventional commit style, e.g. `chore(scope): short action`.
+- Subject: conventional commit style, e.g. `chore(scope): short action`. Allowed **types** are enforced by `commitlint.config.mjs` (see `docs/process/DEVELOPER_WORKFLOW.md`); use **scopes** such as `agents`, `skills`, or package names for area.
 - Body: terse bullets points; prioritize brevity over grammar.
 - Verification section is allowed, but keep each line short, e.g. `- workspace typecheck OK`.
 - Preserve real newlines in commit bodies; never use escaped `\\n` literals.

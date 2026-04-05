@@ -33,7 +33,8 @@
     "typescript-eslint": "^8.57.2"
   },
   "simple-git-hooks": {
-    "pre-commit": "npx lint-staged --allow-empty && oxfmt --check && pnpm typecheck"
+    "pre-commit": "npx lint-staged --allow-empty && oxfmt --check && pnpm typecheck",
+    "commit-msg": "npx --no -- commitlint --edit $1"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
@@ -45,11 +46,6 @@
     ],
     "*.{json,jsonc,yml,yaml,toml}": [
       "oxfmt --no-error-on-unmatched-pattern"
-    ]
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
     ]
   },
   "packageManager": "pnpm@10.32.1",
