@@ -1,15 +1,13 @@
 /**
- * Audit and optionally fix `package.json` script key separators.
+ * Audit and optionally fix `package.json` script key separators (dots → colons).
  *
  * Modes:
- * - default → audit only
- * - --fix → rewrite dotted script keys to colon-separated
- * - --dry-run → simulate fixes without writing
+ * - default → audit only (no files written)
+ * - `--fix` → rewrite dotted keys and references on disk
  *
  * Example:
- * - audit:   tsx script.ts
- * - dry-run: tsx script.ts --fix --dry-run
- * - fix:     tsx script.ts --fix
+ * - `tsx scripts/audit-script-separators.ts` — audit
+ * - `tsx scripts/audit-script-separators.ts --fix` — apply fixes
  */
 
 import { styleText } from 'node:util';
@@ -40,7 +38,6 @@ const WORKSPACE_ROOT = process.cwd();
 
 const args = process.argv.slice(2);
 const SHOULD_FIX = args.includes('--fix');
-const DRY_RUN = args.includes('--dry-run');
 
 /* -------------------------------------------------------------------------------------------------
  * utils
@@ -49,7 +46,7 @@ const DRY_RUN = args.includes('--dry-run');
 function colorize() {
   return {
     title: (s: string) => styleText(['yellow', 'bold'], s),
-    section: (s: string) => styleText('cyan', s),
+    section: (s: string) => styleText(['gray', 'bold'], s),
     filePath: (s: string) => styleText(['cyan', 'bold', 'dim'], s),
     ok: (s: string) => styleText('greenBright', s),
     warn: (s: string) => styleText('yellow', s),
@@ -192,7 +189,7 @@ async function findScriptReferences(scriptKey: string, targetPaths: readonly str
  * fixers
  * ------------------------------------------------------------------------------------------------- */
 
-async function fixPackageJsonScripts(filePath: string, dryRun: boolean): Promise<number> {
+async function fixPackageJsonScripts(filePath: string): Promise<number> {
   const absolutePath = join(WORKSPACE_ROOT, filePath);
 
   let raw: string;
@@ -243,18 +240,12 @@ async function fixPackageJsonScripts(filePath: string, dryRun: boolean): Promise
 
   parsed.scripts = updated;
 
-  if (!dryRun) {
-    await writeFile(absolutePath, JSON.stringify(parsed, null, 2) + '\n');
-  }
+  await writeFile(absolutePath, JSON.stringify(parsed, null, 2) + '\n');
 
   return changes;
 }
 
-async function fixReferences(
-  filePath: string,
-  dottedToColonMap: Map<string, string>,
-  dryRun: boolean,
-): Promise<number> {
+async function fixReferences(filePath: string, dottedToColonMap: Map<string, string>): Promise<number> {
   const absolutePath = join(WORKSPACE_ROOT, filePath);
 
   let content: string;
@@ -277,7 +268,7 @@ async function fixReferences(
     }
   }
 
-  if (totalChanges > 0 && !dryRun) {
+  if (totalChanges > 0) {
     await writeFile(absolutePath, updated);
   }
 
@@ -308,6 +299,9 @@ async function main(): Promise<void> {
     return;
   }
 
+  console.log(c.section('Audit results:'));
+  console.log('');
+
   let totalReferences = 0;
 
   for (const script of dottedScripts) {
@@ -330,14 +324,20 @@ async function main(): Promise<void> {
     console.log('');
   }
 
-  console.log(c.section('Summary'));
+  console.log(c.section('Summary:'));
+  console.log('');
   console.log(`- Dotted scripts: ${dottedScripts.length}`);
   console.log(`- Total references: ${totalReferences}`);
   console.log('');
 
-  if (!SHOULD_FIX) return;
+  if (!SHOULD_FIX) {
+    console.log(c.ok('No files were written (audit only)'));
+    console.log('');
+    return;
+  }
 
-  console.log(c.ok(DRY_RUN ? 'Dry Run (no writes)' : 'Applying fixes'));
+  console.log(c.ok('Applying fixes..'));
+  console.log('');
 
   const dottedToColon = new Map<string, string>();
   for (const s of dottedScripts) {
@@ -346,26 +346,21 @@ async function main(): Promise<void> {
 
   let scriptFixes = 0;
   for (const file of packageJsonFiles) {
-    scriptFixes += await fixPackageJsonScripts(file, DRY_RUN);
+    scriptFixes += await fixPackageJsonScripts(file);
   }
 
   let referenceFixes = 0;
   for (const file of auditTargets) {
-    referenceFixes += await fixReferences(file, dottedToColon, DRY_RUN);
+    referenceFixes += await fixReferences(file, dottedToColon);
   }
 
   console.log('');
-  console.log(c.section('Fix Summary'));
+  console.log(c.section('Fix Summary:'));
+  console.log('');
   console.log(`- Script keys updated: ${scriptFixes}`);
   console.log(`- References updated: ${referenceFixes}`);
   console.log('');
-
-  if (DRY_RUN) {
-    console.log(c.muted('No files were written (--dry-run enabled)'));
-  } else {
-    console.log(c.ok('Fixes applied successfully'));
-  }
-
+  console.log(c.ok('Fixes applied successfully'));
   console.log('');
 }
 
