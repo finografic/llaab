@@ -7,8 +7,8 @@
     "dev:cli": "bun packages/cli/src/index.ts",
     "build": "turbo build",
     "lint": "turbo lint",
-    "format.check": "oxfmt --check",
-    "format.fix": "oxfmt",
+    "format:check": "oxfmt --check",
+    "format:fix": "oxfmt",
     "typecheck": "turbo typecheck",
     "test": "turbo test"
   },
@@ -32,6 +32,14 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2"
   },
+  "packageManager": "pnpm@10.32.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "simple-git-hooks"
+    ]
+  },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged --allow-empty && oxfmt --check && pnpm typecheck",
     "commit-msg": "npx --no -- commitlint --edit $1"
@@ -46,14 +54,6 @@
     ],
     "*.{json,jsonc,yml,yaml,toml}": [
       "oxfmt --no-error-on-unmatched-pattern"
-    ]
-  },
-  "packageManager": "pnpm@10.32.1",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp",
-      "simple-git-hooks"
     ]
   }
 }
