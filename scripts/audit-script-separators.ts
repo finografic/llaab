@@ -47,11 +47,11 @@ function colorize() {
   return {
     title: (s: string) => styleText(['yellow', 'bold'], s),
     section: (s: string) => styleText(['gray', 'bold'], s),
-    filePath: (s: string) => styleText(['cyan', 'bold', 'dim'], s),
+    filePath: (s: string) => styleText(['cyan', 'bold'], s),
     ok: (s: string) => styleText('greenBright', s),
     warn: (s: string) => styleText('yellow', s),
     muted: (s: string) => styleText('gray', s),
-    key: (s: string) => styleText('cyan', s),
+    key: (s: string) => styleText('magenta', s),
     count: (s: string) => styleText('yellowBright', s),
   };
 }
@@ -309,13 +309,13 @@ async function main(): Promise<void> {
     const scriptTotal = matches.reduce((acc, m) => acc + m.count, 0);
     totalReferences += scriptTotal;
 
-    console.log(`${styleText('bold', 'Script:')} ${c.key(script.key)}`);
-    console.log(`Defined in: ${c.filePath(script.filePath)}`);
+    console.log(`file: ${c.filePath(script.filePath)}`);
+    console.log(`${styleText('bold', 'script:')} ${c.key(script.key)}`);
 
     if (matches.length === 0) {
-      console.log(c.muted('References: none found'));
+      console.log(c.muted('references: none found'));
     } else {
-      console.log('References:');
+      console.log('references:');
       for (const match of matches) {
         console.log(`- ${match.filePath}: ${c.count(String(match.count))}`);
       }
