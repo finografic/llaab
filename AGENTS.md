@@ -43,3 +43,11 @@ Use this format for all commits unless the user says otherwise.
 - Verification section is allowed, but keep each line short, e.g. `- workspace typecheck OK`.
 - Preserve real newlines in commit bodies; never use escaped `\\n` literals.
 - Prefer writing commit messages via `git commit -F <message-file>` for multiline safety.
+
+## Learned User Preferences
+
+- For personal or ecosystem-only repos, keep contributor workflow in `docs/process/`; add a root `CONTRIBUTING.md` mainly when a public repo needs GitHub’s usual discoverability.
+
+## Learned Workspace Facts
+
+- Commitlint rule severity is numeric only (`0` / `1` / `2`); the string `error` is not valid in rule configuration.
