@@ -2,21 +2,20 @@
   "npm.packageManager": "pnpm",
 
   "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
 
   "eslint.enable": true,
   "eslint.useFlatConfig": true,
-  "eslint.format.enable": true,
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
 
   "prettier.enable": false,
-
-  "oxc.fmt.configPath": "oxfmt.config.ts",
+  "oxc.typeAware": true,
 
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "javascript.suggestionActions.enabled": false,
 
   "[javascript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
@@ -46,11 +45,11 @@
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
 
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "stylelint.enable": true,
   "stylelint.validate": ["css"],
   "css.validate": false,
 
+  "markdown-preview-enhanced.scrollSync": false,
   "markdownlint.config": {
     "default": true,
     "MD001": false, // Heading levels should only increment by one level at a time
@@ -62,7 +61,5 @@
     "MD040": false, // Don't require language for code blocks
     "MD041": false // Don't require first line to be a top-level heading
   },
-
-  "markdown-preview-enhanced.scrollSync": false,
   "markdown.styles": [".vscode/markdown-github-light.css"]
 }

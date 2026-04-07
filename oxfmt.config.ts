@@ -9,22 +9,14 @@ import {
   sorting,
   typescript,
 } from '@finografic/oxfmt-config';
-
 import { defineConfig } from 'oxfmt';
 
-/**
- * Workspace root oxfmt config — Panda `styled-system/` and generated icon registry
- * are excluded so generated output stays stable.
- *
- * Import order is handled by ESLint (`simple-import-sort`), not oxfmt `sortImports`, so
- * formatter and linter stay aligned.
- */
 export default defineConfig({
   $schema: './node_modules/oxfmt/configuration_schema.json',
-  ignorePatterns: [...ignorePatterns, '**/styled-system/**'],
+  ignorePatterns: [...ignorePatterns],
   ...base,
-  rules: sorting.rules,
-  sortPackageJson: sorting.sortPackageJson,
+  ...typescript,
+  ...sorting,
   overrides: [
     { files: ['*.ts', '*.tsx'], excludeFiles: [], options: { ...typescript } },
     { files: ['*.json', '*.jsonc'], excludeFiles: [], options: { ...json } },

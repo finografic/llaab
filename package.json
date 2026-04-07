@@ -10,8 +10,11 @@
     "format:check": "oxfmt --check",
     "format:fix": "oxfmt",
     "typecheck": "turbo typecheck",
-    "test": "turbo test"
+    "test": "turbo test",
+    "prepare": "husky",
+    "update:oxfmt-config": "pnpm update @finografic/oxfmt-config --latest && pnpm update oxfmt --latest"
   },
+  "dependencies": {},
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
@@ -23,11 +26,10 @@
     "@typescript-eslint/parser": "^8.51.0",
     "eslint": "9.39.2",
     "eslint-plugin-markdownlint": "^0.9.0",
-    "eslint-plugin-simple-import-sort": "^12.1.1",
     "globals": "^17.4.0",
+    "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "oxfmt": "^0.42.0",
-    "simple-git-hooks": "^2.13.1",
     "turbo": "^2.5.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2"
@@ -40,17 +42,14 @@
       "simple-git-hooks"
     ]
   },
-  "simple-git-hooks": {
-    "pre-commit": "npx lint-staged --allow-empty && oxfmt --check && pnpm typecheck",
-    "commit-msg": "npx --no -- commitlint --edit $1"
-  },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
-      "eslint --fix",
-      "oxfmt --no-error-on-unmatched-pattern"
+      "oxfmt --no-error-on-unmatched-pattern",
+      "eslint --fix"
     ],
     "*.md": [
-      "oxfmt --no-error-on-unmatched-pattern"
+      "oxfmt --no-error-on-unmatched-pattern",
+      "eslint --fix"
     ],
     "*.{json,jsonc,yml,yaml,toml}": [
       "oxfmt --no-error-on-unmatched-pattern"

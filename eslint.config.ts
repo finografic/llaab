@@ -1,14 +1,12 @@
 /// <reference path="./declarations.d.ts" />
 import js from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
-import type { Linter } from 'eslint';
-import { defineConfig, globalIgnores } from 'eslint/config';
 import markdownlintPlugin from 'eslint-plugin-markdownlint';
 import markdownlintParser from 'eslint-plugin-markdownlint/parser.js';
-import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
-
 import tseslint from 'typescript-eslint';
+import type { Linter } from 'eslint';
 
 export default defineConfig([
   globalIgnores([
@@ -49,8 +47,7 @@ export default defineConfig([
     },
     plugins: {
       '@typescript-eslint': tseslint.plugin,
-      'simple-import-sort': simpleImportSort,
-      stylistic,
+      '@stylistic': stylistic,
     },
     rules: {
       // Disable base rules in favor of TS-aware ones
@@ -76,67 +73,25 @@ export default defineConfig([
         { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
       ],
 
-      'stylistic/semi': ['error'],
-      'stylistic/quotes': ['error', 'single', { avoidEscape: true }],
-      // TODO: REMOVE `ConditionalExpression` WHEN oxfmt IS ADDED TO
-      'stylistic/indent': ['warn', 2, { SwitchCase: 1, ignoredNodes: ['ConditionalExpression'] }],
-      'stylistic/no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 1 }],
-      'stylistic/no-multi-spaces': ['warn', { exceptions: { Property: true } }],
-      'stylistic/no-trailing-spaces': 'warn',
-      'stylistic/object-curly-spacing': ['error', 'always'],
-      'stylistic/comma-spacing': ['error', { before: false, after: true }],
-      'stylistic/comma-dangle': ['error', 'only-multiline'],
-      'stylistic/object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
-      'stylistic/arrow-spacing': ['error', { before: true, after: true }],
-      // 'stylistic/type-annotation-spacing': ['error', {
-      //   before: false,
-      //   after: true,
-      //   // overrides: { 'arrow': 'ignore' },
-      // }],
-
-      'simple-import-sort/imports': [
-        'error',
-        {
-          groups: [
-            ['^node:'],
-            ['^@finografic', '^@workspace'],
-            ['^\\u0000'],
-            ['^(?!@finografic)(?!@workspace)@?[a-z]'],
-            [
-              '^(lib|utils)',
-              '^(types|constants|config)',
-              '^\\.\\.(?!/?$)',
-              '^\\.\\./?$',
-              '^\\./(?=.*/)(?!/?$)',
-              '^\\.(?!/?$)',
-              '^\\./?$',
-            ],
-          ],
-        },
+      '@stylistic/indent': ['warn', 2, { SwitchCase: 1, ignoredNodes: ['ConditionalExpression'] }],
+      '@stylistic/operator-linebreak': [
+        'warn',
+        'after',
+        { overrides: { '?': 'ignore', ':': 'ignore', '|': 'ignore' } },
       ],
-      'simple-import-sort/exports': 'error',
+      '@stylistic/multiline-ternary': ['warn', 'always-multiline'],
     },
   },
 
   {
     files: ['**/*.md'],
-    ignores: [
-      'node_modules/**',
-      'dist/**',
-      '.github/**/*.md',
-      '.claude/**/*.md',
-      '.cursor/hooks/**',
-      '.cursor/chats/**',
-      '_templates/**/*.md',
-      '!_templates/.cursor/rules/**/*.md', // Template handbooks often use placeholders; exempt the rules index only below
-      '**/CLAUDE.md',
-    ],
+    ignores: ['node_modules/**', 'dist/**', '.cursor/**'],
     languageOptions: {
       parser: markdownlintParser,
     },
     plugins: {
       markdownlint: markdownlintPlugin as Linter.Processor,
-      stylistic,
+      '@stylistic': stylistic,
     },
     // processor: markdownlintPlugin.processors.markdown,
     rules: {
