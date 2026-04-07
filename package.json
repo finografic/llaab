@@ -3,16 +3,33 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "---------- DEV_AND_BUILD": "---------------------------------------------",
     "dev": "turbo dev",
     "dev:cli": "bun packages/cli/src/index.ts",
     "build": "turbo build",
+    "·········· TESTING": "···················································",
+    "test": "vitest test",
+    "test:coverage": "turbo test --coverage",
+    "·········· LINTING": "···················································",
     "lint": "turbo lint",
+    "lint:fix": "turbo lint --fix",
+    "············ FORMATTING": "··············································",
     "format:check": "oxfmt --check",
     "format:fix": "oxfmt",
+    "·········· PACKAGES": "··················································",
+    "update:deps-policy": "pnpm update @finografic/deps-policy --latest",
+    "update:core": "pnpm update @finografic/core --latest",
+    "update:eslint-config": "pnpm update @finografic/eslint-config --latest",
+    "update:oxfmt-config": "pnpm update @finografic/oxfmt-config --latest && pnpm update oxfmt --latest",
+    "update:project-scripts": "pnpm update @finografic/project-scripts --latest",
+    "upgrade:deps:all": "pnpm update --latest",
+    "·········· UTILS": "·····················································",
+    "list:managed-repos": "tsx --tsconfig tsconfig.scripts.json scripts/list-managed-repos.ts",
+    "check:cli-core-spec": "node scripts/check-cli-core-template.mjs",
+    "tsc:debug": "tsc --pretty --project tsconfig.json",
     "typecheck": "turbo typecheck",
-    "test": "turbo test",
-    "prepare": "husky",
-    "update:oxfmt-config": "pnpm update @finografic/oxfmt-config --latest && pnpm update oxfmt --latest"
+    "prepack": "pnpm build",
+    "prepare": "husky"
   },
   "dependencies": {},
   "devDependencies": {
@@ -38,8 +55,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
-      "sharp",
-      "simple-git-hooks"
+      "sharp"
     ]
   },
   "lint-staged": {

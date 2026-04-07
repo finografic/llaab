@@ -111,9 +111,9 @@ export default defineConfig([
       'markdownlint/md045': 'off', // images require alt text
 
       // Formatting consistency
-      'stylistic/no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 1 }],
-      'stylistic/no-trailing-spaces': 'error',
-      'stylistic/no-multi-spaces': ['error', { exceptions: { Property: true } }],
+      '@stylistic/no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 1 }],
+      '@stylistic/no-trailing-spaces': 'error',
+      '@stylistic/no-multi-spaces': ['error', { exceptions: { Property: true } }],
     },
   },
 
