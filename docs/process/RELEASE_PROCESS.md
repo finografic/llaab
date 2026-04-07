@@ -18,9 +18,9 @@ Define scripts in root `package.json`, for example:
 
 | Goal  | Example script (name varies by repo)                |
 | ----- | --------------------------------------------------- |
-| Patch | `pnpm release.patch` or `pnpm release.github.patch` |
-| Minor | `pnpm release.minor` or `pnpm release.github.minor` |
-| Major | `pnpm release.major` or `pnpm release.github.major` |
+| Patch | `pnpm release:patch` or `pnpm release:github:patch` |
+| Minor | `pnpm release:minor` or `pnpm release:github:minor` |
+| Major | `pnpm release:major` or `pnpm release:github:major` |
 
 Use whatever your scaffold or generator created.
 

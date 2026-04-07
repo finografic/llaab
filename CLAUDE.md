@@ -4,11 +4,7 @@
 
 ## Rules - Claude
 
-- IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages. Not ever, not for any reason.
-
-## Project-Specific
-
-- When adding a command, update the `commands` array in `src/gli.help.ts` and add a matching entry to the `EXAMPLES` section.
+- IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages.
 
 ## Session Memory
 
@@ -32,28 +28,14 @@ Keep only the **last 5 sessions** in the file (delete older entries when appendi
 
 Claude Code maintains a handoff document at `.claude/handoff.md` (gitignored).
 
-This file bridges context between local development (Claude Code CLI) and external conversations (Claude.ai chat), which have no shared visibility. The developer manually uploads this file to Claude.ai for continuity, and may bring back updates from those conversations.
+Bridges context between Claude Code (local) and Claude.ai (no repo access). The developer
+uploads it manually to Claude.ai for continuity.
 
-**Purpose:** Provide a concise, current snapshot of project state — enough for a separate Claude instance (with no repo access) to understand what exists, what was decided, and what's next.
-
-**When to update:** After any session that changes architecture, adds/removes features, resolves open questions, or shifts priorities. Not every session — only when the project state meaningfully changed.
-
-**What to write:** Update only the sections that changed. Keep the entire file under 150 lines. Write for an audience that is familiar with the project's goals but cannot see the codebase.
-
-**Structure (maintain these sections in order):**
-
-1. `## Project` — One-liner: package name, purpose, current version/phase.
-2. `## Architecture` — Brief description of the system layers and how they connect. Update when structural decisions change.
-3. `## Stack` — Runtime dependencies and build tools. Update when deps are added/removed.
-4. `## Schema / Types` — List of core types and what they represent. Update when the type surface changes.
-5. `## CLI Commands` — Current command surface. Update when commands are added/changed.
-6. `## Decisions` — Numbered log of significant architectural or design decisions, most recent first. Append-only — never delete entries, but keep to ~10 most recent. Format: `N. <decision> (date)`
-7. `## Open Questions` — Active unresolved questions. Remove entries when resolved (and optionally move to Decisions). Keep to ~5 max.
-8. `## Status` — Current implementation state: what's done, what's in progress, what's next. Plain prose, 3-5 lines max.
+**When to update:** After any session that changes architecture, adds/removes commands/features,
+resolves open questions, or shifts priorities. Not every session.
 
 **Rules:**
 
-- Do not duplicate content from `memory.md` — that file tracks session work, this file tracks project state.
-- Do not include code snippets or file contents — describe what exists, not how it's implemented.
-- Write in present tense ("The CLI uses X to do Y") not past tense.
-- Keep entries factual and terse. This is a reference document, not a narrative.
+- Update only the sections that changed. Keep the file under 150 lines.
+- Write in present tense. No code snippets — describe what exists, not how.
+- `memory.md` = session work log. `handoff.md` = project state snapshot. Don't duplicate.

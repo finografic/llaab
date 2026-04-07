@@ -12,9 +12,9 @@ Typical scripts (yours may differ):
 
 ```bash
 pnpm lint          # ESLint / project lint
-pnpm lint.fix      # Lint with fixes, if defined
-pnpm format.fix    # Formatter (e.g. oxfmt)
-pnpm format.check  # Check formatting without writing
+pnpm lint:fix      # Lint with fixes, if defined
+pnpm format:fix    # Formatter (e.g. oxfmt)
+pnpm format:check  # Check formatting without writing
 pnpm typecheck     # TypeScript across packages
 pnpm test          # Tests
 ```
@@ -29,7 +29,9 @@ If you use **oxfmt** (or another formatter), keep its config in repo root and ru
 
 ### Commit messages
 
-Use **Conventional Commits** so history and tooling stay consistent. **Commitlint** (see `commitlint.config.mjs` in the repo root) validates the **subject line** on `git commit` when a `commit-msg` hook is installed.
+Use **Conventional Commits** so history and tooling stay consistent.
+**Commitlint** (see `commitlint.config.mjs` in the repo root) validates the
+**subject line** on `git commit` when a `commit-msg` hook is installed.
 
 **Subject line:**
 
@@ -71,11 +73,19 @@ git commit -m "deps: bump zod to latest patch"
 | `style`    | Formatting-only or style rules (no logic change)                                        |
 | `revert`   | Reverts a previous commit                                                               |
 
-**Scopes:** Prefer a **scope** for the area of the repo: package name (`core`, `web`), topic (`agents`, `skills`, `ci`), or path theme. There is no separate `agents:` / `ai:` **type** in this preset — use `docs(agents):`, `feat(skills):`, etc.
+**Scopes:** Prefer a **scope** for the area of the repo: package name
+(`core`, `web`), topic (`agents`, `skills`, `ci`), or path theme. There is no
+separate `agents:` / `ai:` **type** in this preset — use `docs(agents):`,
+`feat(skills):`, etc.
 
-**Multiline messages:** use a second `-m`, or `git commit -F message.txt` for bodies. Keep project-specific policies (e.g. no `Co-Authored-By`, body format) in your **AGENTS.md** or team docs.
+**Multiline messages:** use a second `-m`, or `git commit -F message.txt` for
+bodies. Keep project-specific policies (e.g. no `Co-Authored-By`, body format)
+in your **AGENTS.md** or team docs.
 
-**What Commitlint does not check:** body must be bullets, no prose, “Verification:” sections — those need **human review** or **AI “commit instructions”** in your editor (e.g. Codex). **Commitizen** (`git cz`) is an optional interactive helper; it does not replace Commitlint.
+**What Commitlint does not check:** body must be bullets, no prose,
+“Verification:” sections — those need **human review** or **AI “commit
+instructions”** in your editor (e.g. Codex). **Commitizen** (`git cz`) is an
+optional interactive helper; it does not replace Commitlint.
 
 ### Pre-commit hook
 
@@ -96,7 +106,12 @@ git commit --no-verify -m "message"
 
 A **commit-msg** hook runs **Commitlint** on the message file so invalid types or malformed headers are rejected.
 
-Install hooks with your chosen tool (e.g. **simple-git-hooks**, **husky**).
+In this repo, the canonical setup is **Husky**:
+
+```bash
+.husky/pre-commit  -> pnpm exec lint-staged --allow-empty
+.husky/commit-msg  -> pnpm exec commitlint --edit "$1"
+```
 
 ---
 
@@ -107,7 +122,7 @@ See [Release Process](./RELEASE_PROCESS.md) if this template includes release au
 **Example** (adjust script names to your repo):
 
 ```bash
-pnpm release.patch   # or release.github.patch, changeset publish, etc.
+pnpm release:github:patch   # or changeset publish, etc., depending on your repo
 ```
 
 ---
