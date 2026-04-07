@@ -19,6 +19,8 @@ Follow general TypeScript, ESLint, and naming conventions from prior context.
 - [Modern TypeScript Patterns](/.github/instructions/06-modern-typescript-patterns.instructions.md)
 - [Variable Naming](/.github/instructions/07-variable-naming.instructions.md)
 - [README Standards](/.github/instructions/08-readme-standards.instructions.md)
+- [Picocolors CLI styling](/.github/instructions/09-picocolors-cli-styling.instructions.md)
+- [Git Policy](/.github/instructions/10-git-policy.instructions.md)
 
 ## Rules - Project-Specific
 
@@ -32,17 +34,11 @@ Project-specific rules live in `.github/instructions/project/*.instructions.md`.
 - Padded pipes: one space on each side of every `|`, including the separator row.
 - Align column widths so all cells in the same column are equal width.
 
-## Commit Message Policy (LLAAB)
+## Git Policy
 
 - IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages. Not ever, not for any reason.
-
-Use this format for all commits unless the user says otherwise.
-
-- Subject: conventional commit style, e.g. `chore(scope): short action`. Allowed **types** are enforced by `commitlint.config.mjs` (see `docs/process/DEVELOPER_WORKFLOW.md`); use **scopes** such as `agents`, `skills`, or package names for area.
-- Body: terse bullets points; prioritize brevity over grammar.
-- Verification section is allowed, but keep each line short, e.g. `- workspace typecheck OK`.
-- Preserve real newlines in commit bodies; never use escaped `\\n` literals.
-- Prefer writing commit messages via `git commit -F <message-file>` for multiline safety.
+- [Git — Commits](/.github/instructions/10-git-policy.instructions.md#commits)
+- [Git — Releases](/.github/instructions/10-git-policy.instructions.md#releases)
 
 ## Learned User Preferences
 

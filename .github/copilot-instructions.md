@@ -23,12 +23,12 @@
 - Modern TS Patterns: [.github/instructions/06-modern-typescript-patterns.instructions.md](.github/instructions/06-modern-typescript-patterns.instructions.md)
 - Variable Naming: [.github/instructions/07-variable-naming.instructions.md](.github/instructions/07-variable-naming.instructions.md)
 - README Standards: [.github/instructions/08-readme-standards.instructions.md](.github/instructions/08-readme-standards.instructions.md)
+- Picocolors CLI styling: [.github/instructions/09-picocolors-cli-styling.instructions.md](.github/instructions/09-picocolors-cli-styling.instructions.md)
+- Git Policy: [.github/instructions/10-git-policy.instructions.md](.github/instructions/10-git-policy.instructions.md)
 
 ## Project-Specific Rules
 
-- Design System: [.github/instructions/project/design-system.instructions.md](.github/instructions/project/design-system.instructions.md)
-- SVA (slot recipes): [.github/instructions/project/sva-components.instructions.md](.github/instructions/project/sva-components.instructions.md)
-- CVA (atomic recipes): [.github/instructions/project/cva-components.instructions.md](.github/instructions/project/cva-components.instructions.md)
+Project-specific rules live in `.github/instructions/project/*.instructions.md`.
 
 Maintenance
 

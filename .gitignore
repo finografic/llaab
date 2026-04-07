@@ -21,7 +21,7 @@ build/
 !.claude/settings.json
 .cursor/
 !.cursor/rules/
-.vscode/settings.json
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo
