@@ -191,6 +191,50 @@ Right now in the repo:
 
 ---
 
+## rag
+
+**`RAG` means Retrieval-Augmented Generation.**
+
+In LLAAB terms, RAG is the pattern where the system fetches relevant information first, then gives that information to the model as context before asking it to produce an output.
+
+RAG is not the intelligence of the system.
+It is the information access and context-selection layer around the model.
+
+A RAG step usually answers questions like:
+
+- what information should be fetched
+- where it should be fetched from
+- how much of it should be included
+- how it should be structured before the model sees it
+
+Why it matters here:
+
+- the model only reasons over what is actually present in context
+- retrieval helps ground outputs in real project data
+- better retrieval usually matters more than cleverer prompts
+- poor retrieval creates omission, noise, and hallucination risk
+
+A simple mental model is:
+
+```txt
+llm = reasoning engine
+rag = selective memory access
+context = what actually reaches working memory
+```
+
+For LLAAB, the most precise framing is:
+
+```txt
+rag = retrieval and context-selection layer
+```
+
+The important correction is this:
+
+RAG does not give the model “more knowledge.”
+It gives the system a way to supply relevant information at runtime.
+
+---
+
 ## source
 
 **A `source` is the origin of knowledge: the person, channel, repo, publication, or other entity content comes from.**
