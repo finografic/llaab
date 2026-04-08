@@ -1,4 +1,4 @@
-# LLAAB — Project Vocabulary
+# LLAAB — Glossary
 
 > **LLAAB Ubiquitous Language (Critical)**
 >
@@ -18,6 +18,16 @@
 > - precision increases
 > - workflows stabilize
 > - agents become reliable
+
+---
+
+This glossary is the canonical definition of LLAAB's shared vocabulary.
+
+- `ubiquitous language` = the overall shared language discipline across dev, LLM, docs, prompts, schemas, and code
+- `shared vocabulary` = the terms and distinctions that must stay stable across that system
+- `glossary` = the canonical artifact that defines those terms
+
+In plain terms: the system needs a shared vocabulary; this document is the glossary that defines it.
 
 ---
 
@@ -45,7 +55,7 @@ Why it matters here:
 - it makes execution inspectable
 - it lets you debug failures later
 - it creates feedback for refinement
-- it turns “execution” into new knowledge, which fits the LLAAB loop
+- it turns "execution" into new knowledge, which fits the LLAAB loop
 
 A simple mental model is:
 
@@ -64,61 +74,6 @@ Right now in the repo:
 So the schema exists, but persistent run-logging is the next step.
 
 If you want, I can implement that next so every skill execution writes a real markdown `run` node.
-
----
-
-## glossary
-
-**A `glossary` is the locked vocabulary of the lab: the set of words whose meaning should stay stable across you, the codebase, and agents.**
-
-In LLAAB terms, this matters because a system cannot become reliable if the names for its core concepts drift. A glossary is not just a nice document. It is a control mechanism against ambiguity.
-
-A glossary usually answers questions like:
-
-- what terms are officially part of the system
-- what each term means
-- what each term does not mean
-- how terms relate to one another
-- which wording should be preferred when there are near-synonyms
-
-Why it matters here:
-
-- it reduces ambiguity in prompts and implementation
-- it makes agent behavior more consistent
-- it keeps docs, schemas, and code aligned
-- it protects the ubiquitous language from slow drift
-
-A simple mental model is:
-
-```txt
-glossary = the dictionary of the lab
-schema = the typed shape of a concept
-code = the behavior that uses those concepts
-```
-
-For LLAAB, I would treat `glossary` as the preferred term for the concept list itself, and `vocabulary` as the wider language layer around it.
-
----
-
-## vocabulary
-
-**`Vocabulary` is the wider shared language of the lab: the set of meanings, distinctions, and naming rules that shape how LLAAB is described and built.**
-
-In LLAAB terms, vocabulary is broader than glossary. The glossary is the explicit list. Vocabulary is the whole living language system around it.
-
-Why it matters here:
-
-- it gives names to the building blocks of the lab
-- it helps schemas stay meaningful
-- it helps prompts and docs say the same thing the code says
-- it makes agents easier to steer
-
-A simple mental model is:
-
-```txt
-glossary = the official list
-vocabulary = the whole language environment
-```
 
 ---
 
@@ -230,7 +185,7 @@ rag = retrieval and context-selection layer
 
 The important correction is this:
 
-RAG does not give the model “more knowledge.”
+RAG does not give the model "more knowledge."
 It gives the system a way to supply relevant information at runtime.
 
 ---
@@ -272,7 +227,7 @@ Why it matters here:
 
 - it gives the lab a place to store useful external references
 - it provides a landing place for article and repo ingestion right now
-- it separates “reference material” from executable knowledge
+- it separates "reference material" from executable knowledge
 
 A simple mental model is:
 
@@ -398,7 +353,7 @@ run = one execution record
 
 ## vault
 
-**The `vault` is the file-based source of truth for the lab’s knowledge objects.**
+**The `vault` is the file-based source of truth for the lab's knowledge objects.**
 
 In LLAAB terms, the vault is where nodes live on disk. It is not a cache and not a hidden database. It is the inspectable, editable storage layer.
 
