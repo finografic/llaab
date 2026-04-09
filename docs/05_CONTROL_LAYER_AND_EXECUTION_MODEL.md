@@ -1,17 +1,3 @@
-Sounds very good 👍 — this is exactly the right moment to consolidate before going deeper.
-
-Below is a **clean, structured MD-ready document** you can drop straight into your repo. I’ve kept it detailed but _not exhaustive_, with clear boundaries and a concrete next phase.
-
----
-
-# 📄 Suggested filename
-
-```txt
-05_CONTROL_LAYER_AND_EXECUTION_MODEL.md
-```
-
----
-
 # 🧠 LLAAB — Control Layer & Execution Model
 
 ## Purpose
@@ -684,18 +670,3 @@ controlled execution system with persistent knowledge
 > `control.execute()` becomes the gateway to all intelligence.
 
 ---
-
----
-
-# 🧭 Suggested New Chat Threads (Topics Only)
-
-Here are the highest-leverage next deep dives:
-
-1. **Control Layer Design (`control.execute`)**
-2. **Run Node & Observability Model**
-3. **Context Shaping & Retrieval Strategy (Node-based RAG)**
-4. **Extraction Pipeline Design (Transcript → Ideas/Skills)**
-
----
-
-When you're ready, ask for one and I’ll generate a full **dedicated CONTEXT doc** for that thread.

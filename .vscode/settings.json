@@ -61,5 +61,5 @@
     "MD040": false, // Don't require language for code blocks
     "MD041": false // Don't require first line to be a top-level heading
   },
-  "markdown.styles": [".vscode/markdown-github-light.css"]
+  "markdown.styles": ["node_modules/@finografic/md-lint/styles/markdown-github-light.css"]
 }

@@ -13,6 +13,8 @@
     "·········· LINTING": "···················································",
     "lint": "turbo lint",
     "lint:fix": "turbo lint --fix",
+    "lint.md": "md-lint",
+    "lint.md.fix": "md-lint --fix",
     "············ FORMATTING": "··············································",
     "format:check": "oxfmt --check",
     "format:fix": "oxfmt",
@@ -36,6 +38,7 @@
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
     "@eslint/js": "^9.39.2",
+    "@finografic/md-lint": "^0.3.0",
     "@finografic/oxfmt-config": "^1.0.3",
     "@stylistic/eslint-plugin": "^5.6.1",
     "@types/node": "24.0.0",
@@ -65,7 +68,7 @@
     ],
     "*.md": [
       "oxfmt --no-error-on-unmatched-pattern",
-      "eslint --fix"
+      "md-lint --fix"
     ],
     "*.{json,jsonc,yml,yaml,toml}": [
       "oxfmt --no-error-on-unmatched-pattern"
