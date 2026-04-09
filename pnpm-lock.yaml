@@ -18,8 +18,8 @@ importers:
         specifier: ^9.39.2
         version: 9.39.2
       '@finografic/md-lint':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: ^0.4.2
+        version: 0.4.2
       '@finografic/oxfmt-config':
         specifier: ^1.0.3
         version: 1.0.3(oxfmt@0.42.0)
@@ -608,8 +608,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@finografic/md-lint@0.3.0':
-    resolution: {integrity: sha512-TMNJDCJwIV4KqOxYB4c61iLYy5wD8w4Fm7zVDYev8e+48rQpZs8Yc1CiZFv20T/HYpmv7P1HHOn3B0cA9pwTGA==, tarball: https://npm.pkg.github.com/download/@finografic/md-lint/0.3.0/5566a78e28e2957eddab29d05af83e7706900f30}
+  '@finografic/md-lint@0.4.2':
+    resolution: {integrity: sha512-DeV39F8vBeFpltOnThYIvIe6UqxvyGhIizLqwNhpko9AnCoK19ryCq7LtS/ZRcjIODrUKOd4r0tdom9Woemiug==, tarball: https://npm.pkg.github.com/download/@finografic/md-lint/0.4.2/c540422a56faf8effca8689e3e59176ae25c9a6c}
     hasBin: true
 
   '@finografic/oxfmt-config@1.0.3':
@@ -3646,7 +3646,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@finografic/md-lint@0.3.0':
+  '@finografic/md-lint@0.4.2':
     dependencies:
       globby: 16.2.0
       markdownlint: 0.40.0

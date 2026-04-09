@@ -22,6 +22,7 @@
     "update:deps-policy": "pnpm update @finografic/deps-policy --latest",
     "update:core": "pnpm update @finografic/core --latest",
     "update:eslint-config": "pnpm update @finografic/eslint-config --latest",
+    "update:md-lint": "pnpm update @finografic/md-lint --latest",
     "update:oxfmt-config": "pnpm update @finografic/oxfmt-config --latest && pnpm update oxfmt --latest",
     "update:project-scripts": "pnpm update @finografic/project-scripts --latest",
     "upgrade:deps:all": "pnpm update --latest",
@@ -33,12 +34,11 @@
     "prepack": "pnpm build",
     "prepare": "husky"
   },
-  "dependencies": {},
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
     "@eslint/js": "^9.39.2",
-    "@finografic/md-lint": "^0.3.0",
+    "@finografic/md-lint": "^0.4.2",
     "@finografic/oxfmt-config": "^1.0.3",
     "@stylistic/eslint-plugin": "^5.6.1",
     "@types/node": "24.0.0",
