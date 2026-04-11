@@ -78,3 +78,4 @@ Before writing any link:
 ## Learned Workspace Facts
 
 - Commitlint rule severity is numeric only (`0` / `1` / `2`); the string `error` is not valid in rule configuration.
+- Commit messages use a custom Commitlint type list (`build`, `chore`, `ci`, `deps`, `docs`, `feat`, `fix`, `refactor`, `revert`, `style`, `test`); AI-related terms like `agents` and `skills` should be used as scopes, not custom types.

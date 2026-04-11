@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { BaseNodeSchema } from './base-node.schema.js';
+import { NodeIdSchema } from './primitives.schema.js';
 
 export const ResourceTypeSchema = z.enum([
   'tool',
@@ -15,6 +16,7 @@ export const ResourceTypeSchema = z.enum([
 
 export const ResourceNodeSchema = BaseNodeSchema.extend({
   type: z.literal('resource'),
+  sourceId: NodeIdSchema.optional(),
   url: z.string().url().optional(),
   resourceType: ResourceTypeSchema.default('reference'),
   description: z.string().optional(),

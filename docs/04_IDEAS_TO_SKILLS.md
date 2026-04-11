@@ -52,9 +52,9 @@ There is no `noInbox` / `noAutoTag` switch in the current API — adjust `captur
 
 ### Other entry points in this package
 
-| Export          | File                | Role                                                                                     |
-| --------------- | ------------------- | ---------------------------------------------------------------------------------------- |
-| `ingestYouTube` | `ingest-youtube.ts` | YouTube ingestion pipeline (typed `transcript` / `source` nodes; see `SCHEMAS_ADDED.md`) |
-| `runSkill`      | `runner.ts`         | Skill runner (execution; `run` node persistence is still limited — see schema notes)     |
+| Export          | File                | Role                                                                                                              |
+| --------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `ingestYouTube` | `ingest-youtube.ts` | YouTube ingestion pipeline (typed `transcript` / `source` nodes; extraction now passes through the control layer) |
+| `runSkill`      | `runner.ts`         | Skill runner that now persists real `run` nodes with stage and decision data                                      |
 
 Use these when you move from “capture ideas” to “pull external content” or “execute skills” — they share the same schema and vault conventions as core.

@@ -52,7 +52,8 @@
     "oxfmt": "^0.42.0",
     "turbo": "^2.5.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.2"
+    "typescript-eslint": "^8.57.2",
+    "vitest": "^4.1.4"
   },
   "packageManager": "pnpm@10.32.1",
   "pnpm": {

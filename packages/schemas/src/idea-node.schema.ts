@@ -6,7 +6,7 @@ import { NodeIdSchema } from './primitives.schema.js';
 export const IdeaNodeSchema = BaseNodeSchema.extend({
   type: z.literal('idea'),
   origin: z.enum(['manual', 'extracted', 'generated']).default('manual'),
-  sourceNodeId: NodeIdSchema.optional(),
+  sourceId: NodeIdSchema.optional(),
 });
 
 export type IdeaNode = z.infer<typeof IdeaNodeSchema>;

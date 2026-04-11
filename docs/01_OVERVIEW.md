@@ -10,7 +10,7 @@ together, and how to use them with the utilities in `@llaab/core` and `@llaab/sk
 Every piece of knowledge in LLAAB lives in the vault as a Markdown file with YAML-like frontmatter.
 The schema layer is what gives that frontmatter meaning.
 
-```
+```txt
 vault/nodes/ideas/idea.expose-vault-as-mcp-server.md
         │
         ▼
@@ -33,7 +33,7 @@ it doesn't exist in the system.
 
 ## Package Layout
 
-```
+```txt
 packages/schemas/src/
 ├── primitives.schema.ts       # Atoms: NodeId, NodeType, NodeStatus, RunStatus, timestamps
 ├── base-node.schema.ts        # Common fields every node shares
@@ -93,7 +93,7 @@ Field names in Zod schemas and typed nodes use **camelCase** (for example `creat
 
 ### NodeStatus lifecycle
 
-```
+```txt
 seed  →  growing  →  mature  →  archived
   ↑           ↑           ↑          ↑
 captured   being      stable &    no longer
@@ -119,7 +119,7 @@ New node files are written as:
 
 The `id` comes from the title at creation time via `toNodeId()` in `@llaab/schemas` (see `schema.utils.ts`). `formatNodeFilename(type, id)` builds the filename.
 
-```
+```txt
 "Expose vault as MCP server"
         ↓  toNodeId()
 "expose-vault-as-mcp-server"
@@ -147,7 +147,7 @@ const ideas = await listNodes({ type: 'idea', limit: 5 });
 const first = ideas[0];
 if (first?.type === 'idea') {
   console.log(first.origin); // 'manual'
-  console.log(first.sourceNodeId); // optional link to another node
+  console.log(first.sourceId); // optional structural link to a source/transcript origin
 }
 
 // 3. Read one file by path when you already know where it lives (CLI arg, glob, etc.)
@@ -163,11 +163,11 @@ Objects from `listNodes()` are already validated `LabNode` values. Use `readNode
 
 ## Related docs
 
-| Doc                                                         | Topics                                                    |
-| ----------------------------------------------------------- | --------------------------------------------------------- |
-| [02 — Node types and schemas](02_NODE_TYPES_and_SCHEMAS.md) | Per-type fields, unions, relationships                    |
-| [03 — Core utilities](03_CORE_UTILITIES.md)                 | `parseFrontmatter`, `createNode`, `listNodes`, `readNode` |
-| [04 — Ideas to skills](04_IDEAS_TO_SKILLS.md)               | `captureIdea`, inbox, auto-tags                           |
+| Doc                                                         | Topics                                                                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [02 — Node types and schemas](02_NODE_TYPES_and_SCHEMAS.md) | Per-type fields, unions, relationships                                               |
+| [03 — Core utilities](03_CORE_UTILITIES.md)                 | `parseFrontmatter`, `createNode`, `writeNode`, `updateNode`, `listNodes`, `readNode` |
+| [04 — Ideas to skills](04_IDEAS_TO_SKILLS.md)               | `captureIdea`, inbox, auto-tags                                                      |
 
 ---
 

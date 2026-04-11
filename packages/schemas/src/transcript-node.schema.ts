@@ -7,6 +7,7 @@ export const TranscriptSourceTypeSchema = z.enum(['youtube', 'article', 'repo', 
 
 export const TranscriptNodeSchema = BaseNodeSchema.extend({
   type: z.literal('transcript'),
+  sourceId: NodeIdSchema.optional(),
   sourceUrl: z.string().url(),
   sourceType: TranscriptSourceTypeSchema,
   author: z.string().optional(),

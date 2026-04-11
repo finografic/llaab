@@ -6,5 +6,10 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "references": [{ "path": "../schemas" }, { "path": "../core" }, { "path": "../llm" }]
+  "references": [
+    { "path": "../schemas" },
+    { "path": "../core" },
+    { "path": "../control" },
+    { "path": "../llm" }
+  ]
 }

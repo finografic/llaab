@@ -53,6 +53,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
   const cleaned = cleanTranscript(fetched.rawTranscript);
   const structured = structureText(cleaned.cleanedText);
   const extracted = await llmExtract(structured.structuredContent);
+  const sourceId = toNodeId(fetched.channel);
 
   const transcriptResult = await createNode({
     type: 'transcript',
@@ -60,6 +61,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     body: structured.structuredContent,
     tags: [...(input.tags ?? []), 'ingested', 'youtube'],
     extra: {
+      sourceId,
       sourceUrl: input.url,
       sourceType: input.sourceType as TranscriptSourceType,
       author: fetched.channel,
@@ -69,8 +71,6 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       structuredParagraphs: structured.paragraphCount,
     },
   });
-
-  const sourceId = toNodeId(fetched.channel);
 
   try {
     await createNode({

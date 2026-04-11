@@ -89,6 +89,40 @@ const { path, node } = await createNode({
 
 ---
 
+### `writeNode(node)`
+
+Writes an existing node back to its deterministic vault path. Validates through the node's schema, refreshes `updatedAt`, and keeps file output consistent with `createNode()`.
+
+```ts
+import { writeNode } from '@llaab/core';
+
+const result = await writeNode({
+  ...existingNode,
+  body: 'Updated markdown body',
+});
+```
+
+Use this when you already have a full node object and want schema-checked persistence.
+
+---
+
+### `updateNode(filePath, updater)`
+
+Reads a node from disk, passes it through an updater callback, preserves `id` and `type`, revalidates, refreshes `updatedAt`, and writes the result back.
+
+```ts
+import { updateNode } from '@llaab/core';
+
+await updateNode('/absolute/path/to/vault/nodes/ideas/idea.example.md', (current) => ({
+  ...current,
+  body: `${current.body}\n\nRefined note.`,
+}));
+```
+
+Use this when the caller knows the node path and wants a safe mutation layer instead of open-coded read/modify/write logic.
+
+---
+
 ### `listNodes(options?)`
 
 Recursively scans **`process.cwd()/vault`** for `.md` files, validates each with `readNode` (skips files that fail), then filters.
@@ -134,4 +168,4 @@ const ideas = await listNodes({
 
 ## Related skills package
 
-`@llaab/skills` also exposes **`ingestYouTube`** and **`runSkill`** (see `packages/skills/src/`). Those sit above core: they orchestrate ingestion and execution rather than low-level vault I/O. Details belong with workflow docs; they are listed here so you know the files exist next to `captureIdea`.
+`@llaab/skills` also exposes **`ingestYouTube`** and **`runSkill`** (see `packages/skills/src/`). Those sit above core: they orchestrate ingestion and execution rather than low-level vault I/O. `runSkill()` now persists real `run` nodes, so execution observability is part of the current architecture rather than a future note.

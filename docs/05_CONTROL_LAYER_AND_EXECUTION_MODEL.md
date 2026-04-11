@@ -17,7 +17,7 @@ It focuses on:
 
 ---
 
-# 1. Core Architectural Shift
+## 1. Core Architectural Shift
 
 ## From
 
@@ -47,11 +47,11 @@ input
 
 ---
 
-# 2. The Control Layer
+## 2. The Control Layer
 
-## Definition
+## Run Definition
 
-**Control = the system layer that governs execution**
+Control = the system layer that governs execution
 
 It is responsible for:
 
@@ -125,7 +125,7 @@ error → retry or reject
 
 ---
 
-# 3. Execution Model
+## 3. Execution Model
 
 ## System Flow
 
@@ -158,7 +158,7 @@ skill (definition)
 
 ---
 
-# 4. Run Logging (Observability Layer)
+## 4. Run Logging (Observability Layer)
 
 ## Definition
 
@@ -201,7 +201,7 @@ interface RunNode {
 
 ---
 
-## Purpose
+## Run Logging Purpose
 
 - makes execution **inspectable**
 - exposes **failure boundaries**
@@ -210,13 +210,13 @@ interface RunNode {
 
 ---
 
-## Rule
+## Run Logging Rule
 
 > If it is not logged as a run, it did not happen.
 
 ---
 
-# 5. Schema Role (Strengthened)
+## 5. Schema Role (Strengthened)
 
 ## Shift
 
@@ -230,7 +230,7 @@ To:
 
 ---
 
-## Principle
+## Context Principle
 
 ```txt
 LLM output = proposal
@@ -246,7 +246,7 @@ Schema-valid output = admissible state
 
 ---
 
-# 6. Context & Retrieval (Refined)
+## 6. Context & Retrieval (Refined)
 
 ## Current Risk
 
@@ -288,7 +288,7 @@ interface Context {
 
 ---
 
-# 7. Known Risks (If Not Addressed)
+## 7. Known Risks (If Not Addressed)
 
 ### 1. Control drift
 
@@ -308,7 +308,7 @@ interface Context {
 
 ---
 
-# 8. What NOT to Do Yet
+## 8. What NOT to Do Yet
 
 - no vector DB expansion
 - no graph visualization layer
@@ -324,14 +324,14 @@ interface Context {
 
 ---
 
-# 9. Phase 2 — Concrete Next Steps
+## 9. Phase 2 — Concrete Next Steps
 
 ## Step 1 — Node Mutation Layer
 
-Implement:
+Implemented:
 
 - `writeNode(node)`
-- `updateNode(node, updater)`
+- `updateNode(filePath, updater)`
 
 Requirements:
 
@@ -344,61 +344,63 @@ Requirements:
 
 ## Step 2 — Persist Run Nodes
 
+Implemented:
+
 - write run records to `vault/runs`
 - include:
   - stages
   - decisions
-  - llm raw output
+  - optional llm trace support in the schema
 - integrate into `runner.ts`
 
 ---
 
 ## Step 3 — Introduce Control Layer
 
-Create:
+Implemented:
 
 ```txt
 packages/control/
   orchestrator.ts
 ```
 
-Implement:
+Surface:
 
 ```ts
 control.execute();
 ```
 
-Enforce:
+Current enforcement:
 
-- all LLM calls go through this
+- LLM-backed extraction now goes through this
 - schema validation required
 - retry + decision logic included
 
-# 🔧 Section 5.1 — Source Modeling
+## 5.1 — Source Modeling
 
 ## Recommended Placement
 
 Add this **directly after Section 5 (Schema Role)** in the doc:
 
-```
-# 5.1 Source & Provenance Modeling
+```txt
+### 5.1 Source & Provenance Modeling
 ```
 
 ---
 
-# 🧠 Source & Provenance Modeling
+## Source & Provenance Modeling
 
 ## Problem
 
 Current node model includes:
 
-```
+```txt
 id, type, title, tags, related, ...
 ```
 
-But does **not explicitly encode provenance at the node level**.
+The current repo now has a lightweight provenance bridge via `sourceId` on relevant externally-derived node types.
 
-This creates risk:
+Without structural provenance, this creates risk:
 
 - loss of origin traceability
 - weaker retrieval filtering
@@ -407,7 +409,7 @@ This creates risk:
 
 ---
 
-## Key Principle
+## Provenance Principle
 
 > Provenance is not metadata.
 > It is **part of the system’s truth model**.
@@ -418,7 +420,7 @@ This creates risk:
 
 From your glossary (correctly defined):
 
-```
+```txt
 source   = origin (person, channel, repo, publication)
 resource = external artifact (article, repo, tool)
 ```
@@ -429,7 +431,7 @@ resource = external artifact (article, repo, tool)
 
 Instead of:
 
-```
+```txt
 source: string // ❌ too weak
 ```
 
@@ -437,16 +439,16 @@ Use:
 
 ### Option A (Recommended — Graph-first)
 
-```
+```txt
 related: NodeId[] // existing
 relationships:
   - type: "derived_from"
-    target: SourceNodeId
+    target: source-node-id
 ```
 
 Meaning:
 
-```
+```txt
 idea → derived_from → source
 transcript → derived_from → source
 skill → derived_from → source
@@ -458,7 +460,7 @@ skill → derived_from → source
 
 If you want a lightweight step:
 
-```
+```txt
 sourceId?: NodeId
 ```
 
@@ -474,7 +476,7 @@ BUT:
 
 ### 1. Retrieval
 
-```
+```txt
 find ideas derived from X
 find all nodes from source Y
 ```
@@ -483,7 +485,7 @@ find all nodes from source Y
 
 ### 2. Deduplication
 
-```
+```txt
 same source + same content → likely duplicate
 ```
 
@@ -493,7 +495,7 @@ same source + same content → likely duplicate
 
 Future:
 
-```
+```txt
 prefer ideas from high-trust sources
 ```
 
@@ -501,7 +503,7 @@ prefer ideas from high-trust sources
 
 ### 4. Lineage
 
-```
+```txt
 transcript → idea → skill → run
          ↑ all traceable to source
 ```
@@ -524,7 +526,7 @@ Applies to:
 
 ## Example
 
-```
+```txt
 source.youtube-channel-xyz
     ↓
 transcript.video-abc
@@ -554,7 +556,7 @@ skill.extract-context
 
 ---
 
-# 🧭 Quick Guidance
+## Quick Guidance
 
 If you want the **cleanest immediate move**:
 
@@ -578,17 +580,19 @@ Refactor:
 - ingestion
 - skills
 
-Replace:
+Original target:
 
 ```ts
 llm(...)
 ```
 
-With:
+Current state:
 
 ```ts
 control.execute(...)
 ```
+
+Today this is implemented for ingestion extraction. Broader propagation of nested control decisions into higher-level run summaries is still an open follow-up step.
 
 ---
 
@@ -636,7 +640,7 @@ fetch
 
 ---
 
-# 10. Summary
+## 10. Summary
 
 LLAAB is evolving from:
 

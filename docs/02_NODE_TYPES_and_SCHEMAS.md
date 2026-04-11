@@ -36,7 +36,7 @@ The lowest-friction entry point. Captures a thought before it evaporates.
 IdeaNode = BaseNode & {
   type: 'idea'
   origin: 'manual' | 'extracted' | 'generated'  // default 'manual'
-  sourceNodeId?: NodeId   // optional link to transcript/resource/source
+  sourceId?: NodeId       // optional structural link to a `source` node
 }
 ```
 
@@ -77,6 +77,7 @@ SkillNode = BaseNode & {
   outputs: string[]          // what this skill produces
   tools: string[]            // e.g. ['llm', 'bash', 'fetch']
   version?: string
+  sourceId?: NodeId          // optional structural link to source provenance
   derivedFromIds: NodeId[]   // transcript/idea it came from
   parentSkillId?: NodeId     // if refined from another skill
   generation: number         // refinement depth (0 = original)
@@ -124,6 +125,7 @@ Ingested long-form content (for example from YouTube). The readable transcript t
 ```ts
 TranscriptNode = BaseNode & {
   type: 'transcript'
+  sourceId?: NodeId          // source provenance link
   sourceUrl: string         // URL
   sourceType: 'youtube' | 'article' | 'repo' | 'chat' | 'other'
   author?: string
@@ -145,6 +147,7 @@ External references such as tools, libraries, articles, or repos.
 ```ts
 ResourceNode = BaseNode & {
   type: 'resource'
+  sourceId?: NodeId
   url?: string
   resourceType: 'tool' | 'library' | 'api' | 'dataset' | 'reference' | 'article' | 'repo' | 'other'
   description?: string
@@ -198,6 +201,22 @@ RunNode = BaseNode & {
   inputSummary?: string
   outputSummary?: string
   producedNodeIds: NodeId[]  // nodes created by this run
+  stages: Array<{
+    name: string
+    status: 'pending' | 'completed' | 'failed'
+    input?: unknown
+    output?: unknown
+    error?: string
+  }>
+  decisions: Array<{
+    type: 'accept' | 'retry' | 'reject' | 'downgrade'
+    reason: string
+  }>
+  llm?: {
+    model?: string
+    rawOutput?: string
+    parsed?: boolean
+  }
   modelUsed?: string         // e.g. 'llama3', 'claude-sonnet'
   durationMs?: number
   error?: string
@@ -267,3 +286,5 @@ Relationships are defined for future graph work; persisting edges as their own f
 - **camelCase** fields in Zod and on disk (for example `createdAt`, `sourceUrl`, `extractedIdeaIds`).
 - **Single union** — `node.schema.ts` exports `NodeSchema` and the inferred type `LabNode` (there is no separate `lab-node.schema.ts` or `AnyNode` split).
 - **Filename pattern** — `<type>.<id>.md`, not `<id>.md` alone.
+- **Lightweight provenance** — `sourceId` is the current bridge from externally-derived nodes to `source` nodes.
+- **Richer runs** — `run` nodes now support stages, decisions, and optional LLM trace data for observability.
