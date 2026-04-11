@@ -26,6 +26,19 @@ export interface IngestionResult {
   runTrace?: ExtractionRunTrace;
 }
 
+function completedStage(
+  name: string,
+  input?: unknown,
+  output?: unknown,
+): ExtractionRunTrace['stages'][number] {
+  return {
+    name,
+    status: 'completed',
+    input,
+    output,
+  };
+}
+
 async function createResourceNode(
   input: IngestionInput,
   content: string,
@@ -55,9 +68,42 @@ async function createResourceNode(
 
 async function createTranscriptNode(input: IngestionInput): Promise<IngestionResult> {
   const fetched = await fetchYouTube(input.url);
+  const stages: ExtractionRunTrace['stages'] = [
+    completedStage(
+      'fetch:youtube',
+      { url: input.url },
+      {
+        title: fetched.title,
+        channel: fetched.channel,
+        duration: fetched.duration,
+        uploadDate: fetched.uploadDate,
+        hasTranscript: fetched.rawTranscript.length > 0,
+      },
+    ),
+  ];
   const cleaned = cleanTranscript(fetched.rawTranscript);
+  stages.push(
+    completedStage(
+      'clean:transcript',
+      { rawLength: cleaned.rawLength },
+      {
+        cleanLength: cleaned.cleanLength,
+      },
+    ),
+  );
   const structured = structureText(cleaned.cleanedText);
+  stages.push(
+    completedStage(
+      'structure:text',
+      { cleanLength: cleaned.cleanLength },
+      {
+        paragraphCount: structured.paragraphCount,
+        contentLength: structured.structuredContent.length,
+      },
+    ),
+  );
   const extracted = await llmExtractWithTrace(structured.structuredContent);
+  stages.push(...extracted.runTrace.stages);
   const sourceId = toNodeId(fetched.channel);
   const producedNodeIds = new Set<string>();
 
@@ -78,9 +124,19 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     },
   });
   producedNodeIds.add(transcriptResult.id);
+  stages.push(
+    completedStage(
+      'store:transcript',
+      { type: 'transcript', sourceId },
+      {
+        id: transcriptResult.id,
+        path: transcriptResult.path,
+      },
+    ),
+  );
 
   try {
-    await createNode({
+    const sourceResult = await createNode({
       type: 'source',
       title: fetched.channel,
       tags: ['youtube', 'channel'],
@@ -92,10 +148,32 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       },
     });
     producedNodeIds.add(sourceId);
+    stages.push(
+      completedStage(
+        'store:source',
+        { id: sourceId },
+        {
+          id: sourceResult.id,
+          path: sourceResult.path,
+          reused: false,
+        },
+      ),
+    );
   } catch (error) {
     if (!(error instanceof Error) || !error.message.includes(sourceId)) {
       throw error;
     }
+
+    stages.push(
+      completedStage(
+        'store:source',
+        { id: sourceId },
+        {
+          id: sourceId,
+          reused: true,
+        },
+      ),
+    );
   }
 
   return {
@@ -103,7 +181,11 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     path: transcriptResult.path,
     type: 'transcript',
     producedNodeIds: [...producedNodeIds],
-    runTrace: extracted.runTrace,
+    runTrace: {
+      stages,
+      decisions: extracted.runTrace.decisions,
+      llm: extracted.runTrace.llm,
+    },
   };
 }
 

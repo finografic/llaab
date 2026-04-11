@@ -1,7 +1,7 @@
 import { execute } from '@llaab/control';
 import { summarizeText } from '@llaab/llm';
 import { z } from 'zod';
-import type { ControlDecision } from '@llaab/control';
+import type { ControlDecision, ControlLlmTrace, ControlStage } from '@llaab/control';
 
 export interface ExtractedKnowledge {
   ideas: string[];
@@ -10,19 +10,9 @@ export interface ExtractedKnowledge {
 }
 
 export interface ExtractionRunTrace {
-  stages: Array<{
-    name: string;
-    status: 'pending' | 'completed' | 'failed';
-    input?: unknown;
-    output?: unknown;
-    error?: string;
-  }>;
+  stages: ControlStage[];
   decisions: ControlDecision[];
-  llm?: {
-    model?: string;
-    rawOutput?: string;
-    parsed?: boolean;
-  };
+  llm?: ControlLlmTrace;
 }
 
 export interface ExtractedKnowledgeWithTrace extends ExtractedKnowledge {
