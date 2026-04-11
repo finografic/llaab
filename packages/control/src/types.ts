@@ -18,6 +18,20 @@ export interface ControlDecision {
   reason: string;
 }
 
+export interface ControlStage {
+  name: string;
+  status: 'pending' | 'completed' | 'failed';
+  input?: unknown;
+  output?: unknown;
+  error?: string;
+}
+
+export interface ControlLlmTrace {
+  model?: string;
+  rawOutput?: string;
+  parsed: boolean;
+}
+
 export interface ControlExecuteInput<T> {
   task: string;
   input: unknown;
@@ -32,9 +46,33 @@ export interface ControlExecuteResult<T> {
   data: T;
   attempts: number;
   decisions: ControlDecision[];
-  llm?: {
-    model?: string;
-    rawOutput?: string;
-    parsed: boolean;
-  };
+  llm?: ControlLlmTrace;
+}
+
+export interface ControlExecutionErrorInput {
+  message: string;
+  task: string;
+  attempts: number;
+  decisions: ControlDecision[];
+  stages: ControlStage[];
+  llm?: ControlLlmTrace;
+  cause?: unknown;
+}
+
+export class ControlExecutionError extends Error {
+  readonly task: string;
+  readonly attempts: number;
+  readonly decisions: ControlDecision[];
+  readonly stages: ControlStage[];
+  readonly llm?: ControlLlmTrace;
+
+  constructor(input: ControlExecutionErrorInput) {
+    super(input.message, input.cause === undefined ? undefined : { cause: input.cause });
+    this.name = 'ControlExecutionError';
+    this.task = input.task;
+    this.attempts = input.attempts;
+    this.decisions = input.decisions;
+    this.stages = input.stages;
+    this.llm = input.llm;
+  }
 }

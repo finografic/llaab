@@ -1,8 +1,9 @@
 import { createNode } from '@llaab/core';
 import { toNodeId, type TranscriptSourceType } from '@llaab/schemas';
+import type { ExtractionRunTrace } from './extract/llm-extract.js';
 
 import { cleanTranscript } from './clean/transcript.js';
-import { llmExtract } from './extract/llm-extract.js';
+import { llmExtractWithTrace } from './extract/llm-extract.js';
 import { fetchArticle } from './fetch/article.js';
 import { fetchRepo } from './fetch/repo.js';
 import { fetchYouTube } from './fetch/youtube.js';
@@ -21,6 +22,8 @@ export interface IngestionResult {
   id: string;
   path: string;
   type: 'transcript' | 'resource';
+  producedNodeIds?: string[];
+  runTrace?: ExtractionRunTrace;
 }
 
 async function createResourceNode(
@@ -28,7 +31,7 @@ async function createResourceNode(
   content: string,
   resourceType: 'article' | 'repo',
 ): Promise<IngestionResult> {
-  const extracted = await llmExtract(content);
+  const extracted = await llmExtractWithTrace(content);
   const result = await createNode({
     type: 'resource',
     title: input.title,
@@ -45,6 +48,8 @@ async function createResourceNode(
     id: result.id,
     path: result.path,
     type: 'resource',
+    producedNodeIds: [result.id],
+    runTrace: extracted.runTrace,
   };
 }
 
@@ -52,8 +57,9 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
   const fetched = await fetchYouTube(input.url);
   const cleaned = cleanTranscript(fetched.rawTranscript);
   const structured = structureText(cleaned.cleanedText);
-  const extracted = await llmExtract(structured.structuredContent);
+  const extracted = await llmExtractWithTrace(structured.structuredContent);
   const sourceId = toNodeId(fetched.channel);
+  const producedNodeIds = new Set<string>();
 
   const transcriptResult = await createNode({
     type: 'transcript',
@@ -71,6 +77,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       structuredParagraphs: structured.paragraphCount,
     },
   });
+  producedNodeIds.add(transcriptResult.id);
 
   try {
     await createNode({
@@ -84,6 +91,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
         related: [transcriptResult.id],
       },
     });
+    producedNodeIds.add(sourceId);
   } catch (error) {
     if (!(error instanceof Error) || !error.message.includes(sourceId)) {
       throw error;
@@ -94,6 +102,8 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     id: transcriptResult.id,
     path: transcriptResult.path,
     type: 'transcript',
+    producedNodeIds: [...producedNodeIds],
+    runTrace: extracted.runTrace,
   };
 }
 

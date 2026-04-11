@@ -1,5 +1,13 @@
-import { ZodError } from 'zod';
-import type { ControlDecision, ControlExecuteInput, ControlExecuteResult, ControlPolicy } from './types.js';
+import type {
+  ControlDecision,
+  ControlExecuteInput,
+  ControlExecuteResult,
+  ControlLlmTrace,
+  ControlPolicy,
+  ControlStage,
+} from './types.js';
+
+import { ControlExecutionError } from './types.js';
 
 const DEFAULT_POLICY: ControlPolicy = {
   maxRetries: 0,
@@ -28,6 +36,20 @@ function shouldRetry(attempt: number, maxAttempts: number): boolean {
   return attempt < maxAttempts;
 }
 
+function buildFailedStage(
+  input: ControlExecuteInput<unknown>,
+  llm?: ControlLlmTrace,
+  error?: string,
+): ControlStage {
+  return {
+    name: `control:${input.task}`,
+    status: 'failed',
+    input: input.input,
+    output: llm?.rawOutput,
+    error,
+  };
+}
+
 export async function execute<T>(input: ControlExecuteInput<T>): Promise<ControlExecuteResult<T>> {
   const policy = normalizePolicy(input.policy);
   const maxAttempts = policy.maxRetries + 1;
@@ -39,6 +61,11 @@ export async function execute<T>(input: ControlExecuteInput<T>): Promise<Control
     try {
       const output = await input.run(input.context);
       const parsed = input.schema.safeParse(output);
+      const llmTrace: ControlLlmTrace = {
+        model: input.model,
+        rawOutput: toRawOutput(output),
+        parsed: parsed.success,
+      };
 
       if (parsed.success) {
         decisions.push({
@@ -50,11 +77,7 @@ export async function execute<T>(input: ControlExecuteInput<T>): Promise<Control
           data: parsed.data,
           attempts: attempt,
           decisions,
-          llm: {
-            model: input.model,
-            rawOutput: toRawOutput(output),
-            parsed: true,
-          },
+          llm: llmTrace,
         };
       }
 
@@ -72,9 +95,17 @@ export async function execute<T>(input: ControlExecuteInput<T>): Promise<Control
         type: 'reject',
         reason: `Schema validation failed for task "${input.task}" and output was rejected.`,
       });
-      throw parsed.error;
+      throw new ControlExecutionError({
+        message: `Schema validation failed for task "${input.task}" and output was rejected.`,
+        task: input.task,
+        attempts: attempt,
+        decisions,
+        stages: [buildFailedStage(input, llmTrace, parsed.error.message)],
+        llm: llmTrace,
+        cause: parsed.error,
+      });
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof ControlExecutionError) {
         throw error;
       }
 
@@ -92,7 +123,24 @@ export async function execute<T>(input: ControlExecuteInput<T>): Promise<Control
         type: 'reject',
         reason: `Execution failed for task "${input.task}" and was rejected.`,
       });
-      throw error;
+      throw new ControlExecutionError({
+        message: `Execution failed for task "${input.task}" and was rejected.`,
+        task: input.task,
+        attempts: attempt,
+        decisions,
+        stages: [
+          buildFailedStage(
+            input,
+            { model: input.model, parsed: false },
+            error instanceof Error ? error.message : String(error),
+          ),
+        ],
+        llm: {
+          model: input.model,
+          parsed: false,
+        },
+        cause: error,
+      });
     }
   }
 

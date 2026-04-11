@@ -1,4 +1,4 @@
-import { execute } from '@llaab/control';
+import { ControlExecutionError, execute } from '@llaab/control';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -31,5 +31,39 @@ describe('control.execute', () => {
     expect(attempts).toBe(2);
     expect(result.data.summary).toBe('usable summary');
     expect(result.decisions.map((decision) => decision.type)).toEqual(['retry', 'accept']);
+  });
+
+  it('throws a structured control error with decisions and llm trace on rejected output', async () => {
+    let attempts = 0;
+
+    const promise = execute({
+      task: 'extract-summary',
+      input: { text: 'hello world' },
+      schema: z.object({
+        summary: z.string().min(1),
+      }),
+      policy: {
+        maxRetries: 1,
+        onInvalid: 'retry',
+        onFailure: 'reject',
+      },
+      model: 'ollama',
+      run: async () => {
+        attempts += 1;
+        return { summary: '' };
+      },
+    });
+
+    await expect(promise).rejects.toBeInstanceOf(ControlExecutionError);
+    await expect(promise).rejects.toMatchObject({
+      decisions: [{ type: 'retry' }, { type: 'reject' }],
+      stages: [{ name: 'control:extract-summary', status: 'failed' }],
+      llm: {
+        model: 'ollama',
+        parsed: false,
+      },
+    });
+
+    expect(attempts).toBe(2);
   });
 });

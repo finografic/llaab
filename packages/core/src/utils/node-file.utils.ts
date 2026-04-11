@@ -45,15 +45,18 @@ export function getNodeFilePath(type: NodeType, id: string): string {
 
 export function nodeToMarkdown(node: LabNode): string {
   const { body, ...frontmatter } = node;
+  const definedFrontmatter = Object.fromEntries(
+    Object.entries(frontmatter).filter(([, value]) => value !== undefined),
+  ) as Record<string, unknown>;
   const orderedKeys = [
-    ...FRONTMATTER_KEY_ORDER.filter((key) => key in frontmatter),
-    ...Object.keys(frontmatter)
+    ...FRONTMATTER_KEY_ORDER.filter((key) => key in definedFrontmatter),
+    ...Object.keys(definedFrontmatter)
       .filter((key) => !FRONTMATTER_KEY_ORDER.includes(key))
       .sort(),
   ];
 
   const frontmatterLines = orderedKeys.map(
-    (key) => `${key}: ${serializeFrontmatterValue(frontmatter[key as keyof typeof frontmatter])}`,
+    (key) => `${key}: ${serializeFrontmatterValue(definedFrontmatter[key])}`,
   );
 
   return ['---', ...frontmatterLines, '---', '', body].join('\n').trimEnd() + '\n';

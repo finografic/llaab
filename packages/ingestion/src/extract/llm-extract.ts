@@ -1,11 +1,32 @@
 import { execute } from '@llaab/control';
 import { summarizeText } from '@llaab/llm';
 import { z } from 'zod';
+import type { ControlDecision } from '@llaab/control';
 
 export interface ExtractedKnowledge {
   ideas: string[];
   skills: string[];
   summary: string;
+}
+
+export interface ExtractionRunTrace {
+  stages: Array<{
+    name: string;
+    status: 'pending' | 'completed' | 'failed';
+    input?: unknown;
+    output?: unknown;
+    error?: string;
+  }>;
+  decisions: ControlDecision[];
+  llm?: {
+    model?: string;
+    rawOutput?: string;
+    parsed?: boolean;
+  };
+}
+
+export interface ExtractedKnowledgeWithTrace extends ExtractedKnowledge {
+  runTrace: ExtractionRunTrace;
 }
 
 const ExtractedKnowledgeSchema = z.object({
@@ -14,7 +35,7 @@ const ExtractedKnowledgeSchema = z.object({
   summary: z.string().min(1),
 });
 
-export async function llmExtract(input: string): Promise<ExtractedKnowledge> {
+export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowledgeWithTrace> {
   const controlled = await execute({
     task: 'extract-knowledge',
     input,
@@ -41,5 +62,24 @@ export async function llmExtract(input: string): Promise<ExtractedKnowledge> {
     },
   });
 
-  return controlled.data;
+  return {
+    ...controlled.data,
+    runTrace: {
+      stages: [
+        {
+          name: 'control:extract-knowledge',
+          status: 'completed',
+          input,
+          output: controlled.data,
+        },
+      ],
+      decisions: controlled.decisions,
+      llm: controlled.llm,
+    },
+  };
+}
+
+export async function llmExtract(input: string): Promise<ExtractedKnowledge> {
+  const { runTrace: _runTrace, ...data } = await llmExtractWithTrace(input);
+  return data;
 }

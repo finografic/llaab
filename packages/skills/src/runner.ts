@@ -10,6 +10,70 @@ export interface SkillRunRecord {
   output?: Record<string, unknown>;
 }
 
+interface NestedRunTrace {
+  stages?: Array<{
+    name: string;
+    status: 'pending' | 'completed' | 'failed';
+    input?: unknown;
+    output?: unknown;
+    error?: string;
+  }>;
+  decisions?: Array<{
+    type: 'accept' | 'retry' | 'reject' | 'downgrade';
+    reason: string;
+  }>;
+  llm?: {
+    model?: string;
+    rawOutput?: string;
+    parsed?: boolean;
+  };
+}
+
+function extractNestedRunTrace(value: unknown): NestedRunTrace | undefined {
+  if (!value || typeof value !== 'object' || !('runTrace' in value)) {
+    return undefined;
+  }
+
+  const candidate = value.runTrace;
+
+  if (!candidate || typeof candidate !== 'object') {
+    return undefined;
+  }
+
+  return candidate as NestedRunTrace;
+}
+
+function extractNestedRunTraceFromError(error: unknown): NestedRunTrace | undefined {
+  if (!error || typeof error !== 'object') {
+    return undefined;
+  }
+
+  const candidate = error as {
+    stages?: NestedRunTrace['stages'];
+    decisions?: NestedRunTrace['decisions'];
+    llm?: NestedRunTrace['llm'];
+  };
+
+  if (!candidate.stages && !candidate.decisions && !candidate.llm) {
+    return undefined;
+  }
+
+  return {
+    stages: candidate.stages,
+    decisions: candidate.decisions,
+    llm: candidate.llm,
+  };
+}
+
+function stripRunTrace<T>(value: T): T {
+  if (!value || typeof value !== 'object' || !('runTrace' in (value as Record<string, unknown>))) {
+    return value;
+  }
+
+  const { runTrace: _runTrace, ...rest } = value as Record<string, unknown>;
+  return rest as T;
+}
+
 function summarizeValue(value: unknown): string {
   const json = JSON.stringify(value);
   if (!json) return String(value);
@@ -38,7 +102,10 @@ async function persistRunNode(input: {
   rawInput: unknown;
   rawOutput?: unknown;
   error?: string;
+  nestedTrace?: NestedRunTrace;
 }): Promise<void> {
+  const stageOutput = input.rawOutput === undefined ? undefined : stripRunTrace(input.rawOutput);
+
   await createNode({
     type: 'run',
     title: `${input.name} run ${input.startedAt}`,
@@ -49,22 +116,24 @@ async function persistRunNode(input: {
       skillId: toNodeId(input.name),
       runStatus: input.status,
       inputSummary: summarizeValue(input.rawInput),
-      outputSummary: input.rawOutput === undefined ? undefined : summarizeValue(input.rawOutput),
-      producedNodeIds: input.rawOutput === undefined ? [] : collectProducedNodeIds(input.rawOutput),
+      outputSummary: stageOutput === undefined ? undefined : summarizeValue(stageOutput),
+      producedNodeIds: stageOutput === undefined ? [] : collectProducedNodeIds(stageOutput),
       durationMs: Date.parse(input.completedAt) - Date.parse(input.startedAt),
       error: input.error,
       startedAt: input.startedAt,
       completedAt: input.completedAt,
       stages: [
+        ...(input.nestedTrace?.stages ?? []),
         {
           name: 'execute',
           status: input.status,
           input: input.rawInput,
-          output: input.rawOutput,
+          output: stageOutput,
           error: input.error,
         },
       ],
       decisions: [
+        ...(input.nestedTrace?.decisions ?? []),
         {
           type: input.status === 'completed' ? 'accept' : 'reject',
           reason:
@@ -73,6 +142,7 @@ async function persistRunNode(input: {
               : 'Skill execution failed before producing an acceptable output.',
         },
       ],
+      llm: input.nestedTrace?.llm,
     },
   });
 }
@@ -86,6 +156,8 @@ export async function runSkill<TInput, TOutput>(
   try {
     const result = await execute(input);
     const completedAt = new Date().toISOString();
+    const nestedTrace = extractNestedRunTrace(result);
+    const publicResult = stripRunTrace(result);
 
     await persistRunNode({
       name,
@@ -93,7 +165,8 @@ export async function runSkill<TInput, TOutput>(
       completedAt,
       status: 'completed',
       rawInput: input,
-      rawOutput: result,
+      rawOutput: publicResult,
+      nestedTrace,
     });
 
     return {
@@ -103,12 +176,13 @@ export async function runSkill<TInput, TOutput>(
         completedAt,
         status: 'completed',
         input: input as Record<string, unknown>,
-        output: result as Record<string, unknown>,
+        output: publicResult as Record<string, unknown>,
       },
-      result,
+      result: publicResult,
     };
   } catch (error) {
     const completedAt = new Date().toISOString();
+    const nestedTrace = extractNestedRunTraceFromError(error);
 
     await persistRunNode({
       name,
@@ -117,6 +191,7 @@ export async function runSkill<TInput, TOutput>(
       status: 'failed',
       rawInput: input,
       error: error instanceof Error ? error.message : String(error),
+      nestedTrace,
     });
 
     return {
