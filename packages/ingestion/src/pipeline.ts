@@ -1,4 +1,4 @@
-import { createNode } from '@llaab/core';
+import { createNode, getNodeFilePath, listNodes } from '@llaab/core';
 import { toNodeId, type TranscriptSourceType } from '@llaab/schemas';
 import type { ExtractionRunTrace } from './extract/llm-extract.js';
 
@@ -6,7 +6,7 @@ import { cleanTranscript } from './clean/transcript.js';
 import { llmExtractWithTrace } from './extract/llm-extract.js';
 import { fetchArticle } from './fetch/article.js';
 import { fetchRepo } from './fetch/repo.js';
-import { fetchYouTube } from './fetch/youtube.js';
+import { fetchYouTube, parseYouTubeUrl } from './fetch/youtube.js';
 import { structureText } from './structure/text.js';
 
 export type IngestionSourceType = 'youtube' | 'article' | 'repo';
@@ -39,6 +39,40 @@ function completedStage(
   };
 }
 
+async function findExistingYouTubeTranscript(sourceItemId: string): Promise<IngestionResult | undefined> {
+  const nodes = await listNodes({ type: 'transcript' });
+  const existing = nodes.find(
+    (node) =>
+      node.type === 'transcript' && node.sourceType === 'youtube' && node.sourceItemId === sourceItemId,
+  );
+
+  if (!existing) {
+    return undefined;
+  }
+
+  return {
+    id: existing.id,
+    path: getNodeFilePath('transcript', existing.id),
+    type: 'transcript',
+    producedNodeIds: [existing.id],
+    runTrace: {
+      stages: [
+        completedStage(
+          'dedupe:transcript',
+          { sourceType: 'youtube', sourceItemId },
+          { id: existing.id, reused: true },
+        ),
+      ],
+      decisions: [
+        {
+          type: 'accept',
+          reason: `Existing transcript reused for YouTube video "${sourceItemId}".`,
+        },
+      ],
+    },
+  };
+}
+
 async function createResourceNode(
   input: IngestionInput,
   content: string,
@@ -67,6 +101,13 @@ async function createResourceNode(
 }
 
 async function createTranscriptNode(input: IngestionInput): Promise<IngestionResult> {
+  const captured = parseYouTubeUrl(input.url);
+  const existingTranscript = await findExistingYouTubeTranscript(captured.videoId);
+
+  if (existingTranscript) {
+    return existingTranscript;
+  }
+
   const fetched = await fetchYouTube(input.url);
   const stages: ExtractionRunTrace['stages'] = [
     completedStage(
@@ -75,6 +116,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       {
         title: fetched.title,
         channel: fetched.channel,
+        sourceItemId: captured.videoId,
         duration: fetched.duration,
         uploadDate: fetched.uploadDate,
         hasTranscript: fetched.rawTranscript.length > 0,
@@ -114,6 +156,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     tags: [...(input.tags ?? []), 'ingested', 'youtube'],
     extra: {
       sourceId,
+      sourceItemId: captured.videoId,
       sourceUrl: input.url,
       sourceType: input.sourceType as TranscriptSourceType,
       author: fetched.channel,

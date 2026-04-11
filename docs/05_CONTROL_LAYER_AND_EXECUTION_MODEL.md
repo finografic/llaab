@@ -326,6 +326,16 @@ interface Context {
 
 ## 9. Phase 2 — Concrete Next Steps
 
+Current status:
+
+- `Step 1` — done
+- `Step 2` — done
+- `Step 3` — done
+- `Step 4` — mostly done in behavior; repo-wide enforcement is still a follow-up
+- `Step 5` — not implemented yet
+- `Step 6` — done
+- `Step 7` — done for YouTube transcript deduplication
+
 ## Step 1 — Node Mutation Layer
 
 Implemented:
@@ -592,7 +602,11 @@ Current state:
 control.execute(...)
 ```
 
-Today this is implemented for ingestion extraction. Broader propagation of nested control decisions into higher-level run summaries is still an open follow-up step.
+Status:
+
+- implemented for ingestion extraction
+- nested control decisions now propagate into top-level persisted run summaries
+- repo-wide enforcement is still a follow-up step
 
 ---
 
@@ -615,6 +629,12 @@ read transcript
 → log run
 ```
 
+Status:
+
+- not implemented yet
+- current extraction produces validated structured summaries plus control trace
+- current ingestion does **not** yet create `idea` or `skill` nodes from transcript extraction
+
 ---
 
 ## Step 6 — Harden YouTube Ingestion
@@ -630,13 +650,43 @@ fetch
 → log run
 ```
 
+Status:
+
+- implemented for the YouTube ingestion path
+- run traces now aggregate:
+  - `fetch:youtube`
+  - `clean:transcript`
+  - `structure:text`
+  - controlled extraction stages
+  - storage stages
+- top-level run logging receives the nested ingestion trace
+
 ---
 
 ## Step 7 — Define Duplicate Rules
 
-- one transcript per source item
+Target rules:
+
+- one transcript per YouTube source item
 - reuse `source` nodes
 - prevent duplicate node creation
+
+Decision for YouTube:
+
+- accept a full YouTube URL as input
+- extract the canonical `videoId` from that URL
+- store `videoId` as the durable source-item identity
+- also store the full original URL as metadata
+- if the same `videoId` is seen again, short-circuit and return the existing transcript result
+- skip expensive stages (`fetch`, `clean`, `structure`, `extract`) on duplicate reuse
+
+Status:
+
+- implemented for the YouTube ingestion path
+- duplicate detection uses canonical `videoId` extracted from the supplied YouTube URL
+- the original supplied URL is still stored as metadata
+- duplicate transcript ingestions short-circuit before expensive stages
+- `source` node reuse remains deterministic via `source` node ids
 
 ---
 
