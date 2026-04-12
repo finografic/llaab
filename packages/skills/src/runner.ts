@@ -8,6 +8,8 @@ export interface SkillRunRecord {
   status: 'pending' | 'completed' | 'failed';
   input?: Record<string, unknown>;
   output?: Record<string, unknown>;
+  /** Present when `status` is `failed` — same message persisted on the run node. */
+  error?: string;
 }
 
 interface NestedRunTrace {
@@ -201,6 +203,7 @@ export async function runSkill<TInput, TOutput>(
         completedAt,
         status: 'failed',
         input: input as Record<string, unknown>,
+        error: error instanceof Error ? error.message : String(error),
       },
       result: {} as TOutput,
     };

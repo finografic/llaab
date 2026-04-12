@@ -51,6 +51,22 @@ describe('runSkill', () => {
     expect(runNode.decisions[0]?.type).toBe('accept');
   });
 
+  it('surfaces the error message on failed runs', async () => {
+    const skills = await import('@llaab/skills');
+
+    const { record, result } = await skills.runSkill(
+      'failing-skill',
+      async () => {
+        throw new Error('expected failure');
+      },
+      { n: 1 },
+    );
+
+    expect(record.status).toBe('failed');
+    expect(record.error).toBe('expected failure');
+    expect(result).toEqual({});
+  });
+
   it('promotes nested control decisions and llm trace into the persisted run node', async () => {
     const skills = await import('@llaab/skills');
     const core = await import('@llaab/core');
