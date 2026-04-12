@@ -23,8 +23,39 @@ export const nodeSchemaByType: Record<NodeType, ZodType> = {
   transcript: TranscriptNodeSchema,
 };
 
+/**
+ * Canonical stored UTC instant for frontmatter and run metadata: ISO 8601 without fractional seconds.
+ * Example: `2026-04-12T15:59:39Z`
+ */
+export function formatIsoUtcSeconds(date: Date): string {
+  const s = date.toISOString();
+  return s.includes('.') ? s.replace(/\.\d{3}Z$/, 'Z') : s;
+}
+
+/**
+ * Filesystem-safe instant fragment for node ids (not full ISO): keep uppercase `T` between date and time
+ * (same as ISO 8601), `:` → `-` in the time part, no trailing `Z`.
+ * Example: `2026-04-12T15-59-39`
+ */
+export function formatInstantForFilenameId(date: Date): string {
+  return formatIsoUtcSeconds(date).replace(/:/g, '-').replace(/Z$/, '');
+}
+
+/**
+ * Joins a slug prefix to the filesystem-safe datetime fragment with **`_`** (datetime is always its own segment).
+ * Use for any node id that ends with a timestamp (runs, untitled transcripts, etc.).
+ */
+export function appendDatetimeFilenameSegment(prefix: string, date: Date): string {
+  return `${prefix}_${formatInstantForFilenameId(date)}`;
+}
+
+/** Deterministic run node id: `{skill-slug}-run_{date_time}` (underscore before the instant). */
+export function buildRunNodeId(skillName: string, startedAt: Date): string {
+  return appendDatetimeFilenameSegment(`${toNodeId(skillName)}-run`, startedAt);
+}
+
 export function now(): string {
-  return new Date().toISOString();
+  return formatIsoUtcSeconds(new Date());
 }
 
 export function toNodeId(input: string): string {

@@ -80,7 +80,9 @@ describe('node mutation layer', () => {
     expect(reread.type).toBe(node.type);
     expect(reread.body).toBe('Updated body');
     expect(reread.tags).toContain('refined');
-    expect(reread.updatedAt).not.toBe(node.updatedAt);
+    expect(reread.updatedAt).toBeDefined();
+    expect(node.updatedAt).toBeDefined();
+    expect(Date.parse(reread.updatedAt!)).toBeGreaterThanOrEqual(Date.parse(node.updatedAt!));
   });
 
   it('preserves structural provenance fields on externally-derived nodes', async () => {

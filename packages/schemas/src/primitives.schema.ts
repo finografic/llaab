@@ -1,9 +1,13 @@
 import { z } from 'zod';
 
+/** Slug segments separated by `-`, `_`, or `T` (uppercase `T` separates date and time in id timestamps). */
 export const NodeIdSchema = z
   .string()
   .min(1)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers, and hyphens only');
+  .regex(
+    /^[a-z0-9]+(?:[-_T][a-z0-9]+)*$/,
+    'Use lowercase letters, numbers, hyphens, underscores, and T only as separators',
+  );
 
 export const NodeTypeSchema = z.enum([
   'idea',

@@ -15,7 +15,7 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<void> {
       runIngestionPipeline({
         sourceType: 'youtube',
         url: input.url,
-        title: input.title ?? 'Untitled transcript',
+        ...(input.title !== undefined && input.title !== '' ? { title: input.title } : {}),
         tags: input.tags,
       }),
     input,

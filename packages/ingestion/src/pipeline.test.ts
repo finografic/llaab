@@ -100,9 +100,9 @@ describe('runIngestionPipeline', () => {
           status: 'seed',
           tags: ['test', 'ingested', 'youtube'],
           related: [],
-          createdAt: '2026-04-08T00:00:00.000Z',
-          updatedAt: '2026-04-08T00:00:00.000Z',
-          body: 'structured transcript',
+          createdAt: '2026-04-08T00:00:00Z',
+          updatedAt: '2026-04-08T00:00:00Z',
+          body: '# Example video\n\nstructured transcript',
           sourceId: 'example-channel',
           sourceUrl: 'https://www.youtube.com/watch?v=abcdefghijk',
           sourceType: 'youtube',
@@ -125,8 +125,8 @@ describe('runIngestionPipeline', () => {
           status: 'seed',
           tags: ['youtube', 'channel'],
           related: [],
-          createdAt: '2026-04-08T00:00:00.000Z',
-          updatedAt: '2026-04-08T00:00:00.000Z',
+          createdAt: '2026-04-08T00:00:00Z',
+          updatedAt: '2026-04-08T00:00:00Z',
           body: '',
           sourceKind: 'channel',
           url: 'https://www.youtube.com/@ExampleChannel',
@@ -138,7 +138,6 @@ describe('runIngestionPipeline', () => {
     const result = await runIngestionPipeline({
       sourceType: 'youtube',
       url: 'https://www.youtube.com/watch?v=abcdefghijk',
-      title: 'Example video',
       tags: ['test'],
     });
 
@@ -155,6 +154,8 @@ describe('runIngestionPipeline', () => {
       1,
       expect.objectContaining({
         type: 'transcript',
+        title: 'Example video',
+        body: '# Example video\n\nstructured transcript',
         extra: expect.objectContaining({
           sourceItemId: 'abcdefghijk',
           sourceUrl: 'https://www.youtube.com/watch?v=abcdefghijk',
@@ -163,6 +164,83 @@ describe('runIngestionPipeline', () => {
     );
     expect(result.runTrace?.decisions.at(-1)?.type).toBe('accept');
     expect(result.runTrace?.llm?.model).toBe('ollama');
+  });
+
+  it('uses transcript.untitled_{datetime} id when youtube metadata has no title and no override', async () => {
+    vi.mocked(getNodeFilePath).mockImplementation((type, id) => `/vault/${type}s/${type}.${id}.md`);
+    vi.mocked(parseYouTubeUrl).mockReturnValue({
+      url: 'https://www.youtube.com/watch?v=uniqueUntitled01',
+      videoId: 'uniqueUntitled01',
+    });
+    vi.mocked(listNodes).mockResolvedValue([]);
+    vi.mocked(fetchYouTube).mockResolvedValue({
+      title: '',
+      channel: 'Example Channel',
+      description: '',
+      rawTranscript: 'raw transcript',
+      duration: 120,
+      uploadDate: '20260408',
+    });
+    vi.mocked(cleanTranscript).mockReturnValue({
+      cleanedText: 'clean transcript',
+      rawLength: 10,
+      cleanLength: 10,
+    });
+    vi.mocked(structureText).mockReturnValue({
+      structuredContent: 'structured transcript',
+      paragraphCount: 1,
+    });
+    vi.mocked(llmExtractWithTrace).mockResolvedValue({
+      ideas: [],
+      skills: [],
+      summary: 'usable summary',
+      runTrace: {
+        stages: [
+          {
+            name: 'control:extract-knowledge',
+            status: 'completed',
+            output: { summary: 'usable summary' },
+          },
+        ],
+        decisions: [
+          {
+            type: 'accept',
+            reason: 'Schema validation passed for task "extract-knowledge".',
+          },
+        ],
+        llm: {
+          model: 'ollama',
+          rawOutput: '{"summary":"usable summary"}',
+          parsed: true,
+        },
+      },
+    });
+    vi.mocked(createNode)
+      .mockResolvedValueOnce({
+        id: 'untitled_2026-04-12T15-59-39',
+        path: '/vault/transcripts/transcript.untitled_2026-04-12T15-59-39.md',
+        node: {} as never,
+      })
+      .mockResolvedValueOnce({
+        id: 'example-channel',
+        path: '/vault/sources/source.example-channel.md',
+        node: {} as never,
+      });
+
+    await runIngestionPipeline({
+      sourceType: 'youtube',
+      url: 'https://www.youtube.com/watch?v=uniqueUntitled01',
+      tags: ['test'],
+    });
+
+    expect(createNode).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        type: 'transcript',
+        id: expect.stringMatching(/^untitled_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}$/),
+        title: 'Untitled transcript',
+      }),
+    );
   });
 
   it('reuses an existing transcript for the same youtube video id and skips expensive stages', async () => {
@@ -179,8 +257,8 @@ describe('runIngestionPipeline', () => {
         status: 'seed',
         tags: ['ingested', 'youtube'],
         related: [],
-        createdAt: '2026-04-08T00:00:00.000Z',
-        updatedAt: '2026-04-08T00:00:00.000Z',
+        createdAt: '2026-04-08T00:00:00Z',
+        updatedAt: '2026-04-08T00:00:00Z',
         body: 'structured transcript',
         sourceId: 'example-channel',
         sourceItemId: 'abcdefghijk',

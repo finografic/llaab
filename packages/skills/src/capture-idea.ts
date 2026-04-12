@@ -1,6 +1,7 @@
-import { createNode } from '@llaab/core';
 import { appendFile, mkdir, stat, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { createNode } from '@llaab/core';
+import { formatIsoUtcSeconds } from '@llaab/schemas';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,7 @@ const AUTO_TAG_PATTERNS: Array<[string, RegExp]> = [
 // ─── Inbox ────────────────────────────────────────────────────────────────────
 
 async function appendToInbox(title: string, id: string, tags: string[]): Promise<void> {
-  const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  const timestamp = formatIsoUtcSeconds(new Date()).replace('T', ' ').replace(/Z$/, '');
   const tagSuffix = tags.length ? ` [${tags.join(', ')}]` : '';
   const line = `- [ ] ${timestamp} | ${title}${tagSuffix} -> [[${id}]]\n`;
 

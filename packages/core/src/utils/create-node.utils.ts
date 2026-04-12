@@ -1,6 +1,6 @@
 import { access, mkdir, writeFile } from 'fs/promises';
 import { dirname } from 'node:path';
-import { nodeSchemaByType, now, toNodeId } from '@llaab/schemas';
+import { nodeSchemaByType, NodeIdSchema, now, toNodeId } from '@llaab/schemas';
 import type { LabNode, NodeType } from '@llaab/schemas';
 
 import { getNodeFilePath, nodeToMarkdown } from './node-file.utils.js';
@@ -9,6 +9,8 @@ import { getNodeFilePath, nodeToMarkdown } from './node-file.utils.js';
 
 export interface CreateNodeInput {
   type: NodeType;
+  /** When set, used as the node id (must satisfy NodeIdSchema). Otherwise derived from `title` via toNodeId. */
+  id?: string;
   title: string;
   body?: string;
   tags?: string[];
@@ -18,7 +20,7 @@ export interface CreateNodeInput {
 export async function createNode(
   input: CreateNodeInput,
 ): Promise<{ id: string; path: string; node: LabNode }> {
-  const nodeId = toNodeId(input.title);
+  const nodeId = input.id !== undefined ? NodeIdSchema.parse(input.id) : toNodeId(input.title);
   const timestamp = now();
 
   const node = nodeSchemaByType[input.type].parse({

@@ -29,6 +29,10 @@ export {
 } from './resource-node.schema.js';
 export { type RunNode, RunNodeSchema } from './run-node.schema.js';
 export {
+  appendDatetimeFilenameSegment,
+  buildRunNodeId,
+  formatInstantForFilenameId,
+  formatIsoUtcSeconds,
   formatNodeFilename,
   isNodeType,
   isTimestamp,

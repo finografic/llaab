@@ -1,5 +1,5 @@
 import { createNode } from '@llaab/core';
-import { NodeIdSchema, toNodeId } from '@llaab/schemas';
+import { buildRunNodeId, formatIsoUtcSeconds, NodeIdSchema, toNodeId } from '@llaab/schemas';
 
 export interface SkillRunRecord {
   name: string;
@@ -98,6 +98,7 @@ function collectProducedNodeIds(value: unknown): string[] {
 
 async function persistRunNode(input: {
   name: string;
+  runNodeId: string;
   startedAt: string;
   completedAt: string;
   status: 'completed' | 'failed';
@@ -110,6 +111,7 @@ async function persistRunNode(input: {
 
   await createNode({
     type: 'run',
+    id: input.runNodeId,
     title: `${input.name} run ${input.startedAt}`,
     body: '',
     tags: ['run', input.name],
@@ -154,15 +156,18 @@ export async function runSkill<TInput, TOutput>(
   execute: (input: TInput) => Promise<TOutput>,
   input: TInput,
 ): Promise<{ record: SkillRunRecord; result: TOutput }> {
-  const startedAt = new Date().toISOString();
+  const startTime = new Date();
+  const startedAt = formatIsoUtcSeconds(startTime);
+  const runNodeId = buildRunNodeId(name, startTime);
   try {
     const result = await execute(input);
-    const completedAt = new Date().toISOString();
+    const completedAt = formatIsoUtcSeconds(new Date());
     const nestedTrace = extractNestedRunTrace(result);
     const publicResult = stripRunTrace(result);
 
     await persistRunNode({
       name,
+      runNodeId,
       startedAt,
       completedAt,
       status: 'completed',
@@ -183,11 +188,12 @@ export async function runSkill<TInput, TOutput>(
       result: publicResult,
     };
   } catch (error) {
-    const completedAt = new Date().toISOString();
+    const completedAt = formatIsoUtcSeconds(new Date());
     const nestedTrace = extractNestedRunTraceFromError(error);
 
     await persistRunNode({
       name,
+      runNodeId,
       startedAt,
       completedAt,
       status: 'failed',

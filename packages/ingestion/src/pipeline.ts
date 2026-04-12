@@ -1,5 +1,5 @@
 import { createNode, getNodeFilePath, listNodes } from '@llaab/core';
-import { toNodeId, type TranscriptSourceType } from '@llaab/schemas';
+import { appendDatetimeFilenameSegment, toNodeId, type TranscriptSourceType } from '@llaab/schemas';
 import type { ExtractionRunTrace } from './extract/llm-extract.js';
 
 import { cleanTranscript } from './clean/transcript.js';
@@ -14,8 +14,29 @@ export type IngestionSourceType = 'youtube' | 'article' | 'repo';
 export interface IngestionInput {
   sourceType: IngestionSourceType;
   url: string;
-  title: string;
+  /** Optional display name override. For YouTube, defaults to the video title from metadata when omitted. */
+  title?: string;
   tags?: string[];
+}
+
+function resolveYouTubeTranscriptTitle(
+  inputTitle: string | undefined,
+  fetchedTitle: string,
+): { title: string; idWhenUntitled: string | undefined } {
+  const override = inputTitle?.trim();
+  if (override) return { title: override, idWhenUntitled: undefined };
+  const fromMeta = fetchedTitle.trim();
+  if (fromMeta) return { title: fromMeta, idWhenUntitled: undefined };
+  return {
+    title: 'Untitled transcript',
+    idWhenUntitled: appendDatetimeFilenameSegment('untitled', new Date()),
+  };
+}
+
+function markdownH1Line(title: string): string {
+  const singleLine = title.replace(/\r?\n/g, ' ').trim();
+  const withoutLeadingHashes = singleLine.replace(/^#+\s*/, '');
+  return `# ${withoutLeadingHashes}`;
 }
 
 export interface IngestionResult {
@@ -81,7 +102,7 @@ async function createResourceNode(
   const extracted = await llmExtractWithTrace(content);
   const result = await createNode({
     type: 'resource',
-    title: input.title,
+    title: input.title?.trim() || 'Untitled resource',
     body: content,
     tags: [...(input.tags ?? []), 'ingested', resourceType],
     extra: {
@@ -109,6 +130,10 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
   }
 
   const fetched = await fetchYouTube(input.url);
+  const { title: transcriptTitle, idWhenUntitled } = resolveYouTubeTranscriptTitle(
+    input.title,
+    fetched.title,
+  );
   const stages: ExtractionRunTrace['stages'] = [
     completedStage(
       'fetch:youtube',
@@ -149,10 +174,13 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
   const sourceId = toNodeId(fetched.channel);
   const producedNodeIds = new Set<string>();
 
+  const transcriptBody = `${markdownH1Line(transcriptTitle)}\n\n${structured.structuredContent}`;
+
   const transcriptResult = await createNode({
     type: 'transcript',
-    title: input.title || fetched.title,
-    body: structured.structuredContent,
+    ...(idWhenUntitled !== undefined ? { id: idWhenUntitled } : {}),
+    title: transcriptTitle,
+    body: transcriptBody,
     tags: [...(input.tags ?? []), 'ingested', 'youtube'],
     extra: {
       sourceId,
