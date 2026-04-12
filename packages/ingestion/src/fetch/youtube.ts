@@ -61,9 +61,21 @@ export async function fetchYouTube(url: string): Promise<FetchedYouTubeTranscrip
 
   const metadata = JSON.parse(readFileSync(`${outBase}.json`, 'utf-8')) as Record<string, unknown>;
 
+  /**
+   *
+   * --convert-format srt
+   *     Subtitle format; single format, formats preference
+   *     separated by "/", or "ass/srt/best"
+   *
+   * --convert-subs srt
+   *     currently supported: ass, lrc, srt, vtt (single)
+   *     disable: none (default)
+   *
+   */
   try {
     execSync(
-      `yt-dlp --skip-download --write-auto-sub --sub-lang en --sub-format vtt --convert-subs srt -o "${outBase}" "${captured.url}"`,
+      // `yt-dlp --skip-download --write-auto-subs --sub-langs en --sub-format vtt --convert-subs srt -o "${outBase}" "${captured.url}"`,
+      `yt-dlp --skip-download --write-auto-subs --sub-langs en --sub-format srt --convert-subs vtt -o "${outBase}" "${captured.url}"`,
       { stdio: 'pipe' },
     );
   } catch {

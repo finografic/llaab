@@ -38,7 +38,7 @@
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
     "@eslint/js": "^9.39.2",
-    "@finografic/md-lint": "^0.4.2",
+    "@finografic/md-lint": "^0.5.0",
     "@finografic/oxfmt-config": "^1.0.3",
     "@stylistic/eslint-plugin": "^5.6.1",
     "@types/node": "24.0.0",
@@ -61,6 +61,9 @@
       "esbuild",
       "sharp"
     ]
+  },
+  "LOCAL_DEP_EXAMPLE": {
+    "@finografic/md-lint": "file:/Users/justin/repos-finografic/@finografic-md-lint"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [

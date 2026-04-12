@@ -1,26 +1,8 @@
-<!-- MANPAGE: BEGIN EXCLUDED SECTION -->
-<div align="center">
+<!-- markdownlint-disable -->
 
-[![YT-DLP](https://raw.githubusercontent.com/yt-dlp/yt-dlp/master/.github/banner.svg)](#readme)
-
-[![Release version](https://img.shields.io/github/v/release/yt-dlp/yt-dlp?color=brightgreen&label=Download&style=for-the-badge)](#installation 'Installation')
-[![PyPI](https://img.shields.io/badge/-PyPI-blue.svg?logo=pypi&labelColor=555555&style=for-the-badge)](https://pypi.org/project/yt-dlp 'PyPI')
-[![Donate](https://img.shields.io/badge/_-Donate-red.svg?logo=githubsponsors&labelColor=555555&style=for-the-badge)](Maintainers.md#maintainers 'Donate')
-[![Discord](https://img.shields.io/discord/807245652072857610?color=blue&labelColor=555555&label=&logo=discord&style=for-the-badge)](https://discord.gg/H5MNcFW63r 'Discord')
-[![Supported Sites](https://img.shields.io/badge/-Supported_Sites-brightgreen.svg?style=for-the-badge)](supportedsites.md 'Supported Sites')
-[![License: Unlicense](https://img.shields.io/badge/-Unlicense-blue.svg?style=for-the-badge)](LICENSE 'License')
-[![CI Status](https://img.shields.io/github/actions/workflow/status/yt-dlp/yt-dlp/core.yml?branch=master&label=Tests&style=for-the-badge)](https://github.com/yt-dlp/yt-dlp/actions 'CI Status')
-[![Commits](https://img.shields.io/github/commit-activity/m/yt-dlp/yt-dlp?label=commits&style=for-the-badge)](https://github.com/yt-dlp/yt-dlp/commits 'Commit History')
-[![Last Commit](https://img.shields.io/github/last-commit/yt-dlp/yt-dlp/master?label=&style=for-the-badge&display_timestamp=committer)](https://github.com/yt-dlp/yt-dlp/pulse/monthly 'Last activity')
-
-</div>
-<!-- MANPAGE: END EXCLUDED SECTION -->
+[![YT-DLP](https://raw.githubusercontent.com/yt-dlp/yt-dlp/master/.github/banner.svg)]
 
 yt-dlp is a feature-rich command-line audio/video downloader with support for [thousands of sites](supportedsites.md). The project is a fork of [youtube-dl](https://github.com/ytdl-org/youtube-dl) based on the now inactive [youtube-dlc](https://github.com/blackjack4494/yt-dlc).
-
-<!-- MANPAGE: MOVE "USAGE AND OPTIONS" SECTION HERE -->
-
-<!-- MANPAGE: BEGIN EXCLUDED SECTION -->
 
 - [INSTALLATION](#installation)
   - [RELEASE FILES](#release-files)
@@ -100,18 +82,6 @@ yt-dlp is a feature-rich command-line audio/video downloader with support for [t
 <!-- MANPAGE: END EXCLUDED SECTION -->
 
 # INSTALLATION
-
-<!-- MANPAGE: BEGIN EXCLUDED SECTION -->
-
-[![Windows](https://img.shields.io/badge/-Windows_x64-blue.svg?style=for-the-badge&logo=windows)](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe)
-[![Unix](https://img.shields.io/badge/-Linux/BSD-red.svg?style=for-the-badge&logo=linux)](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp)
-[![MacOS](https://img.shields.io/badge/-MacOS-lightblue.svg?style=for-the-badge&logo=apple)](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos)
-[![PyPI](https://img.shields.io/badge/-PyPI-blue.svg?logo=pypi&labelColor=555555&style=for-the-badge)](https://pypi.org/project/yt-dlp)
-[![Source Tarball](https://img.shields.io/badge/-Source_tar-green.svg?style=for-the-badge)](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.tar.gz)
-[![Other variants](https://img.shields.io/badge/-Other-grey.svg?style=for-the-badge)](#release-files)
-[![All versions](https://img.shields.io/badge/-All_Versions-lightgrey.svg?style=for-the-badge)](https://github.com/yt-dlp/yt-dlp/releases)
-
-<!-- MANPAGE: END EXCLUDED SECTION -->
 
 You can install yt-dlp using [the binaries](#release-files), [pip](https://pypi.org/project/yt-dlp) or one using a third-party package manager. See [the wiki](https://github.com/yt-dlp/yt-dlp/wiki/Installation) for detailed instructions
 
@@ -1265,7 +1235,7 @@ You can configure yt-dlp by placing any supported command line option in a confi
    - `/etc/yt-dlp/config`
    - `/etc/yt-dlp/config.txt`
 
-E.g. with the following configuration file, yt-dlp will always extract the audio, copy the mtime, use a proxy and save all videos under `YouTube` directory in your home directory:
+   E.g. with the following configuration file, yt-dlp will always extract the audio, copy the mtime, use a proxy and save all videos under `YouTube` directory in your home directory:
 
 ```
 # Lines starting with # are comments
@@ -2122,7 +2092,7 @@ Plugins can be installed using various methods and locations.
    - Any path in `PYTHONPATH` is searched in for the `yt_dlp_plugins` namespace folder.
      - Note: This does not apply for Pyinstaller builds.
 
-`.zip`, `.egg` and `.whl` archives containing a `yt_dlp_plugins` namespace folder in their root are also supported as plugin packages.
+     `.zip`, `.egg` and `.whl` archives containing a `yt_dlp_plugins` namespace folder in their root are also supported as plugin packages.
 
 - e.g. `${XDG_CONFIG_HOME}/yt-dlp/plugins/mypluginpkg.zip` where `mypluginpkg.zip` contains `yt_dlp_plugins/<type>/myplugin.py`
 
