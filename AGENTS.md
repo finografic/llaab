@@ -79,3 +79,5 @@ Before writing any link:
 
 - Commitlint rule severity is numeric only (`0` / `1` / `2`); the string `error` is not valid in rule configuration.
 - Commit messages use a custom Commitlint type list (`build`, `chore`, `ci`, `deps`, `docs`, `feat`, `fix`, `refactor`, `revert`, `style`, `test`); AI-related terms like `agents` and `skills` should be used as scopes, not custom types.
+- Ubiquitous-language terms are defined in [`LLAAB_GLOSSARY.md`](/LLAAB_GLOSSARY.md) (the glossary artifact); **shared vocabulary** is the broader goal in prose—do not use _vocabulary_ and _glossary_ interchangeably for that file.
+- YouTube transcript ingestion deduplicates existing nodes by matching `sourceType === 'youtube'` and `sourceItemId` to the video id.
