@@ -145,6 +145,7 @@ describe('runIngestionPipeline', () => {
     expect(result.runTrace?.stages.map((stage) => stage.name)).toEqual([
       'fetch:youtube',
       'clean:transcript',
+      'sanitize:transcript',
       'structure:text',
       'control:extract-knowledge',
       'store:transcript',

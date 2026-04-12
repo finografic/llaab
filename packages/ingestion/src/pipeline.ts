@@ -2,6 +2,7 @@ import { createNode, getNodeFilePath, listNodes } from '@llaab/core';
 import { appendDatetimeFilenameSegment, toNodeId, type TranscriptSourceType } from '@llaab/schemas';
 import type { ExtractionRunTrace } from './extract/llm-extract.js';
 
+import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
 import { cleanTranscript } from './clean/transcript.js';
 import { llmExtractWithTrace } from './extract/llm-extract.js';
 import { fetchArticle } from './fetch/article.js';
@@ -158,11 +159,21 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       },
     ),
   );
-  const structured = structureText(cleaned.cleanedText);
+  const sanitizedText = applyKnownTranscriptReplacements(cleaned.cleanedText);
+  stages.push(
+    completedStage(
+      'sanitize:transcript',
+      { cleanLength: cleaned.cleanLength },
+      {
+        cleanLength: sanitizedText.length,
+      },
+    ),
+  );
+  const structured = structureText(sanitizedText);
   stages.push(
     completedStage(
       'structure:text',
-      { cleanLength: cleaned.cleanLength },
+      { cleanLength: sanitizedText.length },
       {
         paragraphCount: structured.paragraphCount,
         contentLength: structured.structuredContent.length,
@@ -190,7 +201,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       author: fetched.channel,
       summary: extracted.summary,
       rawLength: cleaned.rawLength,
-      cleanLength: cleaned.cleanLength,
+      cleanLength: sanitizedText.length,
       structuredParagraphs: structured.paragraphCount,
     },
   });
