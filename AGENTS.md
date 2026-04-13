@@ -14,7 +14,6 @@ Project-specific rules live in `.github/instructions/project/**/*.instructions.m
 ## Rules — Global
 
 Rules are canonical in `.github/instructions/` and shared across Claude Code, Cursor, and GitHub Copilot.
-Follow general TypeScript, ESLint, and naming conventions from prior context.
 
 - General: `.github/instructions/00-general.instructions.md`
 - File Naming: `.github/instructions/01-file-naming.instructions.md`
