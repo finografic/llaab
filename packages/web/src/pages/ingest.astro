@@ -1,0 +1,251 @@
+---
+import { IngestForm } from '../components/IngestForm';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ingest — LLAAB</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">LLAAB</p>
+        <h1>Ingest YouTube Transcript</h1>
+        <p class="description">
+          Paste a YouTube URL to fetch, clean, and store its transcript in the vault.
+        </p>
+      </header>
+
+      <section class="card">
+        <IngestForm client:load />
+      </section>
+    </main>
+  </body>
+</html>
+
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181b;
+    --border: #2e2e32;
+    --border-focus: #6366f1;
+    --text: #e4e4e7;
+    --text-muted: #71717a;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --success-bg: #0f2916;
+    --success-border: #166534;
+    --success-text: #4ade80;
+    --error-bg: #2c0e0e;
+    --error-border: #7f1d1d;
+    --error-text: #f87171;
+    --radius: 8px;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+    --font-sans: system-ui, -apple-system, sans-serif;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 64px 16px;
+  }
+
+  main {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .description {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  /* ── Form ── */
+  :global(.ingest-form) {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  :global(.field) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  :global(.field label) {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  :global(.input-row) {
+    display: flex;
+    gap: 8px;
+  }
+
+  :global(.field input) {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  :global(.field input::placeholder) {
+    color: var(--text-muted);
+    opacity: 0.6;
+  }
+
+  :global(.field input:focus) {
+    border-color: var(--border-focus);
+  }
+
+  :global(.field input:disabled) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  :global(button[type="submit"]) {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, opacity 0.15s;
+  }
+
+  :global(button[type="submit"]:hover:not(:disabled)) {
+    background: var(--accent-hover);
+  }
+
+  :global(button[type="submit"]:disabled) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  :global(.field-error) {
+    font-size: 12px;
+    color: var(--error-text);
+  }
+
+  /* ── Status ── */
+  :global(.status) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  :global(.status--success) {
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+  }
+
+  :global(.status--error) {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+  }
+
+  :global(.status__label) {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  :global(.status--success .status__label) {
+    color: var(--success-text);
+  }
+
+  :global(.status--error .status__label) {
+    color: var(--error-text);
+  }
+
+  :global(.status__id) {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  :global(.status__path) {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    word-break: break-all;
+  }
+
+  :global(.status__message) {
+    color: var(--error-text);
+    font-size: 13px;
+    word-break: break-word;
+  }
+</style>

@@ -1,0 +1,283 @@
+---
+export const prerender = false;
+
+import { readdir } from 'node:fs/promises';
+import path from 'node:path';
+import { VaultBrowser, type VaultNode } from '../../components/VaultBrowser';
+
+// ── Auth gate ─────────────────────────────────────────────────────────────────
+
+const COOKIE_NAME = 'vault_key';
+const password = import.meta.env.VAULT_PASSWORD ?? 'llaab';
+const cookie = Astro.cookies.get(COOKIE_NAME);
+
+if (cookie?.value !== password) {
+  return Astro.redirect('/vault/login', 302);
+}
+
+// ── Build vault tree ──────────────────────────────────────────────────────────
+
+const VAULT_ROOT = path.resolve(process.cwd(), '../../vault');
+const SKIP = new Set(['.tmp', '.DS_Store', '.gitkeep']);
+
+async function readTree(dir: string, rel = ''): Promise<VaultNode[]> {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const nodes: VaultNode[] = [];
+
+  for (const entry of entries) {
+    if (SKIP.has(entry.name) || entry.name.startsWith('.')) continue;
+
+    const entryRel = rel ? `${rel}/${entry.name}` : entry.name;
+
+    if (entry.isDirectory()) {
+      nodes.push({
+        name: entry.name,
+        path: entryRel,
+        type: 'dir',
+        children: await readTree(path.join(dir, entry.name), entryRel),
+      });
+    } else {
+      nodes.push({ name: entry.name, path: entryRel, type: 'file' });
+    }
+  }
+
+  return nodes.sort((a, b) => {
+    if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+const tree = await readTree(VAULT_ROOT);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vault — LLAAB</title>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div class="topbar__left">
+          <span class="eyebrow">LLAAB</span>
+          <span class="topbar__sep">/</span>
+          <span class="topbar__title">Vault</span>
+        </div>
+        <nav class="topbar__nav">
+          <a href="/ingest" class="topbar__link">Ingest</a>
+          <a href="/api/vault/auth" class="topbar__link topbar__link--muted">Logout</a>
+        </nav>
+      </header>
+
+      <VaultBrowser tree={tree} client:load />
+    </div>
+  </body>
+</html>
+
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181b;
+    --surface-raised: #1f1f23;
+    --border: #2e2e32;
+    --border-focus: #6366f1;
+    --text: #e4e4e7;
+    --text-muted: #71717a;
+    --text-faint: #52525b;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --selected-bg: #27272a;
+    --selected-text: #a5b4fc;
+    --radius: 6px;
+    --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --font-sans: system-ui, -apple-system, sans-serif;
+    --topbar-h: 48px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+  }
+
+  /* ── Shell ── */
+  .shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  /* ── Topbar ── */
+  .topbar {
+    height: var(--topbar-h);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar__left { display: flex; align-items: center; gap: 8px; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .topbar__sep { color: var(--text-faint); }
+
+  .topbar__title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .topbar__nav { display: flex; gap: 4px; }
+
+  .topbar__link {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    transition: color 0.12s, background 0.12s;
+  }
+
+  .topbar__link:hover { color: var(--text); background: var(--selected-bg); }
+  .topbar__link--muted { opacity: 0.6; }
+  .topbar__link--muted:hover { opacity: 1; }
+
+  /* ── VaultBrowser island ── */
+  :global(.vault-browser) {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* ── Tree sidebar ── */
+  :global(.vault-tree) {
+    width: 260px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    padding: 8px 0;
+    background: var(--surface);
+  }
+
+  :global(.tree-root),
+  :global(.tree-children) {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  :global(.tree-children) {
+    padding-left: 14px;
+    border-left: 1px solid var(--border);
+    margin-left: 12px;
+  }
+
+  :global(.tree-btn) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 4px 12px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 0;
+    transition: color 0.1s, background 0.1s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global(.tree-btn:hover) { color: var(--text); background: var(--selected-bg); }
+
+  :global(.tree-btn--dir) { color: var(--text); font-weight: 500; }
+  :global(.tree-btn--dir:hover) { background: var(--selected-bg); }
+
+  :global(.tree-btn--file[data-selected]) {
+    color: var(--selected-text);
+    background: var(--selected-bg);
+  }
+
+  :global(.tree-chevron) {
+    font-size: 10px;
+    color: var(--text-faint);
+    flex-shrink: 0;
+    width: 12px;
+    text-align: center;
+  }
+
+  :global(.tree-label) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Content viewer ── */
+  :global(.vault-viewer) {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    min-width: 0;
+  }
+
+  :global(.vault-viewer__empty),
+  :global(.vault-viewer__loading) {
+    color: var(--text-faint);
+    font-size: 13px;
+    padding-top: 8px;
+  }
+
+  :global(.vault-viewer__error) {
+    color: #f87171;
+    font-size: 13px;
+  }
+
+  :global(.vault-viewer__content) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  :global(.vault-viewer__path) {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+  }
+
+  :global(.vault-viewer__pre) {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+</style>

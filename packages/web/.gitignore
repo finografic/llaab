@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# Panda CSS generated utilities
+styled-system/
 
 # dependencies
 node_modules/

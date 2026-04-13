@@ -1,0 +1,8 @@
+/**
+ * App CSS entry point.
+ *
+ * Import order matters:
+ *   1. DS global.css declares the @layer order and pulls in reset + keyframes.
+ *   2. Panda's PostCSS plugin fills tokens / recipes / utilities into those layers.
+ */
+@import '@finografic/design-system/styles/global.css';

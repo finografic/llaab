@@ -1,0 +1,169 @@
+---
+export const prerender = false;
+
+const hasError = Astro.url.searchParams.has('error');
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vault — LLAAB</title>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">LLAAB</p>
+      <h1>Vault</h1>
+
+      <div class="card">
+        <form method="POST" action="/api/vault/auth">
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="input-row">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                autofocus
+                placeholder="Enter vault password"
+              />
+              <button type="submit">Unlock</button>
+            </div>
+            {hasError && <span class="field-error">Incorrect password.</span>}
+          </div>
+        </form>
+
+        <p class="hint">
+          Default password is <code>llaab</code>. Override with
+          <code>VAULT_PASSWORD</code> in <code>.env</code>.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>
+
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181b;
+    --border: #2e2e32;
+    --border-focus: #6366f1;
+    --text: #e4e4e7;
+    --text-muted: #71717a;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --error-text: #f87171;
+    --radius: 8px;
+    --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --font-sans: system-ui, -apple-system, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 64px 16px;
+    min-height: 100vh;
+  }
+
+  main {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 8px; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .input-row { display: flex; gap: 8px; }
+
+  input {
+    flex: 1;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus { border-color: var(--border-focus); }
+
+  button[type="submit"] {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+
+  button[type="submit"]:hover { background: var(--accent-hover); }
+
+  .field-error { font-size: 12px; color: var(--error-text); }
+
+  .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+</style>
