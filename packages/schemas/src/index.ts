@@ -32,6 +32,7 @@ export {
   appendDatetimeFilenameSegment,
   buildRunNodeId,
   formatInstantForFilenameId,
+  formatIsoUtcForTranscriptBody,
   formatIsoUtcSeconds,
   formatNodeFilename,
   isNodeType,

@@ -33,6 +33,20 @@ export function formatIsoUtcSeconds(date: Date): string {
 }
 
 /**
+ * UTC instant for human-readable transcript bodies (no `T` or `Z`).
+ * Example: `2026-04-12T15:59:39Z` → `2026-04-12 15:59:39`
+ */
+export function formatIsoUtcForTranscriptBody(isoUtc: string): string {
+  const noMs = isoUtc.includes('.') ? isoUtc.replace(/\.\d{3}Z$/, 'Z') : isoUtc;
+  const m = noMs.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})Z$/);
+  if (m) return `${m[1]} ${m[2]}`;
+  return isoUtc
+    .replace('T', ' ')
+    .replace(/Z$/, '')
+    .replace(/\.\d{3}$/, '');
+}
+
+/**
  * Filesystem-safe instant fragment for node ids (not full ISO): keep uppercase `T` between date and time
  * (same as ISO 8601), `:` → `-` in the time part, no trailing `Z`.
  * Example: `2026-04-12T15-59-39`

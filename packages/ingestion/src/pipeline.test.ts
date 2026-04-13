@@ -54,6 +54,8 @@ describe('runIngestionPipeline', () => {
       rawTranscript: 'raw transcript',
       duration: 120,
       uploadDate: '20260408',
+      channelUrl: 'https://www.youtube.com/@ExampleChannel',
+      uploadedDisplay: '2026-04-08 00:00:00',
     });
     vi.mocked(cleanTranscript).mockReturnValue({
       cleanedText: 'clean transcript',
@@ -102,7 +104,7 @@ describe('runIngestionPipeline', () => {
           related: [],
           createdAt: '2026-04-08T00:00:00Z',
           updatedAt: '2026-04-08T00:00:00Z',
-          body: '# Example video\n\nstructured transcript',
+          body: '# Example video\n\n[**https://www.youtube.com/watch?v=abcdefghijk**](https://www.youtube.com/watch?v=abcdefghijk)\n**author:** [**example-channel**](https://www.youtube.com/@ExampleChannel)\n**uploaded:** 2026-04-08 00:00:00\n**ingested:** 2026-04-08 00:00:00\n\n## Transcript\n\nstructured transcript',
           sourceId: 'example-channel',
           sourceUrl: 'https://www.youtube.com/watch?v=abcdefghijk',
           sourceType: 'youtube',
@@ -156,7 +158,9 @@ describe('runIngestionPipeline', () => {
       expect.objectContaining({
         type: 'transcript',
         title: 'Example video',
-        body: '# Example video\n\nstructured transcript',
+        body: expect.stringMatching(
+          /^# Example video\n\n\[\*\*https:\/\/www\.youtube\.com\/watch\?v=abcdefghijk\*\*]\(https:\/\/www\.youtube\.com\/watch\?v=abcdefghijk\)\n\*\*author:\*\* \[\*\*example-channel\*\*]\(https:\/\/www\.youtube\.com\/@ExampleChannel\)\n\*\*uploaded:\*\* 2026-04-08 00:00:00\n\*\*ingested:\*\* \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\n\n## Transcript\n\nstructured transcript$/,
+        ),
         extra: expect.objectContaining({
           sourceItemId: 'abcdefghijk',
           sourceUrl: 'https://www.youtube.com/watch?v=abcdefghijk',
@@ -181,6 +185,8 @@ describe('runIngestionPipeline', () => {
       rawTranscript: 'raw transcript',
       duration: 120,
       uploadDate: '20260408',
+      channelUrl: 'https://www.youtube.com/@ExampleChannel',
+      uploadedDisplay: '2026-04-08 00:00:00',
     });
     vi.mocked(cleanTranscript).mockReturnValue({
       cleanedText: 'clean transcript',
@@ -240,6 +246,9 @@ describe('runIngestionPipeline', () => {
         type: 'transcript',
         id: expect.stringMatching(/^untitled_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}$/),
         title: 'Untitled transcript',
+        body: expect.stringMatching(
+          /^# Untitled transcript\n\n\[\*\*https:\/\/www\.youtube\.com\/watch\?v=uniqueUntitled01\*\*]\(https:\/\/www\.youtube\.com\/watch\?v=uniqueUntitled01\)\n\*\*author:\*\* \[\*\*example-channel\*\*]\(https:\/\/www\.youtube\.com\/@ExampleChannel\)\n\*\*uploaded:\*\* 2026-04-08 00:00:00\n\*\*ingested:\*\* \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\n\n## Transcript\n\nstructured transcript$/,
+        ),
       }),
     );
   });

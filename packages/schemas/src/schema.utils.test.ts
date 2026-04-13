@@ -4,6 +4,7 @@ import {
   appendDatetimeFilenameSegment,
   buildRunNodeId,
   formatInstantForFilenameId,
+  formatIsoUtcForTranscriptBody,
   formatIsoUtcSeconds,
 } from './schema.utils.js';
 
@@ -11,6 +12,10 @@ describe('canonical datetime helpers', () => {
   it('formatIsoUtcSeconds drops milliseconds', () => {
     const d = new Date('2026-04-12T15:59:39.859Z');
     expect(formatIsoUtcSeconds(d)).toBe('2026-04-12T15:59:39Z');
+  });
+
+  it('formatIsoUtcForTranscriptBody removes T and Z', () => {
+    expect(formatIsoUtcForTranscriptBody('2026-04-12T15:59:39Z')).toBe('2026-04-12 15:59:39');
   });
 
   it('formatInstantForFilenameId matches filename id convention', () => {

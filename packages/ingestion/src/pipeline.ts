@@ -1,5 +1,11 @@
 import { createNode, getNodeFilePath, listNodes } from '@llaab/core';
-import { appendDatetimeFilenameSegment, toNodeId, type TranscriptSourceType } from '@llaab/schemas';
+import {
+  appendDatetimeFilenameSegment,
+  formatIsoUtcForTranscriptBody,
+  now,
+  toNodeId,
+  type TranscriptSourceType,
+} from '@llaab/schemas';
 import type { ExtractionRunTrace } from './extract/llm-extract.js';
 
 import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
@@ -38,6 +44,23 @@ function markdownH1Line(title: string): string {
   const singleLine = title.replace(/\r?\n/g, ' ').trim();
   const withoutLeadingHashes = singleLine.replace(/^#+\s*/, '');
   return `# ${withoutLeadingHashes}`;
+}
+
+/** Human-visible header: video link, author (linked when URL known), upload + ingest times without `T`/`Z`. */
+function youtubeTranscriptVisibleHeader(
+  sourceUrl: string,
+  sourceId: string,
+  ingestedIsoUtc: string,
+  options: { channelUrl?: string; uploadedDisplay?: string },
+): string {
+  const linkLine = `[**${sourceUrl}**](${sourceUrl})`;
+  const authorLine =
+    options.channelUrl && options.channelUrl.startsWith('http')
+      ? `**author:** [**${sourceId}**](${options.channelUrl})`
+      : `**author:** ${sourceId}`;
+  const uploaded = options.uploadedDisplay ?? '—';
+  const ingested = formatIsoUtcForTranscriptBody(ingestedIsoUtc);
+  return `${linkLine}\n${authorLine}\n**uploaded:** ${uploaded}\n**ingested:** ${ingested}\n\n## Transcript`;
 }
 
 export interface IngestionResult {
@@ -185,7 +208,16 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
   const sourceId = toNodeId(fetched.channel);
   const producedNodeIds = new Set<string>();
 
-  const transcriptBody = `${markdownH1Line(transcriptTitle)}\n\n${structured.structuredContent}`;
+  const updatedAtIso = now();
+  const transcriptBody = `${markdownH1Line(transcriptTitle)}\n\n${youtubeTranscriptVisibleHeader(
+    input.url,
+    sourceId,
+    updatedAtIso,
+    {
+      channelUrl: fetched.channelUrl,
+      uploadedDisplay: fetched.uploadedDisplay,
+    },
+  )}\n\n${structured.structuredContent}`;
 
   const transcriptResult = await createNode({
     type: 'transcript',
@@ -224,7 +256,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       tags: ['youtube', 'channel'],
       extra: {
         sourceKind: 'channel',
-        url: `https://www.youtube.com/@${fetched.channel.replace(/\s+/g, '')}`,
+        url: fetched.channelUrl ?? `https://www.youtube.com/@${fetched.channel.replace(/\s+/g, '')}`,
         platforms: ['youtube'],
         related: [transcriptResult.id],
       },
