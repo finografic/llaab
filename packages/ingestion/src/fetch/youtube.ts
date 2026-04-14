@@ -20,7 +20,10 @@ export interface FetchedYouTubeTranscript {
   uploadDate: string;
   /** Channel or uploader page URL from yt-dlp when present. */
   channelUrl?: string;
-  /** UTC display string for transcript header (`YYYY-MM-DD HH:mm:ss`), from upload timestamp or date-only fallback. */
+  /**
+   * UTC display string for transcript header (`YYYY-MM-DD HH:mm:ss`), from upload timestamp or date-only
+   * fallback.
+   */
   uploadedDisplay?: string;
 }
 
@@ -89,20 +92,14 @@ export async function fetchYouTube(url: string): Promise<FetchedYouTubeTranscrip
   const metadata = JSON.parse(readFileSync(`${outBase}.json`, 'utf-8')) as Record<string, unknown>;
 
   /**
+   * --convert-format srt Subtitle format; single format, formats preference separated by "/", or
+   * "ass/srt/best"
    *
-   * --convert-format srt
-   *     Subtitle format; single format, formats preference
-   *     separated by "/", or "ass/srt/best"
-   *
-   * --convert-subs srt
-   *     currently supported: ass, lrc, srt, vtt (single)
-   *     disable: none (default)
-   *
+   * --convert-subs srt currently supported: ass, lrc, srt, vtt (single) disable: none (default)
    */
   try {
     execSync(
-      // `yt-dlp --skip-download --write-auto-subs --sub-langs en --sub-format vtt --convert-subs srt -o "${outBase}" "${captured.url}"`,
-      `yt-dlp --skip-download --write-auto-subs --sub-langs en --sub-format srt --convert-subs vtt -o "${outBase}" "${captured.url}"`,
+      `yt-dlp --skip-download --write-auto-subs --sub-langs en --sub-format "vtt/best" -o "${outBase}" "${captured.url}"`,
       { stdio: 'pipe' },
     );
   } catch {
@@ -110,7 +107,8 @@ export async function fetchYouTube(url: string): Promise<FetchedYouTubeTranscrip
   }
 
   let rawTranscript = '';
-  for (const subtitleFile of [`${outBase}.en.srt`, `${outBase}.en.vtt`]) {
+  for (const ext of ['.en.vtt', '.en.srt']) {
+    const subtitleFile = `${outBase}${ext}`;
     if (existsSync(subtitleFile)) {
       rawTranscript = readFileSync(subtitleFile, 'utf-8');
       break;

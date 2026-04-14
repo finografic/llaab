@@ -16,6 +16,9 @@ import { fetchRepo } from './fetch/repo.js';
 import { fetchYouTube, parseYouTubeUrl } from './fetch/youtube.js';
 import { structureText } from './structure/text.js';
 
+// At the top — new import
+import { isSrtFormat, parseSrtTranscript } from './structure/srt-parser.utils.js';
+
 export type IngestionSourceType = 'youtube' | 'article' | 'repo';
 
 export interface IngestionInput {
@@ -172,38 +175,63 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       },
     ),
   ];
-  const cleaned = cleanTranscript(fetched.rawTranscript);
-  stages.push(
-    completedStage(
-      'clean:transcript',
-      { rawLength: cleaned.rawLength },
-      {
-        cleanLength: cleaned.cleanLength,
-      },
-    ),
-  );
-  const sanitizedText = applyKnownTranscriptReplacements(cleaned.cleanedText);
-  stages.push(
-    completedStage(
-      'sanitize:transcript',
-      { cleanLength: cleaned.cleanLength },
-      {
-        cleanLength: sanitizedText.length,
-      },
-    ),
-  );
-  const structured = structureText(sanitizedText);
-  stages.push(
-    completedStage(
-      'structure:text',
-      { cleanLength: sanitizedText.length },
-      {
-        paragraphCount: structured.paragraphCount,
-        contentLength: structured.structuredContent.length,
-      },
-    ),
-  );
-  const extracted = await llmExtractWithTrace(structured.structuredContent);
+
+  let structuredContent: string;
+  let plainTextForExtraction: string;
+  let paragraphCount: number;
+  let rawLength: number;
+  let cleanLength: number;
+
+  if (isSrtFormat(fetched.rawTranscript)) {
+    const parsed = parseSrtTranscript(fetched.rawTranscript);
+    structuredContent = parsed.structuredContent;
+    plainTextForExtraction = applyKnownTranscriptReplacements(parsed.plainText);
+    paragraphCount = parsed.paragraphCount;
+    rawLength = parsed.rawLength;
+    cleanLength = parsed.cleanLength;
+
+    stages.push(
+      completedStage(
+        'parse:srt',
+        { rawLength },
+        {
+          cleanLength,
+          paragraphCount,
+          contentLength: structuredContent.length,
+          format: 'srt',
+        },
+      ),
+    );
+  } else {
+    // Fallback for non-SRT content (future article transcripts, etc.)
+    const cleaned = cleanTranscript(fetched.rawTranscript);
+    rawLength = cleaned.rawLength;
+
+    const sanitizedText = applyKnownTranscriptReplacements(cleaned.cleanedText);
+    cleanLength = sanitizedText.length;
+
+    const structured = structureText(sanitizedText);
+    structuredContent = structured.structuredContent;
+    plainTextForExtraction = sanitizedText;
+    paragraphCount = structured.paragraphCount;
+
+    stages.push(
+      completedStage('clean:transcript', { rawLength }, { cleanLength: cleaned.cleanLength }),
+      completedStage(
+        'sanitize:transcript',
+        { cleanLength: cleaned.cleanLength },
+        { cleanLength: sanitizedText.length },
+      ),
+      completedStage(
+        'structure:text',
+        { cleanLength: sanitizedText.length },
+        { paragraphCount, contentLength: structuredContent.length },
+      ),
+    );
+  }
+
+  const extracted = await llmExtractWithTrace(plainTextForExtraction);
+
   stages.push(...extracted.runTrace.stages);
   const sourceId = toNodeId(fetched.channel);
   const producedNodeIds = new Set<string>();
@@ -217,7 +245,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       channelUrl: fetched.channelUrl,
       uploadedDisplay: fetched.uploadedDisplay,
     },
-  )}\n\n${structured.structuredContent}`;
+  )}\n\n${structuredContent}`;
 
   const transcriptResult = await createNode({
     type: 'transcript',
@@ -232,9 +260,9 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       sourceType: input.sourceType as TranscriptSourceType,
       author: fetched.channel,
       summary: extracted.summary,
-      rawLength: cleaned.rawLength,
-      cleanLength: sanitizedText.length,
-      structuredParagraphs: structured.paragraphCount,
+      rawLength,
+      cleanLength,
+      structuredParagraphs: paragraphCount,
     },
   });
   producedNodeIds.add(transcriptResult.id);
