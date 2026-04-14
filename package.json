@@ -6,6 +6,8 @@
     "---------- DEV_AND_BUILD": "---------------------------------------------",
     "dev": "turbo dev",
     "dev:cli": "bun packages/cli/src/index.ts",
+    "dev:clean:vault:recent:2h": "bun scripts/clean-recent-vault-activity.ts --hours 2 --yes",
+    "dev:clean:vault:recent": "bun scripts/clean-recent-vault-activity.ts",
     "build": "turbo build",
     "·········· TESTING": "···················································",
     "test": "vitest test",
