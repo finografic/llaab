@@ -13,14 +13,6 @@ export function cleanTranscript(rawTranscript: string): CleanedTranscript {
 
   let text = rawTranscript;
 
-  // TODO: CONFIRM UNNECESSARY & REMOVE
-  // text = text.replace(/^\d+\s*\n/gm, '');
-  // text = text.replace(/\d{2}:\d{2}:\d{2}[.,]\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}[.,]\d{3}\s*\n?/g, '');
-  text = text.replace(/^WEBVTT.*\n/gm, '');
-  text = text.replace(/^Kind:.*\n/gm, '');
-  text = text.replace(/^Language:.*\n/gm, '');
-  text = text.replace(/<[^>]+>/g, '');
-
   const lines = text.split('\n').filter((line) => line.trim());
   const dedupedLines: string[] = [];
 
