@@ -134,50 +134,51 @@ function parseSrtCues(rawSrt: string): SrtCue[] {
 // ─── Deduplication ────────────────────────────────────────────────────────────
 
 /**
- * YouTube auto-generated subs have heavy overlap — each cue contains roughly the last half of the previous
- * cue plus new words. Example:
+ * YouTube auto-generated subs have heavy overlap — each cue typically repeats part of the previous cue's
+ * text. Deduplicates by:
  *
- * Cue 515: "including the command center in the" Cue 516: "academy link in the description. The" Cue 517:
- * "command center first version is" Cue 518: "launching next"
- *
- * Strategy: instead of word-level overlap detection, we track a running transcript as a single string and
- * only append the _suffix_ of each new cue that doesn't already appear at the end of the running text.
+ * 1. Skipping any cue whose text is already fully present at the end of the running transcript.
+ * 2. Otherwise, finding the longest word-level prefix of the new cue that matches the end of the running
+ *    transcript, and keeping only the non-overlapping suffix.
  */
 function deduplicateCues(cues: SrtCue[]): SrtCue[] {
   if (cues.length === 0) return [];
 
   const result: SrtCue[] = [cues[0]];
-  let running = cues[0].text;
+  let runningText = cues[0].text.toLowerCase();
 
   for (let i = 1; i < cues.length; i++) {
     const cue = cues[i];
-    const cueText = cue.text;
+    const cueTextLower = cue.text.toLowerCase();
 
-    // Find the longest suffix of `running` that matches a prefix of `cueText`.
-    // The new content is everything in `cueText` after that overlap.
-    let overlapLen = 0;
-    const maxCheck = Math.min(running.length, cueText.length);
+    // Skip cues whose text is already fully present in the running transcript
+    if (runningText.endsWith(cueTextLower) || runningText.includes(cueTextLower)) {
+      continue;
+    }
 
-    for (let len = 1; len <= maxCheck; len++) {
-      const runningSuffix = running.slice(-len).toLowerCase();
-      const cuePrefix = cueText.slice(0, len).toLowerCase();
-      if (runningSuffix === cuePrefix) {
-        overlapLen = len;
+    // Find the longest word-level prefix of the new cue that matches the end of the running text,
+    // then keep only the non-overlapping suffix. Capped at 10 words — realistic for YouTube overlap.
+    const words = cue.text.split(/\s+/);
+    const runningWords = runningText.split(/\s+/);
+    let newText = cue.text;
+
+    for (let prefixLen = Math.min(words.length - 1, 10); prefixLen > 0; prefixLen--) {
+      const prefix = words.slice(0, prefixLen).join(' ').toLowerCase();
+      const runningSuffix = runningWords.slice(-prefixLen).join(' ');
+      if (runningSuffix === prefix) {
+        newText = words.slice(prefixLen).join(' ');
+        break;
       }
     }
 
-    const newContent = cueText.slice(overlapLen).trim();
-
-    if (newContent) {
+    if (newText.trim()) {
       result.push({
         startSeconds: cue.startSeconds,
         endSeconds: cue.endSeconds,
-        text: newContent,
+        text: newText.trim(),
       });
-      running += ' ' + newContent;
+      runningText += ' ' + newText.trim().toLowerCase();
     }
-    // If newContent is empty the cue is fully contained in running — skip it.
-    // (The content is already present; forcing it would duplicate the tail fragment.)
   }
 
   return result;
