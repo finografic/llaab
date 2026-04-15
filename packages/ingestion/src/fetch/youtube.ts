@@ -1,9 +1,9 @@
 import { execSync } from 'child_process';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { VAULT_ROOT } from '@llaab/core';
 import { formatIsoUtcForTranscriptBody } from '@llaab/schemas';
 
-const VAULT_ROOT = process.env.LLAAB_VAULT || './vault';
 const TEMP_DIR = join(VAULT_ROOT, '.tmp');
 
 export interface CapturedYouTubeUrl {

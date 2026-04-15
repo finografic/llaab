@@ -1,12 +1,9 @@
-import type { LabNode, NodeStatus, NodeType } from '@llaab/schemas';
 import { readdir } from 'fs/promises';
 import { join } from 'path';
+import type { LabNode, NodeStatus, NodeType } from '@llaab/schemas';
 
 import { readNode } from './read-node.utils.js';
-
-// ─── Config ───────────────────────────────────────────────────────────────────
-
-const VAULT_ROOT = join(process.cwd(), 'vault');
+import { VAULT_ROOT } from './vault-root.js';
 
 // ─── Vault Scanner ────────────────────────────────────────────────────────────
 

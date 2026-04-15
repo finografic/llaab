@@ -22,9 +22,32 @@ The result is a `transcript` node written to `vault/transcripts/`.
 
 | File                                                   | Role                                          |
 | ------------------------------------------------------ | --------------------------------------------- |
+| `packages/core/src/utils/vault-root.ts`                | Single source of truth for `VAULT_ROOT`       |
 | `packages/ingestion/src/fetch/youtube.ts`              | Calls `yt-dlp`, returns raw transcript string |
 | `packages/ingestion/src/structure/srt-parser.utils.ts` | Parses VTT/SRT into timestamped paragraphs    |
 | `packages/ingestion/src/pipeline.ts`                   | Orchestrates fetch → parse → store            |
+
+---
+
+## Vault Path Resolution
+
+All vault writes resolve to the same directory regardless of where the process starts from
+(`pnpm exec`, web server, test runner). The canonical path is exported from `@llaab/core`:
+
+```ts
+import { VAULT_ROOT } from '@llaab/core';
+```
+
+The implementation in `packages/core/src/utils/vault-root.ts` anchors to its own file location
+via `import.meta.url` rather than `process.cwd()`. This means the Astro dev server running from
+`packages/web/` and a CLI script running from the monorepo root both resolve to the same
+`vault/` at the monorepo root.
+
+Override with the `LLAAB_VAULT` env var for non-standard layouts:
+
+```bash
+LLAAB_VAULT=/custom/path pnpm exec bun -e "..."
+```
 
 ---
 

@@ -3,7 +3,8 @@ import { formatNodeFilename } from '@llaab/schemas';
 import type { LabNode } from '@llaab/schemas';
 import type { NodeType } from '@llaab/schemas';
 
-export const VAULT_ROOT = join(process.cwd(), 'vault');
+import { VAULT_ROOT } from './vault-root.js';
+export { VAULT_ROOT };
 
 export const NODE_DIR_MAP: Record<NodeType, string> = {
   decision: 'nodes/decisions',

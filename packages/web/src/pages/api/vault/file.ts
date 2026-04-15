@@ -1,10 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { VAULT_ROOT } from '@llaab/core';
 import type { APIRoute } from 'astro';
 
 export const prerender = false;
-
-const VAULT_ROOT = path.resolve(process.cwd(), '../../vault');
 const COOKIE_NAME = 'vault_key';
 
 function isAuthenticated(cookies: Parameters<APIRoute>[0]['cookies']): boolean {

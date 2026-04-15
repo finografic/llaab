@@ -1,11 +1,10 @@
 import { appendFile, mkdir, stat, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { createNode } from '@llaab/core';
+import { createNode, VAULT_ROOT } from '@llaab/core';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const VAULT_ROOT = process.env.LLAAB_VAULT || './vault';
 const INBOX_FILE = join(VAULT_ROOT, 'INBOX.md');
 const AUTO_TAG_PATTERNS: Array<[string, RegExp]> = [
   ['llm', /\b(llm|gpt|claude|ollama|anthropic|model|prompt)\b/i],
