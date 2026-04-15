@@ -1,0 +1,250 @@
+# TODO — `apps/server` (Hono)
+
+> **Status:** Not started — planning doc only.
+> Current API routes live in `apps/client/src/pages/api/`. They work for now. This migration
+> happens when the skill/agent layer outgrows what Astro's API routes can reasonably own.
+
+---
+
+## Why
+
+Astro API routes are UI glue — they exist to let a page talk to the backend without a second
+process during development. The moment anything needs to call the same logic _without_ a browser
+involved (agent loops, CLI triggers, scheduled jobs, LLM pipelines, future mobile or external
+consumers), the logic belongs in a dedicated server, not co-located with page files.
+
+The split is clean: `apps/client` becomes a pure UI; `apps/server` owns all vault I/O, skill
+execution, and agent coordination.
+
+---
+
+## Core Dependencies
+
+### Server (`apps/server`)
+
+| Package               | Purpose                                                            |
+| --------------------- | ------------------------------------------------------------------ |
+| `hono`                | Router — lightweight, Bun-native, first-class TypeScript           |
+| `@hono/zod-validator` | Request validation using the existing `@llaab/schemas` Zod schemas |
+| `http-status-codes`   | Named HTTP status constants (`HttpStatusCodes.OK`, etc.)           |
+| `@llaab/skills`       | Skill execution — `ingestYouTube`, `captureIdea`, `runSkill`       |
+| `@llaab/core`         | Vault I/O — `readNode`, `listNodes`, `VAULT_ROOT`                  |
+| `@llaab/schemas`      | Zod schemas — request/response contracts                           |
+| `picocolors`          | CLI request logging (already in ecosystem)                         |
+
+### Client (`apps/client`) — changes on migration
+
+| Change                       | Detail                                                          |
+| ---------------------------- | --------------------------------------------------------------- |
+| Remove `@llaab/skills`       | No longer calls skills directly — goes via HTTP                 |
+| Remove `@llaab/ingestion`    | Same reason                                                     |
+| Add `hono/client` (optional) | Hono RPC — full end-to-end type safety from server router types |
+| Add `SERVER_URL` env var     | `http://localhost:3000` in dev; configurable                    |
+| Add `src/lib/api-client.ts`  | Thin fetch wrapper (or Hono RPC client) used by React islands   |
+
+---
+
+## Auth Strategy
+
+This is a local dev tool — there is no public deployment. Two options:
+
+### Option A — Shared API Key (recommended for now)
+
+The server reads a key from env (`SERVER_API_KEY`). The client sends it as a header on every
+request. Simple, zero deps, zero sessions.
+
+```
+# .env (both apps read this)
+SERVER_API_KEY=llaab-dev
+```
+
+```ts
+// Client request
+fetch('http://localhost:3000/api/ingest', {
+  headers: { 'X-API-Key': import.meta.env.SERVER_API_KEY },
+  ...
+});
+```
+
+```ts
+// Server middleware
+app.use('/api/*', async (c, next) => {
+  const key = c.req.header('X-API-Key');
+  if (key !== process.env['SERVER_API_KEY']) return c.json({ error: 'Unauthorized' }, 401);
+  await next();
+});
+```
+
+No sessions, no cookies, no OAuth — appropriate for localhost.
+
+### Option B — `@hono/auth-js` (for when real auth is needed)
+
+If the server ever needs to be accessible over a network or support multiple users, `@hono/auth-js`
+is the established path (same library as in the other monorepo). This adds a proper session layer
+and supports OAuth providers. Defer until there is an actual requirement.
+
+---
+
+## Proposed Structure
+
+```
+apps/server/
+  src/
+    app.ts                  ← Hono app — CORS, auth middleware, route registration
+    index.ts                ← Entry point — Bun.serve()
+    constants/
+      paths.constants.ts    ← VAULT_ROOT re-export + any server-specific paths
+    lib/
+      create-app.ts         ← createRouter() + createApp() helpers
+    middlewares/
+      auth.middleware.ts    ← X-API-Key guard
+      logger.middleware.ts  ← Request/response logging
+    routes/
+      index.route.ts        ← GET / — health + version
+      ingest/
+        index.ts
+        ingest.routes.ts    ← Route definitions + Zod schemas
+        ingest.handlers.ts  ← Handler implementations
+      vault/
+        index.ts
+        vault.routes.ts
+        vault.handlers.ts
+      runs/
+        index.ts
+        runs.routes.ts
+        runs.handlers.ts
+      llm/                  ← Future: LLM proxy / streaming endpoints
+        index.ts
+        llm.routes.ts
+        llm.handlers.ts
+    types/
+      app.types.ts          ← AppHandler type alias, shared request/response types
+  package.json
+  tsconfig.json
+```
+
+---
+
+## Route Conventions
+
+Follows the same `*.routes.ts` / `*.handlers.ts` / `index.ts` pattern from the reference server.
+
+**`*.routes.ts`** — route definitions only. Exports named route descriptors. No business logic.
+
+**`*.handlers.ts`** — one named export per route. Calls into `@llaab/skills` or `@llaab/core`
+directly. No route registration here.
+
+**`index.ts`** — wires routes to handlers, exports the router.
+
+---
+
+## Example — `ingest` Route
+
+This is the exact equivalent of the current `apps/client/src/pages/api/ingest.ts`.
+
+### `routes/ingest/ingest.routes.ts`
+
+```ts
+import { z } from 'zod/v4';
+import { StatusCodes as HttpStatusCodes } from 'http-status-codes';
+
+const tags = ['Ingest'];
+
+export const ingestBodySchema = z.object({
+  url:   z.string().url(),
+  title: z.string().optional(),
+  tags:  z.array(z.string()).optional(),
+});
+
+export const ingestResponseSchema = z.object({
+  success: z.boolean(),
+  result: z.object({
+    id:     z.string(),
+    path:   z.string(),
+    type:   z.string(),
+    reused: z.boolean(),
+  }).optional(),
+  error: z.string().optional(),
+});
+
+export const ingestYouTube = route('/ingest/youtube', {
+  tags,
+  description: 'Ingest a YouTube video — fetch transcript, structure, store vault nodes',
+  responses: {
+    [HttpStatusCodes.OK]:                    json(ingestResponseSchema, 'Ingestion succeeded'),
+    [HttpStatusCodes.BAD_REQUEST]:           json(errorSchema, 'Invalid request body'),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: json(errorSchema, 'Ingestion failed'),
+  },
+});
+```
+
+### `routes/ingest/ingest.handlers.ts`
+
+```ts
+import { ingestYouTube as runIngest } from '@llaab/skills';
+import { StatusCodes as HttpStatusCodes } from 'http-status-codes';
+import type { AppHandler } from 'types/app.types';
+
+export const ingestYouTube: AppHandler = async (c) => {
+  const { url, title, tags } = c.req.valid('json');
+
+  const { record, result } = await runIngest({ url, title, tags });
+
+  if (record.status === 'failed') {
+    return c.json({ success: false, error: record.error ?? 'Ingestion failed.' }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+  }
+
+  const reused = result.runTrace?.stages.some((s) => s.name === 'dedupe:transcript') ?? false;
+
+  return c.json({
+    success: true,
+    result: { id: result.id, path: result.path, type: result.type, reused },
+  });
+};
+```
+
+---
+
+## Vault Routes (planned)
+
+| Method | Path                   | Handler    | Notes                                     |
+| ------ | ---------------------- | ---------- | ----------------------------------------- |
+| GET    | `/vault/nodes`         | `list`     | `listNodes()` — optional `?type=` filter  |
+| GET    | `/vault/nodes/:id`     | `getOne`   | `readNode()` by id                        |
+| GET    | `/vault/nodes/:id/raw` | `getRaw`   | Raw markdown file content                 |
+| GET    | `/vault/runs`          | `listRuns` | All `RunNode` entries                     |
+| GET    | `/vault/runs/:id`      | `getRun`   | Single run with full stage/decision trace |
+
+These replace the current `/api/vault/file` Astro route and the vault browser's direct `fs` calls.
+
+---
+
+## LLM Routes (future)
+
+LLM communications will almost certainly need to run through the server, not through Astro — they
+may be long-running, may need streaming (`text/event-stream`), and may be triggered by agents
+rather than user gestures. A `routes/llm/` module is the right home when that work starts.
+
+Hono supports streaming responses natively via `c.streamText()` — no extra adapter needed.
+
+---
+
+## Client Migration Checklist
+
+When `apps/server` is ready, the client migration is:
+
+- [ ] Add `SERVER_URL` to `.env` and `astro.config.ts` env schema
+- [ ] Create `src/lib/api-client.ts` — base fetch wrapper or Hono RPC client
+- [ ] Update `IngestForm.tsx` to call `SERVER_URL/api/ingest/youtube` instead of `/api/ingest`
+- [ ] Delete `apps/client/src/pages/api/ingest.ts`
+- [ ] Delete `apps/client/src/pages/api/vault/` (file + auth routes) once vault routes migrate
+- [ ] Remove `@llaab/skills` and `@llaab/ingestion` from `apps/client/package.json`
+- [ ] Keep `apps/client/src/pages/vault/login.astro` + auth cookie — this is UI-specific and stays
+
+---
+
+## Open Questions
+
+- Hono RPC vs plain fetch in the client — RPC gives full type safety but requires the router type to be exported and imported in the client. Straightforward with a monorepo, but adds a compile-time coupling. Plain fetch is simpler and fine for now.
+- Port convention — `3000` for server, `4321` for client (Astro default). Make explicit in `.env.example`.
+- Agent triggers — will agents be triggered by HTTP (a `POST /agent/run` route) or by in-process calls? Shapes whether `routes/agent/` is needed or whether the agent layer is purely internal.
