@@ -31,7 +31,7 @@ For LLAAB, `client:load` is fine for all interactive components.
 
 ## Configuration — LLAAB local setup
 
-`apps/web/astro.config.ts` has no `output` key, which means the default `'static'` is active. This is intentional — LLAAB is a local dev tool only; no deployment adapter is needed.
+`apps/client/astro.config.ts` has no `output` key, which means the default `'static'` is active. This is intentional — LLAAB is a local dev tool only; no deployment adapter is needed.
 
 API routes that must run server-side opt out of pre-rendering individually:
 
@@ -230,4 +230,4 @@ For a simple mutation (submit form → show result), `fetch` is sufficient and Q
 
 ### Design system note
 
-The DS project holds the standards, but the web package does not yet have Panda CSS config or generated styled-system output. DS components import `@styled-system/css` and `@styled-system/jsx`, which are not resolvable in `apps/web` today. Wiring that up (`panda.config`, codegen, CSS imports in the Astro layout) is a focused one-session task; after that, DS components should work in the app.
+The DS project holds the standards, but the web package does not yet have Panda CSS config or generated styled-system output. DS components import `@styled-system/css` and `@styled-system/jsx`, which are not resolvable in `apps/client` today. Wiring that up (`panda.config`, codegen, CSS imports in the Astro layout) is a focused one-session task; after that, DS components should work in the app.

@@ -1,5 +1,5 @@
 {
-  "name": "@llaab/web",
+  "name": "@llaab/client",
   "type": "module",
   "version": "0.0.1",
   "engines": {
