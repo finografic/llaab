@@ -40,7 +40,7 @@ import { VAULT_ROOT } from '@llaab/core';
 
 The implementation in `packages/core/src/utils/vault-root.ts` anchors to its own file location
 via `import.meta.url` rather than `process.cwd()`. This means the Astro dev server running from
-`packages/web/` and a CLI script running from the monorepo root both resolve to the same
+`apps/web/` and a CLI script running from the monorepo root both resolve to the same
 `vault/` at the monorepo root.
 
 Override with the `LLAAB_VAULT` env var for non-standard layouts:

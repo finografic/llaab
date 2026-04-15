@@ -69,6 +69,121 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@types/node@24.0.0)(vite@7.3.2(@types/node@24.0.0)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.3))
 
+  apps/web:
+    dependencies:
+      '@astrojs/check':
+        specifier: ^0.9.8
+        version: 0.9.8(prettier@3.8.2)(typescript@5.9.3)
+      '@astrojs/node':
+        specifier: ^10.0.4
+        version: 10.0.4(astro@6.1.6(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3))
+      '@astrojs/react':
+        specifier: ^5.0.2
+        version: 5.0.3(@types/node@25.6.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(jiti@2.6.1)(lightningcss@1.31.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tsx@4.21.0)(yaml@2.8.3)
+      '@finografic/design-system':
+        specifier: link:/Users/justin/repos-finografic/@finografic-design-system/packages/design-system
+        version: link:../../../repos-finografic/@finografic-design-system/packages/design-system
+      '@finografic/icons':
+        specifier: 1.10.0
+        version: 1.10.0(react@19.2.5)
+      '@finografic/zustand-context-creator':
+        specifier: 0.7.1
+        version: 0.7.1(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5)))
+      '@hookform/resolvers':
+        specifier: 5.2.2
+        version: 5.2.2(react-hook-form@7.71.1(react@19.2.5))
+      '@llaab/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@llaab/ingestion':
+        specifier: workspace:*
+        version: link:../../packages/ingestion
+      '@llaab/schemas':
+        specifier: workspace:*
+        version: link:../../packages/schemas
+      '@react-router/dev':
+        specifier: 7.13.0
+        version: 7.13.0(@types/node@25.6.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.31.1)(react-router@7.13.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)
+      '@tanstack/query-sync-storage-persister':
+        specifier: 5.90.22
+        version: 5.90.22
+      '@tanstack/react-query':
+        specifier: ^5.90.21
+        version: 5.99.0(react@19.2.5)
+      '@tanstack/react-query-devtools':
+        specifier: 5.91.3
+        version: 5.91.3(@tanstack/react-query@5.99.0(react@19.2.5))(react@19.2.5)
+      '@tanstack/react-query-persist-client':
+        specifier: 5.90.22
+        version: 5.90.22(@tanstack/react-query@5.99.0(react@19.2.5))(react@19.2.5)
+      '@tanstack/react-table':
+        specifier: ^8.21.3
+        version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      astro:
+        specifier: ^6.1.1
+        version: 6.1.6(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      react:
+        specifier: ^19.2.4
+        version: 19.2.5
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.5(react@19.2.5)
+      react-hook-form:
+        specifier: 7.71.1
+        version: 7.71.1(react@19.2.5)
+      react-i18next:
+        specifier: 16.5.4
+        version: 16.5.4(i18next@26.0.4(typescript@5.9.3))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@5.9.3)
+      react-json-tree:
+        specifier: 0.20.0
+        version: 0.20.0(@types/react@19.2.14)(react@19.2.5)
+      type-fest:
+        specifier: ^5.4.4
+        version: 5.5.0
+      use-debounce:
+        specifier: 10.1.0
+        version: 10.1.0(react@19.2.5)
+      zustand:
+        specifier: ^5.0.11
+        version: 5.0.12(@types/react@19.2.14)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5))
+    devDependencies:
+      '@emotion/css':
+        specifier: 11.13.5
+        version: 11.13.5
+      '@emotion/react':
+        specifier: 11.14.0
+        version: 11.14.0(@types/react@19.2.14)(react@19.2.5)
+      '@emotion/styled':
+        specifier: 11.14.1
+        version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.5))(@types/react@19.2.14)(react@19.2.5)
+      '@finografic/md-lint':
+        specifier: 0.6.1
+        version: 0.6.1
+      '@pandacss/dev':
+        specifier: ^1.9.0
+        version: 1.9.1(typescript@5.9.3)
+      eslint-plugin-import:
+        specifier: 2.32.0
+        version: 2.32.0(@typescript-eslint/parser@8.58.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))
+      eslint-plugin-react:
+        specifier: ^7.37.5
+        version: 7.37.5(eslint@9.39.2(jiti@2.6.1))
+      eslint-plugin-react-hooks:
+        specifier: ^7.0.1
+        version: 7.0.1(eslint@9.39.2(jiti@2.6.1))
+      eslint-plugin-react-refresh:
+        specifier: 0.5.0
+        version: 0.5.0(eslint@9.39.2(jiti@2.6.1))
+      eslint-plugin-simple-import-sort:
+        specifier: ^12.1.1
+        version: 12.1.1(eslint@9.39.2(jiti@2.6.1))
+
   packages/cli:
     dependencies:
       '@llaab/skills':
@@ -155,121 +270,6 @@ importers:
       '@types/node':
         specifier: ^25.5.0
         version: 25.6.0
-
-  packages/web:
-    dependencies:
-      '@astrojs/check':
-        specifier: ^0.9.8
-        version: 0.9.8(prettier@3.8.2)(typescript@5.9.3)
-      '@astrojs/node':
-        specifier: ^10.0.4
-        version: 10.0.4(astro@6.1.6(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3))
-      '@astrojs/react':
-        specifier: ^5.0.2
-        version: 5.0.3(@types/node@25.6.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(jiti@2.6.1)(lightningcss@1.31.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tsx@4.21.0)(yaml@2.8.3)
-      '@finografic/design-system':
-        specifier: link:/Users/justin/repos-finografic/@finografic-design-system/packages/design-system
-        version: link:../../../repos-finografic/@finografic-design-system/packages/design-system
-      '@finografic/icons':
-        specifier: 1.10.0
-        version: 1.10.0(react@19.2.5)
-      '@finografic/zustand-context-creator':
-        specifier: 0.7.1
-        version: 0.7.1(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5)))
-      '@hookform/resolvers':
-        specifier: 5.2.2
-        version: 5.2.2(react-hook-form@7.71.1(react@19.2.5))
-      '@llaab/core':
-        specifier: workspace:*
-        version: link:../core
-      '@llaab/ingestion':
-        specifier: workspace:*
-        version: link:../ingestion
-      '@llaab/schemas':
-        specifier: workspace:*
-        version: link:../schemas
-      '@react-router/dev':
-        specifier: 7.13.0
-        version: 7.13.0(@types/node@25.6.0)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.31.1)(react-router@7.13.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)
-      '@tanstack/query-sync-storage-persister':
-        specifier: 5.90.22
-        version: 5.90.22
-      '@tanstack/react-query':
-        specifier: ^5.90.21
-        version: 5.99.0(react@19.2.5)
-      '@tanstack/react-query-devtools':
-        specifier: 5.91.3
-        version: 5.91.3(@tanstack/react-query@5.99.0(react@19.2.5))(react@19.2.5)
-      '@tanstack/react-query-persist-client':
-        specifier: 5.90.22
-        version: 5.90.22(@tanstack/react-query@5.99.0(react@19.2.5))(react@19.2.5)
-      '@tanstack/react-table':
-        specifier: ^8.21.3
-        version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@types/react':
-        specifier: ^19.2.14
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.14)
-      astro:
-        specifier: ^6.1.1
-        version: 6.1.6(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
-      react:
-        specifier: ^19.2.4
-        version: 19.2.5
-      react-dom:
-        specifier: ^19.2.4
-        version: 19.2.5(react@19.2.5)
-      react-hook-form:
-        specifier: 7.71.1
-        version: 7.71.1(react@19.2.5)
-      react-i18next:
-        specifier: 16.5.4
-        version: 16.5.4(i18next@26.0.4(typescript@5.9.3))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@5.9.3)
-      react-json-tree:
-        specifier: 0.20.0
-        version: 0.20.0(@types/react@19.2.14)(react@19.2.5)
-      type-fest:
-        specifier: ^5.4.4
-        version: 5.5.0
-      use-debounce:
-        specifier: 10.1.0
-        version: 10.1.0(react@19.2.5)
-      zustand:
-        specifier: ^5.0.11
-        version: 5.0.12(@types/react@19.2.14)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5))
-    devDependencies:
-      '@emotion/css':
-        specifier: 11.13.5
-        version: 11.13.5
-      '@emotion/react':
-        specifier: 11.14.0
-        version: 11.14.0(@types/react@19.2.14)(react@19.2.5)
-      '@emotion/styled':
-        specifier: 11.14.1
-        version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.5))(@types/react@19.2.14)(react@19.2.5)
-      '@finografic/md-lint':
-        specifier: 0.6.1
-        version: 0.6.1
-      '@pandacss/dev':
-        specifier: ^1.9.0
-        version: 1.9.1(typescript@5.9.3)
-      eslint-plugin-import:
-        specifier: 2.32.0
-        version: 2.32.0(@typescript-eslint/parser@8.58.2(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))
-      eslint-plugin-react:
-        specifier: ^7.37.5
-        version: 7.37.5(eslint@9.39.2(jiti@2.6.1))
-      eslint-plugin-react-hooks:
-        specifier: ^7.0.1
-        version: 7.0.1(eslint@9.39.2(jiti@2.6.1))
-      eslint-plugin-react-refresh:
-        specifier: 0.5.0
-        version: 0.5.0(eslint@9.39.2(jiti@2.6.1))
-      eslint-plugin-simple-import-sort:
-        specifier: ^12.1.1
-        version: 12.1.1(eslint@9.39.2(jiti@2.6.1))
 
 packages:
 
@@ -7370,7 +7370,7 @@ snapshots:
       '@vue/shared': 3.5.25
       estree-walker: 2.0.2
       magic-string: 0.30.21
-      postcss: 8.5.6
+      postcss: 8.5.9
       source-map-js: 1.2.1
 
   '@vue/compiler-ssr@3.5.25':
