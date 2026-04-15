@@ -5,6 +5,16 @@
 - If **NO** initial context needed, then SKIP to NEXT section.
 - If **YES**, initial context needed, then READ [Project Concept & Manifesto](</LLAAB\ -\ CONCEPT\ &\ MANIFESTO.md>)
 
+## Roadmap
+
+**`docs/todo/ROADMAP.md` is the primary high-level plan for this project.**
+
+- Before proposing or generating new features, check the roadmap for existing items.
+- When conceiving a new feature or initiative, add it to the appropriate priority tier.
+- Detailed todo docs for specific items live alongside it in `docs/todo/`.
+
+---
+
 ## Rules — Project-Specific
 
 Project-specific rules live in `.github/instructions/project/**/*.instructions.md`.

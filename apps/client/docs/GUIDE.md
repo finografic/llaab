@@ -325,6 +325,70 @@ export function MyComponent() {
 Vite (which Astro uses under the hood) transforms `.module.css` into scoped class names at build
 time. Same scoping concept as `@emotion`, zero runtime.
 
+### Style ownership hierarchy
+
+When deciding where a style belongs, work through this order:
+
+| Layer                | File(s)                                 | Owns                                                            |
+| -------------------- | --------------------------------------- | --------------------------------------------------------------- |
+| 1. Design system     | `@finografic/design-system/styles/`     | Base resets, icon utilities, keyframes                          |
+| 2. Global primitives | `app.css`, `forms.css`                  | Tokens, element defaults, `.btn`, `.card`, `.status*`, `.field` |
+| 3. Layout shell      | `AppLayout.astro` `<style>`             | Sidebar, header, main-pane grid                                 |
+| 4. Page layout       | `pages/*.astro` `<style>`               | Max-width, gap, heading sizes specific to one route             |
+| 5. Component styles  | `*.module.css` or `<style>` in `.astro` | Everything internal to a reusable component                     |
+
+**The rule:** apply the style at the lowest layer that covers it. Never duplicate a token or
+primitive in a higher layer just because it's convenient.
+
+### Bridging design-system gaps with `:global()`
+
+React components that predate full design-system integration often use plain HTML elements
+(`<button type="submit">`, `<input>`) without the `.btn` / `.field` class names that `forms.css`
+depends on for layout. `forms.css` sets colors on `button[type='submit']` via the `.btn--primary`
+selector, but padding, `display`, `border-radius`, etc. live on the `.btn` base class — so an
+unstyled submit button gets color but no shape.
+
+Bridge the gap with a scoped `:global()` in the page's `<style>`, annotated with a removal note:
+
+```astro
+<style>
+  /* Submit button base layout — forms.css colours via .btn--primary; shape lives
+     on .btn which this component doesn't use. Remove once DS button is wired up. */
+  :global(.my-form button[type='submit']) {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+</style>
+```
+
+Keep the selector tight (`.my-form button[type='submit']`, not just `button[type='submit']`) so
+the override doesn't leak to other forms on the same page.
+
+### Component-level overrides of global form styles
+
+`forms.css` sets `font-family: var(--font-sans)` on all inputs. Some fields intentionally want
+monospace (URL fields, IDs, code snippets). Override at the component level, not globally:
+
+```astro
+<!-- in the page that owns the form, or in the component's .module.css -->
+<style>
+  :global(.ingest-form .field input) {
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+</style>
+```
+
+If the same override is needed in multiple components, promote it to `forms.css` as a
+utility modifier (e.g. `.field--mono input { font-family: var(--font-mono); }`).
+
 ### CSS custom properties (tokens)
 
 All design tokens are defined in `:root` in `app.css` and available everywhere:
