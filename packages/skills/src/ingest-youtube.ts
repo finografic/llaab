@@ -1,6 +1,6 @@
 import { type IngestionResult, runIngestionPipeline } from '@llaab/ingestion';
 
-import { runSkill } from './runner.js';
+import { runSkill, type SkillRunRecord } from './runner.js';
 
 export interface IngestYouTubeInput {
   url: string;
@@ -8,7 +8,12 @@ export interface IngestYouTubeInput {
   tags?: string[];
 }
 
-export async function ingestYouTube(input: IngestYouTubeInput): Promise<void> {
+export interface IngestYouTubeOutput {
+  record: SkillRunRecord;
+  result: IngestionResult;
+}
+
+export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYouTubeOutput> {
   const { record, result } = await runSkill(
     'ingest-youtube',
     () =>
@@ -27,11 +32,11 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<void> {
       'Tip: ingestion uses yt-dlp for metadata and subtitles. Install it and ensure it is on PATH (e.g. brew install yt-dlp).',
     );
     console.error('Full details are in the persisted run node under vault/runs/.');
-    return;
+  } else {
+    console.log(`YouTube source ingested (${record.status}): ${result.id}`);
+    console.log(`  type: ${result.type}`);
+    console.log(`  -> ${result.path}`);
   }
 
-  const out = result as IngestionResult;
-  console.log(`YouTube source ingested (${record.status}): ${out.id}`);
-  console.log(`  type: ${out.type}`);
-  console.log(`  -> ${out.path}`);
+  return { record, result };
 }

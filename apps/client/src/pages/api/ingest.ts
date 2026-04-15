@@ -1,4 +1,4 @@
-import { runIngestionPipeline } from '@llaab/ingestion';
+import { ingestYouTube } from '@llaab/skills';
 import type { APIRoute } from 'astro';
 
 export const prerender = false;
@@ -19,7 +19,12 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const result = await runIngestionPipeline({ sourceType: 'youtube', url: url.trim() });
+    const { record, result } = await ingestYouTube({ url: url.trim() });
+
+    if (record.status === 'failed') {
+      return json({ success: false, error: record.error ?? 'Ingestion failed.' }, 500);
+    }
+
     const reused = result.runTrace?.stages.some((s) => s.name === 'dedupe:transcript') ?? false;
 
     return json({
