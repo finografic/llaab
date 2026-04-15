@@ -1,0 +1,92 @@
+---
+/**
+ * AppLayout — primary shell for all main app routes.
+ *
+ * Structure:
+ *   ┌──────────┬─────────────────────────┐
+ *   │          │ AppHeader               │
+ *   │ Navbar   ├─────────────────────────┤
+ *   │ Vertical │ <slot />                │
+ *   │          │                         │
+ *   │          ├─────────────────────────┤
+ *   │          │ AppFooter               │
+ *   └──────────┴─────────────────────────┘
+ *
+ * Props:
+ *   title   — passed to AppHeader and <title> tag
+ *
+ * Styling: scoped <style> below. Component styles live in *.module.css or
+ * component-level <style> blocks — never in this file.
+ */
+import AppHeader from '../components/AppHeader/AppHeader.astro';
+import AppFooter from '../components/AppFooter/AppFooter.astro';
+import { NavbarVertical } from '../components/NavbarVertical/NavbarVertical';
+import '../styles/app.css';
+
+interface Props {
+  title?: string;
+}
+
+const { title } = Astro.props;
+const pathname = Astro.url.pathname;
+const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <NavbarVertical pathname={pathname} client:load />
+      </aside>
+
+      <div class="main-pane">
+        <AppHeader title={title} />
+
+        <main class="page-content">
+          <slot />
+        </main>
+
+        <AppFooter />
+      </div>
+    </div>
+  </body>
+</html>
+
+<style>
+  .shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--bg-subtle);
+    border-right: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  .main-pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .page-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-8) var(--space-8);
+  }
+</style>

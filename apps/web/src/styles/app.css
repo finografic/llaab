@@ -1,8 +1,204 @@
 /**
- * App CSS entry point.
+ * app.css — global stylesheet entry point.
  *
- * Import order matters:
- *   1. DS global.css declares the @layer order and pulls in reset + keyframes.
- *   2. Panda's PostCSS plugin fills tokens / recipes / utilities into those layers.
+ * Import order:
+ *   1. DS global.css  — @layer order, reset, keyframes, icon utilities
+ *   2. forms.css      — form element ecosystem (inputs, buttons, labels, states)
+ *
+ * This file owns:
+ *   • CSS custom property tokens (:root)
+ *   • Base element defaults (html, body, a, code)
+ *   • Typography scale utilities (.eyebrow, .text-muted, etc.)
+ *   • Surface / card primitives
+ *   • Scrollbar styling
+ *
+ * Layout styles are scoped to individual layout files.
+ * Component styles live in *.module.css (React) or <style> (Astro).
  */
+
 @import '@finografic/design-system/styles/global.css';
+@import './forms.css';
+
+/* ─── Tokens ──────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Backgrounds */
+  --bg:           #0e0e10;
+  --bg-subtle:    #111113;
+  --surface:      #18181b;
+  --surface-raised: #1c1c1f;
+  --overlay:      rgba(0, 0, 0, 0.6);
+
+  /* Borders */
+  --border:       #2e2e32;
+  --border-subtle: #232326;
+  --border-focus: #6366f1;
+
+  /* Text */
+  --text:         #e4e4e7;
+  --text-muted:   #71717a;
+  --text-faint:   #52525b;
+
+  /* Accent — indigo */
+  --accent:       #6366f1;
+  --accent-hover: #818cf8;
+  --accent-subtle: rgba(99, 102, 241, 0.12);
+  --accent-dim:   #4338ca;
+
+  /* Semantic — success */
+  --success-bg:     #0f2916;
+  --success-border: #166534;
+  --success-text:   #4ade80;
+
+  /* Semantic — error */
+  --error-bg:     #2c0e0e;
+  --error-border: #7f1d1d;
+  --error-text:   #f87171;
+
+  /* Semantic — warning */
+  --warning-bg:     #1c1708;
+  --warning-border: #713f12;
+  --warning-text:   #fbbf24;
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius:    8px;
+  --radius-lg: 12px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Layout */
+  --sidebar-w:   220px;
+  --header-h:    52px;
+  --content-max: 800px;
+
+  /* Motion */
+  --duration-fast: 100ms;
+  --duration:      150ms;
+  --ease:          cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+code,
+kbd,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+/* ─── Focus ───────────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+}
+
+/* ─── Typography utilities ────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+/* ─── Surface / card primitives ───────────────────────────────────────────── */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-6);
+}
+
+.card--raised {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  border: none;
+}
