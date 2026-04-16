@@ -14,6 +14,7 @@
     "test:coverage": "turbo test --coverage",
     "·········· LINTING": "···················································",
     "lint": "turbo lint",
+    "lint:oxlint": "oxlint -c oxlint.config.ts .",
     "lint:fix": "turbo lint --fix",
     "lint.md": "md-lint",
     "lint.md.fix": "md-lint --fix",
@@ -54,11 +55,14 @@
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.51.0",
     "eslint": "9.39.2",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-markdownlint": "^0.9.0",
     "globals": "^17.4.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "oxfmt": "^0.44.0",
+    "oxlint": "^1.60.0",
+    "oxlint-tsgolint": "^0.21.1",
     "turbo": "^2.5.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2",
@@ -77,7 +81,7 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
       "oxfmt --no-error-on-unmatched-pattern",
-      "eslint --fix"
+      "oxlint --fix"
     ],
     "*.md": [
       "oxfmt --no-error-on-unmatched-pattern",

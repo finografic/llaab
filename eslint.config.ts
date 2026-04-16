@@ -1,6 +1,7 @@
 /// <reference path="./declarations.d.ts" />
 import js from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
+import importPlugin from 'eslint-plugin-import';
 import markdownlintPlugin from 'eslint-plugin-markdownlint';
 import markdownlintParser from 'eslint-plugin-markdownlint/parser.js';
 import { defineConfig, globalIgnores } from 'eslint/config';
@@ -48,6 +49,7 @@ export default defineConfig([
     plugins: {
       '@typescript-eslint': tseslint.plugin,
       '@stylistic': stylistic,
+      'import': importPlugin,
     },
     rules: {
       // Disable base rules in favor of TS-aware ones
@@ -72,6 +74,8 @@ export default defineConfig([
         'error',
         { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
       ],
+      // Match oxlint: forbid `import { type X }`; use `import type { X }` instead.
+      'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
 
       '@stylistic/indent': ['warn', 2, { SwitchCase: 1, ignoredNodes: ['ConditionalExpression'] }],
       '@stylistic/operator-linebreak': [
@@ -90,7 +94,7 @@ export default defineConfig([
       parser: markdownlintParser,
     },
     plugins: {
-      markdownlint: markdownlintPlugin as Linter.Processor,
+      'markdownlint': markdownlintPlugin as Linter.Processor,
       '@stylistic': stylistic,
     },
     // processor: markdownlintPlugin.processors.markdown,
@@ -123,6 +127,7 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/consistent-type-imports': 'off',
+      'import/consistent-type-specifier-style': 'off',
 
       'import/no-unresolved': 'off',
       'no-undef': 'off',

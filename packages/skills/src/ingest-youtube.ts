@@ -1,6 +1,8 @@
-import { type IngestionResult, runIngestionPipeline } from '@llaab/ingestion';
+import { runIngestionPipeline } from '@llaab/ingestion';
+import type { SkillRunRecord } from './runner.js';
+import type { IngestionResult } from '@llaab/ingestion';
 
-import { runSkill, type SkillRunRecord } from './runner.js';
+import { runSkill } from './runner.js';
 
 export interface IngestYouTubeInput {
   url: string;

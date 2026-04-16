@@ -1,9 +1,10 @@
+import type { NodeType } from './primitives.schema.js';
 import type { ZodType } from 'zod';
 
 import { DecisionNodeSchema } from './decision-node.schema.js';
 import { IdeaNodeSchema } from './idea-node.schema.js';
 import { InstructionNodeSchema } from './instruction-node.schema.js';
-import { type NodeType, NodeTypeSchema, TimestampSchema } from './primitives.schema.js';
+import { NodeTypeSchema, TimestampSchema } from './primitives.schema.js';
 import { PromptNodeSchema } from './prompt-node.schema.js';
 import { ResourceNodeSchema } from './resource-node.schema.js';
 import { RunNodeSchema } from './run-node.schema.js';
@@ -33,8 +34,8 @@ export function formatIsoUtcSeconds(date: Date): string {
 }
 
 /**
- * UTC instant for human-readable transcript bodies (no `T` or `Z`).
- * Example: `2026-04-12T15:59:39Z` → `2026-04-12 15:59:39`
+ * UTC instant for human-readable transcript bodies (no `T` or `Z`). Example: `2026-04-12T15:59:39Z` →
+ * `2026-04-12 15:59:39`
  */
 export function formatIsoUtcForTranscriptBody(isoUtc: string): string {
   const noMs = isoUtc.includes('.') ? isoUtc.replace(/\.\d{3}Z$/, 'Z') : isoUtc;
@@ -48,16 +49,15 @@ export function formatIsoUtcForTranscriptBody(isoUtc: string): string {
 
 /**
  * Filesystem-safe instant fragment for node ids (not full ISO): keep uppercase `T` between date and time
- * (same as ISO 8601), `:` → `-` in the time part, no trailing `Z`.
- * Example: `2026-04-12T15-59-39`
+ * (same as ISO 8601), `:` → `-` in the time part, no trailing `Z`. Example: `2026-04-12T15-59-39`
  */
 export function formatInstantForFilenameId(date: Date): string {
   return formatIsoUtcSeconds(date).replace(/:/g, '-').replace(/Z$/, '');
 }
 
 /**
- * Joins a slug prefix to the filesystem-safe datetime fragment with **`_`** (datetime is always its own segment).
- * Use for any node id that ends with a timestamp (runs, untitled transcripts, etc.).
+ * Joins a slug prefix to the filesystem-safe datetime fragment with **`_`** (datetime is always its own
+ * segment). Use for any node id that ends with a timestamp (runs, untitled transcripts, etc.).
  */
 export function appendDatetimeFilenameSegment(prefix: string, date: Date): string {
   return `${prefix}_${formatInstantForFilenameId(date)}`;

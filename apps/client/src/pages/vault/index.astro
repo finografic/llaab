@@ -4,7 +4,8 @@ export const prerender = false;
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import AppLayout from '../../layouts/AppLayout.astro';
-import { VaultBrowser, type VaultNode } from '../../components/VaultBrowser';
+import { VaultBrowser } from '../../components/VaultBrowser';
+import type { VaultNode } from '../../components/VaultBrowser';
 import { VAULT_ROOT } from '@llaab/core';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────

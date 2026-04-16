@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { formatNodeFilename } from '@llaab/schemas';
-import type { LabNode } from '@llaab/schemas';
-import type { NodeType } from '@llaab/schemas';
+import type { LabNode, NodeType } from '@llaab/schemas';
 
 import { VAULT_ROOT } from './vault-root.js';
 export { VAULT_ROOT };

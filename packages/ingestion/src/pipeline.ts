@@ -1,12 +1,7 @@
 import { autoTag, createNode, getNodeFilePath, listNodes } from '@llaab/core';
-import {
-  appendDatetimeFilenameSegment,
-  formatIsoUtcForTranscriptBody,
-  now,
-  toNodeId,
-  type TranscriptSourceType,
-} from '@llaab/schemas';
+import { appendDatetimeFilenameSegment, formatIsoUtcForTranscriptBody, now, toNodeId } from '@llaab/schemas';
 import type { ExtractionRunTrace } from './extract/llm-extract.js';
+import type { TranscriptSourceType } from '@llaab/schemas';
 
 import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
 import { cleanTranscript } from './clean/transcript.js';
