@@ -46,11 +46,12 @@ No LM Studio (worse automation), no vLLM (overkill for solo dev).
 - Local = cheap, fast, good-enough (like `eslint --fix`)
 - API = smart, expensive, precise (like a senior architect)
 
-**Avoid always-on agents.** Background loops + continuous indexing quietly drain resources.
-Trigger explicitly; don't poll.
+**Avoid always-on agents.** Background loops + continuous indexing quietly drain resources —
+power cost is real even when models are idle. Trigger explicitly; don't poll. This is a
+hard project rule: see `.github/instructions/project/13-agent-execution.instructions.md`.
 
 **Batch and cache aggressively.** Avoid recomputing embeddings or summaries for content that
-hasn't changed. Cache responses keyed by content hash.
+hasn't changed. Cache responses keyed by content hash (already implemented in `@llaab/llm`).
 
 ---
 

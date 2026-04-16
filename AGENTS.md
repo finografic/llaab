@@ -20,6 +20,10 @@
 Project-specific rules live in `.github/instructions/project/**/*.instructions.md`.
 
 - Do not reference `@workspace/*` — all imports and deps must use published package names.
+- **Agent Execution:** `.github/instructions/project/13-agent-execution.instructions.md`
+  — No always-on background processes, file watchers, or polling loops. All automation
+  uses the one-shot processor pattern (explicit trigger → run → exit). LLAAB does not
+  own a scheduler. This rule is non-negotiable.
 
 ## Rules — Global
 

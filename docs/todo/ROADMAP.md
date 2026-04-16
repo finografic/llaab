@@ -35,6 +35,22 @@ _Nothing queued — pick from P2._
 
 ## P2 — Planned
 
+### Agent Loop Infrastructure
+
+Background agent that monitors the vault, triggers skills on new nodes, and persists `RunNode`
+traces. Needs `apps/server` in place first. Trigger mechanism TBD (HTTP, file watch, cron).
+
+Detail: [`docs/todo/TODO_AGENT_LOOP.md`](./TODO_AGENT_LOOP.md)
+
+### Terminal / Command Panel
+
+Typed command bus (WS) + xterm.js UI. Not a shell — a controlled execution surface for vault
+ops, LLM calls, and agent runs. Gated shell adapter as opt-in power-user mode.
+
+Detail: [`docs/todo/TODO_TERMINAL_PANEL.md`](./TODO_TERMINAL_PANEL.md)
+
+---
+
 ## P3 — Backlog / Ideas
 
 ### Migrate ESLint → oxlint
@@ -46,11 +62,6 @@ expands significantly.
 
 Detail: [`docs/todo/TODO_OXLINT_MIGRATION.md`](./TODO_OXLINT_MIGRATION.md)
 
-### Agent Loop Infrastructure
-
-Background agent that monitors the vault, triggers skills on new nodes, and persists `RunNode`
-traces. Needs `apps/server` in place first. Trigger mechanism TBD (HTTP, file watch, cron).
-
 ### Vault Graph View
 
 Visualise relationships between vault nodes — source → transcript → idea → skill lineage. Likely
@@ -60,14 +71,6 @@ a React island using a lightweight graph library. Read-only to start.
 
 `SourceNode` has a `follow` field. Build a scheduled job that re-ingests followed sources when
 new content appears. Depends on `apps/server` and the agent loop infrastructure.
-
-### Terminal / Command Panel
-
-Typed command bus (WS) + xterm.js UI. Not a shell — a controlled execution surface for vault
-ops, LLM calls, and agent runs. Gated shell adapter as opt-in power-user mode.
-Depends on `apps/server` + LLM layer.
-
-Detail: [`docs/todo/TODO_TERMINAL_PANEL.md`](./TODO_TERMINAL_PANEL.md)
 
 ### `@llaab/client` — Hono RPC Integration
 
