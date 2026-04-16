@@ -44,11 +44,6 @@ Task-based routing (trivial → local small, code → local mid, reasoning → r
 
 Detail: [`docs/todo/TODO_LOCAL_LLM.md`](./TODO_LOCAL_LLM.md)
 
-### Vault Browser — Write Capability
-
-Currently read-only. Add the ability to create/edit `IdeaNode` and `PromptNode` entries from the
-browser UI. Uses the server API for writes — no direct `fs` calls from the client.
-
 ---
 
 ## P3 — Backlog / Ideas
@@ -96,6 +91,7 @@ RPC client. Full end-to-end type safety from server router definitions to React 
 
 | Date       | Item                                                                                           |
 | ---------- | ---------------------------------------------------------------------------------------------- |
+| 2026-04-16 | Vault browser write — `POST /api/vault/nodes`, `CreateIdeaPanel` island on nodes page          |
 | 2026-04-16 | CLI — `llaab ingest <url>` and `llaab vault list [--type]` via citty                           |
 | 2026-04-16 | `apps/server` — Hono server + client migration (`api-client.ts`, remove skills/ingestion deps) |
 | 2026-04-16 | Taxonomy system — `autoTag`, `d:` tags, TagsInput on IngestForm, tag pills, skills doc         |
