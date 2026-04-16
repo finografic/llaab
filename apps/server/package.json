@@ -22,6 +22,7 @@
     "@llaab/llm": "workspace:*",
     "@llaab/schemas": "workspace:*",
     "@llaab/skills": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "hono": "^4.7.11",
     "http-status-codes": "^2.3.0",
     "picocolors": "^1.1.1",

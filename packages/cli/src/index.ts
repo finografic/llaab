@@ -3,6 +3,7 @@ import { defineCommand, runMain } from 'citty';
 
 import { agentCommand } from './commands/agent.js';
 import { ingestCommand } from './commands/ingest.js';
+import { mcpCommand } from './commands/mcp.js';
 import { vaultCommand } from './commands/vault.js';
 
 const main = defineCommand({
@@ -14,6 +15,7 @@ const main = defineCommand({
   subCommands: {
     agent: agentCommand,
     ingest: ingestCommand,
+    mcp: mcpCommand,
     vault: vaultCommand,
   },
 });
