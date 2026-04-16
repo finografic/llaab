@@ -35,12 +35,6 @@ _Nothing queued — pick from P2._
 
 ## P2 — Planned
 
-### `@llaab/client` — Hono RPC Integration
-
-Replace plain `fetch` calls in `api-client.ts` with Hono's typed RPC client. Full end-to-end
-type safety from server router definitions to React components — automatically covers all new
-routes added going forward. Do before the Terminal Panel while call-site count is still small.
-
 ### Terminal / Command Panel
 
 Typed command bus (WS) + xterm.js UI. Not a shell — a controlled execution surface for vault
@@ -98,6 +92,7 @@ Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
 
 | Date       | Item                                                                                            |
 | ---------- | ----------------------------------------------------------------------------------------------- |
+| 2026-04-16 | Hono RPC — typed `hc<AppType>` client, routers refactored to chain form, `rpc.ts` in client     |
 | 2026-04-16 | Agent loop — one-shot processor, skill registry, dedup index, `/api/agent/*`, `llaab agent run` |
 | 2026-04-16 | LLM communication layer — real Anthropic + Ollama providers, task router, cache, `/api/llm/*`   |
 | 2026-04-16 | Vault browser write — `POST /api/vault/nodes`, `CreateIdeaPanel` island on nodes page           |
