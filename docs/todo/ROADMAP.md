@@ -29,21 +29,11 @@ _Nothing active right now — pick from P1._
 
 ## P1 — Next Up
 
-### CLI — First Commands
-
-Wire up the `@llaab/cli` binary with a command parser (commander or citty). Initial commands:
-`llaab ingest <url>` and `llaab vault list [--type]`. This validates that the skill layer works
-from a terminal context independently of the web client.
+_Nothing queued — pick from P2._
 
 ---
 
 ## P2 — Planned
-
-### CLI — First Commands
-
-Wire up the `@llaab/cli` binary with a command parser (commander or citty). Initial commands:
-`llaab ingest <url>` and `llaab vault list [--type]`. This validates that the skill layer works
-from a terminal context independently of the web client.
 
 ### LLM Communication Layer
 
@@ -106,6 +96,7 @@ RPC client. Full end-to-end type safety from server router definitions to React 
 
 | Date       | Item                                                                                           |
 | ---------- | ---------------------------------------------------------------------------------------------- |
+| 2026-04-16 | CLI — `llaab ingest <url>` and `llaab vault list [--type]` via citty                           |
 | 2026-04-16 | `apps/server` — Hono server + client migration (`api-client.ts`, remove skills/ingestion deps) |
 | 2026-04-16 | Taxonomy system — `autoTag`, `d:` tags, TagsInput on IngestForm, tag pills, skills doc         |
 | 2026-04-16 | Vault browser sub-pages — transcripts, nodes, runs list + run detail                           |
