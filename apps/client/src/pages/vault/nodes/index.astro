@@ -1,0 +1,245 @@
+---
+export const prerender = false;
+
+import { listNodes } from '@llaab/core';
+import type { LabNode } from '@llaab/schemas';
+import AppLayout from '../../../layouts/AppLayout.astro';
+
+// ── Auth gate ─────────────────────────────────────────────────────────────────
+
+const COOKIE_NAME = 'vault_key';
+const password = import.meta.env.VAULT_PASSWORD ?? 'llaab';
+const cookie = Astro.cookies.get(COOKIE_NAME);
+if (cookie?.value !== password) return Astro.redirect('/vault/login', 302);
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+
+// Show content nodes — ideas, resources, prompts, skills, instructions.
+// Excludes structural/trace types: transcript, source, run, decision.
+const CONTENT_TYPES = ['idea', 'resource', 'prompt', 'skill', 'instruction'] as const;
+
+const all = await listNodes();
+const nodes: LabNode[] = all
+  .filter((n) => (CONTENT_TYPES as readonly string[]).includes(n.type))
+  .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+const byType = Object.groupBy(nodes, (n) => n.type);
+---
+
+<AppLayout title="Nodes">
+  <div class="list-page">
+    <header class="list-page__header">
+      <p class="eyebrow">Vault</p>
+      <h1 class="list-page__heading">Nodes</h1>
+      <p class="list-page__count">{nodes.length} node{nodes.length !== 1 ? 's' : ''}</p>
+    </header>
+
+    {nodes.length === 0 && (
+      <p class="empty">No nodes yet. Ideas are captured during ingest or via the CLI.</p>
+    )}
+
+    {/* Type filter summary */}
+    {Object.entries(byType).length > 1 && (
+      <div class="type-summary">
+        {Object.entries(byType).map(([type, items]) => (
+          <span class="type-count">
+            <span class={`badge badge--${type}`}>{type}</span>
+            <span class="type-count__n">{items?.length ?? 0}</span>
+          </span>
+        ))}
+      </div>
+    )}
+
+    <ul class="node-list" role="list">
+      {nodes.map((node) => (
+        <li class="node-card">
+          <div class="node-card__meta">
+            <span class={`badge badge--${node.type}`}>{node.type}</span>
+            <span class={`badge badge--status badge--${node.status}`}>{node.status}</span>
+            <time class="node-card__date" datetime={node.createdAt}>
+              {new Date(node.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            </time>
+          </div>
+
+          <h2 class="node-card__title">{node.title}</h2>
+
+          {node.body && (
+            <p class="node-card__body">{node.body}</p>
+          )}
+
+          {node.tags.length > 0 && (
+            <div class="tag-row">
+              {node.tags.map((tag) => (
+                <span class="tag" data-tag={tag}>{tag}</span>
+              ))}
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
+  </div>
+</AppLayout>
+
+<style>
+  .list-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-width: 760px;
+  }
+
+  .list-page__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .list-page__heading {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .list-page__count {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+
+  .empty {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* ── Type summary ── */
+
+  .type-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+
+  .type-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .type-count__n {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-faint);
+  }
+
+  /* ── Node list ── */
+
+  .node-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .node-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .node-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .node-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .node-card__body {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .node-card__date {
+    font-size: 11px;
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    margin-left: auto;
+  }
+
+  /* ── Badges ── */
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    letter-spacing: 0.03em;
+    background: var(--surface-raised);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+  }
+
+  /* Node type colours */
+  .badge--idea        { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+  .badge--resource    { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+  .badge--prompt      { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
+  .badge--skill       { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
+  .badge--instruction { background: #fefce8; color: #ca8a04; border-color: #fef08a; }
+
+  /* Status colours */
+  .badge--status { border-radius: 4px; }
+  .badge--seed     { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); }
+  .badge--growing  { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
+  .badge--mature   { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+  .badge--archived { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); opacity: 0.6; }
+
+  /* ── Tag pills ── */
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    background: color-mix(in srgb, var(--tag-color, var(--accent)) 12%, transparent);
+    color: var(--tag-color, var(--accent));
+    border: 1px solid color-mix(in srgb, var(--tag-color, var(--accent)) 30%, transparent);
+  }
+
+  .tag[data-tag='d:llm']         { --tag-color: #3b82f6; }
+  .tag[data-tag='d:automation']  { --tag-color: #8b5cf6; }
+  .tag[data-tag='d:ingest']      { --tag-color: #f59e0b; }
+  .tag[data-tag='d:schema']      { --tag-color: #14b8a6; }
+  .tag[data-tag='d:infra']       { --tag-color: #6b7280; }
+  .tag[data-tag='d:integration'] { --tag-color: #f97316; }
+  .tag[data-tag='d:ui']          { --tag-color: #ec4899; }
+  .tag[data-tag='d:meta']        { --tag-color: #22c55e; }
+</style>

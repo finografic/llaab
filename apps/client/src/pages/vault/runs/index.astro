@@ -1,0 +1,212 @@
+---
+export const prerender = false;
+
+import { listNodes } from '@llaab/core';
+import type { RunNode } from '@llaab/schemas';
+import AppLayout from '../../../layouts/AppLayout.astro';
+
+// ── Auth gate ─────────────────────────────────────────────────────────────────
+
+const COOKIE_NAME = 'vault_key';
+const password = import.meta.env.VAULT_PASSWORD ?? 'llaab';
+const cookie = Astro.cookies.get(COOKIE_NAME);
+if (cookie?.value !== password) return Astro.redirect('/vault/login', 302);
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+
+const all = await listNodes({ type: 'run' });
+const runs = (all as RunNode[]).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+function fmtDuration(ms?: number): string {
+  if (ms == null) return '—';
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+---
+
+<AppLayout title="Runs">
+  <div class="list-page">
+    <header class="list-page__header">
+      <p class="eyebrow">Vault</p>
+      <h1 class="list-page__heading">Runs</h1>
+      <p class="list-page__count">{runs.length} run{runs.length !== 1 ? 's' : ''}</p>
+    </header>
+
+    {runs.length === 0 && (
+      <p class="empty">No runs yet. Runs are created when a skill executes.</p>
+    )}
+
+    {runs.length > 0 && (
+      <div class="table-wrap">
+        <table class="runs-table">
+          <thead>
+            <tr>
+              <th>Skill / Title</th>
+              <th>Status</th>
+              <th>Produced</th>
+              <th>Duration</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {runs.map((run) => (
+              <tr>
+                <td class="col-title">
+                  <a href={`/vault/runs/${run.id}`} class="run-link">{run.title}</a>
+                  {run.inputSummary && (
+                    <span class="run-input">{run.inputSummary}</span>
+                  )}
+                </td>
+                <td>
+                  <span class={`badge badge--${run.runStatus}`}>{run.runStatus}</span>
+                </td>
+                <td class="col-num">{run.producedNodeIds.length}</td>
+                <td class="col-mono">{fmtDuration(run.durationMs)}</td>
+                <td class="col-mono">
+                  <time datetime={run.createdAt}>
+                    {new Date(run.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </time>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</AppLayout>
+
+<style>
+  .list-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-width: 900px;
+  }
+
+  .list-page__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .list-page__heading {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .list-page__count {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+
+  .empty {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* ── Table ── */
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .runs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .runs-table th {
+    padding: var(--space-2) var(--space-4);
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-subtle);
+    white-space: nowrap;
+  }
+
+  .runs-table td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: top;
+    color: var(--text-muted);
+  }
+
+  .runs-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .runs-table tr:hover td {
+    background: var(--surface);
+  }
+
+  .col-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .run-link {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .run-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .run-input {
+    font-size: 11px;
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+  }
+
+  .col-num {
+    font-family: var(--font-mono);
+    text-align: right;
+    width: 80px;
+  }
+
+  .col-mono {
+    font-family: var(--font-mono);
+    white-space: nowrap;
+  }
+
+  /* ── Badges ── */
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    background: var(--surface-raised);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+    white-space: nowrap;
+  }
+
+  .badge--pending   { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); }
+  .badge--running   { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
+  .badge--completed { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+  .badge--failed    { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+  .badge--cancelled { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); opacity: 0.6; }
+</style>
