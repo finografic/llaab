@@ -6,6 +6,7 @@ import { auth } from './middlewares/auth.middleware.js';
 import { logger } from './middlewares/logger.middleware.js';
 import { indexRouter } from './routes/index.route.js';
 import { ingestRouter } from './routes/ingest/index.js';
+import { llmRouter } from './routes/llm/index.js';
 import { runsRouter } from './routes/runs/index.js';
 import { vaultRouter } from './routes/vault/index.js';
 
@@ -31,6 +32,7 @@ app.use(logger);
 app.route('/', indexRouter);
 app.use('/api/*', auth);
 app.route('/api/ingest', ingestRouter);
+app.route('/api/llm', llmRouter);
 app.route('/api/vault', vaultRouter);
 app.route('/api/runs', runsRouter);
 

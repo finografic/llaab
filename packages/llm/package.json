@@ -17,7 +17,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@llaab/schemas": "workspace:*"
+    "@anthropic-ai/sdk": "^0.90.0",
+    "@llaab/schemas": "workspace:*",
+    "ollama": "^0.6.3"
   },
   "devDependencies": {
     "@types/node": "^25.5.0"

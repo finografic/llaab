@@ -35,17 +35,6 @@ _Nothing queued — pick from P2._
 
 ## P2 — Planned
 
-### LLM Communication Layer
-
-Route all LLM calls through the `apps/server` API once it exists. Hono supports streaming
-(`c.streamText()`) natively. Cover both Anthropic and Ollama providers already in `@llaab/llm`.
-Expose endpoints the client and agents can call without importing provider SDKs directly.
-Task-based routing (trivial → local small, code → local mid, reasoning → remote API).
-
-Detail: [`docs/todo/TODO_LOCAL_LLM.md`](./TODO_LOCAL_LLM.md)
-
----
-
 ## P3 — Backlog / Ideas
 
 ### Migrate ESLint → oxlint
@@ -91,6 +80,7 @@ RPC client. Full end-to-end type safety from server router definitions to React 
 
 | Date       | Item                                                                                           |
 | ---------- | ---------------------------------------------------------------------------------------------- |
+| 2026-04-16 | LLM communication layer — real Anthropic + Ollama providers, task router, cache, `/api/llm/*`  |
 | 2026-04-16 | Vault browser write — `POST /api/vault/nodes`, `CreateIdeaPanel` island on nodes page          |
 | 2026-04-16 | CLI — `llaab ingest <url>` and `llaab vault list [--type]` via citty                           |
 | 2026-04-16 | `apps/server` — Hono server + client migration (`api-client.ts`, remove skills/ingestion deps) |

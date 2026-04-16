@@ -19,6 +19,7 @@
   "dependencies": {
     "@hono/zod-validator": "^0.4.3",
     "@llaab/core": "workspace:*",
+    "@llaab/llm": "workspace:*",
     "@llaab/schemas": "workspace:*",
     "@llaab/skills": "workspace:*",
     "hono": "^4.7.11",

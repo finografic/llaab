@@ -1,7 +1,7 @@
 # TODO — Terminal / Command Panel
 
-> **Status:** Not started. Depends on `apps/server` with WebSocket support.
-> Tertiary priority — implement after server and LLM layer exist.
+> **Status:** Not started. `apps/server` and LLM layer are now done — terminal is unblocked.
+> Tertiary priority — pick up after Agent Loop Infrastructure or as a parallel workstream.
 
 ---
 
@@ -38,16 +38,45 @@ packages/core (shared)
 
 ---
 
+## WS message envelopes
+
+Every message over the socket is wrapped — never raw command payloads.
+
+```ts
+// Client → Server
+interface CommandEnvelope {
+  type: 'command';
+  payload: {
+    id:      string;                               // client-assigned UUID
+    ts:      string;                               // ISO timestamp
+    source:  'terminal' | 'ui' | 'agent';          // who triggered this
+    command: Command;
+  };
+}
+
+// Server → Client
+interface OutputEnvelope {
+  type:  'event';
+  cmdId: string;                                   // correlates to CommandEnvelope.id
+  event: OutputEvent;
+}
+```
+
+---
+
 ## Command types (discriminated union)
 
 ```ts
 type Command =
-  | { kind: 'ai.run';     prompt: string; model?: string; context?: { files?: string[] } }
+  | { kind: 'ai.run';     task: TaskType; prompt: string; model?: string; context?: { files?: string[] } }
   | { kind: 'fs.read';    path: string }
   | { kind: 'fs.list';    path: string }
   | { kind: 'agent.run';  agentId: string; input?: unknown }
   | { kind: 'shell.exec'; cmd: string; cwd?: string }   // gated by capability
 ```
+
+`task` on `ai.run` maps directly to `TaskType` in `@llaab/llm` — the LLM adapter calls the
+same `routeLlm` / `streamLlm` that the HTTP endpoints use. No parallel LLM logic.
 
 ---
 
@@ -56,6 +85,7 @@ type Command =
 ```ts
 type OutputEvent =
   | { type: 'stdout'; data: string }
+  | { type: 'stderr'; data: string }
   | { type: 'token';  data: string }         // LLM token stream
   | { type: 'meta';   data: unknown }        // structured data (file links, progress)
   | { type: 'done';   code: number }
@@ -77,6 +107,22 @@ not just raw text.
 
 ---
 
+## LLM layer integration
+
+The `LlmAdapter` is not a separate LLM implementation — it's a thin dispatch to `@llaab/llm`:
+
+```
+Terminal: ai.run { task: 'extract', prompt: '...' }
+   → LlmAdapter.handle()
+   → streamLlm('extract', prompt)       ← same fn as POST /api/llm/stream
+   → yield { type: 'token', data: '...' }
+```
+
+This means: any model config, routing rules, or cache behaviour applied to HTTP LLM calls
+automatically applies to terminal `ai.run` commands too — one source of truth.
+
+---
+
 ## UI features (power-user tier)
 
 - **Command injection API** — UI clicks a file → `insertCommand('fs.read ./vault/nodes/...')`
@@ -84,6 +130,9 @@ not just raw text.
 - **Autocomplete** — command kinds, file paths from vault index, known agent IDs
 - **Structured output rendering** — `meta` events render as clickable pills, not raw JSON
 - **Split output modes** — raw text / structured / JSON debug (toggle)
+- **Dry-run mode** — append `--dry` to any command: shows what would execute without running it
+- **Replay** — re-run any previous command by ID; deterministic because commands are typed, not strings
+- **Multi-pane** — one terminal instance per agent run (Phase 3+); each pane tracks its `cmdId` stream
 
 ---
 

@@ -1,5 +1,5 @@
 import { execute } from '@llaab/control';
-import { summarizeText } from '@llaab/llm';
+import { routeLlm } from '@llaab/llm';
 import { z } from 'zod';
 import type { ControlDecision, ControlLlmTrace, ControlStage } from '@llaab/control';
 
@@ -42,12 +42,12 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
     },
     model: 'ollama',
     run: async () => {
-      const summary = await summarizeText(input);
+      const { text } = await routeLlm('extract', input);
 
       return {
         ideas: [],
         skills: [],
-        summary,
+        summary: text,
       };
     },
   });

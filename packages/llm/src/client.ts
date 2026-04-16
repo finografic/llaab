@@ -1,11 +1,12 @@
-import { summarizeWithAnthropic } from './providers/anthropic.js';
-import { summarizeWithOllama } from './providers/ollama.js';
+import { anthropicComplete } from './providers/anthropic.js';
+import { ollamaComplete } from './providers/ollama.js';
 
 export type LlmProvider = 'ollama' | 'anthropic';
 
 export async function summarizeText(input: string, provider: LlmProvider = 'ollama'): Promise<string> {
+  const opts = { model: provider === 'anthropic' ? 'claude-sonnet-4-6' : 'llama3.1:8b' };
   if (provider === 'anthropic') {
-    return summarizeWithAnthropic(input);
+    return anthropicComplete(input, opts);
   }
-  return summarizeWithOllama(input);
+  return ollamaComplete(input, opts);
 }
