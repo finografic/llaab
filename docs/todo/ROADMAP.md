@@ -69,13 +69,6 @@ Scope TBD pending research into Karpathy Pattern's data format requirements.
 new content appears. Agent loop registry already has the slot reserved (commented out).
 Trigger: `llaab agent run` or `POST /api/agent/run` on a user-controlled schedule.
 
-### MCP Server
-
-Expose LLAAB vault as an MCP server on `apps/server` so external tools (Claude Code, Cline,
-OpenCode, t3code) can read vault nodes as first-class context. Highest-leverage integration
-play — one server, all clients. Low effort: vault API already exists, MCP is just a protocol
-wrapper using `@modelcontextprotocol/sdk`. Resources = vault nodes, tools = search + list.
-
 ### Library Watch
 
 Track npm packages, frameworks, Homebrew tools, and other ecosystem dependencies as a new
@@ -92,6 +85,7 @@ Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
 
 | Date       | Item                                                                                            |
 | ---------- | ----------------------------------------------------------------------------------------------- |
+| 2026-04-16 | MCP server — `llaab mcp` stdio command, vault resources + vault_list/vault_read tools           |
 | 2026-04-16 | Hono RPC — typed `hc<AppType>` client, routers refactored to chain form, `rpc.ts` in client     |
 | 2026-04-16 | Agent loop — one-shot processor, skill registry, dedup index, `/api/agent/*`, `llaab agent run` |
 | 2026-04-16 | LLM communication layer — real Anthropic + Ollama providers, task router, cache, `/api/llm/*`   |
