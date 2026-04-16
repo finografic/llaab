@@ -1,13 +1,15 @@
 /**
  * Thin fetch wrapper for @llaab/server.
  *
- * | Config      | Default (dev)             | Override via           |
- * | ----------- | ------------------------- | ---------------------- |
- * | Base URL    | http://localhost:3000     | SERVER_URL env var     |
- * | Auth header | (none — key not required) | SERVER_API_KEY env var |
+ * In dev, Vite proxies /api/* → SERVER_URL (apps/server). The client always fetches relative paths so no
+ * cross-origin setup is needed in the browser.
+ *
+ * | Config       | Default (dev)             | Override via           |
+ * | ------------ | ------------------------- | ---------------------- |
+ * | Proxy target | http://localhost:3000     | SERVER_URL env var     |
+ * | Auth header  | (none — key not required) | SERVER_API_KEY env var |
  */
 
-const BASE_URL: string = (import.meta.env['SERVER_URL'] as string | undefined) ?? 'http://localhost:3000';
 const API_KEY: string | undefined = import.meta.env['SERVER_API_KEY'] as string | undefined;
 
 function buildHeaders(): Headers {
@@ -18,7 +20,7 @@ function buildHeaders(): Headers {
 }
 
 export async function apiGet<T = unknown>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(path, {
     headers: buildHeaders(),
   });
   if (!res.ok) {
@@ -29,7 +31,7 @@ export async function apiGet<T = unknown>(path: string): Promise<T> {
 }
 
 export async function apiPost<T = unknown>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(path, {
     method: 'POST',
     headers: buildHeaders(),
     body: JSON.stringify(body),
