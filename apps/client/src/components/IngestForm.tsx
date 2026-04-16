@@ -2,6 +2,8 @@ import { TagsInputDS } from '@finografic/design-system/forms';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { apiPost } from '../lib/api-client';
+
 // ── Tag helpers ───────────────────────────────────────────────────────────────
 
 const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
@@ -59,15 +61,15 @@ export function IngestForm() {
     const pendingTag = tagInput.trim() ? normalizeTag(tagInput) : null;
     const allTags = pendingTag ? [...new Set([...tags, pendingTag])] : tags;
 
-    const res = await fetch('/api/ingest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, tags: allTags }),
-    });
+    let json: ApiResponse;
+    try {
+      json = await apiPost<ApiResponse>('/api/ingest/youtube', { url, tags: allTags });
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : 'Ingestion failed.');
+      return;
+    }
 
-    const json: ApiResponse = await res.json();
-
-    if (!res.ok || !json.success) {
+    if (!json.success) {
       setApiError(json.error ?? 'Ingestion failed.');
       return;
     }

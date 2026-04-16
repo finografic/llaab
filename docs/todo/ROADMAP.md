@@ -29,13 +29,11 @@ _Nothing active right now — pick from P1._
 
 ## P1 — Next Up
 
-### `apps/server` — Hono API Server
+### CLI — First Commands
 
-Dedicated Hono server for all vault I/O, skill execution, and future agent coordination.
-Decouples business logic from Astro's UI layer so skills can be triggered from CLI, agents, and
-other clients — not only the browser.
-
-Detail: [`docs/todo/TODO_APP_SERVER.md`](./TODO_APP_SERVER.md)
+Wire up the `@llaab/cli` binary with a command parser (commander or citty). Initial commands:
+`llaab ingest <url>` and `llaab vault list [--type]`. This validates that the skill layer works
+from a terminal context independently of the web client.
 
 ---
 
@@ -106,16 +104,17 @@ RPC client. Full end-to-end type safety from server router definitions to React 
 
 ## Done
 
-| Date       | Item                                                                                   |
-| ---------- | -------------------------------------------------------------------------------------- |
-| 2026-04-16 | Taxonomy system — `autoTag`, `d:` tags, TagsInput on IngestForm, tag pills, skills doc |
-| 2026-04-16 | Vault browser sub-pages — transcripts, nodes, runs list + run detail                   |
-| 2026-04-16 | Fix web ingest — route through `ingestYouTube` skill to produce `RunNode`              |
-| 2026-04-15 | Rename `apps/web` → `apps/client`, `@llaab/web` → `@llaab/client`                      |
-| 2026-04-15 | `AppLayout` — sidebar shell, `NavbarVertical`, `AppHeader`, `AppFooter`                |
-| 2026-04-15 | Fix vault path resolution — `vault-root.ts` anchored to `import.meta.url`              |
-| 2026-04-15 | YouTube transcript fix — VTT format, trailing trim, word-level dedup                   |
-| 2026-04-13 | Ingest form, gated vault browser, Panda CSS, DS components wired                       |
-| 2026-04-08 | `@llaab/control`, `runSkill`, `RunNode` persistence, decision traces                   |
-| 2026-04-04 | Schema split, `createNode`, `listNodes`, `captureIdea` skill                           |
-| 2026-03-30 | Monorepo genesis — all packages scaffolded, lint, typecheck green                      |
+| Date       | Item                                                                                           |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| 2026-04-16 | `apps/server` — Hono server + client migration (`api-client.ts`, remove skills/ingestion deps) |
+| 2026-04-16 | Taxonomy system — `autoTag`, `d:` tags, TagsInput on IngestForm, tag pills, skills doc         |
+| 2026-04-16 | Vault browser sub-pages — transcripts, nodes, runs list + run detail                           |
+| 2026-04-16 | Fix web ingest — route through `ingestYouTube` skill to produce `RunNode`                      |
+| 2026-04-15 | Rename `apps/web` → `apps/client`, `@llaab/web` → `@llaab/client`                              |
+| 2026-04-15 | `AppLayout` — sidebar shell, `NavbarVertical`, `AppHeader`, `AppFooter`                        |
+| 2026-04-15 | Fix vault path resolution — `vault-root.ts` anchored to `import.meta.url`                      |
+| 2026-04-15 | YouTube transcript fix — VTT format, trailing trim, word-level dedup                           |
+| 2026-04-13 | Ingest form, gated vault browser, Panda CSS, DS components wired                               |
+| 2026-04-08 | `@llaab/control`, `runSkill`, `RunNode` persistence, decision traces                           |
+| 2026-04-04 | Schema split, `createNode`, `listNodes`, `captureIdea` skill                                   |
+| 2026-03-30 | Monorepo genesis — all packages scaffolded, lint, typecheck green                              |

@@ -1,8 +1,6 @@
 # TODO — `apps/server` (Hono)
 
-> **Status:** Not started — planning doc only.
-> Current API routes live in `apps/client/src/pages/api/`. They work for now. This migration
-> happens when the skill/agent layer outgrows what Astro's API routes can reasonably own.
+> **Status:** Complete — server scaffolded, client migrated.
 
 ---
 
@@ -231,15 +229,14 @@ Hono supports streaming responses natively via `c.streamText()` — no extra ada
 
 ## Client Migration Checklist
 
-When `apps/server` is ready, the client migration is:
-
-- [ ] Add `SERVER_URL` to `.env` and `astro.config.ts` env schema
-- [ ] Create `src/lib/api-client.ts` — base fetch wrapper or Hono RPC client
-- [ ] Update `IngestForm.tsx` to call `SERVER_URL/api/ingest/youtube` instead of `/api/ingest`
-- [ ] Delete `apps/client/src/pages/api/ingest.ts`
-- [ ] Delete `apps/client/src/pages/api/vault/` (file + auth routes) once vault routes migrate
-- [ ] Remove `@llaab/skills` and `@llaab/ingestion` from `apps/client/package.json`
-- [ ] Keep `apps/client/src/pages/vault/login.astro` + auth cookie — this is UI-specific and stays
+- [x] Add `SERVER_URL` + `SERVER_API_KEY` to root `.env` / `.env.example`
+- [x] Create `src/lib/api-client.ts` — `apiGet` / `apiPost` wrappers with `X-API-Key` header
+- [x] Update `IngestForm.tsx` — calls `POST /api/ingest/youtube` via `apiPost`
+- [x] Update `VaultBrowser.tsx` — calls `GET /api/vault/file?path=` via `apiGet`
+- [x] Delete `apps/client/src/pages/api/ingest.ts`
+- [x] Delete `apps/client/src/pages/api/vault/file.ts`
+- [x] Remove `@llaab/skills` and `@llaab/ingestion` from `apps/client/package.json`
+- [x] `apps/client/src/pages/api/vault/auth.ts` — kept (cookie-based vault login is UI-specific)
 
 ---
 

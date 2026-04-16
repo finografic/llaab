@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { apiGet } from '../lib/api-client';
+
 export interface VaultNode {
   name: string;
   path: string;
@@ -85,15 +87,10 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`/api/vault/file?path=${encodeURIComponent(path)}`);
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error ?? 'Failed to load file.');
-      } else {
-        setContent(json.content);
-      }
+      const json = await apiGet<{ content: string }>(`/api/vault/file?path=${encodeURIComponent(path)}`);
+      setContent(json.content);
     } catch (err) {
-      setError(String(err));
+      setError(err instanceof Error ? err.message : 'Failed to load file.');
     } finally {
       setLoading(false);
     }
