@@ -35,6 +35,12 @@ _Nothing queued — pick from P2._
 
 ## P2 — Planned
 
+### `@llaab/client` — Hono RPC Integration
+
+Replace plain `fetch` calls in `api-client.ts` with Hono's typed RPC client. Full end-to-end
+type safety from server router definitions to React components — automatically covers all new
+routes added going forward. Do before the Terminal Panel while call-site count is still small.
+
 ### Terminal / Command Panel
 
 Typed command bus (WS) + xterm.js UI. Not a shell — a controlled execution surface for vault
@@ -55,20 +61,25 @@ expands significantly.
 
 Detail: [`docs/todo/TODO_OXLINT_MIGRATION.md`](./TODO_OXLINT_MIGRATION.md)
 
-### Vault Graph View
+### Karpathy Pattern — Vault Graph Integration
 
-Visualise relationships between vault nodes — source → transcript → idea → skill lineage. Likely
-a React island using a lightweight graph library. Read-only to start.
+Andrej Karpathy's knowledge graph visualization is a purpose-built, battle-tested graph view.
+Integrate it with LLAAB's vault rather than building a custom React island from scratch.
+LLAAB's vault exposes node relationships (source → transcript → idea → skill lineage) via
+`listNodes` + `GET /api/vault/nodes` — the integration surface is an export/adapter, not a UI.
+Scope TBD pending research into Karpathy Pattern's data format requirements.
 
 ### Source Auto-Follow
 
 `SourceNode` has a `follow` field. Build a scheduled job that re-ingests followed sources when
-new content appears. Depends on `apps/server` and the agent loop infrastructure.
+new content appears. Agent loop registry already has the slot reserved (commented out).
+Trigger: `llaab agent run` or `POST /api/agent/run` on a user-controlled schedule.
 
-### `@llaab/client` — Hono RPC Integration
+### MCP Server
 
-Once `apps/server` exists, optionally replace plain `fetch` calls in the client with Hono's typed
-RPC client. Full end-to-end type safety from server router definitions to React components.
+Expose LLAAB vault as an MCP server on `apps/server` so external tools (Claude Code, Cline,
+OpenCode, t3code) can read vault nodes as first-class context. Highest-leverage integration
+play — one server, all clients.
 
 ---
 
