@@ -4,6 +4,7 @@ export const prerender = false;
 import { listNodes } from '@llaab/core';
 import type { LabNode } from '@llaab/schemas';
 import AppLayout from '../../../layouts/AppLayout.astro';
+import { CreateIdeaPanel } from '../../../components/CreateIdeaPanel';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 
@@ -29,13 +30,18 @@ const byType = Object.groupBy(nodes, (n) => n.type);
 <AppLayout title="Nodes">
   <div class="list-page">
     <header class="list-page__header">
-      <p class="eyebrow">Vault</p>
-      <h1 class="list-page__heading">Nodes</h1>
-      <p class="list-page__count">{nodes.length} node{nodes.length !== 1 ? 's' : ''}</p>
+      <div class="list-page__title-row">
+        <div>
+          <p class="eyebrow">Vault</p>
+          <h1 class="list-page__heading">Nodes</h1>
+          <p class="list-page__count">{nodes.length} node{nodes.length !== 1 ? 's' : ''}</p>
+        </div>
+        <CreateIdeaPanel client:only="react" />
+      </div>
     </header>
 
     {nodes.length === 0 && (
-      <p class="empty">No nodes yet. Ideas are captured during ingest or via the CLI.</p>
+      <p class="empty">No nodes yet. Use the button above or ingest a video to get started.</p>
     )}
 
     {/* Type filter summary */}
@@ -92,6 +98,13 @@ const byType = Object.groupBy(nodes, (n) => n.type);
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+  }
+
+  .list-page__title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
   }
 
   .list-page__heading {
@@ -242,4 +255,86 @@ const byType = Object.groupBy(nodes, (n) => n.type);
   .tag[data-tag='d:integration'] { --tag-color: #f97316; }
   .tag[data-tag='d:ui']          { --tag-color: #ec4899; }
   .tag[data-tag='d:meta']        { --tag-color: #22c55e; }
+
+  /* ── CreateIdeaPanel (client:only island) ── */
+
+  :global(.create-idea-panel) {
+    padding: var(--space-5);
+    margin-bottom: var(--space-2);
+    max-width: 520px;
+  }
+
+  :global(.create-idea-panel__header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+
+  :global(.create-idea-panel__title) {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  :global(.create-idea-panel__close) {
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 6px;
+    line-height: 1;
+  }
+
+  :global(.create-idea-panel__close:hover) {
+    color: var(--text-muted);
+  }
+
+  :global(.create-idea-form) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  :global(.create-idea-form textarea) {
+    resize: vertical;
+    min-height: 80px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+  }
+
+  :global(.create-idea-form__actions) {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  :global(.tag-suggestions) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: calc(var(--space-1) * -1);
+  }
+
+  :global(.tag-suggestion) {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color var(--duration) var(--ease), border-color var(--duration) var(--ease),
+      background var(--duration) var(--ease);
+  }
+
+  :global(.tag-suggestion:hover) {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+  }
 </style>

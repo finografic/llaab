@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
-import { getNodeFilePath, listNodes, VAULT_ROOT } from '@llaab/core';
+import { createNode, getNodeFilePath, listNodes, VAULT_ROOT } from '@llaab/core';
 import { StatusCodes } from 'http-status-codes';
-import type { ListNodesQuery } from './vault.routes.js';
+import type { CreateNodeBody, ListNodesQuery } from './vault.routes.js';
 import type { Context } from 'hono';
 
 export async function handleListNodes(c: Context) {
@@ -40,4 +40,23 @@ export async function handleGetNodeRaw(c: Context) {
 
   const content = await readFile(filePath, 'utf-8');
   return c.text(content);
+}
+
+export async function handleCreateNode(c: Context) {
+  const body = c.req.valid('json' as never) as CreateNodeBody;
+
+  try {
+    const { id, path, node } = await createNode({
+      type: body.type,
+      title: body.title,
+      body: body.body,
+      tags: body.tags,
+    });
+    return c.json({ id, path, type: node.type }, StatusCodes.CREATED);
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('already exists')) {
+      return c.json({ error: 'A node with that title already exists.' }, StatusCodes.CONFLICT);
+    }
+    return c.json({ error: 'Failed to create node.' }, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
 }

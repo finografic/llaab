@@ -16,3 +16,12 @@ export const listNodesQuerySchema = z.object({
 });
 
 export type ListNodesQuery = z.infer<typeof listNodesQuerySchema>;
+
+export const createNodeBodySchema = z.object({
+  type: z.literal('idea'),
+  title: z.string().min(1, 'Title is required'),
+  body: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export type CreateNodeBody = z.infer<typeof createNodeBodySchema>;
