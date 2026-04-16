@@ -84,4 +84,36 @@ import { IngestForm } from '../components/IngestForm';
     opacity: 0.5;
     cursor: not-allowed;
   }
+
+  /* Tag suggestion dropdown */
+  :global(.tag-suggestions) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: calc(var(--space-1) * -1);
+  }
+
+  :global(.tag-suggestion) {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition:
+      color var(--duration) var(--ease),
+      border-color var(--duration) var(--ease),
+      background var(--duration) var(--ease);
+  }
+
+  :global(.tag-suggestion:hover) {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+  }
 </style>

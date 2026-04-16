@@ -4,22 +4,22 @@ import type { APIRoute } from 'astro';
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
-  let body: { url?: string };
+  let body: { url?: string; tags?: string[] };
 
   try {
-    body = (await request.json()) as { url?: string };
+    body = (await request.json()) as { url?: string; tags?: string[] };
   } catch {
     return json({ success: false, error: 'Invalid request body.' }, 400);
   }
 
-  const { url } = body;
+  const { url, tags } = body;
 
   if (!url?.trim()) {
     return json({ success: false, error: '`url` is required.' }, 400);
   }
 
   try {
-    const { record, result } = await ingestYouTube({ url: url.trim() });
+    const { record, result } = await ingestYouTube({ url: url.trim(), tags });
 
     if (record.status === 'failed') {
       return json({ success: false, error: record.error ?? 'Ingestion failed.' }, 500);

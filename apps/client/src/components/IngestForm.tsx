@@ -1,5 +1,21 @@
+import { TagsInputDS } from '@finografic/design-system/forms';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+// ── Tag helpers ───────────────────────────────────────────────────────────────
+
+const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
+const KNOWN_TAGS = KNOWN_DOMAINS.map((d) => `d:${d}`);
+
+/** Auto-prefix bare domain names: "llm" → "d:llm". Pass-through anything else as-is. */
+function normalizeTag(raw: string): string {
+  const trimmed = raw.trim().toLowerCase();
+  if (trimmed.startsWith('d:')) return trimmed;
+  if (KNOWN_DOMAINS.includes(trimmed)) return `d:${trimmed}`;
+  return trimmed;
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface FormValues {
   url: string;
@@ -20,7 +36,11 @@ interface ApiResponse {
 
 const YOUTUBE_URL_PATTERN = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/;
 
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export function IngestForm() {
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [result, setResult] = useState<IngestResult | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -35,10 +55,14 @@ export function IngestForm() {
     setResult(null);
     setApiError(null);
 
+    // Normalize any pending tag in the input field before submitting
+    const pendingTag = tagInput.trim() ? normalizeTag(tagInput) : null;
+    const allTags = pendingTag ? [...new Set([...tags, pendingTag])] : tags;
+
     const res = await fetch('/api/ingest', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, tags: allTags }),
     });
 
     const json: ApiResponse = await res.json();
@@ -49,10 +73,20 @@ export function IngestForm() {
     }
 
     setResult(json.result ?? null);
+    setTags([]);
+    setTagInput('');
     reset();
   };
 
   const filename = result?.path.split('/').pop();
+
+  // Suggestions: known tags not already added, filtered by current input
+  const suggestions = KNOWN_TAGS.filter((t) => {
+    if (tags.includes(t)) return false;
+    if (!tagInput) return true;
+    const normalized = normalizeTag(tagInput);
+    return t.includes(normalized) || t.includes(tagInput.toLowerCase());
+  });
 
   return (
     <div className="ingest-form">
@@ -81,6 +115,41 @@ export function IngestForm() {
           </div>
           {errors.url && <span className="field-error">{errors.url.message}</span>}
         </div>
+
+        <TagsInputDS
+          size="sm"
+          label="Tags (optional)"
+          description="Domain tags — e.g. d:llm, d:automation. Type a name to see suggestions."
+          placeholder="d:llm"
+          value={tags}
+          onChange={setTags}
+          onInputValueChange={setTagInput}
+          disabled={isSubmitting}
+          validate={({ inputValue }) => {
+            const norm = normalizeTag(inputValue);
+            return norm.startsWith('d:') && norm.length > 2;
+          }}
+        />
+
+        {tagInput && suggestions.length > 0 && (
+          <div className="tag-suggestions">
+            {suggestions.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className="tag-suggestion"
+                onMouseDown={(e) => {
+                  // mousedown fires before input blur — prevent blur before click registers
+                  e.preventDefault();
+                  setTags((prev) => [...new Set([...prev, s])]);
+                  setTagInput('');
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </form>
 
       {result && (

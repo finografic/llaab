@@ -1,6 +1,6 @@
 # TODO — Taxonomy System
 
-> **Status:** Core logic complete. UI layer and tag colors pending.
+> **Status:** Complete.
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## Remaining work
 
-### 1. TagsInput UI on Ingest Form
+### 1. TagsInput UI on Ingest Form ✓
 
 Wire the `TagsInput` component from `@finografic/design-system` (Ark UI) into `IngestForm.tsx`
 so users can add manual tags before submitting. Auto-inferred tags are added server-side; this
@@ -39,7 +39,7 @@ input collects explicit overrides/additions.
 
 ---
 
-### 2. Tag display on Vault / node cards
+### 2. Tag display on Vault / node cards ✓
 
 Show domain tags as colored pills on:
 
@@ -70,7 +70,7 @@ Simplest first cut: render all tags solid (no origin distinction) until the spli
 
 ---
 
-### 3. Normalize tag input (optional, polish)
+### 3. Normalize tag input ✓
 
 If a user types `llm` instead of `d:llm` in the TagsInput, auto-prefix it on submit.
 This makes the UI friendlier without requiring users to know the prefix convention.
@@ -80,7 +80,7 @@ and the value matches a known domain name.
 
 ---
 
-### 4. Place `04_IDEAS_TO_SKILLS.md` in `@llaab/skills`
+### 4. Place `04_IDEAS_TO_SKILLS.md` in `@llaab/skills` ✓
 
 The updated doc is ready at `.claude/assets/taxonomy-files-updated/04_IDEAS_TO_SKILLS.md` —
 it already has the correct 8-tag `d:` table and updated `captureIdea` example. Just needs to
