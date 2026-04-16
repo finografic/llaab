@@ -1,4 +1,4 @@
-import { createNode, getNodeFilePath, listNodes } from '@llaab/core';
+import { autoTag, createNode, getNodeFilePath, listNodes } from '@llaab/core';
 import {
   appendDatetimeFilenameSegment,
   formatIsoUtcForTranscriptBody,
@@ -131,7 +131,7 @@ async function createResourceNode(
     type: 'resource',
     title: input.title?.trim() || 'Untitled resource',
     body: content,
-    tags: [...(input.tags ?? []), 'ingested', resourceType],
+    tags: [...new Set(['d:ingest', ...autoTag(input.title?.trim() ?? '', ''), ...(input.tags ?? [])])],
     extra: {
       url: input.url,
       resourceType,
@@ -252,7 +252,9 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     ...(idWhenUntitled !== undefined ? { id: idWhenUntitled } : {}),
     title: transcriptTitle,
     body: transcriptBody,
-    tags: [...(input.tags ?? []), 'ingested', 'youtube'],
+    tags: [
+      ...new Set(['d:ingest', ...autoTag(transcriptTitle, extracted.summary ?? ''), ...(input.tags ?? [])]),
+    ],
     extra: {
       sourceId,
       sourceItemId: captured.videoId,
@@ -281,7 +283,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     const sourceResult = await createNode({
       type: 'source',
       title: fetched.channel,
-      tags: ['youtube', 'channel'],
+      tags: [],
       extra: {
         sourceKind: 'channel',
         url: fetched.channelUrl ?? `https://www.youtube.com/@${fetched.channel.replace(/\s+/g, '')}`,

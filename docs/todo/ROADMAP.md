@@ -23,7 +23,13 @@ When an item is done, move it to the Done section at the bottom with a completio
 
 ## P0 — Active
 
-_Nothing active. Pick from P1._
+### Taxonomy System — Tag UI + Display
+
+Core logic is complete (`autoTag` in `@llaab/core`, `d:` prefixed tags applied during ingest
+and idea capture). Remaining: `TagsInput` on `IngestForm`, colored tag pills on vault/node
+cards, and updating the skills package doc.
+
+Detail: [`docs/todo/TODO_TAXONOMY.md`](./TODO_TAXONOMY.md)
 
 ---
 
@@ -58,6 +64,9 @@ from a terminal context independently of the web client.
 Route all LLM calls through the `apps/server` API once it exists. Hono supports streaming
 (`c.streamText()`) natively. Cover both Anthropic and Ollama providers already in `@llaab/llm`.
 Expose endpoints the client and agents can call without importing provider SDKs directly.
+Task-based routing (trivial → local small, code → local mid, reasoning → remote API).
+
+Detail: [`docs/todo/TODO_LOCAL_LLM.md`](./TODO_LOCAL_LLM.md)
 
 ### Vault Browser — Write Capability
 
@@ -82,6 +91,14 @@ a React island using a lightweight graph library. Read-only to start.
 
 `SourceNode` has a `follow` field. Build a scheduled job that re-ingests followed sources when
 new content appears. Depends on `apps/server` and the agent loop infrastructure.
+
+### Terminal / Command Panel
+
+Typed command bus (WS) + xterm.js UI. Not a shell — a controlled execution surface for vault
+ops, LLM calls, and agent runs. Gated shell adapter as opt-in power-user mode.
+Depends on `apps/server` + LLM layer.
+
+Detail: [`docs/todo/TODO_TERMINAL_PANEL.md`](./TODO_TERMINAL_PANEL.md)
 
 ### `@llaab/client` — Hono RPC Integration
 

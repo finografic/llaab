@@ -1,23 +1,11 @@
 import { appendFile, mkdir, stat, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { createNode, VAULT_ROOT } from '@llaab/core';
+import { autoTag, createNode, VAULT_ROOT } from '@llaab/core';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const INBOX_FILE = join(VAULT_ROOT, 'INBOX.md');
-const AUTO_TAG_PATTERNS: Array<[string, RegExp]> = [
-  ['llm', /\b(llm|gpt|claude|ollama|anthropic|model|prompt)\b/i],
-  ['automation', /\b(agent|autonomous|workflow|automation|pipeline)\b/i],
-  ['ingestion', /\b(ingest|ingestion|transcript|youtube)\b/i],
-  ['schema', /\b(schema|zod|validation|type)\b/i],
-  ['tooling', /\b(cli|terminal|command|script|bash)\b/i],
-  ['integration', /\b(mcp|cursor|tauri|astro|integration)\b/i],
-  ['ui', /\b(ui|frontend|component|layout|design)\b/i],
-  ['graph', /\b(graph|link|relationship|connection)\b/i],
-  ['execution', /\b(skill|execute|run)\b/i],
-  ['meta', /\b(llaab|lab|self-referential|meta)\b/i],
-];
 
 // ─── Inbox ────────────────────────────────────────────────────────────────────
 
@@ -35,13 +23,6 @@ async function appendToInbox(title: string, id: string, tags: string[]): Promise
   }
 
   await appendFile(INBOX_FILE, line, 'utf-8');
-}
-
-// ─── Auto-tagging ─────────────────────────────────────────────────────────────
-
-function autoTag(title: string, body: string): string[] {
-  const text = `${title} ${body}`;
-  return AUTO_TAG_PATTERNS.filter(([, pattern]) => pattern.test(text)).map(([tag]) => tag);
 }
 
 // ─── Capture Idea ─────────────────────────────────────────────────────────────
