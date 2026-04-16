@@ -51,6 +51,7 @@ packages/web/dist/
 
 # Vault scratch
 vault/.tmp/
+vault/.agent-loop/
 
 # Large local model binaries
 *.gguf

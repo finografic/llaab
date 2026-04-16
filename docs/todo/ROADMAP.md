@@ -35,13 +35,6 @@ _Nothing queued — pick from P2._
 
 ## P2 — Planned
 
-### Agent Loop Infrastructure
-
-Background agent that monitors the vault, triggers skills on new nodes, and persists `RunNode`
-traces. Needs `apps/server` in place first. Trigger mechanism TBD (HTTP, file watch, cron).
-
-Detail: [`docs/todo/TODO_AGENT_LOOP.md`](./TODO_AGENT_LOOP.md)
-
 ### Terminal / Command Panel
 
 Typed command bus (WS) + xterm.js UI. Not a shell — a controlled execution surface for vault
@@ -81,20 +74,21 @@ RPC client. Full end-to-end type safety from server router definitions to React 
 
 ## Done
 
-| Date       | Item                                                                                           |
-| ---------- | ---------------------------------------------------------------------------------------------- |
-| 2026-04-16 | LLM communication layer — real Anthropic + Ollama providers, task router, cache, `/api/llm/*`  |
-| 2026-04-16 | Vault browser write — `POST /api/vault/nodes`, `CreateIdeaPanel` island on nodes page          |
-| 2026-04-16 | CLI — `llaab ingest <url>` and `llaab vault list [--type]` via citty                           |
-| 2026-04-16 | `apps/server` — Hono server + client migration (`api-client.ts`, remove skills/ingestion deps) |
-| 2026-04-16 | Taxonomy system — `autoTag`, `d:` tags, TagsInput on IngestForm, tag pills, skills doc         |
-| 2026-04-16 | Vault browser sub-pages — transcripts, nodes, runs list + run detail                           |
-| 2026-04-16 | Fix web ingest — route through `ingestYouTube` skill to produce `RunNode`                      |
-| 2026-04-15 | Rename `apps/web` → `apps/client`, `@llaab/web` → `@llaab/client`                              |
-| 2026-04-15 | `AppLayout` — sidebar shell, `NavbarVertical`, `AppHeader`, `AppFooter`                        |
-| 2026-04-15 | Fix vault path resolution — `vault-root.ts` anchored to `import.meta.url`                      |
-| 2026-04-15 | YouTube transcript fix — VTT format, trailing trim, word-level dedup                           |
-| 2026-04-13 | Ingest form, gated vault browser, Panda CSS, DS components wired                               |
-| 2026-04-08 | `@llaab/control`, `runSkill`, `RunNode` persistence, decision traces                           |
-| 2026-04-04 | Schema split, `createNode`, `listNodes`, `captureIdea` skill                                   |
-| 2026-03-30 | Monorepo genesis — all packages scaffolded, lint, typecheck green                              |
+| Date       | Item                                                                                            |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| 2026-04-16 | Agent loop — one-shot processor, skill registry, dedup index, `/api/agent/*`, `llaab agent run` |
+| 2026-04-16 | LLM communication layer — real Anthropic + Ollama providers, task router, cache, `/api/llm/*`   |
+| 2026-04-16 | Vault browser write — `POST /api/vault/nodes`, `CreateIdeaPanel` island on nodes page           |
+| 2026-04-16 | CLI — `llaab ingest <url>` and `llaab vault list [--type]` via citty                            |
+| 2026-04-16 | `apps/server` — Hono server + client migration (`api-client.ts`, remove skills/ingestion deps)  |
+| 2026-04-16 | Taxonomy system — `autoTag`, `d:` tags, TagsInput on IngestForm, tag pills, skills doc          |
+| 2026-04-16 | Vault browser sub-pages — transcripts, nodes, runs list + run detail                            |
+| 2026-04-16 | Fix web ingest — route through `ingestYouTube` skill to produce `RunNode`                       |
+| 2026-04-15 | Rename `apps/web` → `apps/client`, `@llaab/web` → `@llaab/client`                               |
+| 2026-04-15 | `AppLayout` — sidebar shell, `NavbarVertical`, `AppHeader`, `AppFooter`                         |
+| 2026-04-15 | Fix vault path resolution — `vault-root.ts` anchored to `import.meta.url`                       |
+| 2026-04-15 | YouTube transcript fix — VTT format, trailing trim, word-level dedup                            |
+| 2026-04-13 | Ingest form, gated vault browser, Panda CSS, DS components wired                                |
+| 2026-04-08 | `@llaab/control`, `runSkill`, `RunNode` persistence, decision traces                            |
+| 2026-04-04 | Schema split, `createNode`, `listNodes`, `captureIdea` skill                                    |
+| 2026-03-30 | Monorepo genesis — all packages scaffolded, lint, typecheck green                               |

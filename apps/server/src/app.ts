@@ -4,6 +4,7 @@ import { createApp } from './lib/create-app.js';
 
 import { auth } from './middlewares/auth.middleware.js';
 import { logger } from './middlewares/logger.middleware.js';
+import { agentRouter } from './routes/agent/index.js';
 import { indexRouter } from './routes/index.route.js';
 import { ingestRouter } from './routes/ingest/index.js';
 import { llmRouter } from './routes/llm/index.js';
@@ -31,6 +32,7 @@ app.use(logger);
 
 app.route('/', indexRouter);
 app.use('/api/*', auth);
+app.route('/api/agent', agentRouter);
 app.route('/api/ingest', ingestRouter);
 app.route('/api/llm', llmRouter);
 app.route('/api/vault', vaultRouter);
