@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["ES2022"]
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../../packages/schemas" },
+    { "path": "../../packages/core" },
+    { "path": "../../packages/skills" }
+  ]
+}
