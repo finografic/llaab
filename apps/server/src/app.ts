@@ -11,11 +11,11 @@ import { llmRouter } from './routes/llm/index.js';
 import { runsRouter } from './routes/runs/index.js';
 import { vaultRouter } from './routes/vault/index.js';
 
-const app = createApp();
+// ── Base app with global middleware ───────────────────────────────────────────
 
-// ── Global middleware ─────────────────────────────────────────────────────────
+const _base = createApp();
 
-app.use(
+_base.use(
   cors({
     origin: [
       'http://localhost:4321', // Astro client dev
@@ -26,25 +26,24 @@ app.use(
   }),
 );
 
-app.use(logger);
+_base.use(logger);
+_base.use('/api/*', auth);
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-
-app.route('/', indexRouter);
-app.use('/api/*', auth);
-app.route('/api/agent', agentRouter);
-app.route('/api/ingest', ingestRouter);
-app.route('/api/llm', llmRouter);
-app.route('/api/vault', vaultRouter);
-app.route('/api/runs', runsRouter);
-
-// ── 404 fallback ──────────────────────────────────────────────────────────────
-
-app.notFound((c) => c.json({ error: 'Not found' }, 404));
-
-app.onError((err, c) => {
+_base.notFound((c) => c.json({ error: 'Not found' }, 404));
+_base.onError((err, c) => {
   console.error(err);
   return c.json({ error: err.message ?? 'Internal server error' }, 500);
 });
 
-export { app };
+// ── Routes — chained so AppType captures the full route shape ─────────────────
+
+export const app = _base
+  .route('/', indexRouter)
+  .route('/api/agent', agentRouter)
+  .route('/api/ingest', ingestRouter)
+  .route('/api/llm', llmRouter)
+  .route('/api/vault', vaultRouter)
+  .route('/api/runs', runsRouter);
+
+/** Exported for Hono RPC — import as `import type { AppType } from '@llaab/server'` */
+export type AppType = typeof app;

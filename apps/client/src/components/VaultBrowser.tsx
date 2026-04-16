@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { apiGet } from '../lib/api-client';
+import { rpc } from '../lib/rpc';
 
 export interface VaultNode {
   name: string;
@@ -87,7 +87,9 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
     setError(null);
     setLoading(true);
     try {
-      const json = await apiGet<{ content: string }>(`/api/vault/file?path=${encodeURIComponent(path)}`);
+      const res = await rpc.api.vault.file.$get({ query: { path } });
+      const json = await res.json();
+      if ('error' in json) throw new Error(json.error);
       setContent(json.content);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load file.');
