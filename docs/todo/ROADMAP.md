@@ -77,6 +77,15 @@ browser UI. Uses the server API for writes — no direct `fs` calls from the cli
 
 ## P3 — Backlog / Ideas
 
+### Migrate ESLint → oxlint
+
+`oxfmt` is already in place. Pairing it with oxlint gives a fully unified Rust-based lint+format
+pipeline — faster, better `oxfmt` integration, and no config impedance mismatch. Earlier is
+better: the longer the ESLint config grows, the more surface to migrate. Do before the codebase
+expands significantly.
+
+Detail: [`docs/todo/TODO_OXLINT_MIGRATION.md`](./TODO_OXLINT_MIGRATION.md)
+
 ### Agent Loop Infrastructure
 
 Background agent that monitors the vault, triggers skills on new nodes, and persists `RunNode`

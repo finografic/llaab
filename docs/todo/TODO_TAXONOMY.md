@@ -80,11 +80,21 @@ and the value matches a known domain name.
 
 ---
 
-### 4. Update `04_IDEAS_TO_SKILLS.md` in `@llaab/skills`
+### 4. Place `04_IDEAS_TO_SKILLS.md` in `@llaab/skills`
 
-The skills package doc (`packages/skills/docs/04_IDEAS_TO_SKILLS.md`) references the old 10
-non-prefixed tags. Update the auto-tagging table and `captureIdea` example to match the current
-8-tag `d:` taxonomy.
+The updated doc is ready at `.claude/assets/taxonomy-files-updated/04_IDEAS_TO_SKILLS.md` —
+it already has the correct 8-tag `d:` table and updated `captureIdea` example. Just needs to
+be placed at `packages/skills/docs/04_IDEAS_TO_SKILLS.md` (create the `docs/` folder if needed).
+
+---
+
+### 5. `ingestArticle` skill (note — out of scope here, tracked separately)
+
+The blog-post ingestion scenario assumes an `ingestArticle` entry point that doesn't exist yet.
+The `runIngestionPipeline` in `@llaab/ingestion` already supports `sourceType: 'article'` and
+applies `autoTag` — so the pipeline is ready. What's missing is a `ingestArticle` skill wrapper
+in `@llaab/skills` mirroring `ingestYouTube`, plus a fetch/parse stage for article HTML.
+Add to ROADMAP P3 or alongside `apps/server` work (an `/api/ingest/article` route would need it).
 
 ---
 

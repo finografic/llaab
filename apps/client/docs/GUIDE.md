@@ -62,13 +62,17 @@ apps/client/
 
 The URL is determined by the file path under `src/pages/`. No route config needed.
 
-| File                          | URL            |
-| ----------------------------- | -------------- |
-| `src/pages/index.astro`       | `/`            |
-| `src/pages/ingest.astro`      | `/ingest`      |
-| `src/pages/vault/index.astro` | `/vault`       |
-| `src/pages/vault/login.astro` | `/vault/login` |
-| `src/pages/api/ingest.ts`     | `/api/ingest`  |
+| File                                      | URL                  |
+| ----------------------------------------- | -------------------- |
+| `src/pages/index.astro`                   | `/`                  |
+| `src/pages/ingest.astro`                  | `/ingest`            |
+| `src/pages/vault/index.astro`             | `/vault`             |
+| `src/pages/vault/login.astro`             | `/vault/login`       |
+| `src/pages/vault/transcripts/index.astro` | `/vault/transcripts` |
+| `src/pages/vault/nodes/index.astro`       | `/vault/nodes`       |
+| `src/pages/vault/runs/index.astro`        | `/vault/runs`        |
+| `src/pages/vault/runs/[id].astro`         | `/vault/runs/:id`    |
+| `src/pages/api/ingest.ts`                 | `/api/ingest`        |
 
 ### Dynamic routes
 
@@ -404,6 +408,105 @@ All design tokens are defined in `:root` in `app.css` and available everywhere:
 /* spacing */       --space-1 through --space-16  (4px steps)
 /* layout */        --sidebar-w  --header-h  --content-max
 /* motion */        --duration-fast  --duration  --ease
+```
+
+---
+
+## Vault page patterns
+
+All vault sub-pages share the same three-part structure.
+
+### Auth gate
+
+Every vault page starts with a cookie check. Copy this block verbatim — do not move it to a
+middleware, the per-page guard keeps each route self-contained:
+
+```astro
+---
+const COOKIE_NAME = 'vault_key';
+const password = import.meta.env.VAULT_PASSWORD ?? 'llaab';
+const cookie = Astro.cookies.get(COOKIE_NAME);
+if (cookie?.value !== password) return Astro.redirect('/vault/login', 302);
+---
+```
+
+### Reading vault data
+
+Use `listNodes` from `@llaab/core` in frontmatter. It scans the vault and returns
+`LabNode[]` (the discriminated union). Cast to the specific type after filtering:
+
+```astro
+---
+import { listNodes } from '@llaab/core';
+import type { TranscriptNode } from '@llaab/schemas';
+
+const all = await listNodes({ type: 'transcript' });
+const transcripts = all as TranscriptNode[];
+---
+```
+
+For the run detail page, filter by id:
+
+```astro
+---
+const { id } = Astro.params;
+const all = await listNodes({ type: 'run' });
+const run = (all as RunNode[]).find((r) => r.id === id);
+if (!run) return Astro.redirect('/vault/runs', 302);
+---
+```
+
+### Tag pills
+
+Domain tags (`d:llm`, `d:automation`, etc.) render as colored pills. The color is driven by
+a `--tag-color` CSS custom property set per `data-tag` attribute — no class proliferation:
+
+```astro
+<div class="tag-row">
+  {node.tags.map((tag) => (
+    <span class="tag" data-tag={tag}>{tag}</span>
+  ))}
+</div>
+```
+
+```css
+.tag {
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: color-mix(in srgb, var(--tag-color, var(--accent)) 12%, transparent);
+  color: var(--tag-color, var(--accent));
+  border: 1px solid color-mix(in srgb, var(--tag-color, var(--accent)) 30%, transparent);
+}
+
+.tag[data-tag='d:llm']         { --tag-color: #3b82f6; }
+.tag[data-tag='d:automation']  { --tag-color: #8b5cf6; }
+.tag[data-tag='d:ingest']      { --tag-color: #f59e0b; }
+.tag[data-tag='d:schema']      { --tag-color: #14b8a6; }
+.tag[data-tag='d:infra']       { --tag-color: #6b7280; }
+.tag[data-tag='d:integration'] { --tag-color: #f97316; }
+.tag[data-tag='d:ui']          { --tag-color: #ec4899; }
+.tag[data-tag='d:meta']        { --tag-color: #22c55e; }
+```
+
+Tags without a known `data-tag` value fall back to `var(--accent)`.
+
+### Badges
+
+Status/type badges use the same `.badge` base class with a modifier that sets colors.
+The full palette is defined in each vault page's `<style>` block — copy from the nearest
+existing page rather than inventing new colors.
+
+```css
+.badge { /* base: surface-raised bg, text-muted, border-subtle */ }
+
+/* RunStatus */
+.badge--pending   { /* gray */ }
+.badge--running   { /* orange */ }
+.badge--completed { /* green */ }
+.badge--failed    { /* red */ }
+.badge--cancelled { /* gray, 0.6 opacity */ }
 ```
 
 ---
