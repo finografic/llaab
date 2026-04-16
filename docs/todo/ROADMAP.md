@@ -87,16 +87,10 @@ wrapper using `@modelcontextprotocol/sdk`. Resources = vault nodes, tools = sear
 Track npm packages, frameworks, Homebrew tools, and other ecosystem dependencies as a new
 `PackageNode` vault type. Cards show weekly downloads, dep count, bundle size, last published
 date, version. `follow: true` nodes auto-refresh stats on `llaab agent run` via a new
-`refreshPackageStats` skill in the agent loop registry.
+`refreshPackageStats` skill in the agent loop registry. Fetch logic ported from npmx.dev
+(`app/utils/npm/api.ts` + `shared/types/npm-registry.ts`) — strip Nuxt wrappers, use plain fetch.
 
-Data sources (all public, no auth):
-
-- npm: `registry.npmjs.org/<pkg>` + `api.npmjs.org/downloads/point/last-week/<pkg>`
-- Homebrew: `formulae.brew.sh/api/formula/<name>.json`
-- pip / cargo / gem: equivalent open registry APIs
-
-UI: `/vault/packages` page with filterable cards — ecosystem badge, stat pills, follow toggle.
-Replaces the manual Obsidian workflow for tracking library choices and ecosystem state.
+Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
 
 ---
 
