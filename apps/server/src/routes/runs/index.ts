@@ -1,18 +1,6 @@
-import { listNodes } from '@llaab/core';
-import type { RunNode } from '@llaab/schemas';
-
 import { createRouter } from '../../lib/create-app.js';
+import * as routes from './runs.routes.js';
 
 export const runsRouter = createRouter()
-  .get('/', async (c) => {
-    const all = await listNodes({ type: 'run' });
-    const runs = (all as RunNode[]).sort((a, b) => b.created_at.localeCompare(a.created_at));
-    return c.json({ runs });
-  })
-  .get('/:id', async (c) => {
-    const { id } = c.req.param();
-    const all = await listNodes({ type: 'run' });
-    const run = (all as RunNode[]).find((r) => r.id === id);
-    if (!run) return c.json({ error: 'Run not found' }, 404);
-    return c.json({ run });
-  });
+  .get(routes.list.path, routes.list.handler)
+  .get(routes.detail.path, routes.detail.handler);

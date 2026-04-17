@@ -1,27 +1,86 @@
-import { NodeTypeSchema } from '@llaab/schemas';
-import { z } from 'zod';
+import { readFile } from 'node:fs/promises';
+import { resolve, sep } from 'node:path';
+import { createNode, getNodeFilePath, listNodes, VAULT_ROOT } from '@llaab/core';
+import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
+import type { CreateNodeBody, ListNodesQuery } from './vault.schema.js';
 
-export const listNodesQuerySchema = z.object({
-  type: NodeTypeSchema.optional(),
-  status: z.enum(['seed', 'growing', 'mature', 'archived']).optional(),
-  tags: z
-    .string()
-    .optional()
-    .transform((val) => (val ? val.split(',').map((t) => t.trim()) : undefined)),
-  search: z.string().optional(),
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? Number.parseInt(val, 10) : undefined)),
-});
+export const file = {
+  path: '/file' as const,
+  handler: async (c: AppCtx) => {
+    const filePath = c.req.query('path');
+    if (!filePath) return c.json({ error: '`path` query parameter is required.' }, 400);
 
-export type ListNodesQuery = z.infer<typeof listNodesQuerySchema>;
+    const resolved = resolve(VAULT_ROOT, filePath);
+    if (!resolved.startsWith(VAULT_ROOT + sep) && resolved !== VAULT_ROOT) {
+      return c.json({ error: 'Invalid path.' }, 403);
+    }
 
-export const createNodeBodySchema = z.object({
-  type: z.literal('idea'),
-  title: z.string().min(1, 'Title is required'),
-  body: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-});
+    try {
+      const content = await readFile(resolved, 'utf-8');
+      return c.json({ content });
+    } catch {
+      return c.json({ error: 'File not found.' }, 404);
+    }
+  },
+};
 
-export type CreateNodeBody = z.infer<typeof createNodeBodySchema>;
+export const listVaultNodes = {
+  path: '/nodes' as const,
+  handler: async (c: AppCtxQuery<ListNodesQuery>) => {
+    const query = c.req.valid('query');
+    const nodes = await listNodes(query);
+    return c.json({ nodes });
+  },
+};
+
+export const createVaultNode = {
+  path: '/nodes' as const,
+  handler: async (c: AppCtxJson<CreateNodeBody>) => {
+    const body = c.req.valid('json');
+    try {
+      const {
+        id,
+        path: createdPath,
+        node,
+      } = await createNode({
+        type: body.type,
+        title: body.title,
+        body: body.body,
+        tags: body.tags,
+      });
+      return c.json({ id, path: createdPath, type: node.type }, 201);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('already exists')) {
+        return c.json({ error: 'A node with that title already exists.' }, 409);
+      }
+      return c.json({ error: 'Failed to create node.' }, 500);
+    }
+  },
+};
+
+export const nodeDetail = {
+  path: '/nodes/:id' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    const nodes = await listNodes();
+    const node = nodes.find((n) => n.id === id);
+    if (!node) return c.json({ error: 'Node not found' }, 404);
+    return c.json({ node });
+  },
+};
+
+export const nodeRaw = {
+  path: '/nodes/:id/raw' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    const nodes = await listNodes();
+    const node = nodes.find((n) => n.id === id);
+    if (!node) return c.json({ error: 'Node not found' }, 404);
+
+    const filePath = getNodeFilePath(node.type, node.id);
+    if (!filePath.startsWith(VAULT_ROOT)) return c.json({ error: 'Forbidden' }, 403);
+
+    const content = await readFile(filePath, 'utf-8');
+    return c.text(content);
+  },
+};

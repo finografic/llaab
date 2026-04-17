@@ -1,9 +1,30 @@
-import { z } from 'zod';
+import { ingestYouTube } from '@llaab/skills';
+import type { AppCtxJson } from '../../types/app.types.js';
+import type { IngestYouTubeBody } from './ingest.schema.js';
 
-export const ingestYouTubeBodySchema = z.object({
-  url: z.string().url('Must be a valid URL'),
-  title: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-});
+export const youtube = {
+  path: '/youtube' as const,
+  handler: async (c: AppCtxJson<IngestYouTubeBody>) => {
+    const body = c.req.valid('json');
+    const { record, result } = await ingestYouTube({
+      url: body.url,
+      title: body.title,
+      tags: body.tags,
+    });
 
-export type IngestYouTubeBody = z.infer<typeof ingestYouTubeBodySchema>;
+    if (record.status === 'failed') {
+      return c.json({ success: false as const, error: record.error ?? 'Ingestion failed.' }, 500);
+    }
+
+    const reused = result.runTrace?.stages.some((s) => s.name === 'dedupe:transcript') ?? false;
+    return c.json({
+      success: true as const,
+      result: {
+        id: result.id,
+        path: result.path,
+        type: result.type,
+        reused,
+      },
+    });
+  },
+};

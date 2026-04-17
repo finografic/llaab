@@ -1,4 +1,4 @@
-import type { Hono } from 'hono';
+import type { Context } from 'hono';
 
 /** Hono context type used across all route handlers. */
 export interface AppEnv {
@@ -6,4 +6,10 @@ export interface AppEnv {
 }
 
 /** Alias for a Hono app instance with the shared env. */
-export type AppInstance = Hono<AppEnv>;
+export type AppCtx = Context<AppEnv>;
+
+/** Context type for handlers that follow a JSON body validator. */
+export type AppCtxJson<T> = Context<AppEnv, string, { in: { json: T }; out: { json: T } }>;
+
+/** Context type for handlers that follow a query string validator. */
+export type AppCtxQuery<T> = Context<AppEnv, string, { in: { query: T }; out: { query: T } }>;
