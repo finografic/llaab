@@ -83,15 +83,13 @@ and supports OAuth providers. Defer until there is an actual requirement.
 
 ---
 
-## Proposed Structure
+## Implemented Structure
 
 ```
 apps/server/
   src/
-    app.ts                  ← Hono app — CORS, auth middleware, route registration
+    app.ts                  ← Hono app — CORS, auth middleware, chained route registration
     index.ts                ← Entry point — Bun.serve()
-    constants/
-      paths.constants.ts    ← VAULT_ROOT re-export + any server-specific paths
     lib/
       create-app.ts         ← createRouter() + createApp() helpers
     middlewares/
@@ -100,23 +98,26 @@ apps/server/
     routes/
       index.route.ts        ← GET / — health + version
       ingest/
-        index.ts
-        ingest.routes.ts    ← Route definitions + Zod schemas
-        ingest.handlers.ts  ← Handler implementations
+        index.ts            ← Pure composition — exports ingestRouter
+        ingest.schema.ts    ← Zod schemas + inferred types
+        ingest.routes.ts    ← Named handler exports { path, handler }
       vault/
-        index.ts
+        index.ts            ← Pure composition — exports vaultRouter
+        vault.schema.ts
         vault.routes.ts
-        vault.handlers.ts
       runs/
-        index.ts
-        runs.routes.ts
-        runs.handlers.ts
-      llm/                  ← Future: LLM proxy / streaming endpoints
-        index.ts
+        index.ts            ← Pure composition — exports runsRouter
+        runs.routes.ts      ← (no schema needed — no request validation)
+      llm/
+        index.ts            ← Pure composition — exports llmRouter
+        llm.schema.ts
         llm.routes.ts
-        llm.handlers.ts
+      agent/
+        index.ts            ← Pure composition — exports agentRouter
+        agent.schema.ts
+        agent.routes.ts
     types/
-      app.types.ts          ← AppHandler type alias, shared request/response types
+      app.types.ts          ← AppCtx / AppCtxJson<T> / AppCtxQuery<T> context helpers
   package.json
   tsconfig.json
 ```
@@ -125,80 +126,71 @@ apps/server/
 
 ## Route Conventions
 
-Follows the same `*.routes.ts` / `*.handlers.ts` / `index.ts` pattern from the reference server.
+Three files per route group:
 
-**`*.routes.ts`** — route definitions only. Exports named route descriptors. No business logic.
+**`*.schema.ts`** — Zod validators and inferred types. No logic.
 
-**`*.handlers.ts`** — one named export per route. Calls into `@llaab/skills` or `@llaab/core`
-directly. No route registration here.
+**`*.routes.ts`** — Handler functions with semantic names (`list`, `detail`, `create`, `youtube`,
+etc.). Each export is `{ path: '/relative-path', handler: async (c) => ... }`. Handlers use
+`AppCtx`, `AppCtxJson<T>`, or `AppCtxQuery<T>` so `c.req.valid()` is typed correctly in
+isolation.
 
-**`index.ts`** — wires routes to handlers, exports the router.
+**`index.ts`** — Pure composition. Imports schemas and route handlers, wires them:
+`createRouter().get(routes.list.path, routes.list.handler)`. Exports a named router.
+
+See `docs/astro/HONO_RPC.md` for the full guide including step-by-step for adding routes.
 
 ---
 
 ## Example — `ingest` Route
 
-This is the exact equivalent of the current `apps/client/src/pages/api/ingest.ts`.
-
-### `routes/ingest/ingest.routes.ts`
+### `routes/ingest/ingest.schema.ts`
 
 ```ts
-import { z } from 'zod/v4';
-import { StatusCodes as HttpStatusCodes } from 'http-status-codes';
+import { z } from 'zod';
 
-const tags = ['Ingest'];
-
-export const ingestBodySchema = z.object({
-  url:   z.string().url(),
+export const ingestYouTubeBodySchema = z.object({
+  url:   z.string().url('Must be a valid URL'),
   title: z.string().optional(),
   tags:  z.array(z.string()).optional(),
 });
 
-export const ingestResponseSchema = z.object({
-  success: z.boolean(),
-  result: z.object({
-    id:     z.string(),
-    path:   z.string(),
-    type:   z.string(),
-    reused: z.boolean(),
-  }).optional(),
-  error: z.string().optional(),
-});
-
-export const ingestYouTube = route('/ingest/youtube', {
-  tags,
-  description: 'Ingest a YouTube video — fetch transcript, structure, store vault nodes',
-  responses: {
-    [HttpStatusCodes.OK]:                    json(ingestResponseSchema, 'Ingestion succeeded'),
-    [HttpStatusCodes.BAD_REQUEST]:           json(errorSchema, 'Invalid request body'),
-    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: json(errorSchema, 'Ingestion failed'),
-  },
-});
+export type IngestYouTubeBody = z.infer<typeof ingestYouTubeBodySchema>;
 ```
 
-### `routes/ingest/ingest.handlers.ts`
+### `routes/ingest/ingest.routes.ts`
 
 ```ts
-import { ingestYouTube as runIngest } from '@llaab/skills';
-import { StatusCodes as HttpStatusCodes } from 'http-status-codes';
-import type { AppHandler } from 'types/app.types';
+import { ingestYouTube } from '@llaab/skills';
+import type { AppCtxJson } from '../../types/app.types.js';
+import type { IngestYouTubeBody } from './ingest.schema.js';
 
-export const ingestYouTube: AppHandler = async (c) => {
-  const { url, title, tags } = c.req.valid('json');
+export const youtube = {
+  path: '/youtube' as const,
+  handler: async (c: AppCtxJson<IngestYouTubeBody>) => {
+    const body = c.req.valid('json');
+    const { record, result } = await ingestYouTube({ url: body.url, title: body.title, tags: body.tags });
 
-  const { record, result } = await runIngest({ url, title, tags });
+    if (record.status === 'failed') {
+      return c.json({ success: false as const, error: record.error ?? 'Ingestion failed.' }, 500);
+    }
 
-  if (record.status === 'failed') {
-    return c.json({ success: false, error: record.error ?? 'Ingestion failed.' }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
-  }
-
-  const reused = result.runTrace?.stages.some((s) => s.name === 'dedupe:transcript') ?? false;
-
-  return c.json({
-    success: true,
-    result: { id: result.id, path: result.path, type: result.type, reused },
-  });
+    const reused = result.runTrace?.stages.some((s) => s.name === 'dedupe:transcript') ?? false;
+    return c.json({ success: true as const, result: { id: result.id, path: result.path, type: result.type, reused } });
+  },
 };
+```
+
+### `routes/ingest/index.ts`
+
+```ts
+import { zValidator } from '@hono/zod-validator';
+import { createRouter } from '../../lib/create-app.js';
+import { ingestYouTubeBodySchema } from './ingest.schema.js';
+import * as routes from './ingest.routes.js';
+
+export const ingestRouter = createRouter()
+  .post(routes.youtube.path, zValidator('json', ingestYouTubeBodySchema), routes.youtube.handler);
 ```
 
 ---

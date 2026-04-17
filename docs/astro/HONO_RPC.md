@@ -4,57 +4,61 @@ How the typed client works, how to add new routes, and why this replaces the man
 
 ---
 
-## What changed — the handler files
+## Route module structure
 
-The old pattern had three files per route group:
-
-```
-routes/vault/
-  vault.routes.ts    ← Zod schemas + input types
-  vault.handlers.ts  ← handler functions (Context → Response)
-  index.ts           ← wires them together
-```
-
-The new pattern has two:
+Each route group under `apps/server/src/routes/` has three files:
 
 ```
 routes/vault/
-  vault.routes.ts    ← Zod schemas + input types  (unchanged)
-  index.ts           ← schemas + inline handlers, chained
+  vault.schema.ts   ← Zod schemas + inferred TS types
+  vault.routes.ts   ← Named handler exports { path, handler }
+  index.ts          ← Wires path + validator + handler; exports named router
 ```
 
-The handler logic moved inline into `index.ts`. The reason is below.
-
----
-
-## Why inline handlers are required for RPC
-
-Hono infers types by reading the **chain** of method calls on a router. When you write:
+**`*.schema.ts`** — Zod validators and their inferred types. No logic.
 
 ```ts
-const vaultRouter = createRouter()
-  .get('/nodes', zValidator('query', listNodesQuerySchema), async (c) => {
-    const nodes = await listNodes(c.req.valid('query'));
-    return c.json({ nodes });           // ← TypeScript sees this return value
-  })
+// vault.schema.ts
+export const listNodesQuerySchema = z.object({
+  type: NodeTypeSchema.optional(),
+  limit: z.string().optional().transform((v) => v ? parseInt(v) : undefined),
+});
+export type ListNodesQuery = z.infer<typeof listNodesQuerySchema>;
 ```
 
-TypeScript sees `c.json({ nodes })` and captures `{ nodes: LabNode[] }` as the response type for
-`GET /vault/nodes`. That information lives in `typeof vaultRouter`.
-
-With the old pattern:
+**`*.routes.ts`** — Handler functions with semantic names. Each export is `{ path, handler }`.
+Handlers use `AppCtx`, `AppCtxJson<T>`, or `AppCtxQuery<T>` from `types/app.types.ts` so
+`c.req.valid()` is fully typed without being inside the validator chain at definition time.
 
 ```ts
-// OLD — type information is lost
-router.get('/nodes', zValidator('query', schema), handleListNodes);
-//                                                ↑ this is (c: Context) => Promise<Response>
-//                                                  TypeScript only sees "Response", not the shape
+// vault.routes.ts
+import type { AppCtxQuery } from '../../types/app.types.js';
+import type { ListNodesQuery } from './vault.schema.js';
+
+export const listVaultNodes = {
+  path: '/nodes' as const,
+  handler: async (c: AppCtxQuery<ListNodesQuery>) => {
+    const query = c.req.valid('query');
+    const nodes = await listNodes(query);
+    return c.json({ nodes });
+  },
+};
 ```
 
-When you pass a separate handler function, TypeScript sees `Promise<Response>` — the specific shape
-of `{ nodes: LabNode[] }` is erased. The chain only captures types for inline return values.
+**`index.ts`** — Pure composition. Imports schemas and route handlers, wires them together.
+No business logic here.
 
-This is a TypeScript structural inference limitation, not a Hono limitation.
+```ts
+// index.ts
+import { zValidator } from '@hono/zod-validator';
+import { createRouter } from '../../lib/create-app.js';
+import { listNodesQuerySchema } from './vault.schema.js';
+import * as routes from './vault.routes.js';
+
+export const vaultRouter = createRouter()
+  .get(routes.listVaultNodes.path, zValidator('query', listNodesQuerySchema), routes.listVaultNodes.handler)
+  .post(routes.createVaultNode.path, zValidator('json', createNodeBodySchema), routes.createVaultNode.handler);
+```
 
 ---
 
@@ -71,8 +75,9 @@ export const app = _base
 export type AppType = typeof app;
 ```
 
-`AppType` is a TypeScript type that encodes every registered route, its input schema, and its
-response shape. It is a pure type — zero bytes at runtime.
+`AppType` encodes every registered route, its input schema, and its response shape. It is a
+pure type — zero bytes at runtime. The chained `.route()` form is required so TypeScript can
+track the cumulative route shape through each call.
 
 ### Client — `apps/client/src/lib/rpc.ts`
 
@@ -83,7 +88,7 @@ import type { AppType } from '../../../server/src/app.js';   // type-only import
 export const rpc = hc<AppType>(baseUrl);
 ```
 
-`hc<AppType>` returns a proxy object whose property path mirrors the server's URL structure:
+`hc<AppType>` returns a proxy whose property path mirrors the server's URL structure:
 
 | URL                        | `rpc` accessor                      |
 | -------------------------- | ----------------------------------- |
@@ -94,10 +99,6 @@ export const rpc = hc<AppType>(baseUrl);
 | `POST /api/ingest/youtube` | `rpc.api.ingest.youtube.$post()`    |
 | `GET /api/runs`            | `rpc.api.runs.$get()`               |
 | `GET /api/runs/:id`        | `rpc.api.runs[':id'].$get()`        |
-
-The `$get` / `$post` methods accept typed input and return a `Promise<TypedResponse<T>>`. You still
-call `.json()` on the response — the difference is that TypeScript knows the shape of what comes
-back.
 
 ---
 
@@ -123,8 +124,7 @@ const res = await rpc.api.vault.nodes[':id'].$get({ param: { id: nodeId } });
 const { node } = await res.json();
 ```
 
-Error handling: check `res.ok` (HTTP status) or check if `'error' in data` after `.json()` if the
-route returns error shapes — the union type makes this safe:
+Error handling — check `res.ok` or check for `'error' in data` after `.json()`:
 
 ```ts
 const data = await res.json();
@@ -138,59 +138,92 @@ if ('error' in data) {
 
 ## Adding a new route — step by step
 
-### 1 — Define the schema (if needed)
+### 1 — Add the schema (if needed)
 
-In `apps/server/src/routes/<group>/<group>.routes.ts`:
+In `apps/server/src/routes/<group>/<group>.schema.ts`:
 
 ```ts
-export const createPackageBodySchema = z.object({
-  packageName: z.string().min(1),
-  ecosystem: z.enum(['npm', 'brew']),
+export const createThingBodySchema = z.object({
+  name: z.string().min(1),
+  kind: z.enum(['a', 'b']),
 });
+export type CreateThingBody = z.infer<typeof createThingBodySchema>;
 ```
 
-### 2 — Add the handler inline in the router
-
-In `apps/server/src/routes/<group>/index.ts`, extend the chain:
+### 2 — Add the handler in `*.routes.ts`
 
 ```ts
-export const packagesRouter = createRouter()
-  .get('/', async (c) => {
-    const packages = await listNodes({ type: 'package' });
-    return c.json({ packages });
-  })
-  .post('/', zValidator('json', createPackageBodySchema), async (c) => {
+// things.routes.ts
+import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
+import type { CreateThingBody } from './things.schema.js';
+
+export const list = {
+  path: '/' as const,
+  handler: async (c: AppCtx) => {
+    const things = await listNodes({ type: 'thing' });
+    return c.json({ things });
+  },
+};
+
+export const create = {
+  path: '/' as const,
+  handler: async (c: AppCtxJson<CreateThingBody>) => {
     const body = c.req.valid('json');
-    const result = await addPackageNode(body);
+    const result = await createNode({ type: 'thing', title: body.name });
     return c.json(result, 201);
-  });
+  },
+};
 ```
 
-### 3 — Register the router in `app.ts`
+### 3 — Wire it in `index.ts`
+
+```ts
+// things/index.ts
+import { zValidator } from '@hono/zod-validator';
+import { createRouter } from '../../lib/create-app.js';
+import { createThingBodySchema } from './things.schema.js';
+import * as routes from './things.routes.js';
+
+export const thingsRouter = createRouter()
+  .get(routes.list.path, routes.list.handler)
+  .post(routes.create.path, zValidator('json', createThingBodySchema), routes.create.handler);
+```
+
+### 4 — Register in `app.ts`
 
 ```ts
 export const app = _base
   // existing routes ...
-  .route('/api/packages', packagesRouter);   // ← add this line
+  .route('/api/things', thingsRouter);   // ← add this line
 
-export type AppType = typeof app;            // no other change needed
+export type AppType = typeof app;        // no other change needed
 ```
 
-### 4 — Use it in the client
-
-The type is immediately available — no manual type definition needed:
+### 5 — Use it in the client
 
 ```ts
-const res = await rpc.api.packages.$get();
-const { packages } = await res.json();
-// packages is typed as LabNode[] (or whatever the handler returns)
+const res = await rpc.api.things.$get();
+const { things } = await res.json();
 
-const res = await rpc.api.packages.$post({
-  json: { packageName: 'citty', ecosystem: 'npm' },
+const res = await rpc.api.things.$post({
+  json: { name: 'My thing', kind: 'a' },
 });
 ```
 
-TypeScript will error if you pass wrong fields, wrong types, or access a route that doesn't exist.
+---
+
+## Context type helpers
+
+`apps/server/src/types/app.types.ts` exports three context types for use in `*.routes.ts`:
+
+| Type             | Use when                                        |
+| ---------------- | ----------------------------------------------- |
+| `AppCtx`         | No validator — plain GET with no parsed input   |
+| `AppCtxJson<T>`  | Handler follows a `zValidator('json', schema)`  |
+| `AppCtxQuery<T>` | Handler follows a `zValidator('query', schema)` |
+
+These declare the appropriate `in` types so `c.req.valid('json')` and `c.req.valid('query')` are
+fully typed inside standalone handler functions.
 
 ---
 
@@ -199,14 +232,12 @@ TypeScript will error if you pass wrong fields, wrong types, or access a route t
 ### Original pattern (generic fetch wrapper)
 
 ```ts
-// api-client.ts
 const data = await apiPost<CreateResult>('/api/vault/nodes', { type: 'idea', title });
 ```
 
 Problems:
 
-- `CreateResult` is a manually maintained interface — it can drift from what the server actually
-  returns
+- `CreateResult` is a manually maintained interface — it can drift from what the server actually returns
 - The URL string is untyped — a typo (`/api/vaullt/nodes`) compiles fine
 - The body type is `unknown` — passing extra or missing fields compiles fine
 - Refactoring a route name requires grep + manual update across all call sites
@@ -220,21 +251,12 @@ const data = await res.json();
 
 Advantages:
 
-- **No manual types** — response shape is inferred from `c.json()` in the handler; update the
-  handler and the client type updates automatically
-- **URL is a type** — `rpc.api.vaullt` doesn't exist; TypeScript errors at the call site, not at runtime
-- **Body is validated** — the Zod schema used by `zValidator` drives the input type; wrong shape
-  = compile error
-- **Automatic coverage** — every new route added to the server is immediately typed in the client
-  with zero client-side changes
-- **Refactor-safe** — rename a route, add/remove a field from the response, change a query param;
-  TypeScript finds all broken call sites instantly
-- **No runtime overhead** — `AppType` is erased at build time; `hc<AppType>` adds zero bytes to
-  the client bundle beyond the tiny `hono/client` runtime
-
-The cost: handler logic must be inline in the chained router definition (no separate handler
-files). For this codebase where handlers are thin wrappers around `@llaab/core` and
-`@llaab/skills` functions, the tradeoff is worth it.
+- **No manual types** — response shape is inferred from `c.json()` in the handler
+- **URL is a type** — `rpc.api.vaullt` doesn't exist; TypeScript errors at the call site
+- **Body is validated** — the Zod schema drives the input type; wrong shape = compile error
+- **Automatic coverage** — every new route is immediately typed in the client
+- **Refactor-safe** — rename a route or change a response field; TypeScript finds all broken sites
+- **No runtime overhead** — `AppType` is erased at build time
 
 ---
 
@@ -243,9 +265,7 @@ files). For this codebase where handlers are thin wrappers around `@llaab/core` 
 `rpc.ts` imports from `'../../../server/src/app.js'` — a relative path that crosses the
 `apps/client` / `apps/server` boundary. This is valid because:
 
-1. It is a **type-only import** (`import type`), erased entirely at compile time. Vite/Astro
-   never bundles server code into the client.
+1. It is a **type-only import** (`import type`), erased entirely at compile time.
 2. TypeScript resolves transitive type imports relative to the **imported file's location**
-   (`apps/server/`), where all server deps (`@llaab/skills`, `@llaab/llm`, etc.) are available
-   via pnpm workspace symlinks.
+   (`apps/server/`), where all server deps are available via pnpm workspace symlinks.
 3. The client only needs `hono` (already a dependency) to use `hono/client` at runtime.

@@ -280,9 +280,9 @@ const json = await res.json();
 URL path segments become property accessors. Hyphens become camelCase:
 `/api/vault/nodes` → `rpc.api.vault.nodes`. Methods: `.$get()`, `.$post()`.
 
-TypeScript infers request/response shapes from `AppType` in `apps/server/src/app.ts`. If a route
-is not yet in chain form on the server, the type won't be inferred — see `docs/astro/HONO_RPC.md`
-for the full guide.
+TypeScript infers request/response shapes from `AppType` in `apps/server/src/app.ts`. See
+`docs/astro/HONO_RPC.md` for the full guide including how to add new routes and the context
+type helpers used in standalone handler functions.
 
 ---
 
