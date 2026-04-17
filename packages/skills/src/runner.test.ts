@@ -3,19 +3,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const originalCwd = process.cwd();
-
 describe('runSkill', () => {
   let tempDir: string;
 
   beforeEach(async () => {
     tempDir = await (await import('node:fs/promises')).mkdtemp(join(tmpdir(), 'llaab-skills-'));
-    process.chdir(tempDir);
+    process.env.LLAAB_VAULT = join(tempDir, 'vault');
     vi.resetModules();
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
+    delete process.env.LLAAB_VAULT;
     await rm(tempDir, { force: true, recursive: true });
   });
 
@@ -44,7 +42,7 @@ describe('runSkill', () => {
 
     if (runNode.type !== 'run') return;
 
-    expect(runNode.runStatus).toBe('completed');
+    expect(runNode.run_status).toBe('completed');
     expect(runNode.stages).toHaveLength(1);
     expect(runNode.stages[0]?.name).toBe('execute');
     expect(runNode.decisions).toHaveLength(1);
@@ -95,7 +93,7 @@ describe('runSkill', () => {
           ],
           llm: {
             model: 'ollama',
-            rawOutput: '{"summary":"usable summary"}',
+            raw_output: '{"summary":"usable summary"}',
             parsed: true,
           },
         },
@@ -149,7 +147,7 @@ describe('runSkill', () => {
           ],
           llm: {
             model: 'ollama',
-            rawOutput: '{"summary":""}',
+            raw_output: '{"summary":""}',
             parsed: false,
           },
         });
@@ -166,7 +164,7 @@ describe('runSkill', () => {
 
     if (runNode.type !== 'run') return;
 
-    expect(runNode.runStatus).toBe('failed');
+    expect(runNode.run_status).toBe('failed');
     expect(runNode.decisions.some((decision) => decision.type === 'retry')).toBe(true);
     expect(runNode.decisions.some((decision) => decision.type === 'reject')).toBe(true);
     expect(runNode.llm?.model).toBe('ollama');

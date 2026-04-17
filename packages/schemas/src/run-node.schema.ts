@@ -22,25 +22,25 @@ const RunDecisionSchema = z.object({
 
 const RunLlmTraceSchema = z.object({
   model: z.string().optional(),
-  rawOutput: z.string().optional(),
+  raw_output: z.string().optional(),
   parsed: z.boolean().optional(),
 });
 
 export const RunNodeSchema = BaseNodeSchema.extend({
   type: z.literal('run'),
-  skillId: NodeIdSchema.optional(),
-  runStatus: RunStatusSchema.default('pending'),
-  inputSummary: z.string().optional(),
-  outputSummary: z.string().optional(),
-  producedNodeIds: z.array(NodeIdSchema).default([]),
+  skill_id: NodeIdSchema.optional(),
+  run_status: RunStatusSchema.default('pending'),
+  input_summary: z.string().optional(),
+  output_summary: z.string().optional(),
+  produced_node_ids: z.array(NodeIdSchema).default([]),
   stages: z.array(RunStageSchema).default([]),
   decisions: z.array(RunDecisionSchema).default([]),
   llm: RunLlmTraceSchema.optional(),
-  modelUsed: z.string().optional(),
-  durationMs: z.number().int().nonnegative().optional(),
+  model_used: z.string().optional(),
+  duration_ms: z.number().int().nonnegative().optional(),
   error: z.string().optional(),
-  startedAt: TimestampSchema.optional(),
-  completedAt: TimestampSchema.optional(),
+  started_at: TimestampSchema.optional(),
+  completed_at: TimestampSchema.optional(),
 });
 
 export type RunNode = z.infer<typeof RunNodeSchema>;

@@ -18,7 +18,7 @@ export const RelationshipSchema = z.object({
   from: NodeIdSchema,
   to: NodeIdSchema,
   type: RelationshipTypeSchema,
-  createdAt: TimestampSchema,
+  created_at: TimestampSchema,
   note: z.string().optional(),
 });
 

@@ -17,7 +17,16 @@ export const NODE_DIR_MAP: Record<NodeType, string> = {
   transcript: 'transcripts',
 };
 
-const FRONTMATTER_KEY_ORDER = ['id', 'type', 'title', 'status', 'tags', 'related', 'createdAt', 'updatedAt'];
+const FRONTMATTER_KEY_ORDER = [
+  'id',
+  'type',
+  'title',
+  'status',
+  'tags',
+  'related',
+  'created_at',
+  'updated_at',
+];
 
 function serializeFrontmatterValue(value: unknown): string {
   if (Array.isArray(value)) {

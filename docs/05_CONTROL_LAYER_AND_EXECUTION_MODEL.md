@@ -173,7 +173,7 @@ Not optional. Not debugging. Core architecture.
 ```ts
 interface RunNode {
   id: string;
-  skillId: string;
+  skill_id: string;
   status: 'success' | 'failed' | 'rejected';
 
   stages: Array<{
@@ -347,7 +347,7 @@ Requirements:
 
 - schema validation before write
 - preserve `id`, `type`
-- update `updatedAt`
+- update `updated_at`
 - deterministic file output
 
 ---
@@ -408,7 +408,7 @@ Current node model includes:
 id, type, title, tags, related, ...
 ```
 
-The current repo now has a lightweight provenance bridge via `sourceId` on relevant externally-derived node types.
+The current repo now has a lightweight provenance bridge via `source_id` on relevant externally-derived node types.
 
 Without structural provenance, this creates risk:
 
@@ -471,7 +471,7 @@ skill → derived_from → source
 If you want a lightweight step:
 
 ```txt
-sourceId?: NodeId
+source_id?: NodeId
 ```
 
 BUT:
@@ -570,7 +570,7 @@ skill.extract-context
 
 If you want the **cleanest immediate move**:
 
-- add `sourceId?: NodeId` to relevant schemas
+- add `source_id?: NodeId` to relevant schemas
 - ensure ingestion always sets it
 - plan migration → relationship edges later
 

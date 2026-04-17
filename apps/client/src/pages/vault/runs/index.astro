@@ -15,7 +15,7 @@ if (cookie?.value !== password) return Astro.redirect('/vault/login', 302);
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const all = await listNodes({ type: 'run' });
-const runs = (all as RunNode[]).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+const runs = (all as RunNode[]).sort((a, b) => b.created_at.localeCompare(a.created_at));
 
 function fmtDuration(ms?: number): string {
   if (ms == null) return '—';
@@ -53,18 +53,18 @@ function fmtDuration(ms?: number): string {
               <tr>
                 <td class="col-title">
                   <a href={`/vault/runs/${run.id}`} class="run-link">{run.title}</a>
-                  {run.inputSummary && (
-                    <span class="run-input">{run.inputSummary}</span>
+                  {run.input_summary && (
+                    <span class="run-input">{run.input_summary}</span>
                   )}
                 </td>
                 <td>
-                  <span class={`badge badge--${run.runStatus}`}>{run.runStatus}</span>
+                  <span class={`badge badge--${run.run_status}`}>{run.run_status}</span>
                 </td>
-                <td class="col-num">{run.producedNodeIds.length}</td>
-                <td class="col-mono">{fmtDuration(run.durationMs)}</td>
+                <td class="col-num">{run.produced_node_ids.length}</td>
+                <td class="col-mono">{fmtDuration(run.duration_ms)}</td>
                 <td class="col-mono">
-                  <time datetime={run.createdAt}>
-                    {new Date(run.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <time datetime={run.created_at}>
+                    {new Date(run.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </time>
                 </td>
               </tr>

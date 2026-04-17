@@ -6,7 +6,7 @@
 
 **File:** `base-node.schema.ts`
 
-Every node in the vault shares these fields (camelCase in typed nodes and in frontmatter produced by `createNode()`):
+Every node in the vault shares these fields (snake_case in Zod schemas and in frontmatter produced by `createNode()`):
 
 ```ts
 {
@@ -15,8 +15,8 @@ Every node in the vault shares these fields (camelCase in typed nodes and in fro
   title: string,            // human-readable name
   tags: string[],           // explicit cross-references (defaults [])
   related: NodeId[],        // default [] — lightweight links to other nodes
-  createdAt: string,        // ISO timestamp
-  updatedAt?: string,       // ISO timestamp (optional in schema; set by flows that write nodes)
+  created_at: string,       // ISO timestamp
+  updated_at?: string,      // ISO timestamp (optional in schema; set by flows that write nodes)
   status: NodeStatus,       // default "seed"
   body: string,             // markdown body (file content below frontmatter)
 }
@@ -36,7 +36,7 @@ The lowest-friction entry point. Captures a thought before it evaporates.
 IdeaNode = BaseNode & {
   type: 'idea'
   origin: 'manual' | 'extracted' | 'generated'  // default 'manual'
-  sourceId?: NodeId       // optional structural link to a `source` node
+  source_id?: NodeId      // optional structural link to a `source` node
 }
 ```
 
@@ -52,8 +52,8 @@ tags:
   - ingestion
   - youtube
 related: []
-createdAt: '2026-04-04T12:00:00.000Z'
-updatedAt: '2026-04-04T12:00:00.000Z'
+created_at: '2026-04-04T12:00:00.000Z'
+updated_at: '2026-04-04T12:00:00.000Z'
 origin: manual
 ---
 
@@ -77,9 +77,9 @@ SkillNode = BaseNode & {
   outputs: string[]          // what this skill produces
   tools: string[]            // e.g. ['llm', 'bash', 'fetch']
   version?: string
-  sourceId?: NodeId          // optional structural link to source provenance
-  derivedFromIds: NodeId[]   // transcript/idea it came from
-  parentSkillId?: NodeId     // if refined from another skill
+  source_id?: NodeId         // optional structural link to source provenance
+  derived_from_ids: NodeId[] // transcript/idea it came from
+  parent_skill_id?: NodeId   // if refined from another skill
   generation: number         // refinement depth (0 = original)
 }
 ```
@@ -96,8 +96,8 @@ Reusable LLM prompt content. The main text is stored in **`body`**; metadata fie
 PromptNode = BaseNode & {
   type: 'prompt'
   variables: string[]             // expected variable names
-  modelHint?: string              // suggested model, e.g. 'llama3'
-  outputSchema?: string           // Zod schema name for structured output
+  model_hint?: string             // suggested model, e.g. 'llama3'
+  output_schema?: string          // Zod schema name for structured output
 }
 ```
 
@@ -125,16 +125,16 @@ Ingested long-form content (for example from YouTube). The readable transcript t
 ```ts
 TranscriptNode = BaseNode & {
   type: 'transcript'
-  sourceId?: NodeId          // source provenance link
-  sourceUrl: string         // URL
-  sourceType: 'youtube' | 'article' | 'repo' | 'chat' | 'other'
+  source_id?: NodeId         // source provenance link
+  source_url: string        // URL
+  source_type: 'youtube' | 'article' | 'repo' | 'chat' | 'other'
   author?: string
   summary?: string               // LLM-generated summary
-  rawLength?: number             // character count of original
-  cleanLength?: number
-  structuredParagraphs?: number
-  extractedIdeaIds: NodeId[]     // ideas pulled from this
-  extractedSkillIds: NodeId[]    // skills pulled from this
+  raw_length?: number            // character count of original
+  clean_length?: number
+  structured_paragraphs?: number
+  extracted_idea_ids: NodeId[]   // ideas pulled from this
+  extracted_skill_ids: NodeId[]  // skills pulled from this
 }
 ```
 
@@ -147,9 +147,9 @@ External references such as tools, libraries, articles, or repos.
 ```ts
 ResourceNode = BaseNode & {
   type: 'resource'
-  sourceId?: NodeId
+  source_id?: NodeId
   url?: string
-  resourceType: 'tool' | 'library' | 'api' | 'dataset' | 'reference' | 'article' | 'repo' | 'other'
+  resource_type: 'tool' | 'library' | 'api' | 'dataset' | 'reference' | 'article' | 'repo' | 'other'
   description?: string
 }
 ```
@@ -163,7 +163,7 @@ People, channels, repos, or other origins.
 ```ts
 SourceNode = BaseNode & {
   type: 'source'
-  sourceKind: 'person' | 'channel' | 'repo' | 'publication' | 'organization' | 'other'
+  source_kind: 'person' | 'channel' | 'repo' | 'publication' | 'organization' | 'other'
   url?: string
   platforms: string[]
   follow: boolean            // actively monitoring? (default false)
@@ -196,11 +196,11 @@ Execution record for a skill or automation. **`RunNode` is part of the same disc
 ```ts
 RunNode = BaseNode & {
   type: 'run'
-  skillId?: NodeId
-  runStatus: RunStatus       // 'pending' (default), 'running', 'completed', 'failed', 'cancelled'
-  inputSummary?: string
-  outputSummary?: string
-  producedNodeIds: NodeId[]  // nodes created by this run
+  skill_id?: NodeId
+  run_status: RunStatus      // 'pending' (default), 'running', 'completed', 'failed', 'cancelled'
+  input_summary?: string
+  output_summary?: string
+  produced_node_ids: NodeId[] // nodes created by this run
   stages: Array<{
     name: string
     status: 'pending' | 'completed' | 'failed'
@@ -217,11 +217,11 @@ RunNode = BaseNode & {
     rawOutput?: string
     parsed?: boolean
   }
-  modelUsed?: string         // e.g. 'llama3', 'claude-sonnet'
-  durationMs?: number
+  model_used?: string        // e.g. 'llama3', 'claude-sonnet'
+  duration_ms?: number
   error?: string
-  startedAt?: string
-  completedAt?: string
+  started_at?: string
+  completed_at?: string
 }
 ```
 
@@ -271,7 +271,7 @@ const edge = RelationshipSchema.parse({
   from: 'skill-a',
   to: 'prompt-b',
   type: 'uses',
-  createdAt: new Date().toISOString(),
+  created_at: new Date().toISOString(),
   note: 'optional',
 });
 ```
@@ -283,8 +283,8 @@ Relationships are defined for future graph work; persisting edges as their own f
 ## What changed vs older drafts
 
 - **Modular `*.schema.ts` files** — `packages/schemas/src/index.ts` only re-exports.
-- **camelCase** fields in Zod and on disk (for example `createdAt`, `sourceUrl`, `extractedIdeaIds`).
+- **snake_case** fields in Zod and on disk (for example `created_at`, `source_url`, `extracted_idea_ids`).
 - **Single union** — `node.schema.ts` exports `NodeSchema` and the inferred type `LabNode` (there is no separate `lab-node.schema.ts` or `AnyNode` split).
 - **Filename pattern** — `<type>.<id>.md`, not `<id>.md` alone.
-- **Lightweight provenance** — `sourceId` is the current bridge from externally-derived nodes to `source` nodes.
+- **Lightweight provenance** — `source_id` is the current bridge from externally-derived nodes to `source` nodes.
 - **Richer runs** — `run` nodes now support stages, decisions, and optional LLM trace data for observability.

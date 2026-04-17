@@ -8,8 +8,8 @@ export const BaseNodeSchema = z.object({
   title: z.string().min(1),
   tags: z.array(z.string()).default([]),
   related: z.array(NodeIdSchema).default([]),
-  createdAt: TimestampSchema,
-  updatedAt: TimestampSchema.optional(),
+  created_at: TimestampSchema,
+  updated_at: TimestampSchema.optional(),
   status: NodeStatusSchema.default('seed'),
   body: z.string().default(''),
 });

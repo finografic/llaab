@@ -53,11 +53,11 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
         <span class={`badge badge--${node.type}`}>{node.type}</span>
         <span class={`badge badge--status badge--${node.status}`}>{node.status}</span>
         <span class="meta-sep">·</span>
-        <span class="meta-text">{fmtDate(node.createdAt)}</span>
-        {node.updatedAt && node.updatedAt !== node.createdAt && (
+        <span class="meta-text">{fmtDate(node.created_at)}</span>
+        {node.updated_at && node.updated_at !== node.created_at && (
           <>
             <span class="meta-sep">·</span>
-            <span class="meta-text">updated {fmtDate(node.updatedAt)}</span>
+            <span class="meta-text">updated {fmtDate(node.updated_at)}</span>
           </>
         )}
       </div>
@@ -87,11 +87,11 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
         <dl class="meta-grid">
           <dt>Origin</dt>
           <dd><span class={`badge badge--origin-${idea.origin}`}>{idea.origin}</span></dd>
-          {idea.sourceId && (
+          {idea.source_id && (
             <>
               <dt>Source</dt>
               <dd>
-                <a href={`/vault/nodes/${idea.sourceId}`} class="meta-link">{idea.sourceId}</a>
+                <a href={`/vault/nodes/${idea.source_id}`} class="meta-link">{idea.source_id}</a>
               </dd>
             </>
           )}
@@ -105,7 +105,7 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
         <h2 class="section__heading">Details</h2>
         <dl class="meta-grid">
           <dt>Type</dt>
-          <dd><span class="badge badge--resource-type">{resource.resourceType}</span></dd>
+          <dd><span class="badge badge--resource-type">{resource.resource_type}</span></dd>
           {resource.url && (
             <>
               <dt>URL</dt>
@@ -122,11 +122,11 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
               <dd class="meta-text">{resource.description}</dd>
             </>
           )}
-          {resource.sourceId && (
+          {resource.source_id && (
             <>
               <dt>Source</dt>
               <dd>
-                <a href={`/vault/nodes/${resource.sourceId}`} class="meta-link">{resource.sourceId}</a>
+                <a href={`/vault/nodes/${resource.source_id}`} class="meta-link">{resource.source_id}</a>
               </dd>
             </>
           )}
@@ -177,28 +177,28 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
               </dd>
             </>
           )}
-          {skill.sourceId && (
+          {skill.source_id && (
             <>
               <dt>Source</dt>
               <dd>
-                <a href={`/vault/nodes/${skill.sourceId}`} class="meta-link">{skill.sourceId}</a>
+                <a href={`/vault/nodes/${skill.source_id}`} class="meta-link">{skill.source_id}</a>
               </dd>
             </>
           )}
-          {skill.parentSkillId && (
+          {skill.parent_skill_id && (
             <>
               <dt>Parent skill</dt>
               <dd>
-                <a href={`/vault/nodes/${skill.parentSkillId}`} class="meta-link">{skill.parentSkillId}</a>
+                <a href={`/vault/nodes/${skill.parent_skill_id}`} class="meta-link">{skill.parent_skill_id}</a>
               </dd>
             </>
           )}
-          {skill.derivedFromIds.length > 0 && (
+          {skill.derived_from_ids.length > 0 && (
             <>
               <dt>Derived from</dt>
               <dd>
                 <ul class="chip-list">
-                  {skill.derivedFromIds.map((sid) => (
+                  {skill.derived_from_ids.map((sid) => (
                     <li class="chip">
                       <a href={`/vault/nodes/${sid}`} class="meta-link">{sid}</a>
                     </li>
@@ -212,14 +212,14 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
     )}
 
     {/* ── Prompt — variables / modelHint / outputSchema ── */}
-    {prompt && (prompt.variables.length > 0 || prompt.modelHint || prompt.outputSchema) && (
+    {prompt && (prompt.variables.length > 0 || prompt.model_hint || prompt.output_schema) && (
       <section class="section">
         <h2 class="section__heading">Details</h2>
         <dl class="meta-grid">
-          {prompt.modelHint && (
+          {prompt.model_hint && (
             <>
               <dt>Model hint</dt>
-              <dd class="meta-mono">{prompt.modelHint}</dd>
+              <dd class="meta-mono">{prompt.model_hint}</dd>
             </>
           )}
           {prompt.variables.length > 0 && (
@@ -232,10 +232,10 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
               </dd>
             </>
           )}
-          {prompt.outputSchema && (
+          {prompt.output_schema && (
             <>
               <dt>Output schema</dt>
-              <dd class="meta-mono">{prompt.outputSchema}</dd>
+              <dd class="meta-mono">{prompt.output_schema}</dd>
             </>
           )}
         </dl>

@@ -8,7 +8,7 @@ import { getNodeFilePath, nodeToMarkdown } from './node-file.utils.js';
 export async function writeNode(node: LabNode): Promise<{ path: string; node: LabNode }> {
   const validatedNode = nodeSchemaByType[node.type].parse({
     ...node,
-    updatedAt: now(),
+    updated_at: now(),
   }) as LabNode;
 
   const filePath = getNodeFilePath(validatedNode.type, validatedNode.id);

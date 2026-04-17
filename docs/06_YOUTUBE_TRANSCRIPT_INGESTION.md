@@ -156,8 +156,8 @@ A new paragraph starts when **both** conditions are met:
 
 ## Deduplication (node level)
 
-Before fetching, the pipeline checks whether a `transcript` node with the same `sourceType:
-'youtube'` and `sourceItemId` (the video ID) already exists in the vault. If found, the existing
+Before fetching, the pipeline checks whether a `transcript` node with the same `source_type:
+'youtube'` and `source_item_id` (the video ID) already exists in the vault. If found, the existing
 node is returned immediately without re-fetching.
 
 ---
@@ -190,4 +190,4 @@ pnpm dev:clean:vault:recent
 | Transcript empty                | Video has no auto-captions             | Expected — node is stored without body   |
 | Final sentence cut short        | SRT truncation (pre-fix state)         | Pipeline now uses VTT + sentence trim    |
 | Duplicate sentence at end       | Last-cue force-add bug (pre-fix state) | Fixed — fully-contained cues are dropped |
-| Re-ingest returns existing node | Node dedup matched on `sourceItemId`   | Run `pnpm dev:clean:vault:recent` first  |
+| Re-ingest returns existing node | Node dedup matched on `source_item_id` | Run `pnpm dev:clean:vault:recent` first  |

@@ -45,7 +45,7 @@ function buildFailedStage(
     name: `control:${input.task}`,
     status: 'failed',
     input: input.input,
-    output: llm?.rawOutput,
+    output: llm?.raw_output,
     error,
   };
 }
@@ -63,7 +63,7 @@ export async function execute<T>(input: ControlExecuteInput<T>): Promise<Control
       const parsed = input.schema.safeParse(output);
       const llmTrace: ControlLlmTrace = {
         model: input.model,
-        rawOutput: toRawOutput(output),
+        raw_output: toRawOutput(output),
         parsed: parsed.success,
       };
 

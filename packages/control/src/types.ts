@@ -28,7 +28,7 @@ export interface ControlStage {
 
 export interface ControlLlmTrace {
   model?: string;
-  rawOutput?: string;
+  raw_output?: string;
   parsed: boolean;
 }
 

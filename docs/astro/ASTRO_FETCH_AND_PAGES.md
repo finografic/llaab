@@ -313,12 +313,12 @@ All other React components (no DS deps) can use `client:load` normally.
 | ------------------------- | ------------------------------------------------------------------ |
 | `/vault`                  | Gated file-tree browser — raw markdown viewer                      |
 | `/vault/login`            | Password form; default `llaab`, override via `VAULT_PASSWORD` env  |
-| `/vault/transcripts`      | List: transcript cards with sourceType badge, stats, idea count    |
+| `/vault/transcripts`      | List: transcript cards with source_type badge, stats, idea count   |
 | `/vault/transcripts/[id]` | Detail: source metadata, summary, extracted ideas, full transcript |
 | `/vault/nodes`            | List + Create — ideas/resources/prompts/skills/instructions        |
 | `/vault/nodes/[id]`       | Detail: type/status/date, tags, body, type-specific fields         |
 | `/vault/sources`          | List: sources sorted alpha, followed badge, platform chips         |
 | `/vault/sources/[id]`     | Detail: kind/follow/url/platforms, linked transcripts              |
-| `/vault/runs`             | Table: runs with runStatus badge, produced count, duration         |
+| `/vault/runs`             | Table: runs with run_status badge, produced count, duration        |
 | `/vault/runs/[id]`        | Detail: summary grid, stages table, decisions list, error block    |
 | `/api/vault/auth`         | POST sets cookie, GET clears it — client-only auth                 |

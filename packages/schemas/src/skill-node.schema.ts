@@ -9,9 +9,9 @@ export const SkillNodeSchema = BaseNodeSchema.extend({
   outputs: z.array(z.string()).default([]),
   tools: z.array(z.string()).default([]),
   version: z.string().optional(),
-  sourceId: NodeIdSchema.optional(),
-  derivedFromIds: z.array(NodeIdSchema).default([]),
-  parentSkillId: NodeIdSchema.optional(),
+  source_id: NodeIdSchema.optional(),
+  derived_from_ids: z.array(NodeIdSchema).default([]),
+  parent_skill_id: NodeIdSchema.optional(),
   generation: z.number().int().nonnegative().default(0),
 });
 

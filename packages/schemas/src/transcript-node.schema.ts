@@ -7,17 +7,17 @@ export const TranscriptSourceTypeSchema = z.enum(['youtube', 'article', 'repo', 
 
 export const TranscriptNodeSchema = BaseNodeSchema.extend({
   type: z.literal('transcript'),
-  sourceId: NodeIdSchema.optional(),
-  sourceItemId: z.string().min(1).optional(),
-  sourceUrl: z.string().url(),
-  sourceType: TranscriptSourceTypeSchema,
+  source_id: NodeIdSchema.optional(),
+  source_item_id: z.string().min(1).optional(),
+  source_url: z.string().url(),
+  source_type: TranscriptSourceTypeSchema,
   author: z.string().optional(),
   summary: z.string().optional(),
-  rawLength: z.number().int().nonnegative().optional(),
-  cleanLength: z.number().int().nonnegative().optional(),
-  structuredParagraphs: z.number().int().nonnegative().optional(),
-  extractedIdeaIds: z.array(NodeIdSchema).default([]),
-  extractedSkillIds: z.array(NodeIdSchema).default([]),
+  raw_length: z.number().int().nonnegative().optional(),
+  clean_length: z.number().int().nonnegative().optional(),
+  structured_paragraphs: z.number().int().nonnegative().optional(),
+  extracted_idea_ids: z.array(NodeIdSchema).default([]),
+  extracted_skill_ids: z.array(NodeIdSchema).default([]),
 });
 
 export type TranscriptNode = z.infer<typeof TranscriptNodeSchema>;

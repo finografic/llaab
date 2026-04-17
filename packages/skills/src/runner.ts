@@ -26,7 +26,7 @@ interface NestedRunTrace {
   }>;
   llm?: {
     model?: string;
-    rawOutput?: string;
+    raw_output?: string;
     parsed?: boolean;
   };
 }
@@ -117,15 +117,15 @@ async function persistRunNode(input: {
     tags: ['run', input.name],
     extra: {
       status: 'mature',
-      skillId: toNodeId(input.name),
-      runStatus: input.status,
-      inputSummary: summarizeValue(input.rawInput),
-      outputSummary: stageOutput === undefined ? undefined : summarizeValue(stageOutput),
-      producedNodeIds: stageOutput === undefined ? [] : collectProducedNodeIds(stageOutput),
-      durationMs: Date.parse(input.completedAt) - Date.parse(input.startedAt),
+      skill_id: toNodeId(input.name),
+      run_status: input.status,
+      input_summary: summarizeValue(input.rawInput),
+      output_summary: stageOutput === undefined ? undefined : summarizeValue(stageOutput),
+      produced_node_ids: stageOutput === undefined ? [] : collectProducedNodeIds(stageOutput),
+      duration_ms: Date.parse(input.completedAt) - Date.parse(input.startedAt),
       error: input.error,
-      startedAt: input.startedAt,
-      completedAt: input.completedAt,
+      started_at: input.startedAt,
+      completed_at: input.completedAt,
       stages: [
         ...(input.nestedTrace?.stages ?? []),
         {

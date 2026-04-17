@@ -26,23 +26,23 @@ Markdown file
 
 ## Schema Files
 
-| File                         | Purpose                                                                                                                  |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `primitives.schema.ts`       | Shared primitives such as `NodeId`, `NodeType`, `NodeStatus`, run status, and timestamps.                                |
-| `base-node.schema.ts`        | The common fields every node gets: `id`, `type`, `title`, `tags`, `related`, `createdAt`, `updatedAt`, `status`, `body`. |
-| `idea-node.schema.ts`        | Fast-capture thoughts and raw ideas.                                                                                     |
-| `skill-node.schema.ts`       | Executable knowledge with `inputs`, `outputs`, `tools`, and lightweight lineage fields.                                  |
-| `prompt-node.schema.ts`      | Reusable prompt definitions with variables and model hints.                                                              |
-| `instruction-node.schema.ts` | Deterministic process or workflow guidance.                                                                              |
-| `transcript-node.schema.ts`  | Ingested long-form content such as YouTube transcripts.                                                                  |
-| `resource-node.schema.ts`    | External docs, tools, repos, references, and similar resources.                                                          |
-| `source-node.schema.ts`      | People, channels, repos, publications, or other origins of knowledge.                                                    |
-| `decision-node.schema.ts`    | Architecture and system decisions made inside the lab.                                                                   |
-| `run-node.schema.ts`         | Execution records for skills or other automations.                                                                       |
-| `relationship.schema.ts`     | Typed edges between nodes.                                                                                               |
-| `node.schema.ts`             | The discriminated union that validates any supported LLAAB node.                                                         |
-| `schema.utils.ts`            | Non-schema helpers like `toNodeId()`, `now()`, `formatNodeFilename()`, and the per-type schema map.                      |
-| `index.ts`                   | Re-exports only. No schema logic lives here.                                                                             |
+| File                         | Purpose                                                                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `primitives.schema.ts`       | Shared primitives such as `NodeId`, `NodeType`, `NodeStatus`, run status, and timestamps.                                  |
+| `base-node.schema.ts`        | The common fields every node gets: `id`, `type`, `title`, `tags`, `related`, `created_at`, `updated_at`, `status`, `body`. |
+| `idea-node.schema.ts`        | Fast-capture thoughts and raw ideas.                                                                                       |
+| `skill-node.schema.ts`       | Executable knowledge with `inputs`, `outputs`, `tools`, and lightweight lineage fields.                                    |
+| `prompt-node.schema.ts`      | Reusable prompt definitions with variables and model hints.                                                                |
+| `instruction-node.schema.ts` | Deterministic process or workflow guidance.                                                                                |
+| `transcript-node.schema.ts`  | Ingested long-form content such as YouTube transcripts.                                                                    |
+| `resource-node.schema.ts`    | External docs, tools, repos, references, and similar resources.                                                            |
+| `source-node.schema.ts`      | People, channels, repos, publications, or other origins of knowledge.                                                      |
+| `decision-node.schema.ts`    | Architecture and system decisions made inside the lab.                                                                     |
+| `run-node.schema.ts`         | Execution records for skills or other automations.                                                                         |
+| `relationship.schema.ts`     | Typed edges between nodes.                                                                                                 |
+| `node.schema.ts`             | The discriminated union that validates any supported LLAAB node.                                                           |
+| `schema.utils.ts`            | Non-schema helpers like `toNodeId()`, `now()`, `formatNodeFilename()`, and the per-type schema map.                        |
+| `index.ts`                   | Re-exports only. No schema logic lives here.                                                                               |
 
 ## Node Types Included
 
@@ -62,17 +62,17 @@ Markdown file
 
 These fields exist on every node through `BaseNodeSchema`:
 
-| Field       | Meaning                                                             |
-| ----------- | ------------------------------------------------------------------- |
-| `id`        | Stable slug-like node id, generated from the title by `toNodeId()`. |
-| `type`      | The node discriminator used by the union schema.                    |
-| `title`     | Human-readable title.                                               |
-| `tags`      | Flexible grouping and filtering labels.                             |
-| `related`   | Light-weight explicit connections to other node ids.                |
-| `createdAt` | ISO timestamp for creation.                                         |
-| `updatedAt` | ISO timestamp for most recent update.                               |
-| `status`    | Lifecycle stage: `seed`, `growing`, `mature`, or `archived`.        |
-| `body`      | The markdown body of the file, stored outside frontmatter.          |
+| Field        | Meaning                                                             |
+| ------------ | ------------------------------------------------------------------- |
+| `id`         | Stable slug-like node id, generated from the title by `toNodeId()`. |
+| `type`       | The node discriminator used by the union schema.                    |
+| `title`      | Human-readable title.                                               |
+| `tags`       | Flexible grouping and filtering labels.                             |
+| `related`    | Light-weight explicit connections to other node ids.                |
+| `created_at` | ISO timestamp for creation.                                         |
+| `updated_at` | ISO timestamp for most recent update.                               |
+| `status`     | Lifecycle stage: `seed`, `growing`, `mature`, or `archived`.        |
+| `body`       | The markdown body of the file, stored outside frontmatter.          |
 
 ## Core Utilities Wired To Schemas
 

@@ -3,19 +3,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const originalCwd = process.cwd();
-
 describe('node mutation layer', () => {
   let tempDir: string;
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), 'llaab-core-'));
-    process.chdir(tempDir);
+    process.env.LLAAB_VAULT = join(tempDir, 'vault');
     vi.resetModules();
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
+    delete process.env.LLAAB_VAULT;
     await rm(tempDir, { force: true, recursive: true });
   });
 
@@ -38,7 +36,7 @@ describe('node mutation layer', () => {
       ...node,
       body: 'After write',
       tags: [...node.tags, 'updated'],
-      updatedAt: '2026-04-08T12:00:00.000Z',
+      updated_at: '2026-04-08T12:00:00.000Z',
     };
 
     await maybeWriteNode(nextNode);
@@ -80,9 +78,9 @@ describe('node mutation layer', () => {
     expect(reread.type).toBe(node.type);
     expect(reread.body).toBe('Updated body');
     expect(reread.tags).toContain('refined');
-    expect(reread.updatedAt).toBeDefined();
-    expect(node.updatedAt).toBeDefined();
-    expect(Date.parse(reread.updatedAt!)).toBeGreaterThanOrEqual(Date.parse(node.updatedAt!));
+    expect(reread.updated_at).toBeDefined();
+    expect(node.updated_at).toBeDefined();
+    expect(Date.parse(reread.updated_at!)).toBeGreaterThanOrEqual(Date.parse(node.updated_at!));
   });
 
   it('preserves structural provenance fields on externally-derived nodes', async () => {
@@ -93,9 +91,9 @@ describe('node mutation layer', () => {
       body: 'Structured transcript body',
       tags: ['youtube'],
       extra: {
-        sourceId: 'example-source',
-        sourceUrl: 'https://example.com/video',
-        sourceType: 'youtube',
+        source_id: 'example-source',
+        source_url: 'https://example.com/video',
+        source_type: 'youtube',
       },
     });
 
@@ -105,6 +103,6 @@ describe('node mutation layer', () => {
 
     if (reread.type !== 'transcript') return;
 
-    expect(reread.sourceId).toBe('example-source');
+    expect(reread.source_id).toBe('example-source');
   });
 });

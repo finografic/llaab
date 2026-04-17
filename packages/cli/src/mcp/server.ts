@@ -61,7 +61,7 @@ export function createMcpServer(): McpServer {
     'vault_list',
     {
       description:
-        'List vault nodes with optional filters. Returns compact summaries (id, type, title, tags, status, createdAt). ' +
+        'List vault nodes with optional filters. Returns compact summaries (id, type, title, tags, status, created_at). ' +
         'Use search for text matching, type to filter by node kind, tags for domain tags (e.g. d:llm).',
       inputSchema: vaultListSchema,
     },
@@ -74,7 +74,7 @@ export function createMcpServer(): McpServer {
         title: n.title,
         tags: n.tags,
         status: n.status,
-        createdAt: n.createdAt,
+        created_at: n.created_at,
       }));
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(summaries, null, 2) }],

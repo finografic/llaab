@@ -16,9 +16,9 @@ export const ResourceTypeSchema = z.enum([
 
 export const ResourceNodeSchema = BaseNodeSchema.extend({
   type: z.literal('resource'),
-  sourceId: NodeIdSchema.optional(),
+  source_id: NodeIdSchema.optional(),
   url: z.string().url().optional(),
-  resourceType: ResourceTypeSchema.default('reference'),
+  resource_type: ResourceTypeSchema.default('reference'),
   description: z.string().optional(),
 });
 

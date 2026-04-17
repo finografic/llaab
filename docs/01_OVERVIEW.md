@@ -75,7 +75,7 @@ These are the atoms everything else is built from.
 | `NodeStatus`       | inferred TypeScript type | Type inferred from `NodeStatusSchema`                                                   |
 | `RunStatus`        | inferred TypeScript type | Type inferred from `RunStatusSchema`                                                    |
 
-Field names in Zod schemas and typed nodes use **camelCase** (for example `createdAt`, `sourceUrl`), including in frontmatter keys as written by `createNode()`.
+Field names in Zod schemas and typed nodes use **snake_case** (for example `created_at`, `source_url`), including in frontmatter keys as written by `createNode()`.
 
 ### NodeType values
 
@@ -147,7 +147,7 @@ const ideas = await listNodes({ type: 'idea', limit: 5 });
 const first = ideas[0];
 if (first?.type === 'idea') {
   console.log(first.origin); // 'manual'
-  console.log(first.sourceId); // optional structural link to a source/transcript origin
+  console.log(first.source_id); // optional structural link to a source/transcript origin
 }
 
 // 3. Read one file by path when you already know where it lives (CLI arg, glob, etc.)

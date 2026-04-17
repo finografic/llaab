@@ -49,47 +49,47 @@ function fmtDate(ts?: string): string {
       <h1 class="detail-header__title">{run.title}</h1>
 
       <div class="detail-header__meta">
-        <span class={`badge badge--${run.runStatus}`}>{run.runStatus}</span>
+        <span class={`badge badge--${run.run_status}`}>{run.run_status}</span>
         <span class="meta-sep">·</span>
-        <span class="meta-text">{fmtDate(run.startedAt ?? run.createdAt)}</span>
-        {run.durationMs != null && (
+        <span class="meta-text">{fmtDate(run.started_at ?? run.created_at)}</span>
+        {run.duration_ms != null && (
           <>
             <span class="meta-sep">·</span>
-            <span class="meta-text">{fmtDuration(run.durationMs)}</span>
+            <span class="meta-text">{fmtDuration(run.duration_ms)}</span>
           </>
         )}
-        {run.modelUsed && (
+        {run.model_used && (
           <>
             <span class="meta-sep">·</span>
-            <span class="meta-text meta-mono">{run.modelUsed}</span>
+            <span class="meta-text meta-mono">{run.model_used}</span>
           </>
         )}
       </div>
     </header>
 
     {/* ── Summary ── */}
-    {(run.inputSummary ?? run.outputSummary) && (
+    {(run.input_summary ?? run.output_summary) && (
       <section class="section">
         <h2 class="section__heading">Summary</h2>
         <dl class="summary-grid">
-          {run.inputSummary && (
+          {run.input_summary && (
             <>
               <dt>Input</dt>
-              <dd>{run.inputSummary}</dd>
+              <dd>{run.input_summary}</dd>
             </>
           )}
-          {run.outputSummary && (
+          {run.output_summary && (
             <>
               <dt>Output</dt>
-              <dd>{run.outputSummary}</dd>
+              <dd>{run.output_summary}</dd>
             </>
           )}
-          {run.producedNodeIds.length > 0 && (
+          {run.produced_node_ids.length > 0 && (
             <>
               <dt>Produced</dt>
               <dd>
                 <ul class="produced-list">
-                  {run.producedNodeIds.map((nid) => (
+                  {run.produced_node_ids.map((nid) => (
                     <li class="produced-id">{nid}</li>
                   ))}
                 </ul>

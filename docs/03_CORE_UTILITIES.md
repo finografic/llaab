@@ -91,7 +91,7 @@ const { path, node } = await createNode({
 
 ### `writeNode(node)`
 
-Writes an existing node back to its deterministic vault path. Validates through the node's schema, refreshes `updatedAt`, and keeps file output consistent with `createNode()`.
+Writes an existing node back to its deterministic vault path. Validates through the node's schema, refreshes `updated_at`, and keeps file output consistent with `createNode()`.
 
 ```ts
 import { writeNode } from '@llaab/core';
@@ -108,7 +108,7 @@ Use this when you already have a full node object and want schema-checked persis
 
 ### `updateNode(filePath, updater)`
 
-Reads a node from disk, passes it through an updater callback, preserves `id` and `type`, revalidates, refreshes `updatedAt`, and writes the result back.
+Reads a node from disk, passes it through an updater callback, preserves `id` and `type`, revalidates, refreshes `updated_at`, and writes the result back.
 
 ```ts
 import { updateNode } from '@llaab/core';

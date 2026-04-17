@@ -22,8 +22,8 @@ if (!source) return Astro.redirect('/vault/sources', 302);
 
 // Load transcripts that reference this source
 const transcriptNodes = await listNodes({ type: 'transcript' });
-const linkedTranscripts = (transcriptNodes as TranscriptNode[]).filter((t) => t.sourceId === source.id);
-linkedTranscripts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+const linkedTranscripts = (transcriptNodes as TranscriptNode[]).filter((t) => t.source_id === source.id);
+linkedTranscripts.sort((a, b) => b.created_at.localeCompare(a.created_at));
 
 function fmtDate(ts?: string): string {
   if (!ts) return '—';
@@ -48,10 +48,10 @@ function fmtDate(ts?: string): string {
       <h1 class="detail-header__title">{source.title}</h1>
 
       <div class="detail-header__meta">
-        <span class={`badge badge--${source.sourceKind}`}>{source.sourceKind}</span>
+        <span class={`badge badge--${source.source_kind}`}>{source.source_kind}</span>
         {source.follow && <span class="badge badge--follow">following</span>}
         <span class="meta-sep">·</span>
-        <span class="meta-text">{fmtDate(source.createdAt)}</span>
+        <span class="meta-text">{fmtDate(source.created_at)}</span>
       </div>
     </header>
 
@@ -77,7 +77,7 @@ function fmtDate(ts?: string): string {
       <h2 class="section__heading">Details</h2>
       <dl class="meta-grid">
         <dt>Kind</dt>
-        <dd><span class={`badge badge--${source.sourceKind}`}>{source.sourceKind}</span></dd>
+        <dd><span class={`badge badge--${source.source_kind}`}>{source.source_kind}</span></dd>
 
         <dt>Follow</dt>
         <dd>
@@ -124,12 +124,12 @@ function fmtDate(ts?: string): string {
               <a href={`/vault/transcripts/${t.id}`} class="transcript-link">
                 <span class="transcript-title">{t.title}</span>
                 <span class="transcript-meta">
-                  <span class={`badge badge--${t.sourceType}`}>{t.sourceType}</span>
-                  {t.extractedIdeaIds.length > 0 && (
-                    <span class="transcript-ideas">{t.extractedIdeaIds.length} idea{t.extractedIdeaIds.length !== 1 ? 's' : ''}</span>
+                  <span class={`badge badge--${t.source_type}`}>{t.source_type}</span>
+                  {t.extracted_idea_ids.length > 0 && (
+                    <span class="transcript-ideas">{t.extracted_idea_ids.length} idea{t.extracted_idea_ids.length !== 1 ? 's' : ''}</span>
                   )}
-                  <time class="transcript-date" datetime={t.createdAt}>
-                    {new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <time class="transcript-date" datetime={t.created_at}>
+                    {new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </time>
                 </span>
               </a>

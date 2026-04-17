@@ -32,7 +32,7 @@ export async function extractTranscriptIdeas(input: ExtractTranscriptIdeasInput)
           tags: inferredTags,
           extra: {
             origin: 'extracted',
-            sourceId: input.transcript.id,
+            source_id: input.transcript.id,
           },
         });
         ideaIds.push(id);
@@ -43,7 +43,7 @@ export async function extractTranscriptIdeas(input: ExtractTranscriptIdeasInput)
         const transcriptPath = getNodeFilePath('transcript', input.transcript.id);
         await updateNode(transcriptPath, (node) => ({
           ...node,
-          extractedIdeaIds: [...((node as TranscriptNode).extractedIdeaIds ?? []), ...ideaIds],
+          extracted_idea_ids: [...((node as TranscriptNode).extracted_idea_ids ?? []), ...ideaIds],
         }));
       }
 

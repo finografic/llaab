@@ -86,7 +86,7 @@ async function findExistingYouTubeTranscript(sourceItemId: string): Promise<Inge
   const nodes = await listNodes({ type: 'transcript' });
   const existing = nodes.find(
     (node) =>
-      node.type === 'transcript' && node.sourceType === 'youtube' && node.sourceItemId === sourceItemId,
+      node.type === 'transcript' && node.source_type === 'youtube' && node.source_item_id === sourceItemId,
   );
 
   if (!existing) {
@@ -129,7 +129,7 @@ async function createResourceNode(
     tags: [...new Set(['d:ingest', ...autoTag(input.title?.trim() ?? '', ''), ...(input.tags ?? [])])],
     extra: {
       url: input.url,
-      resourceType,
+      resource_type: resourceType,
       description: extracted.summary,
     },
   });
@@ -251,15 +251,15 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       ...new Set(['d:ingest', ...autoTag(transcriptTitle, extracted.summary ?? ''), ...(input.tags ?? [])]),
     ],
     extra: {
-      sourceId,
-      sourceItemId: captured.videoId,
-      sourceUrl: input.url,
-      sourceType: input.sourceType as TranscriptSourceType,
+      source_id: sourceId,
+      source_item_id: captured.videoId,
+      source_url: input.url,
+      source_type: input.sourceType as TranscriptSourceType,
       author: fetched.channel,
       summary: extracted.summary,
-      rawLength,
-      cleanLength,
-      structuredParagraphs: paragraphCount,
+      raw_length: rawLength,
+      clean_length: cleanLength,
+      structured_paragraphs: paragraphCount,
     },
   });
   producedNodeIds.add(transcriptResult.id);
@@ -280,7 +280,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       title: fetched.channel,
       tags: [],
       extra: {
-        sourceKind: 'channel',
+        source_kind: 'channel',
         url: fetched.channelUrl ?? `https://www.youtube.com/@${fetched.channel.replace(/\s+/g, '')}`,
         platforms: ['youtube'],
         related: [transcriptResult.id],

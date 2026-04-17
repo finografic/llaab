@@ -41,10 +41,10 @@ const followed = sources.filter((s) => s.follow);
         <li class="node-card">
           <a href={`/vault/sources/${s.id}`} class="node-card__link" aria-label={s.title}>
             <div class="node-card__meta">
-              <span class={`badge badge--${s.sourceKind}`}>{s.sourceKind}</span>
+              <span class={`badge badge--${s.source_kind}`}>{s.source_kind}</span>
               {s.follow && <span class="badge badge--follow">following</span>}
-              <time class="node-card__date" datetime={s.createdAt}>
-                {new Date(s.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+              <time class="node-card__date" datetime={s.created_at}>
+                {new Date(s.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
               </time>
             </div>
 

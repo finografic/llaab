@@ -22,9 +22,9 @@ if (!transcript) return Astro.redirect('/vault/transcripts', 302);
 
 // Load extracted ideas if any exist
 let extractedIdeas: IdeaNode[] = [];
-if (transcript.extractedIdeaIds.length > 0) {
+if (transcript.extracted_idea_ids.length > 0) {
   const ideaNodes = await listNodes({ type: 'idea' });
-  const ideaSet = new Set(transcript.extractedIdeaIds);
+  const ideaSet = new Set(transcript.extracted_idea_ids);
   extractedIdeas = (ideaNodes as IdeaNode[]).filter((n) => ideaSet.has(n.id));
 }
 
@@ -58,12 +58,12 @@ function fmtSeconds(s?: number): string {
       <h1 class="detail-header__title">{transcript.title}</h1>
 
       <div class="detail-header__meta">
-        <span class={`badge badge--${transcript.sourceType}`}>{transcript.sourceType}</span>
+        <span class={`badge badge--${transcript.source_type}`}>{transcript.source_type}</span>
         {transcript.author && (
           <span class="meta-text">{transcript.author}</span>
         )}
         <span class="meta-sep">·</span>
-        <span class="meta-text">{fmtDate(transcript.createdAt)}</span>
+        <span class="meta-text">{fmtDate(transcript.created_at)}</span>
       </div>
     </header>
 
@@ -82,32 +82,32 @@ function fmtSeconds(s?: number): string {
       <dl class="meta-grid">
         <dt>URL</dt>
         <dd>
-          <a href={transcript.sourceUrl} class="meta-link meta-mono" target="_blank" rel="noopener noreferrer">
-            {transcript.sourceUrl}
+          <a href={transcript.source_url} class="meta-link meta-mono" target="_blank" rel="noopener noreferrer">
+            {transcript.source_url}
           </a>
         </dd>
-        {transcript.sourceItemId && (
+        {transcript.source_item_id && (
           <>
             <dt>Item ID</dt>
-            <dd class="meta-mono">{transcript.sourceItemId}</dd>
+            <dd class="meta-mono">{transcript.source_item_id}</dd>
           </>
         )}
-        {transcript.sourceId && (
+        {transcript.source_id && (
           <>
             <dt>Source node</dt>
             <dd>
-              <a href={`/vault/sources/${transcript.sourceId}`} class="meta-link">{transcript.sourceId}</a>
+              <a href={`/vault/sources/${transcript.source_id}`} class="meta-link">{transcript.source_id}</a>
             </dd>
           </>
         )}
-        {(transcript.rawLength != null || transcript.cleanLength != null || transcript.structuredParagraphs != null) && (
+        {(transcript.raw_length != null || transcript.clean_length != null || transcript.structured_paragraphs != null) && (
           <>
             <dt>Stats</dt>
             <dd>
               <span class="stat-row">
-                {transcript.rawLength != null && <span class="stat">{transcript.rawLength.toLocaleString()} raw chars</span>}
-                {transcript.cleanLength != null && <span class="stat">{transcript.cleanLength.toLocaleString()} clean chars</span>}
-                {transcript.structuredParagraphs != null && <span class="stat">{transcript.structuredParagraphs} §</span>}
+                {transcript.raw_length != null && <span class="stat">{transcript.raw_length.toLocaleString()} raw chars</span>}
+                {transcript.clean_length != null && <span class="stat">{transcript.clean_length.toLocaleString()} clean chars</span>}
+                {transcript.structured_paragraphs != null && <span class="stat">{transcript.structured_paragraphs} §</span>}
               </span>
             </dd>
           </>
@@ -124,11 +124,11 @@ function fmtSeconds(s?: number): string {
     )}
 
     {/* ── Extracted ideas ── */}
-    {transcript.extractedIdeaIds.length > 0 && (
+    {transcript.extracted_idea_ids.length > 0 && (
       <section class="section">
         <h2 class="section__heading">
           Extracted ideas
-          <span class="section__count">{transcript.extractedIdeaIds.length}</span>
+          <span class="section__count">{transcript.extracted_idea_ids.length}</span>
         </h2>
         {extractedIdeas.length > 0 ? (
           <ul class="idea-list">

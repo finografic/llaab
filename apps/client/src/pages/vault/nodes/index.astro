@@ -22,7 +22,7 @@ const CONTENT_TYPES = ['idea', 'resource', 'prompt', 'skill', 'instruction'] as 
 const all = await listNodes();
 const nodes: LabNode[] = all
   .filter((n) => (CONTENT_TYPES as readonly string[]).includes(n.type))
-  .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
 const byType = Object.groupBy(nodes, (n) => n.type);
 ---
@@ -63,8 +63,8 @@ const byType = Object.groupBy(nodes, (n) => n.type);
           <div class="node-card__meta">
             <span class={`badge badge--${node.type}`}>{node.type}</span>
             <span class={`badge badge--status badge--${node.status}`}>{node.status}</span>
-            <time class="node-card__date" datetime={node.createdAt}>
-              {new Date(node.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            <time class="node-card__date" datetime={node.created_at}>
+              {new Date(node.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
             </time>
           </div>
 

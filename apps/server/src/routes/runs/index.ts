@@ -6,7 +6,7 @@ import { createRouter } from '../../lib/create-app.js';
 export const runsRouter = createRouter()
   .get('/', async (c) => {
     const all = await listNodes({ type: 'run' });
-    const runs = (all as RunNode[]).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const runs = (all as RunNode[]).sort((a, b) => b.created_at.localeCompare(a.created_at));
     return c.json({ runs });
   })
   .get('/:id', async (c) => {

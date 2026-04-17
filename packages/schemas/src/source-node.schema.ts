@@ -6,7 +6,7 @@ export const SourceKindSchema = z.enum(['person', 'channel', 'repo', 'publicatio
 
 export const SourceNodeSchema = BaseNodeSchema.extend({
   type: z.literal('source'),
-  sourceKind: SourceKindSchema.default('other'),
+  source_kind: SourceKindSchema.default('other'),
   url: z.string().url().optional(),
   platforms: z.array(z.string()).default([]),
   follow: z.boolean().default(false),
