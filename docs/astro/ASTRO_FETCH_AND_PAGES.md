@@ -215,19 +215,110 @@ For a simple mutation (submit form → show result), `fetch` is sufficient and Q
 
 ---
 
-## Routes added
+## Vault page pattern
 
-| URL                     | What it does                                                               |
-| ----------------------- | -------------------------------------------------------------------------- |
-| `/vault`                | Gated browser — redirects to `/vault/login` if no cookie                   |
-| `/vault/login`          | Password form (default: `llaab`; override with `VAULT_PASSWORD` in `.env`) |
-| `/api/vault/auth`       | `POST` sets cookie and redirects to `/vault`; `GET` clears cookie (logout) |
-| `/api/vault/file?path=` | Raw file content; path validated to stay under `vault/`                    |
+All vault pages share the same three-part structure. Follow this template when adding new ones:
 
-**Layout:** Full-height shell with top bar, left tree sidebar (260px), and right content panel. Top-level vault folders start expanded. Choosing a file fetches and shows its raw text. `.tmp`, dotfiles, and `.gitkeep` are hidden.
+```astro
+---
+export const prerender = false;
+
+import { listNodes } from '@llaab/core';
+import type { MyNode } from '@llaab/schemas';
+import AppLayout from '../../../layouts/AppLayout.astro';
+
+// 1. Auth gate — always first
+const COOKIE_NAME = 'vault_key';
+const password = import.meta.env.VAULT_PASSWORD ?? 'llaab';
+const cookie = Astro.cookies.get(COOKIE_NAME);
+if (cookie?.value !== password) return Astro.redirect('/vault/login', 302);
+
+// 2. Data — load directly via @llaab/core (no API hop needed)
+const { id } = Astro.params;                        // for [id].astro pages
+const all = await listNodes({ type: 'my-type' });
+const node = (all as MyNode[]).find((n) => n.id === id);
+if (!node) return Astro.redirect('/vault/my-type', 302);
+
+// 3. Any derived data (e.g. linked nodes)
+const related = await listNodes({ type: 'other' });
+---
+
+<AppLayout title={node.title}>
+  <!-- render here -->
+</AppLayout>
+```
+
+Key conventions:
+
+- `export const prerender = false` — required on every vault page.
+- Import `@llaab/core` directly in the frontmatter — no need to go via `@llaab/server` API.
+- Auth gate redirects before any data loading.
+- Detail pages redirect back to the list when the node is not found.
+- All vault pages use `AppLayout` (sidebar + header shell).
 
 ---
 
-### Design system note
+## Calling the server from React islands — RPC
 
-The DS project holds the standards, but the web package does not yet have Panda CSS config or generated styled-system output. DS components import `@styled-system/css` and `@styled-system/jsx`, which are not resolvable in `apps/client` today. Wiring that up (`panda.config`, codegen, CSS imports in the Astro layout) is a focused one-session task; after that, DS components should work in the app.
+React islands call `@llaab/server` via the typed Hono RPC client in `src/lib/rpc.ts`. Never use
+raw `fetch` against the server from a component.
+
+```typescript
+import { rpc } from '../lib/rpc';
+
+// GET with query params
+const res = await rpc.api.vault.nodes.$get({ query: { type: 'idea', limit: '20' } });
+const json = await res.json();
+
+// POST with JSON body
+const res = await rpc.api.vault.nodes.$post({
+  json: { type: 'idea', title: 'My idea', tags: ['d:llm'] },
+});
+const json = await res.json();
+```
+
+URL path segments become property accessors. Hyphens become camelCase:
+`/api/vault/nodes` → `rpc.api.vault.nodes`. Methods: `.$get()`, `.$post()`.
+
+TypeScript infers request/response shapes from `AppType` in `apps/server/src/app.ts`. If a route
+is not yet in chain form on the server, the type won't be inferred — see `docs/astro/HONO_RPC.md`
+for the full guide.
+
+---
+
+## `client:only="react"` vs `client:load`
+
+Components that use `@finografic/design-system` (e.g. `TagsInputDS`, `CreateIdeaPanel`) **must**
+use `client:only="react"`, not `client:load`.
+
+The linked DS package resolves its own React module instance. SSR runs two React copies
+simultaneously, which causes a null dispatcher crash. `client:only` skips SSR entirely for
+that component, avoiding the conflict.
+
+```astro
+<!-- correct — skips SSR for this island -->
+<CreateIdeaPanel client:only="react" />
+
+<!-- wrong — crashes with null dispatcher on SSR -->
+<CreateIdeaPanel client:load />
+```
+
+All other React components (no DS deps) can use `client:load` normally.
+
+---
+
+## Vault routes
+
+| URL                       | Description                                                        |
+| ------------------------- | ------------------------------------------------------------------ |
+| `/vault`                  | Gated file-tree browser — raw markdown viewer                      |
+| `/vault/login`            | Password form; default `llaab`, override via `VAULT_PASSWORD` env  |
+| `/vault/transcripts`      | List: transcript cards with sourceType badge, stats, idea count    |
+| `/vault/transcripts/[id]` | Detail: source metadata, summary, extracted ideas, full transcript |
+| `/vault/nodes`            | List + Create — ideas/resources/prompts/skills/instructions        |
+| `/vault/nodes/[id]`       | Detail: type/status/date, tags, body, type-specific fields         |
+| `/vault/sources`          | List: sources sorted alpha, followed badge, platform chips         |
+| `/vault/sources/[id]`     | Detail: kind/follow/url/platforms, linked transcripts              |
+| `/vault/runs`             | Table: runs with runStatus badge, produced count, duration         |
+| `/vault/runs/[id]`        | Detail: summary grid, stages table, decisions list, error block    |
+| `/api/vault/auth`         | POST sets cookie, GET clears it — client-only auth                 |
