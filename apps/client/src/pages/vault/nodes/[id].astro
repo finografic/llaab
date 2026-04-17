@@ -99,7 +99,7 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
       </section>
     )}
 
-    {/* ── Resource — url + resourceType + description ── */}
+    {/* ── Resource — url + resource_type + description ── */}
     {resource && (
       <section class="section">
         <h2 class="section__heading">Details</h2>
@@ -211,7 +211,7 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
       </section>
     )}
 
-    {/* ── Prompt — variables / modelHint / outputSchema ── */}
+    {/* ── Prompt — variables / model_hint / output_schema ── */}
     {prompt && (prompt.variables.length > 0 || prompt.model_hint || prompt.output_schema) && (
       <section class="section">
         <h2 class="section__heading">Details</h2>

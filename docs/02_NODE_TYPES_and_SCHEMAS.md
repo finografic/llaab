@@ -214,7 +214,7 @@ RunNode = BaseNode & {
   }>
   llm?: {
     model?: string
-    rawOutput?: string
+    raw_output?: string
     parsed?: boolean
   }
   model_used?: string        // e.g. 'llama3', 'claude-sonnet'

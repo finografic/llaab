@@ -191,7 +191,7 @@ interface RunNode {
 
   llm?: {
     model: string;
-    rawOutput: string;
+    raw_output: string;
     parsed: boolean;
   };
 
