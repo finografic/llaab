@@ -59,6 +59,7 @@ const byType = Object.groupBy(nodes, (n) => n.type);
     <ul class="node-list" role="list">
       {nodes.map((node) => (
         <li class="node-card">
+          <a href={`/vault/nodes/${node.id}`} class="node-card__link" aria-label={node.title}>
           <div class="node-card__meta">
             <span class={`badge badge--${node.type}`}>{node.type}</span>
             <span class={`badge badge--status badge--${node.status}`}>{node.status}</span>
@@ -80,6 +81,7 @@ const byType = Object.groupBy(nodes, (n) => n.type);
               ))}
             </div>
           )}
+          </a>
         </li>
       ))}
     </ul>
@@ -159,11 +161,21 @@ const byType = Object.groupBy(nodes, (n) => n.type);
   .node-card {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4) var(--space-5);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    transition: border-color var(--duration) var(--ease);
+  }
+
+  .node-card:hover { border-color: var(--accent); }
+
+  .node-card__link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5);
+    text-decoration: none;
+    color: inherit;
   }
 
   .node-card__meta {
