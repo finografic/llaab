@@ -88,7 +88,7 @@ Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
 | 2026-04-17 | Vault page coverage — detail pages for nodes, transcripts, sources; all list pages linked; Sources in nav      |
 | 2026-04-17 | Fix `llmExtract` — JSON system prompt, fence stripping, `parseJsonFromText`; agent loop now produces IdeaNodes |
 | 2026-04-16 | MCP server — `llaab mcp` stdio command, vault resources + vault_list/vault_read tools                          |
-| 2026-04-16 | Hono RPC — typed `hc<AppType>` client, routers refactored to chain form, `rpc.ts` in client                    |
+| 2026-04-16 | Hono RPC — typed `hc<AppType>` client, routers refactored to chain form, `api.ts` in client                    |
 | 2026-04-16 | Agent loop — one-shot processor, skill registry, dedup index, `/api/agent/*`, `llaab agent run`                |
 | 2026-04-16 | LLM communication layer — real Anthropic + Ollama providers, task router, cache, `/api/llm/*`                  |
 | 2026-04-16 | Vault browser write — `POST /api/vault/nodes`, `CreateIdeaPanel` island on nodes page                          |

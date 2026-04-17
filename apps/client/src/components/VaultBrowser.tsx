@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { rpc } from '../lib/rpc';
+import { api } from '../lib/api';
 
 export interface VaultNode {
   name: string;
@@ -87,7 +87,7 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
     setError(null);
     setLoading(true);
     try {
-      const res = await rpc.api.vault.file.$get({ query: { path } });
+      const res = await api.vault.file.$get({ query: { path } });
       const json = await res.json();
       if ('error' in json) throw new Error(json.error);
       setContent(json.content);

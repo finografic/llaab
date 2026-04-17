@@ -260,25 +260,25 @@ Key conventions:
 
 ## Calling the server from React islands — RPC
 
-React islands call `@llaab/server` via the typed Hono RPC client in `src/lib/rpc.ts`. Never use
+React islands call `@llaab/server` via the typed Hono RPC client in `src/lib/api.ts`. Never use
 raw `fetch` against the server from a component.
 
 ```typescript
-import { rpc } from '../lib/rpc';
+import { api } from '../lib/api';
 
 // GET with query params
-const res = await rpc.api.vault.nodes.$get({ query: { type: 'idea', limit: '20' } });
+const res = await api.vault.nodes.$get({ query: { type: 'idea', limit: '20' } });
 const json = await res.json();
 
 // POST with JSON body
-const res = await rpc.api.vault.nodes.$post({
+const res = await api.vault.nodes.$post({
   json: { type: 'idea', title: 'My idea', tags: ['d:llm'] },
 });
 const json = await res.json();
 ```
 
 URL path segments become property accessors. Hyphens become camelCase:
-`/api/vault/nodes` → `rpc.api.vault.nodes`. Methods: `.$get()`, `.$post()`.
+`/api/vault/nodes` → `api.vault.nodes`. Methods: `.$get()`, `.$post()`.
 
 TypeScript infers request/response shapes from `AppType` in `apps/server/src/app.ts`. See
 `docs/astro/HONO_RPC.md` for the full guide including how to add new routes and the context

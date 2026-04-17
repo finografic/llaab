@@ -79,48 +79,48 @@ export type AppType = typeof app;
 pure type — zero bytes at runtime. The chained `.route()` form is required so TypeScript can
 track the cumulative route shape through each call.
 
-### Client — `apps/client/src/lib/rpc.ts`
+### Client — `apps/client/src/lib/api.ts`
 
 ```ts
 import { hc } from 'hono/client';
 import type { AppType } from '../../../server/src/app.js';   // type-only import, erased at build
 
-export const rpc = hc<AppType>(baseUrl);
+export const api = client.api; // client = hc<AppType>(baseUrl, { headers })
 ```
 
 `hc<AppType>` returns a proxy whose property path mirrors the server's URL structure:
 
-| URL                        | `rpc` accessor                      |
-| -------------------------- | ----------------------------------- |
-| `GET /api/vault/file`      | `rpc.api.vault.file.$get()`         |
-| `GET /api/vault/nodes`     | `rpc.api.vault.nodes.$get()`        |
-| `POST /api/vault/nodes`    | `rpc.api.vault.nodes.$post()`       |
-| `GET /api/vault/nodes/:id` | `rpc.api.vault.nodes[':id'].$get()` |
-| `POST /api/ingest/youtube` | `rpc.api.ingest.youtube.$post()`    |
-| `GET /api/runs`            | `rpc.api.runs.$get()`               |
-| `GET /api/runs/:id`        | `rpc.api.runs[':id'].$get()`        |
+| URL                        | `api` accessor                  |
+| -------------------------- | ------------------------------- |
+| `GET /api/vault/file`      | `api.vault.file.$get()`         |
+| `GET /api/vault/nodes`     | `api.vault.nodes.$get()`        |
+| `POST /api/vault/nodes`    | `api.vault.nodes.$post()`       |
+| `GET /api/vault/nodes/:id` | `api.vault.nodes[':id'].$get()` |
+| `POST /api/ingest/youtube` | `api.ingest.youtube.$post()`    |
+| `GET /api/runs`            | `api.runs.$get()`               |
+| `GET /api/runs/:id`        | `api.runs[':id'].$get()`        |
 
 ---
 
-## Using `rpc` in a component
+## Using `api` in a component
 
 ```tsx
-import { rpc } from '../lib/rpc';
+import { api } from '../lib/api';
 
 // GET with query params
-const res = await rpc.api.vault.nodes.$get({ query: { type: 'idea' } });
+const res = await api.vault.nodes.$get({ query: { type: 'idea' } });
 const { nodes } = await res.json();
 // nodes is typed as LabNode[]
 
 // POST with JSON body
-const res = await rpc.api.vault.nodes.$post({
+const res = await api.vault.nodes.$post({
   json: { type: 'idea', title: 'My idea', tags: ['d:llm'] },
 });
 const data = await res.json();
 // data is typed as { id: string; path: string; type: string } | { error: string }
 
 // Dynamic segment
-const res = await rpc.api.vault.nodes[':id'].$get({ param: { id: nodeId } });
+const res = await api.vault.nodes[':id'].$get({ param: { id: nodeId } });
 const { node } = await res.json();
 ```
 
@@ -202,10 +202,10 @@ export type AppType = typeof app;        // no other change needed
 ### 5 — Use it in the client
 
 ```ts
-const res = await rpc.api.things.$get();
+const res = await api.things.$get();
 const { things } = await res.json();
 
-const res = await rpc.api.things.$post({
+const res = await api.things.$post({
   json: { name: 'My thing', kind: 'a' },
 });
 ```
@@ -245,14 +245,14 @@ Problems:
 ### Hono RPC
 
 ```ts
-const res = await rpc.api.vault.nodes.$post({ json: { type: 'idea', title } });
+const res = await api.vault.nodes.$post({ json: { type: 'idea', title } });
 const data = await res.json();
 ```
 
 Advantages:
 
 - **No manual types** — response shape is inferred from `c.json()` in the handler
-- **URL is a type** — `rpc.api.vaullt` doesn't exist; TypeScript errors at the call site
+- **URL is a type** — `api.vaullt` doesn't exist; TypeScript errors at the call site
 - **Body is validated** — the Zod schema drives the input type; wrong shape = compile error
 - **Automatic coverage** — every new route is immediately typed in the client
 - **Refactor-safe** — rename a route or change a response field; TypeScript finds all broken sites
@@ -262,7 +262,7 @@ Advantages:
 
 ## The `import type` across app boundary
 
-`rpc.ts` imports from `'../../../server/src/app.js'` — a relative path that crosses the
+`api.ts` imports from `'../../../server/src/app.js'` — a relative path that crosses the
 `apps/client` / `apps/server` boundary. This is valid because:
 
 1. It is a **type-only import** (`import type`), erased entirely at compile time.

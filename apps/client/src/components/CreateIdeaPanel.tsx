@@ -2,7 +2,7 @@ import { TagsInputDS } from '@finografic/design-system/forms';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { rpc } from '../lib/rpc';
+import { api } from '../lib/api';
 
 // ── Tag helpers (same as IngestForm) ─────────────────────────────────────────
 
@@ -53,7 +53,7 @@ export function CreateIdeaPanel() {
     const allTags = pendingTag ? [...new Set([...tags, pendingTag])] : tags;
 
     try {
-      const res = await rpc.api.vault.nodes.$post({
+      const res = await api.vault.nodes.$post({
         json: {
           type: 'idea',
           title,
@@ -109,15 +109,13 @@ export function CreateIdeaPanel() {
         </button>
       </div>
 
-      {result
-? (
+      {result ? (
         <div className="status status--success">
           <span className="status__label">Created</span>
           <span className="status__id">{result.id}</span>
           <span className="status__message">Reloading…</span>
         </div>
-      )
-: (
+      ) : (
         <form className="create-idea-form" onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="field">
             <label htmlFor="idea-title">Title</label>

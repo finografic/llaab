@@ -2,7 +2,7 @@ import { TagsInputDS } from '@finografic/design-system/forms';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { rpc } from '../lib/rpc';
+import { api } from '../lib/api';
 
 // ── Tag helpers ───────────────────────────────────────────────────────────────
 
@@ -63,7 +63,7 @@ export function IngestForm() {
 
     let json: ApiResponse;
     try {
-      const res = await rpc.api.ingest.youtube.$post({ json: { url, tags: allTags } });
+      const res = await api.ingest.youtube.$post({ json: { url, tags: allTags } });
       json = (await res.json()) as ApiResponse;
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Ingestion failed.');
