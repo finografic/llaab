@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import { listNodes } from '@llaab/core';
-import type { TranscriptNode } from '@llaab/schemas';
+import type { SourceNode } from '@llaab/schemas';
 import AppLayout from '../../../layouts/AppLayout.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -14,59 +14,59 @@ if (cookie?.value !== password) return Astro.redirect('/vault/login', 302);
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-const all = await listNodes({ type: 'transcript' });
-const transcripts = all as TranscriptNode[];
-transcripts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+const all = await listNodes({ type: 'source' });
+const sources = all as SourceNode[];
+sources.sort((a, b) => a.title.localeCompare(b.title));
+
+const followed = sources.filter((s) => s.follow);
 ---
 
-<AppLayout title="Transcripts">
+<AppLayout title="Sources">
   <div class="list-page">
     <header class="list-page__header">
       <p class="eyebrow">Vault</p>
-      <h1 class="list-page__heading">Transcripts</h1>
-      <p class="list-page__count">{transcripts.length} transcript{transcripts.length !== 1 ? 's' : ''}</p>
+      <h1 class="list-page__heading">Sources</h1>
+      <p class="list-page__count">
+        {sources.length} source{sources.length !== 1 ? 's' : ''}
+        {followed.length > 0 && <span class="follow-count"> · {followed.length} followed</span>}
+      </p>
     </header>
 
-    {transcripts.length === 0 && (
-      <p class="empty">No transcripts yet. <a href="/ingest">Ingest a YouTube video</a> to get started.</p>
+    {sources.length === 0 && (
+      <p class="empty">No sources yet. Sources are created automatically when ingesting content.</p>
     )}
 
     <ul class="node-list" role="list">
-      {transcripts.map((t) => (
+      {sources.map((s) => (
         <li class="node-card">
-          <a href={`/vault/transcripts/${t.id}`} class="node-card__link" aria-label={t.title}>
-          <div class="node-card__meta">
-            <span class={`badge badge--${t.sourceType}`}>{t.sourceType}</span>
-            <time class="node-card__date" datetime={t.createdAt}>
-              {new Date(t.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-            </time>
-          </div>
-
-          <h2 class="node-card__title">{t.title}</h2>
-
-          {t.author && <p class="node-card__author">{t.author}</p>}
-
-          {t.summary && <p class="node-card__summary">{t.summary}</p>}
-
-          {t.tags.length > 0 && (
-            <div class="tag-row">
-              {t.tags.map((tag) => (
-                <span class="tag" data-tag={tag}>{tag}</span>
-              ))}
+          <a href={`/vault/sources/${s.id}`} class="node-card__link" aria-label={s.title}>
+            <div class="node-card__meta">
+              <span class={`badge badge--${s.sourceKind}`}>{s.sourceKind}</span>
+              {s.follow && <span class="badge badge--follow">following</span>}
+              <time class="node-card__date" datetime={s.createdAt}>
+                {new Date(s.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+              </time>
             </div>
-          )}
 
-          <div class="node-card__stats">
-            {t.cleanLength != null && (
-              <span class="stat">{t.cleanLength.toLocaleString()} chars</span>
+            <h2 class="node-card__title">{s.title}</h2>
+
+            {s.body && <p class="node-card__body">{s.body}</p>}
+
+            {s.platforms.length > 0 && (
+              <div class="platform-row">
+                {s.platforms.map((p) => (
+                  <span class="platform">{p}</span>
+                ))}
+              </div>
             )}
-            {t.structuredParagraphs != null && (
-              <span class="stat">{t.structuredParagraphs} §</span>
+
+            {s.tags.length > 0 && (
+              <div class="tag-row">
+                {s.tags.map((tag) => (
+                  <span class="tag" data-tag={tag}>{tag}</span>
+                ))}
+              </div>
             )}
-            {t.extractedIdeaIds.length > 0 && (
-              <span class="stat stat--ideas">{t.extractedIdeaIds.length} idea{t.extractedIdeaIds.length !== 1 ? 's' : ''}</span>
-            )}
-          </div>
           </a>
         </li>
       ))}
@@ -100,14 +100,11 @@ transcripts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     color: var(--text-faint);
   }
 
+  .follow-count { color: #2563eb; }
+
   .empty {
     font-size: 13px;
     color: var(--text-muted);
-  }
-
-  .empty a {
-    color: var(--accent);
-    text-decoration: underline;
   }
 
   /* ── Node list ── */
@@ -154,56 +151,42 @@ transcripts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     line-height: 1.4;
   }
 
-  .node-card__author {
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-
-  .node-card__summary {
+  .node-card__body {
     font-size: 12px;
     color: var(--text-muted);
     line-height: 1.6;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-  }
-
-  .node-card__stats {
-    display: flex;
-    gap: var(--space-3);
-    margin-top: var(--space-1);
   }
 
   .node-card__date {
     font-size: 11px;
     color: var(--text-faint);
     font-family: var(--font-mono);
+    margin-left: auto;
   }
 
-  /* ── Badges ── */
+  /* ── Platform chips ── */
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-weight: 500;
+  .platform-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .platform {
+    font-size: 11px;
     font-family: var(--font-mono);
-    letter-spacing: 0.03em;
+    color: var(--text-faint);
     background: var(--surface-raised);
-    color: var(--text-muted);
     border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 1px 6px;
   }
 
-  .badge--youtube { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
-  .badge--article { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
-  .badge--repo    { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
-  .badge--chat    { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
-  .badge--other   { background: var(--surface-raised); color: var(--text-muted); border-color: var(--border-subtle); }
-
-  /* ── Tag pills ── */
+  /* ── Tags ── */
 
   .tag-row {
     display: flex;
@@ -233,13 +216,33 @@ transcripts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   .tag[data-tag='d:ui']          { --tag-color: #ec4899; }
   .tag[data-tag='d:meta']        { --tag-color: #22c55e; }
 
-  /* ── Stats ── */
+  /* ── Badges ── */
 
-  .stat {
-    font-size: 11px;
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 500;
     font-family: var(--font-mono);
-    color: var(--text-faint);
+    letter-spacing: 0.03em;
+    background: var(--surface-raised);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
   }
 
-  .stat--ideas { color: #2563eb; }
+  .badge--person       { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+  .badge--channel      { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+  .badge--repo         { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
+  .badge--publication  { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+  .badge--organization { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
+  .badge--other        { background: var(--surface-raised); color: var(--text-muted); border-color: var(--border-subtle); }
+
+  .badge--follow {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+    border-radius: 4px;
+  }
 </style>
