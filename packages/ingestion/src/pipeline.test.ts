@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@llaab/core', () => ({
+  autoTag: vi.fn(() => []),
   createNode: vi.fn(),
   getNodeFilePath: vi.fn(),
   listNodes: vi.fn(),
