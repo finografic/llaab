@@ -46,6 +46,15 @@ Detail: [`docs/todo/TODO_TERMINAL_PANEL.md`](./TODO_TERMINAL_PANEL.md)
 
 ## P3 — Backlog / Ideas
 
+### Upgrade Zod v3 → v4
+
+Zod v4 is a major release with significant perf gains (10–100× faster parsing, smaller bundle)
+and a cleaner API. Migration surface in LLAAB is mostly contained to `packages/schemas` (9 node
+schemas) and the `@hono/zod-validator` integration in `apps/server`. Main unknowns: whether
+`@hono/zod-validator` has published a v4-compatible release, and any deprecated v3 APIs in use
+(`.refine()` changes, `.message()` helpers). Effort: low-medium — likely a half-day once deps
+are confirmed compatible. Do before the schema surface grows much further.
+
 ### Migrate ESLint → oxlint
 
 `oxfmt` is already in place. Pairing it with oxlint gives a fully unified Rust-based lint+format

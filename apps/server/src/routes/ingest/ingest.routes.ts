@@ -6,7 +6,7 @@ export const youtube = {
   path: '/youtube' as const,
   handler: async (c: AppCtxJson<IngestYouTubeBody>) => {
     const body = c.req.valid('json');
-    const { record, result } = await ingestYouTube({
+    const { record, result, extraction, extractionError } = await ingestYouTube({
       url: body.url,
       title: body.title,
       tags: body.tags,
@@ -25,6 +25,8 @@ export const youtube = {
         type: result.type,
         reused,
       },
+      extraction: extraction ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary } : null,
+      extractionError: extractionError ?? null,
     });
   },
 };

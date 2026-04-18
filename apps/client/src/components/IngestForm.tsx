@@ -31,9 +31,16 @@ interface IngestResult {
   reused?: boolean;
 }
 
+interface ExtractionSummary {
+  ideaCount: number;
+  summary: string;
+}
+
 interface ApiResponse {
   success: boolean;
   result?: IngestResult;
+  extraction?: ExtractionSummary | null;
+  extractionError?: string | null;
   error?: string;
 }
 
@@ -45,6 +52,8 @@ export function IngestForm() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [result, setResult] = useState<IngestResult | null>(null);
+  const [extraction, setExtraction] = useState<ExtractionSummary | null>(null);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const {
@@ -56,6 +65,8 @@ export function IngestForm() {
 
   const onSubmit = async ({ url }: FormValues) => {
     setResult(null);
+    setExtraction(null);
+    setExtractionError(null);
     setApiError(null);
 
     // Normalize any pending tag in the input field before submitting
@@ -77,6 +88,8 @@ export function IngestForm() {
     }
 
     setResult(json.result ?? null);
+    setExtraction(json.extraction ?? null);
+    setExtractionError(json.extractionError ?? null);
     setTags([]);
     setTagInput('');
     reset();
@@ -167,9 +180,25 @@ export function IngestForm() {
 
       {result && (
         <div className="status status--success">
-          <span className="status__label">Saved</span>
+          <span className="status__label">{result.reused ? 'Already saved' : 'Transcript saved'}</span>
           <span className="status__id">{result.id}</span>
           {filename && <span className="status__path">{filename}</span>}
+        </div>
+      )}
+
+      {extraction && (
+        <div className="status status--success">
+          <span className="status__label">{extraction.ideaCount} ideas extracted</span>
+          <span className="status__message">{extraction.summary}</span>
+        </div>
+      )}
+
+      {extractionError && (
+        <div className="status status--warning">
+          <span className="status__label">Extraction failed</span>
+          <span className="status__message">
+            Transcript is saved — retry extraction from the transcript page.
+          </span>
         </div>
       )}
 

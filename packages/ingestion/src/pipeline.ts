@@ -1,7 +1,7 @@
-import { autoTag, createNode, getNodeFilePath, listNodes } from '@llaab/core';
+import { autoTag, createNode, getNodeFilePath, listNodes, updateNode } from '@llaab/core';
 import { appendDatetimeFilenameSegment, formatIsoUtcForTranscriptBody, now, toNodeId } from '@llaab/schemas';
 import type { ExtractionRunTrace } from './extract/llm-extract.js';
-import type { TranscriptSourceType } from '@llaab/schemas';
+import type { TranscriptNode, TranscriptSourceType } from '@llaab/schemas';
 
 import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
 import { cleanTranscript } from './clean/transcript.js';
@@ -67,6 +67,8 @@ export interface IngestionResult {
   type: 'transcript' | 'resource';
   producedNodeIds?: string[];
   runTrace?: ExtractionRunTrace;
+  /** Plain text available for extraction — present on fresh transcript ingestion, absent on dedup. */
+  plainText?: string;
 }
 
 function completedStage(
@@ -225,9 +227,6 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     );
   }
 
-  const extracted = await llmExtractWithTrace(plainTextForExtraction);
-
-  stages.push(...extracted.runTrace.stages);
   const sourceId = toNodeId(fetched.channel);
   const producedNodeIds = new Set<string>();
 
@@ -247,16 +246,13 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     ...(idWhenUntitled !== undefined ? { id: idWhenUntitled } : {}),
     title: transcriptTitle,
     body: transcriptBody,
-    tags: [
-      ...new Set(['d:ingest', ...autoTag(transcriptTitle, extracted.summary ?? ''), ...(input.tags ?? [])]),
-    ],
+    tags: [...new Set(['d:ingest', ...autoTag(transcriptTitle, ''), ...(input.tags ?? [])])],
     extra: {
       source_id: sourceId,
       source_item_id: captured.videoId,
       source_url: input.url,
       source_type: input.sourceType as TranscriptSourceType,
       author: fetched.channel,
-      summary: extracted.summary,
       raw_length: rawLength,
       clean_length: cleanLength,
       structured_paragraphs: paragraphCount,
@@ -320,12 +316,54 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     path: transcriptResult.path,
     type: 'transcript',
     producedNodeIds: [...producedNodeIds],
-    runTrace: {
-      stages,
-      decisions: extracted.runTrace.decisions,
-      llm: extracted.runTrace.llm,
-    },
+    plainText: plainTextForExtraction,
+    runTrace: { stages, decisions: [], llm: undefined },
   };
+}
+
+export interface ExtractionResult {
+  transcriptId: string;
+  summary: string;
+  ideaIds: string[];
+}
+
+/**
+ * Run LLM knowledge extraction on an already-saved transcript. Updates the transcript's summary and creates
+ * IdeaNodes for each extracted idea. Safe to call after ingest — transcript is already persisted regardless
+ * of outcome.
+ */
+export async function extractKnowledgeFromTranscript(
+  transcriptId: string,
+  transcriptPath: string,
+  plainText: string,
+): Promise<ExtractionResult> {
+  const extracted = await llmExtractWithTrace(plainText);
+
+  await updateNode(transcriptPath, (node) => ({
+    ...node,
+    extra: {
+      ...(node as TranscriptNode).extra,
+      summary: extracted.summary,
+    },
+    tags: [...new Set([...(node.tags ?? []), ...autoTag(node.title, extracted.summary)])],
+  }));
+
+  const ideaIds: string[] = [];
+  for (const ideaText of extracted.ideas) {
+    const idea = await createNode({
+      type: 'idea',
+      title: ideaText,
+      body: '',
+      tags: [...new Set(['d:ingest', ...autoTag(ideaText, '')])],
+      extra: {
+        origin: 'extracted',
+        source_id: transcriptId,
+      },
+    });
+    ideaIds.push(idea.id);
+  }
+
+  return { transcriptId, summary: extracted.summary, ideaIds };
 }
 
 export async function runIngestionPipeline(input: IngestionInput): Promise<IngestionResult> {
