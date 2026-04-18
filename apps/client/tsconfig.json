@@ -1,12 +1,23 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": ["./.astro/types.d.ts", "**/*"],
-  "exclude": ["./dist", "./styled-system"],
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "paths": {
-      "@styled-system/*": ["./styled-system/*"]
+      // "@styled-system/*": ["./styled-system/*"]
+      // Panda CSS — generated under ./styled-system (gitignored). App code may use either
+      // `styled-system/jsx` or the same paths the DS bundle uses (`@styled-system/*`).
+      // Keep @styled-system/* in sync with panda.config outdir + src/styled-system/recipes.ts.
+      "styled-system": ["./styled-system"],
+      "styled-system/*": ["./styled-system/*"],
+      "@styled-system/css": ["./styled-system/css"],
+      "@styled-system/jsx": ["./styled-system/jsx"],
+      "@styled-system/recipes": ["./src/styled-system/recipes.ts"]
     }
-  }
+  },
+  "include": ["./.astro/types.d.ts", "**/*", "styled-system"],
+  "exclude": [
+    "./dist"
+    // "./styled-system"
+  ]
 }

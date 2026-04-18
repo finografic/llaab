@@ -1,12 +1,16 @@
+# dependencies
+node_modules/
+
 # build output
 dist/
+
 # generated types
 .astro/
+
 # Panda CSS generated utilities
 styled-system/
 
-# dependencies
-node_modules/
+
 
 # logs
 npm-debug.log*
@@ -19,8 +23,22 @@ pnpm-debug.log*
 .env
 .env.production
 
-# macOS-specific files
-.DS_Store
 
-# jetbrains setting folder
-.idea/
+# Coverage
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+Thumbs.db
+Icon?
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~

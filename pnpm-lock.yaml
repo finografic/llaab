@@ -93,8 +93,8 @@ importers:
         specifier: link:/Users/justin/repos-finografic/@finografic-design-system/packages/design-system
         version: link:../../../repos-finografic/@finografic-design-system/packages/design-system
       '@finografic/icons':
-        specifier: 1.11.2
-        version: 1.11.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        specifier: 1.12.0
+        version: 1.12.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@finografic/zustand-context-creator':
         specifier: 0.7.1
         version: 0.7.1(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5)))
@@ -1093,8 +1093,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@finografic/icons@1.11.2':
-    resolution: {integrity: sha512-LbXvGjhrH+ltQ9NHGnDNieSiojseh2UUAlwQyQ62CpOM3wsZutfe6X9UiEe6P9OBkhkS0U+mtS/48G/TnjIrsw==, tarball: https://npm.pkg.github.com/download/@finografic/icons/1.11.2/4033c250c4e68e13798f1cfd4a7272879f48d46d}
+  '@finografic/icons@1.12.0':
+    resolution: {integrity: sha512-SlwIt1hWN5bfkzcquQPLEsSmrKGGHIBWfEKJ68QvuurE4oa7MHvs8y6E3ENdb1NWl1PZrjO9kiN3r0P4oC3FdQ==, tarball: https://npm.pkg.github.com/download/@finografic/icons/1.12.0/93a10182cb0c5b202600500b78ff888e1bf79aa9}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -6447,7 +6447,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@finografic/icons@1.11.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@finografic/icons@1.12.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       lucide-react: 1.8.0(react@19.2.5)
       react: 19.2.5

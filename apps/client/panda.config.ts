@@ -4,14 +4,30 @@ import { defineConfig } from '@pandacss/dev';
 
 export default defineConfig({
   /**
-   * Disable Panda's built-in preflight — the DS reset.css (imported via global.css) handles it.
+   * Disable Panda's built-in preflight — client already has
+   *
+   * @finografic/design-system/styles/reset.css imported in theme.css.
    */
   preflight: false,
 
   /**
-   * Base utilities + the LLAAB design system preset (tokens, recipes, patterns).
+   * Base Panda utilities + our design-system preset. Order matters: designSystemPreset overrides base tokens.
    */
-  presets: [designSystemPreset],
+  presets: [
+    // '@pandacss/dev/presets'
+    designSystemPreset,
+  ],
+
+  /**
+   * Scan for Panda CSS usage (css(), Box, recipes, etc.)
+   *
+   * Include design-system src so Panda extracts styles used in DS component files (components/, forms/,
+   * etc.). Without it, CSS for those components won't be generated. With pnpm workspaces,
+   *
+   * @finografic/design-system resolves to the installed package.
+   */
+  include: ['./src/**/*.{ts,tsx,astro}', './node_modules/@finografic/design-system/src/**/*.{ts,tsx}'],
+  exclude: [],
 
   theme: {
     extend: {
@@ -27,21 +43,28 @@ export default defineConfig({
   },
 
   /**
-   * Scan all source files for used class names (tree-shaking).
-   */
-  include: ['./src/**/*.{ts,tsx,astro}'],
-  exclude: [],
-
-  /**
-   * Output directory for generated utilities (gitignored).
-   */
-  outdir: 'styled-system',
-
-  /**
-   * React JSX helpers — enables <Box>, <Stack>, etc. from styled-system/jsx.
+   * Generate React JSX components from Panda patterns. Gives us <Box mx="4" py="2"> etc. with full token +
+   * responsive support. Use Box for spacing/layout wrappers. Use Row/Col for flex grid layout.
    */
   jsxFramework: 'react',
 
+  /**
+   * Dark mode — match the client's existing EmotionThemeProvider which sets data-theme="dark" on
+   * document.documentElement.
+   *
+   * This makes _dark conditions in semantic tokens and recipes generate: [data-theme="dark"] { --colors-bg:
+   * ...; } instead of the default `.dark { ... }`.
+   */
+  conditions: {
+    extend: {
+      dark: '[data-theme="dark"] &',
+    },
+  },
+
+  // ======================================================================== //
+  // NEW: https://panda-css.com/docs/references/config
+
   syntax: 'object-literal',
+  // syntax: 'template-literal',
   shorthands: true,
 });
