@@ -21,7 +21,7 @@
 import AppHeader from '../components/AppHeader/AppHeader.astro';
 import AppFooter from '../components/AppFooter/AppFooter.astro';
 import { NavbarVertical } from '../components/NavbarVertical/NavbarVertical';
-import '../styles/app.css';
+import BaseLayout from './BaseLayout.astro';
 
 interface Props {
   title?: string;
@@ -32,33 +32,23 @@ const pathname = Astro.url.pathname;
 const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
 ---
 
-<html lang="en" class="dark">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="generator" content={Astro.generator} />
-    <title>{pageTitle}</title>
-  </head>
-  <body>
-    <div class="shell">
-      <aside class="sidebar">
-        <NavbarVertical pathname={pathname} client:load />
-      </aside>
+<BaseLayout title={pageTitle}>
+  <div class="shell">
+    <aside class="sidebar">
+      <NavbarVertical pathname={pathname} client:load />
+    </aside>
 
-      <div class="main-pane">
-        <AppHeader title={title} />
+    <div class="main-pane">
+      <AppHeader title={title} />
 
-        <main class="page-content">
-          <slot />
-        </main>
+      <main class="page-content">
+        <slot />
+      </main>
 
-        <AppFooter />
-      </div>
+      <AppFooter />
     </div>
-  </body>
-</html>
+  </div>
+</BaseLayout>
 
 <style>
   .shell {

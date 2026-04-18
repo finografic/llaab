@@ -26,7 +26,11 @@ export default defineConfig({
    *
    * @finografic/design-system resolves to the installed package.
    */
-  include: ['./src/**/*.{ts,tsx,astro}', './node_modules/@finografic/design-system/src/**/*.{ts,tsx}'],
+  include: [
+    './src/**/*.{ts,tsx,astro}',
+    './node_modules/@finografic/design-system/src/**/*.{ts,tsx}',
+    //  './node_modules/@finografic/design-system/dist/**/*.{ts,tsx}'
+  ],
   exclude: [],
 
   theme: {

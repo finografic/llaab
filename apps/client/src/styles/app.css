@@ -16,56 +16,58 @@
  * Component styles live in *.module.css (React) or <style> (Astro).
  */
 
-@import '../../styled-system/styles.css';
-@import '@finografic/design-system/styles/global.css';
-@import './forms.css';
+/* @import '../../styled-system/styles.css'; */
+@import "@finografic/design-system/styles/global.css";
+@import "./forms.css";
 
 /* ─── Tokens ──────────────────────────────────────────────────────────────── */
 
 :root {
   /* Backgrounds */
-  --bg:           #0e0e10;
-  --bg-subtle:    #111113;
-  --surface:      #18181b;
+  --bg: #0e0e10;
+  --bg-subtle: #111113;
+  --surface: #18181b;
   --surface-raised: #1c1c1f;
-  --overlay:      rgba(0, 0, 0, 0.6);
+  --overlay: rgba(0, 0, 0, 0.6);
 
   /* Borders — DS semantic tokens */
-  --border:        var(--colors-border);
+  --border: var(--colors-border);
   --border-subtle: var(--colors-border-subtle);
-  --border-focus:  var(--colors-accent-focus-ring);
+  --border-focus: var(--colors-accent-focus-ring);
 
   /* Text — DS semantic tokens */
-  --text:       var(--colors-fg);
+  --text: var(--colors-fg);
   --text-muted: var(--colors-fg-muted);
   --text-faint: var(--colors-fg-subtle);
 
   /* Accent — DS semantic tokens (driven by primary color in panda.config.ts) */
-  --accent:        var(--colors-accent);
-  --accent-hover:  var(--colors-accent-fg);
+  --accent: var(--colors-accent);
+  --accent-hover: var(--colors-accent-fg);
   --accent-subtle: var(--colors-accent-subtle);
-  --accent-dim:    var(--colors-accent-emphasized);
+  --accent-dim: var(--colors-accent-emphasized);
 
   /* Semantic — DS semantic tokens */
-  --success-bg:     var(--colors-bg-success);
+  --success-bg: var(--colors-bg-success);
   --success-border: var(--colors-border-success);
-  --success-text:   var(--colors-fg-success);
+  --success-text: var(--colors-fg-success);
 
-  --error-bg:     var(--colors-bg-error);
+  --error-bg: var(--colors-bg-error);
   --error-border: var(--colors-border-error);
-  --error-text:   var(--colors-fg-error);
+  --error-text: var(--colors-fg-error);
 
-  --warning-bg:     var(--colors-bg-warning);
+  --warning-bg: var(--colors-bg-warning);
   --warning-border: var(--colors-border-warning);
-  --warning-text:   var(--colors-fg-warning);
+  --warning-text: var(--colors-fg-warning);
 
   /* Typography */
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:
+    "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
 
   /* Radii */
   --radius-sm: 4px;
-  --radius:    8px;
+  --radius: 8px;
   --radius-lg: 12px;
 
   /* Spacing scale */
@@ -81,14 +83,14 @@
   --space-16: 64px;
 
   /* Layout */
-  --sidebar-w:   220px;
-  --header-h:    52px;
+  --sidebar-w: 220px;
+  --header-h: 52px;
   --content-max: 800px;
 
   /* Motion */
   --duration-fast: 100ms;
-  --duration:      150ms;
-  --ease:          cubic-bezier(0.4, 0, 0.2, 1);
+  --duration: 150ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ─── Base ────────────────────────────────────────────────────────────────── */
