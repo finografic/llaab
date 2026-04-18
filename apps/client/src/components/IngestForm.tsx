@@ -1,3 +1,4 @@
+import { Button } from '@finografic/design-system/components';
 import { TagsInputDS } from '@finografic/design-system/forms';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -112,9 +113,18 @@ export function IngestForm() {
                 },
               })}
             />
-            <button type="submit" disabled={isSubmitting}>
+            {/* <button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Ingesting…' : 'Ingest'}
-            </button>
+            </button> */}
+            <Button
+              type="submit"
+              palette="secondary"
+              variant="ghost"
+              loading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Ingesting…' : 'Ingest'}
+            </Button>
           </div>
           {errors.url && <span className="field-error">{errors.url.message}</span>}
         </div>

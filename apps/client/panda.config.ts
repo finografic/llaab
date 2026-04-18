@@ -13,10 +13,7 @@ export default defineConfig({
   /**
    * Base Panda utilities + our design-system preset. Order matters: designSystemPreset overrides base tokens.
    */
-  presets: [
-    // '@pandacss/dev/presets'
-    designSystemPreset,
-  ],
+  presets: ['@pandacss/dev/presets', designSystemPreset],
 
   /**
    * Scan for Panda CSS usage (css(), Box, recipes, etc.)
