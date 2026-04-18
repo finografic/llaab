@@ -4,6 +4,10 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "paths": {
+      "components/*": ["./src/components/*"],
+      "layouts/*": ["./src/layouts/*"],
+      "lib/*": ["./src/lib/*"],
+      "pages/*": ["./src/pages/*"],
       "styles/*": ["./src/styles/*"]
       // "@styled-system/*": ["./styled-system/*"]
       // Panda CSS — generated under ./styled-system (gitignored). App code may use either
