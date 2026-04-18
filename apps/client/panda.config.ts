@@ -1,5 +1,5 @@
+import { createColorTokens } from '@finografic/design-system/palette';
 import { designSystemPreset } from '@finografic/design-system/panda.preset';
-import { createColorTokens } from '@finografic/design-system/tokens';
 import { defineConfig } from '@pandacss/dev';
 
 export default defineConfig({
@@ -28,19 +28,29 @@ export default defineConfig({
    */
   include: [
     './src/**/*.{ts,tsx,astro}',
-    // './node_modules/@finografic/design-system/src/**/*.{ts,tsx}',
+    './node_modules/@finografic/design-system/src/**/*.{ts,tsx}',
     // './node_modules/@finografic/design-system/dist/**/*.{ts,tsx}',
   ],
   exclude: [],
 
   theme: {
+    ...designSystemPreset.theme,
     extend: {
       tokens: {
+        ...(designSystemPreset.theme?.tokens ?? {}),
         // Override DS base colors with LLAAB's indigo theme.
         // createColorTokens merges these with BASE_COLORS_THEME defaults and rebuilds shade scales.
         // semanticColorTokens.accent.* reference {colors.primary.*} so they update automatically.
         colors: createColorTokens({
           primary: 'oklch(59% 0.234 277)', // indigo — matches --accent: #6366f1
+          secondary: 'oklch(49.6% 0.265 301.924)',
+          success: 'oklch(60.4% 0.194 149.214)',
+          warning: 'oklch(71% 0.188 70.08)',
+          danger: 'oklch(55.7% 0.245 27.325)',
+          info: 'oklch(58.8% 0.158 241.966)',
+          default: 'oklch(65.3% 0.013 58.071)',
+          grey: 'oklch(55.2% 0.016 285.938)',
+          text: 'oklch(28% 0 0)',
         }),
       },
     },
@@ -56,7 +66,7 @@ export default defineConfig({
    * Dark mode — match the client's existing EmotionThemeProvider which sets data-theme="dark" on
    * document.documentElement.
    *
-   * This makes _dark conditions in semantic tokens and recipes generate: [data-theme="dark"] { --colors-bg:
+   * This makes _dark conditions in semantic tokens and recipes generate: [data-theme="dark"] { --colors-bg: *
    * ...; } instead of the default `.dark { ... }`.
    */
   conditions: {

@@ -2,8 +2,9 @@
  * app.css — global stylesheet entry point.
  *
  * Import order:
- *   1. DS global.css  — @layer order, reset, keyframes, icon utilities
- *   2. forms.css      — form element ecosystem (inputs, buttons, labels, states)
+ *   1. styled-system/styles.css — Panda CSS tokens (@layer tokens) + base layer
+ *   2. DS global.css  — @layer order, reset, keyframes, icon utilities
+ *   3. forms.css      — form element ecosystem (inputs, buttons, labels, states)
  *
  * This file owns:
  *   • CSS custom property tokens (:root)
@@ -16,7 +17,7 @@
  * Component styles live in *.module.css (React) or <style> (Astro).
  */
 
-/* @import '../../styled-system/styles.css'; */
+@import "../../styled-system/styles.css";
 @import "@finografic/design-system/styles/global.css";
 @import "./forms.css";
 
