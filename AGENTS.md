@@ -50,13 +50,13 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 - File naming: `.github/instructions/naming/file-naming.instructions.md`
 - Variable naming: `.github/instructions/naming/variable-naming.instructions.md`
 
-**Docs**
+**Documentation**
 
-- Documentation: `.github/instructions/docs/documentation.instructions.md`
-- README standards: `.github/instructions/docs/readme-standards.instructions.md`
-- Agent-facing markdown: `.github/instructions/docs/agent-facing-markdown.instructions.md`
-- Feature design specs: `.github/instructions/docs/feature-design-specs.instructions.md`
-- TODO/DONE docs: `.github/instructions/docs/todo-done-docs.instructions.md`
+- Documentation: `.github/instructions/documentation/documentation.instructions.md`
+- README standards: `.github/instructions/documentation/readme-standards.instructions.md`
+- Agent-facing markdown: `.github/instructions/documentation/agent-facing-markdown.instructions.md`
+- Feature design specs: `.github/instructions/documentation/feature-design-specs.instructions.md`
+- TODO/DONE docs: `.github/instructions/documentation/todo-done-docs.instructions.md`
 
 **Git**
 
