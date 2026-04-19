@@ -7,25 +7,28 @@ stored as `transcript` nodes in the vault.
 
 ## Overview
 
-The pipeline has two phases:
+The pipeline has two phases — transcript save always completes first; extraction is best-effort:
 
-| Phase | What happens                                                       |
-| ----- | ------------------------------------------------------------------ |
-| Fetch | `yt-dlp` downloads video metadata (JSON) and subtitles (VTT/SRT)   |
-| Parse | Raw subtitle content is deduplicated and assembled into paragraphs |
+| Phase      | What happens                                                                            |
+| ---------- | --------------------------------------------------------------------------------------- |
+| 1. Ingest  | `yt-dlp` downloads metadata + subtitles → parse → store `TranscriptNode` + `SourceNode` |
+| 2. Extract | LLM extracts ideas + summary → create `IdeaNode`s, update transcript `summary` field    |
 
-The result is a `transcript` node written to `vault/transcripts/`.
+Phase 1 never fails due to LLM issues. Phase 2 failure is surfaced as a warning in the UI
+("Extraction failed — retry from the transcript page") but the transcript is always persisted.
 
 ---
 
 ## Key Files
 
-| File                                                   | Role                                          |
-| ------------------------------------------------------ | --------------------------------------------- |
-| `packages/core/src/utils/vault-root.ts`                | Single source of truth for `VAULT_ROOT`       |
-| `packages/ingestion/src/fetch/youtube.ts`              | Calls `yt-dlp`, returns raw transcript string |
-| `packages/ingestion/src/structure/srt-parser.utils.ts` | Parses VTT/SRT into timestamped paragraphs    |
-| `packages/ingestion/src/pipeline.ts`                   | Orchestrates fetch → parse → store            |
+| File                                                   | Role                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------- |
+| `packages/core/src/utils/vault-root.ts`                | Single source of truth for `VAULT_ROOT`                 |
+| `packages/ingestion/src/fetch/youtube.ts`              | Calls `yt-dlp`, returns raw transcript string           |
+| `packages/ingestion/src/structure/srt-parser.utils.ts` | Parses VTT/SRT into timestamped paragraphs              |
+| `packages/ingestion/src/pipeline.ts`                   | Orchestrates fetch → parse → store → extract            |
+| `packages/ingestion/src/extract/llm-extract.ts`        | LLM knowledge extraction via `@llaab/control`           |
+| `packages/skills/src/ingest-youtube.ts`                | Entry point — calls pipeline then auto-tries extraction |
 
 ---
 
@@ -154,6 +157,32 @@ A new paragraph starts when **both** conditions are met:
 
 ---
 
+## Extraction Phase
+
+After the transcript is stored, `ingestYouTube` calls `extractKnowledgeFromTranscript`:
+
+```
+plainText (from parse phase)
+    │
+    ▼
+llmExtractWithTrace()    — routeLlm('extract', ...) → local-mid model (default: llama3.2:3b)
+    │
+    ▼
+control.execute()        — schema-validates JSON output; retries once on failure
+    │
+    ▼
+IdeaNode(s) created      — one per extracted idea phrase; origin: 'extracted', source_id: transcriptId
+    │
+    ▼
+updateNode(transcript)   — writes summary + merges autoTag(title, summary) into tags
+```
+
+Extraction uses the `local-mid` model tier. Override with `LLAAB_LOCAL_MID_MODEL` in `.env`.
+If extraction fails, the transcript is unaffected — the error is logged and returned as
+`extractionError` in the API response.
+
+---
+
 ## Deduplication (node level)
 
 Before fetching, the pipeline checks whether a `transcript` node with the same `source_type:
@@ -184,10 +213,12 @@ pnpm dev:clean:vault:recent
 
 ## Troubleshooting
 
-| Symptom                         | Likely cause                           | Fix                                      |
-| ------------------------------- | -------------------------------------- | ---------------------------------------- |
-| `yt-dlp` not found              | Not installed or not on PATH           | `brew install yt-dlp`                    |
-| Transcript empty                | Video has no auto-captions             | Expected — node is stored without body   |
-| Final sentence cut short        | SRT truncation (pre-fix state)         | Pipeline now uses VTT + sentence trim    |
-| Duplicate sentence at end       | Last-cue force-add bug (pre-fix state) | Fixed — fully-contained cues are dropped |
-| Re-ingest returns existing node | Node dedup matched on `source_item_id` | Run `pnpm dev:clean:vault:recent` first  |
+| Symptom                              | Likely cause                                | Fix                                                                                  |
+| ------------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `yt-dlp` not found                   | Not installed or not on PATH                | `brew install yt-dlp`                                                                |
+| Transcript empty                     | Video has no auto-captions                  | Expected — node is stored without body                                               |
+| Final sentence cut short             | SRT truncation (pre-fix state)              | Pipeline now uses VTT + sentence trim                                                |
+| Duplicate sentence at end            | Last-cue force-add bug (pre-fix state)      | Fixed — fully-contained cues are dropped                                             |
+| Re-ingest returns existing node      | Node dedup matched on `source_item_id`      | Run `pnpm dev:clean:vault:recent` first                                              |
+| Extraction failed — transcript saved | LLM model not running or wrong model name   | Check Ollama is running; set `LLAAB_LOCAL_MID_MODEL` in `.env` to an installed model |
+| Ideas created but body is empty      | Expected — idea body is intentionally empty | The title phrase IS the idea content                                                 |

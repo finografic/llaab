@@ -62,7 +62,7 @@ pipeline — faster, better `oxfmt` integration, and no config impedance mismatc
 better: the longer the ESLint config grows, the more surface to migrate. Do before the codebase
 expands significantly.
 
-Detail: [`docs/todo/TODO_OXLINT_MIGRATION.md`](./TODO_OXLINT_MIGRATION.md)
+Detail: [`docs/todo/TODO_OXLINT_MIGRATION.md`](./TODO_OXLINT_MIGRATION.md) — Phase 1 done.
 
 ### Karpathy Pattern — Vault Graph Integration
 

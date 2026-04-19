@@ -5,13 +5,16 @@
 - If **NO** initial context needed, then SKIP to NEXT section.
 - If **YES**, initial context needed, then READ [Project Concept & Manifesto](</LLAAB\ -\ CONCEPT\ &\ MANIFESTO.md>)
 
-## Roadmap
+## Roadmap and Planning Docs
 
 **`docs/todo/ROADMAP.md` is the primary high-level plan for this project.**
+**`docs/todo/NEXT_STEPS.md` is the near-term working list** — small tasks, fixes, and manual testing checklists too small for ROADMAP.
 
 - Before proposing or generating new features, check the roadmap for existing items.
 - When conceiving a new feature or initiative, add it to the appropriate priority tier.
-- Detailed todo docs for specific items live alongside it in `docs/todo/`.
+- Detailed planning docs live alongside in `docs/todo/` as `TODO_*.md` (active) or `DONE_*.md` (complete).
+- **TODO/DONE doc conventions:** `.github/instructions/14-todo-done-docs.instructions.md`
+  — rules for naming, status headers, checkboxes, and graduating `TODO_` → `DONE_`.
 
 ---
 
@@ -41,6 +44,7 @@ Rules are canonical in `.github/instructions/` and shared across Claude Code, Cu
 - Git Policy: `.github/instructions/10-git-policy.instructions.md`
 - Agent-facing Markdown: `.github/instructions/11-agent-facing-markdown.instructions.md`
 - Feature Design Specs: `.github/instructions/12-feature-design-specs.instructions.md`
+- TODO/DONE Docs: `.github/instructions/14-todo-done-docs.instructions.md`
 
 ---
 
@@ -65,6 +69,7 @@ Rules are canonical in `.github/instructions/` and shared across Claude Code, Cu
 
 ## Learned Workspace Facts
 
+- In `apps/server`, each route group uses `*.schema.ts` for Zod, `*.routes.ts` for `{ path, handler }` exports with semantic names, and `index.ts` for wiring only; `app.ts` chains `.route('/api', …)` per group router so Hono `AppType` stays correct for the RPC client.
 - Zod-derived node fields and other values carried through ingestion pipelines (including YAML frontmatter) use snake_case; TypeScript and JavaScript identifiers in source code stay camelCase.
 - Commitlint rule severity is numeric only (`0` / `1` / `2`); the string `error` is not valid in rule configuration.
 - Commit messages use a custom Commitlint type list (`build`, `chore`, `ci`, `deps`, `docs`, `feat`, `fix`, `refactor`, `revert`, `style`, `test`); AI-related terms like `agents` and `skills` should be used as scopes, not custom types.

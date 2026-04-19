@@ -76,7 +76,7 @@ export function toNodeId(input: string): string {
   const slug = input
     .toLowerCase()
     .normalize('NFKD')
-    .replace(/['"]/g, '')
+    .replace(/['\u2018\u2019"\u201C\u201D]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .replace(/-{2,}/g, '-');

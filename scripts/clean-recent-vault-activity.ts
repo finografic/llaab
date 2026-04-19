@@ -6,7 +6,7 @@ import readline from 'node:readline/promises';
 
 const RECENT_THRESHOLD_HOURS = 24;
 const VAULT_DIR = path.resolve(process.cwd(), 'vault');
-const TARGET_DIRS = ['runs', 'sources', 'transcripts', '.tmp'] as const;
+const TARGET_DIRS = ['runs', 'sources', 'transcripts', 'nodes/ideas', '.tmp'] as const;
 
 interface CliOptions {
   hours: number;

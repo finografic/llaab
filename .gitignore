@@ -17,10 +17,16 @@ build/
 .env.*
 !.env.example
 
-# Agent/editor config
+# Agents
+.codex/
 .claude/
 !.claude/settings.json
-.cursor/
+.worktrees/
+**/worktrees/
+
+# IDE
+**/.cursor/**
+!**/.cursor/.gitkeep
 !.cursor/rules/
 !.vscode/settings.json
 .idea/

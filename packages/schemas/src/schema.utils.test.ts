@@ -6,7 +6,28 @@ import {
   formatInstantForFilenameId,
   formatIsoUtcForTranscriptBody,
   formatIsoUtcSeconds,
+  toNodeId,
 } from './schema.utils.js';
+
+describe('toNodeId', () => {
+  it('collapses contractions with straight apostrophe', () => {
+    expect(toNodeId("it's holding you back")).toBe('its-holding-you-back');
+  });
+
+  it('collapses contractions with curly apostrophe (U+2019)', () => {
+    expect(toNodeId('Stop Using Claude \u2014 It\u2019s Holding You Back')).toBe(
+      'stop-using-claude-its-holding-you-back',
+    );
+  });
+
+  it('strips quoted words cleanly', () => {
+    expect(toNodeId("food 'bar' baz")).toBe('food-bar-baz');
+  });
+
+  it('strips curly double quotes', () => {
+    expect(toNodeId('\u201Chello world\u201D')).toBe('hello-world');
+  });
+});
 
 describe('canonical datetime helpers', () => {
   it('formatIsoUtcSeconds drops milliseconds', () => {

@@ -1,8 +1,15 @@
 # TODO — ESLint → oxlint Migration
 
-> **Status:** Phase 1 — `oxlint` + root `oxlint.config.ts` added; run `pnpm lint:oxlint` alongside `pnpm lint` (ESLint + turbo) until coverage is audited.
-> `oxfmt` is already installed with custom config. This migration pairs it with oxlint
-> for a unified Rust-based lint + format pipeline.
+> **Status:** Phase 1 complete (2026-04-17). Phases 2–4 not started.
+> `oxfmt` is already installed. This migration pairs it with oxlint for a unified Rust-based
+> lint + format pipeline.
+
+## Progress
+
+- [x] Phase 1 — oxlint installed, `pnpm lint:oxlint` runs alongside ESLint
+- [ ] Phase 2 — Audit `@finografic/eslint-config` rule coverage
+- [ ] Phase 3 — Replace ESLint in lint-staged and CI
+- [ ] Phase 4 — Update `@finografic/eslint-config`
 
 ---
 

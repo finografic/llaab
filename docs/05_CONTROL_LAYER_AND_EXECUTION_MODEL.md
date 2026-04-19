@@ -631,9 +631,11 @@ read transcript
 
 Status:
 
-- not implemented yet
-- current extraction produces validated structured summaries plus control trace
-- current ingestion does **not** yet create `idea` or `skill` nodes from transcript extraction
+- **implemented** — `extractKnowledgeFromTranscript` in `@llaab/ingestion` runs after transcript save
+- extraction goes through `control.execute` via `llmExtractWithTrace`; schema-validated before any node is created
+- creates `IdeaNode`s for each extracted phrase; updates transcript `summary` and tags via `updateNode`
+- extraction is best-effort: transcript is always persisted regardless of LLM outcome
+- `skill` node extraction is not yet implemented (ideas only)
 
 ---
 
