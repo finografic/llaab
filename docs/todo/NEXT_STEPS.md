@@ -11,7 +11,7 @@
 
 Things to verify end-to-end after recent pipeline changes:
 
-- [ ] Ingest a fresh YouTube URL → confirm transcript + source nodes created
+- [x] Ingest a fresh YouTube URL → confirm transcript + source nodes created
 - [ ] Ingest same URL again → confirm dedup fires (`Already saved` in UI)
 - [ ] Ingest URL with content from different domains (d:infra, d:ui, etc.) → confirm tag variance
 - [ ] Verify extraction produces ideas in `/vault/nodes/ideas/` with correct `source_id`

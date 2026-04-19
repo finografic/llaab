@@ -49,6 +49,12 @@
   "stylelint.validate": ["css"],
   "css.validate": false,
 
+  "files.watcherExclude": {
+    "**/dist/**": true,
+    "**/node_modules/**": true,
+    "**/styled-system/**": true
+  },
+
   "markdown-preview-enhanced.scrollSync": false,
   "markdownlint.config": {
     "default": true,

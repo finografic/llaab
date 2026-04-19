@@ -71,6 +71,23 @@ export const nodeDetail = {
   },
 };
 
+export const transcriptIdeas = {
+  path: '/transcripts/:id/ideas' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    const allNodes = await listNodes();
+    const transcript = allNodes.find((n) => n.id === id && n.type === 'transcript') as
+      | TranscriptNode
+      | undefined;
+    if (!transcript) return c.json({ error: 'Transcript not found' }, 404);
+    const ideaIds: string[] = transcript.extracted_idea_ids ?? [];
+    const ideas = allNodes
+      .filter((n) => n.type === 'idea' && ideaIds.includes(n.id))
+      .map((n) => ({ id: n.id, title: n.title }));
+    return c.json({ ideas });
+  },
+};
+
 export const extractTranscript = {
   path: '/transcripts/:id/extract' as const,
   handler: async (c: AppCtx) => {

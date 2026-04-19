@@ -1,10 +1,10 @@
 import { Button } from '@finografic/design-system/components';
 import { TagsInputDS } from '@finografic/design-system/forms';
 import { Flex } from '@styled-system/jsx';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { api } from '../lib/api';
+import { api } from 'lib/api';
 
 // ── Tag helpers ───────────────────────────────────────────────────────────────
 
@@ -24,7 +24,7 @@ interface FormValues {
   url: string;
 }
 
-type ExtractionPhase = 'idle' | 'pending' | 'success' | 'failed';
+type ExtractionPhase = 'idle' | 'pending' | 'success' | 'existing' | 'extractable' | 'failed';
 
 interface TranscriptCard {
   id: string;
@@ -34,7 +34,7 @@ interface TranscriptCard {
 
 interface ExtractionCard {
   phase: ExtractionPhase;
-  ideaCount?: number;
+  ideas?: Array<{ id: string; title: string }>;
   error?: string;
 }
 
@@ -45,7 +45,7 @@ function StatusCard({
   label,
   children,
 }: {
-  phase: 'success' | 'warning' | 'pending';
+  phase: 'success' | 'warning' | 'pending' | 'neutral';
   label: string;
   children: React.ReactNode;
 }) {
@@ -57,7 +57,49 @@ function StatusCard({
   );
 }
 
+function IdeaList({ ideas }: { ideas: Array<{ id: string; title: string }> }) {
+  if (ideas.length === 0) return null;
+  return (
+    <ul className="status-card__idea-list">
+      {ideas.map((idea) => (
+        <li key={idea.id}>
+          <a href={`/vault/nodes/${idea.id}`} className="status-card__link">
+            {idea.title}
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
+
+async function fetchExistingIdeas(transcriptId: string): Promise<Array<{ id: string; title: string }>> {
+  const res = await api.vault.transcripts[':id'].ideas.$get({ param: { id: transcriptId } });
+  const json = (await res.json()) as { ideas?: Array<{ id: string; title: string }> };
+  return json.ideas ?? [];
+}
+
+async function runExtract(
+  transcriptId: string,
+): Promise<{ phase: ExtractionPhase; ideas?: Array<{ id: string; title: string }>; error?: string }> {
+  try {
+    const res = await api.vault.transcripts[':id'].extract.$post({ param: { id: transcriptId } });
+    const json = (await res.json()) as {
+      success: boolean;
+      ideas?: Array<{ id: string; title: string }>;
+      error?: string;
+    };
+    if (json.success) return { phase: 'success', ideas: json.ideas ?? [] };
+    if (json.error?.includes('already exists')) {
+      const ideas = await fetchExistingIdeas(transcriptId);
+      return ideas.length > 0 ? { phase: 'existing', ideas } : { phase: 'extractable' };
+    }
+    return { phase: 'failed', error: json.error };
+  } catch {
+    return { phase: 'failed', error: 'Network error during extraction.' };
+  }
+}
 
 export function IngestForm() {
   const [tags, setTags] = useState<string[]>([]);
@@ -100,10 +142,19 @@ export function IngestForm() {
       };
       transcriptId = data.result.id;
       const filename = data.result.path.split('/').pop() ?? data.result.path;
-      setTranscript({ id: transcriptId, filename, reused: data.result.reused ?? false });
+      const reused = data.result.reused ?? false;
+      setTranscript({ id: transcriptId, filename, reused });
       setTags([]);
       setTagInput('');
       reset();
+
+      if (reused) {
+        setExtraction({ phase: 'pending' });
+        const ideas = await fetchExistingIdeas(transcriptId);
+        setExtraction(ideas.length > 0 ? { phase: 'existing', ideas } : { phase: 'extractable' });
+        setBusy(false);
+        return;
+      }
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Ingestion failed.');
       setBusy(false);
@@ -112,20 +163,15 @@ export function IngestForm() {
 
     // ── Step 2: extract ───────────────────────────────────────────────────────
     setExtraction({ phase: 'pending' });
-    try {
-      const res = await api.vault.transcripts[':id'].extract.$post({
-        param: { id: transcriptId },
-      });
-      const json = (await res.json()) as { success: boolean; ideaIds?: string[]; error?: string };
-      if (json.success) {
-        setExtraction({ phase: 'success', ideaCount: json.ideaIds?.length ?? 0 });
-      } else {
-        setExtraction({ phase: 'failed', error: json.error });
-      }
-    } catch {
-      setExtraction({ phase: 'failed', error: 'Network error during extraction.' });
-    }
+    setExtraction(await runExtract(transcriptId));
+    setBusy(false);
+  };
 
+  const onRetryExtract = async () => {
+    if (!transcript) return;
+    setBusy(true);
+    setExtraction({ phase: 'pending' });
+    setExtraction(await runExtract(transcript.id));
     setBusy(false);
   };
 
@@ -207,39 +253,62 @@ export function IngestForm() {
         </StatusCard>
       )}
 
-      {transcript && (
-        <StatusCard phase="success" label={transcript.reused ? 'Already saved' : 'Transcript saved'}>
-          <span className="status-card__id">{transcript.id}</span>
-          <span className="status-card__path">{transcript.filename}</span>
+      {transcript?.reused && (
+        <StatusCard phase="warning" label="Transcript already saved">
+          <a href={`/vault/transcripts/${transcript.id}`} className="status-card__link status-card__path">
+            {transcript.filename}
+          </a>
         </StatusCard>
       )}
 
-      {extraction.phase !== 'idle' && (
-        <StatusCard
-          phase={
-            extraction.phase === 'success' ? 'success' : extraction.phase === 'failed' ? 'warning' : 'pending'
-          }
-          label={
-            extraction.phase === 'pending'
-              ? 'Extracting ideas…'
-              : extraction.phase === 'success'
-                ? `${extraction.ideaCount ?? 0} ideas extracted`
-                : 'Extraction failed'
-          }
-        >
-          {extraction.phase === 'pending' && (
-            <span className="status-card__text status-card__text--muted">
-              Running LLM extraction — this may take a moment.
-            </span>
-          )}
-          {extraction.phase === 'success' && (
-            <span className="status-card__text">Knowledge nodes written to vault.</span>
-          )}
-          {extraction.phase === 'failed' && (
-            <span className="status-card__text">
-              {extraction.error ? extraction.error : 'Transcript is saved — retry from the transcript page.'}
-            </span>
-          )}
+      {transcript && !transcript.reused && (
+        <StatusCard phase="success" label="Transcript saved">
+          <span className="status-card__id">{transcript.id}</span>
+          <a href={`/vault/transcripts/${transcript.id}`} className="status-card__link status-card__path">
+            {transcript.filename}
+          </a>
+        </StatusCard>
+      )}
+
+      {extraction.phase === 'pending' && (
+        <StatusCard phase="pending" label="Extracting ideas…">
+          <span className="status-card__text status-card__text--muted">
+            Running LLM extraction — this may take a moment.
+          </span>
+        </StatusCard>
+      )}
+
+      {extraction.phase === 'success' && (
+        <StatusCard phase="success" label={`${extraction.ideas?.length ?? 0} ideas extracted`}>
+          <IdeaList ideas={extraction.ideas ?? []} />
+        </StatusCard>
+      )}
+
+      {extraction.phase === 'existing' && (
+        <StatusCard phase="neutral" label="Ideas already extracted">
+          <IdeaList ideas={extraction.ideas ?? []} />
+        </StatusCard>
+      )}
+
+      {extraction.phase === 'extractable' && (
+        <StatusCard phase="neutral" label="No ideas extracted yet">
+          <button type="button" className="status-card__retry-btn" disabled={busy} onClick={onRetryExtract}>
+            Extract ideas
+          </button>
+        </StatusCard>
+      )}
+
+      {extraction.phase === 'failed' && (
+        <StatusCard phase="warning" label="Extraction failed">
+          <span className="status-card__text">{extraction.error ?? 'Unknown error.'}</span>
+          <button
+            type="button"
+            className="status-card__retry-btn status-card__retry-btn--warning"
+            disabled={busy}
+            onClick={onRetryExtract}
+          >
+            Retry extraction
+          </button>
         </StatusCard>
       )}
     </div>

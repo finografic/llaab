@@ -15,8 +15,8 @@
       // Keep @styled-system/* in sync with panda.config outdir + src/styled-system/recipes.ts.
       // "styled-system": ["./styled-system"],
       // "styled-system/*": ["./styled-system/*"],
-      // "@styled-system/css": ["./styled-system/css"],
-      // "@styled-system/jsx": ["./styled-system/jsx"]
+      "@styled-system/css": ["./styled-system/css"],
+      "@styled-system/jsx": ["./styled-system/jsx"],
       "@styled-system/recipes": ["./src/styles/styled-system/recipes.ts"]
     }
   },

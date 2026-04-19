@@ -287,6 +287,11 @@ select {
   border-color: var(--pending-border);
 }
 
+.status-card--neutral {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
 .status-card__label {
   font-size: 11px;
   font-weight: 600;
@@ -297,6 +302,7 @@ select {
 .status-card--success .status-card__label { color: var(--success-text); }
 .status-card--warning .status-card__label { color: var(--warning-text); }
 .status-card--pending .status-card__label { color: var(--pending-text); }
+.status-card--neutral .status-card__label { color: var(--text-muted); }
 
 .status-card__body {
   display: flex;

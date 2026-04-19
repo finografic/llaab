@@ -325,6 +325,7 @@ export interface ExtractionResult {
   transcriptId: string;
   summary: string;
   ideaIds: string[];
+  ideas: Array<{ id: string; title: string }>;
 }
 
 /**
@@ -345,7 +346,7 @@ export async function extractKnowledgeFromTranscript(
     tags: [...new Set([...(node.tags ?? []), ...autoTag(node.title, extracted.summary)])],
   }));
 
-  const ideaIds: string[] = [];
+  const ideas: Array<{ id: string; title: string }> = [];
   for (const ideaText of extracted.ideas) {
     const idea = await createNode({
       type: 'idea',
@@ -355,12 +356,20 @@ export async function extractKnowledgeFromTranscript(
       extra: {
         origin: 'extracted',
         source_id: transcriptId,
+        related: [transcriptId],
       },
     });
-    ideaIds.push(idea.id);
+    ideas.push({ id: idea.id, title: ideaText });
   }
 
-  return { transcriptId, summary: extracted.summary, ideaIds };
+  const ideaIds = ideas.map((i) => i.id);
+
+  await updateNode(transcriptPath, (node) => ({
+    ...node,
+    extracted_idea_ids: ideaIds,
+  }));
+
+  return { transcriptId, summary: extracted.summary, ideaIds, ideas };
 }
 
 export async function runIngestionPipeline(input: IngestionInput): Promise<IngestionResult> {

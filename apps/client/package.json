@@ -23,7 +23,7 @@
     "panda:clean": "panda codegen --clean",
     "panda:spec": "panda spec",
     "·········· PACKAGES": "···················································",
-    "update:design-system": "pnpm update @finografic/design-system --latest",
+    "update:design-system": "pnpm update @finografic/design-system --latest && pnpm panda:codegen",
     "update:icons": "pnpm update @finografic/icons --latest",
     "update:zustand-context": "pnpm update @finografic/zustand-context-creator --latest",
     "·········· update:DEPS": "···············································",

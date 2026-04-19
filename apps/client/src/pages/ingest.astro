@@ -14,7 +14,7 @@ import { IngestForm } from '../components/IngestForm';
     </header>
 
     <div class="card ingest-page__card">
-      <IngestForm client:only />
+      <IngestForm client:only="react" />
     </div>
   </div>
 </AppLayout>
@@ -59,32 +59,6 @@ import { IngestForm } from '../components/IngestForm';
     font-size: 13px;
   }
 
-  /* Submit button base layout — forms.css only sets colors via .btn--primary;
-     the IngestForm button has no .btn class, so we fill the gap here until
-     the design system button component is wired up. */
-  :global(.ingest-form button[type='submit']) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 20px;
-    border: none;
-    border-radius: var(--radius);
-    font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition:
-      background var(--duration) var(--ease),
-      opacity var(--duration) var(--ease);
-  }
-
-  :global(.ingest-form button[type='submit']:disabled) {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
   /* Tag suggestion dropdown */
   :global(.tag-suggestions) {
     display: flex;
@@ -115,5 +89,55 @@ import { IngestForm } from '../components/IngestForm';
     color: var(--accent);
     border-color: var(--accent);
     background: var(--accent-subtle);
+  }
+
+  :global(.status-card__link) {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    opacity: 0.85;
+  }
+
+  :global(.status-card__link:hover) {
+    opacity: 1;
+  }
+
+  :global(.status-card__idea-list) {
+    margin: 0;
+    padding-left: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: 13px;
+    font-family: var(--font-mono);
+  }
+
+  :global(.status-card__retry-btn) {
+    align-self: flex-start;
+    margin-top: var(--space-1);
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    transition: opacity var(--duration) var(--ease);
+  }
+
+  :global(.status-card__retry-btn:hover:not(:disabled)) {
+    opacity: 0.8;
+  }
+
+  :global(.status-card__retry-btn:disabled) {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  :global(.status-card__retry-btn--warning) {
+    background: var(--warning-bg);
+    border-color: var(--warning-border);
+    color: var(--warning-text);
   }
 </style>
