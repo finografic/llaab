@@ -1,4 +1,4 @@
-export { ollamaListModels, routeLlm, streamLlm } from './router.js';
+export { getLlmStatus, ollamaListModels, routeLlm, streamLlm } from './router.js';
 export type { LlmCompleteResult, ModelTier, TaskType } from './router.js';
 
 // Legacy — kept for backward compat; prefer routeLlm

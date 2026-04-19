@@ -10,6 +10,7 @@ export const youtube = {
       url: body.url,
       title: body.title,
       tags: body.tags,
+      skipExtraction: body.skipExtraction,
     });
 
     if (record.status === 'failed') {

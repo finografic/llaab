@@ -1,7 +1,7 @@
 import { autoTag, createNode, getNodeFilePath, listNodes, updateNode } from '@llaab/core';
 import { appendDatetimeFilenameSegment, formatIsoUtcForTranscriptBody, now, toNodeId } from '@llaab/schemas';
 import type { ExtractionRunTrace } from './extract/llm-extract.js';
-import type { TranscriptNode, TranscriptSourceType } from '@llaab/schemas';
+import type { TranscriptSourceType } from '@llaab/schemas';
 
 import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
 import { cleanTranscript } from './clean/transcript.js';
@@ -341,10 +341,7 @@ export async function extractKnowledgeFromTranscript(
 
   await updateNode(transcriptPath, (node) => ({
     ...node,
-    extra: {
-      ...(node as TranscriptNode).extra,
-      summary: extracted.summary,
-    },
+    summary: extracted.summary,
     tags: [...new Set([...(node.tags ?? []), ...autoTag(node.title, extracted.summary)])],
   }));
 

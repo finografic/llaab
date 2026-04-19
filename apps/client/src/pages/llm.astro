@@ -1,0 +1,360 @@
+---
+export const prerender = false;
+
+import AppLayout from '../layouts/AppLayout.astro';
+
+// ── Fetch status from server ───────────────────────────────────────────────────
+
+const SERVER_ORIGIN = import.meta.env.SERVER_URL ?? 'http://localhost:3000';
+const API_KEY = import.meta.env.SERVER_API_KEY ?? '';
+
+interface RoutingEntry {
+  tier: string;
+  model: string;
+}
+
+interface LlmStatusResponse {
+  routing: Record<string, RoutingEntry>;
+  installedModels: string[];
+  ollamaError?: string;
+}
+
+let status: LlmStatusResponse | null = null;
+let fetchError: string | null = null;
+
+try {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (API_KEY) headers['X-API-Key'] = API_KEY;
+  const res = await fetch(`${SERVER_ORIGIN}/api/llm/status`, { headers });
+  status = await res.json() as LlmStatusResponse;
+} catch (err) {
+  fetchError = err instanceof Error ? err.message : 'Failed to reach server';
+}
+
+const TASK_LABELS: Record<string, string> = {
+  format: 'Format',
+  extract: 'Extract',
+  code: 'Code',
+  reason: 'Reason',
+};
+
+const TIER_LABELS: Record<string, string> = {
+  'local-small': 'Local — small',
+  'local-mid': 'Local — mid',
+  'remote': 'Remote',
+};
+
+function isInstalled(model: string, installed: string[]): boolean {
+  return installed.some((m) => m === model || m.startsWith(model + ':') || model.startsWith(m));
+}
+---
+
+<AppLayout title="LLM Status">
+  <div class="llm-page">
+
+    <header class="llm-page__header">
+      <p class="eyebrow">System</p>
+      <h1 class="llm-page__heading">LLM Status</h1>
+      <p class="llm-page__desc">Active model routing and installed Ollama models.</p>
+    </header>
+
+    {fetchError && (
+      <div class="alert alert--error">
+        <span class="alert__label">Server unreachable</span>
+        <span class="alert__msg">{fetchError}</span>
+      </div>
+    )}
+
+    {status && (
+      <div class="llm-sections">
+
+        {/* ── Task routing ── */}
+        <section class="llm-section">
+          <h2 class="llm-section__heading">Task routing</h2>
+          <div class="route-grid">
+            {Object.entries(status.routing).map(([task, entry]) => {
+              const installed = isInstalled(entry.model, status!.installedModels);
+              return (
+                <div class="route-row">
+                  <span class="route-task">{TASK_LABELS[task] ?? task}</span>
+                  <span class="route-arrow">→</span>
+                  <span class="route-tier">{TIER_LABELS[entry.tier] ?? entry.tier}</span>
+                  <span class="route-arrow">→</span>
+                  <span class={`route-model ${installed ? 'route-model--ok' : 'route-model--missing'}`}>
+                    {entry.model}
+                    <span class={`route-dot route-dot--${installed ? 'ok' : 'missing'}`} />
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ── Installed models ── */}
+        <section class="llm-section">
+          <h2 class="llm-section__heading">
+            Installed Ollama models
+            {status.ollamaError && <span class="llm-section__badge llm-section__badge--err">offline</span>}
+            {!status.ollamaError && (
+              <span class="llm-section__badge llm-section__badge--ok">{status.installedModels.length} models</span>
+            )}
+          </h2>
+
+          {status.ollamaError && (
+            <p class="llm-empty">{status.ollamaError}</p>
+          )}
+
+          {!status.ollamaError && status.installedModels.length === 0 && (
+            <p class="llm-empty">No models found — is Ollama running?</p>
+          )}
+
+          {status.installedModels.length > 0 && (
+            <ul class="model-list">
+              {status.installedModels.map((model) => (
+                <li class="model-item">
+                  <span class="route-dot route-dot--ok" />
+                  <span class="model-name">{model}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* ── Env overrides hint ── */}
+        <section class="llm-section llm-section--muted">
+          <h2 class="llm-section__heading">Env overrides</h2>
+          <dl class="env-grid">
+            <dt>LLAAB_LOCAL_SMALL_MODEL</dt><dd>local-small tier default</dd>
+            <dt>LLAAB_LOCAL_MID_MODEL</dt><dd>local-mid tier default</dd>
+            <dt>LLAAB_REMOTE_MODEL</dt><dd>remote tier default</dd>
+          </dl>
+        </section>
+
+      </div>
+    )}
+
+  </div>
+</AppLayout>
+
+<style>
+  .llm-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    max-width: 640px;
+  }
+
+  .llm-page__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .llm-page__heading {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .llm-page__desc {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* ── Alert ── */
+
+  .alert {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+  }
+
+  .alert--error {
+    background: var(--error-bg);
+    border-color: var(--error-border);
+  }
+
+  .alert__label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--error-text);
+  }
+
+  .alert__msg {
+    font-size: 13px;
+    color: var(--error-text);
+  }
+
+  /* ── Sections ── */
+
+  .llm-sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .llm-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .llm-section__heading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .llm-section__badge {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    border-radius: 99px;
+    padding: 1px 6px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    border: 1px solid transparent;
+  }
+
+  .llm-section__badge--ok {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+    color: var(--success-text);
+  }
+
+  .llm-section__badge--err {
+    background: var(--error-bg);
+    border-color: var(--error-border);
+    color: var(--error-text);
+  }
+
+  .llm-section--muted .llm-section__heading {
+    color: var(--text-faint);
+    opacity: 0.6;
+  }
+
+  .llm-empty {
+    font-size: 13px;
+    color: var(--text-faint);
+  }
+
+  /* ── Route grid ── */
+
+  .route-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .route-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: 13px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .route-task {
+    font-weight: 500;
+    color: var(--text);
+    width: 60px;
+    flex-shrink: 0;
+  }
+
+  .route-arrow {
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+
+  .route-tier {
+    color: var(--text-muted);
+    font-size: 12px;
+    width: 120px;
+    flex-shrink: 0;
+  }
+
+  .route-model {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    flex: 1;
+  }
+
+  .route-model--ok { color: var(--text); }
+  .route-model--missing { color: var(--warning-text); }
+
+  .route-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .route-dot--ok      { background: var(--success-text); }
+  .route-dot--missing { background: var(--warning-text); }
+
+  /* ── Model list ── */
+
+  .model-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .model-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .model-name {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  /* ── Env grid ── */
+
+  .env-grid {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--space-2) var(--space-5);
+    font-size: 12px;
+  }
+
+  .env-grid dt {
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+  }
+
+  .env-grid dd {
+    color: var(--text-faint);
+  }
+</style>

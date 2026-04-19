@@ -53,14 +53,23 @@ function parseJsonFromText(text: string): unknown {
   return JSON.parse(stripped.slice(start, end + 1));
 }
 
+// ~6 000 chars leaves room for the system prompt + JSON response within an 8k token window
+const MAX_INPUT_CHARS = 6_000;
+
+function truncateForExtraction(text: string): string {
+  if (text.length <= MAX_INPUT_CHARS) return text;
+  return text.slice(0, MAX_INPUT_CHARS) + '\n\n[transcript truncated for extraction]';
+}
+
 export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowledgeWithTrace> {
+  const truncated = truncateForExtraction(input);
   const controlled = await execute({
     task: 'extract-knowledge',
-    input,
+    input: truncated,
     schema: ExtractedKnowledgeSchema,
     context: {
       instructions: 'Return structured extracted knowledge as JSON.',
-      data: input,
+      data: truncated,
       constraints: ['summary must be non-empty', 'output must be valid JSON'],
     },
     policy: {
@@ -70,7 +79,7 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
     },
     model: 'ollama',
     run: async () => {
-      const { text } = await routeLlm('extract', input, { system: EXTRACTION_SYSTEM_PROMPT });
+      const { text } = await routeLlm('extract', truncated, { system: EXTRACTION_SYSTEM_PROMPT });
       return parseJsonFromText(text);
     },
   });

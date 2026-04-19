@@ -9,4 +9,5 @@ export const vaultRouter = createRouter()
   .get(routes.listVaultNodes.path, zValidator('query', listNodesQuerySchema), routes.listVaultNodes.handler)
   .post(routes.createVaultNode.path, zValidator('json', createNodeBodySchema), routes.createVaultNode.handler)
   .get(routes.nodeDetail.path, routes.nodeDetail.handler)
-  .get(routes.nodeRaw.path, routes.nodeRaw.handler);
+  .get(routes.nodeRaw.path, routes.nodeRaw.handler)
+  .post(routes.extractTranscript.path, routes.extractTranscript.handler);

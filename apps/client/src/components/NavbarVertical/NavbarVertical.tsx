@@ -40,6 +40,11 @@ const NAV_ITEMS: NavItem[] = [
       { label: 'Runs', href: '/vault/runs' },
     ],
   },
+  {
+    label: 'LLM',
+    href: '/llm',
+    icon: <IconLlm />,
+  },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -181,6 +186,25 @@ function IconVault() {
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <circle cx="12" cy="12" r="3" />
       <path d="M12 9V7M12 17v-2M9 12H7M17 12h-2" />
+    </svg>
+  );
+}
+
+function IconLlm() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 0 6h-1v1a4 4 0 0 1-8 0v-1H7a3 3 0 0 1 0-6h1V6a4 4 0 0 1 4-4z" />
+      <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }

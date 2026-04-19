@@ -60,6 +60,10 @@
   --warning-border: var(--colors-border-warning);
   --warning-text: var(--colors-fg-warning);
 
+  --pending-bg: var(--surface-raised);
+  --pending-border: var(--border-subtle);
+  --pending-text: var(--text-faint);
+
   /* Typography */
   --font-sans:
     system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -96,53 +100,55 @@
 
 /* ─── Base ────────────────────────────────────────────────────────────────── */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
-html {
-  height: 100%;
-  font-size: 15px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
+  html {
+    height: 100%;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
 
-body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-sans);
-  line-height: 1.6;
-}
+  body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+  }
 
-a {
-  color: var(--accent);
-  text-decoration: none;
-}
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
 
-a:hover {
-  color: var(--accent-hover);
-  text-decoration: underline;
-}
+  a:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+  }
 
-code,
-kbd,
-pre {
-  font-family: var(--font-mono);
-  font-size: 0.875em;
-}
+  code,
+  kbd,
+  pre {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+  }
 
-/* ─── Focus ───────────────────────────────────────────────────────────────── */
+  /* ─── Focus ─────────────────────────────────────────────────────────────── */
 
-:focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
+  :focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
 }
 
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */

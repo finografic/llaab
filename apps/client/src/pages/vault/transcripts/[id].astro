@@ -124,34 +124,43 @@ function fmtSeconds(s?: number): string {
     )}
 
     {/* ── Extracted ideas ── */}
-    {transcript.extracted_idea_ids.length > 0 && (
-      <section class="section">
-        <h2 class="section__heading">
-          Extracted ideas
+    <section class="section">
+      <h2 class="section__heading">
+        Extracted ideas
+        {transcript.extracted_idea_ids.length > 0 && (
           <span class="section__count">{transcript.extracted_idea_ids.length}</span>
-        </h2>
-        {extractedIdeas.length > 0 ? (
-          <ul class="idea-list">
-            {extractedIdeas.map((idea) => (
-              <li class="idea-item">
-                <a href={`/vault/nodes/${idea.id}`} class="idea-link">
-                  <span class="idea-title">{idea.title}</span>
-                  {idea.tags.length > 0 && (
-                    <span class="idea-tags">
-                      {idea.tags.map((tag) => (
-                        <span class="tag tag--sm" data-tag={tag}>{tag}</span>
-                      ))}
-                    </span>
-                  )}
-                </a>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p class="empty-note">Ideas listed in IDs but nodes not found in vault.</p>
         )}
-      </section>
-    )}
+        <button id="re-extract-btn" data-id={transcript.id} class="btn-reextract">
+          {transcript.extracted_idea_ids.length > 0 ? 'Re-extract' : 'Extract now'}
+        </button>
+        <span id="re-extract-status" class="reextract-status"></span>
+      </h2>
+
+      {transcript.extracted_idea_ids.length === 0 && (
+        <p class="empty-note">No ideas extracted yet.</p>
+      )}
+      {transcript.extracted_idea_ids.length > 0 && extractedIdeas.length > 0 && (
+        <ul class="idea-list">
+          {extractedIdeas.map((idea) => (
+            <li class="idea-item">
+              <a href={`/vault/nodes/${idea.id}`} class="idea-link">
+                <span class="idea-title">{idea.title}</span>
+                {idea.tags.length > 0 && (
+                  <span class="idea-tags">
+                    {idea.tags.map((tag) => (
+                      <span class="tag tag--sm" data-tag={tag}>{tag}</span>
+                    ))}
+                  </span>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {transcript.extracted_idea_ids.length > 0 && extractedIdeas.length === 0 && (
+        <p class="empty-note">Ideas listed in IDs but nodes not found in vault.</p>
+      )}
+    </section>
 
     {/* ── Full transcript ── */}
     {transcript.body && (
@@ -163,6 +172,39 @@ function fmtSeconds(s?: number): string {
 
   </div>
 </AppLayout>
+
+<script>
+  const btn = document.getElementById('re-extract-btn') as HTMLButtonElement | null;
+  const status = document.getElementById('re-extract-status');
+  if (btn && status) {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      btn.disabled = true;
+      btn.textContent = 'Extracting…';
+      status.textContent = '';
+      status.className = 'reextract-status';
+      try {
+        const res = await fetch(`/api/vault/transcripts/${id}/extract`, { method: 'POST' });
+        const json = await res.json() as { success: boolean; ideaIds?: string[]; error?: string };
+        if (json.success) {
+          status.textContent = `✓ ${json.ideaIds?.length ?? 0} ideas extracted — reloading…`;
+          status.className = 'reextract-status reextract-status--ok';
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          status.textContent = json.error ?? 'Extraction failed';
+          status.className = 'reextract-status reextract-status--err';
+          btn.disabled = false;
+          btn.textContent = 'Retry';
+        }
+      } catch {
+        status.textContent = 'Network error';
+        status.className = 'reextract-status reextract-status--err';
+        btn.disabled = false;
+        btn.textContent = 'Retry';
+      }
+    });
+  }
+</script>
 
 <style>
   .detail-page {
@@ -380,6 +422,44 @@ function fmtSeconds(s?: number): string {
   .tag[data-tag='d:integration'] { --tag-color: #f97316; }
   .tag[data-tag='d:ui']          { --tag-color: #ec4899; }
   .tag[data-tag='d:meta']        { --tag-color: #22c55e; }
+
+  /* ── Re-extract ── */
+
+  .btn-reextract {
+    margin-left: auto;
+    padding: 2px 10px;
+    font-size: 10px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    letter-spacing: 0.02em;
+    background: transparent;
+    color: var(--text-faint);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color var(--duration) var(--ease), border-color var(--duration) var(--ease);
+    text-transform: none;
+  }
+
+  .btn-reextract:hover:not(:disabled) {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .btn-reextract:disabled {
+    opacity: 0.5;
+    cursor: wait;
+  }
+
+  .reextract-status {
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .reextract-status--ok  { color: var(--success-text); }
+  .reextract-status--err { color: var(--error-text); }
 
   /* ── Badges ── */
 

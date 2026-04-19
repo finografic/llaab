@@ -8,6 +8,7 @@ export interface IngestYouTubeInput {
   url: string;
   title?: string;
   tags?: string[];
+  skipExtraction?: boolean;
 }
 
 export interface IngestYouTubeOutput {
@@ -43,7 +44,7 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYo
   console.log(`  -> ${result.path}`);
 
   // Auto-try extraction — transcript is already persisted, this is best-effort.
-  if (result.plainText) {
+  if (result.plainText && !input.skipExtraction) {
     try {
       const extraction = await extractKnowledgeFromTranscript(result.id, result.path, result.plainText);
       console.log(`  extraction: ${extraction.ideaIds.length} ideas, summary written`);

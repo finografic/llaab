@@ -198,6 +198,9 @@ importers:
       '@llaab/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@llaab/ingestion':
+        specifier: workspace:*
+        version: link:../../packages/ingestion
       '@llaab/llm':
         specifier: workspace:*
         version: link:../../packages/llm

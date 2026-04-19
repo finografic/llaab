@@ -1,4 +1,4 @@
-import { ollamaListModels, routeLlm, streamLlm } from '@llaab/llm';
+import { getLlmStatus, ollamaListModels, routeLlm, streamLlm } from '@llaab/llm';
 import { streamSSE } from 'hono/streaming';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { CompleteLlmBody } from './llm.schema.js';
@@ -53,5 +53,24 @@ export const models = {
     } catch {
       return c.json({ models: [] as string[], error: 'Ollama unavailable' }, 503);
     }
+  },
+};
+
+export const status = {
+  path: '/status' as const,
+  handler: async (c: AppCtx) => {
+    const config = getLlmStatus();
+    let installedModels: string[] = [];
+    let ollamaError: string | undefined;
+    try {
+      installedModels = await ollamaListModels();
+    } catch {
+      ollamaError = 'Ollama unavailable';
+    }
+    return c.json({
+      routing: config.routing,
+      installedModels,
+      ollamaError,
+    });
   },
 };

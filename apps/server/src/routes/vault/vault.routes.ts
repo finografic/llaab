@@ -1,8 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { createNode, getNodeFilePath, listNodes, VAULT_ROOT } from '@llaab/core';
+import { extractKnowledgeFromTranscript } from '@llaab/ingestion';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type { CreateNodeBody, ListNodesQuery } from './vault.schema.js';
+import type { TranscriptNode } from '@llaab/schemas';
 
 export const file = {
   path: '/file' as const,
@@ -66,6 +68,25 @@ export const nodeDetail = {
     const node = nodes.find((n) => n.id === id);
     if (!node) return c.json({ error: 'Node not found' }, 404);
     return c.json({ node });
+  },
+};
+
+export const extractTranscript = {
+  path: '/transcripts/:id/extract' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    const nodes = await listNodes({ type: 'transcript' });
+    const node = nodes.find((n) => n.id === id) as TranscriptNode | undefined;
+    if (!node) return c.json({ error: 'Transcript not found' }, 404);
+    if (!node.body) return c.json({ error: 'Transcript has no body' }, 400);
+
+    const filePath = getNodeFilePath(node.type, node.id);
+    try {
+      const result = await extractKnowledgeFromTranscript(id, filePath, node.body);
+      return c.json({ success: true, ...result });
+    } catch (err) {
+      return c.json({ success: false, error: err instanceof Error ? err.message : 'Extraction failed' }, 500);
+    }
   },
 };
 

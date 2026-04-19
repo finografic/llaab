@@ -8,7 +8,7 @@ import { ollamaComplete, ollamaListModels, ollamaStream } from './providers/olla
 
 const MODEL_MAP: Record<ModelTier, string> = {
   'local-small': process.env['LLAAB_LOCAL_SMALL_MODEL'] ?? 'llama3.2:3b',
-  'local-mid': process.env['LLAAB_LOCAL_MID_MODEL'] ?? 'llama3.1:8b',
+  'local-mid': process.env['LLAAB_LOCAL_MID_MODEL'] ?? 'llama3:latest',
   'remote': process.env['LLAAB_REMOTE_MODEL'] ?? 'claude-sonnet-4-6',
 };
 
@@ -70,6 +70,18 @@ export async function* streamLlm(
   } else {
     yield* ollamaStream(prompt, completeOpts);
   }
+}
+
+export function getLlmStatus(): {
+  modelMap: Record<ModelTier, string>;
+  routing: Record<TaskType, { tier: ModelTier; model: string }>;
+} {
+  return {
+    modelMap: { ...MODEL_MAP },
+    routing: Object.fromEntries(
+      Object.entries(ROUTING).map(([task, tier]) => [task, { tier, model: MODEL_MAP[tier] }]),
+    ) as Record<TaskType, { tier: ModelTier; model: string }>,
+  };
 }
 
 export { ollamaListModels };
