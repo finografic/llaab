@@ -639,16 +639,19 @@ function patchCopilotInstructions(extra: ExtraFile[]): void {
 
   const lines = fs.readFileSync(filePath, 'utf8').split('\n');
 
-  if (!hasSection(lines, (h) => /rules.*global/i.test(h))) {
-    skip('Rules — Global section not found');
+  // Match "Rules — Global", "Rules - Global", "Rule Files", etc.
+  const isRulesSection = (h: string) => /rules?.*global/i.test(h) || /rule\s+files/i.test(h);
+
+  if (!hasSection(lines, isRulesSection)) {
+    skip('rules section not found');
     return;
   }
-  if (!sectionHasOldPaths(lines, (h) => /rules.*global/i.test(h))) {
+  if (!sectionHasOldPaths(lines, isRulesSection)) {
     skip('Rules — Global already up to date');
     return;
   }
 
-  replaceSection(lines, (h) => /rules.*global/i.test(h), buildRulesGlobalLines(extra));
+  replaceSection(lines, isRulesSection, buildRulesGlobalLines(extra));
   ok(`Rules — Global updated${extra.length ? ` (+${extra.length} extra in Other)` : ''}`);
 
   fs.writeFileSync(filePath, lines.join('\n'));
