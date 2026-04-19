@@ -13,7 +13,7 @@
 - Before proposing or generating new features, check the roadmap for existing items.
 - When conceiving a new feature or initiative, add it to the appropriate priority tier.
 - Detailed planning docs live alongside in `docs/todo/` as `TODO_*.md` (active) or `DONE_*.md` (complete).
-- **TODO/DONE doc conventions:** `.github/instructions/14-todo-done-docs.instructions.md`
+- **TODO/DONE doc conventions:** `.github/instructions/docs/todo-done-docs.instructions.md`
   — rules for naming, status headers, checkboxes, and graduating `TODO_` → `DONE_`.
 
 ---
@@ -74,8 +74,8 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 ## Git Policy
 
 - IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages. Not ever, not for any reason.
-- [Git — Commits](/.github/instructions/10-git-policy.instructions.md#commits)
-- [Git — Releases](/.github/instructions/10-git-policy.instructions.md#releases)
+- [Git — Commits](/.github/instructions/git/git-policy.instructions.md#commits)
+- [Git — Releases](/.github/instructions/git/git-policy.instructions.md#releases)
 
 ---
 
