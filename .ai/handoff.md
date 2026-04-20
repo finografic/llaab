@@ -81,26 +81,27 @@ Primary color (indigo) is set in `panda.config.ts` via `createColorTokens({ prim
 Auth: `X-API-Key` vs `SERVER_API_KEY` env. No key set = dev mode, auth skipped.
 Each route group: `*.schema.ts` (Zod), `*.routes.ts` (`{ path, handler }` exports), `index.ts` (wiring).
 
-| Route                                     | Description                                                              |
-| ----------------------------------------- | ------------------------------------------------------------------------ |
-| `POST /api/ingest/youtube`                | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`        |
-| `GET /api/vault/nodes`                    | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`         |
-| `GET /api/vault/nodes/:id`                | Single node by id                                                        |
-| `POST /api/vault/transcripts/:id/extract` | Run LLM extraction on a saved transcript; returns `{ success, ideaIds }` |
-| `GET /api/runs`, `/:id`                   | Run list + detail with full stage/decision trace                         |
-| `POST /api/llm/complete`                  | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`  |
-| `POST /api/llm/stream`                    | SSE streaming LLM                                                        |
-| `GET /api/llm/models`                     | Lists installed Ollama models                                            |
-| `GET /api/llm/status`                     | Task routing config + installed models cross-referenced                  |
-| `POST /api/agent/run`                     | One-shot agent processor; optional `{ nodeId?, force? }`                 |
-| `GET /api/agent/status`                   | Last run metadata                                                        |
+| Route                                     | Description                                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `POST /api/ingest/youtube`                | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`               |
+| `GET /api/vault/nodes`                    | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`                |
+| `GET /api/vault/nodes/:id`                | Single node by id                                                               |
+| `GET /api/vault/transcripts/:id/ideas`    | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`       |
+| `POST /api/vault/transcripts/:id/extract` | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }` |
+| `GET /api/runs`, `/:id`                   | Run list + detail with full stage/decision trace                                |
+| `POST /api/llm/complete`                  | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`         |
+| `POST /api/llm/stream`                    | SSE streaming LLM                                                               |
+| `GET /api/llm/models`                     | Lists installed Ollama models                                                   |
+| `GET /api/llm/status`                     | Task routing config + installed models cross-referenced                         |
+| `POST /api/agent/run`                     | One-shot agent processor; optional `{ nodeId?, force? }`                        |
+| `GET /api/agent/status`                   | Last run metadata                                                               |
 
 ## Ingestion Pipeline
 
 Two-phase split — transcript always saved first, extraction is best-effort:
 
 1. `runIngestionPipeline` — fetches YouTube, parses/cleans transcript, saves `TranscriptNode` + `SourceNode`. No LLM call.
-2. `extractKnowledgeFromTranscript(id, path, plainText)` — runs `llmExtractWithTrace` (input truncated to 6 000 chars), updates transcript `summary`, creates `IdeaNode`s.
+2. `extractKnowledgeFromTranscript(id, path, plainText)` — runs `llmExtractWithTrace`, updates transcript `summary`, writes `extracted_idea_ids`, creates `IdeaNode`s with `related: [transcriptId]`. Returns `{ ideaIds, ideas: [{id, title}] }`.
 
 The ingest UI fires these as two sequential API calls so the user sees phase-by-phase feedback.
 `skipExtraction: true` on the ingest endpoint makes step 1 return immediately (no LLM blocking).
@@ -146,7 +147,5 @@ TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.in
 
 ## Open Questions
 
-- Extraction still failing at runtime ("Network error") — root cause unclear; Re-extract button on transcript detail page can be used to retry and surface the real server error message.
 - Tag origin tracking: separate `autoTags` / `manualTags` fields vs. post-hoc derivation?
 - Skill extraction: LLM returns `skills[]` but only `IdeaNode`s are created — should extracted skills become `SkillNode`s?
-- Re-extract button on failed ingest card (noted, not yet built).
