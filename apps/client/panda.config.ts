@@ -27,6 +27,7 @@ export default defineConfig({
     './src/**/*.{ts,tsx,astro}',
     './node_modules/@finografic/design-system/src/**/*.{ts,tsx}',
     // './node_modules/@finografic/design-system/dist/**/*.{ts,tsx}',
+    './node_modules/@finografic/design-system/dist/**/*.recipe.js',
   ],
   exclude: [],
 
@@ -34,7 +35,7 @@ export default defineConfig({
     ...designSystemPreset.theme,
     extend: {
       tokens: {
-        ...(designSystemPreset.theme?.tokens ?? {}),
+        ...designSystemPreset.theme?.tokens,
         // Override DS base colors with LLAAB's indigo theme.
         // createColorTokens merges these with BASE_COLORS_THEME defaults and rebuilds shade scales.
         // semanticColorTokens.accent.* reference {colors.primary.*} so they update automatically.
@@ -76,6 +77,5 @@ export default defineConfig({
   // NEW: https://panda-css.com/docs/references/config
 
   syntax: 'object-literal',
-  // syntax: 'template-literal',
   shorthands: true,
 });
