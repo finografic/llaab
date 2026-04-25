@@ -13,7 +13,7 @@
     "clean:turbo": "turbo run clean",
     "··········· LINTING": "·················································",
     "lint": "eslint .",
-    "lint.fix": "eslint . --fix",
+    "lint:fix": "eslint . --fix",
     "··········· FORMATTING": "·············································",
     "format:check": "oxfmt --check",
     "format:fix": "oxfmt",
