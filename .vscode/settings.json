@@ -1,26 +1,28 @@
 {
   "npm.packageManager": "pnpm",
-
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.oxc": "explicit",
+    "source.organizeImports": "explicit"
   },
 
-  "eslint.enable": true,
-  "eslint.useFlatConfig": true,
+  "eslint.enable": false,
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
 
   "prettier.enable": false,
   "oxc.typeAware": true,
-
+  "oxc.lint.run": "onSave",
   "typescript.tsdk": "node_modules/typescript/lib",
-
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
   "[javascript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[typescriptreact]": {
@@ -38,34 +40,29 @@
   "[toml]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-  "[markdown]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode"
-  },
   "[css]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-
-  "stylelint.enable": true,
-  "stylelint.validate": ["css"],
-  "css.validate": false,
-
-  "files.watcherExclude": {
-    "**/dist/**": true,
-    "**/node_modules/**": true,
-    "**/styled-system/**": true
+  "[scss]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-
-  "markdown-preview-enhanced.scrollSync": false,
+  "[html]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true
+  },
   "markdownlint.config": {
     "default": true,
-    "MD001": false, // Heading levels should only increment by one level at a time
-    "MD013": false, // Line length
-    "MD024": false, // Duplicate headings
-    "MD025": false, // Allow multiple top-level headings (useful for TODO files)
-    "MD026": false, // Allow trailing punctuation in headings ':'
-    "MD036": false, // No emphasis as heading
-    "MD040": false, // Don't require language for code blocks
-    "MD041": false // Don't require first line to be a top-level heading
+    "MD001": false,
+    "MD013": false,
+    "MD024": false,
+    "MD025": false,
+    "MD026": false,
+    "MD036": false,
+    "MD040": false,
+    "MD041": false
   },
   "markdown.styles": ["node_modules/@finografic/md-lint/styles/markdown-github-light.css"]
 }
