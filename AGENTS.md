@@ -84,7 +84,7 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 > This section applies to Claude Code only. Other agents can ignore it.
 
 - **Session log:** `.claude/memory.md` (gitignored) — maintenance rules are in that file.
-- **Project state snapshot:** `.ai/handoff.md` (git-tracked) — maintenance rules are in that file.
+- **Project state snapshot:** `.agents/handoff.md` (git-tracked) — maintenance rules are in that file.
 
 ---
 

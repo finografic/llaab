@@ -18,6 +18,8 @@ build/
 !.env.example
 
 # Agents
+.agents/
+!.agents/handoff.md
 .codex/
 .claude/
 !.claude/settings.json
