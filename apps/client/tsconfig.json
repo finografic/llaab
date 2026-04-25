@@ -15,9 +15,15 @@
       // Keep @styled-system/* in sync with panda.config outdir + src/styled-system/recipes.ts.
       // "styled-system": ["./styled-system"],
       // "styled-system/*": ["./styled-system/*"],
+      // ======================================================================== //
       "@styled-system/css": ["./styled-system/css"],
       "@styled-system/jsx": ["./styled-system/jsx"],
       "@styled-system/recipes": ["./src/styles/styled-system/recipes.ts"]
+      // ======================================================================== //
+      // "@finografic/design-system/css": ["./styled-system/css"],
+      // "@finografic/design-system/jsx": ["./styled-system/jsx"],
+      // "@finografic/design-system/recipes": ["./src/styles/styled-system/recipes.ts"]
+      // ======================================================================== //
     }
   },
   "include": [

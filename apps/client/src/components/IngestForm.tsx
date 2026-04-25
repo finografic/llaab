@@ -1,5 +1,6 @@
 import { Button } from '@finografic/design-system/components';
 import { TagsInputDS } from '@finografic/design-system/forms';
+import { Row, Col } from '@finografic/design-system/grid';
 import { Flex } from '@styled-system/jsx';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -185,66 +186,70 @@ export function IngestForm() {
   return (
     <div className="ingest-form">
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <Flex align="between" direction="column" gap={4}>
-          <div className="field">
-            <label htmlFor="url">YouTube URL</label>
-            <div className="input-row">
-              <input
-                id="url"
-                type="url"
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="https://www.youtube.com/watch?v=…"
+        <Row>
+          <Col>
+            <Flex align="between" direction="column" gap={4}>
+              <div className="field">
+                <label htmlFor="url">YouTube URL</label>
+                <div className="input-row">
+                  <input
+                    id="url"
+                    type="url"
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    disabled={busy}
+                    {...register('url', {
+                      required: 'URL is required.',
+                      pattern: {
+                        value: /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/,
+                        message: 'Must be a YouTube URL.',
+                      },
+                    })}
+                  />
+                  <Button type="submit" palette="primary" variant="solid" loading={busy} disabled={busy}>
+                    {busy ? 'Processing…' : 'Ingest'}
+                  </Button>
+                </div>
+                {errors.url && <span className="field-error">{errors.url.message}</span>}
+              </div>
+
+              <TagsInputDS
+                size="sm"
+                label="Tags (optional)"
+                description="Domain tags — e.g. d:llm, d:automation. Type a name to see suggestions."
+                placeholder="d:llm"
+                value={tags}
+                onChange={setTags}
+                onInputValueChange={setTagInput}
                 disabled={busy}
-                {...register('url', {
-                  required: 'URL is required.',
-                  pattern: {
-                    value: /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/,
-                    message: 'Must be a YouTube URL.',
-                  },
-                })}
+                validate={({ inputValue }) => {
+                  const norm = normalizeTag(inputValue);
+                  return norm.startsWith('d:') && norm.length > 2;
+                }}
               />
-              <Button type="submit" palette="primary" variant="solid" loading={busy} disabled={busy}>
-                {busy ? 'Processing…' : 'Ingest'}
-              </Button>
-            </div>
-            {errors.url && <span className="field-error">{errors.url.message}</span>}
-          </div>
 
-          <TagsInputDS
-            size="sm"
-            label="Tags (optional)"
-            description="Domain tags — e.g. d:llm, d:automation. Type a name to see suggestions."
-            placeholder="d:llm"
-            value={tags}
-            onChange={setTags}
-            onInputValueChange={setTagInput}
-            disabled={busy}
-            validate={({ inputValue }) => {
-              const norm = normalizeTag(inputValue);
-              return norm.startsWith('d:') && norm.length > 2;
-            }}
-          />
-
-          {tagInput && suggestions.length > 0 && (
-            <div className="tag-suggestions">
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className="tag-suggestion"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setTags((prev) => [...new Set([...prev, s])]);
-                    setTagInput('');
-                  }}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-        </Flex>
+              {tagInput && suggestions.length > 0 && (
+                <div className="tag-suggestions">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className="tag-suggestion"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setTags((prev) => [...new Set([...prev, s])]);
+                        setTagInput('');
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Flex>
+          </Col>
+        </Row>
       </form>
 
       {apiError && (

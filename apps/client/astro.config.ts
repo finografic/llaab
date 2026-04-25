@@ -33,9 +33,14 @@ export default defineConfig({
          *   imports inside **linked** `@finografic/design-system/dist/*` still need explicit `resolve.alias`
          *   or the build fails with "failed to resolve @styled-system/css".
          */
+        // '@styled-system/css': resolve('styled-system/css'),
+        // '@styled-system/jsx': resolve('styled-system/jsx'),
         '@styled-system/css': resolve('styled-system/css'),
         '@styled-system/jsx': resolve('styled-system/jsx'),
-        // '@styled-system/recipes': resolve(__dirname, 'src/styled-system/recipes.ts'),
+        '@styled-system/recipes': resolve('./src/styled-system/recipes.ts'),
+        // '@finografic/design-system/css': resolve('styled-system/css'),
+        // '@finografic/design-system/jsx': resolve('styled-system/jsx'),
+        // '@finografic/design-system/recipes': resolve(__dirname, 'src/styled-system/recipes.ts'),
       },
     },
   },
