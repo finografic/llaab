@@ -7,6 +7,10 @@
     "··········· DEV": "·····················································",
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
+    "build": "bun build src/index.ts --outdir dist",
+    "·········· CLEAN": "·····················································",
+    "clean": "pnpm --package=@finografic/project-scripts dlx purge-builds --recursive --detach",
+    "clean:turbo": "turbo run clean",
     "··········· LINTING": "·················································",
     "lint": "eslint .",
     "lint.fix": "eslint . --fix",
@@ -30,6 +34,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@finografic/project-scripts": "^1.3.3",
     "@types/bun": "latest",
     "@types/node": "24.12.2"
   }
