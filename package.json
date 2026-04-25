@@ -36,7 +36,7 @@
     "upgrade:deps:all": "pnpm update --latest --recursive",
     "·········· RESET": "·····················································",
     "reset": "run-s clean reset:install reset:sync reset:build",
-    "reset:sync": "pnpm syncpack.fix",
+    "reset:sync": "pnpm syncpack:fix",
     "reset:install": "pnpm install",
     "reset:build": "turbo build",
     "·········· CLEAN": "·····················································",
