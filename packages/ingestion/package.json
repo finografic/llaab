@@ -21,9 +21,9 @@
     "@llaab/core": "workspace:*",
     "@llaab/llm": "workspace:*",
     "@llaab/schemas": "workspace:*",
-    "zod": "^3.24.0"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0"
+    "@types/node": "24.12.2"
   }
 }

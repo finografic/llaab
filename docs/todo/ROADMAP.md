@@ -72,11 +72,15 @@ LLAAB's vault exposes node relationships (source → transcript → idea → ski
 `listNodes` + `GET /api/vault/nodes` — the integration surface is an export/adapter, not a UI.
 Scope TBD pending research into Karpathy Pattern's data format requirements.
 
+
+
 ### Source Auto-Follow
 
 `SourceNode` has a `follow` field. Build a scheduled job that re-ingests followed sources when
 new content appears. Agent loop registry already has the slot reserved (commented out).
 Trigger: `llaab agent run` or `POST /api/agent/run` on a user-controlled schedule.
+
+
 
 ### Library Watch
 
@@ -87,6 +91,20 @@ date, version. `follow: true` nodes auto-refresh stats on `llaab agent run` via 
 (`app/utils/npm/api.ts` + `shared/types/npm-registry.ts`) — strip Nuxt wrappers, use plain fetch.
 
 Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
+
+
+
+### Harness Layer — Token-Aware Control Pipeline
+
+Extend `@llaab/control` and `@llaab/llm` into a formal harness: tokenization/counting,
+chunking for long inputs (transcripts), structured context assembly, and deterministic
+model routing. Not a new package — evolves the existing `control.execute()` path.
+First concrete driver: Step 5 (transcript → control → idea node extraction).
+
+Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
+
+
+
 
 ---
 
