@@ -18,8 +18,8 @@
  * Styling: scoped <style> below. Component styles live in *.module.css or
  * component-level <style> blocks — never in this file.
  */
-import AppHeader from '../components/AppHeader/AppHeader.astro';
 import AppFooter from '../components/AppFooter/AppFooter.astro';
+import AppHeaderV2 from '../components/AppHeaderV2/AppHeaderV2.astro';
 import { NavbarVertical } from '../components/NavbarVertical/NavbarVertical';
 import BaseLayout from './BaseLayout.astro';
 
@@ -33,13 +33,13 @@ const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
 ---
 
 <BaseLayout title={pageTitle}>
-  <div class="shell">
-    <aside class="sidebar">
+  <div class="app-shell">
+    <aside class="app-sidebar">
       <NavbarVertical pathname={pathname} client:load />
     </aside>
 
-    <div class="main-pane">
-      <AppHeader title={title} />
+    <div class="app-pane">
+      <AppHeaderV2 title={title} />
 
       <main class="page-content">
         <slot />
@@ -51,32 +51,32 @@ const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
 </BaseLayout>
 
 <style>
-  .shell {
+  .app-shell {
     display: grid;
-    grid-template-columns: var(--sidebar-w) 1fr;
+    grid-template-columns: 260px 1fr;
     min-height: 100vh;
+    background: var(--colors-bg);
   }
 
-  .sidebar {
+  .app-sidebar {
+    border-right: 1px solid var(--colors-border);
+    background: var(--colors-bg-subtle);
+    overflow-y: auto;
+    /* Sticky so sidebar doesn't scroll with page content */
     position: sticky;
     top: 0;
     height: 100vh;
-    overflow-y: auto;
-    background: var(--bg-subtle);
-    border-right: 1px solid var(--border-subtle);
-    flex-shrink: 0;
   }
 
-  .main-pane {
-    display: flex;
-    flex-direction: column;
+  .app-pane {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
     min-height: 100vh;
     overflow: hidden;
   }
 
   .page-content {
-    flex: 1;
+    padding: 1.5rem;
     overflow-y: auto;
-    padding: var(--space-8) var(--space-8);
   }
 </style>

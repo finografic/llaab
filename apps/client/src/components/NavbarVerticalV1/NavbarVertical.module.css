@@ -1,0 +1,177 @@
+/* NavbarVertical.module.css */
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 10px;
+  gap: 4px;
+}
+
+/* ─── Brand ───────────────────────────────────────────────────────────────── */
+
+.brand {
+  display: block;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.brand:hover {
+  color: var(--accent-hover);
+  text-decoration: none;
+}
+
+/* ─── Divider ─────────────────────────────────────────────────────────────── */
+
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  border: none;
+  margin: 8px 0;
+  flex-shrink: 0;
+}
+
+/* ─── List ────────────────────────────────────────────────────────────────── */
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ─── Item row ────────────────────────────────────────────────────────────── */
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ─── Nav item ────────────────────────────────────────────────────────────── */
+
+.item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+  min-width: 0;
+}
+
+.item:hover {
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.itemActive {
+  background: var(--accent-subtle);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.itemActive:hover {
+  background: var(--accent-subtle);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.label {
+  truncate: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ─── Chevron button ──────────────────────────────────────────────────────── */
+
+.chevronBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 28px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-faint);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.chevronBtn:hover {
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.chevron {
+  transition: transform var(--duration) var(--ease);
+  transform: rotate(0deg);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ─── Sub-list ────────────────────────────────────────────────────────────── */
+
+.subList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 2px 0 4px;
+  padding-left: 28px;
+}
+
+.subItem {
+  display: block;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.subItem:hover {
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.subItemActive {
+  color: var(--accent-hover);
+  background: var(--accent-subtle);
+}
+
+.subItemActive:hover {
+  background: var(--accent-subtle);
+}

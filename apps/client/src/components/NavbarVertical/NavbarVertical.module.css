@@ -1,11 +1,18 @@
-/* NavbarVertical.module.css */
+/*
+ * NavbarVertical.module.css
+ *
+ * CSS modules are unlayered — they beat @layer utilities (Panda recipes) by
+ * default. Use this file to override DS TreeView recipe defaults where the
+ * nav sidebar needs different sizing, color, or layout.
+ */
+
+/* ─── Shell ───────────────────────────────────────────────────────────────── */
 
 .nav {
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 16px 10px;
-  gap: 4px;
 }
 
 /* ─── Brand ───────────────────────────────────────────────────────────────── */
@@ -38,34 +45,128 @@
   flex-shrink: 0;
 }
 
-/* ─── List ────────────────────────────────────────────────────────────────── */
+/* ─── Tree root ───────────────────────────────────────────────────────────── */
 
-.list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.treeRoot {
   flex: 1;
   overflow-y: auto;
+  /* override DS default gap between label + tree slots */
+  gap: 0;
 }
 
-/* ─── Item row ────────────────────────────────────────────────────────────── */
+.tree {
+  /* tighten DS default gap between tree nodes */
+  gap: 1px;
+}
 
-.itemRow {
+/* ─── Branch (section with children) ─────────────────────────────────────── */
+
+.branch {
+  position: relative;
+}
+
+/*
+ * branchRow: flex container that holds the nav link (fills width) and the
+ * expand toggle button (fixed-width, right-aligned). Keeps <a> and <button>
+ * as siblings — never nested — so the HTML is valid.
+ */
+.branchRow {
   display: flex;
   align-items: center;
   gap: 2px;
+  border-radius: var(--radius-sm);
 }
 
-/* ─── Nav item ────────────────────────────────────────────────────────────── */
+.branchRow:hover {
+  background: var(--surface);
+}
 
-.item {
+.branchLink {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 7px 10px;
+  padding: 7px 8px 7px 10px;
   border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-muted);
+  text-decoration: none;
+  min-width: 0;
+  transition:
+    color var(--duration-fast) var(--ease);
+}
+
+.branchLink:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.branchLink[data-active] {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ─── Expand toggle ───────────────────────────────────────────────────────── */
+
+/*
+ * Override DS recipe's branchControl defaults (width: 100%, full padding-inline,
+ * depth-based indentation). Here it is only the 24×28 chevron button.
+ */
+.expandBtn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 28px !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+  background: transparent !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.expandBtn:hover {
+  background: var(--surface-raised) !important;
+  color: var(--text-muted);
+}
+
+/* DS recipe animates the indicator via [data-state=open] — keep it. */
+.indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Branch content + indent guide ──────────────────────────────────────── */
+
+.branchContent {
+  overflow: hidden;
+}
+
+.indentGuide {
+  /* DS recipe positions via --tree-offset; override color to match nav palette */
+  background: var(--border-subtle) !important;
+}
+
+/* ─── Leaf item ───────────────────────────────────────────────────────────── */
+
+/*
+ * TreeView.Item asChild renders as <a>. Override DS recipe item defaults
+ * (depth indentation, padding-inline) with nav-appropriate sizing.
+ */
+.leafItem {
+  display: flex !important;
+  align-items: center !important;
+  padding: 6px 10px !important;
+  padding-inline-start: 10px !important;
+  border-radius: var(--radius-sm) !important;
   font-size: 13px;
   font-weight: 450;
   color: var(--text-muted);
@@ -73,24 +174,31 @@
   transition:
     background var(--duration-fast) var(--ease),
     color var(--duration-fast) var(--ease);
-  min-width: 0;
 }
 
-.item:hover {
+.leafItem:hover {
   background: var(--surface);
   color: var(--text);
   text-decoration: none;
 }
 
-.itemActive {
+/* data-selected is set by Ark from selectedValue; data-active is our custom attr */
+.leafItem[data-selected],
+.leafItem[data-active] {
   background: var(--accent-subtle);
   color: var(--text);
   font-weight: 500;
 }
 
-.itemActive:hover {
-  background: var(--accent-subtle);
+.itemText {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  overflow: hidden;
 }
+
+/* ─── Shared: icon + label ────────────────────────────────────────────────── */
 
 .icon {
   display: flex;
@@ -100,78 +208,26 @@
 }
 
 .label {
-  truncate: ellipsis;
   overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ─── Chevron button ──────────────────────────────────────────────────────── */
+/* ─── Sub-items (children of a branch) ───────────────────────────────────── */
 
-.chevronBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 28px;
-  flex-shrink: 0;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-faint);
-  cursor: pointer;
-  transition:
-    background var(--duration-fast) var(--ease),
-    color var(--duration-fast) var(--ease);
-}
-
-.chevronBtn:hover {
-  background: var(--surface);
-  color: var(--text-muted);
-}
-
-.chevron {
-  transition: transform var(--duration) var(--ease);
-  transform: rotate(0deg);
-}
-
-.chevronOpen {
-  transform: rotate(180deg);
-}
-
-/* ─── Sub-list ────────────────────────────────────────────────────────────── */
-
-.subList {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin: 2px 0 4px;
-  padding-left: 28px;
-}
-
-.subItem {
-  display: block;
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
+/*
+ * Child TreeView.Items inside a Branch get depth-based indentation from the
+ * DS recipe via CSS vars. Override padding-inline-start to use our simpler
+ * fixed indent (left-aligns to icon column of parent).
+ */
+.branch .leafItem {
+  padding-inline-start: 28px !important;
   font-size: 12.5px;
-  color: var(--text-muted);
-  text-decoration: none;
-  transition:
-    background var(--duration-fast) var(--ease),
-    color var(--duration-fast) var(--ease);
 }
 
-.subItem:hover {
-  background: var(--surface);
-  color: var(--text);
-  text-decoration: none;
-}
-
-.subItemActive {
+.branch .leafItem[data-selected],
+.branch .leafItem[data-active] {
   color: var(--accent-hover);
   background: var(--accent-subtle);
-}
-
-.subItemActive:hover {
-  background: var(--accent-subtle);
+  font-weight: 450;
 }

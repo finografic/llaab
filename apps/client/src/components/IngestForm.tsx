@@ -1,6 +1,6 @@
 import { Button } from '@finografic/design-system/components';
 import { TagsInputDS } from '@finografic/design-system/forms';
-import { Row, Col } from '@finografic/design-system/grid';
+import { Col, Row } from '@finografic/design-system/grid';
 import { Flex } from '@styled-system/jsx';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';

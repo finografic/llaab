@@ -1,0 +1,195 @@
+/*
+ * FileList.module.css — Finder-style list view.
+ *
+ * Design intent: looks like macOS Finder list view, not a data table.
+ * No grid lines, no striping, no visible chrome. Rows are dense (32px),
+ * header is minimal (labels only, 28px). Selected row gets accent-subtle fill.
+ */
+
+/* ─── Root ────────────────────────────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* ─── Header row ──────────────────────────────────────────────────────────── */
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  padding-inline: 12px;
+  height: 28px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.headerCell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-inline-end: 12px;
+  user-select: none;
+}
+
+.headerCell[data-sortable] {
+  cursor: pointer;
+}
+
+.headerCell[data-sortable]:hover {
+  color: var(--text-muted);
+}
+
+.headerCell[data-sort='asc'],
+.headerCell[data-sort='desc'] {
+  color: var(--accent);
+}
+
+.sortIcon {
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+/* ─── Body ────────────────────────────────────────────────────────────────── */
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ─── Row ─────────────────────────────────────────────────────────────────── */
+
+.row {
+  display: flex;
+  align-items: center;
+  padding-inline: 12px;
+  height: 32px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: default;
+  transition: background var(--duration-fast) var(--ease);
+  outline: none;
+}
+
+.row:hover {
+  background: var(--surface);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+.row[data-selected] {
+  background: var(--accent-subtle);
+}
+
+.row[data-selected]:hover {
+  background: var(--accent-subtle);
+}
+
+/* Clickable rows get pointer cursor */
+.row[onClick] {
+  cursor: pointer;
+}
+
+/* ─── Cell ────────────────────────────────────────────────────────────────── */
+
+.cell {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-inline-end: 12px;
+  color: inherit;
+}
+
+/* ─── FileCell (icon + name primary cell) ─────────────────────────────────── */
+
+.fileCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.fileCellIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+.fileCellIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.fileCellName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.fileCellMeta {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.emptyText {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* ─── Skeleton rows ───────────────────────────────────────────────────────── */
+
+.rowSkeleton {
+  cursor: default;
+  pointer-events: none;
+  gap: 12px;
+}
+
+.skeletonBar {
+  height: 10px;
+  border-radius: 4px;
+  background: var(--surface);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}

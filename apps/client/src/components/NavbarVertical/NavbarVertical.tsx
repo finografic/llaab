@@ -1,51 +1,40 @@
-import { useState } from 'react';
-import type React from 'react';
+import { createTreeCollection, TreeView } from '@finografic/design-system/components';
+import type { ReactNode } from 'react';
 
 import s from './NavbarVertical.module.css';
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
-// Swap icons for @finografic/icons components when ready.
 
-interface NavChild {
+interface NavNode {
+  id: string;
   label: string;
-  href: string;
+  icon?: ReactNode;
+  children?: NavNode[];
 }
 
-interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-  children?: NavChild[];
-}
-
-const NAV_ITEMS: NavItem[] = [
+const NAV_NODES: NavNode[] = [
+  { id: '/', label: 'Home', icon: <IconHome /> },
+  { id: '/ingest', label: 'Ingest', icon: <IconIngest /> },
   {
-    label: 'Home',
-    href: '/',
-    icon: <IconHome />,
-  },
-  {
-    label: 'Ingest',
-    href: '/ingest',
-    icon: <IconIngest />,
-  },
-  {
+    id: '/vault',
     label: 'Vault',
-    href: '/vault',
     icon: <IconVault />,
     children: [
-      { label: 'Transcripts', href: '/vault/transcripts' },
-      { label: 'Nodes', href: '/vault/nodes' },
-      { label: 'Sources', href: '/vault/sources' },
-      { label: 'Runs', href: '/vault/runs' },
+      { id: '/vault/transcripts', label: 'Transcripts' },
+      { id: '/vault/nodes', label: 'Nodes' },
+      { id: '/vault/sources', label: 'Sources' },
+      { id: '/vault/runs', label: 'Runs' },
     ],
   },
-  {
-    label: 'LLM',
-    href: '/llm',
-    icon: <IconLlm />,
-  },
+  { id: '/llm', label: 'LLM', icon: <IconLlm /> },
 ];
+
+// Collection is stable — created once at module scope.
+const navCollection = createTreeCollection<NavNode>({
+  nodeToValue: (node) => node.id,
+  nodeToString: (node) => node.label,
+  rootNode: { id: '__ROOT__', label: '', children: NAV_NODES },
+});
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -54,86 +43,110 @@ interface Props {
 }
 
 export function NavbarVertical({ pathname }: Props) {
-  // Sections with children default to open when any child is active.
-  const defaultOpen = (item: NavItem) => item.children?.some((c) => pathname.startsWith(c.href)) ?? false;
-
-  const [open, setOpen] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(NAV_ITEMS.filter((i) => i.children).map((i) => [i.href, defaultOpen(i)])),
-  );
-
-  const toggle = (href: string) => setOpen((prev) => ({ ...prev, [href]: !prev[href] }));
-
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+
+  // Drive Ark's selected state from pathname so [data-selected] renders correctly.
+  const selectedValue = NAV_NODES.flatMap((n) => n.children ?? [n])
+    .filter((n) => isActive(n.id))
+    .map((n) => n.id);
+
+  // Pre-expand sections that contain the active route on initial load.
+  const defaultExpandedValue = NAV_NODES.filter((n) => n.children?.some((c) => isActive(c.id))).map(
+    (n) => n.id,
+  );
 
   return (
     <nav className={s.nav} aria-label="Main navigation">
-      {/* Brand */}
       <a href="/" className={s.brand}>
         LLAAB
       </a>
 
       <hr className={s.divider} />
 
-      {/* Nav items */}
-      <ul className={s.list} role="list">
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(item.href);
-          const expanded = open[item.href] ?? false;
-
-          return (
-            <li key={item.href}>
-              <div className={s.itemRow}>
-                <a
-                  href={item.href}
-                  className={`${s.item} ${active ? s.itemActive : ''}`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span className={s.icon} aria-hidden="true">
-                    {item.icon}
-                  </span>
-                  <span className={s.label}>{item.label}</span>
-                </a>
-
-                {item.children && (
-                  <button
-                    type="button"
-                    className={s.chevronBtn}
-                    onClick={() => toggle(item.href)}
-                    aria-expanded={expanded}
-                    aria-label={`${expanded ? 'Collapse' : 'Expand'} ${item.label}`}
-                  >
-                    <IconChevron className={`${s.chevron} ${expanded ? s.chevronOpen : ''}`} />
-                  </button>
-                )}
-              </div>
-
-              {item.children && expanded && (
-                <ul className={s.subList} role="list">
-                  {item.children.map((child) => {
-                    const childActive = pathname === child.href || pathname.startsWith(child.href + '/');
-                    return (
-                      <li key={child.href}>
-                        <a
-                          href={child.href}
-                          className={`${s.subItem} ${childActive ? s.subItemActive : ''}`}
-                          aria-current={childActive ? 'page' : undefined}
-                        >
-                          {child.label}
-                        </a>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      <TreeView.Root
+        collection={navCollection}
+        selectedValue={selectedValue}
+        defaultExpandedValue={defaultExpandedValue}
+        size="sm"
+        className={s.treeRoot}
+      >
+        <TreeView.Tree className={s.tree}>
+          {NAV_NODES.map((node, index) => (
+            <NavNode key={node.id} node={node} indexPath={[index]} isActive={isActive} />
+          ))}
+        </TreeView.Tree>
+      </TreeView.Root>
     </nav>
   );
 }
 
-// ─── Icons (inline SVG — swap for DS icons later) ─────────────────────────────
+// ─── Recursive node renderer ──────────────────────────────────────────────────
+
+interface NavNodeProps {
+  node: NavNode;
+  indexPath: number[];
+  isActive: (href: string) => boolean;
+}
+
+function NavNode({ node, indexPath, isActive }: NavNodeProps) {
+  const active = isActive(node.id);
+
+  return (
+    <TreeView.NodeProvider node={node} indexPath={indexPath}>
+      {node.children ? (
+        <TreeView.Branch className={s.branch}>
+          {/*
+           * Split row: navigation link + expand toggle are separate interactive elements.
+           * This avoids the invalid <a> inside <button> pattern while keeping both
+           * navigation (link) and keyboard expand (BranchControl) fully accessible.
+           */}
+          <div className={s.branchRow}>
+            <a
+              href={node.id}
+              className={s.branchLink}
+              data-active={active || undefined}
+              aria-current={active ? 'page' : undefined}
+            >
+              <span className={s.icon} aria-hidden="true">
+                {node.icon}
+              </span>
+              <span className={s.label}>{node.label}</span>
+            </a>
+
+            <TreeView.BranchControl className={s.expandBtn}>
+              <TreeView.BranchIndicator className={s.indicator}>
+                <IconChevron />
+              </TreeView.BranchIndicator>
+            </TreeView.BranchControl>
+          </div>
+
+          <TreeView.BranchContent className={s.branchContent}>
+            <TreeView.BranchIndentGuide className={s.indentGuide} />
+            {node.children.map((child, i) => (
+              <NavNode key={child.id} node={child} indexPath={[...indexPath, i]} isActive={isActive} />
+            ))}
+          </TreeView.BranchContent>
+        </TreeView.Branch>
+      ) : (
+        // Leaf node — the whole Item renders as an <a> via asChild.
+        <TreeView.Item asChild className={s.leafItem} data-active={active || undefined}>
+          <a href={node.id} aria-current={active ? 'page' : undefined}>
+            <TreeView.ItemText className={s.itemText}>
+              {node.icon && (
+                <span className={s.icon} aria-hidden="true">
+                  {node.icon}
+                </span>
+              )}
+              <span className={s.label}>{node.label}</span>
+            </TreeView.ItemText>
+          </a>
+        </TreeView.Item>
+      )}
+    </TreeView.NodeProvider>
+  );
+}
+
+// ─── Icons (inline SVG — swap for DS icons when ready) ───────────────────────
 
 function IconHome() {
   return (
@@ -209,7 +222,7 @@ function IconLlm() {
   );
 }
 
-function IconChevron({ className }: { className?: string }) {
+function IconChevron() {
   return (
     <svg
       width="12"
@@ -220,7 +233,6 @@ function IconChevron({ className }: { className?: string }) {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={className}
     >
       <path d="M6 9l6 6 6-6" />
     </svg>

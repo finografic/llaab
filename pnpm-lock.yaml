@@ -70,10 +70,10 @@ importers:
     dependencies:
       '@astrojs/check':
         specifier: ^0.9.8
-        version: 0.9.8(prettier@3.8.3)(typescript@5.9.3)
+        version: 0.9.8(prettier@3.8.3)(typescript@6.0.2)
       '@astrojs/node':
         specifier: ^10.0.4
-        version: 10.0.6(astro@6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3))
+        version: 10.0.6(astro@6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.3))
       '@astrojs/react':
         specifier: ^5.0.2
         version: 5.0.4(@types/node@24.12.2)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(jiti@2.6.1)(lightningcss@1.31.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(tsx@4.21.0)(yaml@2.8.3)
@@ -84,8 +84,8 @@ importers:
         specifier: 1.13.11
         version: 1.13.11(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@finografic/zustand-context-creator':
-        specifier: 0.7.1
-        version: 0.7.1(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(react@19.2.5))
+        specifier: 1.0.0
+        version: 1.0.0(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(react@19.2.5))
       '@hookform/resolvers':
         specifier: 5.2.2
         version: 5.2.2(react-hook-form@7.72.1(react@19.2.5))
@@ -97,7 +97,7 @@ importers:
         version: link:../../packages/schemas
       '@react-router/dev':
         specifier: 7.14.1
-        version: 7.14.1(@types/node@24.12.2)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.31.1)(react-router@7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)
+        version: 7.14.1(@types/node@24.12.2)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.31.1)(react-router@7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tsx@4.21.0)(typescript@6.0.2)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)
       '@tanstack/query-sync-storage-persister':
         specifier: 5.99.0
         version: 5.99.0
@@ -121,7 +121,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       astro:
         specifier: ^6.1.1
-        version: 6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+        version: 6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.3)
       hono:
         specifier: ^4.12.14
         version: 4.12.15
@@ -164,7 +164,7 @@ importers:
         version: 1.3.3(@types/node@24.12.2)(tsx@4.21.0)
       '@pandacss/dev':
         specifier: ^1.9.1
-        version: 1.10.0(typescript@5.9.3)
+        version: 1.10.0(typescript@6.0.2)
       eslint-plugin-import:
         specifier: ^2.32.0
         version: 2.32.0(eslint@9.39.4(jiti@2.6.1))
@@ -1136,10 +1136,10 @@ packages:
     peerDependencies:
       tsx: ^4.0.0
 
-  '@finografic/zustand-context-creator@0.7.1':
-    resolution: {integrity: sha512-yhzQ6Pb2WhtqgDiwboSpsLdLYBAGmOC4MUm96z2ABjjtHDjZLrIb2sYOzGgLXdWx20a40A+nTzP7Vingd4xXrQ==, tarball: https://npm.pkg.github.com/download/@finografic/zustand-context-creator/0.7.1/fbafea22618da4b414f44950c7eb664d22e38336}
+  '@finografic/zustand-context-creator@1.0.0':
+    resolution: {integrity: sha512-J0nIYG+VfJImS2/V2ZeBf9b1Xvk86nsmChcfIVjQA4xqmHZRVeyJN/I61Yru59b+wB5c/5gHrXQ/ER5o5E2Uww==, tarball: https://npm.pkg.github.com/download/@finografic/zustand-context-creator/1.0.0/5009b77530526da4ef805b8d36c83b329d71feb9}
     peerDependencies:
-      react: ^18.0.0
+      react: ^19.0.0
       zustand: ^4.0.0 || ^5.0.0
 
   '@hono/node-server@1.19.14':
@@ -5969,12 +5969,12 @@ snapshots:
     optionalDependencies:
       zod: 4.3.6
 
-  '@astrojs/check@0.9.8(prettier@3.8.3)(typescript@5.9.3)':
+  '@astrojs/check@0.9.8(prettier@3.8.3)(typescript@6.0.2)':
     dependencies:
-      '@astrojs/language-server': 2.16.6(prettier@3.8.3)(typescript@5.9.3)
+      '@astrojs/language-server': 2.16.6(prettier@3.8.3)(typescript@6.0.2)
       chokidar: 4.0.3
       kleur: 4.1.5
-      typescript: 5.9.3
+      typescript: 6.0.2
       yargs: 17.7.2
     transitivePeerDependencies:
       - prettier
@@ -5988,12 +5988,12 @@ snapshots:
     dependencies:
       picomatch: 4.0.4
 
-  '@astrojs/language-server@2.16.6(prettier@3.8.3)(typescript@5.9.3)':
+  '@astrojs/language-server@2.16.6(prettier@3.8.3)(typescript@6.0.2)':
     dependencies:
       '@astrojs/compiler': 2.13.1
       '@astrojs/yaml2ts': 0.2.3
       '@jridgewell/sourcemap-codec': 1.5.5
-      '@volar/kit': 2.4.28(typescript@5.9.3)
+      '@volar/kit': 2.4.28(typescript@6.0.2)
       '@volar/language-core': 2.4.28
       '@volar/language-server': 2.4.28
       '@volar/language-service': 2.4.28
@@ -6039,10 +6039,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/node@10.0.6(astro@6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3))':
+  '@astrojs/node@10.0.6(astro@6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.3))':
     dependencies:
       '@astrojs/internal-helpers': 0.9.0
-      astro: 6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+      astro: 6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.3)
       send: 1.2.1
       server-destroy: 1.0.1
     transitivePeerDependencies:
@@ -6844,7 +6844,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@finografic/zustand-context-creator@0.7.1(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(react@19.2.5))':
+  '@finografic/zustand-context-creator@1.0.0(react@19.2.5)(zustand@5.0.12(@types/react@19.2.14)(react@19.2.5))':
     dependencies:
       react: 19.2.5
       zustand: 5.0.12(@types/react@19.2.14)(react@19.2.5)
@@ -7344,14 +7344,14 @@ snapshots:
       postcss-selector-parser: 7.1.1
       ts-pattern: 5.9.0
 
-  '@pandacss/dev@1.10.0(typescript@5.9.3)':
+  '@pandacss/dev@1.10.0(typescript@6.0.2)':
     dependencies:
       '@clack/prompts': 0.11.0
       '@pandacss/config': 1.10.0
       '@pandacss/logger': 1.10.0
-      '@pandacss/mcp': 1.10.0(typescript@5.9.3)
-      '@pandacss/node': 1.10.0(typescript@5.9.3)
-      '@pandacss/postcss': 1.10.0(typescript@5.9.3)
+      '@pandacss/mcp': 1.10.0(typescript@6.0.2)
+      '@pandacss/node': 1.10.0(typescript@6.0.2)
+      '@pandacss/postcss': 1.10.0(typescript@6.0.2)
       '@pandacss/preset-base': 1.10.0
       '@pandacss/preset-panda': 1.10.0
       '@pandacss/shared': 1.10.0
@@ -7364,10 +7364,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@pandacss/extractor@1.10.0(typescript@5.9.3)':
+  '@pandacss/extractor@1.10.0(typescript@6.0.2)':
     dependencies:
       '@pandacss/shared': 1.10.0
-      ts-evaluator: 1.2.0(typescript@5.9.3)
+      ts-evaluator: 1.2.0(typescript@6.0.2)
       ts-morph: 28.0.0
     transitivePeerDependencies:
       - jsdom
@@ -7394,12 +7394,12 @@ snapshots:
       '@pandacss/types': 1.10.0
       kleur: 4.1.5
 
-  '@pandacss/mcp@1.10.0(typescript@5.9.3)':
+  '@pandacss/mcp@1.10.0(typescript@6.0.2)':
     dependencies:
       '@clack/prompts': 0.11.0
       '@modelcontextprotocol/sdk': 1.29.0(zod@4.3.6)
       '@pandacss/logger': 1.10.0
-      '@pandacss/node': 1.10.0(typescript@5.9.3)
+      '@pandacss/node': 1.10.0(typescript@6.0.2)
       '@pandacss/token-dictionary': 1.10.0
       '@pandacss/types': 1.10.0
       zod: 4.3.6
@@ -7409,13 +7409,13 @@ snapshots:
       - supports-color
       - typescript
 
-  '@pandacss/node@1.10.0(typescript@5.9.3)':
+  '@pandacss/node@1.10.0(typescript@6.0.2)':
     dependencies:
       '@pandacss/config': 1.10.0
       '@pandacss/core': 1.10.0
       '@pandacss/generator': 1.10.0
       '@pandacss/logger': 1.10.0
-      '@pandacss/parser': 1.10.0(typescript@5.9.3)
+      '@pandacss/parser': 1.10.0(typescript@6.0.2)
       '@pandacss/plugin-lightningcss': 1.10.0
       '@pandacss/plugin-svelte': 1.10.0
       '@pandacss/plugin-vue': 1.10.0
@@ -7447,11 +7447,11 @@ snapshots:
       - jsdom
       - typescript
 
-  '@pandacss/parser@1.10.0(typescript@5.9.3)':
+  '@pandacss/parser@1.10.0(typescript@6.0.2)':
     dependencies:
       '@pandacss/config': 1.10.0
       '@pandacss/core': 1.10.0
-      '@pandacss/extractor': 1.10.0(typescript@5.9.3)
+      '@pandacss/extractor': 1.10.0(typescript@6.0.2)
       '@pandacss/logger': 1.10.0
       '@pandacss/shared': 1.10.0
       '@pandacss/types': 1.10.0
@@ -7479,9 +7479,9 @@ snapshots:
       '@vue/compiler-sfc': 3.5.25
       magic-string: 0.30.21
 
-  '@pandacss/postcss@1.10.0(typescript@5.9.3)':
+  '@pandacss/postcss@1.10.0(typescript@6.0.2)':
     dependencies:
-      '@pandacss/node': 1.10.0(typescript@5.9.3)
+      '@pandacss/node': 1.10.0(typescript@6.0.2)
       postcss: 8.5.6
     transitivePeerDependencies:
       - jsdom
@@ -7523,7 +7523,7 @@ snapshots:
     dependencies:
       quansync: 1.0.0
 
-  '@react-router/dev@7.14.1(@types/node@24.12.2)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.31.1)(react-router@7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tsx@4.21.0)(typescript@5.9.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)':
+  '@react-router/dev@7.14.1(@types/node@24.12.2)(babel-plugin-macros@3.1.0)(jiti@2.6.1)(lightningcss@1.31.1)(react-router@7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(tsx@4.21.0)(typescript@6.0.2)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.3))(yaml@2.8.3)':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/generator': 7.29.1
@@ -7532,7 +7532,7 @@ snapshots:
       '@babel/preset-typescript': 7.28.5(@babel/core@7.29.0)
       '@babel/traverse': 7.29.0
       '@babel/types': 7.29.0
-      '@react-router/node': 7.14.1(react-router@7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)
+      '@react-router/node': 7.14.1(react-router@7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@6.0.2)
       '@remix-run/node-fetch-server': 0.13.0
       arg: 5.0.2
       babel-dead-code-elimination: 1.0.12
@@ -7552,11 +7552,11 @@ snapshots:
       react-router: 7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       semver: 7.7.4
       tinyglobby: 0.2.16
-      valibot: 1.3.1(typescript@5.9.3)
+      valibot: 1.3.1(typescript@6.0.2)
       vite: 7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.3)
       vite-node: 3.2.4(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.3)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -7572,12 +7572,12 @@ snapshots:
       - tsx
       - yaml
 
-  '@react-router/node@7.14.1(react-router@7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)':
+  '@react-router/node@7.14.1(react-router@7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@6.0.2)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
       react-router: 7.14.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   '@remix-run/node-fetch-server@0.13.0': {}
 
@@ -7981,12 +7981,12 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@volar/kit@2.4.28(typescript@5.9.3)':
+  '@volar/kit@2.4.28(typescript@6.0.2)':
     dependencies:
       '@volar/language-service': 2.4.28
       '@volar/typescript': 2.4.28
       typesafe-path: 0.2.2
-      typescript: 5.9.3
+      typescript: 6.0.2
       vscode-languageserver-textdocument: 1.0.12
       vscode-uri: 3.1.0
 
@@ -8210,7 +8210,7 @@ snapshots:
 
   astral-regex@2.0.0: {}
 
-  astro@6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3):
+  astro@6.1.9(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.60.2)(tsx@4.21.0)(typescript@6.0.2)(yaml@2.8.3):
     dependencies:
       '@astrojs/compiler': 3.0.1
       '@astrojs/internal-helpers': 0.9.0
@@ -8255,7 +8255,7 @@ snapshots:
       tinyclip: 0.1.12
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
-      tsconfck: 3.1.6(typescript@5.9.3)
+      tsconfck: 3.1.6(typescript@6.0.2)
       ultrahtml: 1.6.0
       unifont: 0.7.4
       unist-util-visit: 5.1.0
@@ -10199,7 +10199,7 @@ snapshots:
       micromark-util-character: 2.1.1
       micromark-util-sanitize-uri: 2.0.1
       micromark-util-symbol: 2.0.1
-      micromark-util-types: 2.0.2
+      micromark-util-types: 2.0.1
 
   micromark-extension-gfm-footnote@2.1.0:
     dependencies:
@@ -10210,7 +10210,7 @@ snapshots:
       micromark-util-normalize-identifier: 2.0.1
       micromark-util-sanitize-uri: 2.0.1
       micromark-util-symbol: 2.0.1
-      micromark-util-types: 2.0.2
+      micromark-util-types: 2.0.1
 
   micromark-extension-gfm-strikethrough@2.1.0:
     dependencies:
@@ -10268,7 +10268,7 @@ snapshots:
       micromark-factory-space: 2.0.1
       micromark-util-character: 2.1.1
       micromark-util-symbol: 2.0.1
-      micromark-util-types: 2.0.2
+      micromark-util-types: 2.0.1
 
   micromark-factory-destination@2.0.1:
     dependencies:
@@ -10286,7 +10286,7 @@ snapshots:
   micromark-factory-space@2.0.1:
     dependencies:
       micromark-util-character: 2.1.1
-      micromark-util-types: 2.0.2
+      micromark-util-types: 2.0.1
 
   micromark-factory-title@2.0.1:
     dependencies:
@@ -10300,12 +10300,12 @@ snapshots:
       micromark-factory-space: 2.0.1
       micromark-util-character: 2.1.1
       micromark-util-symbol: 2.0.1
-      micromark-util-types: 2.0.2
+      micromark-util-types: 2.0.1
 
   micromark-util-character@2.1.1:
     dependencies:
       micromark-util-symbol: 2.0.1
-      micromark-util-types: 2.0.2
+      micromark-util-types: 2.0.1
 
   micromark-util-chunked@2.0.1:
     dependencies:
@@ -10320,7 +10320,7 @@ snapshots:
   micromark-util-combine-extensions@2.0.1:
     dependencies:
       micromark-util-chunked: 2.0.1
-      micromark-util-types: 2.0.2
+      micromark-util-types: 2.0.1
 
   micromark-util-decode-numeric-character-reference@2.0.2:
     dependencies:
@@ -10343,7 +10343,7 @@ snapshots:
 
   micromark-util-resolve-all@2.0.1:
     dependencies:
-      micromark-util-types: 2.0.2
+      micromark-util-types: 2.0.1
 
   micromark-util-sanitize-uri@2.0.1:
     dependencies:
@@ -10356,7 +10356,7 @@ snapshots:
       devlop: 1.1.0
       micromark-util-chunked: 2.0.1
       micromark-util-symbol: 2.0.1
-      micromark-util-types: 2.0.2
+      micromark-util-types: 2.0.1
 
   micromark-util-symbol@2.0.1: {}
 
@@ -11603,12 +11603,12 @@ snapshots:
 
   ts-algebra@2.0.0: {}
 
-  ts-evaluator@1.2.0(typescript@5.9.3):
+  ts-evaluator@1.2.0(typescript@6.0.2):
     dependencies:
       ansi-colors: 4.1.3
       crosspath: 2.0.0
       object-path: 0.11.8
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   ts-morph@28.0.0:
     dependencies:
@@ -11617,9 +11617,9 @@ snapshots:
 
   ts-pattern@5.9.0: {}
 
-  tsconfck@3.1.6(typescript@5.9.3):
+  tsconfck@3.1.6(typescript@6.0.2):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   tsconfig-paths@3.15.0:
     dependencies:
@@ -11858,9 +11858,9 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  valibot@1.3.1(typescript@5.9.3):
+  valibot@1.3.1(typescript@6.0.2):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   validate-npm-package-license@3.0.4:
     dependencies:
