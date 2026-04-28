@@ -19,10 +19,14 @@ export default defineConfig({
         '/api': SERVER_URL,
       },
     },
+    ssr: {
+      // Bundle these for SSR — prevents Node from loading them from the design
+      // system's own node_modules and picking up a second React instance.
+      noExternal: ['@finografic/design-system', '@ark-ui/react', '@zag-js/react'],
+    },
     resolve: {
-      // Force linked packages (pnpm link) to share a single instance of
-      // React and Ark UI — prevents "invalid hook call" / multiple copies.
-      // dedupe: ['react', 'react-dom', '@ark-ui/react'],
+      // Force a single React 19 instance across all linked packages.
+      dedupe: ['react', 'react-dom'],
       extensions: ['.tsx', '.ts', '.js', '.mjs', '.json'],
       alias: {
         /**
