@@ -44,7 +44,7 @@
     "@astrojs/node": "^10.0.4",
     "@astrojs/react": "^5.0.2",
     "@finografic/design-system": "link:/Users/justin/repos-finografic/@finografic-design-system/packages/design-system",
-    "@finografic/icons": "1.13.11",
+    "@finografic/icons": "1.14.1",
     "@finografic/zustand-context-creator": "1.0.0",
     "@hookform/resolvers": "5.2.2",
     "@llaab/core": "workspace:*",

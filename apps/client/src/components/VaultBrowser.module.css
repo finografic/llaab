@@ -1,0 +1,69 @@
+/* ─── Shell ───────────────────────────────────────────────────────────────── */
+
+.browser {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ─── Tree sidebar ────────────────────────────────────────────────────────── */
+
+.tree {
+  width: 280px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--bg-subtle);
+  padding: var(--space-2) 0;
+}
+
+.treeRoot {
+  gap: 0;
+}
+
+/* ─── Content viewer ──────────────────────────────────────────────────────── */
+
+.viewer {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  min-width: 0;
+}
+
+.viewerEmpty,
+.viewerLoading {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+.viewerError {
+  color: var(--error-text, #ef4444);
+  font-size: 13px;
+}
+
+.viewerContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.viewerPath {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+
+.viewerPre {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+}

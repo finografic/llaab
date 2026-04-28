@@ -64,7 +64,7 @@ export function NavbarVertical({ pathname }: Props) {
       <hr className={s.divider} />
 
       <TreeView.Root
-        collection={navCollection}
+        collection={navCollection as any}
         selectedValue={selectedValue}
         defaultExpandedValue={defaultExpandedValue}
         size="sm"

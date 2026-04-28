@@ -98,6 +98,7 @@ export function FileList<TData>({
                 key={row.id}
                 className={s.row}
                 data-selected={isSelected || undefined}
+                data-clickable={onRowClick ? true : undefined}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 role="row"
                 aria-selected={isSelected}

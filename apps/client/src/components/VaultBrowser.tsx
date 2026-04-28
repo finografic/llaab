@@ -1,6 +1,11 @@
-import { useState } from 'react';
+import { createTreeCollection, TreeView } from '@finografic/design-system/components';
+import { ChevronRightIcon, FileIcon, FolderIcon, FolderOpenIcon } from '@finografic/icons';
+import { useMemo, useState } from 'react';
 
 import { api } from '../lib/api';
+import s from './VaultBrowser.module.css';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface VaultNode {
   name: string;
@@ -9,76 +14,29 @@ export interface VaultNode {
   children?: VaultNode[];
 }
 
-interface VaultBrowserProps {
+interface Props {
   tree: VaultNode[];
 }
 
-interface TreeNodeProps {
-  node: VaultNode;
-  expanded: Set<string>;
-  selectedPath: string | null;
-  onToggle: (path: string) => void;
-  onSelect: (path: string) => void;
-}
+// ─── Component ────────────────────────────────────────────────────────────────
 
-function TreeNode({ node, expanded, selectedPath, onToggle, onSelect }: TreeNodeProps) {
-  if (node.type === 'dir') {
-    const isExpanded = expanded.has(node.path);
-    return (
-      <li className="tree-item tree-item--dir">
-        <button className="tree-btn tree-btn--dir" onClick={() => onToggle(node.path)}>
-          <span className="tree-chevron">{isExpanded ? '▾' : '▸'}</span>
-          <span className="tree-label">{node.name}</span>
-        </button>
-        {isExpanded && node.children && node.children.length > 0 && (
-          <ul className="tree-children">
-            {node.children.map((child) => (
-              <TreeNode
-                key={child.path}
-                node={child}
-                expanded={expanded}
-                selectedPath={selectedPath}
-                onToggle={onToggle}
-                onSelect={onSelect}
-              />
-            ))}
-          </ul>
-        )}
-      </li>
-    );
-  }
-
-  const isSelected = selectedPath === node.path;
-  return (
-    <li className="tree-item tree-item--file">
-      <button
-        className="tree-btn tree-btn--file"
-        data-selected={isSelected || undefined}
-        onClick={() => onSelect(node.path)}
-      >
-        <span className="tree-label">{node.name}</span>
-      </button>
-    </li>
-  );
-}
-
-export function VaultBrowser({ tree }: VaultBrowserProps) {
-  const [expanded, setExpanded] = useState<Set<string>>(
-    () => new Set(tree.filter((n) => n.type === 'dir').map((n) => n.path)),
-  );
+export function VaultBrowser({ tree }: Props) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const toggleDir = (path: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  };
+  const collection = useMemo(
+    () =>
+      createTreeCollection<VaultNode>({
+        nodeToValue: (node) => node.path,
+        nodeToString: (node) => node.name,
+        rootNode: { name: '__ROOT__', path: '__ROOT__', type: 'dir', children: tree },
+      }),
+    [tree],
+  );
+
+  const defaultExpandedValue = useMemo(() => tree.filter((n) => n.type === 'dir').map((n) => n.path), [tree]);
 
   const selectFile = async (path: string) => {
     if (selectedPath === path) return;
@@ -99,33 +57,86 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
   };
 
   return (
-    <div className="vault-browser">
-      <nav className="vault-tree" aria-label="Vault files">
-        <ul className="tree-root">
-          {tree.map((node) => (
-            <TreeNode
-              key={node.path}
-              node={node}
-              expanded={expanded}
-              selectedPath={selectedPath}
-              onToggle={toggleDir}
-              onSelect={selectFile}
-            />
-          ))}
-        </ul>
+    <div className={s.browser}>
+      <nav className={s.tree} aria-label="Vault files">
+        <TreeView.Root
+          collection={collection as any}
+          selectedValue={selectedPath ? [selectedPath] : []}
+          defaultExpandedValue={defaultExpandedValue}
+          onSelectionChange={({ selectedValue }) => {
+            const path = selectedValue[0];
+            if (path) selectFile(path);
+          }}
+          size="sm"
+          className={s.treeRoot}
+        >
+          <TreeView.Tree>
+            {tree.map((node, index) => (
+              <VaultTreeNode key={node.path} node={node} indexPath={[index]} />
+            ))}
+          </TreeView.Tree>
+        </TreeView.Root>
       </nav>
 
-      <div className="vault-viewer">
-        {!selectedPath && <p className="vault-viewer__empty">Select a file to view its contents.</p>}
-        {selectedPath && loading && <p className="vault-viewer__loading">Loading…</p>}
-        {selectedPath && error && <p className="vault-viewer__error">{error}</p>}
+      <div className={s.viewer}>
+        {!selectedPath && <p className={s.viewerEmpty}>Select a file to view its contents.</p>}
+        {selectedPath && loading && <p className={s.viewerLoading}>Loading…</p>}
+        {selectedPath && error && <p className={s.viewerError}>{error}</p>}
         {selectedPath && !loading && content !== null && (
-          <div className="vault-viewer__content">
-            <p className="vault-viewer__path">{selectedPath}</p>
-            <pre className="vault-viewer__pre">{content}</pre>
+          <div className={s.viewerContent}>
+            <p className={s.viewerPath}>{selectedPath}</p>
+            <pre className={s.viewerPre}>{content}</pre>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+// ─── Recursive tree node ──────────────────────────────────────────────────────
+
+interface VaultTreeNodeProps {
+  node: VaultNode;
+  indexPath: number[];
+}
+
+function VaultTreeNode({ node, indexPath }: VaultTreeNodeProps) {
+  return (
+    <TreeView.NodeProvider node={node} indexPath={indexPath}>
+      <TreeView.NodeContext>
+        {(state) =>
+          node.type === 'dir' ? (
+            <TreeView.Branch>
+              <TreeView.BranchControl>
+                <TreeView.BranchIndicator>
+                  <ChevronRightIcon width={12} height={12} aria-hidden />
+                </TreeView.BranchIndicator>
+                <TreeView.BranchText>
+                  {state.expanded ? (
+                    <FolderOpenIcon width={14} height={14} aria-hidden />
+                  ) : (
+                    <FolderIcon width={14} height={14} aria-hidden />
+                  )}
+                  {node.name}
+                </TreeView.BranchText>
+              </TreeView.BranchControl>
+              <TreeView.BranchContent>
+                <TreeView.BranchIndentGuide />
+                {node.children?.map((child, i) => (
+                  <VaultTreeNode key={child.path} node={child} indexPath={[...indexPath, i]} />
+                ))}
+              </TreeView.BranchContent>
+            </TreeView.Branch>
+          ) : (
+            <TreeView.Item>
+              <TreeView.ItemText>
+                <FileIcon width={14} height={14} aria-hidden />
+                {node.name}
+              </TreeView.ItemText>
+            </TreeView.Item>
+          )
+        }
+      </TreeView.NodeContext>
+    </TreeView.NodeProvider>
   );
 }

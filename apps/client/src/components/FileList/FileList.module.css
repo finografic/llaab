@@ -102,8 +102,7 @@
   background: var(--accent-subtle);
 }
 
-/* Clickable rows get pointer cursor */
-.row[onClick] {
+.row[data-clickable] {
   cursor: pointer;
 }
 

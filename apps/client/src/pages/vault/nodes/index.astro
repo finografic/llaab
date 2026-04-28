@@ -4,7 +4,10 @@ export const prerender = false;
 import { listNodes } from '@llaab/core';
 import type { LabNode } from '@llaab/schemas';
 import AppLayout from '../../../layouts/AppLayout.astro';
+import PageLayout from '../../../layouts/PageLayout.astro';
+import PageHero from '../../../components/PageHero/PageHero.astro';
 import { CreateIdeaPanel } from '../../../components/CreateIdeaPanel';
+import { NodesFileList } from '../../../components/NodesFileList/NodesFileList';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 
@@ -15,338 +18,38 @@ if (cookie?.value !== password) return Astro.redirect('/vault/login', 302);
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-// Show content nodes — ideas, resources, prompts, skills, instructions.
-// Excludes structural/trace types: transcript, source, run, decision.
 const CONTENT_TYPES = ['idea', 'resource', 'prompt', 'skill', 'instruction'] as const;
 
 const all = await listNodes();
 const nodes: LabNode[] = all
   .filter((n) => (CONTENT_TYPES as readonly string[]).includes(n.type))
   .sort((a, b) => b.created_at.localeCompare(a.created_at));
-
-const byType = Object.groupBy(nodes, (n) => n.type);
 ---
 
 <AppLayout title="Nodes">
-  <div class="list-page">
-    <header class="list-page__header">
-      <div class="list-page__title-row">
-        <div>
-          <p class="eyebrow">Vault</p>
-          <h1 class="list-page__heading">Nodes</h1>
-          <p class="list-page__count">{nodes.length} node{nodes.length !== 1 ? 's' : ''}</p>
-        </div>
-        <CreateIdeaPanel client:only="react" />
-      </div>
-    </header>
-
-    {nodes.length === 0 && (
-      <p class="empty">No nodes yet. Use the button above or ingest a video to get started.</p>
-    )}
-
-    {/* Type filter summary */}
-    {Object.entries(byType).length > 1 && (
-      <div class="type-summary">
-        {Object.entries(byType).map(([type, items]) => (
-          <span class="type-count">
-            <span class={`badge badge--${type}`}>{type}</span>
-            <span class="type-count__n">{items?.length ?? 0}</span>
-          </span>
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Vault" title="Nodes">
+      <Fragment slot="meta">
+        <span>{nodes.length} node{nodes.length !== 1 ? 's' : ''}</span>
+        {Object.entries(Object.groupBy(nodes, (n) => n.type)).map(([type, items]) => (
+          <span>{type} · {items?.length ?? 0}</span>
         ))}
-      </div>
+      </Fragment>
+      <CreateIdeaPanel slot="actions" client:only="react" />
+    </PageHero>
+
+    {nodes.length === 0 ? (
+      <p class="empty">No nodes yet. Use the button above or ingest a video to get started.</p>
+    ) : (
+      <NodesFileList client:only="react" nodes={nodes} />
     )}
-
-    <ul class="node-list" role="list">
-      {nodes.map((node) => (
-        <li class="node-card">
-          <a href={`/vault/nodes/${node.id}`} class="node-card__link" aria-label={node.title}>
-          <div class="node-card__meta">
-            <span class={`badge badge--${node.type}`}>{node.type}</span>
-            <span class={`badge badge--status badge--${node.status}`}>{node.status}</span>
-            <time class="node-card__date" datetime={node.created_at}>
-              {new Date(node.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-            </time>
-          </div>
-
-          <h2 class="node-card__title">{node.title}</h2>
-
-          {node.body && (
-            <p class="node-card__body">{node.body}</p>
-          )}
-
-          {node.tags.length > 0 && (
-            <div class="tag-row">
-              {node.tags.map((tag) => (
-                <span class="tag" data-tag={tag}>{tag}</span>
-              ))}
-            </div>
-          )}
-          </a>
-        </li>
-      ))}
-    </ul>
-  </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
-  .list-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-    max-width: 760px;
-  }
-
-  .list-page__header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .list-page__title-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-4);
-  }
-
-  .list-page__heading {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .list-page__count {
-    font-size: 12px;
-    color: var(--text-faint);
-  }
-
   .empty {
+    padding: var(--space-6);
     font-size: 13px;
     color: var(--text-muted);
-  }
-
-  /* ── Type summary ── */
-
-  .type-summary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    align-items: center;
-  }
-
-  .type-count {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .type-count__n {
-    font-size: 11px;
-    font-family: var(--font-mono);
-    color: var(--text-faint);
-  }
-
-  /* ── Node list ── */
-
-  .node-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .node-card {
-    display: flex;
-    flex-direction: column;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    transition: border-color var(--duration) var(--ease);
-  }
-
-  .node-card:hover { border-color: var(--accent); }
-
-  .node-card__link {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4) var(--space-5);
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .node-card__meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .node-card__title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.4;
-  }
-
-  .node-card__body {
-    font-size: 12px;
-    color: var(--text-muted);
-    line-height: 1.6;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .node-card__date {
-    font-size: 11px;
-    color: var(--text-faint);
-    font-family: var(--font-mono);
-    margin-left: auto;
-  }
-
-  /* ── Badges ── */
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-weight: 500;
-    font-family: var(--font-mono);
-    letter-spacing: 0.03em;
-    background: var(--surface-raised);
-    color: var(--text-muted);
-    border: 1px solid var(--border-subtle);
-  }
-
-  /* Node type colours */
-  .badge--idea        { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-  .badge--resource    { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
-  .badge--prompt      { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
-  .badge--skill       { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
-  .badge--instruction { background: #fefce8; color: #ca8a04; border-color: #fef08a; }
-
-  /* Status colours */
-  .badge--status { border-radius: 4px; }
-  .badge--seed     { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); }
-  .badge--growing  { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
-  .badge--mature   { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
-  .badge--archived { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); opacity: 0.6; }
-
-  /* ── Tag pills ── */
-
-  .tag-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
-  }
-
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    background: color-mix(in srgb, var(--tag-color, var(--accent)) 12%, transparent);
-    color: var(--tag-color, var(--accent));
-    border: 1px solid color-mix(in srgb, var(--tag-color, var(--accent)) 30%, transparent);
-  }
-
-  .tag[data-tag='d:llm']         { --tag-color: #3b82f6; }
-  .tag[data-tag='d:automation']  { --tag-color: #8b5cf6; }
-  .tag[data-tag='d:ingest']      { --tag-color: #f59e0b; }
-  .tag[data-tag='d:schema']      { --tag-color: #14b8a6; }
-  .tag[data-tag='d:infra']       { --tag-color: #6b7280; }
-  .tag[data-tag='d:integration'] { --tag-color: #f97316; }
-  .tag[data-tag='d:ui']          { --tag-color: #ec4899; }
-  .tag[data-tag='d:meta']        { --tag-color: #22c55e; }
-
-  /* ── CreateIdeaPanel (client:only island) ── */
-
-  :global(.create-idea-panel) {
-    padding: var(--space-5);
-    margin-bottom: var(--space-2);
-    max-width: 520px;
-  }
-
-  :global(.create-idea-panel__header) {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-4);
-  }
-
-  :global(.create-idea-panel__title) {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  :global(.create-idea-panel__close) {
-    background: none;
-    border: none;
-    color: var(--text-faint);
-    cursor: pointer;
-    font-size: 13px;
-    padding: 2px 6px;
-    line-height: 1;
-  }
-
-  :global(.create-idea-panel__close:hover) {
-    color: var(--text-muted);
-  }
-
-  :global(.create-idea-form) {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-  }
-
-  :global(.create-idea-form textarea) {
-    resize: vertical;
-    min-height: 80px;
-    font-family: var(--font-sans);
-    font-size: 13px;
-  }
-
-  :global(.create-idea-form__actions) {
-    display: flex;
-    gap: var(--space-2);
-  }
-
-  :global(.tag-suggestions) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: calc(var(--space-1) * -1);
-  }
-
-  :global(.tag-suggestion) {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 99px;
-    font-size: 11px;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: color var(--duration) var(--ease), border-color var(--duration) var(--ease),
-      background var(--duration) var(--ease);
-  }
-
-  :global(.tag-suggestion:hover) {
-    color: var(--accent);
-    border-color: var(--accent);
-    background: var(--accent-subtle);
   }
 </style>
