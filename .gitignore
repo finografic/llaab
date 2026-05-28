@@ -18,7 +18,8 @@ build/
 !.env.example
 
 # Agents
-.agents/
+.agents/*
+!.agents/
 !.agents/handoff.md
 .codex/
 .claude/

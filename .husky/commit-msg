@@ -1,1 +1,2 @@
+. "$(dirname "$0")/bootstrap-env.sh"
 pnpm exec commitlint --edit "$1"
