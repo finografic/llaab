@@ -134,6 +134,13 @@ Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 
 | Date       | Item                                                                                                           |
 | ---------- | -------------------------------------------------------------------------------------------------------------- |
+| 2026-05-28 | Repo public-readiness — vault privacy audit flow, initial `lab/` approvals, and prepare-to-publish cleanup     |
+| 2026-04-29 | Vault browser nodes page — `PageLayout` + `FileList` + DS TreeView integration                                 |
+| 2026-04-28 | Fix client SSR React dedupe — cross-repo design-system / Ark / Zag single-instance resolution                  |
+| 2026-04-27 | Layout system — `PageLayout`, `PageHero`, Finder-style `FileList`, sticky sidebar, layout guide                |
+| 2026-04-20 | Transcript extraction UX + linking — `related`, ideas endpoint, linked idea cards, improved re-extract flow    |
+| 2026-04-19 | Ollama extraction stability — switch to chat API, local model fix, clean-vault script improvements             |
+| 2026-04-18 | Dark theme + two-phase ingestion — layout refactor, transcript-first save, best-effort extraction              |
 | 2026-04-17 | Vault page coverage — detail pages for nodes, transcripts, sources; all list pages linked; Sources in nav      |
 | 2026-04-17 | Fix `llmExtract` — JSON system prompt, fence stripping, `parseJsonFromText`; agent loop now produces IdeaNodes |
 | 2026-04-16 | MCP server — `llaab mcp` stdio command, vault resources + vault_list/vault_read tools                          |

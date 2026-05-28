@@ -16,6 +16,24 @@
 - **TODO/DONE doc conventions:** `.github/instructions/docs/todo-done-docs.instructions.md`
   — rules for naming, status headers, checkboxes, and graduating `TODO_` → `DONE_`.
 
+## Project Memory Model
+
+- `docs/todo/ROADMAP.md` = curated milestone plan + completed milestone history.
+- `docs/todo/NEXT_STEPS.md` = near-term working list, manual testing, and small follow-ups.
+- `.agents/handoff.md` = current project state snapshot.
+- `.agents/memory.md` = chronological working memory / session log.
+
+Promotion rule:
+
+- session detail, partial work, and temporary context belong in `.agents/memory.md`
+- stable current truth belongs in `.agents/handoff.md`
+- project priorities and completed milestone-scale work belong in `ROADMAP.md`
+- small actionable follow-ups and manual verification belong in `NEXT_STEPS.md`
+
+Do not duplicate the same item across all four files unless it truly belongs in each role.
+
+Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMORY_MODEL.md)
+
 ---
 
 ## Rules — Project-Specific
@@ -79,12 +97,11 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 
 ---
 
-## Claude Code — Session Memory and Handoff
+## Agent Memory Files
 
-> This section applies to Claude Code only. Other agents can ignore it.
-
-- **Session log:** `.claude/memory.md` (gitignored) — maintenance rules are in that file.
-- **Project state snapshot:** `.agents/handoff.md` (git-tracked) — maintenance rules are in that file.
+- `.agents/memory.md` is the canonical session log path for this repo.
+- `.agents/handoff.md` is the canonical project state snapshot path for this repo.
+- `.claude/memory.md` is deprecated here and should only remain as a pointer, not the real log.
 
 ---
 
