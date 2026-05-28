@@ -1,117 +1,180 @@
-# Harness Integration — Roadmap Section
+# Harness Integration
 
-> Paste the P2 entry into `_ROADMAP.md` under **P2 — Planned**.
-> The detail section below can live at `docs/todo/TODO_HARNESS.md` or stay here as a
-> self-contained planning reference until a codebase session fleshes it out.
+## Summary
+
+LLAAB now has a published external package available:
+
+- `@finografic/ai-harness@0.1.0`
+
+That package currently provides:
+
+- explicit pipeline primitives
+- deterministic step composition
+- a real debug pipeline (`typecheck -> parse -> slice -> structure`)
+
+It does **not** yet provide the full runtime features originally imagined for LLAAB:
+
+- token counting
+- chunking long inputs
+- structured context assembly for model calls
+- deterministic model routing
+
+So the LLAAB plan needs to split into two layers:
+
+1. **consumer adoption now**
+2. **full runtime harness later**
 
 ---
 
-## Problem
+## Where harness sits in LLAAB
 
-`control.execute()` governs the LLM call, but assumes the input already fits in context and
-the correct model has already been chosen. Long transcripts will exceed context windows, and
-model selection is currently implicit. The harness formalizes the pre-call and post-call
-pipeline around `execute()`.
+Harness should not sit as one universal wrapper above every ingestion pipeline stage.
 
----
+The better mental model is:
 
-## Scope
+> harness sits at the **control boundary around model-facing work**
 
-Three concerns, in priority order:
+That means:
 
-### 1. Token Counting & Chunking (`@llaab/llm`)
+- fetch/clean/structure/store stages stay deterministic and local to each pipeline
+- harness wraps the preparation and shaping that happens **before** `control.execute()` or other
+  model-facing execution
+- the exact usage can differ by task, but the conceptual position stays the same
 
-- Add `js-tiktoken` (or `@anthropic-ai/tokenizer`) as a dependency of `@llaab/llm`
-- Expose a `countTokens(text, model?)` utility
-- Build a `chunkText(text, opts)` function:
-  - `maxTokens` — per-chunk ceiling (derived from model context window minus prompt overhead)
-  - `overlap` — token overlap between chunks (preserves context at boundaries)
-  - returns `{ chunks: string[], tokenCounts: number[] }`
-- Chunking is a pure utility — no LLM involvement, no control dependency
+For ingestion, the first important insertion point is:
 
-### 2. Context Assembly (`@llaab/control`)
-
-- Formalize the `Context` shape already sketched in the control layer doc:
-
-```ts
-  interface Context {
-    instructions: string;
-    data: unknown;
-    constraints?: string[];
-    examples?: unknown[];
-  }
+```txt
+fetch
+→ clean
+→ structure
+→ harness prep
+→ control.execute / routeLlm
+→ parse / validate
+→ store / link / trace
 ```
 
-- Add a `buildContext()` helper that:
-  - accepts raw input + task type + target schema
-  - measures token budget (total window minus reserved output tokens)
-  - assembles instructions, data, constraints, examples within budget
-  - returns a `Context` ready for `execute()`
-- This is where prompt templates live — they are structured, not ad-hoc strings
-
-### 3. Deterministic Model Routing (`@llaab/llm`)
-
-- Start with Tier 1: a config map, not an LLM call
-- Routing inputs: `taskType` + `inputTokenCount` + `outputSchema complexity`
-- Routing outputs: `{ provider, model, maxTokens }`
-- Example rules (starting point):
-  - `tag` / `classify` → Ollama small (e.g., `llama3.2:3b`)
-  - `extract` + input < 4k tokens → Ollama mid (e.g., `llama3.1:8b`)
-  - `extract` + input > 4k tokens → Anthropic Claude
-  - `reason` / `synthesize` → Anthropic Claude always
-- Config lives in `@llaab/llm`, consumed by `control.execute()` when no explicit model is passed
-- RunNode traces feed future Tier 2 heuristic tuning (not built now, but the data accumulates)
+For short inputs, harness can collapse to a very small prep layer.
+For long transcripts, it becomes much more substantial.
 
 ---
 
-### Integration Point
+## Current LLAAB reality
 
-The harness does NOT replace `control.execute()`. It wraps the preparation layer:
+Today, transcript extraction in LLAAB already has a clear boundary:
 
-```
-input
-→ countTokens (llm)
-→ chunkText if needed (llm)
-→ selectModel (llm, deterministic)
-→ buildContext per chunk (control)
-→ control.execute() per chunk (existing)
-→ merge/validate outputs (control)
-→ vault + run logging (existing)
-```
+- `packages/ingestion/src/extract/llm-extract.ts`
+- `packages/control/src/orchestrator.ts`
 
-For single-chunk inputs (most idea captures, short transcripts), the pipeline collapses to
-`buildContext → execute()` — no overhead.
+Current behavior:
+
+- truncates input by character count
+- sends the prepared text into `routeLlm(...)`
+- validates through `control.execute(...)`
+
+This means harness adoption should start **there**, not as a generic top-of-system rewrite.
 
 ---
 
-### What This Unlocks
+## Phase 1 — Adopt the released package
 
-- **Step 5** (transcript → idea extraction) becomes viable for long transcripts
-- **Agent loop** gets smarter routing without per-skill model hardcoding
-- **Run traces** capture token counts and model selection rationale — execution becomes knowledge
-- **Future chunked skills**: summarize-then-merge, map-reduce extraction, progressive refinement
+Goal: prepare LLAAB to install and use `@finografic/ai-harness` intentionally, without forcing
+the package to solve all runtime harness concerns immediately.
 
----
+### Tasks
 
-### What This Does NOT Include
+- Add `@finografic/ai-harness` as a dependency in the workspace(s) that will consume it first.
+- Decide the first consumer package:
+  - likely `@llaab/ingestion`
+  - possibly `@llaab/llm` if the adapter boundary belongs there instead
+- Add a small local spike or adapter around transcript extraction that proves the package can be
+  used cleanly inside LLAAB.
+- Keep the current truncation-based extraction path intact unless the package exposes a clearly
+  better replacement.
 
-- No LLM-based routing (Tier 3) — deterministic config only
-- No vector DB or embedding-based retrieval
-- No new package — changes land in `@llaab/llm` and `@llaab/control`
-- No UI changes
-- Detailed implementation requires a codebase-visible session to align with current file structure
+### Success condition
 
----
-
-### Dependencies
-
-- `js-tiktoken` or `@anthropic-ai/tokenizer` (new dependency, lightweight)
-- Existing: `@llaab/llm`, `@llaab/control`, `@llaab/schemas` (Zod types for Context, routing config)
+- LLAAB imports the released package
+- the package is exercised in a real consumer path
+- the integration boundary is proven without destabilizing extraction
 
 ---
 
-### Suggested Priority
+## Phase 2 — Define the runtime harness boundary
 
-**P2** — direction is decided, and the natural trigger is Step 5 (first controlled extraction).
-When Step 5 becomes P0, the tokenization + chunking piece moves with it. Model routing can
-trail slightly — it's useful but not blocking until you're running mixed local/remote workloads.
+Goal: formalize the exact point where LLAAB transitions from deterministic preprocessing into
+model-facing preparation.
+
+### Tasks
+
+- Define what belongs in deterministic ingestion vs harness prep vs control execution.
+- Decide whether harness prep should live closer to:
+  - `packages/ingestion`
+  - `packages/llm`
+  - `packages/control`
+- Document the handoff contract between:
+  - structured input
+  - harness-prepared context
+  - `control.execute(...)`
+
+### Design rule
+
+Do **not** spread harness logic across multiple layers without a clear contract.
+
+---
+
+## Phase 3 — Extend ai-harness for real LLAAB runtime needs
+
+This is the larger feature set originally described in the old harness notes.
+
+### Needed capabilities
+
+#### 1. Token counting and chunking
+
+- `countTokens(text, model?)`
+- `chunkText(text, opts)`
+- overlap support
+- model-aware chunk limits
+
+#### 2. Context assembly
+
+- build a structured `Context`
+- assemble instructions, constraints, examples, and input data
+- respect input/output budget boundaries
+
+#### 3. Deterministic routing
+
+- choose provider/model/maxTokens based on task type and input size
+- start with config-driven routing only
+
+### First concrete driver
+
+- transcript extraction for long YouTube ingestions
+
+This replaces the current character-count truncation with a real preparation layer.
+
+---
+
+## Priority recommendation
+
+Harness is now strong enough to move **up** in priority, but not as the full original concept.
+
+Recommended ordering:
+
+1. **Next:** install and validate `@finografic/ai-harness` in LLAAB as a consumer
+2. **After that:** decide and document the exact runtime boundary
+3. **Then:** extend the package for token-aware extraction prep
+
+That means:
+
+- harness consumer adoption can reasonably move to **P1**
+- full token-aware runtime harness should remain **P2** until the package grows past its current
+  debug-pipeline-only shape
+
+---
+
+## What not to do yet
+
+- do not rewrite all ingestion pipelines around harness at once
+- do not move fetch/clean/structure logic into the harness package
+- do not add LLM-based routing
+- do not over-generalize before the transcript extraction path proves the contract

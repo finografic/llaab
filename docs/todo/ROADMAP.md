@@ -29,7 +29,13 @@ _Nothing active right now — pick from P1._
 
 ## P1 — Next Up
 
-_Nothing queued — pick from P2._
+### Install and validate `@finografic/ai-harness` in the transcript extraction path
+
+Adopt the released package as a real LLAAB dependency and prove the first consumer integration at
+the extraction boundary. Start small: validate the package inside the current transcript
+extraction flow before expanding the runtime harness scope.
+
+Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 
 ---
 
@@ -96,10 +102,10 @@ Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
 
 ### Harness Layer — Token-Aware Control Pipeline
 
-Extend `@llaab/control` and `@llaab/llm` into a formal harness: tokenization/counting,
-chunking for long inputs (transcripts), structured context assembly, and deterministic
-model routing. Not a new package — evolves the existing `control.execute()` path.
-First concrete driver: Step 5 (transcript → control → idea node extraction).
+Extend the new `@finografic/ai-harness` package beyond its current debug-pipeline scope so LLAAB
+can use it for real runtime preparation around `control.execute()`: tokenization/counting,
+chunking for long inputs (transcripts), structured context assembly, and deterministic model
+routing. First concrete driver: transcript → harness prep → control → idea extraction.
 
 Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 
