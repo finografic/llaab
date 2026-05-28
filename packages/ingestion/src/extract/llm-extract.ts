@@ -3,6 +3,8 @@ import { routeLlm } from '@llaab/llm';
 import { z } from 'zod';
 import type { ControlDecision, ControlLlmTrace, ControlStage } from '@llaab/control';
 
+import { prepareExtractionInput } from './harness-prep.js';
+
 export interface ExtractedKnowledge {
   ideas: string[];
   skills: string[];
@@ -53,25 +55,16 @@ function parseJsonFromText(text: string): unknown {
   return JSON.parse(stripped.slice(start, end + 1));
 }
 
-// ~6 000 chars leaves room for the system prompt + JSON response within an 8k token window
-const MAX_INPUT_CHARS = 6_000;
-
-function truncateForExtraction(text: string): string {
-  if (text.length <= MAX_INPUT_CHARS) return text;
-  return text.slice(0, MAX_INPUT_CHARS) + '\n\n[transcript truncated for extraction]';
-}
-
 export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowledgeWithTrace> {
-  const truncated = truncateForExtraction(input);
+  const prepared = await prepareExtractionInput({
+    cwd: process.cwd(),
+    input,
+  });
   const controlled = await execute({
     task: 'extract-knowledge',
-    input: truncated,
+    input: prepared.preparedText,
     schema: ExtractedKnowledgeSchema,
-    context: {
-      instructions: 'Return structured extracted knowledge as JSON.',
-      data: truncated,
-      constraints: ['summary must be non-empty', 'output must be valid JSON'],
-    },
+    context: prepared.context,
     policy: {
       maxRetries: 1,
       onInvalid: 'retry',
@@ -79,7 +72,9 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
     },
     model: 'ollama',
     run: async () => {
-      const { text } = await routeLlm('extract', truncated, { system: EXTRACTION_SYSTEM_PROMPT });
+      const { text } = await routeLlm('extract', prepared.preparedText, {
+        system: EXTRACTION_SYSTEM_PROMPT,
+      });
       return parseJsonFromText(text);
     },
   });
@@ -88,6 +83,7 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
     ...controlled.data,
     runTrace: {
       stages: [
+        ...prepared.stages,
         {
           name: 'control:extract-knowledge',
           status: 'completed',

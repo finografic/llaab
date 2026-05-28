@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@finografic/ai-harness": "0.1.0",
     "@llaab/control": "workspace:*",
     "@llaab/core": "workspace:*",
     "@llaab/llm": "workspace:*",

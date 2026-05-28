@@ -80,16 +80,26 @@ This means harness adoption should start **there**, not as a generic top-of-syst
 Goal: prepare LLAAB to install and use `@finografic/ai-harness` intentionally, without forcing
 the package to solve all runtime harness concerns immediately.
 
+### Current status
+
+- dependency adoption in `@llaab/ingestion`: done
+- first extraction-boundary spike in `llm-extract.ts`: done
+- real transcript-flow validation: pending
+
 ### Tasks
 
 - Add `@finografic/ai-harness` as a dependency in the workspace(s) that will consume it first.
-- Decide the first consumer package:
-  - likely `@llaab/ingestion`
-  - possibly `@llaab/llm` if the adapter boundary belongs there instead
+  Status: done in `@llaab/ingestion`.
+- Decide the first consumer package.
+  Status: `@llaab/ingestion` chosen for the first integration spike.
 - Add a small local spike or adapter around transcript extraction that proves the package can be
   used cleanly inside LLAAB.
+  Status: done via local extraction-prep pipeline before `control.execute(...)`.
 - Keep the current truncation-based extraction path intact unless the package exposes a clearly
   better replacement.
+  Status: done — current semantics preserved.
+- Validate the integration against real transcript ingestion and extraction runs.
+  Status: pending.
 
 ### Success condition
 
@@ -160,7 +170,7 @@ Harness is now strong enough to move **up** in priority, but not as the full ori
 
 Recommended ordering:
 
-1. **Next:** install and validate `@finografic/ai-harness` in LLAAB as a consumer
+1. **Now:** validate the installed package in the real transcript extraction flow
 2. **After that:** decide and document the exact runtime boundary
 3. **Then:** extend the package for token-aware extraction prep
 

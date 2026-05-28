@@ -271,6 +271,9 @@ importers:
 
   packages/ingestion:
     dependencies:
+      '@finografic/ai-harness':
+        specifier: 0.1.0
+        version: 0.1.0
       '@llaab/control':
         specifier: workspace:*
         version: link:../control
@@ -1267,6 +1270,9 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@finografic/ai-harness@0.1.0':
+    resolution: {integrity: sha512-7CGyc5fSPO1LaU7+dJTQj0+vYDcYNrXsMBhr4K1cYFadmIPUg7oelKveyuWZNC1cfCSST5NRPauyuJZsqeqt+w==, tarball: https://npm.pkg.github.com/download/@finografic/ai-harness/0.1.0/25a8e955cf563361e5901f49650ae8aa9cad5780}
 
   '@finografic/icons@1.14.1':
     resolution: {integrity: sha512-j7uf825Wb6BGgTMeregI5KPCs8rco7GcClAdfSagoZ5NGLPMoDxnvlNl7Dr4MaSfVhV9ASNKGDV0zPB1ur+F9A==, tarball: https://npm.pkg.github.com/download/@finografic/icons/1.14.1/47ed2a0b06fcde0e33a04696738016a88b27d75c}
@@ -6979,6 +6985,8 @@ snapshots:
     dependencies:
       '@eslint/core': 0.17.0
       levn: 0.4.1
+
+  '@finografic/ai-harness@0.1.0': {}
 
   '@finografic/icons@1.14.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:

@@ -36,21 +36,61 @@ Things to verify end-to-end after recent pipeline changes:
 
 ---
 
+## Near-Term Integration
+
+- [x] **Install `@finografic/ai-harness` in the first LLAAB consumer package** — now added to
+      `@llaab/ingestion`.
+
+- [x] **Spike harness at the transcript extraction boundary** — `llm-extract.ts` now uses a small
+      local harness prep pipeline before `control.execute(...)`.
+
+- [ ] **Validate the new extraction prep in real transcript ingestion** — run the actual ingest +
+      extract flow and confirm the staged preparation is useful in practice.
+      Start here:
+      `packages/ingestion/src/extract/harness-prep.ts`,
+      `packages/ingestion/src/extract/llm-extract.ts`,
+      `packages/control/src/orchestrator.ts`.
+      Done means:
+      extraction succeeds, harness stages appear in trace output, and there is a written call on
+      whether current truncation is acceptable.
+
+- [ ] **Compare current truncation-based prep vs harness-ready prep** — confirm what should stay
+      local to LLAAB now and what should move into the harness package later.
+      Specifically answer:
+      should `prepareExtractionInput(...)` remain local for now, or is transcript length handling
+      the next package-level feature gap?
+
+- [ ] **Decide next priority after consumer validation** — if transcript extraction still feels
+      blocked by input prep limits, do harness extension before Terminal Panel. If not, Terminal
+      Panel can stay next.
+      Record that decision in both `ROADMAP.md` and `TODO_HARNESS.md`.
+
+- [ ] **Capture one short implementation note after validation** — update `TODO_HARNESS.md` with:
+      what was tested, what failed or held up, and whether Phase 2 or Terminal should come next.
+
+---
+
 ## Roadmap Items — Current Priority Order
 
 See [`ROADMAP.md`](./ROADMAP.md) for full descriptions. Suggested order:
 
-1. **P2 — Terminal / Command Panel** — next major feature after current pipeline is stable
-2. **P3 — Zod v4 upgrade** — do before schema surface grows further
-3. **P3 — oxlint migration** — phase 2 audit next; see [`TODO_OXLINT_MIGRATION.md`](./TODO_OXLINT_MIGRATION.md)
-4. **P3 — Harness layer** — token-aware prep + deterministic routing around `control.execute`; see [`TODO_HARNESS.md`](./TODO_HARNESS.md)
-5. **P3 — Source Auto-Follow** — agent loop slot already reserved; needs scheduled trigger story
-6. **P3 — Library Watch** — npmx.dev logic is portable; `PackageNode` schema needed first
-7. **P3 — Karpathy graph** — defer until vault has meaningful node density (50+ nodes)
+1. **P1 — Install and validate `@finografic/ai-harness`** — adopt the released package in the
+   transcript extraction path first; remaining work is real-flow validation; see
+   [`TODO_HARNESS.md`](./TODO_HARNESS.md)
+2. **P2 — Terminal / Command Panel** — only stays next if harness consumer validation does not
+   expose immediate prep/runtime blockers
+3. **P2 — Harness layer extension** — should move ahead of Terminal Panel if long-input prep or
+   model-boundary issues become the real blocker during transcript testing
+4. **P3 — Source Auto-Follow** — agent loop slot already reserved; needs scheduled trigger story
+5. **P3 — Library Watch** — npmx.dev logic is portable; `PackageNode` schema needed first
+6. **P3 — Karpathy graph** — defer until vault has meaningful node density (50+ nodes)
 
 ---
 
 ## Open Questions (carry-forward from architecture)
+
+- **Harness priority call** — after a real ingest + extract validation pass, does transcript prep
+  remain "good enough", or is token-aware harness work now the sharper blocker than Terminal?
 
 - **Tag origin tracking** — separate `autoTags` / `manualTags` fields vs. derive post-hoc?
   Decide before building solid/outline tag UI. Tracked in `DONE_TAXONOMY.md`.

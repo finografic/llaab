@@ -56,7 +56,26 @@ describe('llmExtract', () => {
 
     const result = await llmExtractWithTrace('example transcript');
 
+    expect(result.runTrace.stages.map((stage) => stage.name)).toEqual([
+      'harness:truncate-extraction-input',
+      'harness:build-extraction-context',
+      'control:extract-knowledge',
+    ]);
     expect(result.runTrace.decisions.at(-1)?.type).toBe('accept');
     expect(result.runTrace.llm?.model).toBe('ollama');
+  });
+
+  it('truncates long inputs before calling the model', async () => {
+    vi.mocked(routeLlm).mockResolvedValue({ text: VALID_RESPONSE, model: 'llama3.1:8b', cached: false });
+
+    await llmExtractWithTrace('x'.repeat(6_500));
+
+    expect(routeLlm).toHaveBeenCalledWith(
+      'extract',
+      expect.stringContaining('[transcript truncated for extraction]'),
+      expect.objectContaining({
+        system: expect.any(String),
+      }),
+    );
   });
 });

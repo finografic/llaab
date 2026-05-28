@@ -109,6 +109,9 @@ Two-phase split — transcript always saved first, extraction is best-effort:
 
 The ingest UI fires these as two sequential API calls so the user sees phase-by-phase feedback.
 `skipExtraction: true` on the ingest endpoint makes step 1 return immediately (no LLM blocking).
+The extraction boundary now includes a tiny local harness-prep stage using `@finografic/ai-harness`
+before `control.execute(...)`. Current use is intentionally narrow: deterministic prep only, no
+token-aware runtime harness yet.
 
 ## LLM Layer
 
@@ -123,7 +126,9 @@ Task routing (all env-configurable via `LLAAB_*_MODEL` vars):
 
 `getLlmStatus()` exported from `@llaab/llm` returns the live routing map (respects env overrides).
 Ollama provider uses `chat` API (not `generate`) for proper system/user separation.
-Extraction input is truncated to 6 000 chars before the LLM call to avoid 8k context overflow.
+Extraction input is still truncated to 6 000 chars before the LLM call to avoid 8k context
+overflow, but that truncation now runs through a small harness-based prep pipeline inside
+`packages/ingestion/src/extract/`.
 
 ## Schema / Types
 
@@ -146,10 +151,13 @@ via regex. All ingest runs apply `d:ingest` + `autoTag`. Source nodes carry no d
 ## Roadmap & Planning
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
-P0 + P1 empty. P2: Terminal Panel. P3: oxlint (phase 1 done), Zod v4, Karpathy graph, Source Auto-Follow, Library Watch.
+P1: install + validate `@finografic/ai-harness` in transcript extraction. P2: Terminal Panel and
+later harness extension. P3: Karpathy graph, Source Auto-Follow, Library Watch.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.
 
 ## Open Questions
 
 - Tag origin tracking: separate `autoTags` / `manualTags` fields vs. post-hoc derivation?
 - Skill extraction: LLM returns `skills[]` but only `IdeaNode`s are created — should extracted skills become `SkillNode`s?
+- After real transcript testing, does the broader harness extension become a more urgent blocker
+  than Terminal / Command Panel?

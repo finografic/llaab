@@ -150,7 +150,6 @@ describe('runIngestionPipeline', () => {
       'clean:transcript',
       'sanitize:transcript',
       'structure:text',
-      'control:extract-knowledge',
       'store:transcript',
       'store:source',
     ]);
@@ -168,8 +167,8 @@ describe('runIngestionPipeline', () => {
         }),
       }),
     );
-    expect(result.runTrace?.decisions.at(-1)?.type).toBe('accept');
-    expect(result.runTrace?.llm?.model).toBe('ollama');
+    expect(result.runTrace?.decisions).toEqual([]);
+    expect(result.runTrace?.llm).toBeUndefined();
   });
 
   it('uses transcript.untitled_{datetime} id when youtube metadata has no title and no override', async () => {
