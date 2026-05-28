@@ -62,6 +62,7 @@ Vault pages load data directly via `@llaab/core` in frontmatter (no API hop); au
 Layout hierarchy: `BaseLayout` owns `<html class="dark">/<head>/<body>` + CSS imports.
 `AppLayout` wraps `BaseLayout`, adds sidebar/header/footer shell. `login.astro` uses `BaseLayout` directly.
 Inner pages use `PageLayout` (hero / optional aside / main zones) + `PageHero` (eyebrow, title, actions slot, meta bar). See `LAYOUT_AND_PAGES_GUIDE.md`.
+`FileList` exists as a reusable TanStack-based list component for Finder-style index views.
 
 CSS: `app.css` imports `styled-system/styles.css` (Panda tokens) first, then DS global.css, then forms.css.
 Base reset and app globals wrapped in `@layer base {}` so Panda `@layer utilities` wins the cascade.

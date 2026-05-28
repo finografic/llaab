@@ -1,3 +1,29 @@
 {
-  "approved": []
+  "approved": [
+    {
+      "path": "lab/ideas.md",
+      "approvedAt": "2026-05-28",
+      "note": ""
+    },
+    {
+      "path": "lab/_meta/conventions.md",
+      "approvedAt": "2026-05-28",
+      "note": ""
+    },
+    {
+      "path": "lab/_meta/glossary.md",
+      "approvedAt": "2026-05-28",
+      "note": ""
+    },
+    {
+      "path": "lab/roadmap.md",
+      "approvedAt": "2026-05-28",
+      "note": ""
+    },
+    {
+      "path": "lab/decisions.md",
+      "approvedAt": "2026-05-28",
+      "note": ""
+    }
+  ]
 }
