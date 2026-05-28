@@ -28,7 +28,7 @@ const { eyebrow, title, bordered = true } = Astro.props;
       {eyebrow && <p class="eyebrow page-hero__eyebrow">{eyebrow}</p>}
 
       <div class="page-hero__title-row">
-        <h1 class="page-hero__title">{title}</h1>
+        <h1 class="page-hero__title">HERO: {title}</h1>
 
         {Astro.slots.has('actions') && (
           <div class="page-hero__actions">

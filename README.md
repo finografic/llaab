@@ -1,4 +1,4 @@
-# LLAAB
+# 🌱 LLAAB
 
 Local-first learning loop: structured vault nodes, governed LLM calls, and persisted runs.
 

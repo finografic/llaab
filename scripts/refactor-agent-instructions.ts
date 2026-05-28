@@ -55,12 +55,14 @@ const ok = (msg: string) => console.log(`  ✓ ${msg}`);
 const skip = (msg: string) => console.log(`  - ${msg}`);
 const fail = (msg: string) => console.log(`  ✗ ${msg}`);
 const info = (msg: string) => console.log(`  · ${msg}`);
+const formatUnknownError = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
 // ── subfolder map ─────────────────────────────────────────────────────────────
 
 const FOLDER_MAP: Record<string, string> = {
   'typescript-patterns': 'code',
-  'eslint-code-style': 'code',
+  'linting-code-style': 'code',
   'modern-typescript-patterns': 'code',
   'provider-context-patterns': 'code',
   'picocolors-cli-styling': 'code',
@@ -78,7 +80,7 @@ const FOLDER_MAP: Record<string, string> = {
 const CANONICAL: Record<string, string[]> = {
   code: [
     'typescript-patterns',
-    'eslint-code-style',
+    'linting-code-style',
     'modern-typescript-patterns',
     'provider-context-patterns',
     'picocolors-cli-styling',
@@ -135,7 +137,7 @@ function migrateInPlace(): void {
         ok(`${filename} → removed (replaced by embedded general.instructions.md)`);
         moved++;
       } catch (e) {
-        fail(`${filename} → remove failed: ${e}`);
+        fail(`${filename} → remove failed: ${formatUnknownError(e)}`);
         errors++;
       }
       continue;
@@ -156,7 +158,7 @@ function migrateInPlace(): void {
       ok(`${filename} → ${folder}/${name}.instructions.md`);
       moved++;
     } catch (e) {
-      fail(`${filename} → failed: ${e}`);
+      fail(`${filename} → failed: ${formatUnknownError(e)}`);
       errors++;
     }
   }
@@ -172,7 +174,7 @@ function migrateInPlace(): void {
       ok(`project/${filename} → project/${newname}`);
       moved++;
     } catch (e) {
-      fail(`project/${filename} → failed: ${e}`);
+      fail(`project/${filename} → failed: ${formatUnknownError(e)}`);
       errors++;
     }
   }
@@ -208,7 +210,7 @@ function copyFromSource(): void {
       ok(rel);
       copied++;
     } catch (e) {
-      fail(`${rel} → ${e}`);
+      fail(`${rel} → ${formatUnknownError(e)}`);
       errors++;
     }
   }
@@ -300,13 +302,13 @@ function writeEmbeddedFiles(): void {
     fs.writeFileSync(path.join(instDst, 'general.instructions.md'), GENERAL_INSTRUCTIONS);
     ok('general.instructions.md');
   } catch (e) {
-    fail(`general.instructions.md → ${e}`);
+    fail(`general.instructions.md → ${formatUnknownError(e)}`);
   }
   try {
     fs.writeFileSync(path.join(instDst, 'README.md'), INSTRUCTIONS_README);
     ok('README.md');
   } catch (e) {
-    fail(`README.md → ${e}`);
+    fail(`README.md → ${formatUnknownError(e)}`);
   }
 }
 
@@ -364,7 +366,7 @@ function mergeHandoff(): void {
     fs.rmSync(claudeHandoff);
     ok('.claude/handoff.md removed');
   } catch (e) {
-    fail(`handoff merge failed: ${e}`);
+    fail(`handoff merge failed: ${formatUnknownError(e)}`);
   }
 }
 
@@ -492,7 +494,7 @@ function buildRulesGlobalLines(extra: ExtraFile[]): string[] {
     '',
     '- TypeScript patterns: `.github/instructions/code/typescript-patterns.instructions.md`',
     '- Modern TS patterns: `.github/instructions/code/modern-typescript-patterns.instructions.md`',
-    '- ESLint & style: `.github/instructions/code/eslint-code-style.instructions.md`',
+    '- ESLint & style: `.github/instructions/code/linting-code-style.instructions.md`',
     '- Provider/context patterns: `.github/instructions/code/provider-context-patterns.instructions.md`',
     '- Picocolors CLI styling: `.github/instructions/code/picocolors-cli-styling.instructions.md`',
     '',

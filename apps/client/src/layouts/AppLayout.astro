@@ -19,7 +19,8 @@
  * component-level <style> blocks — never in this file.
  */
 import AppFooter from '../components/AppFooter/AppFooter.astro';
-import AppHeaderV2 from '../components/AppHeaderV2/AppHeaderV2.astro';
+// import AppHeaderV2 from '../components/AppHeaderV2/AppHeaderV2.astro';
+import AppHeader from '../components/AppHeader/AppHeader.astro';
 import { NavbarVertical } from '../components/NavbarVertical/NavbarVertical';
 import BaseLayout from './BaseLayout.astro';
 
@@ -39,7 +40,8 @@ const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
     </aside>
 
     <div class="app-pane">
-      <AppHeaderV2 title={title} />
+      <!-- <AppHeaderV2 title={title} /> -->
+      <AppHeader title={title} />
 
       <main class="page-content">
         <slot />

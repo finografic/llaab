@@ -59,6 +59,7 @@
     "@finografic/md-lint": "^0.9.6",
     "@finografic/oxc-config": "^2.3.5",
     "@finografic/project-scripts": "^1.3.3",
+    "@types/bun": "^1.3.14",
     "@types/node": "24.12.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",

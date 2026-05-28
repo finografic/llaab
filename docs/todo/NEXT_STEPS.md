@@ -3,7 +3,7 @@
 > Maintained working list. Larger initiatives live in [`ROADMAP.md`](./ROADMAP.md) — this doc
 > covers concrete near-term tasks, manual testing, and small fixes not large enough for ROADMAP.
 >
-> Last updated: 2026-04-19
+> Last updated: 2026-05-28
 
 ---
 
@@ -24,13 +24,11 @@ Things to verify end-to-end after recent pipeline changes:
 
 ## Code — Small Fixes & Polish
 
-- [ ] **Extraction retry button** — add `POST /api/vault/transcripts/:id/extract` route + "Re-extract"
-      button on `/vault/transcripts/[id]` page. `extractKnowledgeFromTranscript` is already exported
-      and ready to call.
+- [x] **Extraction retry button** — `POST /api/vault/transcripts/:id/extract` route exists and
+      transcript detail page includes "Re-extract" action.
 
-- [ ] **LLM model status indicator** — surface `GET /api/llm/models` somewhere in the UI (even just
-      a small footer badge showing which Ollama models are available). Helps debug extraction failures.
-      `GET /api/llm/models` already exists in `apps/server`.
+- [x] **LLM model status indicator** — `/llm` page calls `GET /api/llm/status` and surfaces model
+      routing/availability.
 
 - [ ] **`related` field on idea nodes** — currently always `[]`. Consider auto-linking extracted ideas
       to their transcript via `related` (in addition to `source_id`). Low priority — `source_id` is
@@ -45,9 +43,10 @@ See [`ROADMAP.md`](./ROADMAP.md) for full descriptions. Suggested order:
 1. **P2 — Terminal / Command Panel** — next major feature after current pipeline is stable
 2. **P3 — Zod v4 upgrade** — do before schema surface grows further
 3. **P3 — oxlint migration** — phase 2 audit next; see [`TODO_OXLINT_MIGRATION.md`](./TODO_OXLINT_MIGRATION.md)
-4. **P3 — Source Auto-Follow** — agent loop slot already reserved; needs scheduled trigger story
-5. **P3 — Library Watch** — npmx.dev logic is portable; `PackageNode` schema needed first
-6. **P3 — Karpathy graph** — defer until vault has meaningful node density (50+ nodes)
+4. **P3 — Harness layer** — token-aware prep + deterministic routing around `control.execute`; see [`TODO_HARNESS.md`](./TODO_HARNESS.md)
+5. **P3 — Source Auto-Follow** — agent loop slot already reserved; needs scheduled trigger story
+6. **P3 — Library Watch** — npmx.dev logic is portable; `PackageNode` schema needed first
+7. **P3 — Karpathy graph** — defer until vault has meaningful node density (50+ nodes)
 
 ---
 
@@ -57,7 +56,8 @@ See [`ROADMAP.md`](./ROADMAP.md) for full descriptions. Suggested order:
   Decide before building solid/outline tag UI. Tracked in `DONE_TAXONOMY.md`.
 
 - **LLM dev tools** — ping model, check connection, list installed Ollama models in UI.
-  `GET /api/llm/models` exists; just needs a UI surface. Could be as simple as a settings modal.
+  `/llm` now covers status/routing; decide whether a lightweight global indicator (header/footer)
+  is still useful.
 
 - **Skill extraction from transcripts** — the LLM currently extracts `ideas` and `skills` arrays
   from transcripts, but only `IdeaNode`s are created. `SkillNode`s from extraction are not yet
