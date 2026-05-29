@@ -5,16 +5,7 @@
 - If **NO** initial context needed, then SKIP to NEXT section.
 - If **YES**, initial context needed, then READ [Project Concept & Manifesto](</LLAAB\ -\ CONCEPT\ &\ MANIFESTO.md>)
 
-## Roadmap and Planning Docs
-
-**`docs/todo/ROADMAP.md` is the primary high-level plan for this project.**
-**`docs/todo/NEXT_STEPS.md` is the near-term working list** — small tasks, fixes, and manual testing checklists too small for ROADMAP.
-
-- Before proposing or generating new features, check the roadmap for existing items.
-- When conceiving a new feature or initiative, add it to the appropriate priority tier.
-- Detailed planning docs live alongside in `docs/todo/` as `TODO_*.md` (active) or `DONE_*.md` (complete).
-- **TODO/DONE doc conventions:** `.github/instructions/docs/todo-done-docs.instructions.md`
-  — rules for naming, status headers, checkboxes, and graduating `TODO_` → `DONE_`.
+---
 
 ## Project Memory Model
 
@@ -33,6 +24,19 @@ Promotion rule:
 Do not duplicate the same item across all four files unless it truly belongs in each role.
 
 Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMORY_MODEL.md)
+
+---
+
+## Roadmap and Planning Docs
+
+**`docs/todo/ROADMAP.md` is the primary high-level plan for this project.**
+**`docs/todo/NEXT_STEPS.md` is the near-term working list** — small tasks, fixes, and manual testing checklists too small for ROADMAP.
+
+- Before proposing or generating new features, check the roadmap for existing items.
+- When conceiving a new feature or initiative, add it to the appropriate priority tier.
+- Detailed planning docs live alongside in `docs/todo/` as `TODO_*.md` (active) or `DONE_*.md` (complete).
+- **TODO/DONE doc conventions:** `.github/instructions/documentation/todo-done-docs.instructions.md`
+  — rules for naming, status headers, checkboxes, and graduating `TODO_` → `DONE_`.
 
 ---
 
@@ -59,7 +63,7 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 
 - TypeScript patterns: `.github/instructions/code/typescript-patterns.instructions.md`
 - Modern TS patterns: `.github/instructions/code/modern-typescript-patterns.instructions.md`
-- ESLint & style: `.github/instructions/code/linting-code-style.instructions.md`
+- Oxlint & style: `.github/instructions/code/linting-code-style.instructions.md`
 - Provider/context patterns: `.github/instructions/code/provider-context-patterns.instructions.md`
 - Picocolors CLI styling: `.github/instructions/code/picocolors-cli-styling.instructions.md`
 
@@ -82,7 +86,7 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 
 ---
 
-## Rules — Markdown Tables (universal)
+## Rules — Markdown Tables
 
 - Padded pipes: one space on each side of every `|`, including the separator row.
 - Align column widths so all cells in the same column are equal width.
@@ -91,17 +95,8 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 
 ## Git Policy
 
-- IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages. Not ever, not for any reason.
-- [Git — Commits](/.github/instructions/git/git-policy.instructions.md#commits)
-- [Git — Releases](/.github/instructions/git/git-policy.instructions.md#releases)
-
----
-
-## Agent Memory Files
-
-- `.agents/memory.md` is the canonical session log path for this repo.
-- `.agents/handoff.md` is the canonical project state snapshot path for this repo.
-- `.claude/memory.md` is deprecated here and should only remain as a pointer, not the real log.
+- IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages. Non-negotiable.
+- `.github/instructions/git/git-policy.instructions.md` (see Commits and Releases sections)
 
 ---
 
