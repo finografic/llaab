@@ -93,8 +93,7 @@
   color: var(--text-muted);
   text-decoration: none;
   min-width: 0;
-  transition:
-    color var(--duration-fast) var(--ease);
+  transition: color var(--duration-fast) var(--ease);
 }
 
 .branchLink:hover {

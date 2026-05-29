@@ -1,6 +1,6 @@
-import type { LabNode } from '@llaab/schemas';
-import { NodeSchema } from '@llaab/schemas';
 import { readFile } from 'fs/promises';
+import { NodeSchema } from '@llaab/schemas';
+import type { LabNode } from '@llaab/schemas';
 
 import { parseFrontmatter } from './parse-frontmatter.utils.js';
 

@@ -27,9 +27,9 @@ export const ingestCommand = defineCommand({
     const { url, title, tags } = args;
     const tagList = tags
       ? tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean)
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
       : undefined;
 
     console.log(pc.cyan(`Ingesting: ${url}`));

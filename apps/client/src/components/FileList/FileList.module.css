@@ -55,8 +55,8 @@
   color: var(--text-muted);
 }
 
-.headerCell[data-sort='asc'],
-.headerCell[data-sort='desc'] {
+.headerCell[data-sort="asc"],
+.headerCell[data-sort="desc"] {
   color: var(--accent);
 }
 

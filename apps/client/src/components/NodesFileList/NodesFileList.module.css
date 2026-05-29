@@ -56,10 +56,23 @@
   white-space: nowrap;
 }
 
-.statusSeed     { color: var(--text-faint); }
-.statusGrowing  { color: #ea580c; background: #fff7ed; border-color: #fed7aa; }
-.statusMature   { color: #16a34a; background: #f0fdf4; border-color: #bbf7d0; }
-.statusArchived { color: var(--text-faint); opacity: 0.6; }
+.statusSeed {
+  color: var(--text-faint);
+}
+.statusGrowing {
+  color: #ea580c;
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+.statusMature {
+  color: #16a34a;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.statusArchived {
+  color: var(--text-faint);
+  opacity: 0.6;
+}
 
 /* ─── Tag pills ───────────────────────────────────────────────────────────── */
 
@@ -85,8 +98,18 @@
 
 /* ─── Type icon color tints ───────────────────────────────────────────────── */
 
-.iconIdea        { color: #2563eb; }
-.iconResource    { color: #16a34a; }
-.iconPrompt      { color: #ea580c; }
-.iconSkill       { color: #7c3aed; }
-.iconInstruction { color: #ca8a04; }
+.iconIdea {
+  color: #2563eb;
+}
+.iconResource {
+  color: #16a34a;
+}
+.iconPrompt {
+  color: #ea580c;
+}
+.iconSkill {
+  color: #7c3aed;
+}
+.iconInstruction {
+  color: #ca8a04;
+}

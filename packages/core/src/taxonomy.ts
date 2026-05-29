@@ -4,8 +4,10 @@
  * Tags use a single dimension prefix: `d:` (domain — what the content is about).
  *
  * Other dimensions are handled by dedicated frontmatter fields, NOT tags: • type → idea | transcript | source
+ *
  * | skill | snippet (node kind) • status → seed | growing | mature (lifecycle) • origin → manual | youtube |
- * agent (scope/source)
+ *
+ * Agent (scope/source)
  *
  * Regex right-side = broad catch-net that funnels into the tag on the left. Rules for regex terms: • Only
  * include words that _almost certainly_ mean this domain. • When in doubt, leave it out — missed auto-tags

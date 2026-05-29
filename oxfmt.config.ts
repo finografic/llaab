@@ -1,13 +1,14 @@
+import type { OxfmtConfig, OxfmtOverrideConfig } from '@finografic/oxc-config/oxfmt';
 import {
   AGENT_DOC_MARKDOWN_PATHS,
   agentMarkdown,
   base,
+  css,
   ignorePatterns,
   json,
   markdown,
   sorting,
 } from '@finografic/oxc-config/oxfmt';
-import type { OxfmtConfig, OxfmtOverrideConfig } from '@finografic/oxc-config/oxfmt';
 import { defineConfig } from 'oxfmt';
 
 export default defineConfig({
@@ -26,5 +27,6 @@ export default defineConfig({
       excludeFiles: [],
       options: { ...agentMarkdown },
     },
+    { files: ['*.css', '*.scss'], excludeFiles: [], options: { ...css } },
   ] satisfies OxfmtOverrideConfig[],
 } satisfies OxfmtConfig);
