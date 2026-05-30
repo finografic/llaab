@@ -50,3 +50,9 @@ await ingestYouTube({
 
 - Control layer and execution checklist: [`docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`](docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md)
 - Ubiquitous language: [`LLAAB_GLOSSARY.md`](LLAAB_GLOSSARY.md)
+
+---
+
+## License
+
+MIT © [Justin Rankin](https://github.com/finografic)

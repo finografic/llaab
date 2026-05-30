@@ -1,4 +1,4 @@
-# 🧪 Introducing: LLAAB
+# 🌱 Introducing: LLAAB
 
 > L = Lab / Language / Learning / Loop / Local
 > A = Agent / Automation / Augmented / Architecture

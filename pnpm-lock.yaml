@@ -15,8 +15,8 @@ importers:
         specifier: ^21.0.2
         version: 21.0.2
       '@finografic/md-lint':
-        specifier: ^0.9.7
-        version: 0.9.7
+        specifier: ^0.10.1
+        version: 0.10.1
       '@finografic/oxc-config':
         specifier: ^2.6.2
         version: 2.6.2(oxfmt@0.52.0)(oxlint@1.67.0(oxlint-tsgolint@0.23.0))
@@ -154,8 +154,8 @@ importers:
         specifier: 11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.15)(react@19.2.6))(@types/react@19.2.15)(react@19.2.6)
       '@finografic/md-lint':
-        specifier: 0.9.6
-        version: 0.9.6
+        specifier: 0.10.1
+        version: 0.10.1
       '@finografic/project-scripts':
         specifier: ^1.3.3
         version: 1.3.3(@types/node@24.12.2)(tsx@4.22.3)
@@ -1290,12 +1290,8 @@ packages:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
 
-  '@finografic/md-lint@0.9.6':
-    resolution: {integrity: sha512-vpJXCqcV1OD/FovMNIhrnkHrGA2NBHqclb/5d0r9lRZNuo+5KIs7H/K5vci9Ah6/PcVMpJVnaDv34rvHK69yNQ==, tarball: https://npm.pkg.github.com/download/@finografic/md-lint/0.9.6/93dfddec2a85df3ed5802939904bdc8ad786969d}
-    hasBin: true
-
-  '@finografic/md-lint@0.9.7':
-    resolution: {integrity: sha512-foTPZMShfXbvUrTQgXYlY5YIRFs2z1LC01que6rlOgKojNcAdWrOlhyA0EWTsXHwMMjylS0qysDnrh/3gTW+uA==, tarball: https://npm.pkg.github.com/download/@finografic/md-lint/0.9.7/23bb0303dbcbaeb6b2f2f135fc5c4b36dcf1ea58}
+  '@finografic/md-lint@0.10.1':
+    resolution: {integrity: sha512-x7172NmlPsV2+fi0Ofdq9rAfen/xVLBUtgulT/IX4mgOnVlnqDDO/jXhWee6VDdHnyA+wGe28i22Of1pX/OByA==, tarball: https://npm.pkg.github.com/download/@finografic/md-lint/0.10.1/0cd45779a52dc55cc228751ece58b05be97f8199}
     hasBin: true
 
   '@finografic/oxc-config@2.6.2':
@@ -7129,7 +7125,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@finografic/md-lint@0.9.6':
+  '@finografic/md-lint@0.10.1':
     dependencies:
       globby: 16.2.0
       ignore: 7.0.5
@@ -7137,17 +7133,7 @@ snapshots:
       markdownlint: 0.40.0
       picocolors: 1.1.1
       picomatch: 4.0.4
-    transitivePeerDependencies:
-      - supports-color
-
-  '@finografic/md-lint@0.9.7':
-    dependencies:
-      globby: 16.2.0
-      ignore: 7.0.5
-      jsonc-parser: 3.3.1
-      markdownlint: 0.40.0
-      picocolors: 1.1.1
-      picomatch: 4.0.4
+      tsx: 4.22.3
     transitivePeerDependencies:
       - supports-color
 

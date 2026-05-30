@@ -1,8 +1,14 @@
 # Project Memory Model
 
-> Reference and setup guide for the planning + memory system used in this repo.
+> Reference and setup guide for the file-role system used in this repo.
 > This document is intentionally portable: it can be dropped into another repo and used by an
 > agent to install or repair the same structure there.
+>
+> Scope:
+> This doc explains how `ROADMAP.md`, `NEXT_STEPS.md`, `.agents/handoff.md`, and
+> `.agents/memory.md` relate to each other.
+> It does **not** replace the project's TODO/DONE documentation conventions, which should remain in
+> the existing instructions file.
 
 ---
 
@@ -33,6 +39,10 @@ Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMOR
 ---
 
 ## Roles of the Files
+
+For TODO/DONE naming, lifecycle, and formatting rules, use:
+
+- `.github/instructions/documentation/todo-done-docs.instructions.md`
 
 ### `docs/todo/ROADMAP.md`
 
@@ -114,13 +124,15 @@ If another repo does not yet use this system, install it like this:
 
 1. Ensure `AGENTS.md` exists at repo root and add the exact block above.
 2. Create `docs/todo/ROADMAP.md` if missing.
-3. Create `docs/todo/NEXT_STEPS.md` if the repo wants a separate near-term working list.
+3. Create `docs/todo/NEXT_STEPS.md` if the repo uses a separate near-term working list.
 4. Create `.agents/handoff.md` for the current-state snapshot.
 5. Create `.agents/memory.md` for session logging.
 6. If the repo already has `.claude/memory.md`, move the real content into `.agents/memory.md`.
 7. Leave a short pointer at `.claude/memory.md` if older tooling or habits may still read it.
 8. Ensure ignore rules allow `.agents/handoff.md` to be tracked while keeping `.agents/memory.md`
    gitignored unless the repo intentionally wants it tracked.
+9. If the repo already has TODO/DONE docs, keep using the existing TODO/DONE instruction file for
+   naming and lifecycle rules rather than redefining those rules here.
 
 Suggested transitional `.claude/memory.md` pointer:
 
@@ -160,6 +172,8 @@ If the repo already has some version of these files but they are stale or mixed 
 5. Remove duplicated text that appears in all files.
 6. Add or update `NEXT_STEPS.md` so near-term tasks are actionable.
 7. Add the exact block to `AGENTS.md`.
+8. Leave TODO/DONE structure rules in the existing project instruction file instead of copying them
+   into this document.
 
 Heuristic:
 

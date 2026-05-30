@@ -5,8 +5,6 @@
 - If **NO** initial context needed, then SKIP to NEXT section.
 - If **YES**, initial context needed, then READ [Project Concept & Manifesto](</LLAAB\ -\ CONCEPT\ &\ MANIFESTO.md>)
 
----
-
 ## Project Memory Model
 
 - `docs/todo/ROADMAP.md` = curated milestone plan + completed milestone history.
@@ -29,12 +27,10 @@ Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMOR
 
 ## Roadmap and Planning Docs
 
-**`docs/todo/ROADMAP.md` is the primary high-level plan for this project.**
-**`docs/todo/NEXT_STEPS.md` is the near-term working list** — small tasks, fixes, and manual testing checklists too small for ROADMAP.
-
-- Before proposing or generating new features, check the roadmap for existing items.
-- When conceiving a new feature or initiative, add it to the appropriate priority tier.
-- Detailed planning docs live alongside in `docs/todo/` as `TODO_*.md` (active) or `DONE_*.md` (complete).
+- Before proposing or generating new features, check `ROADMAP.md` for existing priorities.
+- When conceiving a new feature or initiative, add it to the appropriate roadmap tier.
+- Use `NEXT_STEPS.md` for concrete follow-ups, manual validation, and small tasks that do not need full roadmap treatment.
+- Detailed feature planning docs live in `docs/todo/` as `TODO_*.md` (active) or `DONE_*.md` (complete).
 - **TODO/DONE doc conventions:** `.github/instructions/documentation/todo-done-docs.instructions.md`
   — rules for naming, status headers, checkboxes, and graduating `TODO_` → `DONE_`.
 
