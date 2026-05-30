@@ -5,17 +5,20 @@
   "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "explicit",
-    "source.organizeImports": "explicit"
+    "source.organizeImports": "never",
+    "source.sortImports": "explicit",
+    "source.addMissingImports": "explicit"
   },
 
   "eslint.enable": false,
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
-
   "prettier.enable": false,
+
   "oxc.typeAware": true,
   "oxc.lint.run": "onSave",
+
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.preferences.preferTypeOnlyAutoImports": true,
+
   "[javascript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
@@ -53,16 +56,16 @@
     "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.formatOnSave": true
   },
-  "markdownlint.config": {
-    "default": true,
-    "MD001": false,
-    "MD013": false,
-    "MD024": false,
-    "MD025": false,
-    "MD026": false,
-    "MD036": false,
-    "MD040": false,
-    "MD041": false
-  },
+  // "markdownlint.config": {
+  //   "default": true,
+  //   "MD001": false,
+  //   "MD013": false,
+  //   "MD024": false,
+  //   "MD025": false,
+  //   "MD026": false,
+  //   "MD036": false,
+  //   "MD040": false,
+  //   "MD041": false
+  // },
   "markdown.styles": ["node_modules/@finografic/md-lint/styles/markdown-github-light.css"]
 }

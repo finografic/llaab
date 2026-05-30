@@ -15,8 +15,8 @@ importers:
         specifier: ^21.0.2
         version: 21.0.2
       '@finografic/md-lint':
-        specifier: ^0.10.1
-        version: 0.10.1
+        specifier: ^0.12.0
+        version: 0.12.0
       '@finografic/oxc-config':
         specifier: ^2.6.2
         version: 2.6.2(oxfmt@0.52.0)(oxlint@1.67.0(oxlint-tsgolint@0.23.0))
@@ -154,8 +154,8 @@ importers:
         specifier: 11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.15)(react@19.2.6))(@types/react@19.2.15)(react@19.2.6)
       '@finografic/md-lint':
-        specifier: 0.10.1
-        version: 0.10.1
+        specifier: 0.12.0
+        version: 0.12.0
       '@finografic/project-scripts':
         specifier: ^1.3.3
         version: 1.3.3(@types/node@24.12.2)(tsx@4.22.3)
@@ -1290,8 +1290,8 @@ packages:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
 
-  '@finografic/md-lint@0.10.1':
-    resolution: {integrity: sha512-x7172NmlPsV2+fi0Ofdq9rAfen/xVLBUtgulT/IX4mgOnVlnqDDO/jXhWee6VDdHnyA+wGe28i22Of1pX/OByA==, tarball: https://npm.pkg.github.com/download/@finografic/md-lint/0.10.1/0cd45779a52dc55cc228751ece58b05be97f8199}
+  '@finografic/md-lint@0.12.0':
+    resolution: {integrity: sha512-1LBxuazVVa2aH8oqDGoIYHZtU1ZjyllsopiRhwyb0IHaU5NR/DEIXomL+vqQmWeCp7S7d52MXXwo1rxmP843ww==, tarball: https://npm.pkg.github.com/download/@finografic/md-lint/0.12.0/d7132558b270e0c9ec57bd01afb09a383018017f}
     hasBin: true
 
   '@finografic/oxc-config@2.6.2':
@@ -7125,7 +7125,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@finografic/md-lint@0.10.1':
+  '@finografic/md-lint@0.12.0':
     dependencies:
       globby: 16.2.0
       ignore: 7.0.5
