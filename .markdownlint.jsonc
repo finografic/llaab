@@ -1,19 +1,3 @@
 {
-  // Global disables (all categories: standard, agent, vault)
-  "MD001": false,
-  "MD025": false,
-  "MD028": false,
-  "MD034": false,
-  "MD036": false,
-  "MD041": false,
-
-  // Vault nodes — YAML `title:` is implicit h1; body headings start at ##
-  "vault": {
-    "MD001": {
-      "front_matter_title": "^\\s*title\\s*[:=]"
-    },
-    "MD041": {
-      "front_matter_title": "^\\s*title\\s*[:=]"
-    }
-  }
+  "extends": "node_modules/@finografic/md-lint/.markdownlint.jsonc"
 }

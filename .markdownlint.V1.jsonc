@@ -1,0 +1,30 @@
+{
+  // Global disables (all categories: standard, agent, vault)
+  "MD025": false,
+  "MD028": false,
+  "MD034": false,
+  "MD036": false,
+
+  // ========================================================================
+  // Custom overrides for different document types
+  // ========================================================================
+
+  // Standard docs — relaxed heading rules (manifesto, investigation notes, prose-first)
+  "standard": {
+    "MD001": false,
+    "MD041": false
+  },
+  // Agent docs — keep MD041 off (CLAUDE.md → @AGENTS.md, etc.)
+  "agent": {
+    "MD041": false
+  },
+  // Vault nodes — YAML `title:` is implicit h1; body headings start at ##
+  "vault": {
+    "MD001": {
+      "front_matter_title": "^\\s*title\\s*[:=]"
+    },
+    "MD041": {
+      "front_matter_title": "^\\s*title\\s*[:=]"
+    }
+  }
+}

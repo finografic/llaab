@@ -1,5 +1,6 @@
 {
   "npm.packageManager": "pnpm",
+
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "editor.defaultFormatter": "oxc.oxc-vscode",
@@ -56,16 +57,6 @@
     "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.formatOnSave": true
   },
-  // "markdownlint.config": {
-  //   "default": true,
-  //   "MD001": false,
-  //   "MD013": false,
-  //   "MD024": false,
-  //   "MD025": false,
-  //   "MD026": false,
-  //   "MD036": false,
-  //   "MD040": false,
-  //   "MD041": false
-  // },
+
   "markdown.styles": ["node_modules/@finografic/md-lint/styles/markdown-github-light.css"]
 }

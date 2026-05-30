@@ -15,11 +15,11 @@ importers:
         specifier: ^21.0.2
         version: 21.0.2
       '@finografic/md-lint':
-        specifier: ^0.12.0
-        version: 0.12.0
+        specifier: ^0.16.1
+        version: 0.16.1
       '@finografic/oxc-config':
-        specifier: ^2.6.2
-        version: 2.6.2(oxfmt@0.52.0)(oxlint@1.67.0(oxlint-tsgolint@0.23.0))
+        specifier: ^2.6.4
+        version: 2.6.4(oxfmt@0.52.0)(oxlint@1.67.0(oxlint-tsgolint@0.23.0))
       '@finografic/project-scripts':
         specifier: ^1.3.3
         version: 1.3.3(@types/node@24.12.2)(tsx@4.22.3)
@@ -33,8 +33,8 @@ importers:
         specifier: ^9.1.7
         version: 9.1.7
       lint-staged:
-        specifier: ^17.0.5
-        version: 17.0.5
+        specifier: ^17.0.6
+        version: 17.0.6
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
@@ -154,8 +154,8 @@ importers:
         specifier: 11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.15)(react@19.2.6))(@types/react@19.2.15)(react@19.2.6)
       '@finografic/md-lint':
-        specifier: 0.12.0
-        version: 0.12.0
+        specifier: 0.16.1
+        version: 0.16.1
       '@finografic/project-scripts':
         specifier: ^1.3.3
         version: 1.3.3(@types/node@24.12.2)(tsx@4.22.3)
@@ -1290,12 +1290,13 @@ packages:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
 
-  '@finografic/md-lint@0.12.0':
-    resolution: {integrity: sha512-1LBxuazVVa2aH8oqDGoIYHZtU1ZjyllsopiRhwyb0IHaU5NR/DEIXomL+vqQmWeCp7S7d52MXXwo1rxmP843ww==, tarball: https://npm.pkg.github.com/download/@finografic/md-lint/0.12.0/d7132558b270e0c9ec57bd01afb09a383018017f}
+  '@finografic/md-lint@0.16.1':
+    resolution: {integrity: sha512-ndXk7uHG6kzkAnl+oSjy6/y5h/h4Z+JL/vJX5DqlV68Ft2dq+LdWgjSfjhiDJ0ABVq0irD8A3phNMgEEf6hdVw==, tarball: https://npm.pkg.github.com/download/@finografic/md-lint/0.16.1/61b04b72a21614a98e0efc03e22f3e37e6f48295}
     hasBin: true
 
-  '@finografic/oxc-config@2.6.2':
-    resolution: {integrity: sha512-Nz73bT0vsm3ab+t41PS6lyNm0ObCFnSRfkrM9Dgv61vjEPW3lWQ6Z8HgVj8xjuyIH9F7FWB+C5eJ25BMkcD86A==, tarball: https://npm.pkg.github.com/download/@finografic/oxc-config/2.6.2/6fd66110fe9cde46eff406d8f0ec4d2cb0550e12}
+  '@finografic/oxc-config@2.6.4':
+    resolution: {integrity: sha512-xFIDvk5/c4BHnr11pxcdax7WO85IfnviqFk7GVWYk0QUc7khsBZGVYtjtgkwn4Gwa8EMtmpC8v8mLJ68kd8smw==, tarball: https://npm.pkg.github.com/download/@finografic/oxc-config/2.6.4/d7efd290e6615529ddb3d89c45b6c82db86ae511}
+    engines: {node: '>=24.3.0'}
     peerDependencies:
       oxfmt: '>=0.41.0'
       oxlint: '>=1.67.0'
@@ -4286,8 +4287,8 @@ packages:
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
-  lint-staged@17.0.5:
-    resolution: {integrity: sha512-d12yC+/e8RhBjZtaxZn71FyrgU/P5e+uAPifhCLwdosQZP/zamSdKRWDC30ocVIbzDKiFG1McHc/LUgB92GIPw==}
+  lint-staged@17.0.6:
+    resolution: {integrity: sha512-xTowloQX5tfs9TC6SUHnKuBSx/TUx+9w39zRTbVrB70DxUJZh3OZWnOa0LbejxVX9adYuioGJoP4dpQ04QHehg==}
     engines: {node: '>=22.22.1'}
     hasBin: true
 
@@ -7125,7 +7126,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@finografic/md-lint@0.12.0':
+  '@finografic/md-lint@0.16.1':
     dependencies:
       globby: 16.2.0
       ignore: 7.0.5
@@ -7137,7 +7138,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@finografic/oxc-config@2.6.2(oxfmt@0.52.0)(oxlint@1.67.0(oxlint-tsgolint@0.23.0))':
+  '@finografic/oxc-config@2.6.4(oxfmt@0.52.0)(oxlint@1.67.0(oxlint-tsgolint@0.23.0))':
     dependencies:
       execa: 9.6.1
       oxfmt: 0.52.0
@@ -10280,7 +10281,7 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  lint-staged@17.0.5:
+  lint-staged@17.0.6:
     dependencies:
       listr2: 10.2.1
       picomatch: 4.0.4
