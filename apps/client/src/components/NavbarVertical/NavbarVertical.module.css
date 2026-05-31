@@ -1,21 +1,9 @@
-/*
- * NavbarVertical.module.css
- *
- * CSS modules are unlayered — they beat @layer utilities (Panda recipes) by
- * default. Use this file to override DS TreeView recipe defaults where the
- * nav sidebar needs different sizing, color, or layout.
- */
-
-/* ─── Shell ───────────────────────────────────────────────────────────────── */
-
 .nav {
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 16px 10px;
 }
-
-/* ─── Brand ───────────────────────────────────────────────────────────────── */
 
 .brand {
   display: block;
@@ -35,8 +23,6 @@
   text-decoration: none;
 }
 
-/* ─── Divider ─────────────────────────────────────────────────────────────── */
-
 .divider {
   height: 1px;
   background: var(--border-subtle);
@@ -45,85 +31,80 @@
   flex-shrink: 0;
 }
 
-/* ─── Tree root ───────────────────────────────────────────────────────────── */
+.navList,
+.branchList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 
-.treeRoot {
+.navList {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: 2px;
   overflow-y: auto;
-  /* override DS default gap between label + tree slots */
-  gap: 0;
 }
-
-.tree {
-  /* tighten DS default gap between tree nodes */
-  gap: 1px;
-}
-
-/* ─── Branch (section with children) ─────────────────────────────────────── */
 
 .branch {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-/*
- * branchRow: flex container that holds the nav link (fills width) and the
- * expand toggle button (fixed-width, right-aligned). Keeps <a> and <button>
- * as siblings — never nested — so the HTML is valid.
- */
 .branchRow {
   display: flex;
   align-items: center;
   gap: 2px;
-  border-radius: var(--radius-sm);
 }
 
-.branchRow:hover {
-  background: var(--surface);
-}
-
-.branchLink {
-  flex: 1;
+.link {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: 9px;
-  padding: 7px 8px 7px 10px;
+  min-width: 0;
+  padding: 7px 10px;
   border-radius: var(--radius-sm);
+  color: var(--text-muted);
   font-size: 13px;
   font-weight: 450;
-  color: var(--text-muted);
   text-decoration: none;
-  min-width: 0;
-  transition: color var(--duration-fast) var(--ease);
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
 }
 
-.branchLink:hover {
+.link:hover {
+  background: var(--surface);
   color: var(--text);
   text-decoration: none;
 }
 
-.branchLink[data-active] {
+.link[data-active] {
+  background: var(--accent-subtle);
   color: var(--text);
   font-weight: 500;
 }
 
-/* ─── Expand toggle ───────────────────────────────────────────────────────── */
+.link[data-variant="child"] {
+  padding-left: 34px;
+  font-size: 12.5px;
+}
 
-/*
- * Override DS recipe's branchControl defaults (width: 100%, full padding-inline,
- * depth-based indentation). Here it is only the 24×28 chevron button.
- */
+.link[data-variant="child"][data-active] {
+  color: var(--accent-hover);
+}
+
 .expandBtn {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 24px !important;
-  height: 28px !important;
-  flex-shrink: 0 !important;
-  padding: 0 !important;
-  padding-inline-start: 0 !important;
-  padding-inline-end: 0 !important;
-  background: transparent !important;
-  border-radius: var(--radius-sm) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--text-faint);
   cursor: pointer;
   transition:
@@ -132,101 +113,34 @@
 }
 
 .expandBtn:hover {
-  background: var(--surface-raised) !important;
+  background: var(--surface-raised);
   color: var(--text-muted);
 }
 
-/* DS recipe animates the indicator via [data-state=open] — keep it. */
-.indicator {
+.expandIcon {
+  transition: transform var(--duration-fast) var(--ease);
+}
+
+.expandIconOpen {
+  transform: rotate(90deg);
+  transition: transform var(--duration-fast) var(--ease);
+}
+
+.branchList {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
 }
-
-/* ─── Branch content + indent guide ──────────────────────────────────────── */
-
-.branchContent {
-  overflow: hidden;
-}
-
-.indentGuide {
-  /* DS recipe positions via --tree-offset; override color to match nav palette */
-  background: var(--border-subtle) !important;
-}
-
-/* ─── Leaf item ───────────────────────────────────────────────────────────── */
-
-/*
- * TreeView.Item asChild renders as <a>. Override DS recipe item defaults
- * (depth indentation, padding-inline) with nav-appropriate sizing.
- */
-.leafItem {
-  display: flex !important;
-  align-items: center !important;
-  padding: 6px 10px !important;
-  padding-inline-start: 10px !important;
-  border-radius: var(--radius-sm) !important;
-  font-size: 13px;
-  font-weight: 450;
-  color: var(--text-muted);
-  text-decoration: none;
-  transition:
-    background var(--duration-fast) var(--ease),
-    color var(--duration-fast) var(--ease);
-}
-
-.leafItem:hover {
-  background: var(--surface);
-  color: var(--text);
-  text-decoration: none;
-}
-
-/* data-selected is set by Ark from selectedValue; data-active is our custom attr */
-.leafItem[data-selected],
-.leafItem[data-active] {
-  background: var(--accent-subtle);
-  color: var(--text);
-  font-weight: 500;
-}
-
-.itemText {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  flex: 1;
-  overflow: hidden;
-}
-
-/* ─── Shared: icon + label ────────────────────────────────────────────────── */
 
 .icon {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  color: inherit;
 }
 
 .label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* ─── Sub-items (children of a branch) ───────────────────────────────────── */
-
-/*
- * Child TreeView.Items inside a Branch get depth-based indentation from the
- * DS recipe via CSS vars. Override padding-inline-start to use our simpler
- * fixed indent (left-aligns to icon column of parent).
- */
-.branch .leafItem {
-  padding-inline-start: 28px !important;
-  font-size: 12.5px;
-}
-
-.branch .leafItem[data-selected],
-.branch .leafItem[data-active] {
-  color: var(--accent-hover);
-  background: var(--accent-subtle);
-  font-weight: 450;
 }

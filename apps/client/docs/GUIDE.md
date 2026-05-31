@@ -335,7 +335,7 @@ When deciding where a style belongs, work through this order:
 
 | Layer                | File(s)                                 | Owns                                                            |
 | -------------------- | --------------------------------------- | --------------------------------------------------------------- |
-| 1. Design system     | `@finografic/design-system/styles/`     | Base resets, icon utilities, keyframes                          |
+| 1. Theme foundation  | `app.css`, Tailwind, shadcn/ui          | Theme tokens, resets, shared component primitives               |
 | 2. Global primitives | `app.css`, `forms.css`                  | Tokens, element defaults, `.btn`, `.card`, `.status*`, `.field` |
 | 3. Layout shell      | `AppLayout.astro` `<style>`             | Sidebar, header, main-pane grid                                 |
 | 4. Page layout       | `pages/*.astro` `<style>`               | Max-width, gap, heading sizes specific to one route             |
@@ -344,9 +344,9 @@ When deciding where a style belongs, work through this order:
 **The rule:** apply the style at the lowest layer that covers it. Never duplicate a token or
 primitive in a higher layer just because it's convenient.
 
-### Bridging design-system gaps with `:global()`
+### Bridging primitive gaps with `:global()`
 
-React components that predate full design-system integration often use plain HTML elements
+React components that predate full shared primitive usage often use plain HTML elements
 (`<button type="submit">`, `<input>`) without the `.btn` / `.field` class names that `forms.css`
 depends on for layout. `forms.css` sets colors on `button[type='submit']` via the `.btn--primary`
 selector, but padding, `display`, `border-radius`, etc. live on the `.btn` base class — so an

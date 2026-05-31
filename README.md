@@ -110,23 +110,15 @@ pnpm dev
 
 Runs the workspace dev stack (including the Astro client at `http://localhost:4321` — see [`apps/client/README.md`](apps/client/README.md)).
 
-### Icon selector (`@finografic/icons`)
+### Client UI stack
 
-Customize which Lucide icons are available to the client UI. Run from the **repo root** (not `apps/client`):
+`apps/client` now uses:
 
-```bash
-pnpm icons
-```
+- Tailwind CSS v4
+- shadcn/ui
+- an app-local theme preset applied directly in the client workspace
 
-This starts the icons API server (`http://localhost:5001`) and the [lucide-manager](https://github.com/finografic/lucide-manager) picker in the browser. On first run, `icons.config.json` is created at the repo root from the published DS default set; each save regenerates `icons.generated.ts` there.
-
-| File                         | Notes                                                              |
-| ---------------------------- | ------------------------------------------------------------------ |
-| `icons.config.json`          | Source of truth — commit                                           |
-| `icons.generated.ts`         | Generated — commit (recommended) so builds work without the server |
-| `lucide-manager.config.json` | Written on startup — gitignored                                    |
-
-Root `package.json` already lists `@finografic/icons`, `@finografic/lucide-manager`, and `concurrently` as devDependencies. Wire imports in `apps/client` from `icons.generated.ts` (path relative to your app). To change icons for **all** Finografic apps, edit defaults in the [design-system](https://github.com/finografic/design-system) repo and release `@finografic/icons`.
+The client no longer depends on PandaCSS or `@finografic/design-system`.
 
 ## YouTube ingestion
 

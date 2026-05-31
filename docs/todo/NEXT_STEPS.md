@@ -3,7 +3,7 @@
 > Maintained working list. Larger initiatives live in [`ROADMAP.md`](./ROADMAP.md) — this doc
 > covers concrete near-term tasks, manual testing, and small fixes not large enough for ROADMAP.
 >
-> Last updated: 2026-05-28
+> Last updated: 2026-06-01
 
 ---
 
@@ -12,6 +12,10 @@
 Things to verify end-to-end after recent pipeline changes:
 
 - [x] Ingest a fresh YouTube URL → confirm transcript + source nodes created
+- [ ] Verify `/ingest` drag-and-drop still works after the shadcn migration
+- [ ] Verify `/ingest` pipeline cards still show correct states for fresh ingest, reused transcript, and extract retry
+- [ ] Verify sidebar nav expand/collapse + active route styling after the shadcn migration
+- [ ] Verify `/vault` file tree selection and content preview after replacing the DS tree
 - [ ] Ingest same URL again → confirm dedup fires (`Already saved` in UI)
 - [ ] Ingest URL with content from different domains (d:infra, d:ui, etc.) → confirm tag variance
 - [ ] Verify extraction produces ideas in `/vault/nodes/ideas/` with correct `source_id`
@@ -41,6 +45,9 @@ Things to verify end-to-end after recent pipeline changes:
 - [ ] **`related` field on idea nodes** — currently always `[]`. Consider auto-linking extracted ideas
       to their transcript via `related` (in addition to `source_id`). Low priority — `source_id` is
       the primary provenance link.
+
+- [ ] **shadcn follow-up cleanup** — review remaining client routes/layouts for places where
+      app-local semantic CSS variables can be simplified further now that Panda/DS are gone.
 
 ---
 

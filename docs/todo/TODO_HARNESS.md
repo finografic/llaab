@@ -1,4 +1,6 @@
-# Harness Integration
+# TODO — Harness Integration
+
+> **Status:** Phase 1 spike complete (2026-05-31). Real-flow validation and priority decision still pending.
 
 ## Summary
 

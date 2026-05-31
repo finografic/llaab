@@ -44,7 +44,7 @@ Dependency chain (one-directional):
 - Tests: Vitest 4.x
 - Server: Hono 4.x, http-status-codes, @hono/zod-validator
 - Client: Astro 6, React 19, React Hook Form 7.x, @astrojs/react
-- CSS: Panda CSS 1.9.1, `@finografic/design-system` (linked local)
+- CSS: Tailwind CSS 4, shadcn/ui, app-local semantic CSS variables
 - Linting: ESLint 9.x, typescript-eslint, oxfmt 0.42.0
 - Hooks: husky + lint-staged (pre-commit: lint + format + typecheck)
 - Commits: commitlint
@@ -55,8 +55,9 @@ Dependency chain (one-directional):
 
 Pure UI. All data calls go to `@llaab/server` via `src/lib/api.ts` (Hono typed RPC client).
 Vite dev proxy forwards `/api/*` → `SERVER_URL` (default `http://localhost:3000`).
-Cross-repo React deduplication: `@finografic/design-system` lives outside the monorepo, so its transitive deps (`@ark-ui/react`, `@zag-js/react`) resolve React from the DS's own `node_modules`, creating a second React instance that breaks SSR hooks. Fixed via `vite.ssr.noExternal` for all three packages + `resolve.dedupe`.
-`TreeView.Root` requires `collection={collection as any}` — `withContext`/`withProvider` wrappers erase the `TreeCollection<T>` generic; this is a DS typing limitation, not a usage-site bug.
+Client styling is app-local: Tailwind v4 + shadcn/ui primitives under `src/components/ui/`, plus
+semantic CSS variables in `src/styles/app.css`.
+The old PandaCSS + linked design-system stack has been removed from the client.
 Vault pages load data directly via `@llaab/core` in frontmatter (no API hop); auth gate at top.
 
 Layout hierarchy: `BaseLayout` owns `<html class="dark">/<head>/<body>` + CSS imports.
@@ -64,26 +65,29 @@ Layout hierarchy: `BaseLayout` owns `<html class="dark">/<head>/<body>` + CSS im
 Inner pages use `PageLayout` (hero / optional aside / main zones) + `PageHero` (eyebrow, title, actions slot, meta bar). See `LAYOUT_AND_PAGES_GUIDE.md`.
 `FileList` exists as a reusable TanStack-based list component for Finder-style index views.
 
-CSS: `app.css` imports `styled-system/styles.css` (Panda tokens) first, then DS global.css, then forms.css.
-Base reset and app globals wrapped in `@layer base {}` so Panda `@layer utilities` wins the cascade.
+CSS: `app.css` imports Tailwind, `tw-animate-css`, shadcn theme helpers, and `forms.css`.
+The app keeps a local semantic token layer (`--bg`, `--surface`, `--text`, `--accent`, etc.) so
+route-level styles do not depend directly on any external design package.
 Dark mode is always active via `class="dark"` on `<html>` (hardcoded — LLAAB is dark-only).
-Primary color (indigo) is set in `panda.config.ts` via `createColorTokens({ primary: 'oklch(59% 0.234 277)' })`.
+Primary color and base palette now come from the applied shadcn preset.
 
-| Route                     | Description                                                                                  |
-| ------------------------- | -------------------------------------------------------------------------------------------- |
-| `/ingest`                 | YouTube URL form; two-phase: ingest fires first → Transcript Saved card, then extraction     |
-| `/llm`                    | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list |
-| `/vault`                  | Gated file-tree browser — DS TreeView sidebar (FolderIcon/FolderOpenIcon) + raw file viewer  |
-| `/vault/transcripts/[id]` | Detail: source metadata, summary, extracted ideas (linked), Re-extract button                |
-| `/vault/nodes`            | PageLayout + NodesFileList island; nodes by type (idea/resource/prompt/skill/instruction)    |
-| `/vault/nodes/[id]`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                 |
-| `/vault/sources/[id]`     | Detail: kind/follow/url/platforms, linked transcripts with idea count                        |
-| `/vault/runs/[id]`        | Detail: summary grid, stages table, decisions list, error block                              |
+| Route                     | Description                                                                                               |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `/ingest`                 | URL form with card-wide drag/drop; two-phase: ingest fires first → Transcript Saved card, then extraction |
+| `/llm`                    | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list              |
+| `/vault`                  | Gated file-tree browser — local recursive tree + raw file viewer                                          |
+| `/vault/transcripts/[id]` | Detail: source metadata, summary, extracted ideas (linked), Re-extract button                             |
+| `/vault/nodes`            | PageLayout + NodesFileList island; nodes by type (idea/resource/prompt/skill/instruction)                 |
+| `/vault/nodes/[id]`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                              |
+| `/vault/sources/[id]`     | Detail: kind/follow/url/platforms, linked transcripts with idea count                                     |
+| `/vault/runs/[id]`        | Detail: summary grid, stages table, decisions list, error block                                           |
 
 ### `@llaab/server` — Hono + Bun (port 3000)
 
 Auth: `X-API-Key` vs `SERVER_API_KEY` env. No key set = dev mode, auth skipped.
 Each route group: `*.schema.ts` (Zod), `*.routes.ts` (`{ path, handler }` exports), `index.ts` (wiring).
+Long-running ingest and extract routes explicitly disable Bun's per-request idle timeout so the
+client does not receive false network failures while the server continues extracting.
 
 | Route                                     | Description                                                                     |
 | ----------------------------------------- | ------------------------------------------------------------------------------- |

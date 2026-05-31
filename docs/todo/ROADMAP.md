@@ -151,6 +151,7 @@ Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 
 | Date       | Item                                                                                                           |
 | ---------- | -------------------------------------------------------------------------------------------------------------- |
+| 2026-06-01 | Client UI migration — remove PandaCSS and `@finografic/design-system`; adopt app-local shadcn/ui + Tailwind 4  |
 | 2026-05-28 | Repo public-readiness — vault privacy audit flow, initial `lab/` approvals, and prepare-to-publish cleanup     |
 | 2026-04-29 | Vault browser nodes page — `PageLayout` + `FileList` + DS TreeView integration                                 |
 | 2026-04-28 | Fix client SSR React dedupe — cross-repo design-system / Ark / Zag single-instance resolution                  |

@@ -1,13 +1,14 @@
-import { TagsInputDS } from '@finografic/design-system/forms';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { api } from '../lib/api';
-
-// ── Tag helpers (same as IngestForm) ─────────────────────────────────────────
+import { TagInputField } from '@/components/TagInputField';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { api } from '@/lib/api';
 
 const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
-const KNOWN_TAGS = KNOWN_DOMAINS.map((d) => `d:${d}`);
+const KNOWN_TAGS = KNOWN_DOMAINS.map((domain) => `d:${domain}`);
 
 function normalizeTag(raw: string): string {
   const trimmed = raw.trim().toLowerCase();
@@ -15,8 +16,6 @@ function normalizeTag(raw: string): string {
   if (KNOWN_DOMAINS.includes(trimmed)) return `d:${trimmed}`;
   return trimmed;
 }
-
-// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface FormValues {
   title: string;
@@ -28,8 +27,6 @@ interface CreateResult {
   path: string;
   type: string;
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export function CreateIdeaPanel() {
   const [open, setOpen] = useState(false);
@@ -58,34 +55,43 @@ export function CreateIdeaPanel() {
           type: 'idea',
           title,
           body: body || undefined,
-          tags: allTags.length ? allTags : undefined,
+          tags: allTags.length > 0 ? allTags : undefined,
         },
       });
       const json = await res.json();
       if ('error' in json) throw new Error(json.error);
+
       setResult(json);
       reset();
       setTags([]);
       setTagInput('');
-      // Reload the page after a short delay so the new node appears in the list
       setTimeout(() => globalThis.location.reload(), 1200);
-    } catch (err) {
-      setApiError(err instanceof Error ? err.message : 'Failed to create idea.');
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : 'Failed to create idea.');
     }
   };
 
-  const suggestions = KNOWN_TAGS.filter((t) => {
-    if (tags.includes(t)) return false;
+  const suggestions = KNOWN_TAGS.filter((tag) => {
+    if (tags.includes(tag)) return false;
     if (!tagInput) return true;
     const normalized = normalizeTag(tagInput);
-    return t.includes(normalized) || t.includes(tagInput.toLowerCase());
+    return tag.includes(normalized) || tag.includes(tagInput.toLowerCase());
   });
+
+  const closePanel = () => {
+    setOpen(false);
+    setResult(null);
+    setApiError(null);
+    reset();
+    setTags([]);
+    setTagInput('');
+  };
 
   if (!open) {
     return (
-      <button className="btn btn--primary btn--sm" onClick={() => setOpen(true)}>
+      <Button size="sm" onClick={() => setOpen(true)}>
         + New Idea
-      </button>
+      </Button>
     );
   }
 
@@ -93,18 +99,7 @@ export function CreateIdeaPanel() {
     <div className="create-idea-panel card">
       <div className="create-idea-panel__header">
         <h2 className="create-idea-panel__title">New Idea</h2>
-        <button
-          className="create-idea-panel__close"
-          aria-label="Close"
-          onClick={() => {
-            setOpen(false);
-            setResult(null);
-            setApiError(null);
-            reset();
-            setTags([]);
-            setTagInput('');
-          }}
-        >
+        <button className="create-idea-panel__close" aria-label="Close" onClick={closePanel}>
           ✕
         </button>
       </div>
@@ -119,7 +114,7 @@ export function CreateIdeaPanel() {
         <form className="create-idea-form" onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="field">
             <label htmlFor="idea-title">Title</label>
-            <input
+            <Input
               id="idea-title"
               type="text"
               autoFocus
@@ -127,12 +122,12 @@ export function CreateIdeaPanel() {
               placeholder="A one-line description of the idea"
               {...register('title', { required: 'Title is required.' })}
             />
-            {errors.title && <span className="field-error">{errors.title.message}</span>}
+            {errors.title ? <span className="field-error">{errors.title.message}</span> : null}
           </div>
 
           <div className="field">
             <label htmlFor="idea-body">Notes (optional)</label>
-            <textarea
+            <Textarea
               id="idea-body"
               rows={4}
               disabled={isSubmitting}
@@ -141,60 +136,35 @@ export function CreateIdeaPanel() {
             />
           </div>
 
-          <TagsInputDS
-            size="sm"
+          <TagInputField
             label="Tags (optional)"
             description="Domain tags — e.g. d:llm, d:automation."
             placeholder="d:llm"
             value={tags}
+            inputValue={tagInput}
+            suggestions={suggestions}
+            disabled={isSubmitting}
             onChange={setTags}
             onInputValueChange={setTagInput}
-            disabled={isSubmitting}
-            validate={({ inputValue }) => {
-              const norm = normalizeTag(inputValue);
-              return norm.startsWith('d:') && norm.length > 2;
-            }}
+            normalizeTag={normalizeTag}
+            validateTag={(value) => value.startsWith('d:') && value.length > 2}
           />
 
-          {tagInput && suggestions.length > 0 && (
-            <div className="tag-suggestions">
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className="tag-suggestion"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setTags((prev) => [...new Set([...prev, s])]);
-                    setTagInput('');
-                  }}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-
           <div className="create-idea-form__actions">
-            <button type="submit" className="btn btn--primary btn--sm" disabled={isSubmitting}>
+            <Button type="submit" size="sm" disabled={isSubmitting}>
               {isSubmitting ? 'Saving…' : 'Save idea'}
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              disabled={isSubmitting}
-              onClick={() => setOpen(false)}
-            >
+            </Button>
+            <Button type="button" variant="ghost" size="sm" disabled={isSubmitting} onClick={closePanel}>
               Cancel
-            </button>
+            </Button>
           </div>
 
-          {apiError && (
+          {apiError ? (
             <div className="status status--error">
               <span className="status__label">Error</span>
               <span className="status__message">{apiError}</span>
             </div>
-          )}
+          ) : null}
         </form>
       )}
     </div>

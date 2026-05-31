@@ -1,11 +1,8 @@
-import { createTreeCollection, TreeView } from '@finografic/design-system/components';
-import { ChevronRightIcon, FileIcon, FolderIcon, FolderOpenIcon } from '@finografic/icons';
+import { ChevronRight, FileText, Folder, FolderOpen } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { api } from '../lib/api';
 import s from './VaultBrowser.module.css';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { api } from '@/lib/api';
 
 export interface VaultNode {
   name: string;
@@ -18,25 +15,28 @@ interface Props {
   tree: VaultNode[];
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export function VaultBrowser({ tree }: Props) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const collection = useMemo(
-    () =>
-      createTreeCollection<VaultNode>({
-        nodeToValue: (node) => node.path,
-        nodeToString: (node) => node.name,
-        rootNode: { name: '__ROOT__', path: '__ROOT__', type: 'dir', children: tree },
-      }),
-    [tree],
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(
+    new Set(tree.filter((node) => node.type === 'dir').map((node) => node.path)),
   );
 
-  const defaultExpandedValue = useMemo(() => tree.filter((n) => n.type === 'dir').map((n) => n.path), [tree]);
+  const rootNodes = useMemo(() => tree, [tree]);
+
+  const toggleDirectory = (path: string) => {
+    setExpandedDirs((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  };
 
   const selectFile = async (path: string) => {
     if (selectedPath === path) return;
@@ -44,13 +44,14 @@ export function VaultBrowser({ tree }: Props) {
     setContent(null);
     setError(null);
     setLoading(true);
+
     try {
       const res = await api.vault.file.$get({ query: { path } });
       const json = await res.json();
       if ('error' in json) throw new Error(json.error);
       setContent(json.content);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load file.');
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Failed to load file.');
     } finally {
       setLoading(false);
     }
@@ -59,84 +60,100 @@ export function VaultBrowser({ tree }: Props) {
   return (
     <div className={s.browser}>
       <nav className={s.tree} aria-label="Vault files">
-        <TreeView.Root
-          collection={collection as any}
-          selectedValue={selectedPath ? [selectedPath] : []}
-          defaultExpandedValue={defaultExpandedValue}
-          onSelectionChange={({ selectedValue }) => {
-            const path = selectedValue[0];
-            if (path) selectFile(path);
-          }}
-          size="sm"
-          className={s.treeRoot}
-        >
-          <TreeView.Tree>
-            {tree.map((node, index) => (
-              <VaultTreeNode key={node.path} node={node} indexPath={[index]} />
-            ))}
-          </TreeView.Tree>
-        </TreeView.Root>
+        <ul className={s.treeList}>
+          {rootNodes.map((node) => (
+            <VaultTreeNode
+              key={node.path}
+              node={node}
+              depth={0}
+              selectedPath={selectedPath}
+              expandedDirs={expandedDirs}
+              toggleDirectory={toggleDirectory}
+              selectFile={selectFile}
+            />
+          ))}
+        </ul>
       </nav>
 
       <div className={s.viewer}>
-        {!selectedPath && <p className={s.viewerEmpty}>Select a file to view its contents.</p>}
-        {selectedPath && loading && <p className={s.viewerLoading}>Loading…</p>}
-        {selectedPath && error && <p className={s.viewerError}>{error}</p>}
-        {selectedPath && !loading && content !== null && (
+        {!selectedPath ? <p className={s.viewerEmpty}>Select a file to view its contents.</p> : null}
+        {selectedPath && loading ? <p className={s.viewerLoading}>Loading…</p> : null}
+        {selectedPath && error ? <p className={s.viewerError}>{error}</p> : null}
+        {selectedPath && !loading && content !== null ? (
           <div className={s.viewerContent}>
             <p className={s.viewerPath}>{selectedPath}</p>
             <pre className={s.viewerPre}>{content}</pre>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
 }
 
-// ─── Recursive tree node ──────────────────────────────────────────────────────
-
-interface VaultTreeNodeProps {
+function VaultTreeNode({
+  node,
+  depth,
+  selectedPath,
+  expandedDirs,
+  toggleDirectory,
+  selectFile,
+}: {
   node: VaultNode;
-  indexPath: number[];
-}
+  depth: number;
+  selectedPath: string | null;
+  expandedDirs: Set<string>;
+  toggleDirectory: (path: string) => void;
+  selectFile: (path: string) => void;
+}) {
+  if (node.type === 'dir') {
+    const expanded = expandedDirs.has(node.path);
 
-function VaultTreeNode({ node, indexPath }: VaultTreeNodeProps) {
+    return (
+      <li className={s.treeNode}>
+        <button
+          type="button"
+          className={s.treeButton}
+          style={{ paddingLeft: `${12 + depth * 16}px` }}
+          onClick={() => toggleDirectory(node.path)}
+        >
+          <ChevronRight size={12} className={expanded ? s.chevronOpen : s.chevron} aria-hidden />
+          {expanded ? <FolderOpen size={14} aria-hidden /> : <Folder size={14} aria-hidden />}
+          <span>{node.name}</span>
+        </button>
+
+        {expanded && node.children?.length ? (
+          <ul className={s.treeChildren}>
+            {node.children.map((child) => (
+              <VaultTreeNode
+                key={child.path}
+                node={child}
+                depth={depth + 1}
+                selectedPath={selectedPath}
+                expandedDirs={expandedDirs}
+                toggleDirectory={toggleDirectory}
+                selectFile={selectFile}
+              />
+            ))}
+          </ul>
+        ) : null}
+      </li>
+    );
+  }
+
+  const active = selectedPath === node.path;
+
   return (
-    <TreeView.NodeProvider node={node} indexPath={indexPath}>
-      <TreeView.NodeContext>
-        {(state) =>
-          node.type === 'dir' ? (
-            <TreeView.Branch>
-              <TreeView.BranchControl>
-                <TreeView.BranchIndicator>
-                  <ChevronRightIcon width={12} height={12} aria-hidden />
-                </TreeView.BranchIndicator>
-                <TreeView.BranchText>
-                  {state.expanded ? (
-                    <FolderOpenIcon width={14} height={14} aria-hidden />
-                  ) : (
-                    <FolderIcon width={14} height={14} aria-hidden />
-                  )}
-                  {node.name}
-                </TreeView.BranchText>
-              </TreeView.BranchControl>
-              <TreeView.BranchContent>
-                <TreeView.BranchIndentGuide />
-                {node.children?.map((child, i) => (
-                  <VaultTreeNode key={child.path} node={child} indexPath={[...indexPath, i]} />
-                ))}
-              </TreeView.BranchContent>
-            </TreeView.Branch>
-          ) : (
-            <TreeView.Item>
-              <TreeView.ItemText>
-                <FileIcon width={14} height={14} aria-hidden />
-                {node.name}
-              </TreeView.ItemText>
-            </TreeView.Item>
-          )
-        }
-      </TreeView.NodeContext>
-    </TreeView.NodeProvider>
+    <li className={s.treeNode}>
+      <button
+        type="button"
+        className={s.treeButton}
+        data-active={active || undefined}
+        style={{ paddingLeft: `${28 + depth * 16}px` }}
+        onClick={() => selectFile(node.path)}
+      >
+        <FileText size={14} aria-hidden />
+        <span>{node.name}</span>
+      </button>
+    </li>
   );
 }

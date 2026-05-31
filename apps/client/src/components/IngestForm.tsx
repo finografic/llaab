@@ -1,17 +1,15 @@
-import { Button, Spinner } from '@finografic/design-system/components';
-import { TagsInputDS } from '@finografic/design-system/forms';
-import { Col, Row } from '@finografic/design-system/grid';
-import { Flex } from '@styled-system/jsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { api } from 'lib/api';
-import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
-
-// ── Tag helpers ───────────────────────────────────────────────────────────────
+import { TagInputField } from '@/components/TagInputField';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { api } from '@/lib/api';
+import { formatElapsed, useElapsedSeconds } from '@/lib/heartbeat';
 
 const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
-const KNOWN_TAGS = KNOWN_DOMAINS.map((d) => `d:${d}`);
+const KNOWN_TAGS = KNOWN_DOMAINS.map((domain) => `d:${domain}`);
 
 function normalizeTag(raw: string): string {
   const trimmed = raw.trim().toLowerCase();
@@ -49,17 +47,18 @@ function extractDroppedUrl(dataTransfer: DataTransfer): string | null {
       .find((line) => line.length > 0 && !line.startsWith('#'));
     if (firstUri) return firstUri;
   }
+
   const plainText = dataTransfer.getData('text/plain').trim();
   if (plainText && isHttpUrl(plainText)) return plainText;
+
   const downloadUrl = dataTransfer.getData('DownloadURL');
   if (downloadUrl) {
     const maybeUrl = downloadUrl.split(':').at(-1)?.trim() ?? '';
     if (isHttpUrl(maybeUrl)) return maybeUrl;
   }
+
   return null;
 }
-
-// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface FormValues {
   url: string;
@@ -73,8 +72,6 @@ interface TranscriptData {
   id: string;
   filename: string;
 }
-
-// ── Icons ─────────────────────────────────────────────────────────────────────
 
 function CheckIcon() {
   return (
@@ -132,8 +129,6 @@ function RetryButton({ onClick, disabled }: { onClick: () => void; disabled: boo
   );
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
 function PipelineCard({
   phase,
   label,
@@ -153,35 +148,18 @@ function PipelineCard({
 
   return (
     <div className={`pipeline-card pipeline-card--${phase}`}>
-      <div
-      // className="pipeline-card__main"
-      >
-        <Row direction="row" align="center" justify="space-between">
-          <Col xs={6}>
-            <span className="pipeline-card__label">{label}</span>
-          </Col>
-          <Col xs={2}>
-            {phase === 'active' && startedAt != null && (
+      <div className="pipeline-card__main">
+        <div className="pipeline-card__row">
+          <span className="pipeline-card__label">{label}</span>
+          <div className="pipeline-card__meta">
+            {phase === 'active' && startedAt != null ? (
               <span className="pipeline-card__elapsed">{formatElapsed(elapsed)}</span>
-            )}
-          </Col>
-          <Col xs={1}>
+            ) : null}
             <div className="pipeline-card__status">{statusSlot}</div>
-          </Col>
-        </Row>
-        {hasBody ? (
-          <Row>
-            <Col>
-              <div className="pipeline-card__body">{bodyChildren}</div>
-            </Col>
-          </Row>
-        ) : null}
-        {/* <span className="pipeline-card__label">{label}</span> */}
-        {/* {hasBody ? <div className="pipeline-card__body">{bodyChildren}</div> : null} */}
+          </div>
+        </div>
+        {hasBody ? <div className="pipeline-card__body">{bodyChildren}</div> : null}
       </div>
-      {/* {phase === 'active' && startedAt != null && (
-        <span className="pipeline-card__elapsed">{formatElapsed(elapsed)}</span>
-      )} */}
     </div>
   );
 }
@@ -205,6 +183,7 @@ function StatusCard({
 
 function IdeaList({ ideas }: { ideas: Array<{ id: string; title: string }> }) {
   if (ideas.length === 0) return null;
+
   return (
     <ul className="pipeline-card__item-list">
       {ideas.map((idea) => (
@@ -217,8 +196,6 @@ function IdeaList({ ideas }: { ideas: Array<{ id: string; title: string }> }) {
     </ul>
   );
 }
-
-// ── Data fetchers ─────────────────────────────────────────────────────────────
 
 async function fetchExistingIdeas(transcriptId: string): Promise<Array<{ id: string; title: string }>> {
   const res = await api.vault.transcripts[':id'].ideas.$get({ param: { id: transcriptId } });
@@ -238,18 +215,18 @@ async function runExtract(transcriptId: string): Promise<{
       ideas?: Array<{ id: string; title: string }>;
       error?: string;
     };
+
     if (json.success) return { phase: 'success', ideas: json.ideas ?? [] };
     if (json.error?.includes('already exists')) {
       const ideas = await fetchExistingIdeas(transcriptId);
       return ideas.length > 0 ? { phase: 'existing', ideas } : { phase: 'extractable' };
     }
+
     return { phase: 'failed', error: json.error };
   } catch {
     return { phase: 'failed', error: 'Network error during extraction.' };
   }
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 interface IngestFormProps {
   submitOnDrop?: boolean;
@@ -297,14 +274,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   useEffect(() => {
     const preventWindowDropNavigation = (event: DragEvent) => {
-      // Allow the ingest-form itself to handle drops; prevent navigation everywhere else.
-      // Must NOT early-return on non-Element targets (e.g. document), or address-bar drags
-      // outside the card will still navigate the page.
       if (event.target instanceof Element && event.target.closest('.ingest-form')) return;
       event.preventDefault();
     };
+
     window.addEventListener('dragover', preventWindowDropNavigation);
     window.addEventListener('drop', preventWindowDropNavigation);
+
     return () => {
       window.removeEventListener('dragover', preventWindowDropNavigation);
       window.removeEventListener('drop', preventWindowDropNavigation);
@@ -312,18 +288,27 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   }, []);
 
   const applyExtractResult = (result: Awaited<ReturnType<typeof runExtract>>) => {
+    setExtractionError(null);
+
     if (result.phase === 'success') {
       setExtractionPhase('success');
       setExtractionIdeas(result.ideas ?? []);
-    } else if (result.phase === 'existing') {
+      return;
+    }
+
+    if (result.phase === 'existing') {
       setExtractionPhase('existing');
       setExtractionIdeas(result.ideas ?? []);
-    } else if (result.phase === 'extractable') {
-      setExtractionPhase('extractable');
-    } else {
-      setExtractionPhase('failed');
-      setExtractionError(result.error ?? 'Unknown error.');
+      return;
     }
+
+    if (result.phase === 'extractable') {
+      setExtractionPhase('extractable');
+      return;
+    }
+
+    setExtractionPhase('failed');
+    setExtractionError(result.error ?? 'Unknown error.');
   };
 
   const onSubmit = async ({ url }: FormValues) => {
@@ -354,13 +339,14 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     const pendingTag = tagInput.trim() ? normalizeTag(tagInput) : null;
     const allTags = pendingTag ? [...new Set([...tags, pendingTag])] : tags;
 
-    // ── Step 1: ingest ────────────────────────────────────────────────────────
     let transcriptId: string;
+
     try {
       const res = await api.ingest.youtube.$post({
         json: { url: trimmedUrl, tags: allTags, skipExtraction: true },
       });
       const json = await res.json();
+
       if (!json.success) {
         setTranscriptPhase('failed');
         setTranscriptError((json as { error?: string }).error ?? 'Ingestion failed.');
@@ -368,10 +354,12 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         setBusy(false);
         return;
       }
+
       const data = json as { result: { id: string; path: string; reused?: boolean } };
       transcriptId = data.result.id;
       const filename = data.result.path.split('/').pop() ?? data.result.path;
       const reused = data.result.reused ?? false;
+
       setTranscriptData({ id: transcriptId, filename });
       setTranscriptPhase(reused ? 'reused' : 'saved');
       setTags([]);
@@ -380,36 +368,28 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       if (reused) {
         setExtractionPhase('pending');
         const ideas = await fetchExistingIdeas(transcriptId);
+
         if (ideas.length > 0) {
           setExtractionPhase('existing');
           setExtractionIdeas(ideas);
         } else {
           setExtractionPhase('extractable');
         }
+
         setBusy(false);
         return;
       }
-    } catch (err) {
+    } catch (error) {
       setTranscriptPhase('failed');
-      setTranscriptError(err instanceof Error ? err.message : 'Ingestion failed.');
+      setTranscriptError(error instanceof Error ? error.message : 'Ingestion failed.');
       setExtractionPhase('waiting');
       setBusy(false);
       return;
     }
 
-    // ── Step 2: extract ───────────────────────────────────────────────────────
-    // Small delay lets the server finish committing the transcript before extraction reads it.
-    await new Promise((resolve) => setTimeout(resolve, 800));
     setExtractionPhase('pending');
     setExtractionStartedAt(Date.now());
-    let extractResult = await runExtract(transcriptId);
-    if (extractResult.phase === 'failed') {
-      // Auto-retry once — the LLM call may have succeeded server-side while the
-      // HTTP connection dropped, or the transcript may not yet be fully indexed.
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      extractResult = await runExtract(transcriptId);
-    }
-    applyExtractResult(extractResult);
+    applyExtractResult(await runExtract(transcriptId));
     setBusy(false);
   };
 
@@ -426,16 +406,14 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setBusy(false);
   };
 
-  const suggestions = KNOWN_TAGS.filter((t) => {
-    if (tags.includes(t)) return false;
+  const suggestions = KNOWN_TAGS.filter((tag) => {
+    if (tags.includes(tag)) return false;
     if (!tagInput) return true;
     const normalized = normalizeTag(tagInput);
-    return t.includes(normalized) || t.includes(tagInput.toLowerCase());
+    return tag.includes(normalized) || tag.includes(tagInput.toLowerCase());
   });
 
   const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
-    // Always prevent default — browsers don't expose URL data during dragenter/dragover,
-    // only during drop. Skipping preventDefault here causes navigation on drop.
     event.preventDefault();
     setIsDropActive(true);
   };
@@ -485,8 +463,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setDropMessage('Dropped content did not resolve to a supported URL.');
   };
 
-  // ── Derived pipeline card props ───────────────────────────────────────────────
-
   const pipelineVisible = transcriptPhase !== 'idle';
 
   const transcriptCardPhase =
@@ -509,7 +485,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const transcriptStatusSlot =
     transcriptPhase === 'processing' ? (
-      <Spinner size={1} aria-hidden />
+      <Spinner className="size-4" aria-hidden />
     ) : transcriptPhase === 'failed' ? (
       <RetryButton onClick={onRetryIngest} disabled={busy} />
     ) : (
@@ -538,7 +514,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const extractionStatusSlot =
     extractionPhase === 'pending' ? (
-      <Spinner size={1} aria-hidden />
+      <Spinner className="size-4" aria-hidden />
     ) : extractionPhase === 'success' || extractionPhase === 'existing' ? (
       <CheckIcon />
     ) : extractionPhase === 'failed' || extractionPhase === 'extractable' ? (
@@ -546,8 +522,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     ) : (
       <WaitingIcon />
     );
-
-  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <div
@@ -564,96 +538,73 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       <div className="ingest-dropzone__desc">{dropzoneDesc}</div>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <Row>
-          <Col>
-            <Flex align="between" direction="column" gap={4}>
-              <div className="field">
-                <label htmlFor="url">Source URL</label>
-                <div className="input-row">
-                  <input
-                    id="url"
-                    type="url"
-                    autoComplete="off"
-                    spellCheck={false}
-                    placeholder="https://www.youtube.com/watch?v=…"
-                    disabled={busy}
-                    {...register('url', {
-                      required: 'URL is required.',
-                      validate: { validUrl: (value) => isHttpUrl(value) || 'Must be a valid URL.' },
-                    })}
-                  />
-                  <Button type="submit" palette="primary" variant="solid" disabled={!canSubmit}>
-                    {buttonLabel}
-                  </Button>
-                </div>
-                {errors.url && <span className="field-error">{errors.url.message}</span>}
-                {!errors.url && sourceKind === 'youtube' && (
-                  <span className="field-hint field-hint--success">
-                    Detected YouTube URL. This can be ingested now.
-                  </span>
-                )}
-                {!errors.url && sourceKind === 'webpage' && (
-                  <span className="field-hint">
-                    Detected website/online reference. Recognition works, but this ingestion path is not wired
-                    yet.
-                  </span>
-                )}
-                {!errors.url && sourceKind === 'unknown' && urlValue.trim().length > 0 && (
-                  <span className="field-hint">Paste or drop a valid URL to classify the source asset.</span>
-                )}
-              </div>
-
-              <TagsInputDS
-                size="sm"
-                label="Tags (optional)"
-                description="Domain tags — e.g. d:llm, d:automation. Type a name to see suggestions."
-                placeholder="d:llm"
-                value={tags}
-                onChange={setTags}
-                onInputValueChange={setTagInput}
+        <div className="ingest-form__stack">
+          <div className="field">
+            <label htmlFor="url">Source URL</label>
+            <div className="input-row">
+              <Input
+                id="url"
+                type="url"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="https://www.youtube.com/watch?v=…"
                 disabled={busy}
-                validate={({ inputValue }) => {
-                  const norm = normalizeTag(inputValue);
-                  return norm.startsWith('d:') && norm.length > 2;
-                }}
+                {...register('url', {
+                  required: 'URL is required.',
+                  validate: { validUrl: (value) => isHttpUrl(value) || 'Must be a valid URL.' },
+                })}
               />
+              <Button type="submit" disabled={!canSubmit} className="shrink-0">
+                {buttonLabel}
+              </Button>
+            </div>
 
-              {tagInput && suggestions.length > 0 && (
-                <div className="tag-suggestions">
-                  {suggestions.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      className="tag-suggestion"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setTags((prev) => [...new Set([...prev, s])]);
-                        setTagInput('');
-                      }}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </Flex>
-          </Col>
-        </Row>
+            {errors.url ? <span className="field-error">{errors.url.message}</span> : null}
+            {!errors.url && sourceKind === 'youtube' ? (
+              <span className="field-hint field-hint--success">
+                Detected YouTube URL. This can be ingested now.
+              </span>
+            ) : null}
+            {!errors.url && sourceKind === 'webpage' ? (
+              <span className="field-hint">
+                Detected website/online reference. Recognition works, but this ingestion path is not wired
+                yet.
+              </span>
+            ) : null}
+            {!errors.url && sourceKind === 'unknown' && urlValue.trim().length > 0 ? (
+              <span className="field-hint">Paste or drop a valid URL to classify the source asset.</span>
+            ) : null}
+          </div>
+
+          <TagInputField
+            label="Tags (optional)"
+            description="Domain tags — e.g. d:llm, d:automation. Type a name to see suggestions."
+            placeholder="d:llm"
+            value={tags}
+            inputValue={tagInput}
+            suggestions={suggestions}
+            disabled={busy}
+            onChange={setTags}
+            onInputValueChange={setTagInput}
+            normalizeTag={normalizeTag}
+            validateTag={(value) => value.startsWith('d:') && value.length > 2}
+          />
+        </div>
       </form>
 
-      {apiError && (
+      {apiError ? (
         <StatusCard phase="warning" label="Error">
           <span className="status-card__text">{apiError}</span>
         </StatusCard>
-      )}
+      ) : null}
 
-      {dropMessage && (
+      {dropMessage ? (
         <StatusCard phase={sourceKind === 'youtube' ? 'success' : 'neutral'} label="Drop result">
           <span className="status-card__text">{dropMessage}</span>
         </StatusCard>
-      )}
+      ) : null}
 
-      {pipelineVisible && (
+      {pipelineVisible ? (
         <div className="pipeline">
           <PipelineCard
             phase={transcriptCardPhase}
@@ -661,7 +612,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
             statusSlot={transcriptStatusSlot}
             startedAt={transcriptStartedAt}
           >
-            {transcriptData && (
+            {transcriptData ? (
               <ul className="pipeline-card__item-list">
                 <li>
                   <a href={`/vault/transcripts/${transcriptData.id}`} className="pipeline-card__link">
@@ -669,10 +620,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
                   </a>
                 </li>
               </ul>
-            )}
-            {transcriptPhase === 'failed' && transcriptError && (
+            ) : null}
+            {transcriptPhase === 'failed' && transcriptError ? (
               <span className="pipeline-card__text">{transcriptError}</span>
-            )}
+            ) : null}
           </PipelineCard>
 
           <PipelineCard
@@ -682,13 +633,15 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
             startedAt={extractionStartedAt}
           >
             {(extractionPhase === 'success' || extractionPhase === 'existing') &&
-              extractionIdeas.length > 0 && <IdeaList ideas={extractionIdeas} />}
-            {extractionPhase === 'failed' && extractionError && (
+            extractionIdeas.length > 0 ? (
+              <IdeaList ideas={extractionIdeas} />
+            ) : null}
+            {extractionPhase === 'failed' && extractionError ? (
               <span className="pipeline-card__text">{extractionError}</span>
-            )}
+            ) : null}
           </PipelineCard>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

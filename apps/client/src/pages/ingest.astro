@@ -65,6 +65,12 @@ import { IngestForm } from '../components/IngestForm';
       box-shadow var(--duration) var(--ease);
   }
 
+  :global(.ingest-form__stack) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
   :global(.ingest-form--drop-active) {
     border-color: oklch(0.68 0.2 145);
     border-style: dotted;
@@ -119,10 +125,7 @@ import { IngestForm } from '../components/IngestForm';
   }
 
   :global(.tag-suggestion) {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 99px;
+    border-radius: 99px !important;
     font-size: 11px;
     font-family: var(--font-mono);
     font-weight: 500;
@@ -229,6 +232,20 @@ import { IngestForm } from '../components/IngestForm';
     flex-direction: column;
     gap: var(--space-1);
     min-width: 0;
+  }
+
+  :global(.pipeline-card__row) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  :global(.pipeline-card__meta) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-shrink: 0;
   }
 
   :global(.pipeline-card__label) {

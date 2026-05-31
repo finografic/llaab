@@ -7,8 +7,6 @@
   overflow: hidden;
 }
 
-/* ─── Tree sidebar ────────────────────────────────────────────────────────── */
-
 .tree {
   width: 280px;
   flex-shrink: 0;
@@ -18,11 +16,69 @@
   padding: var(--space-2) 0;
 }
 
-.treeRoot {
-  gap: 0;
+.treeList,
+.treeChildren {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-/* ─── Content viewer ──────────────────────────────────────────────────────── */
+.treeChildren {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.treeNode {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.treeButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.treeButton:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.treeButton[data-active] {
+  background: var(--accent-subtle);
+  color: var(--text);
+}
+
+.treeButton span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: var(--text-faint);
+  transition: transform var(--duration-fast) var(--ease);
+}
+
+.chevronOpen {
+  color: var(--text-faint);
+  transform: rotate(90deg);
+  transition: transform var(--duration-fast) var(--ease);
+}
 
 .viewer {
   flex: 1;
