@@ -3,16 +3,7 @@ import { designSystemPreset } from '@finografic/design-system/panda.preset';
 import { defineConfig } from '@pandacss/dev';
 
 export default defineConfig({
-  /**
-   * Disable Panda's built-in preflight — client already has
-   *
-   * @finografic/design-system/styles/reset.css imported in theme.css.
-   */
   preflight: false,
-
-  /**
-   * Base Panda utilities + our design-system preset. Order matters: designSystemPreset overrides base tokens.
-   */
   presets: ['@pandacss/dev/presets', designSystemPreset],
 
   /**
@@ -25,11 +16,18 @@ export default defineConfig({
    */
   include: [
     './src/**/*.{ts,tsx,astro}',
+    './node_modules/@finografic/design-system/dist/**/*.recipe.js',
     './node_modules/@finografic/design-system/src/**/*.{ts,tsx}',
     // './node_modules/@finografic/design-system/dist/**/*.{ts,tsx}',
-    './node_modules/@finografic/design-system/dist/**/*.recipe.js',
   ],
   exclude: [],
+
+  /**
+   * Generate React JSX components from Panda patterns. Gives us <Box mx="4" py="2"> etc. with full token +
+   * responsive support. Use Box for spacing/layout wrappers. Use Row/Col for flex grid layout.
+   */
+  jsxFramework: 'react',
+  outdir: './styled-system',
 
   theme: {
     ...designSystemPreset.theme,
@@ -53,12 +51,6 @@ export default defineConfig({
       },
     },
   },
-
-  /**
-   * Generate React JSX components from Panda patterns. Gives us <Box mx="4" py="2"> etc. with full token +
-   * responsive support. Use Box for spacing/layout wrappers. Use Row/Col for flex grid layout.
-   */
-  jsxFramework: 'react',
 
   /**
    * Dark mode — match the client's existing EmotionThemeProvider which sets data-theme="dark" on

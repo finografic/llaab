@@ -148,17 +148,40 @@ function PipelineCard({
   children?: React.ReactNode;
 }) {
   const elapsed = useElapsedSeconds(phase === 'active' ? (startedAt ?? null) : null);
+  const bodyChildren = React.Children.toArray(children);
+  const hasBody = bodyChildren.length > 0;
 
   return (
     <div className={`pipeline-card pipeline-card--${phase}`}>
-      <div className="pipeline-card__main">
-        <span className="pipeline-card__label">{label}</span>
-        {children && <div className="pipeline-card__body">{children}</div>}
+      <div
+      // className="pipeline-card__main"
+      >
+        <Row direction="row" align="center" justify="space-between">
+          <Col xs={6}>
+            <span className="pipeline-card__label">{label}</span>
+          </Col>
+          <Col xs={2}>
+            {phase === 'active' && startedAt != null && (
+              <span className="pipeline-card__elapsed">{formatElapsed(elapsed)}</span>
+            )}
+          </Col>
+          <Col xs={1}>
+            <div className="pipeline-card__status">{statusSlot}</div>
+          </Col>
+        </Row>
+        {hasBody ? (
+          <Row>
+            <Col>
+              <div className="pipeline-card__body">{bodyChildren}</div>
+            </Col>
+          </Row>
+        ) : null}
+        {/* <span className="pipeline-card__label">{label}</span> */}
+        {/* {hasBody ? <div className="pipeline-card__body">{bodyChildren}</div> : null} */}
       </div>
-      {phase === 'active' && startedAt != null && (
+      {/* {phase === 'active' && startedAt != null && (
         <span className="pipeline-card__elapsed">{formatElapsed(elapsed)}</span>
-      )}
-      <div className="pipeline-card__status">{statusSlot}</div>
+      )} */}
     </div>
   );
 }
@@ -263,10 +286,12 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const buttonLabel = busy ? 'Processing...' : sourceKind === 'youtube' ? 'Ingest YouTube' : 'Ingest';
 
   const dropzoneDesc = useMemo(() => {
-    if (sourceKind === 'youtube')
-      {return 'YouTube video URL detected. Click Ingest YouTube to fetch the transcript.';}
-    if (sourceKind === 'webpage')
-      {return 'Website or online reference detected. Drop recognition works; this source type is not yet wired for ingestion.';}
+    if (sourceKind === 'youtube') {
+      return 'YouTube video URL detected. Click Ingest YouTube to fetch the transcript.';
+    }
+    if (sourceKind === 'webpage') {
+      return 'Website or online reference detected. Drop recognition works; this source type is not yet wired for ingestion.';
+    }
     return 'Address-bar drags and in-page links should both work. The form classifies the source asset and adapts the ingest action.';
   }, [sourceKind]);
 
@@ -484,7 +509,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const transcriptStatusSlot =
     transcriptPhase === 'processing' ? (
-      <Spinner size={14} aria-hidden />
+      <Spinner size={1} aria-hidden />
     ) : transcriptPhase === 'failed' ? (
       <RetryButton onClick={onRetryIngest} disabled={busy} />
     ) : (
@@ -513,7 +538,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const extractionStatusSlot =
     extractionPhase === 'pending' ? (
-      <Spinner size={14} aria-hidden />
+      <Spinner size={1} aria-hidden />
     ) : extractionPhase === 'success' || extractionPhase === 'existing' ? (
       <CheckIcon />
     ) : extractionPhase === 'failed' || extractionPhase === 'extractable' ? (

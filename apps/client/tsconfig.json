@@ -9,6 +9,7 @@
       "lib/*": ["./src/lib/*"],
       "pages/*": ["./src/pages/*"],
       "styles/*": ["./src/styles/*"],
+      // ======================================================================== //
       // "@styled-system/*": ["./styled-system/*"]
       // Panda CSS — generated under ./styled-system (gitignored). App code may use either
       // `styled-system/jsx` or the same paths the DS bundle uses (`@styled-system/*`).
@@ -20,9 +21,9 @@
       "@styled-system/jsx": ["./styled-system/jsx"],
       "@styled-system/recipes": ["./src/styles/styled-system/recipes.ts"]
       // ======================================================================== //
-      // "@finografic/design-system/css": ["./styled-system/css"],
-      // "@finografic/design-system/jsx": ["./styled-system/jsx"],
-      // "@finografic/design-system/recipes": ["./src/styles/styled-system/recipes.ts"]
+      // "@styled-system/*": ["./styled-system/*"],
+      // "@styled-system/css": ["./styled-system/css"],
+      // "@styled-system/jsx": ["./styled-system/jsx"]
       // ======================================================================== //
     }
   },
