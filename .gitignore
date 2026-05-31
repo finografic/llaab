@@ -72,6 +72,9 @@ vault/.agent-loop/
 *.local.*
 *.tmp.*
 
+# Icon manager (server writes on startup; icons.config.json + icons.generated.ts are committed)
+lucide-manager.config.json
+
 # OS
 .DS_Store
 Thumbs.db

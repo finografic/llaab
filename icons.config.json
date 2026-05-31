@@ -1,0 +1,338 @@
+[
+  {
+    "exportName": "Add",
+    "lucideName": "plus"
+  },
+  {
+    "exportName": "BadgeCheck",
+    "lucideName": "badge-check"
+  },
+  {
+    "exportName": "CheckCircle",
+    "lucideName": "check-circle-2"
+  },
+  {
+    "exportName": "Clipboard",
+    "lucideName": "clipboard"
+  },
+  {
+    "exportName": "Close",
+    "lucideName": "x"
+  },
+  {
+    "exportName": "Coffee",
+    "lucideName": "coffee"
+  },
+  {
+    "exportName": "Columns3",
+    "lucideName": "columns-3"
+  },
+  {
+    "exportName": "Columns4",
+    "lucideName": "columns-4"
+  },
+  {
+    "exportName": "CountdownTimer",
+    "lucideName": "hourglass"
+  },
+  {
+    "exportName": "Cross2",
+    "lucideName": "x"
+  },
+  {
+    "exportName": "Delete",
+    "lucideName": "x"
+  },
+  {
+    "exportName": "Dialog",
+    "lucideName": "app-window-mac"
+  },
+  {
+    "exportName": "Dropdown",
+    "lucideName": "chevron-down"
+  },
+  {
+    "exportName": "Edit",
+    "lucideName": "pencil-line"
+  },
+  {
+    "exportName": "ExclamationTriangle",
+    "lucideName": "triangle-alert"
+  },
+  {
+    "exportName": "EyeOff",
+    "lucideName": "eye-off"
+  },
+  {
+    "exportName": "EyeOn",
+    "lucideName": "eye"
+  },
+  {
+    "exportName": "FastForward",
+    "lucideName": "fast-forward"
+  },
+  {
+    "exportName": "Fullscreen",
+    "lucideName": "fullscreen"
+  },
+  {
+    "exportName": "Grid",
+    "lucideName": "grid-3x3"
+  },
+  {
+    "exportName": "Home",
+    "lucideName": "house"
+  },
+  {
+    "exportName": "InfoCircled",
+    "lucideName": "info"
+  },
+  {
+    "exportName": "Language",
+    "lucideName": "languages"
+  },
+  {
+    "exportName": "Loader",
+    "lucideName": "loader"
+  },
+  {
+    "exportName": "ListChecks",
+    "lucideName": "list-checks"
+  },
+  {
+    "exportName": "List",
+    "lucideName": "list"
+  },
+  {
+    "exportName": "Lock",
+    "lucideName": "lock"
+  },
+  {
+    "exportName": "MagnifyingGlass",
+    "lucideName": "search"
+  },
+  {
+    "exportName": "Menu",
+    "lucideName": "menu"
+  },
+  {
+    "exportName": "Minimize",
+    "lucideName": "minimize"
+  },
+  {
+    "exportName": "Check",
+    "lucideName": "check"
+  },
+  {
+    "exportName": "Minus",
+    "lucideName": "minus"
+  },
+  {
+    "exportName": "Moon",
+    "lucideName": "moon"
+  },
+  {
+    "exportName": "Plus",
+    "lucideName": "plus"
+  },
+  {
+    "exportName": "X",
+    "lucideName": "x"
+  },
+  {
+    "exportName": "Radio",
+    "lucideName": "radio"
+  },
+  {
+    "exportName": "Refresh",
+    "lucideName": "refresh-ccw"
+  },
+  {
+    "exportName": "Reload",
+    "lucideName": "rotate-cw"
+  },
+  {
+    "exportName": "Settings",
+    "lucideName": "cog"
+  },
+  {
+    "exportName": "ShieldCheck",
+    "lucideName": "shield-check"
+  },
+  {
+    "exportName": "Shuffle",
+    "lucideName": "shuffle"
+  },
+  {
+    "exportName": "SpeakerLoud",
+    "lucideName": "volume-2"
+  },
+  {
+    "exportName": "Star",
+    "lucideName": "star"
+  },
+  {
+    "exportName": "Stop",
+    "lucideName": "circle-stop"
+  },
+  {
+    "exportName": "Sun",
+    "lucideName": "sun"
+  },
+  {
+    "exportName": "Temp",
+    "lucideName": "thermometer"
+  },
+  {
+    "exportName": "TextAlignLeft",
+    "lucideName": "align-left"
+  },
+  {
+    "exportName": "TextAlignTop",
+    "lucideName": "align-start-vertical"
+  },
+  {
+    "exportName": "Timer",
+    "lucideName": "timer"
+  },
+  {
+    "exportName": "TimerReset",
+    "lucideName": "timer-reset"
+  },
+  {
+    "exportName": "Trash",
+    "lucideName": "trash-2"
+  },
+  {
+    "exportName": "Upload",
+    "lucideName": "upload"
+  },
+  {
+    "exportName": "UserCircle",
+    "lucideName": "circle-user-round"
+  },
+  {
+    "exportName": "User",
+    "lucideName": "user"
+  },
+  {
+    "exportName": "UserLock",
+    "lucideName": "user-lock"
+  },
+  {
+    "exportName": "UserRoundCheck",
+    "lucideName": "user-round-check"
+  },
+  {
+    "exportName": "UserShield",
+    "lucideName": "shield-user"
+  },
+  {
+    "exportName": "Volume",
+    "lucideName": "volume-2"
+  },
+  {
+    "exportName": "VolumeOff",
+    "lucideName": "volume-off"
+  },
+  {
+    "exportName": "Window",
+    "lucideName": "app-window-mac"
+  },
+  {
+    "exportName": "Wine",
+    "lucideName": "wine"
+  },
+  {
+    "exportName": "ArrowDown",
+    "lucideName": "arrow-down"
+  },
+  {
+    "exportName": "ArrowLeft",
+    "lucideName": "arrow-left"
+  },
+  {
+    "exportName": "ArrowRight",
+    "lucideName": "arrow-right"
+  },
+  {
+    "exportName": "ArrowUp",
+    "lucideName": "arrow-up"
+  },
+  {
+    "exportName": "ChevronDown",
+    "lucideName": "chevron-down"
+  },
+  {
+    "exportName": "ChevronLeft",
+    "lucideName": "chevron-left"
+  },
+  {
+    "exportName": "ChevronRight",
+    "lucideName": "chevron-right"
+  },
+  {
+    "exportName": "ChevronUp",
+    "lucideName": "chevron-up"
+  },
+  {
+    "exportName": "ChevronsUpDown",
+    "lucideName": "chevrons-up-down"
+  },
+  {
+    "exportName": "DoubleArrowLeft",
+    "lucideName": "chevrons-left"
+  },
+  {
+    "exportName": "DoubleArrowRight",
+    "lucideName": "chevrons-right"
+  },
+  {
+    "exportName": "PanelBottomClose",
+    "lucideName": "panel-bottom-close"
+  },
+  {
+    "exportName": "PanelBottomOpen",
+    "lucideName": "panel-bottom-open"
+  },
+  {
+    "exportName": "PanelLeftClose",
+    "lucideName": "panel-left-close"
+  },
+  {
+    "exportName": "PanelLeftOpen",
+    "lucideName": "panel-left-open"
+  },
+  {
+    "exportName": "Zap",
+    "lucideName": "zap"
+  },
+  {
+    "exportName": "Aperture",
+    "lucideName": "aperture"
+  },
+  {
+    "exportName": "Apple",
+    "lucideName": "apple"
+  },
+  {
+    "exportName": "File",
+    "lucideName": "file"
+  },
+  {
+    "exportName": "Folder",
+    "lucideName": "folder"
+  },
+  {
+    "exportName": "FolderOpen",
+    "lucideName": "folder-open"
+  },
+  {
+    "exportName": "BrushCleaning",
+    "lucideName": "brush-cleaning"
+  },
+  {
+    "exportName": "AlarmClockCheck",
+    "lucideName": "alarm-clock-check"
+  }
+]

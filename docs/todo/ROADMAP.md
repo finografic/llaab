@@ -60,6 +60,23 @@ Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 
 ## P2 — Planned
 
+### LLM execution metadata in node frontmatter
+
+Write model name, wall-clock duration, and token counts (prompt + completion) to the frontmatter
+of transcript and idea nodes at the point of extraction. This makes every vault node
+self-documenting — you can see exactly which model produced it and how long it took.
+
+Implementation boundary:
+
+- Wrap `llmExtract` in `packages/ingestion/src/extract/llm-extract.ts` to capture timing and
+  model info from the response.
+- Pass metadata through to `extractTranscriptIdeas` in `packages/skills/src/extract-transcript-ideas.ts`.
+- Write `llm_model`, `llm_duration_ms`, `llm_prompt_tokens`, `llm_completion_tokens` fields
+  via `updateNode` on both the transcript and each created idea node.
+- Schema: add optional fields to `TranscriptNode` and `IdeaNode` in `packages/schemas`.
+
+---
+
 ### Terminal / Command Panel
 
 Typed command bus (WS) + xterm.js UI. Not a shell — a controlled execution surface for vault

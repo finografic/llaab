@@ -22,6 +22,14 @@ Things to verify end-to-end after recent pipeline changes:
 
 ---
 
+## Up Next
+
+- [ ] **LLM execution metadata in frontmatter** — write `llm_model`, `llm_duration_ms`,
+      `llm_prompt_tokens`, `llm_completion_tokens` to transcript and idea nodes at extraction time.
+      See ROADMAP P2 for full implementation boundary.
+
+---
+
 ## Code — Small Fixes & Polish
 
 - [x] **Extraction retry button** — `POST /api/vault/transcripts/:id/extract` route exists and
