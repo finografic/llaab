@@ -2,6 +2,81 @@
 
 Local-first learning loop: structured vault nodes, governed LLM calls, and persisted runs.
 
+## macOS persistent local app
+
+If you want LLAAB available in the browser at any time, the supported local setup is:
+
+- Bun API service on `http://127.0.0.1:3000`
+- Astro standalone client on `http://llaab.localhost:4321`
+- `launchd` for login-time persistence
+- SwiftBar for a menu bar control
+
+### Required installs
+
+1. Install the core runtimes:
+
+   ```bash
+   brew install node pnpm yt-dlp swiftbar
+   brew install oven-sh/bun/bun
+   ```
+
+   This repo currently expects Node 24.x.
+
+2. Install repo dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+3. Build the standalone client once:
+
+   ```bash
+   pnpm --filter @llaab/client build
+   ```
+
+### Persistent-service scripts
+
+The repo includes macOS helper scripts in [`scripts/macos/`](./scripts/macos/):
+
+- `start-persistent-server.sh`
+- `start-persistent-client.sh`
+- `llaab-service.sh`
+- `llaab-swiftbar.15s.sh`
+
+These are intended to be used with user `LaunchAgents`:
+
+- `~/Library/LaunchAgents/com.llaab.server.plist`
+- `~/Library/LaunchAgents/com.llaab.client.plist`
+
+Once installed, useful controls are:
+
+```bash
+scripts/macos/llaab-service.sh start
+scripts/macos/llaab-service.sh stop
+scripts/macos/llaab-service.sh restart
+scripts/macos/llaab-service.sh status
+```
+
+### SwiftBar
+
+Set the SwiftBar plugin folder to:
+
+```text
+~/Library/Application Support/SwiftBar/Plugins
+```
+
+The LLAAB plugin can then expose quick actions such as:
+
+- open app
+- open ingest
+- restart services
+- inspect logs
+
+### Notes
+
+- `llaab.localhost` is the low-friction friendly local hostname. No reverse proxy is required.
+- This persistent setup intentionally runs outside LLAAB itself. The app does not own an always-on scheduler or watcher.
+
 ## Installation
 
 1. **Runtime:** [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/) (see `package.json` for the workspace `packageManager` version).
