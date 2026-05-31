@@ -12,6 +12,7 @@
       "@llaab/skills": ["./packages/skills/src/index.ts"]
     },
     "lib": ["ES2022"],
+    "types": ["node"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
