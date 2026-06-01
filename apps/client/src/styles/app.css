@@ -105,14 +105,15 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    @apply font-sans;
+    font-family: var(--font-sans);
   }
 
   body {
     height: 100%;
     font-family: var(--font-sans);
     line-height: 1.6;
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
   }
 
   a {
@@ -138,9 +139,6 @@
     border-radius: var(--radius-sm);
   }
 
-  * {
-    @apply border-border outline-ring/50;
-  }
 }
 
 ::-webkit-scrollbar {
