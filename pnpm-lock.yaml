@@ -92,6 +92,9 @@ importers:
       '@llaab/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
+      '@llaab/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@react-router/dev':
         specifier: 7.14.1
         version: 7.14.1(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(react-router@7.14.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(tsx@4.22.4)(typescript@6.0.3)(vite@7.3.3(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)(yaml@2.9.0))(yaml@2.9.0)
@@ -110,9 +113,6 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@llaab/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       astro:
         specifier: ^6.1.1
         version: 6.4.2(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.4)(tsx@4.22.4)(yaml@2.9.0)
