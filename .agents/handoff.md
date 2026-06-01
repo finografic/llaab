@@ -29,6 +29,7 @@ Dependency chain (one-directional):
 | `core`      | Vault file I/O — `createNode`, `writeNode`, `readNode`, `listNodes`, `autoTag`                |
 | `control`   | Execution governance — `execute()`, retry/reject, decision traces                             |
 | `ingestion` | Fetch → clean → structure → store pipeline; extraction is a separate exported function        |
+| `icons`     | Workspace icon registry package — runs `icons-server` + `lucide-manager`, exports app icons   |
 | `llm`       | Task router + real providers (Anthropic SDK, Ollama npm) — `routeLlm`, `streamLlm`, 24h cache |
 | `skills`    | Composed workflows — `captureIdea`, `ingestYouTube`, `runSkill`                               |
 | `cli`       | Binary entry point (`llaab`) — citty commands: ingest, vault, agent, mcp                      |
@@ -42,6 +43,7 @@ Dependency chain (one-directional):
 - Build: Turborepo 2.x, TypeScript 5.9.3
 - Validation: Zod 3.x
 - Tests: Vitest 4.x
+- Icons: `@finografic/icons` + `@finografic/lucide-manager` via `@llaab/icons`
 - Server: Hono 4.x, http-status-codes, @hono/zod-validator
 - Client: Astro 6, React 19, React Hook Form 7.x, @astrojs/react
 - CSS: Tailwind CSS 4, shadcn/ui, app-local semantic CSS variables
@@ -75,6 +77,8 @@ amber dark palette in `:root {}`. `BaseLayout.astro` imports both in order.
 Dark mode is always active via `class="dark"` on `<html>` (hardcoded — LLAAB is dark-only).
 Installed shadcn components in `packages/ui/src/components/`: `button`, `badge`, `breadcrumb`,
 `scroll-area`, `table`, `tooltip`.
+`@llaab/client` can import generated local icons from `@llaab/icons`; `src/pages/index.astro`
+already does this for its four homepage icons.
 
 | Route                     | Description                                                                                               |
 | ------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -108,6 +112,14 @@ client does not receive false network failures while the server continues extrac
 | `GET /api/llm/status`                     | Task routing config + installed models cross-referenced                         |
 | `POST /api/agent/run`                     | One-shot agent processor; optional `{ nodeId?, force? }`                        |
 | `GET /api/agent/status`                   | Last run metadata                                                               |
+
+### `@llaab/icons` — Workspace icon registry package
+
+Owns `icons.config.json`, `icons.generated.ts`, and the package export surface for generated icons.
+Consumer imports use `@llaab/icons` rather than root files. The package runs as its own Turbo `dev`
+task and starts three sidecars: `icons-server`, `lucide-manager`, and generated-export syncing.
+LLAAB suppresses auto-opening the picker by setting `LUCIDE_MANAGER_OPEN=false` in the package `dev`
+script because `icons-server` rewrites `lucide-manager.config.json` on startup.
 
 ## Ingestion Pipeline
 
@@ -163,6 +175,12 @@ Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`
 P1: install + validate `@finografic/ai-harness` in transcript extraction. P2: Terminal Panel and
 later harness extension. P3: Karpathy graph, Source Auto-Follow, Library Watch.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.
+
+## Local Dev Ops
+
+macOS persistence is handled outside the app via `launchd` user agents plus a SwiftBar plugin in
+`scripts/macos/`. SwiftBar exposes `Open App`, `Open Ingest`, and `Open Icons`; the icons picker
+target is `http://localhost:5199/`.
 
 ## Open Questions
 

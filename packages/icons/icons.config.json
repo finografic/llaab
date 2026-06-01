@@ -362,5 +362,13 @@
   {
     "exportName": "FolderKanban",
     "lucideName": "folder-kanban"
+  },
+  {
+    "exportName": "Activity",
+    "lucideName": "activity"
+  },
+  {
+    "exportName": "Download",
+    "lucideName": "download"
   }
 ]

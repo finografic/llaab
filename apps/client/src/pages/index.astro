@@ -1,7 +1,10 @@
 ---
 import AppLayout from 'layouts/AppLayout.astro';
+import { ArrowRightIcon,
+   DownloadIcon,
+  // CheckCircleIcon as DownloadIcon,
+    FolderKanbanIcon, PlayIcon } from '@llaab/icons';
 import { Card, CardContent } from 'components/ui/card';
-import { Download, FolderKanban, Play, ArrowRight } from 'lucide-react';
 ---
 
 <AppLayout title="Home">
@@ -19,13 +22,13 @@ import { Download, FolderKanban, Play, ArrowRight } from 'lucide-react';
         <Card className="home-card">
           <CardContent className="home-card__content">
             <div class="home-card__icon">
-              <Download size={18} aria-hidden="true" />
+              <DownloadIcon size={18} aria-hidden="true" />
             </div>
             <div class="home-card__body">
               <h2 class="home-card__title">Ingest</h2>
               <p class="home-card__desc">Fetch a YouTube transcript and store it as a vault node.</p>
             </div>
-            <ArrowRight size={14} className="home-card__arrow" aria-hidden="true" />
+            <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
           </CardContent>
         </Card>
       </a>
@@ -34,13 +37,13 @@ import { Download, FolderKanban, Play, ArrowRight } from 'lucide-react';
         <Card className="home-card">
           <CardContent className="home-card__content">
             <div class="home-card__icon">
-              <FolderKanban size={18} aria-hidden="true" />
+              <FolderKanbanIcon size={18} aria-hidden="true" />
             </div>
             <div class="home-card__body">
               <h2 class="home-card__title">Vault</h2>
               <p class="home-card__desc">Browse transcripts, nodes, and structured vault content.</p>
             </div>
-            <ArrowRight size={14} className="home-card__arrow" aria-hidden="true" />
+            <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
           </CardContent>
         </Card>
       </a>
@@ -49,13 +52,13 @@ import { Download, FolderKanban, Play, ArrowRight } from 'lucide-react';
         <Card className="home-card">
           <CardContent className="home-card__content">
             <div class="home-card__icon">
-              <Play size={18} aria-hidden="true" />
+              <PlayIcon size={18} aria-hidden="true" />
             </div>
             <div class="home-card__body">
               <h2 class="home-card__title">Runs</h2>
               <p class="home-card__desc">Inspect agent execution traces and skill run history.</p>
             </div>
-            <ArrowRight size={14} className="home-card__arrow" aria-hidden="true" />
+            <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
           </CardContent>
         </Card>
       </a>

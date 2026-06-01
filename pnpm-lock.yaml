@@ -17,12 +17,6 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^21.0.2
         version: 21.0.2
-      '@finografic/icons':
-        specifier: 1.14.1
-        version: 1.14.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@finografic/lucide-manager':
-        specifier: ^0.6.2
-        version: 0.6.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@7.3.5(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)(yaml@2.9.0))
       '@finografic/md-lint':
         specifier: ^0.16.1
         version: 0.16.1
@@ -38,9 +32,6 @@ importers:
       '@types/node':
         specifier: 24.12.2
         version: 24.12.2
-      concurrently:
-        specifier: ^9.2.0
-        version: 9.2.1
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -98,6 +89,9 @@ importers:
       '@llaab/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@llaab/icons':
+        specifier: workspace:*
+        version: link:../../packages/icons
       '@llaab/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
@@ -295,6 +289,28 @@ importers:
       '@types/node':
         specifier: 24.12.2
         version: 24.12.2
+
+  packages/icons:
+    dependencies:
+      '@finografic/icons':
+        specifier: 1.14.1
+        version: 1.14.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.6)
+      react:
+        specifier: ^19.2.6
+        version: 19.2.6
+      react-dom:
+        specifier: ^19.2.6
+        version: 19.2.6(react@19.2.6)
+    devDependencies:
+      '@finografic/lucide-manager':
+        specifier: ^0.8.4
+        version: 0.8.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@7.3.5(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)(yaml@2.9.0))
+      concurrently:
+        specifier: ^9.2.0
+        version: 9.2.1
 
   packages/ingestion:
     dependencies:
@@ -1320,8 +1336,9 @@ packages:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
 
-  '@finografic/lucide-manager@0.6.2':
-    resolution: {integrity: sha512-1eWFv2b1P1g3tC7g6NdK1MZs7qHj5PGTTQBxzJFDo745T5sIQa1bxscu+Urb70LDK4isXax0b7o/5WWAQLKRHg==, tarball: https://npm.pkg.github.com/download/@finografic/lucide-manager/0.6.2/931f585a1c396cc77b3778aa4b9737f6f847f194}
+  '@finografic/lucide-manager@0.8.4':
+    resolution: {integrity: sha512-UMH/4m0ErCvQobZV7pm47I1sXw2Tiy3puTxwP306c/gb9R1nQiL96HZIatG81Yg3ZXVungTsDfKzuOmNC5ey1A==, tarball: https://npm.pkg.github.com/download/@finografic/lucide-manager/0.8.4/24e93afa96171cf9eeb2118d504b91ad67b9504f}
+    engines: {node: '>=24.3.0'}
     hasBin: true
     peerDependencies:
       react: '>=18'
@@ -7916,7 +7933,7 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@finografic/lucide-manager@0.6.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@7.3.5(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)(yaml@2.9.0))':
+  '@finografic/lucide-manager@0.8.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vite@7.3.5(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       '@vitejs/plugin-react': 4.7.0(vite@7.3.5(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)(yaml@2.9.0))
       react: 19.2.6

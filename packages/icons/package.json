@@ -1,0 +1,32 @@
+{
+  "name": "@llaab/icons",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    },
+    "./generated": {
+      "types": "./icons.generated.ts",
+      "default": "./icons.generated.ts"
+    }
+  },
+  "scripts": {
+    "dev": "concurrently -n \"server,manager,exports\" -c \"cyan,green,magenta\" \"pnpm exec icons-server\" \"LUCIDE_MANAGER_OPEN=false pnpm exec lucide-manager\" \"node scripts/watch-generated-index.mjs\"",
+    "sync:exports": "node scripts/sync-generated-index.mjs"
+  },
+  "dependencies": {
+    "@finografic/icons": "1.14.1",
+    "lucide-react": "^1.17.0"
+  },
+  "devDependencies": {
+    "@finografic/lucide-manager": "^0.8.4",
+    "concurrently": "^9.2.0"
+  },
+  "peerDependencies": {
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  }
+}
