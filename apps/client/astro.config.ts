@@ -17,6 +17,8 @@ export default defineConfig({
     plugins: [tailwindcss()],
     server: {
       proxy: {
+        // Forward all /api/* to apps/server in dev. Astro-internal auth is handled
+        // inline in login.astro (POST to self) so it never hits this proxy.
         '/api': SERVER_URL,
       },
     },

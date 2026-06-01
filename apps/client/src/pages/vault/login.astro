@@ -1,9 +1,32 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-
 export const prerender = false;
 
-const hasError = Astro.url.searchParams.has('error');
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+
+const COOKIE_NAME = 'vault_key';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const vaultPassword = import.meta.env.VAULT_PASSWORD ?? 'llaab';
+
+let hasError = Astro.url.searchParams.has('error');
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const submitted = form.get('password');
+
+  if (typeof submitted === 'string' && submitted === vaultPassword) {
+    Astro.cookies.set(COOKIE_NAME, vaultPassword, {
+      path: '/',
+      maxAge: COOKIE_MAX_AGE,
+      httpOnly: true,
+      sameSite: 'lax',
+    });
+    return Astro.redirect('/vault', 302);
+  }
+
+  hasError = true;
+}
 ---
 
 <BaseLayout title="Vault — LLAAB">
@@ -13,19 +36,20 @@ const hasError = Astro.url.searchParams.has('error');
       <h1>Vault</h1>
 
       <div class="card">
-        <form method="POST" action="/api/vault/auth">
+        <form method="POST">
           <div class="field">
             <label for="password">Password</label>
             <div class="input-row">
-              <input
+              <Input
                 id="password"
                 name="password"
                 type="password"
                 autocomplete="current-password"
                 autofocus
                 placeholder="Enter vault password"
+                className="font-mono text-sm"
               />
-              <button type="submit">Unlock</button>
+              <Button type="submit">Unlock</Button>
             </div>
             {hasError && <span class="field-error">Incorrect password.</span>}
           </div>
@@ -66,43 +90,11 @@ const hasError = Astro.url.searchParams.has('error');
   .input-row {
     display: flex;
     gap: 8px;
-  }
-
-  input {
-    flex: 1;
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    font-family: var(--font-mono);
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-
-  input:focus {
-    border-color: var(--border-focus);
-  }
-
-  button[type='submit'] {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius);
-    padding: 10px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.15s;
-  }
-
-  button[type='submit']:hover {
-    background: var(--accent-hover);
+    align-items: center;
   }
 
   .hint {
+    margin-top: 16px;
     font-size: 12px;
     color: var(--text-muted);
     line-height: 1.6;
