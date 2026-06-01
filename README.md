@@ -120,6 +120,26 @@ Runs the workspace dev stack (including the Astro client at `http://localhost:43
 
 The client no longer depends on PandaCSS or `@finografic/design-system`.
 
+### Adding shadcn components
+
+Components are installed into `packages/ui/src/components/` and imported via `@llaab/ui/components/<name>`.
+Run the add command from `apps/client` so that `apps/client/components.json` provides the correct
+registry and path configuration:
+
+```bash
+cd apps/client
+pnpm dlx shadcn@latest add <component-name>
+```
+
+Browse available components first with:
+
+```bash
+pnpm dlx shadcn@latest view @shadcn
+```
+
+Installed components use `@llaab/ui/lib/utils` for `cn()` and `@llaab/ui` peer deps — no extra
+wiring needed. For `tooltip`, wrap the relevant React island root with `<TooltipProvider>`.
+
 ## YouTube ingestion
 
 **Prerequisite (repeat):** `yt-dlp` must be installed and on `PATH` (see [Installation](#installation) step 3). Browsers do not satisfy this—the CLI invokes `yt-dlp`, not the browser.
