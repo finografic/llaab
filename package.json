@@ -5,6 +5,8 @@
   "scripts": {
     "---------- DEV_AND_BUILD": "---------------------------------------------",
     "dev": "turbo dev",
+    "dev:icons": "concurrently -n \"server,config\" -c \"cyan,green\" \"pnpm exec icons-server\" \"pnpm exec lucide-manager\"",
+    "dev:all": "concurrently -n \"turbo,icons,lucide\" -c \"white,cyan,green\" \"turbo dev\" \"pnpm exec icons-server\" \"pnpm exec lucide-manager\"",
     "dev:cli": "bun packages/cli/src/index.ts",
     "dev:reset": "run-s reset",
     "dev:clean:vault:recent:6h": "bun scripts/clean-recent-vault-activity.ts --hours 6 --yes",
