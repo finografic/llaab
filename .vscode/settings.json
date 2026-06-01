@@ -58,5 +58,7 @@
     "editor.formatOnSave": true
   },
 
-  "markdown.styles": ["node_modules/@finografic/md-lint/styles/markdown-github-light.css"]
+  "markdown.styles": ["node_modules/@finografic/md-lint/styles/markdown-github-light.css"],
+
+  "css.lint.unknownAtRules": "ignore"
 }

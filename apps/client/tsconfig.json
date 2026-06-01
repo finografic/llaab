@@ -6,6 +6,7 @@
     "jsxImportSource": "react",
     "paths": {
       "@llaab/ui/*": ["../../packages/ui/src/*"],
+      "components/ui/*": ["../../packages/ui/src/components/*"],
       "components/*": ["./src/components/*"],
       "layouts/*": ["./src/layouts/*"],
       "lib/*": ["./src/lib/*"],
