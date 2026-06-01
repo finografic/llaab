@@ -120,6 +120,8 @@ Runs the workspace dev stack (including the Astro client at `http://localhost:43
 
 The client no longer depends on PandaCSS or `@finografic/design-system`.
 
+---
+
 ### Adding shadcn components
 
 Components are installed into `packages/ui/src/components/` and imported via `@llaab/ui/components/<name>`.
@@ -139,6 +141,26 @@ pnpm dlx shadcn@latest view @shadcn
 
 Installed components use `@llaab/ui/lib/utils` for `cn()` and `@llaab/ui` peer deps — no extra
 wiring needed. For `tooltip`, wrap the relevant React island root with `<TooltipProvider>`.
+
+### Icon selector (`@finografic/icons`)
+
+Customize which Lucide icons are available to the client UI. Run from the **repo root** (not `apps/client`):
+
+```bash
+pnpm icons
+```
+
+This starts the icons API server (`http://localhost:5001`) and the [lucide-manager](https://github.com/finografic/lucide-manager) picker in the browser. On first run, `icons.config.json` is created at the repo root from the published DS default set; each save regenerates `icons.generated.ts` there.
+
+| File                         | Notes                                                              |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `icons.config.json`          | Source of truth — commit                                           |
+| `icons.generated.ts`         | Generated — commit (recommended) so builds work without the server |
+| `lucide-manager.config.json` | Written on startup — gitignored                                    |
+
+Root `package.json` already lists `@finografic/icons`, `@finografic/lucide-manager`, and `concurrently` as devDependencies. Wire imports in `apps/client` from `icons.generated.ts` (path relative to your app). To change icons for **all** Finografic apps, edit defaults in the [design-system](https://github.com/finografic/design-system) repo and release `@finografic/icons`.
+
+---
 
 ## YouTube ingestion
 

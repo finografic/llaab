@@ -334,5 +334,33 @@
   {
     "exportName": "AlarmClockCheck",
     "lucideName": "alarm-clock-check"
+  },
+  {
+    "exportName": "ArrowDownToLine",
+    "lucideName": "arrow-down-to-line"
+  },
+  {
+    "exportName": "Play",
+    "lucideName": "play"
+  },
+  {
+    "exportName": "FolderRoot",
+    "lucideName": "folder-root"
+  },
+  {
+    "exportName": "FolderCode",
+    "lucideName": "folder-code"
+  },
+  {
+    "exportName": "FolderSync",
+    "lucideName": "folder-sync"
+  },
+  {
+    "exportName": "FolderTree",
+    "lucideName": "folder-tree"
+  },
+  {
+    "exportName": "FolderKanban",
+    "lucideName": "folder-kanban"
   }
 ]

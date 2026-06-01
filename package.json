@@ -22,6 +22,8 @@
     "·········· FORMATTING": "················································",
     "format:check": "oxfmt --check",
     "format:fix": "oxfmt",
+    "·········· ICONS": "·····················································",
+    "icons": "concurrently -n \"server,config\" -c \"cyan,green\" \"pnpm exec icons-server\" \"pnpm exec lucide-manager\"",
     "·········· PACKAGES": "············································",
     "update:finografic": "pnpm update:oxfmt && pnpm update:md-lint && pnpm update:project-scripts && pnpm update:zustand-context",
     "update:oxc-config": "pnpm update @finografic/oxc-config --latest --recursive && pnpm update oxfmt --latest --recursive && pnpm update oxlint --latest --recursive",
@@ -51,6 +53,8 @@
   "devDependencies": {
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
+    "@finografic/icons": "1.14.1",
+    "@finografic/lucide-manager": "^0.6.2",
     "@finografic/md-lint": "^0.16.1",
     "@finografic/oxc-config": "^2.6.6",
     "@finografic/project-scripts": "^1.3.3",
