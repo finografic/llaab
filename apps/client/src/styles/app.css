@@ -101,8 +101,14 @@
     text-decoration: none;
   }
 
+  /* Only underline bare text links — never when <a> wraps a component or card */
   a:hover {
     color: var(--accent-hover);
+  }
+
+  p a:hover,
+  li a:hover,
+  .prose a:hover {
     text-decoration: underline;
   }
 
