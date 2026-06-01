@@ -18,10 +18,9 @@
  * Styling: scoped <style> below. Component styles live in *.module.css or
  * component-level <style> blocks — never in this file.
  */
-import AppFooter from '../components/AppFooter/AppFooter.astro';
-// import AppHeaderV2 from '../components/AppHeaderV2/AppHeaderV2.astro';
-import AppHeader from '../components/AppHeader/AppHeader.astro';
-import { NavbarVertical } from '../components/NavbarVertical/NavbarVertical';
+import AppFooter from 'components/AppFooter/AppFooter.astro';
+import AppHeader from 'components/AppHeader/AppHeader.astro';
+import { NavbarVertical } from 'components/NavbarVertical/NavbarVertical';
 import BaseLayout from './BaseLayout.astro';
 
 interface Props {
@@ -29,7 +28,7 @@ interface Props {
 }
 
 const { title } = Astro.props;
-const pathname = Astro.url.pathname;
+const { pathname } = Astro.url;
 const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
 ---
 

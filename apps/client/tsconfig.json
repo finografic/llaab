@@ -5,7 +5,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "paths": {
-      "@/*": ["./src/*"],
+      "@llaab/ui/*": ["../../packages/ui/src/*"],
       "components/*": ["./src/components/*"],
       "layouts/*": ["./src/layouts/*"],
       "lib/*": ["./src/lib/*"],

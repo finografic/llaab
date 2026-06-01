@@ -112,6 +112,8 @@ export default defineConfig({
     'import/first': 'off',
     'import/no-amd': 'error',
     'import/no-self-import': 'error',
+    // Side-effect CSS imports (Astro layouts, global styles) are intentional.
+    'import/no-unassigned-import': ['error', { allow: ['**/*.css'] }],
   },
 
   overrides: [

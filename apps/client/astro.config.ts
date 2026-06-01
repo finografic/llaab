@@ -23,7 +23,7 @@ export default defineConfig({
     resolve: {
       dedupe: ['react', 'react-dom'],
       alias: {
-        '@': new URL('./src', import.meta.url).pathname,
+        '@llaab/ui': new URL('../../packages/ui/src', import.meta.url).pathname,
       },
     },
   },

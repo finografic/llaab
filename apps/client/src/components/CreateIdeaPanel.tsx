@@ -1,11 +1,11 @@
+import { TagInputField } from 'components/TagInputField';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import { Textarea } from 'components/ui/textarea';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { TagInputField } from '@/components/TagInputField';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { api } from '@/lib/api';
+import { api } from 'lib/api';
 
 const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
 const KNOWN_TAGS = KNOWN_DOMAINS.map((domain) => `d:${domain}`);

@@ -1,8 +1,9 @@
 import { ChevronRight, FileText, Folder, FolderOpen } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { api } from 'lib/api';
+
 import s from './VaultBrowser.module.css';
-import { api } from '@/lib/api';
 
 export interface VaultNode {
   name: string;

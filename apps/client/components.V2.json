@@ -12,10 +12,10 @@
   "iconLibrary": "lucide",
   "aliases": {
     "components": "components",
-    "hooks": "hooks",
+    "utils": "lib/utils",
+    "ui": "components/ui",
     "lib": "lib",
-    "utils": "@llaab/ui/lib/utils",
-    "ui": "@llaab/ui/components"
+    "hooks": "hooks"
   },
   "rtl": false,
   "menuColor": "default",
