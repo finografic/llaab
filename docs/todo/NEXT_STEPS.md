@@ -3,7 +3,7 @@
 > Maintained working list. Larger initiatives live in [`ROADMAP.md`](./ROADMAP.md) — this doc
 > covers concrete near-term tasks, manual testing, and small fixes not large enough for ROADMAP.
 >
-> Last updated: 2026-06-01
+> Last updated: 2026-06-01 (session 17)
 
 ---
 
@@ -12,6 +12,8 @@
 Things to verify end-to-end after recent pipeline changes:
 
 - [x] Ingest a fresh YouTube URL → confirm transcript + source nodes created
+- [ ] Verify dark mode renders correctly across all pages (no light backgrounds)
+- [ ] Verify badge colors look correct in dark mode (nodes/[id], runs, sources, transcripts)
 - [ ] Verify `/ingest` drag-and-drop still works after the shadcn migration
 - [ ] Verify `/ingest` pipeline cards still show correct states for fresh ingest, reused transcript, and extract retry
 - [ ] Verify sidebar nav expand/collapse + active route styling after the shadcn migration
@@ -46,8 +48,9 @@ Things to verify end-to-end after recent pipeline changes:
       to their transcript via `related` (in addition to `source_id`). Low priority — `source_id` is
       the primary provenance link.
 
-- [ ] **shadcn follow-up cleanup** — review remaining client routes/layouts for places where
-      app-local semantic CSS variables can be simplified further now that Panda/DS are gone.
+- [x] **shadcn initial-setup audit** — fixed dark mode (`data-theme` → `class="dark"`), re-enabled
+      `app.css`, removed duplicate framework imports, fixed light-mode badge hex colors across 6
+      pages, installed `badge`, `breadcrumb`, `table`, `tooltip`, `scroll-area` to `packages/ui`.
 
 ---
 

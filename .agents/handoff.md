@@ -55,8 +55,9 @@ Dependency chain (one-directional):
 
 Pure UI. All data calls go to `@llaab/server` via `src/lib/api.ts` (Hono typed RPC client).
 Vite dev proxy forwards `/api/*` → `SERVER_URL` (default `http://localhost:3000`).
-Client styling is app-local: Tailwind v4 + shadcn/ui primitives under `src/components/ui/`, plus
-semantic CSS variables in `src/styles/app.css`.
+Client styling: Tailwind v4 + shadcn/ui. shadcn components live in `packages/ui/src/components/`
+(imported via `@llaab/ui/components/<name>`); a parallel set of app-local copies with local import
+paths lives in `src/components/ui/` and is what all current React code imports via `components/ui/`.
 The old PandaCSS + linked design-system stack has been removed from the client.
 Vault pages load data directly via `@llaab/core` in frontmatter (no API hop); auth gate at top.
 
@@ -65,11 +66,15 @@ Layout hierarchy: `BaseLayout` owns `<html class="dark">/<head>/<body>` + CSS im
 Inner pages use `PageLayout` (hero / optional aside / main zones) + `PageHero` (eyebrow, title, actions slot, meta bar). See `LAYOUT_AND_PAGES_GUIDE.md`.
 `FileList` exists as a reusable TanStack-based list component for Finder-style index views.
 
-CSS: `app.css` imports Tailwind, `tw-animate-css`, shadcn theme helpers, and `forms.css`.
-The app keeps a local semantic token layer (`--bg`, `--surface`, `--text`, `--accent`, etc.) so
-route-level styles do not depend directly on any external design package.
+CSS entry points: `packages/ui/src/styles/globals.css` owns all framework imports (Tailwind,
+`tw-animate-css`, `shadcn/tailwind.css`, Roboto), the shadcn stone token `:root`/`.dark` blocks,
+and the `@theme inline` + `@custom-variant dark` directives. `apps/client/src/styles/app.css`
+imports `forms.css` only, then adds app-specific semantic tokens (`--bg`, `--surface`, `--text`,
+`--accent`, `--space-*`, `--font-mono`, etc.) and overrides the shadcn tokens with LLAAB's warm
+amber dark palette in `:root {}`. `BaseLayout.astro` imports both in order.
 Dark mode is always active via `class="dark"` on `<html>` (hardcoded — LLAAB is dark-only).
-Primary color and base palette now come from the applied shadcn preset.
+Installed shadcn components in `packages/ui/src/components/`: `button`, `badge`, `breadcrumb`,
+`scroll-area`, `table`, `tooltip`.
 
 | Route                     | Description                                                                                               |
 | ------------------------- | --------------------------------------------------------------------------------------------------------- |

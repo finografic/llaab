@@ -473,23 +473,23 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
   }
 
   /* Node type colours */
-  .badge--idea        { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-  .badge--resource    { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
-  .badge--prompt      { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
-  .badge--skill       { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
-  .badge--instruction { background: #fefce8; color: #ca8a04; border-color: #fef08a; }
+  .badge--idea        { background: oklch(0.22 0.04 264 / 0.25); color: oklch(0.65 0.18 264); border-color: oklch(0.40 0.12 264 / 0.40); }
+  .badge--resource    { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
+  .badge--prompt      { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
+  .badge--skill       { background: oklch(0.22 0.04 295 / 0.25); color: oklch(0.65 0.18 295); border-color: oklch(0.40 0.12 295 / 0.40); }
+  .badge--instruction { background: oklch(0.24 0.05 80 / 0.25);  color: oklch(0.77 0.16 80);  border-color: oklch(0.44 0.14 80 / 0.40);  }
 
   /* Status colours */
   .badge--status { border-radius: 4px; }
   .badge--seed     { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); }
-  .badge--growing  { background: #fff7ed; color: #ea580c; border-color: #fed7aa; }
-  .badge--mature   { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+  .badge--growing  { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
+  .badge--mature   { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
   .badge--archived { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); opacity: 0.6; }
 
   /* Idea origin */
   .badge--origin-manual    { background: var(--surface-raised); color: var(--text-muted); border-color: var(--border-subtle); }
-  .badge--origin-extracted { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-  .badge--origin-generated { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
+  .badge--origin-extracted { background: oklch(0.22 0.04 264 / 0.25); color: oklch(0.65 0.18 264); border-color: oklch(0.40 0.12 264 / 0.40); }
+  .badge--origin-generated { background: oklch(0.22 0.04 295 / 0.25); color: oklch(0.65 0.18 295); border-color: oklch(0.40 0.12 295 / 0.40); }
 
   /* Resource type */
   .badge--resource-type { background: var(--surface-raised); color: var(--text-muted); border-color: var(--border-subtle); border-radius: 4px; }

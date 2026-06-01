@@ -1,6 +1,6 @@
 ---
 import '@llaab/ui/globals.css';
-// import 'styles/app.css';
+import 'styles/app.css';
 
 interface Props {
   title?: string;
@@ -9,7 +9,7 @@ interface Props {
 const { title = 'LLAAB' } = Astro.props;
 ---
 
-<html lang="en" data-theme="dark">
+<html lang="en" class="dark">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
