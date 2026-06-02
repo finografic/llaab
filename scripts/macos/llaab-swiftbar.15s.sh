@@ -14,6 +14,7 @@ set -euo pipefail
 readonly control_script="/Users/justin/LLAAB/scripts/macos/llaab-service.sh"
 readonly logs_dir="/Users/justin/Library/Logs/llaab"
 readonly client_log="$logs_dir/client.stdout.log"
+readonly icons_log="$logs_dir/icons.stdout.log"
 readonly server_log="$logs_dir/server.stdout.log"
 readonly app_url="http://llaab.localhost:4321"
 readonly ingest_url="http://llaab.localhost:4321/ingest"
@@ -23,8 +24,9 @@ readonly github_url="https://github.com/finografic"
 status_output="$("$control_script" status)"
 server_state="$(printf '%s\n' "$status_output" | awk -F= '/^server=/{print $2}')"
 client_state="$(printf '%s\n' "$status_output" | awk -F= '/^client=/{print $2}')"
+icons_state="$(printf '%s\n' "$status_output" | awk -F= '/^icons=/{print $2}')"
 
-if [[ "$server_state" == "running" && "$client_state" == "running" ]]; then
+if [[ "$server_state" == "running" && "$client_state" == "running" && "$icons_state" == "running" ]]; then
   echo "🌱 LLAAB | color=#52c41a tooltip=$app_url"
 else
   echo "🌱 LLAAB | color=#ff7875 tooltip=$app_url"
@@ -41,9 +43,11 @@ echo "Stop Services | bash=$control_script param1=stop terminal=false refresh=tr
 echo "---"
 echo "Server: $server_state"
 echo "Client: $client_state"
+echo "Icons: $icons_state"
 echo "---"
 echo "Local URL: $app_url | href=$app_url"
 echo "GitHub: finografic | href=$github_url"
 echo "---"
 echo "Tail Server Log | bash=/usr/bin/open param1=-a param2=Console param3=$server_log terminal=false"
 echo "Tail Client Log | bash=/usr/bin/open param1=-a param2=Console param3=$client_log terminal=false"
+echo "Tail Icons Log | bash=/usr/bin/open param1=-a param2=Console param3=$icons_log terminal=false"
