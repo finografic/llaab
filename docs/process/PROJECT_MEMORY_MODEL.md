@@ -12,28 +12,28 @@
 
 ---
 
-## Exact AGENTS.md Block
+## Exact AGENTS.md Blocks
 
-Paste this block into `AGENTS.md` as a prominent top-level section:
+Paste these blocks into `AGENTS.md` as prominent top-level sections:
 
 ```md
 ## Project Memory Model
 
-- `docs/todo/ROADMAP.md` = curated milestone plan + completed milestone history.
-- `docs/todo/NEXT_STEPS.md` = near-term working list, manual testing, and small follow-ups.
-- `.agents/handoff.md` = current project state snapshot.
-- `.agents/memory.md` = chronological working memory / session log.
+- `docs/todo/ROADMAP.md` = milestone plan and completed history.
+- `docs/todo/NEXT_STEPS.md` = near-term tasks and manual checks.
+- `.agents/handoff.md` = stable current project state.
+- `.agents/memory.md` = chronological session log.
 
-Promotion rule:
-
-- session detail, partial work, and temporary context belong in `.agents/memory.md`
-- stable current truth belongs in `.agents/handoff.md`
-- project priorities and completed milestone-scale work belong in `ROADMAP.md`
-- small actionable follow-ups and manual verification belong in `NEXT_STEPS.md`
-
-Do not duplicate the same item across all four files unless it truly belongs in each role.
+Promote durable findings from memory → handoff, priorities → roadmap, and concrete follow-ups → next steps.
 
 Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMORY_MODEL.md)
+
+## Roadmap and Planning Docs
+
+- Check `ROADMAP.md` before proposing new initiatives.
+- Use `NEXT_STEPS.md` for small follow-ups and manual validation.
+- Keep detailed plans in `docs/todo/TODO_*.md`; graduate completed plans to `DONE_*.md`.
+- Follow `.github/instructions/documentation/todo-done-docs.instructions.md`.
 ```
 
 ---
@@ -127,29 +127,12 @@ If another repo does not yet use this system, install it like this:
 3. Create `docs/todo/NEXT_STEPS.md` if the repo uses a separate near-term working list.
 4. Create `.agents/handoff.md` for the current-state snapshot.
 5. Create `.agents/memory.md` for session logging.
-6. If the repo already has `.claude/memory.md`, move the real content into `.agents/memory.md`.
-7. Leave a short pointer at `.claude/memory.md` if older tooling or habits may still read it.
-8. Ensure ignore rules allow `.agents/handoff.md` to be tracked while keeping `.agents/memory.md`
+6. If the repo already has `.claude/memory.md`, move the real content into `.agents/memory.md`, then
+   delete `.claude/memory.md`.
+7. Ensure ignore rules allow `.agents/handoff.md` to be tracked while keeping `.agents/memory.md`
    gitignored unless the repo intentionally wants it tracked.
-9. If the repo already has TODO/DONE docs, keep using the existing TODO/DONE instruction file for
+8. If the repo already has TODO/DONE docs, keep using the existing TODO/DONE instruction file for
    naming and lifecycle rules rather than redefining those rules here.
-
-Suggested transitional `.claude/memory.md` pointer:
-
-```md
-# Moved
-
-The canonical session log for this repo now lives at:
-
-- `.agents/memory.md`
-
-Use that file for current-session checklists and recent working memory.
-`.agents/handoff.md` remains the current project-state snapshot.
-
-This compatibility pointer is deprecated and should be removed after:
-
-- `2026-07-31`
-```
 
 Suggested ignore pattern:
 

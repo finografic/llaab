@@ -7,19 +7,12 @@
 
 ## Project Memory Model
 
-- `docs/todo/ROADMAP.md` = curated milestone plan + completed milestone history.
-- `docs/todo/NEXT_STEPS.md` = near-term working list, manual testing, and small follow-ups.
-- `.agents/handoff.md` = current project state snapshot.
-- `.agents/memory.md` = chronological working memory / session log.
+- `docs/todo/ROADMAP.md` = milestone plan and completed history.
+- `docs/todo/NEXT_STEPS.md` = near-term tasks and manual checks.
+- `.agents/handoff.md` = stable current project state.
+- `.agents/memory.md` = chronological session log.
 
-Promotion rule:
-
-- session detail, partial work, and temporary context belong in `.agents/memory.md`
-- stable current truth belongs in `.agents/handoff.md`
-- project priorities and completed milestone-scale work belong in `ROADMAP.md`
-- small actionable follow-ups and manual verification belong in `NEXT_STEPS.md`
-
-Do not duplicate the same item across all four files unless it truly belongs in each role.
+Promote durable findings from memory → handoff, priorities → roadmap, and concrete follow-ups → next steps.
 
 Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMORY_MODEL.md)
 
@@ -27,12 +20,10 @@ Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMOR
 
 ## Roadmap and Planning Docs
 
-- Before proposing or generating new features, check `ROADMAP.md` for existing priorities.
-- When conceiving a new feature or initiative, add it to the appropriate roadmap tier.
-- Use `NEXT_STEPS.md` for concrete follow-ups, manual validation, and small tasks that do not need full roadmap treatment.
-- Detailed feature planning docs live in `docs/todo/` as `TODO_*.md` (active) or `DONE_*.md` (complete).
-- **TODO/DONE doc conventions:** `.github/instructions/documentation/todo-done-docs.instructions.md`
-  — rules for naming, status headers, checkboxes, and graduating `TODO_` → `DONE_`.
+- Check `ROADMAP.md` before proposing new initiatives.
+- Use `NEXT_STEPS.md` for small follow-ups and manual validation.
+- Keep detailed plans in `docs/todo/TODO_*.md`; graduate completed plans to `DONE_*.md`.
+- Follow `.github/instructions/documentation/todo-done-docs.instructions.md`.
 
 ---
 
