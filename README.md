@@ -47,6 +47,7 @@ These are intended to be used with user `LaunchAgents`:
 
 - `~/Library/LaunchAgents/com.llaab.server.plist`
 - `~/Library/LaunchAgents/com.llaab.client.plist`
+- `~/Library/LaunchAgents/com.llaab.icons.plist`
 
 Once installed, useful controls are:
 
@@ -54,6 +55,7 @@ Once installed, useful controls are:
 scripts/macos/llaab-service.sh start
 scripts/macos/llaab-service.sh stop
 scripts/macos/llaab-service.sh restart
+scripts/macos/llaab-service.sh repair-client
 scripts/macos/llaab-service.sh status
 ```
 
@@ -69,6 +71,8 @@ The LLAAB plugin can then expose quick actions such as:
 
 - open app
 - open ingest
+- open icons
+- repair client
 - restart services
 - inspect logs
 
@@ -76,6 +80,8 @@ The LLAAB plugin can then expose quick actions such as:
 
 - `llaab.localhost` is the low-friction friendly local hostname. No reverse proxy is required.
 - This persistent setup intentionally runs outside LLAAB itself. The app does not own an always-on scheduler or watcher.
+- The persistent client uses a staged "last-known-good" runtime build, not a live in-place rebuild of the served output.
+  See [`docs/process/PERSISTENT_LOCAL_RUNTIME.md`](./docs/process/PERSISTENT_LOCAL_RUNTIME.md).
 
 ## Installation
 

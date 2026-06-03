@@ -6,6 +6,7 @@ readonly server_label="com.llaab.server"
 readonly client_label="com.llaab.client"
 readonly icons_label="com.llaab.icons"
 readonly launch_agents_dir="$HOME/Library/LaunchAgents"
+readonly script_dir="/Users/justin/LLAAB/scripts/macos"
 readonly server_plist="$launch_agents_dir/$server_label.plist"
 readonly client_plist="$launch_agents_dir/$client_label.plist"
 readonly icons_plist="$launch_agents_dir/$icons_label.plist"
@@ -77,6 +78,10 @@ open_icons() {
   open "http://localhost:5199/"
 }
 
+repair_client() {
+  "$script_dir/repair-persistent-client.sh"
+}
+
 case "${1:-}" in
   start)
     start_services
@@ -99,8 +104,11 @@ case "${1:-}" in
   open-icons)
     open_icons
     ;;
+  repair-client)
+    repair_client
+    ;;
   *)
-    echo "usage: $0 {start|stop|restart|status|open|open-ingest|open-icons}" >&2
+    echo "usage: $0 {start|stop|restart|status|open|open-ingest|open-icons|repair-client}" >&2
     exit 1
     ;;
 esac

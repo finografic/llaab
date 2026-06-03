@@ -1,9 +1,13 @@
+import path from 'node:path';
 import node from '@astrojs/node';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
 
 const SERVER_URL = process.env['SERVER_URL'] ?? 'http://localhost:3000';
+const OUT_DIR = process.env['LLAAB_CLIENT_OUT_DIR']
+  ? path.resolve(process.env['LLAAB_CLIENT_OUT_DIR'])
+  : './dist';
 
 /**
  * SSR routes (`prerender = false`) and API routes require a server adapter at build time. Vite proxy: /api/*
@@ -11,6 +15,7 @@ const SERVER_URL = process.env['SERVER_URL'] ?? 'http://localhost:3000';
  */
 export default defineConfig({
   output: 'server',
+  outDir: OUT_DIR,
   adapter: node({ mode: 'standalone' }),
   integrations: [react()],
   vite: {

@@ -180,7 +180,10 @@ TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.in
 
 macOS persistence is handled outside the app via `launchd` user agents plus a SwiftBar plugin in
 `scripts/macos/`. SwiftBar exposes `Open App`, `Open Ingest`, and `Open Icons`; the icons picker
-target is `http://localhost:5199/`.
+target is `http://localhost:5199/`. The persistent Astro client no longer serves directly from
+`apps/client/dist`; it builds into `apps/client/.persistent/builds/<timestamp>`, promotes only
+successful builds to the `apps/client/.persistent/current` symlink, and falls back to the last
+known-good `current` build if a new build fails.
 
 ## Open Questions
 
