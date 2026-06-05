@@ -4,10 +4,6 @@
 
 Project-specific rules live in `.github/instructions/project/*.instructions.md`
 
-- Design System: `.github/instructions/project/design-system.instructions.md`
-- SVA (slot recipes): `.github/instructions/project/sva-components.instructions.md`
-- CVA (atomic recipes): `.github/instructions/project/cva-components.instructions.md](.github/instructions/project/cva-components.instructions.md`
-
 ## Rules — Global
 
 Rules are canonical in `.github/instructions/` — see `README.md` there for folder structure.
@@ -21,7 +17,7 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 
 - TypeScript patterns: `.github/instructions/code/typescript-patterns.instructions.md`
 - Modern TS patterns: `.github/instructions/code/modern-typescript-patterns.instructions.md`
-- ESLint & style: `.github/instructions/code/linting-code-style.instructions.md`
+- Oxlint & style: `.github/instructions/code/linting-code-style.instructions.md`
 - Provider/context patterns: `.github/instructions/code/provider-context-patterns.instructions.md`
 - Picocolors CLI styling: `.github/instructions/code/picocolors-cli-styling.instructions.md`
 
@@ -41,5 +37,3 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 **Git**
 
 - Git policy: `.github/instructions/git/git-policy.instructions.md`
-
----

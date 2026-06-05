@@ -1,7 +1,25 @@
 ---
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import AppLayout from '../../layouts/AppLayout.astro';
 
-const iconsUrl = 'http://localhost:5199/';
+const configPath = resolve(process.cwd(), 'packages/icons/lucide-manager.config.json');
+const rawConfig = JSON.parse(await readFile(configPath, 'utf-8')) as {
+  manager?: {
+    server?: {
+      host?: string;
+      port?: number;
+    };
+  };
+};
+
+const pickerPort = rawConfig.manager?.server?.port ?? 5199;
+const configuredHost = rawConfig.manager?.server?.host;
+const pickerHost =
+  configuredHost && configuredHost !== '0.0.0.0' && configuredHost !== '::' && configuredHost !== '::1'
+    ? configuredHost
+    : 'localhost';
+const iconsUrl = `http://${pickerHost}:${pickerPort}/`;
 ---
 
 <AppLayout title="Dev · Icons">
@@ -14,13 +32,6 @@ const iconsUrl = 'http://localhost:5199/';
       </p>
     </header>
 
-    <div class="dev-icons-toolbar">
-      <a href={iconsUrl} target="_blank" rel="noreferrer noopener" class="dev-icons-link">
-        Open standalone picker
-      </a>
-      <span class="dev-icons-meta">Source: {iconsUrl}</span>
-    </div>
-
     <div class="dev-icons-frame-shell">
       <iframe
         src={iconsUrl}
@@ -28,6 +39,13 @@ const iconsUrl = 'http://localhost:5199/';
         loading="lazy"
         class="dev-icons-frame"
       ></iframe>
+    </div>
+
+    <div class="dev-icons-toolbar">
+      <a href={iconsUrl} target="_blank" rel="noreferrer noopener" class="dev-icons-link">
+        Open standalone picker
+      </a>
+      <span class="dev-icons-meta">Source: {iconsUrl}</span>
     </div>
   </div>
 </AppLayout>
@@ -37,7 +55,6 @@ const iconsUrl = 'http://localhost:5199/';
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
-    min-height: 100%;
   }
 
   .dev-icons-page__header {
@@ -88,20 +105,18 @@ const iconsUrl = 'http://localhost:5199/';
   }
 
   .dev-icons-frame-shell {
-    flex: 1;
-    min-height: 680px;
     border: 1px solid var(--border);
     border-radius: calc(var(--radius) + 2px);
     overflow: hidden;
-    background: #0f1117;
+    background: #000;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
   }
 
   .dev-icons-frame {
     display: block;
     width: 100%;
-    min-height: 680px;
-    height: calc(100vh - 255px);
+    height: calc(100vh - 330px);
+    min-height: 580px;
     border: 0;
     background: transparent;
   }

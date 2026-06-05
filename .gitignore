@@ -72,6 +72,7 @@ vault/.agent-loop/
 
 # Icon manager (server writes on startup; icons.config.json + icons.generated.ts are committed)
 lucide-manager.config.json
+packages/icons/.icons-server-runtime/
 
 # OS
 .DS_Store

@@ -1,4 +1,4 @@
-# AGENTS.md - AI Assistant Guide
+# AGENTS.md — AI Assistant Guide
 
 ## New here and require INITIAL CONTEXT ?
 
@@ -24,31 +24,6 @@ Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMOR
 - Use `NEXT_STEPS.md` for small follow-ups and manual validation.
 - Keep detailed plans in `docs/todo/TODO_*.md`; graduate completed plans to `DONE_*.md`.
 - Follow `.github/instructions/documentation/todo-done-docs.instructions.md`.
-
----
-
-## Rules — Components
-
-Full detail: `.github/instructions/project/components-shadcn.instructions.md`
-
-**shadcn/ui first — always.** Before writing any custom component, icon, or layout
-primitive, check whether shadcn or Lucide already covers it. If they do, use them.
-Hand-rolling what shadcn provides is not permitted.
-
-- **Icons:** always use `lucide-react`. Never write raw `<svg>` for icons Lucide covers.
-- **Primitives:** buttons, inputs, cards, badges, dialogs, tables, tooltips, etc.
-  all come from shadcn — install them, don't rebuild them.
-- **CSS values:** use shadcn tokens (`var(--primary)`, `var(--border)`, etc.) or LLAAB
-  app tokens (`var(--accent)`, `var(--surface)`, etc.). Never hard-code hex/rgb colours
-  in components or layouts.
-
-**Canonical component location:** `packages/ui/src/components/`
-
-- `pnpm dlx shadcn@latest add <name>` run from `apps/client` installs there automatically.
-- The `components/ui/*` tsconfig alias in `apps/client` resolves to that path — no
-  import changes needed when adding components.
-- App-specific feature components (IngestForm, NavbarVertical, etc.) stay in
-  `apps/client/src/components/` and import primitives from `components/ui/*`.
 
 ---
 
@@ -109,8 +84,33 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 
 ## Git Policy
 
-- IMPORTANT: NEVER include `Co-Authored-By` lines in commit messages. Non-negotiable.
+- Do not include `Co-Authored-By` lines in commit messages.
 - `.github/instructions/git/git-policy.instructions.md` (see Commits and Releases sections)
+
+---
+
+## Rules — Components
+
+Full detail: `.github/instructions/project/components-shadcn.instructions.md`
+
+**shadcn/ui first — always.** Before writing any custom component, icon, or layout
+primitive, check whether shadcn or Lucide already covers it. If they do, use them.
+Hand-rolling what shadcn provides is not permitted.
+
+- **Icons:** always use `lucide-react`. Never write raw `<svg>` for icons Lucide covers.
+- **Primitives:** buttons, inputs, cards, badges, dialogs, tables, tooltips, etc.
+  all come from shadcn — install them, don't rebuild them.
+- **CSS values:** use shadcn tokens (`var(--primary)`, `var(--border)`, etc.) or LLAAB
+  app tokens (`var(--accent)`, `var(--surface)`, etc.). Never hard-code hex/rgb colours
+  in components or layouts.
+
+**Canonical component location:** `packages/ui/src/components/`
+
+- `pnpm dlx shadcn@latest add <name>` run from `apps/client` installs there automatically.
+- The `components/ui/*` tsconfig alias in `apps/client` resolves to that path — no
+  import changes needed when adding components.
+- App-specific feature components (IngestForm, NavbarVertical, etc.) stay in
+  `apps/client/src/components/` and import primitives from `components/ui/*`.
 
 ---
 

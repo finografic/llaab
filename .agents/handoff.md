@@ -23,19 +23,19 @@ Dependency chain (one-directional):
 `@llaab/schemas` + `@llaab/core` → `@llaab/client` (UI only, no skill deps)
 `@llaab/schemas` + `@llaab/core` + `@llaab/skills` + `@llaab/llm` → `@llaab/server` (owns all business logic)
 
-| Package     | Role                                                                                          |
-| ----------- | --------------------------------------------------------------------------------------------- |
-| `schemas`   | Zod schemas — 9 node types, ubiquitous language                                               |
-| `core`      | Vault file I/O — `createNode`, `writeNode`, `readNode`, `listNodes`, `autoTag`                |
-| `control`   | Execution governance — `execute()`, retry/reject, decision traces                             |
-| `ingestion` | Fetch → clean → structure → store pipeline; extraction is a separate exported function        |
-| `icons`     | Workspace icon registry package — runs `icons-server` + `lucide-manager`, exports app icons   |
-| `llm`       | Task router + real providers (Anthropic SDK, Ollama npm) — `routeLlm`, `streamLlm`, 24h cache |
-| `skills`    | Composed workflows — `captureIdea`, `ingestYouTube`, `runSkill`                               |
-| `cli`       | Binary entry point (`llaab`) — citty commands: ingest, vault, agent, mcp                      |
-| `client`    | Astro 6 + React 19 — pure UI, calls server via `src/lib/api.ts` (Hono typed RPC)              |
-| `server`    | Hono + Bun — REST API on port 3000, owns all non-UI logic                                     |
-| `vault/`    | Data directory — markdown files organized by node type (not a package)                        |
+| Package     | Role                                                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `schemas`   | Zod schemas — 9 node types, ubiquitous language                                                                                |
+| `core`      | Vault file I/O — `createNode`, `writeNode`, `readNode`, `listNodes`, `autoTag`                                                 |
+| `control`   | Execution governance — `execute()`, retry/reject, decision traces                                                              |
+| `ingestion` | Fetch → clean → structure → store pipeline; extraction is a separate exported function                                         |
+| `icons`     | Workspace icon registry package — runs `icons-server` + `lucide-manager` (v0.12.8), exports app icons via `icons.generated.ts` |
+| `llm`       | Task router + real providers (Anthropic SDK, Ollama npm) — `routeLlm`, `streamLlm`, 24h cache                                  |
+| `skills`    | Composed workflows — `captureIdea`, `ingestYouTube`, `runSkill`                                                                |
+| `cli`       | Binary entry point (`llaab`) — citty commands: ingest, vault, agent, mcp                                                       |
+| `client`    | Astro 6 + React 19 — pure UI, calls server via `src/lib/api.ts` (Hono typed RPC)                                               |
+| `server`    | Hono + Bun — REST API on port 3000, owns all non-UI logic                                                                      |
+| `vault/`    | Data directory — markdown files organized by node type (not a package)                                                         |
 
 ## Stack
 
@@ -117,9 +117,12 @@ client does not receive false network failures while the server continues extrac
 
 Owns `icons.config.json`, `icons.generated.ts`, and the package export surface for generated icons.
 Consumer imports use `@llaab/icons` rather than root files. The package runs as its own Turbo `dev`
-task and starts three sidecars: `icons-server`, `lucide-manager`, and generated-export syncing.
-LLAAB suppresses auto-opening the picker by setting `LUCIDE_MANAGER_OPEN=false` in the package `dev`
-script because `icons-server` rewrites `lucide-manager.config.json` on startup.
+task and starts three sidecars: `icons-server` (port 5001), `lucide-manager` Vite picker (port 5199),
+and generated-export syncing. `scripts/start-icons-server.mjs` redirects `icons-server` into
+`.icons-server-runtime/` so its config write does not overwrite `lucide-manager.config.json`.
+`lucide-manager.config.json` controls picker port, branding (title + optional `img` as relative
+file path auto-converted to data URL at startup), and iconsApi host/port.
+`openOnStart: false` suppresses browser auto-open; `strictPort: true` prevents port bumping.
 
 ## Ingestion Pipeline
 
@@ -178,12 +181,17 @@ TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.in
 
 ## Local Dev Ops
 
-macOS persistence is handled outside the app via `launchd` user agents plus a SwiftBar plugin in
-`scripts/macos/`. SwiftBar exposes `Open App`, `Open Ingest`, and `Open Icons`; the icons picker
-target is `http://localhost:5199/`. The persistent Astro client no longer serves directly from
-`apps/client/dist`; it builds into `apps/client/.persistent/builds/<timestamp>`, promotes only
-successful builds to the `apps/client/.persistent/current` symlink, and falls back to the last
-known-good `current` build if a new build fails.
+macOS persistence via `launchd` user agents (`com.llaab.server`, `com.llaab.client`,
+`com.llaab.icons`) managed by `scripts/macos/llaab-service.sh`. SwiftBar plugin
+(`llaab-swiftbar.15s.sh`) polls status every 15 s and shows three-state traffic-light indicators
+(⚫ stopped · 🟡 launching · 🟢 running) with per-service submenus for start/stop. Individual
+`start-*` commands wait for HTTP health before exiting so SwiftBar `refresh=true` fires only once
+the service is genuinely up. Repair Client lives in the LLAAB Client submenu.
+
+The persistent Astro client builds into `apps/client/.persistent/builds/<timestamp>`, promotes
+only successful builds to the `apps/client/.persistent/current` symlink, and falls back to the
+last known-good build on failure. `.claude/settings.json` holds a project-level allowlist for
+`pnpm typecheck` and `launchctl list` to reduce permission prompts.
 
 ## Open Questions
 

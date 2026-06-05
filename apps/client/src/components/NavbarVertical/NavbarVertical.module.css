@@ -6,8 +6,9 @@
 }
 
 .brand {
-  display: block;
-  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  padding: 3px 10px;
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;

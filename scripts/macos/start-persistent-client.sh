@@ -22,9 +22,7 @@ staging_dir="$builds_dir/$build_id"
 readonly keep_builds=3
 
 promote_build() {
-  local next_link="$persistent_root/current.next"
-  ln -sfn "$staging_dir" "$next_link"
-  mv -f "$next_link" "$current_link"
+  ln -sfn "$staging_dir" "$current_link"
 }
 
 trim_old_builds() {

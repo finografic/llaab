@@ -14,15 +14,17 @@
     }
   },
   "scripts": {
-    "dev": "concurrently -n \"server,manager,exports\" -c \"cyan,green,magenta\" \"pnpm exec icons-server\" \"LUCIDE_MANAGER_OPEN=false pnpm exec lucide-manager\" \"node scripts/watch-generated-index.mjs\"",
-    "sync:exports": "node scripts/sync-generated-index.mjs"
+    "dev": "concurrently -n \"server,manager,exports\" -c \"cyan,green,magenta\" \"node scripts/start-icons-server.mjs\" \"pnpm exec lucide-manager\" \"node scripts/watch-generated-index.mjs\"",
+    "sync:exports": "node scripts/sync-generated-index.mjs",
+    "update:icons": "pnpm update @finografic/icons --latest",
+    "update:lucide-manager": "pnpm update @finografic/lucide-manager --latest"
   },
   "dependencies": {
     "@finografic/icons": "1.14.1",
     "lucide-react": "^1.17.0"
   },
   "devDependencies": {
-    "@finografic/lucide-manager": "^0.8.4",
+    "@finografic/lucide-manager": "^0.12.11",
     "concurrently": "^9.2.0"
   },
   "peerDependencies": {

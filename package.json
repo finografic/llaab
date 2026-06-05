@@ -29,6 +29,7 @@
     "update:oxc-config": "pnpm update @finografic/oxc-config --latest --recursive && pnpm update oxfmt --latest --recursive && pnpm update oxlint --latest --recursive",
     "update:md-lint": "pnpm update @finografic/md-lint --latest --recursive",
     "update:project-scripts": "pnpm update @finografic/project-scripts --latest --recursive",
+    "update:lucide-manager": "pnpm --filter @llaab/icons update:lucide-manager",
     "update:zustand-context": "pnpm --filter @llaab/client update:zustand-context",
     "update:deps:all": "pnpm update --latest --recursive",
     "update:deps:ignore": "npx tsx scripts/update-deps-ignore.ts",
