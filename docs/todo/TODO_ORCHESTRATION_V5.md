@@ -1,7 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 5 done — extraction model metadata is visible on transcript, idea, and run
-> detail pages. Phase 6 remains promoted for extraction quality work.
+> **Status:** Phase 6 done — long extraction now uses token-aware harness prep with chunked
+> model calls and merged output instead of blind first-6 000-character truncation.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -871,7 +871,7 @@ pages. `astro check --root apps/client` passes.
 
 ---
 
-## Phase 6 — Token-Aware Harness Extension
+## Phase 6 — Token-Aware Harness Extension — DONE
 
 > **Only start this after Phase 1 validation has confirmed that truncation is the actual
 > bottleneck.** If Phase 1 says 6 000 chars is fine for now, this phase stays in backlog.
@@ -889,10 +889,10 @@ inside LLAAB.
 
 ### 6a. Token counting in harness-prep
 
-- [ ] Add a `count-extraction-tokens` step to the harness pipeline.
-- [ ] If `countTokens` is not yet in `@finografic/ai-harness`, implement a local approximation
+- [x] Add a `count-extraction-tokens` step to the harness pipeline.
+- [x] If `countTokens` is not yet in `@finografic/ai-harness`, implement a local approximation
       (`text.length / 4`) and log a TODO to graduate it to the package later.
-- [ ] Accept a `model` parameter so token limits are model-specific rather than using a
+- [x] Accept a `model` parameter so token limits are model-specific rather than using a
       hardcoded character limit.
 
 ### 6b. Context assembly pipeline
@@ -906,35 +906,52 @@ count-tokens
   → validate-budget
 ```
 
-- [ ] `chunk-if-needed` splits long transcripts with configurable overlap so extraction
+- [x] `chunk-if-needed` splits long transcripts with configurable overlap so extraction
       doesn't lose cross-boundary context.
-- [ ] `validate-budget` step fails fast if the assembled context exceeds the model's input
+- [x] `validate-budget` step fails fast if the assembled context exceeds the model's input
       window, instead of silently truncating.
 
 ### 6c. Reducer support for chunked output
 
-- [ ] When extraction runs over multiple chunks, a reducer step merges partial results
+- [x] When extraction runs over multiple chunks, a reducer step merges partial results
       (deduplicate ideas, reconcile summaries).
-- [ ] Preserve current short-input behavior — single-chunk transcripts should not pay the
+- [x] Preserve current short-input behavior — single-chunk transcripts should not pay the
       cost of chunking machinery.
 
 ### 6d. Harness prep is provider-aware
 
-- [ ] `prepareExtractionInput(...)` accepts a `model` param and passes it through the
+- [x] `prepareExtractionInput(...)` accepts a `model` param and passes it through the
       pipeline.
-- [ ] `llm-extract.ts` passes the resolved model from `routeLlm` into harness prep.
+- [x] `llm-extract.ts` passes the resolved model from `routeLlm` into harness prep.
 
 ### Boundary contract
 
-- [ ] Define the handoff contract between deterministic ingestion output, harness-prepared
+- [x] Define the handoff contract between deterministic ingestion output, harness-prepared
       context, and `control.execute(...)` — this is the formal interface between the three
       layers.
 
+Contract:
+
+- Deterministic ingestion passes raw transcript text plus the resolved extraction model into
+  `prepareExtractionInput(...)`.
+- Harness prep returns immutable chunks, token budget metadata, a `ControlContext`, and trace
+  stages; it never drops transcript content.
+- `control.execute(...)` receives the prepared model/chunk envelope, runs one extraction per
+  chunk, validates each partial JSON payload, and returns a reduced `ExtractedKnowledge` object.
+
 ### Validation
 
-- [ ] Add tests around boundary sizes and truncation/chunking decisions.
-- [ ] A transcript that previously got silently truncated now either extracts fully (if it
+- [x] Add tests around boundary sizes and truncation/chunking decisions.
+- [x] A transcript that previously got silently truncated now either extracts fully (if it
       fits the model window) or produces multiple chunk runs with merged output.
+
+### Phase 6 validation result
+
+- `prepareExtractionInput(...)` keeps short input as a single chunk and records four harness
+  stages: count tokens, chunk if needed, build context, validate budget.
+- Long input now produces overlapped chunks with `wasTruncated: false`.
+- Extraction calls the model once per chunk and deduplicates repeated ideas/skills in the
+  reduced result.
 
 ### Done means
 

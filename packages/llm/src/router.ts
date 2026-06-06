@@ -44,6 +44,14 @@ function resolveModel(
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
+export function resolveLlmRoute(
+  task: TaskType,
+  override?: string,
+): { model: string; tier: ModelTier; provider: LlmProvider['id'] } {
+  const { model, tier, provider } = resolveModel(task, override);
+  return { model, tier, provider: provider.id };
+}
+
 export async function routeLlm(
   task: TaskType,
   prompt: string,

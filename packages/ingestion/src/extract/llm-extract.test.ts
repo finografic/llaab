@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@llaab/llm', () => ({
+  resolveLlmRoute: vi.fn(() => ({
+    model: 'llama3.1:8b',
+    provider: 'ollama',
+    tier: 'local-mid',
+  })),
   routeLlm: vi.fn(),
 }));
 
@@ -67,8 +72,10 @@ describe('llmExtract', () => {
     const result = await llmExtractWithTrace('example transcript');
 
     expect(result.runTrace.stages.map((stage) => stage.name)).toEqual([
-      'harness:truncate-extraction-input',
+      'harness:count-extraction-tokens',
+      'harness:chunk-if-needed',
       'harness:build-extraction-context',
+      'harness:validate-budget',
       'control:extract-knowledge',
     ]);
     expect(result.runTrace.decisions.at(-1)?.type).toBe('accept');
@@ -84,15 +91,29 @@ describe('llmExtract', () => {
     });
   });
 
-  it('truncates long inputs before calling the model', async () => {
+  it('chunks long inputs before calling the model and reduces duplicate output', async () => {
     mockRouteLlm(VALID_RESPONSE);
 
-    await llmExtractWithTrace('x'.repeat(6_500));
+    const result = await llmExtractWithTrace('x'.repeat(40_000));
 
-    expect(routeLlm).toHaveBeenCalledWith(
+    expect(routeLlm).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(routeLlm).mock.calls[0]?.[1]).toContain('[chunk 1/2]');
+    expect(vi.mocked(routeLlm).mock.calls[0]?.[1]).not.toContain('[transcript truncated for extraction]');
+    expect(result.ideas).toHaveLength(2);
+    expect(result.skills).toHaveLength(2);
+    expect(result.runTrace.stages.at(-1)?.output).toEqual({
+      ideas: [
+        'LLMs require careful prompt engineering',
+        'Fine-tuning outperforms prompting for narrow tasks',
+      ],
+      skills: ['prompt engineering', 'fine-tuning'],
+      summary: 'Overview of LLM training and prompting strategies.',
+    });
+    expect(routeLlm).toHaveBeenLastCalledWith(
       'extract',
-      expect.stringContaining('[transcript truncated for extraction]'),
+      expect.stringContaining('[chunk 2/2]'),
       expect.objectContaining({
+        model: 'llama3.1:8b',
         system: expect.any(String),
       }),
     );

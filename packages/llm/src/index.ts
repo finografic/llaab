@@ -1,4 +1,4 @@
-export { getLlmStatus, ollamaListModels, routeLlm, streamLlm } from './router.js';
+export { getLlmStatus, ollamaListModels, resolveLlmRoute, routeLlm, streamLlm } from './router.js';
 export type { LlmCompleteResult, ModelTier, TaskType } from './router.js';
 export type { LlmProvider, LlmProviderResult } from './provider.js';
 

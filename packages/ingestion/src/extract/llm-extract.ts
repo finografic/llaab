@@ -1,5 +1,5 @@
 import { execute } from '@llaab/control';
-import { routeLlm } from '@llaab/llm';
+import { resolveLlmRoute, routeLlm } from '@llaab/llm';
 import { z } from 'zod';
 import type { ControlDecision, ControlLlmTrace, ControlStage } from '@llaab/control';
 
@@ -64,15 +64,46 @@ function parseJsonFromText(text: string): unknown {
   return JSON.parse(stripped.slice(start, end + 1));
 }
 
+function dedupeValues(values: string[]): string[] {
+  const seen = new Set<string>();
+  return values.filter((value) => {
+    const key = value.trim().toLocaleLowerCase();
+    if (key.length === 0 || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function reduceChunkedExtraction(parts: ExtractedKnowledge[]): ExtractedKnowledge {
+  if (parts.length === 1) return parts[0] as ExtractedKnowledge;
+
+  return {
+    ideas: dedupeValues(parts.flatMap((part) => part.ideas)),
+    skills: dedupeValues(parts.flatMap((part) => part.skills)),
+    summary: dedupeValues(parts.map((part) => part.summary)).join(' '),
+  };
+}
+
+function addOptionalTokenCount(left: number | undefined, right: number | undefined): number | undefined {
+  if (left === undefined && right === undefined) return undefined;
+  return (left ?? 0) + (right ?? 0);
+}
+
 export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowledgeWithTrace> {
+  const route = resolveLlmRoute('extract');
   const prepared = await prepareExtractionInput({
     cwd: process.cwd(),
     input,
+    model: route.model,
   });
   let llmMeta: LlmExtractionMeta | undefined;
   const controlled = await execute({
     task: 'extract-knowledge',
-    input: prepared.preparedText,
+    input: {
+      chunkCount: prepared.chunks.length,
+      model: prepared.model,
+      text: prepared.preparedText,
+    },
     schema: ExtractedKnowledgeSchema,
     context: prepared.context,
     policy: {
@@ -82,17 +113,29 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
     },
     model: 'extract',
     run: async () => {
-      const result = await routeLlm('extract', prepared.preparedText, {
-        system: EXTRACTION_SYSTEM_PROMPT,
-      });
-      llmMeta = {
-        model: result.model,
-        provider: result.provider,
-        durationMs: result.durationMs,
-        promptTokens: result.promptTokens,
-        completionTokens: result.completionTokens,
-      };
-      return parseJsonFromText(result.text);
+      let nextLlmMeta: LlmExtractionMeta | undefined;
+      const chunkResults: ExtractedKnowledge[] = [];
+      for (const chunk of prepared.chunks) {
+        const prompt =
+          prepared.chunks.length === 1
+            ? chunk.text
+            : `[chunk ${chunk.index + 1}/${prepared.chunks.length}]\n\n${chunk.text}`;
+        const result = await routeLlm('extract', prompt, {
+          model: prepared.model,
+          system: EXTRACTION_SYSTEM_PROMPT,
+        });
+        nextLlmMeta = {
+          model: result.model,
+          provider: result.provider,
+          durationMs: (nextLlmMeta?.durationMs ?? 0) + result.durationMs,
+          promptTokens: addOptionalTokenCount(nextLlmMeta?.promptTokens, result.promptTokens),
+          completionTokens: addOptionalTokenCount(nextLlmMeta?.completionTokens, result.completionTokens),
+        };
+        chunkResults.push(ExtractedKnowledgeSchema.parse(parseJsonFromText(result.text)));
+      }
+
+      llmMeta = nextLlmMeta;
+      return reduceChunkedExtraction(chunkResults);
     },
   });
   if (!llmMeta) throw new Error('LLM extraction completed without metadata');
