@@ -1,5 +1,5 @@
 import { CAPABILITIES, COMMAND_CAPABILITIES } from '@llaab/core';
-import { getLlmStatus } from '@llaab/llm';
+import { getExecutorStatus, getLlmStatus } from '@llaab/llm';
 import { REGISTRY } from '@llaab/skills';
 import { defineCommand } from 'citty';
 
@@ -16,9 +16,11 @@ export const doctorCommand = defineCommand({
   },
   async run() {
     const status = await getLlmStatus();
+    const executors = await getExecutorStatus();
     const covered = [
       ...new Set([
         ...status.capabilities.flatMap((provider) => provider.capabilities),
+        ...executors.flatMap((provider) => provider.capabilities),
         ...Object.values(COMMAND_CAPABILITIES).flat(),
         ...REGISTRY.flatMap((route) => route.capabilities),
       ]),
@@ -27,6 +29,11 @@ export const doctorCommand = defineCommand({
 
     console.log(pc.bold('LLM Providers'));
     for (const provider of status.capabilities) {
+      console.log(
+        `  ${statusIcon(provider.available)} ${provider.provider.padEnd(10)} ${provider.capabilities.join(', ')}`,
+      );
+    }
+    for (const provider of executors) {
       console.log(
         `  ${statusIcon(provider.available)} ${provider.provider.padEnd(10)} ${provider.capabilities.join(', ')}`,
       );

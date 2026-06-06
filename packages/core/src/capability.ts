@@ -13,6 +13,9 @@ export const CAPABILITIES = [
   'skill_run',
   'agent_run',
   'command_run',
+  'code_edit',
+  'shell_exec',
+  'test_run',
   'plan',
 ] as const;
 

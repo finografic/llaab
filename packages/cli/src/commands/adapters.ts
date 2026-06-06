@@ -1,5 +1,10 @@
 import { CAPABILITIES, CapabilitySchema } from '@llaab/core';
-import { findProvidersByCapability, getLlmStatus } from '@llaab/llm';
+import {
+  findExecutorProvidersByCapability,
+  findProvidersByCapability,
+  getExecutorStatus,
+  getLlmStatus,
+} from '@llaab/llm';
 import { defineCommand } from 'citty';
 
 import { pc } from '../utils/picocolors.js';
@@ -29,12 +34,16 @@ export const adaptersCommand = defineCommand({
         }
 
         const status = await getLlmStatus();
+        const executors = await getExecutorStatus();
         const providerIds = parsedCapability?.success
-          ? new Set(findProvidersByCapability(parsedCapability.data).map((provider) => provider.id))
+          ? new Set([
+              ...findProvidersByCapability(parsedCapability.data).map((provider) => provider.id),
+              ...findExecutorProvidersByCapability(parsedCapability.data).map((provider) => provider.id),
+            ])
           : undefined;
-        const providers = providerIds
-          ? status.capabilities.filter((provider) => providerIds.has(provider.provider))
-          : status.capabilities;
+        const providers = [...status.capabilities, ...executors].filter((provider) =>
+          providerIds ? providerIds.has(provider.provider) : true,
+        );
 
         for (const provider of providers) {
           const availability = provider.available ? pc.green('available') : pc.gray('unavailable');

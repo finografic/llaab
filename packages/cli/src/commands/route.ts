@@ -1,5 +1,5 @@
 import { CAPABILITIES, CapabilitySchema } from '@llaab/core';
-import { findProvidersByCapability, resolveLlmRoute } from '@llaab/llm';
+import { findExecutorProvidersByCapability, findProvidersByCapability, resolveLlmRoute } from '@llaab/llm';
 import { defineCommand } from 'citty';
 import type { TaskType } from '@llaab/llm';
 
@@ -45,7 +45,10 @@ export const routeCommand = defineCommand({
       process.exit(1);
     }
 
-    const providers = findProvidersByCapability(parsedCapability.data);
+    const providers = [
+      ...findProvidersByCapability(parsedCapability.data),
+      ...findExecutorProvidersByCapability(parsedCapability.data),
+    ];
     if (providers.length === 0) {
       console.log(pc.gray(`No providers declare "${parsedCapability.data}".`));
       return;

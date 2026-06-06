@@ -1,7 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 8 done — CLI diagnostics now expose provider availability, adapter
-> capabilities, and route decisions.
+> **Status:** Phase 9 done — external executor adapter contracts and OpenCode registration
+> are in place; optional shell execution remains Phase 10.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -1011,6 +1011,47 @@ Budget violations surface as meaningful errors rather than silent content loss.
   passes.
 - Tests confirm Gemma/open-weight content now gets `d:llm`, omitted extraction `tags` default
   to `[]`, and both idea extraction paths pass transcript body text to `autoTag(...)`.
+- Live YouTube ingest validation remains the only deferred check: run a real ingest with
+  extraction and confirm transcript/idea frontmatter contains both `d:` domain tags and
+  normalized content tags.
+
+### Phase 6b expected tag shape
+
+For Gemma-style LLM content, transcript nodes should now carry tags like:
+
+```yaml
+tags:
+  - d:ingest
+  - d:llm
+  - gemma-4
+  - open-weight
+  - edge-inference
+  - multimodal
+```
+
+Generated idea nodes from that transcript should carry the same domain/content signal, including
+`d:llm` from transcript-body auto-tagging and normalized LLM tags such as `gemma-4` and
+`open-weight`.
+
+### Phase 6b files touched
+
+| File                                                   | Change                                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `packages/skills/src/extract-transcript-ideas.ts`      | Pass transcript body to `autoTag`; merge LLM tags; normalize             |
+| `packages/core/src/taxonomy.ts`                        | Expand `d:` regex patterns with model names and domain terms             |
+| `packages/ingestion/src/extract/llm-extract.ts`        | Add `tags` to extraction prompt, schema, and interfaces                  |
+| `packages/ingestion/src/extract/llm-extract.test.ts`   | Update extraction tests for tags and omitted-tag fallback                |
+| `packages/ingestion/src/pipeline.ts`                   | Merge body-derived domain tags and LLM content tags in normal extraction |
+| `packages/ingestion/src/pipeline.test.ts`              | Cover merged transcript/idea tags in pipeline extraction                 |
+| `packages/core/src/taxonomy.test.ts`                   | Cover Gemma/open-weight `d:llm` detection                                |
+| `packages/skills/src/extract-transcript-ideas.test.ts` | Cover transcript body passed to `autoTag` in skills extraction           |
+
+### Phase 6b non-goals
+
+- Do not add a second tag prefix such as `t:` for topic tags. Content tags remain unprefixed.
+- Do not change the taxonomy guide's `d:` prefix system; this phase only expands conservative
+  regexes and adds complementary content tags.
+- Do not add tag suggestions to the UI tag input yet.
 
 ### Done means
 
@@ -1043,6 +1084,9 @@ export type Capability =
   | 'skill_run'
   | 'agent_run'
   | 'command_run'
+  | 'code_edit'
+  | 'shell_exec'
+  | 'test_run'
   | 'plan';
 ```
 
@@ -1051,9 +1095,11 @@ map to others. One type system, not two.
 
 Explicitly deferred capabilities (only add when there is a real consumer):
 
-- `code_edit`, `code_review`, `browser_use`, `shell_exec`, `notify`, `orchestrate`
+- `code_review`, `browser_use`, `notify`, `orchestrate`
 
 - [x] Added `CapabilitySchema` / `Capability` in `packages/core/src/capability.ts`.
+- [x] Phase 9 added `code_edit`, `shell_exec`, and `test_run` when OpenCode became a real
+      registered executor consumer.
 
 ### 7b. Annotate existing providers with capabilities
 
@@ -1179,7 +1225,7 @@ Command Bus: 4 handlers registered (ai.run, agent.run, fs.read, fs.list)
 
 ---
 
-## Phase 9 — External Executor Adapters (OpenCode, Cline)
+## Phase 9 — External Executor Adapters (OpenCode, Cline) — DONE
 
 > **Start only after the command bus and capability registry are proven (Phases 3 + 7).**
 > The interface must exist first so there is somewhere to plug them in.
@@ -1220,22 +1266,32 @@ constraints, grounded in LLAAB's existing schema types.
 
 ### Rules
 
-- [ ] External coding adapters receive a prepared context bundle and task, not vague raw
+- [x] External coding adapters receive a prepared context bundle and task, not vague raw
       prompts.
-- [ ] External coding adapters do not write directly to vault memory unless routed through
+- [x] External coding adapters do not write directly to vault memory unless routed through
       LLAAB APIs.
-- [ ] Cloud or paid adapters must log provider, model, duration, and fallback reason.
-- [ ] Expensive or high-risk adapter calls should support explicit human confirmation.
-- [ ] Do not make external executors default before local LLM, harness, command bus, and
+- [x] Cloud or paid adapters must log provider, model, duration, and fallback reason.
+- [x] Expensive or high-risk adapter calls should support explicit human confirmation.
+- [x] Do not make external executors default before local LLM, harness, command bus, and
       RunNode tracing are stable.
 
 ### Tasks (deferred)
 
-- [ ] Define `ExecutorProvider` interface.
-- [ ] Implement `OpenCodeAdapter` (shell-out; synchronous; context bundle as temp file).
-- [ ] Register `OpenCodeAdapter` in the capability router.
-- [ ] `isAvailable()` checks for binary presence via `which opencode`.
-- [ ] Add `opencode` as an allowlisted command in the Terminal Panel's shell adapter.
+- [x] Define `ExecutorProvider` interface.
+- [x] Implement `OpenCodeAdapter` (shell-out; synchronous; context bundle as temp file).
+- [x] Register `OpenCodeAdapter` in the capability router.
+- [x] `isAvailable()` checks for binary presence via `which opencode`.
+- [x] Add `opencode` as an allowlisted command in the Terminal Panel's shell adapter.
+      Deferred to Phase 10 because the shell adapter does not exist before that phase.
+
+### Phase 9 validation result
+
+- `tsc -b packages/core packages/llm packages/skills packages/cli --pretty false` passes.
+- `vitest run packages/core/src/capability.test.ts packages/llm/src/router.test.ts packages/llm/src/executor-router.test.ts packages/skills/src/agent/registry.test.ts`
+  passes.
+- `llaab route code_edit` lists OpenCode as the registered executor adapter.
+- `llaab adapters list --capability code_edit` reports OpenCode unavailable on this machine
+  because `opencode` is not installed.
 
 ---
 
