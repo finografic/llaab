@@ -1,5 +1,6 @@
 import type { LlmProvider } from './provider.js';
 import type { LlmCompleteOptions, LlmCompleteResult, ModelTier, TaskType } from './types.js';
+import type { Capability } from '@llaab/core';
 
 import { cacheGet, cacheSet } from './cache.js';
 import { anthropicProvider } from './providers/anthropic.js';
@@ -52,6 +53,13 @@ export function resolveLlmRoute(
   return { model, tier, provider: provider.id };
 }
 
+export function findProvidersByCapability(capability: Capability): LlmProvider[] {
+  return Object.values(PROVIDERS).filter((provider, index, providers) => {
+    const firstIndex = providers.findIndex((candidate) => candidate.id === provider.id);
+    return firstIndex === index && provider.capabilities.includes(capability);
+  });
+}
+
 export async function routeLlm(
   task: TaskType,
   prompt: string,
@@ -93,6 +101,12 @@ export async function* streamLlm(
 
 export async function getLlmStatus(): Promise<{
   availableProviders: Array<LlmProvider['id']>;
+  capabilities: Array<{
+    available: boolean;
+    capabilities: Capability[];
+    displayName: string;
+    provider: LlmProvider['id'];
+  }>;
   modelMap: Record<ModelTier, string>;
   routing: Record<TaskType, { tier: ModelTier; model: string; provider: LlmProvider['id'] }>;
 }> {
@@ -112,6 +126,14 @@ export async function getLlmStatus(): Promise<{
 
   return {
     availableProviders,
+    capabilities: await Promise.all(
+      uniqueProviders.map(async (provider) => ({
+        available: availableProviders.includes(provider.id),
+        capabilities: provider.capabilities,
+        displayName: provider.displayName,
+        provider: provider.id,
+      })),
+    ),
     modelMap: { ...MODEL_MAP },
     routing: Object.fromEntries(
       Object.entries(ROUTING).map(([task, tier]) => [

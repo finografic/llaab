@@ -1,7 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 6b done — auto-tagging now uses transcript body signal plus LLM-extracted
-> content tags before the plan continues to Phase 7.
+> **Status:** Phase 7 done — providers, skills, and commands now declare/query shared
+> capabilities.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -1020,7 +1020,7 @@ videos such as Gemma 4 now receive `d:llm` plus normalized topic tags such as `g
 
 ---
 
-## Phase 7 — Capability-Based Routing
+## Phase 7 — Capability-Based Routing — DONE
 
 > **Do this after the provider and command seams exist (Phases 2 + 3). Avoid premature
 > abstraction.** The current `TaskType` enum is already a capability model — it just isn't
@@ -1053,6 +1053,8 @@ Explicitly deferred capabilities (only add when there is a real consumer):
 
 - `code_edit`, `code_review`, `browser_use`, `shell_exec`, `notify`, `orchestrate`
 
+- [x] Added `CapabilitySchema` / `Capability` in `packages/core/src/capability.ts`.
+
 ### 7b. Annotate existing providers with capabilities
 
 ```ts
@@ -1070,6 +1072,8 @@ export interface LlmProvider {
 - `AnthropicProvider` → `['chat', 'reason', 'summarize', 'extract', 'structure', 'plan']`
 - `OllamaProvider` → `['chat', 'summarize', 'extract', 'reduce', 'structure']`
 
+- [x] Annotated Anthropic and Ollama providers with declared capabilities.
+
 ### 7c. Add `findProvidersByCapability` to router
 
 ```ts
@@ -1077,6 +1081,8 @@ export function findProvidersByCapability(cap: Capability): LlmProvider[];
 ```
 
 Now the system can answer "who can summarize?" without hard-coding tiers in call sites.
+
+- [x] Added `findProvidersByCapability(capability)` to `packages/llm/src/router.ts`.
 
 ### 7d. Extend `SkillRoute` with capabilities
 
@@ -1093,21 +1099,31 @@ export interface SkillRoute {
 
 Skills now declare what they provide, making the agent loop queryable.
 
+- [x] Added capabilities to `SkillRoute`.
+- [x] Added `findSkillRoutesByCapability(capability)`.
+
 ### 7e. Map command kinds to capabilities
 
-- [ ] Update Terminal Panel's `Command` types to map `kind → Capability` (for routing +
+- [x] Update Terminal Panel's `Command` types to map `kind → Capability` (for routing +
       audit trail).
-- [ ] Capability routing is the same code path for HTTP endpoints, Terminal Panel, and CLI.
+- [x] Capability routing is the same code path for HTTP endpoints, Terminal Panel, and CLI.
 
 ### 7f. Expose via API
 
-- [ ] Add `GET /api/llm/capabilities` endpoint — lists providers and their declared
+- [x] Add `GET /api/llm/capabilities` endpoint — lists providers and their declared
       capabilities with availability status.
 
 ### Validation
 
-- [ ] Keep capability selection deterministic and config-driven.
-- [ ] `findProvidersByCapability('extract')` returns both Ollama and Anthropic providers.
+- [x] Keep capability selection deterministic and config-driven.
+- [x] `findProvidersByCapability('extract')` returns both Ollama and Anthropic providers.
+
+### Phase 7 validation result
+
+- `tsc -b packages/core packages/llm packages/skills apps/server --pretty false` passes.
+- `vitest run packages/core/src/capability.test.ts packages/llm/src/router.test.ts packages/skills/src/agent/registry.test.ts`
+  passes.
+- `GET /api/llm/capabilities` is wired into the existing `/api/llm` router.
 
 ---
 

@@ -1,4 +1,4 @@
-import { CommandEnvelopeSchema } from '@llaab/core';
+import { CommandEnvelopeSchema, getCommandCapabilities } from '@llaab/core';
 import { runSkill } from '@llaab/skills';
 import type { CommandContext, CommandHandler } from './handler.js';
 import type { Command, CommandEnvelope, OutputEnvelope, OutputEvent } from '@llaab/core';
@@ -45,6 +45,7 @@ async function persistCommandRun(input: {
   error?: Error;
 }): Promise<void> {
   const runInput = {
+    capabilities: getCommandCapabilities(input.envelope.command),
     commandId: input.envelope.id,
     source: input.envelope.source,
     command: input.envelope.command,
@@ -65,6 +66,7 @@ async function persistCommandRun(input: {
     commandRunName(input.envelope),
     async () => ({
       commandId: input.envelope.id,
+      capabilities: getCommandCapabilities(input.envelope.command),
       kind: input.envelope.command.kind,
       exitCode: input.exitCode,
       eventCount: input.events.length,

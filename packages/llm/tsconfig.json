@@ -6,5 +6,5 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "references": [{ "path": "../schemas" }]
+  "references": [{ "path": "../schemas" }, { "path": "../core" }]
 }

@@ -75,3 +75,11 @@ export const status = {
     });
   },
 };
+
+export const capabilities = {
+  path: '/capabilities' as const,
+  handler: async (c: AppCtx) => {
+    const config = await getLlmStatus();
+    return c.json({ providers: config.capabilities });
+  },
+};

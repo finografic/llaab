@@ -55,6 +55,7 @@ export async function ollamaListModels(): Promise<string[]> {
 export const ollamaProvider: LlmProvider = {
   id: 'ollama',
   displayName: 'Ollama',
+  capabilities: ['chat', 'summarize', 'extract', 'reduce', 'structure'],
   complete: ollamaComplete,
   stream: ollamaStream,
   async isAvailable() {

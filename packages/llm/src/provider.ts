@@ -1,4 +1,5 @@
 import type { LlmCompleteOptions } from './types.js';
+import type { Capability } from '@llaab/core';
 
 export interface LlmProviderResult {
   text: string;
@@ -12,6 +13,7 @@ export interface LlmProviderResult {
 export interface LlmProvider {
   readonly id: LlmProviderResult['providerId'];
   readonly displayName: string;
+  readonly capabilities: Capability[];
   complete(prompt: string, opts: LlmCompleteOptions): Promise<LlmProviderResult>;
   stream(prompt: string, opts: LlmCompleteOptions): AsyncGenerator<string>;
   isAvailable(): Promise<boolean>;

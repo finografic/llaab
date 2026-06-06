@@ -1,4 +1,5 @@
 import type { SkillRunRecord } from '../runner.js';
+import type { Capability } from '@llaab/core';
 import type { LabNode, NodeType, TranscriptNode } from '@llaab/schemas';
 
 import { extractTranscriptIdeas } from '../extract-transcript-ideas.js';
@@ -6,6 +7,7 @@ import { extractTranscriptIdeas } from '../extract-transcript-ideas.js';
 export interface SkillRoute {
   nodeType: NodeType;
   skill: string;
+  capabilities: Capability[];
   execute: (node: LabNode) => Promise<{ record: SkillRunRecord }>;
   filter?: (node: LabNode) => boolean;
 }
@@ -14,6 +16,7 @@ export const REGISTRY: SkillRoute[] = [
   {
     nodeType: 'transcript',
     skill: 'extract-transcript-ideas',
+    capabilities: ['extract', 'summarize', 'memory_write', 'skill_run'],
     execute: (node) => extractTranscriptIdeas({ transcript: node as TranscriptNode }),
   },
   // Source Auto-Follow — uncomment when that feature is built:
@@ -27,4 +30,8 @@ export const REGISTRY: SkillRoute[] = [
 
 export function getRoutesFor(nodeType: NodeType): SkillRoute[] {
   return REGISTRY.filter((r) => r.nodeType === nodeType);
+}
+
+export function findSkillRoutesByCapability(capability: Capability): SkillRoute[] {
+  return REGISTRY.filter((route) => route.capabilities.includes(capability));
 }

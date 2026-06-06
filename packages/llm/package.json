@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
+    "@llaab/core": "workspace:*",
     "@llaab/schemas": "workspace:*",
     "ollama": "^0.6.3"
   },

@@ -348,6 +348,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.90.0
         version: 0.90.0(zod@4.4.3)
+      '@llaab/core':
+        specifier: workspace:*
+        version: link:../core
       '@llaab/schemas':
         specifier: workspace:*
         version: link:../schemas

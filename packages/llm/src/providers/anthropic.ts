@@ -53,6 +53,7 @@ export async function* anthropicStream(prompt: string, opts: LlmCompleteOptions)
 export const anthropicProvider: LlmProvider = {
   id: 'anthropic',
   displayName: 'Anthropic',
+  capabilities: ['chat', 'reason', 'summarize', 'extract', 'structure', 'plan'],
   complete: anthropicComplete,
   stream: anthropicStream,
   async isAvailable() {
