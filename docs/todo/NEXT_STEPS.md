@@ -3,7 +3,7 @@
 > Maintained working list. Larger initiatives live in [`ROADMAP.md`](./ROADMAP.md) — this doc
 > covers concrete near-term tasks, manual testing, and small fixes not large enough for ROADMAP.
 >
-> Last updated: 2026-06-07 (Phase 0 orchestration metadata)
+> Last updated: 2026-06-07 (Phase 1 harness validation)
 
 ---
 
@@ -66,7 +66,7 @@ Things to verify end-to-end after recent pipeline changes:
 - [x] **Spike harness at the transcript extraction boundary** — `llm-extract.ts` now uses a small
       local harness prep pipeline before `control.execute(...)`.
 
-- [ ] **Validate the new extraction prep in real transcript ingestion** — run the actual ingest +
+- [x] **Validate the new extraction prep in real transcript ingestion** — run the actual ingest +
       extract flow and confirm the staged preparation is useful in practice.
       Start here:
       `packages/ingestion/src/extract/harness-prep.ts`,
@@ -76,19 +76,28 @@ Things to verify end-to-end after recent pipeline changes:
       extraction succeeds, harness stages appear in trace output, and there is a written call on
       whether current truncation is acceptable.
 
-- [ ] **Compare current truncation-based prep vs harness-ready prep** — confirm what should stay
+- [x] **Compare current truncation-based prep vs harness-ready prep** — confirm what should stay
       local to LLAAB now and what should move into the harness package later.
       Specifically answer:
       should `prepareExtractionInput(...)` remain local for now, or is transcript length handling
       the next package-level feature gap?
 
-- [ ] **Decide next priority after consumer validation** — if transcript extraction still feels
+- [x] **Decide next priority after consumer validation** — if transcript extraction still feels
       blocked by input prep limits, do harness extension before Terminal Panel. If not, Terminal
       Panel can stay next.
       Record that decision in both `ROADMAP.md` and `TODO_HARNESS.md`.
 
-- [ ] **Capture one short implementation note after validation** — update `TODO_HARNESS.md` with:
+- [x] **Capture one short implementation note after validation** — update `TODO_HARNESS.md` with:
       what was tested, what failed or held up, and whether Phase 2 or Terminal should come next.
+
+### Phase 1 harness verdict
+
+Real YouTube validation succeeded, and persisted extraction RunNodes now include informative
+harness stage payloads. The current 6 000-character cap retained only 31.4% of a 19 207-char
+transcript while using 18.8% of the `llama3:latest` context window, so token-aware
+chunking/context assembly is the next extraction-quality blocker. Keep `prepareExtractionInput`
+local until the boundary contract is clearer, but promote the token-aware harness extension ahead
+of Terminal Panel.
 
 ---
 
@@ -96,13 +105,10 @@ Things to verify end-to-end after recent pipeline changes:
 
 See [`ROADMAP.md`](./ROADMAP.md) for full descriptions. Suggested order:
 
-1. **P1 — Install and validate `@finografic/ai-harness`** — adopt the released package in the
-   transcript extraction path first; remaining work is real-flow validation; see
-   [`TODO_HARNESS.md`](./TODO_HARNESS.md)
-2. **P2 — Terminal / Command Panel** — only stays next if harness consumer validation does not
-   expose immediate prep/runtime blockers
-3. **P2 — Harness layer extension** — should move ahead of Terminal Panel if long-input prep or
-   model-boundary issues become the real blocker during transcript testing
+1. **P1 — LLM provider interface** — next orchestration phase after metadata + harness validation
+2. **P1 — Harness layer extension** — promoted ahead of Terminal Panel after Phase 1 validation
+3. **P2 — Terminal / Command Panel** — wait until token-aware extraction prep is no longer the
+   sharper blocker
 4. **P3 — Source Auto-Follow** — agent loop slot already reserved; needs scheduled trigger story
 5. **P3 — Library Watch** — npmx.dev logic is portable; `PackageNode` schema needed first
 6. **P3 — Karpathy graph** — defer until vault has meaningful node density (50+ nodes)
@@ -111,8 +117,8 @@ See [`ROADMAP.md`](./ROADMAP.md) for full descriptions. Suggested order:
 
 ## Open Questions (carry-forward from architecture)
 
-- **Harness priority call** — after a real ingest + extract validation pass, does transcript prep
-  remain "good enough", or is token-aware harness work now the sharper blocker than Terminal?
+- **Harness priority call** — answered 2026-06-07: token-aware harness work is now sharper than
+  Terminal Panel for extraction quality.
 
 - **Tag origin tracking** — separate `autoTags` / `manualTags` fields vs. derive post-hoc?
   Decide before building solid/outline tag UI. Tracked in `DONE_TAXONOMY.md`.

@@ -1,6 +1,6 @@
 import { autoTag, createNode, getNodeFilePath, updateNode } from '@llaab/core';
 import { llmExtractWithTrace } from '@llaab/ingestion';
-import type { LlmExtractionMeta } from '@llaab/ingestion';
+import type { ExtractionRunTrace, LlmExtractionMeta } from '@llaab/ingestion';
 import type { TranscriptNode } from '@llaab/schemas';
 
 import { runSkill } from './runner.js';
@@ -14,13 +14,14 @@ export interface ExtractTranscriptIdeasOutput {
   summary: string;
   producedNodeIds: string[];
   llmMeta: LlmExtractionMeta;
+  runTrace: ExtractionRunTrace;
 }
 
 export async function extractTranscriptIdeas(input: ExtractTranscriptIdeasInput) {
   return runSkill(
     'extract-transcript-ideas',
     async () => {
-      const { ideas, summary, llmMeta } = await llmExtractWithTrace(input.transcript.body);
+      const { ideas, summary, llmMeta, runTrace } = await llmExtractWithTrace(input.transcript.body);
 
       // Create an IdeaNode for each extracted idea string
       const ideaIds: string[] = [];
@@ -64,6 +65,7 @@ export async function extractTranscriptIdeas(input: ExtractTranscriptIdeasInput)
         summary,
         producedNodeIds: ideaIds,
         llmMeta,
+        runTrace,
       };
     },
     input,

@@ -1,6 +1,7 @@
 # TODO — Harness Integration
 
-> **Status:** Phase 1 spike complete (2026-05-31). Real-flow validation and priority decision still pending.
+> **Status:** Phase 1 validation complete (2026-06-07). Token-aware harness extension is promoted
+> ahead of Terminal Panel.
 
 ## Summary
 
@@ -82,11 +83,20 @@ This means harness adoption should start **there**, not as a generic top-of-syst
 Goal: prepare LLAAB to install and use `@finografic/ai-harness` intentionally, without forcing
 the package to solve all runtime harness concerns immediately.
 
+Validation result (2026-06-07): real YouTube ingest + `extract-transcript-ideas` was run in a
+temp vault with local Ollama. The persisted RunNode includes useful harness stage payloads:
+`truncate-extraction-input` records input length, max chars, prepared length, and truncation;
+`build-extraction-context` records prepared length, truncation state, constraint count, and
+instruction presence. Extraction succeeds, but the 6 000-character cap retained only 6 039 of
+19 207 chars (`31.4%`) while using 1 537 of 8 192 prompt-context tokens (`18.8%`). Verdict:
+current prep is stable enough to keep local for now, but blind character truncation is the next
+quality blocker; token-aware chunking/context assembly should move ahead of Terminal Panel.
+
 ### Current status
 
 - dependency adoption in `@llaab/ingestion`: done
 - first extraction-boundary spike in `llm-extract.ts`: done
-- real transcript-flow validation: pending
+- real transcript-flow validation: done — see validation result above
 
 ### Tasks
 
@@ -101,7 +111,7 @@ the package to solve all runtime harness concerns immediately.
   better replacement.
   Status: done — current semantics preserved.
 - Validate the integration against real transcript ingestion and extraction runs.
-  Status: pending.
+  Status: done.
 
 ### Success condition
 
@@ -172,15 +182,15 @@ Harness is now strong enough to move **up** in priority, but not as the full ori
 
 Recommended ordering:
 
-1. **Now:** validate the installed package in the real transcript extraction flow
-2. **After that:** decide and document the exact runtime boundary
+1. **Done:** validate the installed package in the real transcript extraction flow
+2. **Next:** decide and document the exact runtime boundary
 3. **Then:** extend the package for token-aware extraction prep
 
 That means:
 
-- harness consumer adoption can reasonably move to **P1**
-- full token-aware runtime harness should remain **P2** until the package grows past its current
-  debug-pipeline-only shape
+- harness consumer adoption is complete
+- full token-aware runtime harness should move ahead of Terminal Panel because real validation
+  showed silent content loss despite available model context
 
 ---
 

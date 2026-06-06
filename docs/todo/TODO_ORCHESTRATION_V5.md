@@ -1,7 +1,8 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 0 done — LLM execution metadata now flows into extraction traces and node
-> frontmatter.
+> **Status:** Phase 1 done — harness real-flow validation is complete. Phase 2 (LLM provider
+> interface) can proceed, and Phase 6 (token-aware harness extension) is promoted ahead of the
+> Terminal Panel work.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -549,7 +550,7 @@ ran, how long it took, and any available token counts.
 
 ---
 
-## Phase 1 — Finish Harness Validation in a Real Extraction Run
+## Phase 1 — Finish Harness Validation in a Real Extraction Run — DONE
 
 > **This is the existing ROADMAP P1 item.** Now that Phase 0 has wired metadata through the
 > pipeline, this validation benefits from richer traces: token counts make the truncation
@@ -571,18 +572,18 @@ everything downstream.
 
 ### Tasks
 
-- [ ] Run a real ingest + extract flow end-to-end with harness prep in place.
+- [x] Run a real ingest + extract flow end-to-end with harness prep in place.
       Entry: `llm-extract.ts` → `prepareExtractionInput(...)` → `control.execute(...)`.
-- [ ] Confirm `harness:truncate-extraction-input` and `harness:build-extraction-context`
+- [x] Confirm `harness:truncate-extraction-input` and `harness:build-extraction-context`
       stages appear in the persisted `RunNode` and carry enough useful data for debugging
       (not just `completed` with no payload).
-- [ ] Use the `llm_prompt_tokens` data from Phase 0 to quantify how much of the model's
+- [x] Use the `llm_prompt_tokens` data from Phase 0 to quantify how much of the model's
       context window the 6 000-char truncation actually uses. Document the ratio.
-- [ ] Confirm current 6 000-character truncation is acceptable for typical YouTube transcripts,
+- [x] Confirm current 6 000-character truncation is acceptable for typical YouTube transcripts,
       or document exactly where it fails and what content is lost.
-- [ ] Write a one-paragraph validation result at the top of `TODO_HARNESS.md` Phase 1 section.
-- [ ] Record the result in `NEXT_STEPS.md`.
-- [ ] Make the priority call: is token-aware chunking now the real blocker, or does Terminal
+- [x] Write a one-paragraph validation result at the top of `TODO_HARNESS.md` Phase 1 section.
+- [x] Record the result in `NEXT_STEPS.md`.
+- [x] Make the priority call: is token-aware chunking now the real blocker, or does Terminal
       Panel stay next? Record the decision in `ROADMAP.md`.
 
 ### Decision gate
@@ -599,6 +600,18 @@ This phase produces a binary signal that determines ordering for everything belo
 Extraction succeeds end-to-end. Stage traces are visible and informative in the RunNode.
 Truncation verdict is documented with token count evidence. Priority ordering for downstream
 phases is committed to `ROADMAP.md`.
+
+### Phase 1 validation result
+
+Validated with a real YouTube transcript in a temp vault (`3Blue1Brown`, 19 207 chars) and the
+persisted `extract-transcript-ideas` RunNode. Extraction succeeded and preserved informative
+harness stages: `truncate-extraction-input` recorded `inputLength: 19207`, `maxChars: 6000`,
+`preparedLength: 6039`, `truncated: true`; `build-extraction-context` recorded prepared length,
+truncation state, constraint count, and instruction presence. The run used `llama3:latest` through
+Ollama with `1537` prompt tokens against an `8192` token context window (`18.8%`), while retaining
+only `31.4%` of the transcript by character count. Verdict: current truncation is operationally
+stable but not acceptable as the quality baseline for typical YouTube transcripts; token-aware
+chunking/context assembly is now the real blocker and Phase 6 is promoted ahead of Terminal Panel.
 
 ---
 
@@ -1122,34 +1135,34 @@ orchestration model.
 
 | Phase | Item                                       | Depends on      | ROADMAP tier |
 | ----- | ------------------------------------------ | --------------- | ------------ |
-| 0     | LLM execution metadata in node frontmatter | —               | P0 (now)     |
-| 1     | Harness real-flow validation               | Phase 0         | P1           |
+| 0     | LLM execution metadata in node frontmatter | —               | Done         |
+| 1     | Harness real-flow validation               | Phase 0         | Done         |
 | 2     | LLM provider interface                     | Phase 1 verdict | P1           |
 | 3     | Typed command protocol (no UI)             | Phase 2         | P2           |
-| 4     | Terminal / Command Panel vertical slice    | Phase 3         | P2           |
+| 4     | Terminal / Command Panel vertical slice    | Phase 3 + 6     | P2           |
 | 5     | Terminal metadata display (Elements)       | Phases 0 + 4    | P2           |
-| 6     | Token-aware harness extension              | Phase 1 verdict | P2 or P3\*   |
+| 6     | Token-aware harness extension              | Phase 1 verdict | P1           |
 | 7     | Capability-based routing                   | Phases 2 + 3    | P2           |
 | 8     | CLI surface + diagnostics                  | Phase 7         | P3           |
 | 9     | External executor adapters                 | Phases 3 + 7    | P3           |
 | 10    | Optional shell adapter                     | Phase 4         | P3           |
 
-\*Phase 6 priority depends on Phase 1 outcome — see decision gate.
+\*Phase 1 promoted Phase 6: current truncation succeeds but loses too much transcript content
+while using less than 20% of the available local model context window.
 
 ### Recommended execution order
 
-Phase 0 is the entry point. Phase 1 follows immediately (harness validation with metadata).
-Phases 2 and 3 can proceed in parallel once Phase 1 is done. Phase 5 can start as soon as
-Phase 4 delivers the terminal panel.
+Phase 0 and Phase 1 are complete. Phase 2 can proceed next. Phase 6 is promoted ahead of the
+Terminal Panel work because real-flow validation showed blind 6 000-character truncation drops
+too much transcript content while underusing the model context window.
 
 ```
 Phase 0 ─── Phase 1 ──┬──── Phase 2 ──┬──── Phase 7 ──── Phase 8
                        │               │                    Phase 9
-                       │               └──── Phase 5
                        │
-                       └──── Phase 3 ──── Phase 4 ──── Phase 10
+                       ├──── Phase 6
                        │
-                       └──── Phase 6 (if promoted by Phase 1 verdict)
+                       └──── Phase 3 ──── Phase 4 ──── Phase 5 ──── Phase 10
 ```
 
 ---

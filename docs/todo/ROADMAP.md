@@ -23,36 +23,26 @@ When an item is done, move it to the Done section at the bottom with a completio
 
 ## P0 — Active
 
-Nothing active — `P1` harness validation is the next item to pick up.
+Nothing active — orchestration Phase 2 (LLM provider interface) is the next item to pick up.
 
 ---
 
 ## P1 — Next Up
 
-### Install and validate `@finografic/ai-harness` in the transcript extraction path
+### LLM provider interface
 
-Adopt the released package as a real LLAAB dependency and prove the first consumer integration at
-the extraction boundary. Start small: validate the package inside the current transcript
-extraction flow before expanding the runtime harness scope.
+Formalize the provider contract in `packages/llm` now that Phase 0 established provider result
+metadata and Phase 1 validated the extraction path. This keeps future providers behind a stable
+interface before command routing and diagnostics expand.
 
-Current state: package install + initial extraction-boundary spike are done. Remaining work is
-real-flow validation and deciding whether transcript constraints push the broader harness
-extension ahead of Terminal / Command Panel.
+Detail: [`docs/todo/TODO_ORCHESTRATION_V5.md`](./TODO_ORCHESTRATION_V5.md#phase-2--formalize-the-llm-provider-interface)
 
-Implementation boundary for agents with no prior context:
+### Harness Layer — Token-Aware Control Pipeline
 
-- current consumer package: `packages/ingestion`
-- harness prep entrypoint: `packages/ingestion/src/extract/harness-prep.ts`
-- current extraction boundary: `packages/ingestion/src/extract/llm-extract.ts`
-- downstream model-governance boundary: `packages/control/src/orchestrator.ts`
-
-What "validate" means here:
-
-- run a real ingest + extract flow, not just unit tests
-- confirm extraction still succeeds with the harness prep stage in place
-- inspect run traces and confirm the harness stages are visible and useful
-- decide whether the current character truncation remains acceptable for transcript extraction
-- if transcript prep is still the blocker, promote Harness Layer extension above Terminal Panel
+Real-flow validation showed that the current 6 000-character truncation succeeds but drops too
+much transcript content. A 19 207-char YouTube transcript retained only 31.4% of the text while
+using 18.8% of the `llama3:latest` context window. Promote token-aware counting, chunking, and
+context assembly ahead of Terminal / Command Panel.
 
 Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 
@@ -60,30 +50,14 @@ Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 
 ## P2 — Planned
 
-### LLM execution metadata in node frontmatter
-
-Write model name, wall-clock duration, and token counts (prompt + completion) to the frontmatter
-of transcript and idea nodes at the point of extraction. This makes every vault node
-self-documenting — you can see exactly which model produced it and how long it took.
-
-Implementation boundary:
-
-- Wrap `llmExtract` in `packages/ingestion/src/extract/llm-extract.ts` to capture timing and
-  model info from the response.
-- Pass metadata through to `extractTranscriptIdeas` in `packages/skills/src/extract-transcript-ideas.ts`.
-- Write `llm_model`, `llm_duration_ms`, `llm_prompt_tokens`, `llm_completion_tokens` fields
-  via `updateNode` on both the transcript and each created idea node.
-- Schema: add optional fields to `TranscriptNode` and `IdeaNode` in `packages/schemas`.
-
----
-
 ### Terminal / Command Panel
 
 Typed command bus (WS) + xterm.js UI. Not a shell — a controlled execution surface for vault
 ops, LLM calls, and agent runs. Gated shell adapter as opt-in power-user mode.
 
-Priority rule: this stays next only if the harness consumer validation above does not reveal that
-transcript extraction is blocked by missing token-aware prep, chunking, or routing support.
+Priority rule: Phase 1 validation showed token-aware extraction prep is the sharper blocker, so
+Terminal Panel waits until the promoted harness extension is no longer blocking extraction
+quality.
 
 Detail: [`docs/todo/TODO_TERMINAL_PANEL.md`](./TODO_TERMINAL_PANEL.md)
 
@@ -138,21 +112,17 @@ date, version. `follow: true` nodes auto-refresh stats on `llaab agent run` via 
 
 Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
 
-### Harness Layer — Token-Aware Control Pipeline
+## Done
 
-Extend the new `@finografic/ai-harness` package beyond its current debug-pipeline scope so LLAAB
-can use it for real runtime preparation around `control.execute()`: tokenization/counting,
-chunking for long inputs (transcripts), structured context assembly, and deterministic model
-routing. First concrete driver: transcript → harness prep → control → idea extraction.
+### Install and validate `@finografic/ai-harness` in the transcript extraction path
 
-Do not start this until Phase 1 validation has been done in the real transcript flow and the
-decision has been made that current prep limits are the next actual bottleneck.
+Completed 2026-06-07. The released harness package is installed in `@llaab/ingestion`, exercised
+before `control.execute(...)`, and validated through a real YouTube transcript plus persisted
+`extract-transcript-ideas` RunNode. Verdict: integration is stable, but blind character
+truncation is not an acceptable quality baseline; token-aware harness extension is promoted ahead
+of Terminal Panel.
 
 Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
-
----
-
-## Done
 
 | Date       | Item                                                                                                                                                                                                                        |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
