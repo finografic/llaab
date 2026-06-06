@@ -1,6 +1,6 @@
-import { cn } from '@llaab/ui/lib/utils';
 import { ScrollArea as ScrollAreaPrimitive } from 'radix-ui';
 import * as React from 'react';
+import { cn } from 'utils';
 
 function ScrollArea({
   className,

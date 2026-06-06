@@ -1,8 +1,8 @@
 'use client';
 
-import { cn } from '@llaab/ui/lib/utils';
 import { Tooltip as TooltipPrimitive } from 'radix-ui';
 import * as React from 'react';
+import { cn } from 'utils';
 
 function TooltipProvider({
   delayDuration = 0,

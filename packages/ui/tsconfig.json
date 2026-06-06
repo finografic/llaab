@@ -9,7 +9,10 @@
     "strict": true,
     "noEmit": true,
     "paths": {
-      "@llaab/ui/*": ["./src/*"]
+      "@llaab/ui/*": ["./src/*"],
+      "ui/*": ["./src/components/*"],
+      "hooks/*": ["./src/hooks/*"],
+      "utils": ["./src/lib/utils"]
     }
   },
   "include": ["."],

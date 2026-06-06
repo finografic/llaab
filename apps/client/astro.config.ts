@@ -37,6 +37,10 @@ export default defineConfig({
       dedupe: ['react', 'react-dom'],
       alias: {
         '@llaab/ui': new URL('../../packages/ui/src', import.meta.url).pathname,
+        // Internal aliases used by packages/ui components (match packages/ui tsconfig paths)
+        'ui': new URL('../../packages/ui/src/components', import.meta.url).pathname,
+        'hooks': new URL('../../packages/ui/src/hooks', import.meta.url).pathname,
+        'utils': new URL('../../packages/ui/src/lib/utils.ts', import.meta.url).pathname,
       },
     },
   },

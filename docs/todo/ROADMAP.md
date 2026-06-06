@@ -23,7 +23,14 @@ When an item is done, move it to the Done section at the bottom with a completio
 
 ## P0 — Active
 
-_Nothing active right now — pick from P1._
+### UI Refactor — shadcn expansion + typography system
+
+Replace hand-rolled CSS components with shadcn primitives and convert all hard `px` font-size
+declarations to a `rem`-based type scale so the root `html { font-size }` controls the full UI.
+
+Phase 1 (shadcn component copy + adopt in high-traffic components) is in progress.
+
+Detail: [`docs/todo/TODO_UI_REFACTOR.md`](./TODO_UI_REFACTOR.md)
 
 ---
 
