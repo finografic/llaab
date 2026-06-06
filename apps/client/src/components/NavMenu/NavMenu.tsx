@@ -67,7 +67,7 @@ export function NavMenu({ pathname }: NavMenuProps) {
 
       {/* Desktop — Tailwind owns display toggling; do not set display in CSS modules (it overrides hidden). */}
       <NavigationMenu
-        viewport
+        viewport={false}
         className="relative hidden max-w-none flex-1 items-center justify-start md:flex"
       >
         <NavigationMenuList className="flex-nowrap justify-start gap-0.5">
@@ -81,7 +81,12 @@ export function NavMenu({ pathname }: NavMenuProps) {
               >
                 {section.label}
               </NavigationMenuTrigger>
-              <NavigationMenuContent>
+              <NavigationMenuContent
+                className={cn(
+                  'absolute top-full left-0 z-50 mt-0 w-auto',
+                  section.id === 'system' && 'left-auto right-0',
+                )}
+              >
                 <NavMenuDropdownPanel
                   sectionId={section.id}
                   itemCount={section.items.length}
