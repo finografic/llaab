@@ -1,9 +1,15 @@
 ---
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import AppLayout from '../../layouts/AppLayout.astro';
 
-const configPath = resolve(process.cwd(), 'packages/icons/lucide-manager.config.json');
+// Anchor to this file's location (apps/client/src/pages/dev/) — 5 levels up = workspace root
+const configPath = resolve(
+  fileURLToPath(new URL('.', import.meta.url)),
+  '../../../../..',
+  'packages/icons/lucide-manager.config.json',
+);
 const rawConfig = JSON.parse(await readFile(configPath, 'utf-8')) as {
   manager?: {
     server?: {
