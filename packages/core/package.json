@@ -20,6 +20,6 @@
     "@llaab/schemas": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "24.12.2"
+    "@types/node": "25.9.2"
   }
 }

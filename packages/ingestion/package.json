@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@finografic/ai-harness": "0.1.0",
+    "@finografic/ai-harness": "^0.1.0",
     "@llaab/control": "workspace:*",
     "@llaab/core": "workspace:*",
     "@llaab/llm": "workspace:*",
@@ -25,6 +25,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "24.12.2"
+    "@types/node": "25.9.2"
   }
 }
