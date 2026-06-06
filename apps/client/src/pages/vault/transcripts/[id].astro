@@ -166,10 +166,7 @@ function fmtSeconds(s?: number): string {
         >
           {transcript.extracted_idea_ids.length > 0 ? 'Re-extract' : 'Extract now'}
         </button>
-        <span
-          id="re-extract-status"
-          class="text-[11px] font-normal tracking-normal"
-          style="text-transform:none"></span>
+        <span id="re-extract-status" class="normal-case text-[11px] font-normal tracking-normal"></span>
       </h2>
 
       {transcript.extracted_idea_ids.length === 0 && <p class="empty-note">No ideas extracted yet.</p>}

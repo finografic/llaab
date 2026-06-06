@@ -72,11 +72,11 @@ Add to `apps/client/src/styles/app.css` `:root` block and use everywhere instead
 
 ### Phase 3 — Consolidate globals + cleanup
 
-- [ ] Remove `html { font-size }` from `packages/ui/src/styles/globals.css` — `app.css` owns it
-- [ ] Remove the `!important` flag once all competing declarations are gone
-- [ ] Audit remaining inline `style=` attributes on HTML elements in `.astro` files
-- [ ] Delete `forms.css` sections fully replaced by shadcn components
-- [ ] Verify end-to-end: change `html { font-size }` in `app.css` → entire UI scales uniformly
+- [x] `packages/ui/src/styles/globals.css` — no competing `html { font-size }` present (nothing to remove)
+- [x] Remove `!important` from `html { font-size: 16px }` in `app.css` — no competing declarations remain
+- [x] Audit inline `style=` in `.astro` files — one found (`text-transform:none`) converted to `normal-case`; dynamic depth-padding in VaultBrowser.tsx is intentional (computed value)
+- [x] `forms.css` cleanup — already completed in Phase 1
+- [ ] Verify end-to-end: change `html { font-size }` in `app.css` → entire UI should scale uniformly
 
 ---
 
