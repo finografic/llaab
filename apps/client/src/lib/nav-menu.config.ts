@@ -98,7 +98,7 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         label: 'Terminal',
         description: 'Command panel — dispatch typed commands with streaming output',
         href: '/terminal',
-        live: false,
+        live: true,
       },
       {
         label: 'Skills',

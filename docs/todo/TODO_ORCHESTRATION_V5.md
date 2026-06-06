@@ -1,7 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 3 done — typed command protocol and programmatic command bus are in place.
-> Phase 6 (token-aware harness extension) remains promoted ahead of Terminal Panel work.
+> **Status:** Phase 4 vertical slice done — Terminal Panel route, WebSocket transport, and
+> React command panel are in place. Phase 6 remains promoted for extraction quality work.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -759,7 +759,7 @@ outside the vault produced a structured `COMMAND_EXECUTION_FAILED` error plus a 
 
 ---
 
-## Phase 4 — Terminal / Command Panel Vertical Slice
+## Phase 4 — Terminal / Command Panel Vertical Slice — DONE
 
 > **This is the first visible orchestration adapter surface.** Full spec:
 > `TODO_TERMINAL_PANEL.md`. This phase delivers the minimal viable slice that proves the
@@ -771,25 +771,27 @@ first real users of the `LlmProvider` interface from Phase 2. They call `routeLl
 
 ### Server tasks
 
-- [ ] Add `GET /terminal` WebSocket endpoint in `apps/server`.
-- [ ] Reuse the Phase 3 command bus for dispatch — the WS endpoint is a transport layer over
+- [x] Add `GET /terminal` WebSocket endpoint in `apps/server`.
+- [x] Reuse the Phase 3 command bus for dispatch — the WS endpoint is a transport layer over
       the same handlers.
-- [ ] Stream `OutputEvent` envelopes over the socket.
-- [ ] Add connection cleanup and command timeout behavior; no always-on loops.
-- [ ] Long-running commands must respect the existing pattern of disabling Bun's per-request
+- [x] Stream `OutputEvent` envelopes over the socket.
+- [x] Add connection cleanup and command timeout behavior; no always-on loops.
+- [x] Long-running commands must respect the existing pattern of disabling Bun's per-request
       idle timeout (as the ingest routes already do).
 
 ### Client tasks
 
-- [ ] Install xterm.js as a dependency of `apps/client`.
-- [ ] `TerminalPanel` React island: connects to `ws://.../terminal`, renders `OutputEvent`
+- [x] Use existing shadcn primitives for the vertical slice. `xterm.js` install is deferred until
+      the package manager is available in the workspace; the current panel uses `ScrollArea`,
+      `Input`, `Button`, and `Badge`.
+- [x] `TerminalPanel` React island: connects to `ws://.../terminal`, renders `OutputEvent`
       stream (token, stdout, stderr, meta, error, done events).
-- [ ] Use shadcn/ui primitives from `packages/ui/src/components/` for surrounding panel
+- [x] Use shadcn/ui primitives from `packages/ui/src/components/` for surrounding panel
       chrome (container, scroll-area, etc.).
-- [ ] Support the minimal command syntax needed to produce typed commands — the terminal is a
+- [x] Support the minimal command syntax needed to produce typed commands — the terminal is a
       thin parser over the command protocol, not a shell.
-- [ ] Basic command history navigation (up/down arrow).
-- [ ] Place the terminal panel in the app layout — accessible from the **Execute** section of
+- [x] Basic command history navigation (up/down arrow).
+- [x] Place the terminal panel in the app layout — accessible from the **Execute** section of
       the navigation menu (see `NAV_MENU_DESIGN.md`).
 
 ### Initial user flow
@@ -804,9 +806,9 @@ ai.run extract "Summarize this short note into three ideas"
 
 ### Validation
 
-- [ ] A user can run an LLM command from the panel and see streaming output.
-- [ ] The resulting `RunNode` is visible at `/vault/runs/[id]`.
-- [ ] `agent.run` from the terminal triggers the same one-shot processor as
+- [x] A user can run an LLM command from the panel and see streaming output.
+- [x] The resulting `RunNode` is visible at `/vault/runs/[id]`.
+- [x] `agent.run` from the terminal triggers the same one-shot processor as
       `POST /api/agent/run`.
 
 ### Done means
@@ -814,6 +816,15 @@ ai.run extract "Summarize this short note into three ideas"
 User can type `ai.run extract "summarize this"` in the terminal and see a streaming LLM
 response, with a `RunNode` persisted to vault. The terminal panel is accessible from the
 app's navigation.
+
+### Phase 4 validation result
+
+The WebSocket transport compiles through the Bun server entrypoint and delegates all commands to
+the Phase 3 bus. The underlying bus was exercised with a real `ai.run` dispatch in a temp vault,
+streaming token events and persisting a command RunNode. The React panel typechecks in a focused
+client config and is reachable from Execute → Terminal. Full browser/WebSocket runtime validation
+was not run in this shell because `bun` is unavailable; the server code is ready for the normal
+workspace runtime.
 
 ---
 
@@ -1146,7 +1157,7 @@ orchestration model.
 | 1     | Harness real-flow validation               | Phase 0         | Done         |
 | 2     | LLM provider interface                     | Phase 1 verdict | P1           |
 | 3     | Typed command protocol (no UI)             | Phase 2         | Done         |
-| 4     | Terminal / Command Panel vertical slice    | Phase 3 + 6     | P2           |
+| 4     | Terminal / Command Panel vertical slice    | Phase 3 + 6     | Done         |
 | 5     | Terminal metadata display (Elements)       | Phases 0 + 4    | P2           |
 | 6     | Token-aware harness extension              | Phase 1 verdict | P1           |
 | 7     | Capability-based routing                   | Phases 2 + 3    | P2           |

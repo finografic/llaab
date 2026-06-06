@@ -1,0 +1,10 @@
+---
+export const prerender = false;
+
+import { TerminalPanel } from '../components/TerminalPanel';
+import AppLayout from '../layouts/AppLayout.astro';
+---
+
+<AppLayout title="Terminal">
+  <TerminalPanel client:only="react" />
+</AppLayout>
