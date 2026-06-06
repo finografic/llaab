@@ -31,8 +31,11 @@ if (transcript.extracted_idea_ids.length > 0) {
 function fmtDate(ts?: string): string {
   if (!ts) return '—';
   return new Date(ts).toLocaleString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -46,35 +49,36 @@ function fmtSeconds(s?: number): string {
 
 <AppLayout title={transcript.title}>
   <div class="detail-page">
-
     {/* ── Header ── */}
     <header class="detail-header">
-      <nav class="breadcrumb">
-        <a href="/vault/transcripts" class="breadcrumb__link">Transcripts</a>
-        <span class="breadcrumb__sep">›</span>
-        <span class="breadcrumb__current">{transcript.title}</span>
+      <nav class="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <a href="/vault/transcripts" class="text-accent hover:underline">Transcripts</a>
+        <span>›</span>
+        <span class="text-muted-foreground">{transcript.title}</span>
       </nav>
 
       <h1 class="detail-header__title">{transcript.title}</h1>
 
       <div class="detail-header__meta">
         <span class={`badge badge--${transcript.source_type}`}>{transcript.source_type}</span>
-        {transcript.author && (
-          <span class="meta-text">{transcript.author}</span>
-        )}
+        {transcript.author && <span class="meta-text">{transcript.author}</span>}
         <span class="meta-sep">·</span>
         <span class="meta-text">{fmtDate(transcript.created_at)}</span>
       </div>
     </header>
 
     {/* ── Tags ── */}
-    {transcript.tags.length > 0 && (
-      <div class="tag-row">
-        {transcript.tags.map((tag) => (
-          <span class="tag" data-tag={tag}>{tag}</span>
-        ))}
-      </div>
-    )}
+    {
+      transcript.tags.length > 0 && (
+        <div class="tag-row">
+          {transcript.tags.map((tag) => (
+            <span class="tag" data-tag={tag}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )
+    }
 
     {/* ── Source metadata ── */}
     <section class="section">
@@ -82,94 +86,131 @@ function fmtSeconds(s?: number): string {
       <dl class="meta-grid">
         <dt>URL</dt>
         <dd>
-          <a href={transcript.source_url} class="meta-link meta-mono" target="_blank" rel="noopener noreferrer">
+          <a
+            href={transcript.source_url}
+            class="meta-link meta-mono"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             {transcript.source_url}
           </a>
         </dd>
-        {transcript.source_item_id && (
-          <>
-            <dt>Item ID</dt>
-            <dd class="meta-mono">{transcript.source_item_id}</dd>
-          </>
-        )}
-        {transcript.source_id && (
-          <>
-            <dt>Source node</dt>
-            <dd>
-              <a href={`/vault/sources/${transcript.source_id}`} class="meta-link">{transcript.source_id}</a>
-            </dd>
-          </>
-        )}
-        {(transcript.raw_length != null || transcript.clean_length != null || transcript.structured_paragraphs != null) && (
-          <>
-            <dt>Stats</dt>
-            <dd>
-              <span class="stat-row">
-                {transcript.raw_length != null && <span class="stat">{transcript.raw_length.toLocaleString()} raw chars</span>}
-                {transcript.clean_length != null && <span class="stat">{transcript.clean_length.toLocaleString()} clean chars</span>}
-                {transcript.structured_paragraphs != null && <span class="stat">{transcript.structured_paragraphs} §</span>}
-              </span>
-            </dd>
-          </>
-        )}
+        {
+          transcript.source_item_id && (
+            <>
+              <dt>Item ID</dt>
+              <dd class="meta-mono">{transcript.source_item_id}</dd>
+            </>
+          )
+        }
+        {
+          transcript.source_id && (
+            <>
+              <dt>Source node</dt>
+              <dd>
+                <a href={`/vault/sources/${transcript.source_id}`} class="meta-link">
+                  {transcript.source_id}
+                </a>
+              </dd>
+            </>
+          )
+        }
+        {
+          (transcript.raw_length != null ||
+            transcript.clean_length != null ||
+            transcript.structured_paragraphs != null) && (
+            <>
+              <dt>Stats</dt>
+              <dd>
+                <span class="stat-row">
+                  {transcript.raw_length != null && (
+                    <span class="stat">{transcript.raw_length.toLocaleString()} raw chars</span>
+                  )}
+                  {transcript.clean_length != null && (
+                    <span class="stat">{transcript.clean_length.toLocaleString()} clean chars</span>
+                  )}
+                  {transcript.structured_paragraphs != null && (
+                    <span class="stat">{transcript.structured_paragraphs} §</span>
+                  )}
+                </span>
+              </dd>
+            </>
+          )
+        }
       </dl>
     </section>
 
     {/* ── Summary ── */}
-    {transcript.summary && (
-      <section class="section">
-        <h2 class="section__heading">Summary</h2>
-        <p class="summary-text">{transcript.summary}</p>
-      </section>
-    )}
+    {
+      transcript.summary && (
+        <section class="section">
+          <h2 class="section__heading">Summary</h2>
+          <p class="summary-text">{transcript.summary}</p>
+        </section>
+      )
+    }
 
     {/* ── Extracted ideas ── */}
     <section class="section">
       <h2 class="section__heading">
         Extracted ideas
-        {transcript.extracted_idea_ids.length > 0 && (
-          <span class="section__count">{transcript.extracted_idea_ids.length}</span>
-        )}
-        <button id="re-extract-btn" data-id={transcript.id} class="btn-reextract">
+        {
+          transcript.extracted_idea_ids.length > 0 && (
+            <span class="section__count">{transcript.extracted_idea_ids.length}</span>
+          )
+        }
+        <button
+          id="re-extract-btn"
+          data-id={transcript.id}
+          class="ml-auto cursor-pointer rounded-sm border border-border-subtle px-2.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground transition hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-50"
+        >
           {transcript.extracted_idea_ids.length > 0 ? 'Re-extract' : 'Extract now'}
         </button>
-        <span id="re-extract-status" class="reextract-status"></span>
+        <span
+          id="re-extract-status"
+          class="text-[11px] font-normal tracking-normal"
+          style="text-transform:none"></span>
       </h2>
 
-      {transcript.extracted_idea_ids.length === 0 && (
-        <p class="empty-note">No ideas extracted yet.</p>
-      )}
-      {transcript.extracted_idea_ids.length > 0 && extractedIdeas.length > 0 && (
-        <ul class="idea-list">
-          {extractedIdeas.map((idea) => (
-            <li class="idea-item">
-              <a href={`/vault/nodes/${idea.id}`} class="idea-link">
-                <span class="idea-title">{idea.title}</span>
-                {idea.tags.length > 0 && (
-                  <span class="idea-tags">
-                    {idea.tags.map((tag) => (
-                      <span class="tag tag--sm" data-tag={tag}>{tag}</span>
-                    ))}
-                  </span>
-                )}
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-      {transcript.extracted_idea_ids.length > 0 && extractedIdeas.length === 0 && (
-        <p class="empty-note">Ideas listed in IDs but nodes not found in vault.</p>
-      )}
+      {transcript.extracted_idea_ids.length === 0 && <p class="empty-note">No ideas extracted yet.</p>}
+      {
+        transcript.extracted_idea_ids.length > 0 && extractedIdeas.length > 0 && (
+          <ul class="idea-list">
+            {extractedIdeas.map((idea) => (
+              <li class="idea-item">
+                <a href={`/vault/nodes/${idea.id}`} class="idea-link">
+                  <span class="idea-title">{idea.title}</span>
+                  {idea.tags.length > 0 && (
+                    <span class="idea-tags">
+                      {idea.tags.map((tag) => (
+                        <span class="tag tag--sm" data-tag={tag}>
+                          {tag}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      {
+        transcript.extracted_idea_ids.length > 0 && extractedIdeas.length === 0 && (
+          <p class="empty-note">Ideas listed in IDs but nodes not found in vault.</p>
+        )
+      }
     </section>
 
     {/* ── Full transcript ── */}
-    {transcript.body && (
-      <section class="section">
-        <h2 class="section__heading">Transcript</h2>
-        <pre class="body-pre">{transcript.body}</pre>
-      </section>
-    )}
-
+    {
+      transcript.body && (
+        <section class="section">
+          <h2 class="section__heading">Transcript</h2>
+          <pre class="body-pre">{transcript.body}</pre>
+        </section>
+      )
+    }
   </div>
 </AppLayout>
 
@@ -182,23 +223,23 @@ function fmtSeconds(s?: number): string {
       btn.disabled = true;
       btn.textContent = 'Extracting…';
       status.textContent = '';
-      status.className = 'reextract-status';
+      status.className = 'text-[11px]';
       try {
         const res = await fetch(`/api/vault/transcripts/${id}/extract`, { method: 'POST' });
-        const json = await res.json() as { success: boolean; ideaIds?: string[]; error?: string };
+        const json = (await res.json()) as { success: boolean; ideaIds?: string[]; error?: string };
         if (json.success) {
           status.textContent = `✓ ${json.ideaIds?.length ?? 0} ideas extracted — reloading…`;
-          status.className = 'reextract-status reextract-status--ok';
+          status.className = 'text-[11px] text-emerald-600 dark:text-emerald-400';
           setTimeout(() => location.reload(), 1200);
         } else {
           status.textContent = json.error ?? 'Extraction failed';
-          status.className = 'reextract-status reextract-status--err';
+          status.className = 'text-[11px] text-destructive';
           btn.disabled = false;
           btn.textContent = 'Retry';
         }
       } catch {
         status.textContent = 'Network error';
-        status.className = 'reextract-status reextract-status--err';
+        status.className = 'text-[11px] text-destructive';
         btn.disabled = false;
         btn.textContent = 'Retry';
       }
@@ -216,20 +257,6 @@ function fmtSeconds(s?: number): string {
 
   /* ── Header ── */
 
-  .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: 12px;
-    color: var(--text-faint);
-    margin-bottom: var(--space-2);
-  }
-
-  .breadcrumb__link { color: var(--accent); text-decoration: none; }
-  .breadcrumb__link:hover { text-decoration: underline; }
-  .breadcrumb__sep { color: var(--text-faint); }
-  .breadcrumb__current { color: var(--text-muted); }
-
   .detail-header__title {
     font-size: 20px;
     font-weight: 600;
@@ -246,16 +273,27 @@ function fmtSeconds(s?: number): string {
     margin-top: var(--space-2);
   }
 
-  .meta-sep { color: var(--text-faint); }
-  .meta-text { font-size: 12px; color: var(--text-faint); }
-  .meta-mono { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+  .meta-sep {
+    color: var(--text-faint);
+  }
+  .meta-text {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .meta-mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
 
   .meta-link {
     color: var(--accent);
     text-decoration: none;
     font-size: 12px;
   }
-  .meta-link:hover { text-decoration: underline; }
+  .meta-link:hover {
+    text-decoration: underline;
+  }
 
   /* ── Sections ── */
 
@@ -310,9 +348,16 @@ function fmtSeconds(s?: number): string {
     white-space: nowrap;
   }
 
-  .meta-grid dd { color: var(--text-muted); line-height: 1.5; }
+  .meta-grid dd {
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
 
-  .stat-row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+  .stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
 
   .stat {
     font-size: 11px;
@@ -344,7 +389,9 @@ function fmtSeconds(s?: number): string {
     transition: background var(--duration) var(--ease);
   }
 
-  .idea-item:hover { background: var(--surface-raised); }
+  .idea-item:hover {
+    background: var(--surface-raised);
+  }
 
   .idea-link {
     display: flex;
@@ -412,54 +459,35 @@ function fmtSeconds(s?: number): string {
     border: 1px solid color-mix(in srgb, var(--tag-color, var(--accent)) 30%, transparent);
   }
 
-  .tag--sm { font-size: 9px; padding: 1px 5px; }
-
-  .tag[data-tag='d:llm']         { --tag-color: #3b82f6; }
-  .tag[data-tag='d:automation']  { --tag-color: #8b5cf6; }
-  .tag[data-tag='d:ingest']      { --tag-color: #f59e0b; }
-  .tag[data-tag='d:schema']      { --tag-color: #14b8a6; }
-  .tag[data-tag='d:infra']       { --tag-color: #6b7280; }
-  .tag[data-tag='d:integration'] { --tag-color: #f97316; }
-  .tag[data-tag='d:ui']          { --tag-color: #ec4899; }
-  .tag[data-tag='d:meta']        { --tag-color: #22c55e; }
-
-  /* ── Re-extract ── */
-
-  .btn-reextract {
-    margin-left: auto;
-    padding: 2px 10px;
-    font-size: 10px;
-    font-weight: 500;
-    font-family: var(--font-sans);
-    letter-spacing: 0.02em;
-    background: transparent;
-    color: var(--text-faint);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: color var(--duration) var(--ease), border-color var(--duration) var(--ease);
-    text-transform: none;
+  .tag--sm {
+    font-size: 9px;
+    padding: 1px 5px;
   }
 
-  .btn-reextract:hover:not(:disabled) {
-    color: var(--accent);
-    border-color: var(--accent);
+  .tag[data-tag='d:llm'] {
+    --tag-color: #3b82f6;
   }
-
-  .btn-reextract:disabled {
-    opacity: 0.5;
-    cursor: wait;
+  .tag[data-tag='d:automation'] {
+    --tag-color: #8b5cf6;
   }
-
-  .reextract-status {
-    font-size: 11px;
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: 0;
+  .tag[data-tag='d:ingest'] {
+    --tag-color: #f59e0b;
   }
-
-  .reextract-status--ok  { color: var(--success-text); }
-  .reextract-status--err { color: var(--error-text); }
+  .tag[data-tag='d:schema'] {
+    --tag-color: #14b8a6;
+  }
+  .tag[data-tag='d:infra'] {
+    --tag-color: #6b7280;
+  }
+  .tag[data-tag='d:integration'] {
+    --tag-color: #f97316;
+  }
+  .tag[data-tag='d:ui'] {
+    --tag-color: #ec4899;
+  }
+  .tag[data-tag='d:meta'] {
+    --tag-color: #22c55e;
+  }
 
   /* ── Badges ── */
 
@@ -477,9 +505,29 @@ function fmtSeconds(s?: number): string {
     border: 1px solid var(--border-subtle);
   }
 
-  .badge--youtube { background: oklch(0.22 0.04 25 / 0.25);  color: oklch(0.68 0.20 25);  border-color: oklch(0.42 0.12 25 / 0.40);  }
-  .badge--article { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
-  .badge--repo    { background: oklch(0.22 0.04 295 / 0.25); color: oklch(0.65 0.18 295); border-color: oklch(0.40 0.12 295 / 0.40); }
-  .badge--chat    { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
-  .badge--other   { background: var(--surface-raised); color: var(--text-muted); border-color: var(--border-subtle); }
+  .badge--youtube {
+    background: oklch(0.22 0.04 25 / 0.25);
+    color: oklch(0.68 0.2 25);
+    border-color: oklch(0.42 0.12 25 / 0.4);
+  }
+  .badge--article {
+    background: oklch(0.22 0.04 155 / 0.25);
+    color: oklch(0.6 0.17 155);
+    border-color: oklch(0.4 0.12 155 / 0.4);
+  }
+  .badge--repo {
+    background: oklch(0.22 0.04 295 / 0.25);
+    color: oklch(0.65 0.18 295);
+    border-color: oklch(0.4 0.12 295 / 0.4);
+  }
+  .badge--chat {
+    background: oklch(0.24 0.05 40 / 0.25);
+    color: oklch(0.7 0.19 40);
+    border-color: oklch(0.42 0.12 40 / 0.4);
+  }
+  .badge--other {
+    background: var(--surface-raised);
+    color: var(--text-muted);
+    border-color: var(--border-subtle);
+  }
 </style>

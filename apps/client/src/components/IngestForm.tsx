@@ -1,6 +1,8 @@
 import { TagInputField } from 'components/TagInputField';
+import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
+import { Label } from 'components/ui/label';
 import { Spinner } from 'components/ui/spinner';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -160,23 +162,6 @@ function PipelineCard({
         </div>
         {hasBody ? <div className="pipeline-card__body">{bodyChildren}</div> : null}
       </div>
-    </div>
-  );
-}
-
-function StatusCard({
-  phase,
-  label,
-  children,
-}: {
-  phase: 'success' | 'warning' | 'pending' | 'neutral';
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={`status-card status-card--${phase}`}>
-      <span className="status-card__label">{label}</span>
-      <div className="status-card__body">{children}</div>
     </div>
   );
 }
@@ -539,8 +524,8 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="ingest-form__stack">
-          <div className="field">
-            <label htmlFor="url">Source URL</label>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="url">Source URL</Label>
             <div className="input-row">
               <Input
                 id="url"
@@ -559,20 +544,22 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
               </Button>
             </div>
 
-            {errors.url ? <span className="field-error">{errors.url.message}</span> : null}
+            {errors.url ? <p className="text-sm text-destructive">{errors.url.message}</p> : null}
             {!errors.url && sourceKind === 'youtube' ? (
-              <span className="field-hint field-hint--success">
+              <p className="text-sm text-emerald-600 dark:text-emerald-400">
                 Detected YouTube URL. This can be ingested now.
-              </span>
+              </p>
             ) : null}
             {!errors.url && sourceKind === 'webpage' ? (
-              <span className="field-hint">
+              <p className="text-sm text-muted-foreground">
                 Detected website/online reference. Recognition works, but this ingestion path is not wired
                 yet.
-              </span>
+              </p>
             ) : null}
             {!errors.url && sourceKind === 'unknown' && urlValue.trim().length > 0 ? (
-              <span className="field-hint">Paste or drop a valid URL to classify the source asset.</span>
+              <p className="text-sm text-muted-foreground">
+                Paste or drop a valid URL to classify the source asset.
+              </p>
             ) : null}
           </div>
 
@@ -593,15 +580,20 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       </form>
 
       {apiError ? (
-        <StatusCard phase="warning" label="Error">
-          <span className="status-card__text">{apiError}</span>
-        </StatusCard>
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{apiError}</AlertDescription>
+        </Alert>
       ) : null}
 
       {dropMessage ? (
-        <StatusCard phase={sourceKind === 'youtube' ? 'success' : 'neutral'} label="Drop result">
-          <span className="status-card__text">{dropMessage}</span>
-        </StatusCard>
+        <Alert
+          className={
+            sourceKind === 'youtube' ? 'border-emerald-500/40 text-emerald-700 dark:text-emerald-400' : ''
+          }
+        >
+          <AlertDescription>{dropMessage}</AlertDescription>
+        </Alert>
       ) : null}
 
       {pipelineVisible ? (

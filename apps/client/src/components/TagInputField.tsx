@@ -1,3 +1,4 @@
+import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
@@ -38,24 +39,28 @@ export function TagInputField({
   };
 
   return (
-    <div className="field">
+    <div className="flex flex-col gap-1.5">
       <Label htmlFor="tag-input">{label}</Label>
-      <div className="tag-field">
+      <div className="flex flex-col gap-1.5">
         {value.length > 0 && (
-          <div className="tag-field__list">
+          <div className="flex flex-wrap gap-1.5">
             {value.map((tag) => (
-              <span key={tag} className="tag-chip">
+              <Badge
+                key={tag}
+                variant="outline"
+                className="h-7 gap-1.5 border-accent/30 bg-accent/10 px-2.5 font-mono text-xs text-accent"
+              >
                 <span>{tag}</span>
                 <button
                   type="button"
-                  className="tag-chip__remove"
+                  className="inline-flex size-4 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45"
                   aria-label={`Remove ${tag}`}
                   onClick={() => onChange(value.filter((candidate) => candidate !== tag))}
                   disabled={disabled}
                 >
-                  <X size={12} aria-hidden />
+                  <X size={10} aria-hidden />
                 </button>
-              </span>
+              </Badge>
             ))}
           </div>
         )}
@@ -79,10 +84,10 @@ export function TagInputField({
           onBlur={commitInput}
         />
       </div>
-      {description ? <span className="field__hint">{description}</span> : null}
+      {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
 
       {inputValue && suggestions.length > 0 && (
-        <div className="tag-suggestions">
+        <div className="flex flex-wrap gap-1">
           {suggestions.map((suggestion) => (
             <Button
               key={suggestion}

@@ -37,9 +37,11 @@ if (Astro.request.method === 'POST') {
 
       <div class="card">
         <form method="POST">
-          <div class="field">
-            <label for="password">Password</label>
-            <div class="input-row">
+          <div class="flex flex-col gap-1.5">
+            <label for="password" class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >Password</label
+            >
+            <div class="flex gap-2 items-center">
               <Input
                 id="password"
                 name="password"
@@ -51,7 +53,7 @@ if (Astro.request.method === 'POST') {
               />
               <Button type="submit">Unlock</Button>
             </div>
-            {hasError && <span class="field-error">Incorrect password.</span>}
+            {hasError && <span class="text-sm text-destructive">Incorrect password.</span>}
           </div>
         </form>
 
@@ -85,12 +87,6 @@ if (Astro.request.method === 'POST') {
     font-size: 24px;
     font-weight: 600;
     letter-spacing: -0.02em;
-  }
-
-  .input-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
   }
 
   .hint {

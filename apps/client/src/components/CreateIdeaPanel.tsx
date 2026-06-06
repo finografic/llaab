@@ -1,6 +1,8 @@
 import { TagInputField } from 'components/TagInputField';
+import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
+import { Label } from 'components/ui/label';
 import { Textarea } from 'components/ui/textarea';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -105,15 +107,14 @@ export function CreateIdeaPanel() {
       </div>
 
       {result ? (
-        <div className="status status--success">
-          <span className="status__label">Created</span>
-          <span className="status__id">{result.id}</span>
-          <span className="status__message">Reloading…</span>
-        </div>
+        <Alert className="border-emerald-500/40">
+          <AlertTitle>Created</AlertTitle>
+          <AlertDescription>{result.id} — Reloading…</AlertDescription>
+        </Alert>
       ) : (
         <form className="create-idea-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-          <div className="field">
-            <label htmlFor="idea-title">Title</label>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="idea-title">Title</Label>
             <Input
               id="idea-title"
               type="text"
@@ -122,11 +123,11 @@ export function CreateIdeaPanel() {
               placeholder="A one-line description of the idea"
               {...register('title', { required: 'Title is required.' })}
             />
-            {errors.title ? <span className="field-error">{errors.title.message}</span> : null}
+            {errors.title ? <p className="text-sm text-destructive">{errors.title.message}</p> : null}
           </div>
 
-          <div className="field">
-            <label htmlFor="idea-body">Notes (optional)</label>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="idea-body">Notes (optional)</Label>
             <Textarea
               id="idea-body"
               rows={4}
@@ -160,10 +161,10 @@ export function CreateIdeaPanel() {
           </div>
 
           {apiError ? (
-            <div className="status status--error">
-              <span className="status__label">Error</span>
-              <span className="status__message">{apiError}</span>
-            </div>
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{apiError}</AlertDescription>
+            </Alert>
           ) : null}
         </form>
       )}
