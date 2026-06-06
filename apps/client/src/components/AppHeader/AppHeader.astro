@@ -1,13 +1,19 @@
 ---
+import { NavMenu } from 'components/NavMenu/NavMenu';
+
 interface Props {
   title?: string;
 }
 
 const { title } = Astro.props;
+const { pathname } = Astro.url;
 ---
 
 <header class="app-header">
-  {title && <h1 class="app-header__title">{title}</h1>}
+  <NavMenu pathname={pathname} client:load />
+
+  {title ? <h1 class="app-header__title">{title}</h1> : null}
+
   <div class="app-header__actions">
     <slot name="actions" />
   </div>
@@ -17,23 +23,35 @@ const { title } = Astro.props;
   .app-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: var(--space-4);
     height: var(--header-h);
     padding: 0 var(--space-6);
     border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
+    background: var(--bg-subtle);
   }
 
   .app-header__title {
+    margin-left: auto;
     font-size: var(--text-ui);
     font-weight: 500;
     color: var(--text-muted);
     letter-spacing: 0.01em;
+    white-space: nowrap;
   }
 
   .app-header__actions {
     display: flex;
     align-items: center;
     gap: var(--space-2);
+    flex-shrink: 0;
+  }
+
+  .app-header__title + .app-header__actions {
+    margin-left: var(--space-4);
+  }
+
+  .app-header:not(:has(.app-header__title)) .app-header__actions {
+    margin-left: auto;
   }
 </style>

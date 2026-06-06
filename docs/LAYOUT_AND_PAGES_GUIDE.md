@@ -9,9 +9,8 @@ page template. All components live in `apps/client/src/`.
 
 ```
 BaseLayout          ← <html> / <head> / CSS imports
-  AppLayout         ← app shell (sidebar + pane grid)
-    NavbarVertical  ← primary sidebar nav (DS TreeView)
-    AppHeaderV2     ← top app bar
+  AppLayout         ← app shell (header + main + footer)
+    AppHeader       ← brand + NavMenu + page title
     [page slot]
       PageLayout    ← finder-style inner-page template  ← YOU ARE HERE
         PageHero    ← page title / actions bar
@@ -23,7 +22,7 @@ BaseLayout          ← <html> / <head> / CSS imports
 
 ## AppLayout
 
-`layouts/AppLayout.astro` — shell for every main route. Fixed 260px sidebar, sticky-height.
+`layouts/AppLayout.astro` — shell for every main route. Horizontal header with megamenu nav; no sidebar.
 
 ```astro
 <AppLayout title="Transcripts">
@@ -37,31 +36,21 @@ pages by wrapping with a negative-margin reset or passing the PageLayout as a di
 
 ---
 
-## NavbarVertical
+## NavMenu
 
-`components/NavbarVertical/NavbarVertical.tsx` — built on DS `TreeView` compound.
+`components/NavMenu/NavMenu.tsx` — horizontal shadcn `NavigationMenu` in `AppHeader`. Structure lives in
+`lib/nav-menu.config.ts`; route-prefix active matching in `lib/nav-menu.utils.ts`.
 
-- **Branches** (sections with children): split row — `<a>` for navigation + `BranchControl`
-  for the expand chevron. Click the label navigates; click the chevron toggles. Both are
-  independent tab stops (keyboard-friendly, valid HTML).
-- **Leaf items** (no children): `TreeView.Item asChild <a>` — the whole row is the anchor.
-- `selectedValue` and `defaultExpandedValue` are derived from `pathname` on each render.
-  Ark manages expand state internally after initial mount.
-- To add a nav item: add a `NavNode` entry to `NAV_NODES`. No other changes needed.
+- **Desktop (`md+`):** five megamenus (Vault, Pipeline, Execute, Models, System) with label + description
+  list items; two-column panel when a section has 4+ items.
+- **Mobile:** hamburger opens a `Sheet` with the same sections in an `Accordion`.
+- **Future routes:** rendered disabled with reduced opacity and a lock icon — set `live: true` in config
+  when the route ships.
+- **CSS rule:** responsive show/hide uses Tailwind only (`hidden md:flex`, `md:hidden`). Do not set
+  `display` on NavMenu CSS-module wrappers — it overrides Tailwind `hidden` after hydration.
 
-**Adding a section with sub-routes:**
-
-```ts
-{
-  id: '/agents',
-  label: 'Agents',
-  icon: <IconAgents />,
-  children: [
-    { id: '/agents/runs', label: 'Runs' },
-    { id: '/agents/skills', label: 'Skills' },
-  ],
-},
-```
+**Adding or enabling a nav item:** edit `NAV_MENU_SECTIONS` in `nav-menu.config.ts`. See
+[`docs/NAV_MENU_DESIGN.md`](../NAV_MENU_DESIGN.md) for the full route map.
 
 ---
 

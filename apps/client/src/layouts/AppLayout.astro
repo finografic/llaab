@@ -3,24 +3,19 @@
  * AppLayout — primary shell for all main app routes.
  *
  * Structure:
- *   ┌──────────┬─────────────────────────┐
- *   │          │ AppHeader               │
- *   │ Navbar   ├─────────────────────────┤
- *   │ Vertical │ <slot />                │
- *   │          │                         │
- *   │          ├─────────────────────────┤
- *   │          │ AppFooter               │
- *   └──────────┴─────────────────────────┘
+ *   ┌─────────────────────────────────────┐
+ *   │ AppHeader (brand + NavMenu + title) │
+ *   ├─────────────────────────────────────┤
+ *   │ <slot />                            │
+ *   ├─────────────────────────────────────┤
+ *   │ AppFooter                           │
+ *   └─────────────────────────────────────┘
  *
  * Props:
  *   title   — passed to AppHeader and <title> tag
- *
- * Styling: scoped <style> below. Component styles live in *.module.css or
- * component-level <style> blocks — never in this file.
  */
 import AppFooter from 'components/AppFooter/AppFooter.astro';
 import AppHeader from 'components/AppHeader/AppHeader.astro';
-import { NavbarVertical } from 'components/NavbarVertical/NavbarVertical';
 import BaseLayout from './BaseLayout.astro';
 
 interface Props {
@@ -28,51 +23,27 @@ interface Props {
 }
 
 const { title } = Astro.props;
-const { pathname } = Astro.url;
 const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
 ---
 
 <BaseLayout title={pageTitle}>
   <div class="app-shell">
-    <aside class="app-sidebar">
-      <NavbarVertical pathname={pathname} client:load />
-    </aside>
+    <AppHeader title={title} />
 
-    <div class="app-pane">
-      <AppHeader title={title} />
+    <main class="page-content">
+      <slot />
+    </main>
 
-      <main class="page-content">
-        <slot />
-      </main>
-
-      <AppFooter />
-    </div>
+    <AppFooter />
   </div>
 </BaseLayout>
 
 <style>
   .app-shell {
     display: grid;
-    grid-template-columns: 260px 1fr;
-    min-height: 100vh;
-    background: var(--bg);
-  }
-
-  .app-sidebar {
-    border-right: 1px solid var(--border);
-    background: var(--bg-subtle);
-    overflow-y: auto;
-    /* Sticky so sidebar doesn't scroll with page content */
-    position: sticky;
-    top: 0;
-    height: 100vh;
-  }
-
-  .app-pane {
-    display: grid;
     grid-template-rows: auto 1fr auto;
     min-height: 100vh;
-    overflow: hidden;
+    background: var(--bg);
   }
 
   .page-content {

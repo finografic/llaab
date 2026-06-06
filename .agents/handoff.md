@@ -64,9 +64,11 @@ The old PandaCSS + linked design-system stack has been removed from the client.
 Vault pages load data directly via `@llaab/core` in frontmatter (no API hop); auth gate at top.
 
 Layout hierarchy: `BaseLayout` owns `<html class="dark">/<head>/<body>` + CSS imports.
-`AppLayout` wraps `BaseLayout`, adds sidebar/header/footer shell. `login.astro` uses `BaseLayout` directly.
-Inner pages use `PageLayout` (hero / optional aside / main zones) + `PageHero` (eyebrow, title, actions slot, meta bar). See `LAYOUT_AND_PAGES_GUIDE.md`.
-`FileList` exists as a reusable TanStack-based list component for Finder-style index views.
+`AppLayout` wraps `BaseLayout` with horizontal header + main + footer (sidebar removed 2026-06-07).
+`AppHeader` hosts the `NavMenu` React island (brand link + shadcn megamenus + mobile sheet).
+Inner pages use `PageLayout` (hero / optional aside / main zones) + `PageHero`. See `LAYOUT_AND_PAGES_GUIDE.md`.
+Navigation structure: `lib/nav-menu.config.ts`; design spec: `docs/NAV_MENU_DESIGN.md`.
+Home dashboard uses `BalancedGrid` + `utils/balanced-grid.utils.ts` to avoid orphan cards in multi-column grids.
 
 CSS entry points: `packages/ui/src/styles/globals.css` owns all framework imports (Tailwind,
 `tw-animate-css`, `shadcn/tailwind.css`, Roboto), the shadcn stone token `:root`/`.dark` blocks,
@@ -78,15 +80,17 @@ whole UI), and overrides the shadcn tokens with LLAAB's warm amber dark palette 
 `BaseLayout.astro` imports both in order. `forms.css` retains only native element resets for
 `input`, `textarea`, and `select` — all hand-rolled component classes were removed.
 Dark mode is always active via `class="dark"` on `<html>` (hardcoded — LLAAB is dark-only).
-Installed shadcn components in `packages/ui/src/components/`: `button`, `badge`, `breadcrumb`,
-`scroll-area`, `table`, `tooltip`.
-`@llaab/client` can import generated local icons from `@llaab/icons`; `src/pages/index.astro`
-already does this for its four homepage icons.
+Installed shadcn components in `packages/ui/src/components/` include `navigation-menu`, `sheet`,
+`accordion`, `button`, `badge`, `breadcrumb`, `scroll-area`, `table`, `tooltip`.
+Homepage (`index.astro`) callout cards: Ingest, Vault, Runs, Models (2×2 via `BalancedGrid`).
+`/icons` redirects to `/dev/icons` (Lucide picker / registry).
 
 | Route                     | Description                                                                                               |
 | ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `/`                       | Home dashboard — four callout cards (Ingest, Vault, Runs, Models)                                         |
 | `/ingest`                 | URL form with card-wide drag/drop; two-phase: ingest fires first → Transcript Saved card, then extraction |
 | `/llm`                    | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list              |
+| `/icons`                  | Redirect to `/dev/icons` (embedded Lucide picker)                                                         |
 | `/vault`                  | Gated file-tree browser — local recursive tree + raw file viewer                                          |
 | `/vault/transcripts/[id]` | Detail: source metadata, summary, extracted ideas (linked), Re-extract button                             |
 | `/vault/nodes`            | PageLayout + NodesFileList island; nodes by type (idea/resource/prompt/skill/instruction)                 |
@@ -178,7 +182,7 @@ via regex. All ingest runs apply `d:ingest` + `autoTag`. Source nodes carry no d
 ## Roadmap & Planning
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
-UI Refactor (all 3 phases) is complete as of 2026-06-06. P0 is now empty.
+UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07. P0 is empty.
 P1: install + validate `@finografic/ai-harness` in transcript extraction. P2: Terminal Panel and
 later harness extension. P3: Karpathy graph, Source Auto-Follow, Library Watch.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.

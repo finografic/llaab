@@ -156,6 +156,7 @@ Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 
 | Date       | Item                                                                                                                                                                                                                        |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-07 | Navigation menu — `NavbarVertical` replaced by horizontal shadcn `NavigationMenu` in `AppHeader`; megamenu config in `nav-menu.config.ts`; future routes disabled with lock icon; `/icons` redirect; homepage Models card   |
 | 2026-06-06 | ESLint → oxlint migration — root, `apps/client`, `apps/server`, and `packages/ui` on oxlint + oxfmt; ESLint removed repo-wide; lint-staged and CI use oxlint                                                                |
 | 2026-06-06 | Zod v3 → v4 upgrade — all packages on `zod@^4`; `@llaab/schemas` + `@hono/zod-validator` in `apps/server` validated                                                                                                         |
 | 2026-06-06 | UI Refactor — shadcn expansion + typography system: type-scale tokens, px → rem, shadcn adoption, inline style cleanup. Detail: [`DONE_UI_REFACTOR.md`](./DONE_UI_REFACTOR.md)                                              |

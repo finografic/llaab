@@ -1,10 +1,9 @@
 ---
 import AppLayout from 'layouts/AppLayout.astro';
 import BalancedGrid from 'components/BalancedGrid/BalancedGrid.astro';
-import { ArrowRightIcon, DownloadIcon, FolderKanbanIcon, PlayIcon, WindowIcon } from '@llaab/icons';
+import { ActivityIcon, ArrowRightIcon, DownloadIcon, FolderKanbanIcon, PlayIcon } from '@llaab/icons';
 import { Card, CardContent } from 'components/ui/card';
 
-const iconsRoute = '/dev/icons';
 const homeCalloutCount = 4;
 ---
 
@@ -62,15 +61,15 @@ const homeCalloutCount = 4;
         </Card>
       </a>
 
-      <a href={iconsRoute} class="home-card-link">
+      <a href="/llm" class="home-card-link">
         <Card className="home-card">
           <CardContent className="home-card__content">
             <div class="home-card__icon">
-              <WindowIcon size={18} aria-hidden="true" />
+              <ActivityIcon size={18} aria-hidden="true" />
             </div>
             <div class="home-card__body">
-              <h2 class="home-card__title">Icons</h2>
-              <p class="home-card__desc">Open the embedded Lucide picker and manage the local registry.</p>
+              <h2 class="home-card__title">Models</h2>
+              <p class="home-card__desc">Task routing, provider status, and installed model indicators.</p>
             </div>
             <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
           </CardContent>

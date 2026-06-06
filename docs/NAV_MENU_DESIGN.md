@@ -1,8 +1,11 @@
 # LLAAB — Navigation Menu Design
 
-> **Purpose:** Define the structure of the new shadcn Navigation Menu (Radix) that replaces
+> **Status:** Implemented in `apps/client` (2026-06-07). Source of truth for menu structure:
+> `apps/client/src/lib/nav-menu.config.ts`. UI: `components/NavMenu/NavMenu.tsx`.
+>
+> **Purpose:** Define the structure of the shadcn Navigation Menu (Radix) that replaced
 > `NavbarVertical`. Each top-level item opens a megamenu-style dropdown with label + description
-> pairs. Items marked `[future]` should be rendered visually but disabled until implemented.
+> pairs. Items marked `[future]` are rendered disabled with a lock icon until implemented.
 >
 > **Component:** `@radix-ui/react-navigation-menu` via `shadcn/ui`
 > **Ref:** https://ui.shadcn.com/docs/components/radix/navigation-menu

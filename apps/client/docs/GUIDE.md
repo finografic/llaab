@@ -515,7 +515,7 @@ existing page rather than inventing new colors.
 
 1. Create `src/pages/my-section.astro` (or `src/pages/my-section/index.astro`).
 2. Use `AppLayout` as the wrapper.
-3. Add a nav entry in `NavbarVertical.tsx` (`NAV_ITEMS` array).
+3. Add a nav entry in `lib/nav-menu.config.ts` (see `docs/NAV_MENU_DESIGN.md`).
 4. Style with a `<style>` block in the `.astro` file.
 
 ```astro
