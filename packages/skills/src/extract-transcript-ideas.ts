@@ -1,5 +1,5 @@
 import { autoTag, createNode, getNodeFilePath, updateNode } from '@llaab/core';
-import { llmExtractWithTrace } from '@llaab/ingestion';
+import { llmExtractWithTrace, normalizeContentTags } from '@llaab/ingestion';
 import type { ExtractionRunTrace, LlmExtractionMeta } from '@llaab/ingestion';
 import type { TranscriptNode } from '@llaab/schemas';
 
@@ -21,18 +21,27 @@ export async function extractTranscriptIdeas(input: ExtractTranscriptIdeasInput)
   return runSkill(
     'extract-transcript-ideas',
     async () => {
-      const { ideas, summary, llmMeta, runTrace } = await llmExtractWithTrace(input.transcript.body);
+      const { ideas, summary, llmMeta, runTrace, tags } = await llmExtractWithTrace(input.transcript.body);
+      const normalizedLlmTags = normalizeContentTags(tags);
+      const inferredTranscriptTags = autoTag(input.transcript.title, input.transcript.body ?? '');
 
       // Create an IdeaNode for each extracted idea string
       const ideaIds: string[] = [];
 
       for (const ideaTitle of ideas) {
-        const inferredTags = autoTag(ideaTitle, '');
+        const inferredTags = autoTag(ideaTitle, input.transcript.body ?? '');
         const { id } = await createNode({
           type: 'idea',
           title: ideaTitle,
           body: '',
-          tags: inferredTags,
+          tags: [
+            ...new Set([
+              ...(input.transcript.tags ?? []),
+              ...inferredTranscriptTags,
+              ...inferredTags,
+              ...normalizedLlmTags,
+            ]),
+          ],
           extra: {
             origin: 'extracted',
             source_id: input.transcript.id,
@@ -51,6 +60,7 @@ export async function extractTranscriptIdeas(input: ExtractTranscriptIdeasInput)
         const transcriptPath = getNodeFilePath('transcript', input.transcript.id);
         await updateNode(transcriptPath, (node) => ({
           ...node,
+          tags: [...new Set([...(node.tags ?? []), ...inferredTranscriptTags, ...normalizedLlmTags])],
           extracted_idea_ids: [...((node as TranscriptNode).extracted_idea_ids ?? []), ...ideaIds],
           llm_model: llmMeta.model,
           llm_provider: llmMeta.provider,

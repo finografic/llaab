@@ -1,4 +1,4 @@
-export { llmExtract, llmExtractWithTrace } from './extract/llm-extract.js';
+export { llmExtract, llmExtractWithTrace, normalizeContentTags } from './extract/llm-extract.js';
 export type {
   ExtractedKnowledge,
   ExtractedKnowledgeWithTrace,

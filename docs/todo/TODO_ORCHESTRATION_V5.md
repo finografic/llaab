@@ -1,7 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 6 done — long extraction now uses token-aware harness prep with chunked
-> model calls and merged output instead of blind first-6 000-character truncation.
+> **Status:** Phase 6b done — auto-tagging now uses transcript body signal plus LLM-extracted
+> content tags before the plan continues to Phase 7.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -957,6 +957,66 @@ Contract:
 
 Long transcript extraction no longer depends on blind first-6 000-character truncation.
 Budget violations surface as meaningful errors rather than silent content loss.
+
+---
+
+## Phase 6b — Auto-Tag Expansion + Content Tags — DONE
+
+> Inserted from `TODO_ORCHESTRATION_ADDENDUM.md` after Phase 6 and before Phase 7.
+
+### Outstanding notes from completed phases
+
+- Phase 4 deferred `xterm.js`; current terminal panel uses shadcn primitives. Runtime WebSocket
+  validation remains a manual follow-up when `bun` is available.
+- Phase 5 evaluated Elements-style metadata components but kept the local `ModelMetaCard` with
+  existing shadcn primitives.
+
+### 6b-1. Fix empty-body auto-tagging
+
+- [x] `packages/skills/src/extract-transcript-ideas.ts` now calls
+      `autoTag(ideaTitle, input.transcript.body ?? '')`.
+- [x] `packages/ingestion/src/pipeline.ts` also passes transcript/plain text into `autoTag(...)`
+      for both transcript updates and generated idea tags.
+
+### 6b-2. Expand conservative domain regexes
+
+- [x] Expanded `d:llm` to include model family names and high-signal LLM terms such as
+      `gemma`, `llama`, `mistral`, `qwen`, `gemini`, `deepseek`, `open-weight`, `inference`,
+      `fine-tuning`, `context-window`, `token`, and `embedding`.
+- [x] Expanded automation, infra, integration, and UI patterns with project-specific terms from
+      the orchestration roadmap.
+
+### 6b-3. Add LLM content tags
+
+- [x] Extraction prompt now requests `tags` alongside `ideas`, `skills`, and `summary`.
+- [x] `ExtractedKnowledgeSchema` uses `tags: z.array(z.string()).default([])` so old-style
+      model responses still validate.
+- [x] Content tags are normalized centrally in `llm-extract.ts` as lowercase hyphenated tags.
+
+### 6b-4. Merge tag sources
+
+- [x] Generated idea nodes merge domain tags from `autoTag(...)`, LLM content tags, and manual
+      tags where available.
+- [x] Both extraction paths are covered: the skills path and the normal ingestion pipeline path.
+
+### 6b-5. Thread tags back to transcripts
+
+- [x] Transcript updates merge existing/manual tags, body-derived domain tags, and LLM content
+      tags.
+
+### Phase 6b validation result
+
+- `tsc -b packages/core packages/ingestion packages/skills --pretty false` passes.
+- `vitest run packages/core/src/taxonomy.test.ts packages/ingestion/src/extract/llm-extract.test.ts packages/ingestion/src/pipeline.test.ts packages/skills/src/extract-transcript-ideas.test.ts`
+  passes.
+- Tests confirm Gemma/open-weight content now gets `d:llm`, omitted extraction `tags` default
+  to `[]`, and both idea extraction paths pass transcript body text to `autoTag(...)`.
+
+### Done means
+
+Extracted transcript and idea nodes carry both domain tags and content-specific tags. LLM-focused
+videos such as Gemma 4 now receive `d:llm` plus normalized topic tags such as `gemma-4` and
+`open-weight`.
 
 ---
 

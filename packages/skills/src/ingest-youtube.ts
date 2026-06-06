@@ -46,7 +46,12 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYo
   // Auto-try extraction — transcript is already persisted, this is best-effort.
   if (result.plainText && !input.skipExtraction) {
     try {
-      const extraction = await extractKnowledgeFromTranscript(result.id, result.path, result.plainText);
+      const extraction = await extractKnowledgeFromTranscript(
+        result.id,
+        result.path,
+        result.plainText,
+        input.tags,
+      );
       console.log(`  extraction: ${extraction.ideaIds.length} ideas, summary written`);
       return { record, result, extraction };
     } catch (err) {

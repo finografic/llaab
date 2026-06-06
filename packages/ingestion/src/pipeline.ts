@@ -5,7 +5,7 @@ import type { TranscriptSourceType } from '@llaab/schemas';
 
 import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
 import { cleanTranscript } from './clean/transcript.js';
-import { llmExtractWithTrace } from './extract/llm-extract.js';
+import { llmExtractWithTrace, normalizeContentTags } from './extract/llm-extract.js';
 import { fetchArticle } from './fetch/article.js';
 import { fetchRepo } from './fetch/repo.js';
 import { fetchYouTube, parseYouTubeUrl } from './fetch/youtube.js';
@@ -337,19 +337,33 @@ export async function extractKnowledgeFromTranscript(
   transcriptId: string,
   transcriptPath: string,
   plainText: string,
+  manualTags: string[] = [],
 ): Promise<ExtractionResult> {
   const extracted = await llmExtractWithTrace(plainText);
+  const normalizedLlmTags = normalizeContentTags(extracted.tags);
+  let transcriptTags: string[] = [];
 
-  await updateNode(transcriptPath, (node) => ({
-    ...node,
-    summary: extracted.summary,
-    tags: [...new Set([...(node.tags ?? []), ...autoTag(node.title, extracted.summary)])],
-    llm_model: extracted.llmMeta.model,
-    llm_provider: extracted.llmMeta.provider,
-    llm_duration_ms: extracted.llmMeta.durationMs,
-    llm_prompt_tokens: extracted.llmMeta.promptTokens,
-    llm_completion_tokens: extracted.llmMeta.completionTokens,
-  }));
+  await updateNode(transcriptPath, (node) => {
+    transcriptTags = [
+      ...new Set([
+        ...(node.tags ?? []),
+        ...manualTags,
+        ...autoTag(node.title, plainText),
+        ...normalizedLlmTags,
+      ]),
+    ];
+
+    return {
+      ...node,
+      summary: extracted.summary,
+      tags: transcriptTags,
+      llm_model: extracted.llmMeta.model,
+      llm_provider: extracted.llmMeta.provider,
+      llm_duration_ms: extracted.llmMeta.durationMs,
+      llm_prompt_tokens: extracted.llmMeta.promptTokens,
+      llm_completion_tokens: extracted.llmMeta.completionTokens,
+    };
+  });
 
   const ideas: Array<{ id: string; title: string }> = [];
   for (const ideaText of extracted.ideas) {
@@ -357,7 +371,15 @@ export async function extractKnowledgeFromTranscript(
       type: 'idea',
       title: ideaText,
       body: '',
-      tags: [...new Set(['d:ingest', ...autoTag(ideaText, '')])],
+      tags: [
+        ...new Set([
+          'd:ingest',
+          ...manualTags,
+          ...transcriptTags,
+          ...autoTag(ideaText, plainText),
+          ...normalizedLlmTags,
+        ]),
+      ],
       extra: {
         origin: 'extracted',
         source_id: transcriptId,

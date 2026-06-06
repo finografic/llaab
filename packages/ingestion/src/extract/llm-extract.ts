@@ -9,6 +9,7 @@ export interface ExtractedKnowledge {
   ideas: string[];
   skills: string[];
   summary: string;
+  tags: string[];
 }
 
 export interface ExtractionRunTrace {
@@ -34,14 +35,16 @@ const ExtractedKnowledgeSchema = z.object({
   ideas: z.array(z.string()),
   skills: z.array(z.string()),
   summary: z.string().min(1),
+  tags: z.array(z.string()).default([]),
 });
 
 const EXTRACTION_SYSTEM_PROMPT = `You are a knowledge extraction assistant. Analyze the provided content and extract structured knowledge.
 
-Return ONLY a valid JSON object with exactly these three fields:
+Return ONLY a valid JSON object with exactly these four fields:
 - "ideas": array of distinct insights, concepts, or takeaways as concise phrases (5–15 words each)
 - "skills": array of specific techniques, tools, methods, or practices mentioned
 - "summary": a single sentence (max 30 words) summarising the core topic
+- "tags": array of 2–5 concise topic tags (1–3 words each, lowercase, hyphenated) describing the specific subjects covered. These are content tags, not domain categories. Good tags name concrete topics: "open-weight-models", "edge-inference", "multimodal", "gemma-4", "context-window". Bad tags are vague categories: "ai", "technology", "interesting".
 
 Rules:
 - Output raw JSON only — no markdown fences, no explanation, no commentary
@@ -49,7 +52,7 @@ Rules:
 - Every string must be plain text with no nested quotes
 
 Example output format:
-{"ideas":["Large language models require careful prompt engineering","Fine-tuning outperforms prompting for narrow tasks"],"skills":["prompt engineering","model fine-tuning","RLHF"],"summary":"Overview of LLM training and deployment strategies."}`;
+{"ideas":["Large language models require careful prompt engineering","Fine-tuning outperforms prompting for narrow tasks"],"skills":["prompt engineering","model fine-tuning","RLHF"],"summary":"Overview of LLM training and deployment strategies.","tags":["prompt-engineering","fine-tuning","rlhf","deployment-strategies"]}`;
 
 function parseJsonFromText(text: string): unknown {
   // Strip optional markdown code fences (```json ... ``` or ``` ... ```)
@@ -74,13 +77,35 @@ function dedupeValues(values: string[]): string[] {
   });
 }
 
+export function normalizeContentTags(tags: string[]): string[] {
+  return dedupeValues(
+    tags
+      .map((tag) =>
+        tag
+          .toLocaleLowerCase()
+          .trim()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, ''),
+      )
+      .filter((tag) => tag.length > 0),
+  );
+}
+
 function reduceChunkedExtraction(parts: ExtractedKnowledge[]): ExtractedKnowledge {
-  if (parts.length === 1) return parts[0] as ExtractedKnowledge;
+  if (parts.length === 1) {
+    return {
+      ...parts[0],
+      tags: normalizeContentTags(parts[0]?.tags ?? []),
+    } as ExtractedKnowledge;
+  }
 
   return {
     ideas: dedupeValues(parts.flatMap((part) => part.ideas)),
     skills: dedupeValues(parts.flatMap((part) => part.skills)),
     summary: dedupeValues(parts.map((part) => part.summary)).join(' '),
+    tags: normalizeContentTags(parts.flatMap((part) => part.tags)),
   };
 }
 

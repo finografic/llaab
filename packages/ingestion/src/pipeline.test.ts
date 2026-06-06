@@ -5,6 +5,7 @@ vi.mock('@llaab/core', () => ({
   createNode: vi.fn(),
   getNodeFilePath: vi.fn(),
   listNodes: vi.fn(),
+  updateNode: vi.fn(),
 }));
 
 vi.mock('./fetch/youtube.js', () => ({
@@ -26,14 +27,17 @@ vi.mock('./structure/text.js', () => ({
 
 vi.mock('./extract/llm-extract.js', () => ({
   llmExtractWithTrace: vi.fn(),
+  normalizeContentTags: vi.fn((tags: string[]) =>
+    tags.map((tag) => tag.toLocaleLowerCase().replace(/\s+/g, '-')).filter((tag) => tag.length > 0),
+  ),
 }));
 
-import { createNode, getNodeFilePath, listNodes } from '@llaab/core';
+import { autoTag, createNode, getNodeFilePath, listNodes, updateNode } from '@llaab/core';
 
 import { cleanTranscript } from './clean/transcript.js';
 import { llmExtractWithTrace } from './extract/llm-extract.js';
 import { fetchYouTube, parseYouTubeUrl } from './fetch/youtube.js';
-import { runIngestionPipeline } from './pipeline.js';
+import { extractKnowledgeFromTranscript, runIngestionPipeline } from './pipeline.js';
 import { structureText } from './structure/text.js';
 
 describe('runIngestionPipeline', () => {
@@ -71,6 +75,7 @@ describe('runIngestionPipeline', () => {
       ideas: [],
       skills: [],
       summary: 'usable summary',
+      tags: [],
       llmMeta: {
         model: 'llama3.1:8b',
         provider: 'ollama',
@@ -208,6 +213,7 @@ describe('runIngestionPipeline', () => {
       ideas: [],
       skills: [],
       summary: 'usable summary',
+      tags: [],
       llmMeta: {
         model: 'llama3.1:8b',
         provider: 'ollama',
@@ -318,5 +324,74 @@ describe('runIngestionPipeline', () => {
     });
     expect(result.runTrace?.stages.map((stage) => stage.name)).toEqual(['dedupe:transcript']);
     expect(result.runTrace?.decisions.map((decision) => decision.type)).toEqual(['accept']);
+  });
+
+  it('merges domain, content, and manual tags onto extracted transcript ideas', async () => {
+    vi.mocked(autoTag).mockImplementation((_title, body) => (body.includes('Gemma') ? ['d:llm'] : []));
+    vi.mocked(llmExtractWithTrace).mockResolvedValue({
+      ideas: ['Gemma 4 runs as an open-weight local model'],
+      skills: ['local inference'],
+      summary: 'Gemma 4 supports local open-weight inference.',
+      tags: ['Gemma 4', 'Open Weight', 'edge inference'],
+      llmMeta: {
+        model: 'llama3.1:8b',
+        provider: 'ollama',
+        durationMs: 150,
+      },
+      runTrace: {
+        stages: [],
+        decisions: [],
+        llm: undefined,
+      },
+    });
+    vi.mocked(updateNode).mockImplementation(async (_path, updater) => ({
+      path: '/vault/transcripts/transcript.gemma.md',
+      node: updater({
+        id: 'transcript.gemma',
+        type: 'transcript',
+        title: 'Master Gemma 4 in 20 Minutes',
+        status: 'seed',
+        tags: ['d:ingest', 'manual'],
+        related: [],
+        created_at: '2026-04-08T00:00:00Z',
+        updated_at: '2026-04-08T00:00:00Z',
+        body: '',
+        source_id: 'example-channel',
+        source_url: 'https://www.youtube.com/watch?v=gemma',
+        source_type: 'youtube',
+        author: 'Example Channel',
+        extracted_idea_ids: [],
+        extracted_skill_ids: [],
+      }),
+    }));
+    vi.mocked(createNode).mockResolvedValue({
+      id: 'idea.gemma-4-runs-as-an-open-weight-local-model',
+      path: '/vault/ideas/idea.gemma-4-runs-as-an-open-weight-local-model.md',
+      node: {} as never,
+    });
+
+    await extractKnowledgeFromTranscript(
+      'transcript.gemma',
+      '/vault/transcripts/transcript.gemma.md',
+      'Gemma 4 is an open weight model for edge inference with a long context window.',
+      ['manual'],
+    );
+
+    expect(updateNode).toHaveBeenNthCalledWith(
+      1,
+      '/vault/transcripts/transcript.gemma.md',
+      expect.any(Function),
+    );
+    await expect(vi.mocked(updateNode).mock.results[0]?.value).resolves.toMatchObject({
+      node: {
+        tags: ['d:ingest', 'manual', 'd:llm', 'gemma-4', 'open-weight', 'edge-inference'],
+      },
+    });
+    expect(createNode).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'idea',
+        tags: ['d:ingest', 'manual', 'd:llm', 'gemma-4', 'open-weight', 'edge-inference'],
+      }),
+    );
   });
 });

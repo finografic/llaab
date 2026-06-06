@@ -17,6 +17,7 @@ const VALID_RESPONSE = JSON.stringify({
   ideas: ['LLMs require careful prompt engineering', 'Fine-tuning outperforms prompting for narrow tasks'],
   skills: ['prompt engineering', 'fine-tuning'],
   summary: 'Overview of LLM training and prompting strategies.',
+  tags: ['Prompt Engineering', 'fine tuning', 'RLHF'],
 });
 
 describe('llmExtract', () => {
@@ -42,6 +43,7 @@ describe('llmExtract', () => {
     expect(result.ideas).toHaveLength(2);
     expect(result.skills).toContain('prompt engineering');
     expect(result.summary).toBe('Overview of LLM training and prompting strategies.');
+    expect(result.tags).toEqual(['prompt-engineering', 'fine-tuning', 'rlhf']);
   });
 
   it('strips markdown fences before parsing JSON', async () => {
@@ -64,6 +66,20 @@ describe('llmExtract', () => {
     mockRouteLlm(badSummary);
 
     await expect(llmExtract('example transcript')).rejects.toThrow();
+  });
+
+  it('defaults omitted tags to an empty array', async () => {
+    mockRouteLlm(
+      JSON.stringify({
+        ideas: ['LLMs require careful prompt engineering'],
+        skills: ['prompt engineering'],
+        summary: 'Overview of LLM prompting strategies.',
+      }),
+    );
+
+    const result = await llmExtract('example transcript');
+
+    expect(result.tags).toEqual([]);
   });
 
   it('returns control trace metadata with accept decision on success', async () => {
@@ -108,6 +124,7 @@ describe('llmExtract', () => {
       ],
       skills: ['prompt engineering', 'fine-tuning'],
       summary: 'Overview of LLM training and prompting strategies.',
+      tags: ['prompt-engineering', 'fine-tuning', 'rlhf'],
     });
     expect(routeLlm).toHaveBeenLastCalledWith(
       'extract',

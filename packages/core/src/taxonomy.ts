@@ -18,13 +18,19 @@
  */
 
 export const AUTO_TAG_PATTERNS: Array<[string, RegExp]> = [
-  ['d:llm', /\b(llm|gpt|claude|ollama|anthropic|prompt(?:ing)?)\b/i],
-  ['d:automation', /\b(agent|autonomous|workflow|automation|pipeline|orchestrat\w*)\b/i],
+  [
+    'd:llm',
+    /\b(llm|gpt|claude|ollama|anthropic|prompt(?:ing)?|gemma|llama|mistral|qwen|phi|gemini|deepseek|open[ -]?weight|inference|fine[ -]?tun\w*|context[ -]?window|token|embedding)\b/i,
+  ],
+  [
+    'd:automation',
+    /\b(agent|autonomous|workflow|automation|pipeline|orchestrat\w*|harness|executor|adapter|command[ -]?bus)\b/i,
+  ],
   ['d:ingest', /\b(ingest(?:ion)?|transcript|youtube|capture)\b/i],
   ['d:schema', /\b(schema|zod|validation)\b/i],
-  ['d:infra', /\b(cli|terminal|bash|monorepo|ci[\s/]cd)\b/i],
-  ['d:integration', /\b(mcp|cursor|tauri|astro|obsidian)\b/i],
-  ['d:ui', /\b(ui|frontend|component|layout|react)\b/i],
+  ['d:infra', /\b(cli|terminal|bash|monorepo|ci[\s/]cd|launchd|swiftbar|turborepo|pnpm|bun)\b/i],
+  ['d:integration', /\b(mcp|cursor|tauri|astro|obsidian|opencode|cline|codex|hermes)\b/i],
+  ['d:ui', /\b(ui|frontend|component|layout|react|shadcn|tailwind|xterm)\b/i],
   ['d:meta', /\b(llaab|self-referential|meta)\b/i],
 ];
 
