@@ -127,3 +127,6 @@ Hand-rolling what shadcn provides is not permitted.
 - Ubiquitous-language terms are defined in [`LLAAB_GLOSSARY.md`](/LLAAB_GLOSSARY.md) (the glossary artifact); **shared vocabulary** is the broader goal in prose—do not use _vocabulary_ and _glossary_ interchangeably for that file.
 - YouTube transcript ingestion deduplicates existing nodes by matching `sourceType === 'youtube'` and `sourceItemId` to the video id.
 - `@finografic/md-lint` (`pnpm run lint:md`) classifies markdown as **standard**, **agent**, or **vault** (`vault/**/*.md`). Root `.markdownlint.jsonc` rule keys apply globally; optional **`standard` / `agent` / `vault`** objects are md-lint-only scope overrides (not upstream markdownlint) merged preset → global → category.
+- ESLint is removed repo-wide; oxlint + oxfmt (`@finografic/oxc-config`) handle TS/JS lint and format; Prettier remains only for Astro files in `apps/client`.
+- TypeScript is pinned to 6.x via root `pnpm.overrides`; TS 6 no longer auto-includes `@types/*`—set explicit `compilerOptions.types` (base: `["node"]`, `apps/server`: `["node", "bun"]`).
+- In `apps/client`, imports use tsconfig path aliases (`components/*`, `lib/*`, …)—not `@/*`.
