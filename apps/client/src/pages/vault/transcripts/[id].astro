@@ -438,72 +438,7 @@ function fmtSeconds(s?: number): string {
     overflow-y: auto;
   }
 
-  /* ── Tags ── */
-
-  .tag-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
-  }
-
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    background: color-mix(in srgb, var(--tag-color, var(--accent)) 12%, transparent);
-    color: var(--tag-color, var(--accent));
-    border: 1px solid color-mix(in srgb, var(--tag-color, var(--accent)) 30%, transparent);
-  }
-
-  .tag--sm {
-    font-size: 9px;
-    padding: 1px 5px;
-  }
-
-  .tag[data-tag='d:llm'] {
-    --tag-color: #3b82f6;
-  }
-  .tag[data-tag='d:automation'] {
-    --tag-color: #8b5cf6;
-  }
-  .tag[data-tag='d:ingest'] {
-    --tag-color: #f59e0b;
-  }
-  .tag[data-tag='d:schema'] {
-    --tag-color: #14b8a6;
-  }
-  .tag[data-tag='d:infra'] {
-    --tag-color: #6b7280;
-  }
-  .tag[data-tag='d:integration'] {
-    --tag-color: #f97316;
-  }
-  .tag[data-tag='d:ui'] {
-    --tag-color: #ec4899;
-  }
-  .tag[data-tag='d:meta'] {
-    --tag-color: #22c55e;
-  }
-
-  /* ── Badges ── */
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-weight: 500;
-    font-family: var(--font-mono);
-    letter-spacing: 0.03em;
-    background: var(--surface-raised);
-    color: var(--text-muted);
-    border: 1px solid var(--border-subtle);
-  }
+  /* ── Source type badge variants (base in app.css) ── */
 
   .badge--youtube {
     background: oklch(0.22 0.04 25 / 0.25);
@@ -524,10 +459,5 @@ function fmtSeconds(s?: number): string {
     background: oklch(0.24 0.05 40 / 0.25);
     color: oklch(0.7 0.19 40);
     border-color: oklch(0.42 0.12 40 / 0.4);
-  }
-  .badge--other {
-    background: var(--surface-raised);
-    color: var(--text-muted);
-    border-color: var(--border-subtle);
   }
 </style>

@@ -23,28 +23,30 @@ if (!node) return Astro.redirect('/vault/nodes', 302);
 function fmtDate(ts?: string): string {
   if (!ts) return '—';
   return new Date(ts).toLocaleString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
 // Type-narrowed node views
-const idea        = node.type === 'idea'        ? (node as IdeaNode)        : null;
-const skill       = node.type === 'skill'       ? (node as SkillNode)       : null;
-const prompt      = node.type === 'prompt'      ? (node as PromptNode)      : null;
+const idea = node.type === 'idea' ? (node as IdeaNode) : null;
+const skill = node.type === 'skill' ? (node as SkillNode) : null;
+const prompt = node.type === 'prompt' ? (node as PromptNode) : null;
 const instruction = node.type === 'instruction' ? (node as InstructionNode) : null;
-const resource    = node.type === 'resource'    ? (node as ResourceNode)    : null;
+const resource = node.type === 'resource' ? (node as ResourceNode) : null;
 ---
 
 <AppLayout title={node.title}>
   <div class="detail-page">
-
     {/* ── Header ── */}
     <header class="detail-header">
-      <nav class="breadcrumb">
-        <a href="/vault/nodes" class="breadcrumb__link">Nodes</a>
-        <span class="breadcrumb__sep">›</span>
-        <span class="breadcrumb__current">{node.title}</span>
+      <nav class="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <a href="/vault/nodes" class="text-accent hover:underline">Nodes</a>
+        <span>›</span>
+        <span>{node.title}</span>
       </nav>
 
       <h1 class="detail-header__title">{node.title}</h1>
@@ -54,219 +56,267 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
         <span class={`badge badge--status badge--${node.status}`}>{node.status}</span>
         <span class="meta-sep">·</span>
         <span class="meta-text">{fmtDate(node.created_at)}</span>
-        {node.updated_at && node.updated_at !== node.created_at && (
-          <>
-            <span class="meta-sep">·</span>
-            <span class="meta-text">updated {fmtDate(node.updated_at)}</span>
-          </>
-        )}
+        {
+          node.updated_at && node.updated_at !== node.created_at && (
+            <>
+              <span class="meta-sep">·</span>
+              <span class="meta-text">updated {fmtDate(node.updated_at)}</span>
+            </>
+          )
+        }
       </div>
     </header>
 
     {/* ── Tags ── */}
-    {node.tags.length > 0 && (
-      <div class="tag-row">
-        {node.tags.map((tag) => (
-          <span class="tag" data-tag={tag}>{tag}</span>
-        ))}
-      </div>
-    )}
+    {
+      node.tags.length > 0 && (
+        <div class="tag-row">
+          {node.tags.map((tag) => (
+            <span class="tag" data-tag={tag}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )
+    }
 
     {/* ── Body ── */}
-    {node.body && (
-      <section class="section">
-        <h2 class="section__heading">Body</h2>
-        <pre class="body-pre">{node.body}</pre>
-      </section>
-    )}
+    {
+      node.body && (
+        <section class="section">
+          <h2 class="section__heading">Body</h2>
+          <pre class="body-pre">{node.body}</pre>
+        </section>
+      )
+    }
 
     {/* ── Idea — origin + source ── */}
-    {idea && (
-      <section class="section">
-        <h2 class="section__heading">Details</h2>
-        <dl class="meta-grid">
-          <dt>Origin</dt>
-          <dd><span class={`badge badge--origin-${idea.origin}`}>{idea.origin}</span></dd>
-          {idea.source_id && (
-            <>
-              <dt>Source</dt>
-              <dd>
-                <a href={`/vault/nodes/${idea.source_id}`} class="meta-link">{idea.source_id}</a>
-              </dd>
-            </>
-          )}
-        </dl>
-      </section>
-    )}
+    {
+      idea && (
+        <section class="section">
+          <h2 class="section__heading">Details</h2>
+          <dl class="meta-grid">
+            <dt>Origin</dt>
+            <dd>
+              <span class={`badge badge--origin-${idea.origin}`}>{idea.origin}</span>
+            </dd>
+            {idea.source_id && (
+              <>
+                <dt>Source</dt>
+                <dd>
+                  <a href={`/vault/nodes/${idea.source_id}`} class="meta-link">
+                    {idea.source_id}
+                  </a>
+                </dd>
+              </>
+            )}
+          </dl>
+        </section>
+      )
+    }
 
     {/* ── Resource — url + resource_type + description ── */}
-    {resource && (
-      <section class="section">
-        <h2 class="section__heading">Details</h2>
-        <dl class="meta-grid">
-          <dt>Type</dt>
-          <dd><span class="badge badge--resource-type">{resource.resource_type}</span></dd>
-          {resource.url && (
-            <>
-              <dt>URL</dt>
-              <dd>
-                <a href={resource.url} class="meta-link meta-mono" target="_blank" rel="noopener noreferrer">
-                  {resource.url}
-                </a>
-              </dd>
-            </>
-          )}
-          {resource.description && (
-            <>
-              <dt>Description</dt>
-              <dd class="meta-text">{resource.description}</dd>
-            </>
-          )}
-          {resource.source_id && (
-            <>
-              <dt>Source</dt>
-              <dd>
-                <a href={`/vault/nodes/${resource.source_id}`} class="meta-link">{resource.source_id}</a>
-              </dd>
-            </>
-          )}
-        </dl>
-      </section>
-    )}
+    {
+      resource && (
+        <section class="section">
+          <h2 class="section__heading">Details</h2>
+          <dl class="meta-grid">
+            <dt>Type</dt>
+            <dd>
+              <span class="badge badge--resource-type">{resource.resource_type}</span>
+            </dd>
+            {resource.url && (
+              <>
+                <dt>URL</dt>
+                <dd>
+                  <a
+                    href={resource.url}
+                    class="meta-link meta-mono"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {resource.url}
+                  </a>
+                </dd>
+              </>
+            )}
+            {resource.description && (
+              <>
+                <dt>Description</dt>
+                <dd class="meta-text">{resource.description}</dd>
+              </>
+            )}
+            {resource.source_id && (
+              <>
+                <dt>Source</dt>
+                <dd>
+                  <a href={`/vault/nodes/${resource.source_id}`} class="meta-link">
+                    {resource.source_id}
+                  </a>
+                </dd>
+              </>
+            )}
+          </dl>
+        </section>
+      )
+    }
 
     {/* ── Skill — inputs / outputs / tools / lineage ── */}
-    {skill && (
-      <section class="section">
-        <h2 class="section__heading">Details</h2>
-        <dl class="meta-grid">
-          {skill.version && (
-            <>
-              <dt>Version</dt>
-              <dd class="meta-mono">{skill.version}</dd>
-            </>
-          )}
-          <dt>Generation</dt>
-          <dd class="meta-mono">{skill.generation}</dd>
-          {skill.inputs.length > 0 && (
-            <>
-              <dt>Inputs</dt>
-              <dd>
-                <ul class="chip-list">
-                  {skill.inputs.map((s) => <li class="chip">{s}</li>)}
-                </ul>
-              </dd>
-            </>
-          )}
-          {skill.outputs.length > 0 && (
-            <>
-              <dt>Outputs</dt>
-              <dd>
-                <ul class="chip-list">
-                  {skill.outputs.map((s) => <li class="chip">{s}</li>)}
-                </ul>
-              </dd>
-            </>
-          )}
-          {skill.tools.length > 0 && (
-            <>
-              <dt>Tools</dt>
-              <dd>
-                <ul class="chip-list">
-                  {skill.tools.map((s) => <li class="chip">{s}</li>)}
-                </ul>
-              </dd>
-            </>
-          )}
-          {skill.source_id && (
-            <>
-              <dt>Source</dt>
-              <dd>
-                <a href={`/vault/nodes/${skill.source_id}`} class="meta-link">{skill.source_id}</a>
-              </dd>
-            </>
-          )}
-          {skill.parent_skill_id && (
-            <>
-              <dt>Parent skill</dt>
-              <dd>
-                <a href={`/vault/nodes/${skill.parent_skill_id}`} class="meta-link">{skill.parent_skill_id}</a>
-              </dd>
-            </>
-          )}
-          {skill.derived_from_ids.length > 0 && (
-            <>
-              <dt>Derived from</dt>
-              <dd>
-                <ul class="chip-list">
-                  {skill.derived_from_ids.map((sid) => (
-                    <li class="chip">
-                      <a href={`/vault/nodes/${sid}`} class="meta-link">{sid}</a>
-                    </li>
-                  ))}
-                </ul>
-              </dd>
-            </>
-          )}
-        </dl>
-      </section>
-    )}
+    {
+      skill && (
+        <section class="section">
+          <h2 class="section__heading">Details</h2>
+          <dl class="meta-grid">
+            {skill.version && (
+              <>
+                <dt>Version</dt>
+                <dd class="meta-mono">{skill.version}</dd>
+              </>
+            )}
+            <dt>Generation</dt>
+            <dd class="meta-mono">{skill.generation}</dd>
+            {skill.inputs.length > 0 && (
+              <>
+                <dt>Inputs</dt>
+                <dd>
+                  <ul class="chip-list">
+                    {skill.inputs.map((s) => (
+                      <li class="chip">{s}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+            {skill.outputs.length > 0 && (
+              <>
+                <dt>Outputs</dt>
+                <dd>
+                  <ul class="chip-list">
+                    {skill.outputs.map((s) => (
+                      <li class="chip">{s}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+            {skill.tools.length > 0 && (
+              <>
+                <dt>Tools</dt>
+                <dd>
+                  <ul class="chip-list">
+                    {skill.tools.map((s) => (
+                      <li class="chip">{s}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+            {skill.source_id && (
+              <>
+                <dt>Source</dt>
+                <dd>
+                  <a href={`/vault/nodes/${skill.source_id}`} class="meta-link">
+                    {skill.source_id}
+                  </a>
+                </dd>
+              </>
+            )}
+            {skill.parent_skill_id && (
+              <>
+                <dt>Parent skill</dt>
+                <dd>
+                  <a href={`/vault/nodes/${skill.parent_skill_id}`} class="meta-link">
+                    {skill.parent_skill_id}
+                  </a>
+                </dd>
+              </>
+            )}
+            {skill.derived_from_ids.length > 0 && (
+              <>
+                <dt>Derived from</dt>
+                <dd>
+                  <ul class="chip-list">
+                    {skill.derived_from_ids.map((sid) => (
+                      <li class="chip">
+                        <a href={`/vault/nodes/${sid}`} class="meta-link">
+                          {sid}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+          </dl>
+        </section>
+      )
+    }
 
     {/* ── Prompt — variables / model_hint / output_schema ── */}
-    {prompt && (prompt.variables.length > 0 || prompt.model_hint || prompt.output_schema) && (
-      <section class="section">
-        <h2 class="section__heading">Details</h2>
-        <dl class="meta-grid">
-          {prompt.model_hint && (
-            <>
-              <dt>Model hint</dt>
-              <dd class="meta-mono">{prompt.model_hint}</dd>
-            </>
-          )}
-          {prompt.variables.length > 0 && (
-            <>
-              <dt>Variables</dt>
-              <dd>
-                <ul class="chip-list">
-                  {prompt.variables.map((v) => <li class="chip chip--var">{`{{${v}}}`}</li>)}
-                </ul>
-              </dd>
-            </>
-          )}
-          {prompt.output_schema && (
-            <>
-              <dt>Output schema</dt>
-              <dd class="meta-mono">{prompt.output_schema}</dd>
-            </>
-          )}
-        </dl>
-      </section>
-    )}
+    {
+      prompt && (prompt.variables.length > 0 || prompt.model_hint || prompt.output_schema) && (
+        <section class="section">
+          <h2 class="section__heading">Details</h2>
+          <dl class="meta-grid">
+            {prompt.model_hint && (
+              <>
+                <dt>Model hint</dt>
+                <dd class="meta-mono">{prompt.model_hint}</dd>
+              </>
+            )}
+            {prompt.variables.length > 0 && (
+              <>
+                <dt>Variables</dt>
+                <dd>
+                  <ul class="chip-list">
+                    {prompt.variables.map((v) => (
+                      <li class="chip chip--var">{`{{${v}}}`}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+            {prompt.output_schema && (
+              <>
+                <dt>Output schema</dt>
+                <dd class="meta-mono">{prompt.output_schema}</dd>
+              </>
+            )}
+          </dl>
+        </section>
+      )
+    }
 
     {/* ── Instruction — scope ── */}
-    {instruction && instruction.scope && (
-      <section class="section">
-        <h2 class="section__heading">Details</h2>
-        <dl class="meta-grid">
-          <dt>Scope</dt>
-          <dd class="meta-text">{instruction.scope}</dd>
-        </dl>
-      </section>
-    )}
+    {
+      instruction && instruction.scope && (
+        <section class="section">
+          <h2 class="section__heading">Details</h2>
+          <dl class="meta-grid">
+            <dt>Scope</dt>
+            <dd class="meta-text">{instruction.scope}</dd>
+          </dl>
+        </section>
+      )
+    }
 
     {/* ── Related nodes ── */}
-    {node.related.length > 0 && (
-      <section class="section">
-        <h2 class="section__heading">Related</h2>
-        <ul class="related-list">
-          {node.related.map((rel) => (
-            <li>
-              <a href={`/vault/nodes/${rel}`} class="meta-link meta-mono">{rel}</a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
-
+    {
+      node.related.length > 0 && (
+        <section class="section">
+          <h2 class="section__heading">Related</h2>
+          <ul class="related-list">
+            {node.related.map((rel) => (
+              <li>
+                <a href={`/vault/nodes/${rel}`} class="meta-link meta-mono">
+                  {rel}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
   </div>
 </AppLayout>
 
@@ -279,24 +329,6 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
   }
 
   /* ── Header ── */
-
-  .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: 12px;
-    color: var(--text-faint);
-    margin-bottom: var(--space-2);
-  }
-
-  .breadcrumb__link {
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  .breadcrumb__link:hover { text-decoration: underline; }
-  .breadcrumb__sep { color: var(--text-faint); }
-  .breadcrumb__current { color: var(--text-muted); }
 
   .detail-header__title {
     font-size: 20px;
@@ -314,7 +346,9 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
     margin-top: var(--space-2);
   }
 
-  .meta-sep { color: var(--text-faint); }
+  .meta-sep {
+    color: var(--text-faint);
+  }
 
   .meta-text {
     font-size: 12px;
@@ -333,7 +367,9 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
     font-size: 12px;
   }
 
-  .meta-link:hover { text-decoration: underline; }
+  .meta-link:hover {
+    text-decoration: underline;
+  }
 
   /* ── Sections ── */
 
@@ -413,7 +449,10 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
     padding: 1px 6px;
   }
 
-  .chip--var { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .chip--var {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  }
 
   /* ── Related list ── */
 
@@ -426,71 +465,76 @@ const resource    = node.type === 'resource'    ? (node as ResourceNode)    : nu
     gap: var(--space-1);
   }
 
-  /* ── Tags ── */
+  /* ── Node badge variants (base in app.css) ── */
 
-  .tag-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
+  .badge--idea {
+    background: oklch(0.22 0.04 264 / 0.25);
+    color: oklch(0.65 0.18 264);
+    border-color: oklch(0.4 0.12 264 / 0.4);
   }
-
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    background: color-mix(in srgb, var(--tag-color, var(--accent)) 12%, transparent);
-    color: var(--tag-color, var(--accent));
-    border: 1px solid color-mix(in srgb, var(--tag-color, var(--accent)) 30%, transparent);
+  .badge--resource {
+    background: oklch(0.22 0.04 155 / 0.25);
+    color: oklch(0.6 0.17 155);
+    border-color: oklch(0.4 0.12 155 / 0.4);
   }
-
-  .tag[data-tag='d:llm']         { --tag-color: #3b82f6; }
-  .tag[data-tag='d:automation']  { --tag-color: #8b5cf6; }
-  .tag[data-tag='d:ingest']      { --tag-color: #f59e0b; }
-  .tag[data-tag='d:schema']      { --tag-color: #14b8a6; }
-  .tag[data-tag='d:infra']       { --tag-color: #6b7280; }
-  .tag[data-tag='d:integration'] { --tag-color: #f97316; }
-  .tag[data-tag='d:ui']          { --tag-color: #ec4899; }
-  .tag[data-tag='d:meta']        { --tag-color: #22c55e; }
-
-  /* ── Badges ── */
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-weight: 500;
-    font-family: var(--font-mono);
-    letter-spacing: 0.03em;
+  .badge--prompt {
+    background: oklch(0.24 0.05 40 / 0.25);
+    color: oklch(0.7 0.19 40);
+    border-color: oklch(0.42 0.12 40 / 0.4);
+  }
+  .badge--skill {
+    background: oklch(0.22 0.04 295 / 0.25);
+    color: oklch(0.65 0.18 295);
+    border-color: oklch(0.4 0.12 295 / 0.4);
+  }
+  .badge--instruction {
+    background: oklch(0.24 0.05 80 / 0.25);
+    color: oklch(0.77 0.16 80);
+    border-color: oklch(0.44 0.14 80 / 0.4);
+  }
+  .badge--status {
+    border-radius: 4px;
+  }
+  .badge--seed {
+    background: var(--surface-raised);
+    color: var(--text-faint);
+    border-color: var(--border-subtle);
+  }
+  .badge--growing {
+    background: oklch(0.24 0.05 40 / 0.25);
+    color: oklch(0.7 0.19 40);
+    border-color: oklch(0.42 0.12 40 / 0.4);
+  }
+  .badge--mature {
+    background: oklch(0.22 0.04 155 / 0.25);
+    color: oklch(0.6 0.17 155);
+    border-color: oklch(0.4 0.12 155 / 0.4);
+  }
+  .badge--archived {
+    background: var(--surface-raised);
+    color: var(--text-faint);
+    border-color: var(--border-subtle);
+    opacity: 0.6;
+  }
+  .badge--origin-manual {
     background: var(--surface-raised);
     color: var(--text-muted);
-    border: 1px solid var(--border-subtle);
+    border-color: var(--border-subtle);
   }
-
-  /* Node type colours */
-  .badge--idea        { background: oklch(0.22 0.04 264 / 0.25); color: oklch(0.65 0.18 264); border-color: oklch(0.40 0.12 264 / 0.40); }
-  .badge--resource    { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
-  .badge--prompt      { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
-  .badge--skill       { background: oklch(0.22 0.04 295 / 0.25); color: oklch(0.65 0.18 295); border-color: oklch(0.40 0.12 295 / 0.40); }
-  .badge--instruction { background: oklch(0.24 0.05 80 / 0.25);  color: oklch(0.77 0.16 80);  border-color: oklch(0.44 0.14 80 / 0.40);  }
-
-  /* Status colours */
-  .badge--status { border-radius: 4px; }
-  .badge--seed     { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); }
-  .badge--growing  { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
-  .badge--mature   { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
-  .badge--archived { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); opacity: 0.6; }
-
-  /* Idea origin */
-  .badge--origin-manual    { background: var(--surface-raised); color: var(--text-muted); border-color: var(--border-subtle); }
-  .badge--origin-extracted { background: oklch(0.22 0.04 264 / 0.25); color: oklch(0.65 0.18 264); border-color: oklch(0.40 0.12 264 / 0.40); }
-  .badge--origin-generated { background: oklch(0.22 0.04 295 / 0.25); color: oklch(0.65 0.18 295); border-color: oklch(0.40 0.12 295 / 0.40); }
-
-  /* Resource type */
-  .badge--resource-type { background: var(--surface-raised); color: var(--text-muted); border-color: var(--border-subtle); border-radius: 4px; }
+  .badge--origin-extracted {
+    background: oklch(0.22 0.04 264 / 0.25);
+    color: oklch(0.65 0.18 264);
+    border-color: oklch(0.4 0.12 264 / 0.4);
+  }
+  .badge--origin-generated {
+    background: oklch(0.22 0.04 295 / 0.25);
+    color: oklch(0.65 0.18 295);
+    border-color: oklch(0.4 0.12 295 / 0.4);
+  }
+  .badge--resource-type {
+    background: var(--surface-raised);
+    color: var(--text-muted);
+    border-color: var(--border-subtle);
+    border-radius: 4px;
+  }
 </style>

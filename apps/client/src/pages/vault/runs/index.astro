@@ -32,47 +32,51 @@ function fmtDuration(ms?: number): string {
       <p class="list-page__count">{runs.length} run{runs.length !== 1 ? 's' : ''}</p>
     </header>
 
-    {runs.length === 0 && (
-      <p class="empty">No runs yet. Runs are created when a skill executes.</p>
-    )}
+    {runs.length === 0 && <p class="empty">No runs yet. Runs are created when a skill executes.</p>}
 
-    {runs.length > 0 && (
-      <div class="table-wrap">
-        <table class="runs-table">
-          <thead>
-            <tr>
-              <th>Skill / Title</th>
-              <th>Status</th>
-              <th>Produced</th>
-              <th>Duration</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {runs.map((run) => (
+    {
+      runs.length > 0 && (
+        <div class="table-wrap">
+          <table class="runs-table">
+            <thead>
               <tr>
-                <td class="col-title">
-                  <a href={`/vault/runs/${run.id}`} class="run-link">{run.title}</a>
-                  {run.input_summary && (
-                    <span class="run-input">{run.input_summary}</span>
-                  )}
-                </td>
-                <td>
-                  <span class={`badge badge--${run.run_status}`}>{run.run_status}</span>
-                </td>
-                <td class="col-num">{run.produced_node_ids.length}</td>
-                <td class="col-mono">{fmtDuration(run.duration_ms)}</td>
-                <td class="col-mono">
-                  <time datetime={run.created_at}>
-                    {new Date(run.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </time>
-                </td>
+                <th>Skill / Title</th>
+                <th>Status</th>
+                <th>Produced</th>
+                <th>Duration</th>
+                <th>Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
+            </thead>
+            <tbody>
+              {runs.map((run) => (
+                <tr>
+                  <td class="col-title">
+                    <a href={`/vault/runs/${run.id}`} class="run-link">
+                      {run.title}
+                    </a>
+                    {run.input_summary && <span class="run-input">{run.input_summary}</span>}
+                  </td>
+                  <td>
+                    <span class={`badge badge--${run.run_status}`}>{run.run_status}</span>
+                  </td>
+                  <td class="col-num">{run.produced_node_ids.length}</td>
+                  <td class="col-mono">{fmtDuration(run.duration_ms)}</td>
+                  <td class="col-mono">
+                    <time datetime={run.created_at}>
+                      {new Date(run.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </time>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
   </div>
 </AppLayout>
 
@@ -188,25 +192,32 @@ function fmtDuration(ms?: number): string {
     white-space: nowrap;
   }
 
-  /* ── Badges ── */
+  /* ── Run status badge variants (base in app.css) ── */
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-weight: 500;
-    font-family: var(--font-mono);
+  .badge--pending {
     background: var(--surface-raised);
-    color: var(--text-muted);
-    border: 1px solid var(--border-subtle);
-    white-space: nowrap;
+    color: var(--text-faint);
+    border-color: var(--border-subtle);
   }
-
-  .badge--pending   { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); }
-  .badge--running   { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
-  .badge--completed { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
-  .badge--failed    { background: oklch(0.22 0.04 25 / 0.25);  color: oklch(0.68 0.20 25);  border-color: oklch(0.42 0.12 25 / 0.40);  }
-  .badge--cancelled { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); opacity: 0.6; }
+  .badge--running {
+    background: oklch(0.24 0.05 40 / 0.25);
+    color: oklch(0.7 0.19 40);
+    border-color: oklch(0.42 0.12 40 / 0.4);
+  }
+  .badge--completed {
+    background: oklch(0.22 0.04 155 / 0.25);
+    color: oklch(0.6 0.17 155);
+    border-color: oklch(0.4 0.12 155 / 0.4);
+  }
+  .badge--failed {
+    background: oklch(0.22 0.04 25 / 0.25);
+    color: oklch(0.68 0.2 25);
+    border-color: oklch(0.42 0.12 25 / 0.4);
+  }
+  .badge--cancelled {
+    background: var(--surface-raised);
+    color: var(--text-faint);
+    border-color: var(--border-subtle);
+    opacity: 0.6;
+  }
 </style>

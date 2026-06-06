@@ -29,21 +29,23 @@ function fmtDuration(ms?: number): string {
 function fmtDate(ts?: string): string {
   if (!ts) return '—';
   return new Date(ts).toLocaleString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 ---
 
 <AppLayout title={run.title}>
   <div class="detail-page">
-
     {/* ── Header ── */}
     <header class="detail-header">
-      <nav class="breadcrumb">
-        <a href="/vault/runs" class="breadcrumb__link">Runs</a>
-        <span class="breadcrumb__sep">›</span>
-        <span class="breadcrumb__current">{run.title}</span>
+      <nav class="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <a href="/vault/runs" class="text-accent hover:underline">Runs</a>
+        <span>›</span>
+        <span>{run.title}</span>
       </nav>
 
       <h1 class="detail-header__title">{run.title}</h1>
@@ -52,118 +54,129 @@ function fmtDate(ts?: string): string {
         <span class={`badge badge--${run.run_status}`}>{run.run_status}</span>
         <span class="meta-sep">·</span>
         <span class="meta-text">{fmtDate(run.started_at ?? run.created_at)}</span>
-        {run.duration_ms != null && (
-          <>
-            <span class="meta-sep">·</span>
-            <span class="meta-text">{fmtDuration(run.duration_ms)}</span>
-          </>
-        )}
-        {run.model_used && (
-          <>
-            <span class="meta-sep">·</span>
-            <span class="meta-text meta-mono">{run.model_used}</span>
-          </>
-        )}
+        {
+          run.duration_ms != null && (
+            <>
+              <span class="meta-sep">·</span>
+              <span class="meta-text">{fmtDuration(run.duration_ms)}</span>
+            </>
+          )
+        }
+        {
+          run.model_used && (
+            <>
+              <span class="meta-sep">·</span>
+              <span class="meta-text meta-mono">{run.model_used}</span>
+            </>
+          )
+        }
       </div>
     </header>
 
     {/* ── Summary ── */}
-    {(run.input_summary ?? run.output_summary) && (
-      <section class="section">
-        <h2 class="section__heading">Summary</h2>
-        <dl class="summary-grid">
-          {run.input_summary && (
-            <>
-              <dt>Input</dt>
-              <dd>{run.input_summary}</dd>
-            </>
-          )}
-          {run.output_summary && (
-            <>
-              <dt>Output</dt>
-              <dd>{run.output_summary}</dd>
-            </>
-          )}
-          {run.produced_node_ids.length > 0 && (
-            <>
-              <dt>Produced</dt>
-              <dd>
-                <ul class="produced-list">
-                  {run.produced_node_ids.map((nid) => (
-                    <li class="produced-id">{nid}</li>
-                  ))}
-                </ul>
-              </dd>
-            </>
-          )}
-        </dl>
-      </section>
-    )}
+    {
+      (run.input_summary ?? run.output_summary) && (
+        <section class="section">
+          <h2 class="section__heading">Summary</h2>
+          <dl class="summary-grid">
+            {run.input_summary && (
+              <>
+                <dt>Input</dt>
+                <dd>{run.input_summary}</dd>
+              </>
+            )}
+            {run.output_summary && (
+              <>
+                <dt>Output</dt>
+                <dd>{run.output_summary}</dd>
+              </>
+            )}
+            {run.produced_node_ids.length > 0 && (
+              <>
+                <dt>Produced</dt>
+                <dd>
+                  <ul class="produced-list">
+                    {run.produced_node_ids.map((nid) => (
+                      <li class="produced-id">{nid}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )}
+          </dl>
+        </section>
+      )
+    }
 
     {/* ── Stages ── */}
-    {run.stages.length > 0 && (
-      <section class="section">
-        <h2 class="section__heading">Stages</h2>
-        <div class="table-wrap">
-          <table class="stages-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Stage</th>
-                <th>Status</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {run.stages.map((stage, i) => (
+    {
+      run.stages.length > 0 && (
+        <section class="section">
+          <h2 class="section__heading">Stages</h2>
+          <div class="table-wrap">
+            <table class="stages-table">
+              <thead>
                 <tr>
-                  <td class="col-mono col-num">{i + 1}</td>
-                  <td class="col-name">{stage.name}</td>
-                  <td>
-                    <span class={`badge badge--stage-${stage.status}`}>{stage.status}</span>
-                  </td>
-                  <td class="col-notes">
-                    {stage.error && <span class="stage-error">{stage.error}</span>}
-                  </td>
+                  <th>#</th>
+                  <th>Stage</th>
+                  <th>Status</th>
+                  <th>Notes</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    )}
+              </thead>
+              <tbody>
+                {run.stages.map((stage, i) => (
+                  <tr>
+                    <td class="col-mono col-num">{i + 1}</td>
+                    <td class="col-name">{stage.name}</td>
+                    <td>
+                      <span class={`badge badge--stage-${stage.status}`}>{stage.status}</span>
+                    </td>
+                    <td class="col-notes">{stage.error && <span class="stage-error">{stage.error}</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )
+    }
 
     {/* ── Decisions ── */}
-    {run.decisions.length > 0 && (
-      <section class="section">
-        <h2 class="section__heading">Decisions</h2>
-        <ul class="decision-list">
-          {run.decisions.map((d) => (
-            <li class="decision-item">
-              <span class={`badge badge--decision-${d.type}`}>{d.type}</span>
-              <span class="decision-reason">{d.reason}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
+    {
+      run.decisions.length > 0 && (
+        <section class="section">
+          <h2 class="section__heading">Decisions</h2>
+          <ul class="decision-list">
+            {run.decisions.map((d) => (
+              <li class="decision-item">
+                <span class={`badge badge--decision-${d.type}`}>{d.type}</span>
+                <span class="decision-reason">{d.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
 
     {/* ── Error ── */}
-    {run.error && (
-      <section class="section">
-        <h2 class="section__heading section__heading--error">Error</h2>
-        <pre class="error-pre">{run.error}</pre>
-      </section>
-    )}
+    {
+      run.error && (
+        <section class="section">
+          <h2 class="section__heading section__heading--error">Error</h2>
+          <pre class="error-pre">{run.error}</pre>
+        </section>
+      )
+    }
 
     {/* ── Body / notes ── */}
-    {run.body && (
-      <section class="section">
-        <h2 class="section__heading">Notes</h2>
-        <pre class="body-pre">{run.body}</pre>
-      </section>
-    )}
-
+    {
+      run.body && (
+        <section class="section">
+          <h2 class="section__heading">Notes</h2>
+          <pre class="body-pre">{run.body}</pre>
+        </section>
+      )
+    }
   </div>
 </AppLayout>
 
@@ -176,25 +189,6 @@ function fmtDate(ts?: string): string {
   }
 
   /* ── Header ── */
-
-  .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: 12px;
-    color: var(--text-faint);
-    margin-bottom: var(--space-2);
-  }
-
-  .breadcrumb__link {
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  .breadcrumb__link:hover { text-decoration: underline; }
-
-  .breadcrumb__sep { color: var(--text-faint); }
-  .breadcrumb__current { color: var(--text-muted); }
 
   .detail-header__title {
     font-size: 20px;
@@ -212,14 +206,18 @@ function fmtDate(ts?: string): string {
     margin-top: var(--space-2);
   }
 
-  .meta-sep { color: var(--text-faint); }
+  .meta-sep {
+    color: var(--text-faint);
+  }
 
   .meta-text {
     font-size: 12px;
     color: var(--text-faint);
   }
 
-  .meta-mono { font-family: var(--font-mono); }
+  .meta-mono {
+    font-family: var(--font-mono);
+  }
 
   /* ── Sections ── */
 
@@ -239,7 +237,9 @@ function fmtDate(ts?: string): string {
     border-bottom: 1px solid var(--border-subtle);
   }
 
-  .section__heading--error { color: oklch(0.68 0.20 25); }
+  .section__heading--error {
+    color: oklch(0.68 0.2 25);
+  }
 
   /* ── Summary grid ── */
 
@@ -317,14 +317,30 @@ function fmtDate(ts?: string): string {
     vertical-align: middle;
   }
 
-  .stages-table tr:last-child td { border-bottom: none; }
+  .stages-table tr:last-child td {
+    border-bottom: none;
+  }
 
-  .col-mono { font-family: var(--font-mono); }
-  .col-num  { width: 40px; text-align: center; color: var(--text-faint); }
-  .col-name { font-weight: 500; color: var(--text); }
-  .col-notes { font-size: 11px; }
+  .col-mono {
+    font-family: var(--font-mono);
+  }
+  .col-num {
+    width: 40px;
+    text-align: center;
+    color: var(--text-faint);
+  }
+  .col-name {
+    font-weight: 500;
+    color: var(--text);
+  }
+  .col-notes {
+    font-size: 11px;
+  }
 
-  .stage-error { color: oklch(0.68 0.20 25); font-family: var(--font-mono); }
+  .stage-error {
+    color: oklch(0.68 0.2 25);
+    font-family: var(--font-mono);
+  }
 
   /* ── Decisions ── */
 
@@ -345,7 +361,9 @@ function fmtDate(ts?: string): string {
     color: var(--text-muted);
   }
 
-  .decision-reason { line-height: 1.5; }
+  .decision-reason {
+    line-height: 1.5;
+  }
 
   /* ── Pre blocks ── */
 
@@ -363,39 +381,73 @@ function fmtDate(ts?: string): string {
     color: var(--text-muted);
   }
 
-  .error-pre { color: oklch(0.68 0.20 25); border-color: oklch(0.42 0.12 25 / 0.40); background: oklch(0.22 0.04 25 / 0.25); }
-
-  /* ── Badges ── */
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-weight: 500;
-    font-family: var(--font-mono);
-    background: var(--surface-raised);
-    color: var(--text-muted);
-    border: 1px solid var(--border-subtle);
-    white-space: nowrap;
+  .error-pre {
+    color: oklch(0.68 0.2 25);
+    border-color: oklch(0.42 0.12 25 / 0.4);
+    background: oklch(0.22 0.04 25 / 0.25);
   }
 
-  /* RunStatus */
-  .badge--pending   { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); }
-  .badge--running   { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
-  .badge--completed { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
-  .badge--failed    { background: oklch(0.22 0.04 25 / 0.25);  color: oklch(0.68 0.20 25);  border-color: oklch(0.42 0.12 25 / 0.40);  }
-  .badge--cancelled { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); opacity: 0.6; }
+  /* ── Run badge variants (base in app.css) ── */
 
-  /* Stage status */
-  .badge--stage-pending   { background: var(--surface-raised); color: var(--text-faint); border-color: var(--border-subtle); }
-  .badge--stage-completed { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
-  .badge--stage-failed    { background: oklch(0.22 0.04 25 / 0.25);  color: oklch(0.68 0.20 25);  border-color: oklch(0.42 0.12 25 / 0.40);  }
-
-  /* Decision type */
-  .badge--decision-accept    { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
-  .badge--decision-retry     { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
-  .badge--decision-reject    { background: oklch(0.22 0.04 25 / 0.25);  color: oklch(0.68 0.20 25);  border-color: oklch(0.42 0.12 25 / 0.40);  }
-  .badge--decision-downgrade { background: oklch(0.22 0.04 295 / 0.25); color: oklch(0.65 0.18 295); border-color: oklch(0.40 0.12 295 / 0.40); }
+  .badge--pending {
+    background: var(--surface-raised);
+    color: var(--text-faint);
+    border-color: var(--border-subtle);
+  }
+  .badge--running {
+    background: oklch(0.24 0.05 40 / 0.25);
+    color: oklch(0.7 0.19 40);
+    border-color: oklch(0.42 0.12 40 / 0.4);
+  }
+  .badge--completed {
+    background: oklch(0.22 0.04 155 / 0.25);
+    color: oklch(0.6 0.17 155);
+    border-color: oklch(0.4 0.12 155 / 0.4);
+  }
+  .badge--failed {
+    background: oklch(0.22 0.04 25 / 0.25);
+    color: oklch(0.68 0.2 25);
+    border-color: oklch(0.42 0.12 25 / 0.4);
+  }
+  .badge--cancelled {
+    background: var(--surface-raised);
+    color: var(--text-faint);
+    border-color: var(--border-subtle);
+    opacity: 0.6;
+  }
+  .badge--stage-pending {
+    background: var(--surface-raised);
+    color: var(--text-faint);
+    border-color: var(--border-subtle);
+  }
+  .badge--stage-completed {
+    background: oklch(0.22 0.04 155 / 0.25);
+    color: oklch(0.6 0.17 155);
+    border-color: oklch(0.4 0.12 155 / 0.4);
+  }
+  .badge--stage-failed {
+    background: oklch(0.22 0.04 25 / 0.25);
+    color: oklch(0.68 0.2 25);
+    border-color: oklch(0.42 0.12 25 / 0.4);
+  }
+  .badge--decision-accept {
+    background: oklch(0.22 0.04 155 / 0.25);
+    color: oklch(0.6 0.17 155);
+    border-color: oklch(0.4 0.12 155 / 0.4);
+  }
+  .badge--decision-retry {
+    background: oklch(0.24 0.05 40 / 0.25);
+    color: oklch(0.7 0.19 40);
+    border-color: oklch(0.42 0.12 40 / 0.4);
+  }
+  .badge--decision-reject {
+    background: oklch(0.22 0.04 25 / 0.25);
+    color: oklch(0.68 0.2 25);
+    border-color: oklch(0.42 0.12 25 / 0.4);
+  }
+  .badge--decision-downgrade {
+    background: oklch(0.22 0.04 295 / 0.25);
+    color: oklch(0.65 0.18 295);
+    border-color: oklch(0.4 0.12 295 / 0.4);
+  }
 </style>

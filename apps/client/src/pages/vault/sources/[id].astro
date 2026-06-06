@@ -28,21 +28,23 @@ linkedTranscripts.sort((a, b) => b.created_at.localeCompare(a.created_at));
 function fmtDate(ts?: string): string {
   if (!ts) return '—';
   return new Date(ts).toLocaleString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 ---
 
 <AppLayout title={source.title}>
   <div class="detail-page">
-
     {/* ── Header ── */}
     <header class="detail-header">
-      <nav class="breadcrumb">
-        <a href="/vault/sources" class="breadcrumb__link">Sources</a>
-        <span class="breadcrumb__sep">›</span>
-        <span class="breadcrumb__current">{source.title}</span>
+      <nav class="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <a href="/vault/sources" class="text-accent hover:underline">Sources</a>
+        <span>›</span>
+        <span>{source.title}</span>
       </nav>
 
       <h1 class="detail-header__title">{source.title}</h1>
@@ -56,21 +58,27 @@ function fmtDate(ts?: string): string {
     </header>
 
     {/* ── Tags ── */}
-    {source.tags.length > 0 && (
-      <div class="tag-row">
-        {source.tags.map((tag) => (
-          <span class="tag" data-tag={tag}>{tag}</span>
-        ))}
-      </div>
-    )}
+    {
+      source.tags.length > 0 && (
+        <div class="tag-row">
+          {source.tags.map((tag) => (
+            <span class="tag" data-tag={tag}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )
+    }
 
     {/* ── Body ── */}
-    {source.body && (
-      <section class="section">
-        <h2 class="section__heading">About</h2>
-        <p class="body-text">{source.body}</p>
-      </section>
-    )}
+    {
+      source.body && (
+        <section class="section">
+          <h2 class="section__heading">About</h2>
+          <p class="body-text">{source.body}</p>
+        </section>
+      )
+    }
 
     {/* ── Details ── */}
     <section class="section">
@@ -81,64 +89,80 @@ function fmtDate(ts?: string): string {
 
         <dt>Follow</dt>
         <dd>
-          {source.follow
-            ? <span class="badge badge--follow">yes — auto-refresh enabled</span>
-            : <span class="meta-text">no</span>
+          {
+            source.follow ? (
+              <span class="badge badge--follow">yes — auto-refresh enabled</span>
+            ) : (
+              <span class="meta-text">no</span>
+            )
           }
         </dd>
 
-        {source.url && (
-          <>
-            <dt>URL</dt>
-            <dd>
-              <a href={source.url} class="meta-link meta-mono" target="_blank" rel="noopener noreferrer">
-                {source.url}
-              </a>
-            </dd>
-          </>
-        )}
+        {
+          source.url && (
+            <>
+              <dt>URL</dt>
+              <dd>
+                <a href={source.url} class="meta-link meta-mono" target="_blank" rel="noopener noreferrer">
+                  {source.url}
+                </a>
+              </dd>
+            </>
+          )
+        }
 
-        {source.platforms.length > 0 && (
-          <>
-            <dt>Platforms</dt>
-            <dd>
-              <div class="platform-row">
-                {source.platforms.map((p) => <span class="platform">{p}</span>)}
-              </div>
-            </dd>
-          </>
-        )}
+        {
+          source.platforms.length > 0 && (
+            <>
+              <dt>Platforms</dt>
+              <dd>
+                <div class="platform-row">
+                  {source.platforms.map((p) => (
+                    <span class="platform">{p}</span>
+                  ))}
+                </div>
+              </dd>
+            </>
+          )
+        }
       </dl>
     </section>
 
     {/* ── Linked transcripts ── */}
-    {linkedTranscripts.length > 0 && (
-      <section class="section">
-        <h2 class="section__heading">
-          Transcripts
-          <span class="section__count">{linkedTranscripts.length}</span>
-        </h2>
-        <ul class="transcript-list">
-          {linkedTranscripts.map((t) => (
-            <li class="transcript-item">
-              <a href={`/vault/transcripts/${t.id}`} class="transcript-link">
-                <span class="transcript-title">{t.title}</span>
-                <span class="transcript-meta">
-                  <span class={`badge badge--${t.source_type}`}>{t.source_type}</span>
-                  {t.extracted_idea_ids.length > 0 && (
-                    <span class="transcript-ideas">{t.extracted_idea_ids.length} idea{t.extracted_idea_ids.length !== 1 ? 's' : ''}</span>
-                  )}
-                  <time class="transcript-date" datetime={t.created_at}>
-                    {new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </time>
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
-
+    {
+      linkedTranscripts.length > 0 && (
+        <section class="section">
+          <h2 class="section__heading">
+            Transcripts
+            <span class="section__count">{linkedTranscripts.length}</span>
+          </h2>
+          <ul class="transcript-list">
+            {linkedTranscripts.map((t) => (
+              <li class="transcript-item">
+                <a href={`/vault/transcripts/${t.id}`} class="transcript-link">
+                  <span class="transcript-title">{t.title}</span>
+                  <span class="transcript-meta">
+                    <span class={`badge badge--${t.source_type}`}>{t.source_type}</span>
+                    {t.extracted_idea_ids.length > 0 && (
+                      <span class="transcript-ideas">
+                        {t.extracted_idea_ids.length} idea{t.extracted_idea_ids.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <time class="transcript-date" datetime={t.created_at}>
+                      {new Date(t.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </time>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
   </div>
 </AppLayout>
 
@@ -151,20 +175,6 @@ function fmtDate(ts?: string): string {
   }
 
   /* ── Header ── */
-
-  .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: 12px;
-    color: var(--text-faint);
-    margin-bottom: var(--space-2);
-  }
-
-  .breadcrumb__link { color: var(--accent); text-decoration: none; }
-  .breadcrumb__link:hover { text-decoration: underline; }
-  .breadcrumb__sep { color: var(--text-faint); }
-  .breadcrumb__current { color: var(--text-muted); }
 
   .detail-header__title {
     font-size: 20px;
@@ -182,12 +192,27 @@ function fmtDate(ts?: string): string {
     margin-top: var(--space-2);
   }
 
-  .meta-sep { color: var(--text-faint); }
-  .meta-text { font-size: 12px; color: var(--text-faint); }
-  .meta-mono { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+  .meta-sep {
+    color: var(--text-faint);
+  }
+  .meta-text {
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .meta-mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
 
-  .meta-link { color: var(--accent); text-decoration: none; font-size: 12px; }
-  .meta-link:hover { text-decoration: underline; }
+  .meta-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 12px;
+  }
+  .meta-link:hover {
+    text-decoration: underline;
+  }
 
   /* ── Sections ── */
 
@@ -242,7 +267,10 @@ function fmtDate(ts?: string): string {
     white-space: nowrap;
   }
 
-  .meta-grid dd { color: var(--text-muted); line-height: 1.5; }
+  .meta-grid dd {
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
 
   /* ── Body ── */
 
@@ -254,7 +282,11 @@ function fmtDate(ts?: string): string {
 
   /* ── Platform chips ── */
 
-  .platform-row { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+  .platform-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
 
   .platform {
     font-size: 11px;
@@ -282,7 +314,9 @@ function fmtDate(ts?: string): string {
     transition: background var(--duration) var(--ease);
   }
 
-  .transcript-item:hover { background: var(--surface-raised); }
+  .transcript-item:hover {
+    background: var(--surface-raised);
+  }
 
   .transcript-link {
     display: flex;
@@ -321,63 +355,52 @@ function fmtDate(ts?: string): string {
     white-space: nowrap;
   }
 
-  /* ── Tags ── */
+  /* ── Source kind badges (base in app.css) ── */
 
-  .tag-row { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    background: color-mix(in srgb, var(--tag-color, var(--accent)) 12%, transparent);
-    color: var(--tag-color, var(--accent));
-    border: 1px solid color-mix(in srgb, var(--tag-color, var(--accent)) 30%, transparent);
+  .badge--person {
+    background: oklch(0.22 0.04 264 / 0.25);
+    color: oklch(0.65 0.18 264);
+    border-color: oklch(0.4 0.12 264 / 0.4);
   }
-
-  .tag[data-tag='d:llm']         { --tag-color: #3b82f6; }
-  .tag[data-tag='d:automation']  { --tag-color: #8b5cf6; }
-  .tag[data-tag='d:ingest']      { --tag-color: #f59e0b; }
-  .tag[data-tag='d:schema']      { --tag-color: #14b8a6; }
-  .tag[data-tag='d:infra']       { --tag-color: #6b7280; }
-  .tag[data-tag='d:integration'] { --tag-color: #f97316; }
-  .tag[data-tag='d:ui']          { --tag-color: #ec4899; }
-  .tag[data-tag='d:meta']        { --tag-color: #22c55e; }
-
-  /* ── Badges ── */
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 10px;
-    font-weight: 500;
-    font-family: var(--font-mono);
-    letter-spacing: 0.03em;
-    background: var(--surface-raised);
-    color: var(--text-muted);
-    border: 1px solid var(--border-subtle);
+  .badge--channel {
+    background: oklch(0.22 0.04 25 / 0.25);
+    color: oklch(0.68 0.2 25);
+    border-color: oklch(0.42 0.12 25 / 0.4);
   }
-
-  .badge--person       { background: oklch(0.22 0.04 264 / 0.25); color: oklch(0.65 0.18 264); border-color: oklch(0.40 0.12 264 / 0.40); }
-  .badge--channel      { background: oklch(0.22 0.04 25 / 0.25);  color: oklch(0.68 0.20 25);  border-color: oklch(0.42 0.12 25 / 0.40);  }
-  .badge--repo         { background: oklch(0.22 0.04 295 / 0.25); color: oklch(0.65 0.18 295); border-color: oklch(0.40 0.12 295 / 0.40); }
-  .badge--publication  { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
-  .badge--organization { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
-  .badge--other        { background: var(--surface-raised); color: var(--text-muted); border-color: var(--border-subtle); }
-
-  .badge--youtube { background: oklch(0.22 0.04 25 / 0.25);  color: oklch(0.68 0.20 25);  border-color: oklch(0.42 0.12 25 / 0.40);  }
-  .badge--article { background: oklch(0.22 0.04 155 / 0.25); color: oklch(0.60 0.17 155); border-color: oklch(0.40 0.12 155 / 0.40); }
-  .badge--chat    { background: oklch(0.24 0.05 40 / 0.25);  color: oklch(0.70 0.19 40);  border-color: oklch(0.42 0.12 40 / 0.40);  }
-
+  .badge--repo {
+    background: oklch(0.22 0.04 295 / 0.25);
+    color: oklch(0.65 0.18 295);
+    border-color: oklch(0.4 0.12 295 / 0.4);
+  }
+  .badge--publication {
+    background: oklch(0.22 0.04 155 / 0.25);
+    color: oklch(0.6 0.17 155);
+    border-color: oklch(0.4 0.12 155 / 0.4);
+  }
+  .badge--organization {
+    background: oklch(0.24 0.05 40 / 0.25);
+    color: oklch(0.7 0.19 40);
+    border-color: oklch(0.42 0.12 40 / 0.4);
+  }
+  .badge--youtube {
+    background: oklch(0.22 0.04 25 / 0.25);
+    color: oklch(0.68 0.2 25);
+    border-color: oklch(0.42 0.12 25 / 0.4);
+  }
+  .badge--article {
+    background: oklch(0.22 0.04 155 / 0.25);
+    color: oklch(0.6 0.17 155);
+    border-color: oklch(0.4 0.12 155 / 0.4);
+  }
+  .badge--chat {
+    background: oklch(0.24 0.05 40 / 0.25);
+    color: oklch(0.7 0.19 40);
+    border-color: oklch(0.42 0.12 40 / 0.4);
+  }
   .badge--follow {
     background: oklch(0.22 0.04 264 / 0.25);
     color: oklch(0.65 0.18 264);
-    border-color: oklch(0.40 0.12 264 / 0.40);
+    border-color: oklch(0.4 0.12 264 / 0.4);
     border-radius: 4px;
   }
 </style>
