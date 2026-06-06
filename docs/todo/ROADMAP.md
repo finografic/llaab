@@ -91,24 +91,6 @@ Detail: [`docs/todo/TODO_TERMINAL_PANEL.md`](./TODO_TERMINAL_PANEL.md)
 
 ## P3 — Backlog / Ideas
 
-### Upgrade Zod v3 → v4
-
-Zod v4 is a major release with significant perf gains (10–100× faster parsing, smaller bundle)
-and a cleaner API. Migration surface in LLAAB is mostly contained to `packages/schemas` (9 node
-schemas) and the `@hono/zod-validator` integration in `apps/server`. Main unknowns: whether
-`@hono/zod-validator` has published a v4-compatible release, and any deprecated v3 APIs in use
-(`.refine()` changes, `.message()` helpers). Effort: low-medium — likely a half-day once deps
-are confirmed compatible. Do before the schema surface grows much further.
-
-### Migrate ESLint → oxlint
-
-`oxfmt` is already in place. Pairing it with oxlint gives a fully unified Rust-based lint+format
-pipeline — faster, better `oxfmt` integration, and no config impedance mismatch. Earlier is
-better: the longer the ESLint config grows, the more surface to migrate. Do before the codebase
-expands significantly.
-
-Detail: [`docs/todo/TODO_OXLINT_MIGRATION.md`](./TODO_OXLINT_MIGRATION.md) — Phase 1 done.
-
 ### Karpathy Pattern — Vault Graph Integration
 
 Andrej Karpathy's knowledge graph visualization is a purpose-built, battle-tested graph view.
@@ -151,6 +133,8 @@ Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 
 | Date       | Item                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-06-06 | ESLint → oxlint migration — root, `apps/client`, `apps/server`, and `packages/ui` on oxlint + oxfmt; ESLint removed repo-wide; lint-staged and CI use oxlint                                                                                           |
+| 2026-06-06 | Zod v3 → v4 upgrade — all packages on `zod@^4`; `@llaab/schemas` + `@hono/zod-validator` in `apps/server` validated                                                                                                                                    |
 | 2026-06-06 | UI Refactor — shadcn expansion + typography system: Phase 1 (shadcn component adoption, stages table inline), Phase 2 (type-scale tokens `--text-2xs`…`--text-4xl`, all `font-size: Npx` converted), Phase 3 (remove `!important`, clear inline style) |
 | 2026-06-05 | SwiftBar overhaul — three-state service indicators (stopped/launching/running), per-service submenus, health-aware refresh timing, traffic-light icons                                                                                                 |
 | 2026-06-05 | Icons service hardening + lucide-manager polish — config-safe runtime dir, launchctl stability, optional branding img, relative img path auto-conversion, embedded picker UI improvements                                                              |

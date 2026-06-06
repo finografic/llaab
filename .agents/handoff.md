@@ -41,13 +41,13 @@ Dependency chain (one-directional):
 
 - Runtime: Node.js 24, pnpm 10.32.1, Bun 1.2.2
 - Build: Turborepo 2.x, TypeScript 5.9.3
-- Validation: Zod 3.x
+- Validation: Zod 4.x
 - Tests: Vitest 4.x
 - Icons: `@finografic/icons` + `@finografic/lucide-manager` via `@llaab/icons`
 - Server: Hono 4.x, http-status-codes, @hono/zod-validator
 - Client: Astro 6, React 19, React Hook Form 7.x, @astrojs/react
 - CSS: Tailwind CSS 4, shadcn/ui, app-local semantic CSS variables
-- Linting: ESLint 9.x, typescript-eslint, oxfmt 0.42.0
+- Linting: oxlint + oxfmt (`@finografic/oxc-config`); Prettier retained for Astro files only
 - Hooks: husky + lint-staged (pre-commit: lint + format + typecheck)
 - Commits: commitlint
 

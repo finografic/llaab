@@ -11,8 +11,10 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "lint": "eslint",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "lint": "oxlint -c oxlint.config.ts",
+    "lint:fix": "oxlint -c oxlint.config.ts --fix",
+    "format:check": "oxfmt --check",
+    "format:fix": "oxfmt",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -37,18 +39,16 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@eslint/js": "^10",
+    "@finografic/oxc-config": "^2.7.0",
     "@tailwindcss/vite": "^4.3.0",
     "@turbo/gen": "^2.9.15",
     "@types/node": "25.9.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "eslint": "^10",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17",
+    "oxfmt": "^0.53.0",
+    "oxlint": "^1.68.0",
+    "oxlint-tsgolint": "^0.23.0",
     "tailwindcss": "^4.3.0",
-    "typescript": "6.0.3",
-    "typescript-eslint": "^8"
+    "typescript": "6.0.3"
   }
 }

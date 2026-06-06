@@ -1,5 +1,4 @@
 import { cva } from 'class-variance-authority';
-import type { VariantProps } from 'class-variance-authority';
 import { useIsMobile } from 'hooks/useIsMobile';
 import { PanelLeftIcon } from 'lucide-react';
 import { Slot } from 'radix-ui';
@@ -11,6 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Skeleton } from 'ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from 'ui/tooltip';
 import { cn } from 'utils';
+import type { VariantProps } from 'class-variance-authority';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

@@ -13,6 +13,6 @@ function DirectionProvider({
   return <Direction.DirectionProvider dir={direction ?? dir}>{children}</Direction.DirectionProvider>;
 }
 
-const useDirection = Direction.useDirection;
+const { useDirection } = Direction;
 
 export { DirectionProvider, useDirection };

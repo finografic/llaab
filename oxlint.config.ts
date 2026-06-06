@@ -1,5 +1,5 @@
 /**
- * Oxlint — single root config (Phase 1 of docs/todo/TODO_OXLINT_MIGRATION.md).
+ * Oxlint — single root config (see docs/todo/DONE_OXLINT_MIGRATION.md).
  *
  * Editor schema: `oxlint`’s TS `defineConfig` type omits `$schema`; if you want JSON-schema IntelliSense in a
  * JSON config, use `.oxlintrc.json` with `"$schema": "./node_modules/oxlint/configuration_schema.json"`.
