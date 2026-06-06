@@ -8,6 +8,8 @@ const SERVER_URL = process.env['SERVER_URL'] ?? 'http://localhost:3000';
 const OUT_DIR = process.env['LLAAB_CLIENT_OUT_DIR']
   ? path.resolve(process.env['LLAAB_CLIENT_OUT_DIR'])
   : './dist';
+const DEV_HOST = process.env['HOST'] ?? '127.0.0.1';
+const DEV_PORT = Number(process.env['PORT'] ?? 4321);
 
 /**
  * SSR routes (`prerender = false`) and API routes require a server adapter at build time. Vite proxy: /api/*
@@ -18,6 +20,10 @@ export default defineConfig({
   outDir: OUT_DIR,
   adapter: node({ mode: 'standalone' }),
   integrations: [react()],
+  server: {
+    host: DEV_HOST,
+    port: DEV_PORT,
+  },
   vite: {
     plugins: [tailwindcss()],
     server: {

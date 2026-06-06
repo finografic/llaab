@@ -15,8 +15,10 @@ label_exists() {
 
 restart_client() {
   if label_exists "$client_label"; then
-    launchctl kickstart -k "gui/$UID/$client_label"
-    return
+    # bootout + bootstrap ensures updated plist/script changes are picked up.
+    # kickstart -k reuses the cached plist and won't reflect script changes.
+    launchctl bootout "gui/$UID/$client_label" || true
+    sleep 1
   fi
 
   launchctl bootstrap "gui/$UID" "$client_plist"
