@@ -47,13 +47,15 @@ Add to `apps/client/src/styles/app.css` `:root` block and use everywhere instead
 ### Phase 1 — shadcn component copy + adopt in high-traffic components
 
 - [x] Copy all 56 components from `@finografic-lucide-manager` to `packages/ui/src/components/ui`
-- [ ] Replace `.btn` / `.btn--sm` / `.btn--lg` in `forms.css` → shadcn `Button`
-- [ ] Replace `.field`, `.field label`, `.field__hint`, `.field__error` → shadcn `Form` + `Label`
-- [ ] Replace `input[type="text"]` raw styles → shadcn `Input`
-- [ ] Replace `.tag`, `.tag--sm`, `.badge` across pages → shadcn `Badge`
-- [ ] Replace `.status`, `.status-card` blocks → shadcn `Alert`
+- [x] Replace `.field`, `.field label`, `.field__hint`, `.field__error` → shadcn `Label` + Tailwind in `IngestForm`, `TagInputField`, `CreateIdeaPanel`, `login.astro`
+- [x] Replace `.tag-chip` in `TagInputField` → shadcn `Badge` (accent-colored, monospace)
+- [x] Replace `.status`, `.status-card` in `CreateIdeaPanel` + `IngestForm` → shadcn `Alert`
+- [x] Replace breadcrumb + `btn-reextract` in `transcripts/[id].astro` → Tailwind
+- [ ] Replace `.btn` / `.btn--sm` / `.btn--lg` remaining in pages → shadcn `Button`
+- [ ] Replace `input[type="text"]` raw styles in `forms.css` → already using shadcn `Input` in components; remove global fallback
+- [ ] Replace `.tag`, `.tag--sm`, `.badge` across other vault pages → Tailwind or shadcn `Badge`
 - [ ] Replace `FileList` raw `<table>` → shadcn `Table`
-- [ ] Replace breadcrumb markup in transcript / source pages → shadcn `Breadcrumb`
+- [ ] Replace breadcrumb markup in source / node / run detail pages → Tailwind nav
 - [ ] Identify tab-like patterns → shadcn `Tabs`
 
 ### Phase 2 — Type scale tokens + px → rem conversion
