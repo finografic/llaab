@@ -1,4 +1,32 @@
 export { AUTO_TAG_PATTERNS, autoTag } from './taxonomy.js';
+export {
+  AgentRunCommandSchema,
+  AiRunCommandSchema,
+  CommandEnvelopeSchema,
+  CommandSchema,
+  CommandSourceSchema,
+  DoneOutputEventSchema,
+  ErrorOutputEventSchema,
+  FsListCommandSchema,
+  FsReadCommandSchema,
+  MetaOutputEventSchema,
+  OutputEnvelopeSchema,
+  OutputEventSchema,
+  StderrOutputEventSchema,
+  StdoutOutputEventSchema,
+  TokenOutputEventSchema,
+} from './command-protocol.js';
+export type {
+  AgentRunCommand,
+  AiRunCommand,
+  Command,
+  CommandEnvelope,
+  CommandSource,
+  FsListCommand,
+  FsReadCommand,
+  OutputEnvelope,
+  OutputEvent,
+} from './command-protocol.js';
 export { deleteNode } from './utils/delete-node.utils.js';
 export { readMarkdownFiles } from './storage/reader.utils.js';
 export { writeTextFile } from './storage/writer.utils.js';

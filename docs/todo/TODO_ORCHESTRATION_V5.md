@@ -1,7 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 2 done — the LLM provider interface is formalized. Phase 6 (token-aware
-> harness extension) is promoted ahead of Terminal Panel work.
+> **Status:** Phase 3 done — typed command protocol and programmatic command bus are in place.
+> Phase 6 (token-aware harness extension) remains promoted ahead of Terminal Panel work.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -686,7 +686,7 @@ export async function getLlmStatus(): Promise<{ ... availableProviders: string[]
 
 ---
 
-## Phase 3 — Define the Typed Command Protocol
+## Phase 3 — Define the Typed Command Protocol — DONE
 
 > **This lays the foundation for Terminal Panel and future adapters without needing WebSockets
 > or xterm.js first.** The protocol is testable in isolation — a significant architectural
@@ -700,55 +700,62 @@ export async function getLlmStatus(): Promise<{ ... availableProviders: string[]
 
 ### 3a. Define protocol types
 
-- [ ] Define `CommandEnvelope`, `OutputEnvelope`, `Command`, and `OutputEvent` with Zod schemas.
-- [ ] `Command` is a discriminated union: `ai.run | agent.run | fs.read | fs.list`.
+- [x] Define `CommandEnvelope`, `OutputEnvelope`, `Command`, and `OutputEvent` with Zod schemas.
+- [x] `Command` is a discriminated union: `ai.run | agent.run | fs.read | fs.list`.
       Shell is deliberately excluded.
-- [ ] `OutputEvent` is a discriminated union:
+- [x] `OutputEvent` is a discriminated union:
       `{ type: 'token'; data: string }` — streaming LLM chunks
       `{ type: 'stdout'; data: string }` — buffered text output
       `{ type: 'stderr'; data: string }` — error stream
       `{ type: 'meta'; data: Record<string, unknown> }` — structured metadata
       `{ type: 'error'; message: string; code?: string }` — recoverable error
       `{ type: 'done'; code: number }` — terminal event
-- [ ] `CommandEnvelope` wraps `Command` with `id` (correlation), `source` (`CommandSource`),
+- [x] `CommandEnvelope` wraps `Command` with `id` (correlation), `source` (`CommandSource`),
       and `timestamp`.
 
 ### 3b. Implement command bus
 
-- [ ] Command gateway: Zod-validate every inbound envelope before dispatch; reject malformed
+- [x] Command gateway: Zod-validate every inbound envelope before dispatch; reject malformed
       envelopes with a structured error.
-- [ ] Command bus: dispatch by `command.kind` to the matching `CommandHandler`.
-- [ ] `LlmCommandHandler` handles `ai.run` → calls `streamLlm(...)` from `packages/llm`;
+- [x] Command bus: dispatch by `command.kind` to the matching `CommandHandler`.
+- [x] `LlmCommandHandler` handles `ai.run` → calls `streamLlm(...)` from `packages/llm`;
       yields `token` events per chunk, `done` on completion.
       **Must not duplicate `routeLlm` — delegates to it.**
-- [ ] `AgentCommandHandler` handles `agent.run` → calls `runAgentLoop(...)` from
+- [x] `AgentCommandHandler` handles `agent.run` → calls `runAgentLoop(...)` from
       `packages/skills`; preserves one-shot execution semantics.
-- [ ] `FsCommandHandler` handles `fs.read` and `fs.list` → operates against vault-safe paths
+- [x] `FsCommandHandler` handles `fs.read` and `fs.list` → operates against vault-safe paths
       only; normalize and restrict file paths to the vault root.
 
 ### 3c. RunNode persistence
 
-- [ ] Every dispatched command creates a `RunNode` via `packages/skills/runner.ts`.
+- [x] Every dispatched command creates a `RunNode` via `packages/skills/runner.ts`.
       This gives every terminal-initiated run a vault trace for free.
-- [ ] Trace includes: duration, status, input summary, output summary, and failure reason.
+- [x] Trace includes: duration, status, input summary, output summary, and failure reason.
 
 ### Security requirements
 
-- [ ] Validate every inbound envelope before dispatch (covered by Zod schemas).
-- [ ] Normalize file paths and restrict `fs.*` commands to the vault root.
-- [ ] Do not add `shell.exec` to the command protocol in this phase.
+- [x] Validate every inbound envelope before dispatch (covered by Zod schemas).
+- [x] Normalize file paths and restrict `fs.*` commands to the vault root.
+- [x] Do not add `shell.exec` to the command protocol in this phase.
 
 ### Validation
 
-- [ ] The command bus can be exercised from tests or a local server route without the client
+- [x] The command bus can be exercised from tests or a local server route without the client
       terminal UI existing yet.
-- [ ] A programmatic `ai.run` dispatch through the bus produces a streaming response and a
+- [x] A programmatic `ai.run` dispatch through the bus produces a streaming response and a
       persisted `RunNode`.
 
 ### Done means
 
 The typed command protocol exists, is testable without UI, and `ai.run` dispatches through the
 same `routeLlm` / `streamLlm` codepath used by the existing extraction pipeline.
+
+### Phase 3 validation result
+
+Validated the command bus directly in a temp vault. `ai.run` streamed `meta` + `token` events
+through `streamLlm(...)`, produced `command-bus-ok`, and persisted a completed command RunNode.
+Malformed `shell.exec` input was rejected by envelope validation, and `fs.read` path traversal
+outside the vault produced a structured `COMMAND_EXECUTION_FAILED` error plus a failed RunNode.
 
 ---
 
@@ -1138,7 +1145,7 @@ orchestration model.
 | 0     | LLM execution metadata in node frontmatter | —               | Done         |
 | 1     | Harness real-flow validation               | Phase 0         | Done         |
 | 2     | LLM provider interface                     | Phase 1 verdict | P1           |
-| 3     | Typed command protocol (no UI)             | Phase 2         | P2           |
+| 3     | Typed command protocol (no UI)             | Phase 2         | Done         |
 | 4     | Terminal / Command Panel vertical slice    | Phase 3 + 6     | P2           |
 | 5     | Terminal metadata display (Elements)       | Phases 0 + 4    | P2           |
 | 6     | Token-aware harness extension              | Phase 1 verdict | P1           |

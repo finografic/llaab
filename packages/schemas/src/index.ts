@@ -1,3 +1,4 @@
+export { z } from 'zod';
 export { type BaseNode, BaseNodeSchema } from './base-node.schema.js';
 export { type DecisionNode, DecisionNodeSchema } from './decision-node.schema.js';
 export { type IdeaNode, IdeaNodeSchema } from './idea-node.schema.js';
