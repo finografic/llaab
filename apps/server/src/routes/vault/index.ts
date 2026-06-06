@@ -11,4 +11,5 @@ export const vaultRouter = createRouter()
   .get(routes.nodeDetail.path, routes.nodeDetail.handler)
   .get(routes.nodeRaw.path, routes.nodeRaw.handler)
   .get(routes.transcriptIdeas.path, routes.transcriptIdeas.handler)
-  .post(routes.extractTranscript.path, routes.extractTranscript.handler);
+  .post(routes.extractTranscript.path, routes.extractTranscript.handler)
+  .delete(routes.discardTranscript.path, routes.discardTranscript.handler);

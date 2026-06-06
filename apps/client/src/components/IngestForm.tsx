@@ -4,6 +4,7 @@ import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { Spinner } from 'components/ui/spinner';
+import { CheckIcon as LucideCheck, RotateCcwIcon, Trash2Icon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -75,7 +76,7 @@ interface TranscriptData {
   filename: string;
 }
 
-function CheckIcon() {
+function SvgCheckIcon() {
   return (
     <svg className="pipeline-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <polyline
@@ -182,10 +183,146 @@ function IdeaList({ ideas }: { ideas: Array<{ id: string; title: string }> }) {
   );
 }
 
+// ── Run summary card ──────────────────────────────────────────────────────────
+
+function stepLabel(transcriptPhase: TranscriptPhase, extractionPhase: ExtractionPhase): string {
+  if (transcriptPhase === 'processing') return 'Fetching transcript…';
+  if (transcriptPhase === 'failed') return 'Transcript fetch failed';
+  if (extractionPhase === 'waiting') return 'Waiting for extraction';
+  if (extractionPhase === 'pending') return 'Extracting ideas…';
+  if (extractionPhase === 'success' || extractionPhase === 'existing') return 'Complete';
+  if (extractionPhase === 'extractable') return 'No ideas extracted';
+  if (extractionPhase === 'failed') return 'Extraction failed';
+  if (transcriptPhase === 'saved') return 'Transcript saved';
+  if (transcriptPhase === 'reused') return 'Transcript already saved';
+  return 'Starting…';
+}
+
+function runPhase(
+  transcriptPhase: TranscriptPhase,
+  extractionPhase: ExtractionPhase,
+  busy: boolean,
+): 'active' | 'success' | 'warning' | 'neutral' {
+  if (busy || transcriptPhase === 'idle') return busy ? 'active' : 'neutral';
+  const transcriptDone = ['saved', 'reused', 'failed'].includes(transcriptPhase);
+  const extractionDone = ['success', 'existing', 'extractable', 'failed'].includes(extractionPhase);
+  if (!transcriptDone || !extractionDone) return 'active';
+  if (transcriptPhase === 'failed' || extractionPhase === 'failed') return 'warning';
+  return 'success';
+}
+
+function RunSummaryCard({
+  transcriptPhase,
+  extractionPhase,
+  busy,
+  runStartedAt,
+  totalElapsedSecs,
+  onKeep,
+  onDiscard,
+  onRetry,
+}: {
+  transcriptPhase: TranscriptPhase;
+  extractionPhase: ExtractionPhase;
+  busy: boolean;
+  runStartedAt: number | null;
+  totalElapsedSecs: number | null;
+  onKeep: () => void;
+  onDiscard: () => Promise<void>;
+  onRetry: () => void;
+}) {
+  const phase = runPhase(transcriptPhase, extractionPhase, busy);
+  const liveElapsed = useElapsedSeconds(phase === 'active' ? runStartedAt : null);
+  const displayElapsed = totalElapsedSecs != null ? totalElapsedSecs : liveElapsed;
+
+  const transcriptDone = ['saved', 'reused', 'failed'].includes(transcriptPhase);
+  const extractionDone = ['success', 'existing', 'extractable', 'failed'].includes(extractionPhase);
+  const isComplete = transcriptDone && extractionDone && !busy;
+
+  const [discarding, setDiscarding] = useState(false);
+
+  const handleDiscard = async () => {
+    setDiscarding(true);
+    await onDiscard();
+    setDiscarding(false);
+  };
+
+  const statusIcon =
+    phase === 'active' ? (
+      <Spinner className="size-4" aria-hidden />
+    ) : phase === 'success' || phase === 'warning' ? (
+      <SvgCheckIcon />
+    ) : null;
+
+  return (
+    <div className={`pipeline-card pipeline-card--${phase} pipeline-card--summary`}>
+      <div className="pipeline-card__main">
+        <div className="pipeline-card__row">
+          <div className="pipeline-summary__left">
+            <span className="pipeline-card__label">Run</span>
+            <span className="pipeline-summary__step">{stepLabel(transcriptPhase, extractionPhase)}</span>
+          </div>
+          <div className="pipeline-card__meta">
+            {runStartedAt != null ? (
+              <span className="pipeline-card__elapsed">{formatElapsed(displayElapsed)}</span>
+            ) : null}
+            <div className="pipeline-card__status">{statusIcon}</div>
+          </div>
+        </div>
+
+        {isComplete ? (
+          <div className="pipeline-summary__actions">
+            <button
+              type="button"
+              className="pipeline-action-btn pipeline-action-btn--keep"
+              onClick={onKeep}
+              aria-label="Keep — confirm ingestion and clear the form"
+            >
+              <LucideCheck size={14} aria-hidden />
+              <span>Keep</span>
+            </button>
+            <button
+              type="button"
+              className="pipeline-action-btn pipeline-action-btn--discard"
+              onClick={handleDiscard}
+              disabled={discarding}
+              aria-label="Discard — delete ingested nodes and clear the form"
+            >
+              <Trash2Icon size={14} aria-hidden />
+              <span>Discard</span>
+            </button>
+            <button
+              type="button"
+              className="pipeline-action-btn pipeline-action-btn--retry"
+              onClick={onRetry}
+              disabled={discarding}
+              aria-label="Retry — delete ingested nodes and re-run this ingest"
+            >
+              <RotateCcwIcon size={14} aria-hidden />
+              <span>Retry</span>
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+
 async function fetchExistingIdeas(transcriptId: string): Promise<Array<{ id: string; title: string }>> {
   const res = await api.vault.transcripts[':id'].ideas.$get({ param: { id: transcriptId } });
   const json = (await res.json()) as { ideas?: Array<{ id: string; title: string }> };
   return json.ideas ?? [];
+}
+
+async function fetchNodeTags(nodeId: string): Promise<string[]> {
+  try {
+    const res = await api.vault.nodes[':id'].$get({ param: { id: nodeId } });
+    const json = (await res.json()) as { node?: { tags?: string[] } };
+    return json.node?.tags ?? [];
+  } catch {
+    return [];
+  }
 }
 
 async function runExtract(transcriptId: string): Promise<{
@@ -213,12 +350,15 @@ async function runExtract(transcriptId: string): Promise<{
   }
 }
 
+// ── IngestForm ────────────────────────────────────────────────────────────────
+
 interface IngestFormProps {
   submitOnDrop?: boolean;
 }
 
 export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const [tags, setTags] = useState<string[]>([]);
+  const [lockedTags, setLockedTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [isDropActive, setIsDropActive] = useState(false);
@@ -234,6 +374,9 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [extractionStartedAt, setExtractionStartedAt] = useState<number | null>(null);
 
+  const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
+  const [totalElapsedSecs, setTotalElapsedSecs] = useState<number | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -245,11 +388,11 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const urlValue = watch('url');
   const sourceKind = useMemo(() => classifyUrl(urlValue.trim()), [urlValue]);
   const canSubmit = sourceKind === 'youtube' && !busy;
-  const buttonLabel = busy ? 'Processing...' : sourceKind === 'youtube' ? 'Ingest YouTube' : 'Ingest';
+  const buttonLabel = busy ? 'Processing…' : sourceKind === 'youtube' ? 'Ingest YouTube' : 'Ingest';
 
   const dropzoneDesc = useMemo(() => {
     if (sourceKind === 'youtube') {
-      return 'YouTube video URL detected. Click Ingest YouTube to fetch the transcript.';
+      return 'YouTube video URL detected.\nClick Ingest YouTube to fetch the transcript.';
     }
     if (sourceKind === 'webpage') {
       return 'Website or online reference detected. Drop recognition works; this source type is not yet wired for ingestion.';
@@ -272,23 +415,48 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     };
   }, []);
 
-  const applyExtractResult = (result: Awaited<ReturnType<typeof runExtract>>) => {
+  const resetForm = () => {
+    setValue('url', '');
+    setTags([]);
+    setLockedTags([]);
+    setTagInput('');
+    setTranscriptPhase('idle');
+    setTranscriptData(null);
+    setTranscriptError(null);
+    setTranscriptStartedAt(null);
+    setExtractionPhase('idle');
+    setExtractionIdeas([]);
+    setExtractionError(null);
+    setExtractionStartedAt(null);
+    setRunStartedAt(null);
+    setTotalElapsedSecs(null);
+    setApiError(null);
+    setDropMessage(null);
+  };
+
+  const applyExtractResult = async (result: Awaited<ReturnType<typeof runExtract>>, transcriptId: string) => {
     setExtractionError(null);
 
     if (result.phase === 'success') {
       setExtractionPhase('success');
       setExtractionIdeas(result.ideas ?? []);
+      const nodeTags = await fetchNodeTags(transcriptId);
+      setLockedTags(nodeTags);
       return;
     }
 
     if (result.phase === 'existing') {
       setExtractionPhase('existing');
       setExtractionIdeas(result.ideas ?? []);
+      const nodeTags = await fetchNodeTags(transcriptId);
+      setLockedTags(nodeTags);
       return;
     }
 
     if (result.phase === 'extractable') {
       setExtractionPhase('extractable');
+      const nodeTags = await fetchNodeTags(transcriptId);
+      setLockedTags(nodeTags);
       return;
     }
 
@@ -309,16 +477,20 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       return;
     }
 
+    const now = Date.now();
     setTranscriptPhase('processing');
     setTranscriptData(null);
     setTranscriptError(null);
-    setTranscriptStartedAt(Date.now());
+    setTranscriptStartedAt(now);
     setExtractionPhase('waiting');
     setExtractionIdeas([]);
     setExtractionError(null);
     setExtractionStartedAt(null);
     setApiError(null);
     setDropMessage(null);
+    setLockedTags([]);
+    setRunStartedAt(now);
+    setTotalElapsedSecs(null);
     setBusy(true);
 
     const pendingTag = tagInput.trim() ? normalizeTag(tagInput) : null;
@@ -336,6 +508,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         setTranscriptPhase('failed');
         setTranscriptError((json as { error?: string }).error ?? 'Ingestion failed.');
         setExtractionPhase('waiting');
+        setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
         setBusy(false);
         return;
       }
@@ -361,6 +534,9 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
           setExtractionPhase('extractable');
         }
 
+        const nodeTags = await fetchNodeTags(transcriptId);
+        setLockedTags(nodeTags);
+        setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
         setBusy(false);
         return;
       }
@@ -368,13 +544,15 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setTranscriptPhase('failed');
       setTranscriptError(error instanceof Error ? error.message : 'Ingestion failed.');
       setExtractionPhase('waiting');
+      setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
       setBusy(false);
       return;
     }
 
     setExtractionPhase('pending');
     setExtractionStartedAt(Date.now());
-    applyExtractResult(await runExtract(transcriptId));
+    await applyExtractResult(await runExtract(transcriptId), transcriptId);
+    setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
     setBusy(false);
   };
 
@@ -387,12 +565,44 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setBusy(true);
     setExtractionPhase('pending');
     setExtractionError(null);
-    applyExtractResult(await runExtract(transcriptData.id));
+    setTotalElapsedSecs(null);
+    const started = runStartedAt ?? Date.now();
+    await applyExtractResult(await runExtract(transcriptData.id), transcriptData.id);
+    setTotalElapsedSecs(Math.floor((Date.now() - started) / 1000));
     setBusy(false);
   };
 
+  const onKeep = () => resetForm();
+
+  const onDiscard = async () => {
+    if (!transcriptData) {
+      resetForm();
+      return;
+    }
+    try {
+      const res = await api.vault.transcripts[':id'].$delete({ param: { id: transcriptData.id } });
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: string };
+        setApiError(json.error ?? `Delete failed (${res.status})`);
+        return;
+      }
+    } catch {
+      setApiError('Network error — could not delete nodes.');
+      return;
+    }
+    resetForm();
+  };
+
+  const onRetry = () => {
+    const currentUrl = urlValue;
+    onDiscard().then(() => {
+      setValue('url', currentUrl, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
+      handleSubmit(onSubmit)();
+    });
+  };
+
   const suggestions = KNOWN_TAGS.filter((tag) => {
-    if (tags.includes(tag)) return false;
+    if (tags.includes(tag) || lockedTags.includes(tag)) return false;
     if (!tagInput) return true;
     const normalized = normalizeTag(tagInput);
     return tag.includes(normalized) || tag.includes(tagInput.toLowerCase());
@@ -474,7 +684,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     ) : transcriptPhase === 'failed' ? (
       <RetryButton onClick={onRetryIngest} disabled={busy} />
     ) : (
-      <CheckIcon />
+      <SvgCheckIcon />
     );
 
   const extractionCardPhase =
@@ -501,7 +711,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     extractionPhase === 'pending' ? (
       <Spinner className="size-4" aria-hidden />
     ) : extractionPhase === 'success' || extractionPhase === 'existing' ? (
-      <CheckIcon />
+      <SvgCheckIcon />
     ) : extractionPhase === 'failed' || extractionPhase === 'extractable' ? (
       <RetryButton onClick={onRetryExtract} disabled={busy} />
     ) : (
@@ -568,6 +778,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
             description="Domain tags — e.g. d:llm, d:automation. Type a name to see suggestions."
             placeholder="d:llm"
             value={tags}
+            lockedTags={lockedTags}
             inputValue={tagInput}
             suggestions={suggestions}
             disabled={busy}
@@ -598,6 +809,17 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
       {pipelineVisible ? (
         <div className="pipeline">
+          <RunSummaryCard
+            transcriptPhase={transcriptPhase}
+            extractionPhase={extractionPhase}
+            busy={busy}
+            runStartedAt={runStartedAt}
+            totalElapsedSecs={totalElapsedSecs}
+            onKeep={onKeep}
+            onDiscard={onDiscard}
+            onRetry={onRetry}
+          />
+
           <PipelineCard
             phase={transcriptCardPhase}
             label={transcriptCardLabel}

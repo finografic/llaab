@@ -109,7 +109,7 @@ Hand-rolling what shadcn provides is not permitted.
 - `pnpm dlx shadcn@latest add <name>` run from `apps/client` installs there automatically.
 - The `components/ui/*` tsconfig alias in `apps/client` resolves to that path — no
   import changes needed when adding components.
-- App-specific feature components (IngestForm, NavbarVertical, etc.) stay in
+- App-specific feature components (IngestForm, NavMenu, etc.) stay in
   `apps/client/src/components/` and import primitives from `components/ui/*`.
 
 ---
@@ -129,4 +129,6 @@ Hand-rolling what shadcn provides is not permitted.
 - `@finografic/md-lint` (`pnpm run lint:md`) classifies markdown as **standard**, **agent**, or **vault** (`vault/**/*.md`). Root `.markdownlint.jsonc` rule keys apply globally; optional **`standard` / `agent` / `vault`** objects are md-lint-only scope overrides (not upstream markdownlint) merged preset → global → category.
 - ESLint is removed repo-wide; oxlint + oxfmt (`@finografic/oxc-config`) handle TS/JS lint and format; Prettier remains only for Astro files in `apps/client`.
 - TypeScript is pinned to 6.x via root `pnpm.overrides`; TS 6 no longer auto-includes `@types/*`—set explicit `compilerOptions.types` (base: `["node"]`, `apps/server`: `["node", "bun"]`).
-- In `apps/client`, imports use tsconfig path aliases (`components/*`, `lib/*`, …)—not `@/*`.
+- In `apps/client`, imports use tsconfig path aliases (`components/*`, `lib/*`, `utils/*`, …)—not `@/*`.
+- Client primary nav is shadcn `NavigationMenu` (`components/NavMenu/NavMenu.tsx`); menu structure lives in `apps/client/src/lib/nav-menu.config.ts`. Use `viewport={false}` so megamenu panels anchor under each trigger; rightmost sections (e.g. System) may need `left-auto right-0` on content.
+- NavMenu responsive show/hide uses Tailwind only (`hidden md:flex`, `md:hidden`); do not set `display` on CSS-module wrappers—it overrides Tailwind `hidden` after hydration.

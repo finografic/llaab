@@ -1,4 +1,5 @@
 export { AUTO_TAG_PATTERNS, autoTag } from './taxonomy.js';
+export { deleteNode } from './utils/delete-node.utils.js';
 export { readMarkdownFiles } from './storage/reader.utils.js';
 export { writeTextFile } from './storage/writer.utils.js';
 export { createNode } from './utils/create-node.utils.js';

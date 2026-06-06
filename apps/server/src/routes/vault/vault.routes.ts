@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
-import { createNode, getNodeFilePath, listNodes, VAULT_ROOT } from '@llaab/core';
+import { createNode, deleteNode, getNodeFilePath, listNodes, readNode, VAULT_ROOT } from '@llaab/core';
 import { extractKnowledgeFromTranscript } from '@llaab/ingestion';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type { CreateNodeBody, ListNodesQuery } from './vault.schema.js';
-import type { TranscriptNode } from '@llaab/schemas';
+import type { RunNode, TranscriptNode } from '@llaab/schemas';
 
 export const file = {
   path: '/file' as const,
@@ -104,6 +104,59 @@ export const extractTranscript = {
     } catch (err) {
       return c.json({ success: false, error: err instanceof Error ? err.message : 'Extraction failed' }, 500);
     }
+  },
+};
+
+export const discardTranscript = {
+  path: '/transcripts/:id' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+
+    // Read directly by path — avoids listNodes scan returning stale/incomplete results
+    const transcriptPath = getNodeFilePath('transcript', id);
+    let transcript: TranscriptNode;
+    try {
+      transcript = (await readNode(transcriptPath)) as TranscriptNode;
+    } catch {
+      return c.json({ error: 'Transcript not found' }, 404);
+    }
+
+    // Delete idea nodes
+    for (const ideaId of transcript.extracted_idea_ids ?? []) {
+      try {
+        await deleteNode('idea', ideaId);
+      } catch {
+        /* best-effort */
+      }
+    }
+
+    // Delete source node
+    if (transcript.source_id) {
+      try {
+        await deleteNode('source', transcript.source_id);
+      } catch {
+        /* best-effort */
+      }
+    }
+
+    // Delete associated run node (find by produced_node_ids containing this transcript)
+    try {
+      const runNodes = await listNodes({ type: 'run' });
+      for (const n of runNodes) {
+        if (n.type === 'run' && (n as RunNode).produced_node_ids?.includes(id)) {
+          try {
+            await deleteNode('run', n.id);
+          } catch {
+            /* best-effort */
+          }
+        }
+      }
+    } catch {
+      /* best-effort */
+    }
+
+    await deleteNode('transcript', id);
+    return c.json({ success: true });
   },
 };
 
