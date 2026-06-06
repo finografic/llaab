@@ -53,8 +53,8 @@ Add to `apps/client/src/styles/app.css` `:root` block and use everywhere instead
 - [x] Replace breadcrumb + `btn-reextract` in `transcripts/[id].astro` → Tailwind
 - [x] Replace breadcrumb markup in `sources/[id].astro`, `nodes/[id].astro`, `runs/[id].astro` → Tailwind nav
 - [x] Extract shared `.tag-row`, `.tag`, `.tag--sm`, data-tag colors, `.badge` base CSS to `app.css`; remove duplication from 7 vault pages
-- [ ] Replace `input[type="text"]` raw styles in `forms.css` → already using shadcn `Input` in components; remove global fallback once all usages confirmed
-- [ ] Replace `FileList` raw `<table>` → shadcn `Table` (note: FileList uses divs+TanStack, not a plain table; actual `<table>` only in `runs/[id].astro` stages section)
+- [x] Remove hand-rolled class groups from `forms.css` (`.field`, `.btn`, `.status`, `.status-card`, `.tag-chip`); keep native element resets
+- [x] Replace `runs/[id].astro` stages `<table>` with Tailwind-styled table (shadcn Table class equivalents applied inline)
 - [ ] Identify tab-like patterns → shadcn `Tabs`
 
 ### Phase 2 — Type scale tokens + px → rem conversion

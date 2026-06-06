@@ -526,7 +526,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         <div className="ingest-form__stack">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="url">Source URL</Label>
-            <div className="input-row">
+            <div className="flex gap-2 items-start">
               <Input
                 id="url"
                 type="url"

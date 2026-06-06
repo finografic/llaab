@@ -113,25 +113,37 @@ function fmtDate(ts?: string): string {
       run.stages.length > 0 && (
         <section class="section">
           <h2 class="section__heading">Stages</h2>
-          <div class="table-wrap">
-            <table class="stages-table">
+          <div class="overflow-x-auto rounded-md border border-border">
+            <table class="w-full border-collapse text-xs">
               <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Stage</th>
-                  <th>Status</th>
-                  <th>Notes</th>
+                <tr class="border-b border-border bg-[var(--bg-subtle)]">
+                  <th class="w-10 px-4 py-2 text-center font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
+                    #
+                  </th>
+                  <th class="px-4 py-2 text-left font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
+                    Stage
+                  </th>
+                  <th class="px-4 py-2 text-left font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
+                    Status
+                  </th>
+                  <th class="px-4 py-2 text-left font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
+                    Notes
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {run.stages.map((stage, i) => (
-                  <tr>
-                    <td class="col-mono col-num">{i + 1}</td>
-                    <td class="col-name">{stage.name}</td>
-                    <td>
+                  <tr class="border-b border-border-subtle last:border-0">
+                    <td class="w-10 px-4 py-3 text-center font-mono text-muted-foreground align-middle">
+                      {i + 1}
+                    </td>
+                    <td class="px-4 py-3 font-medium text-foreground align-middle">{stage.name}</td>
+                    <td class="px-4 py-3 align-middle">
                       <span class={`badge badge--stage-${stage.status}`}>{stage.status}</span>
                     </td>
-                    <td class="col-notes">{stage.error && <span class="stage-error">{stage.error}</span>}</td>
+                    <td class="px-4 py-3 text-[11px] align-middle">
+                      {stage.error && <span class="stage-error">{stage.error}</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -281,60 +293,6 @@ function fmtDate(ts?: string): string {
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius);
     padding: 1px 6px;
-  }
-
-  /* ── Table ── */
-
-  .table-wrap {
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-
-  .stages-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-
-  .stages-table th {
-    padding: var(--space-2) var(--space-4);
-    text-align: left;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-faint);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-subtle);
-    white-space: nowrap;
-  }
-
-  .stages-table td {
-    padding: var(--space-3) var(--space-4);
-    border-bottom: 1px solid var(--border-subtle);
-    color: var(--text-muted);
-    vertical-align: middle;
-  }
-
-  .stages-table tr:last-child td {
-    border-bottom: none;
-  }
-
-  .col-mono {
-    font-family: var(--font-mono);
-  }
-  .col-num {
-    width: 40px;
-    text-align: center;
-    color: var(--text-faint);
-  }
-  .col-name {
-    font-weight: 500;
-    color: var(--text);
-  }
-  .col-notes {
-    font-size: 11px;
   }
 
   .stage-error {
