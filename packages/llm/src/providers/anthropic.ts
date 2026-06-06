@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
+import type { LlmProvider, LlmProviderResult } from '../provider.js';
 import type { LlmCompleteOptions } from '../types.js';
-import type { ProviderResult } from './types.js';
 
 let client: Anthropic | null = null;
 
@@ -11,7 +11,11 @@ function getClient(): Anthropic {
   return client;
 }
 
-export async function anthropicComplete(prompt: string, opts: LlmCompleteOptions): Promise<ProviderResult> {
+export async function anthropicComplete(
+  prompt: string,
+  opts: LlmCompleteOptions,
+): Promise<LlmProviderResult> {
+  const start = performance.now();
   const response = await getClient().messages.create({
     model: opts.model,
     max_tokens: opts.maxTokens ?? 1024,
@@ -23,6 +27,9 @@ export async function anthropicComplete(prompt: string, opts: LlmCompleteOptions
   if (block?.type !== 'text') throw new Error('Unexpected response type from Anthropic');
   return {
     text: block.text,
+    durationMs: Math.round(performance.now() - start),
+    providerId: 'anthropic',
+    model: opts.model,
     promptTokens: response.usage.input_tokens,
     completionTokens: response.usage.output_tokens,
   };
@@ -42,3 +49,13 @@ export async function* anthropicStream(prompt: string, opts: LlmCompleteOptions)
     }
   }
 }
+
+export const anthropicProvider: LlmProvider = {
+  id: 'anthropic',
+  displayName: 'Anthropic',
+  complete: anthropicComplete,
+  stream: anthropicStream,
+  async isAvailable() {
+    return Boolean(process.env['ANTHROPIC_API_KEY']);
+  },
+};

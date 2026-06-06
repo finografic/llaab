@@ -1,6 +1,6 @@
 import { Ollama } from 'ollama';
+import type { LlmProvider, LlmProviderResult } from '../provider.js';
 import type { LlmCompleteOptions } from '../types.js';
-import type { ProviderResult } from './types.js';
 
 let client: Ollama | null = null;
 
@@ -18,7 +18,8 @@ function buildMessages(prompt: string, system?: string) {
   return messages;
 }
 
-export async function ollamaComplete(prompt: string, opts: LlmCompleteOptions): Promise<ProviderResult> {
+export async function ollamaComplete(prompt: string, opts: LlmCompleteOptions): Promise<LlmProviderResult> {
+  const start = performance.now();
   const response = await getClient().chat({
     model: opts.model,
     messages: buildMessages(prompt, opts.system),
@@ -26,6 +27,9 @@ export async function ollamaComplete(prompt: string, opts: LlmCompleteOptions): 
   });
   return {
     text: response.message.content,
+    durationMs: Math.round(performance.now() - start),
+    providerId: 'ollama',
+    model: opts.model,
     promptTokens: response.prompt_eval_count,
     completionTokens: response.eval_count,
   };
@@ -47,3 +51,18 @@ export async function ollamaListModels(): Promise<string[]> {
   const { models } = await getClient().list();
   return models.map((m) => m.name);
 }
+
+export const ollamaProvider: LlmProvider = {
+  id: 'ollama',
+  displayName: 'Ollama',
+  complete: ollamaComplete,
+  stream: ollamaStream,
+  async isAvailable() {
+    try {
+      await ollamaListModels();
+      return true;
+    } catch {
+      return false;
+    }
+  },
+};

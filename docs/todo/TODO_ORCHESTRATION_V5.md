@@ -1,8 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 1 done — harness real-flow validation is complete. Phase 2 (LLM provider
-> interface) can proceed, and Phase 6 (token-aware harness extension) is promoted ahead of the
-> Terminal Panel work.
+> **Status:** Phase 2 done — the LLM provider interface is formalized. Phase 6 (token-aware
+> harness extension) is promoted ahead of Terminal Panel work.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -615,7 +614,7 @@ chunking/context assembly is now the real blocker and Phase 6 is promoted ahead 
 
 ---
 
-## Phase 2 — Formalize the LLM Provider Interface
+## Phase 2 — Formalize the LLM Provider Interface — DONE
 
 > **Location:** `packages/llm/src/`
 > **Effort:** Small — two concrete providers already exist and already return `ProviderResult`
@@ -630,17 +629,17 @@ shared interface so adding a third provider does not require editing `router.ts`
 
 ### 2a. Extract `LlmProvider` interface
 
-- [ ] Create `packages/llm/src/provider.ts` with the `LlmProvider` interface and
+- [x] Create `packages/llm/src/provider.ts` with the `LlmProvider` interface and
       `LlmProviderResult` type (see Core Types above).
 
 ### 2b. Refactor existing providers
 
-- [ ] Refactor `providers/anthropic.ts` to export an `anthropicProvider` object implementing
+- [x] Refactor `providers/anthropic.ts` to export an `anthropicProvider` object implementing
       `LlmProvider`. The `ProviderResult` return from Phase 0 becomes the foundation of
       `LlmProviderResult`.
-- [ ] Refactor `providers/ollama.ts` to export an `ollamaProvider` object implementing
+- [x] Refactor `providers/ollama.ts` to export an `ollamaProvider` object implementing
       `LlmProvider`.
-- [ ] Each provider's `complete()` now returns `LlmProviderResult` with timing, model, and
+- [x] Each provider's `complete()` now returns `LlmProviderResult` with timing, model, and
       provider ID baked in — not added after the fact by the router.
 
 ### 2c. Add provider registry to router
@@ -654,12 +653,12 @@ const PROVIDERS: Record<ModelTier, LlmProvider> = {
 };
 ```
 
-- [ ] Update `router.ts` so tier-to-provider routing uses the `PROVIDERS` map instead of
+- [x] Update `router.ts` so tier-to-provider routing uses the `PROVIDERS` map instead of
       direct function imports.
-- [ ] `resolveModel()` now returns `{ model, tier, provider }`.
-- [ ] Preserve the public API surface: `routeLlm`, `streamLlm`, `ollamaListModels`,
+- [x] `resolveModel()` now returns `{ model, tier, provider }`.
+- [x] Preserve the public API surface: `routeLlm`, `streamLlm`, `ollamaListModels`,
       `getLlmStatus`.
-- [ ] Keep model-name selection env-configurable through the existing `MODEL_MAP`.
+- [x] Keep model-name selection env-configurable through the existing `MODEL_MAP`.
 
 ### 2d. Expose `isAvailable()` in `getLlmStatus()`
 
@@ -667,15 +666,16 @@ const PROVIDERS: Record<ModelTier, LlmProvider> = {
 export async function getLlmStatus(): Promise<{ ... availableProviders: string[] }>;
 ```
 
-- [ ] Make `getLlmStatus()` call `isAvailable()` on each registered provider asynchronously.
-- [ ] This unblocks the `llaab doctor` diagnostic (Phase 8) and the `/llm` status page
+- [x] Make `getLlmStatus()` call `isAvailable()` on each registered provider asynchronously.
+- [x] This unblocks the `llaab doctor` diagnostic (Phase 8) and the `/llm` status page
       live check without requiring callers to know SDK details.
 
 ### Validation
 
-- [ ] `pnpm --filter @llaab/llm typecheck` passes.
-- [ ] Existing LLM-related tests pass with no behavior change.
-- [ ] A real `routeLlm` call through the provider map returns the same output as before the
+- [x] Typecheck passes for `@llaab/llm` and affected server route via direct `tsc -b`
+      (`pnpm` unavailable on PATH in this shell).
+- [x] Existing LLM-related tests pass with no behavior change.
+- [x] A real `routeLlm` call through the provider map returns the same output as before the
       refactor.
 
 ### Non-goals for this phase

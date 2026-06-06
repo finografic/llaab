@@ -59,7 +59,7 @@ export const models = {
 export const status = {
   path: '/status' as const,
   handler: async (c: AppCtx) => {
-    const config = getLlmStatus();
+    const config = await getLlmStatus();
     let installedModels: string[] = [];
     let ollamaError: string | undefined;
     try {
@@ -68,6 +68,7 @@ export const status = {
       ollamaError = 'Ollama unavailable';
     }
     return c.json({
+      availableProviders: config.availableProviders,
       routing: config.routing,
       installedModels,
       ollamaError,
