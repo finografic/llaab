@@ -11,6 +11,6 @@ describe('getCommandCapabilities', () => {
       prompt: 'Extract ideas from this transcript',
     };
 
-    expect(getCommandCapabilities(command)).toEqual(['chat', 'extract', 'reason']);
+    expect(getCommandCapabilities(command)).toEqual(['chat', 'extract', 'reason', 'command_run']);
   });
 });

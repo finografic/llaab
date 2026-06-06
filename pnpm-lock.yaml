@@ -256,6 +256,12 @@ importers:
       '@llaab/core':
         specifier: workspace:*
         version: link:../core
+      '@llaab/llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@llaab/schemas':
+        specifier: workspace:*
+        version: link:../schemas
       '@llaab/skills':
         specifier: workspace:*
         version: link:../skills

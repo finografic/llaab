@@ -1,5 +1,10 @@
 export { AUTO_TAG_PATTERNS, autoTag } from './taxonomy.js';
-export { CapabilitySchema, COMMAND_CAPABILITIES, getCommandCapabilities } from './capability.js';
+export {
+  CAPABILITIES,
+  CapabilitySchema,
+  COMMAND_CAPABILITIES,
+  getCommandCapabilities,
+} from './capability.js';
 export type { Capability } from './capability.js';
 export {
   AgentRunCommandSchema,

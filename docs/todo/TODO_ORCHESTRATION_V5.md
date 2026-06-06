@@ -1,7 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 7 done — providers, skills, and commands now declare/query shared
-> capabilities.
+> **Status:** Phase 8 done — CLI diagnostics now expose provider availability, adapter
+> capabilities, and route decisions.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -1127,7 +1127,7 @@ Skills now declare what they provide, making the agent loop queryable.
 
 ---
 
-## Phase 8 — CLI Surface + Diagnostics
+## Phase 8 — CLI Surface + Diagnostics — DONE
 
 > **Extends `packages/cli/`.** Most of the heavy lifting is done in earlier phases. The CLI
 > surface is the thin layer that exposes it.
@@ -1159,12 +1159,23 @@ Command Bus: 4 handlers registered (ai.run, agent.run, fs.read, fs.list)
 
 ### Tasks
 
-- [ ] Add `llaab doctor` command using `isAvailable()` from Phase 2 and capability
+- [x] Add `llaab doctor` command using `isAvailable()` from Phase 2 and capability
       metadata from Phase 7.
-- [ ] Add `llaab adapters list` command using `findProvidersByCapability` from Phase 7.
-- [ ] Add `llaab route` command with capability → provider resolution chain.
-- [ ] Wire `llaab route` to the same routing logic used by `routeLlm` (not a
+- [x] Add `llaab adapters list` command using `findProvidersByCapability` from Phase 7.
+- [x] Add `llaab route` command with capability → provider resolution chain.
+- [x] Wire `llaab route` to the same routing logic used by `routeLlm` (not a
       reimplementation).
+
+### Phase 8 validation result
+
+- `tsc -b packages/core packages/llm packages/skills packages/cli --pretty false` passes.
+- `vitest run packages/core/src/capability.test.ts packages/llm/src/router.test.ts packages/skills/src/agent/registry.test.ts`
+  passes.
+- `llaab route extract` lists Ollama and Anthropic.
+- `llaab route --explain extract` resolves the current `extract` task to the local-mid
+  Ollama route.
+- `llaab adapters list --capability extract` lists both extraction-capable providers.
+- `llaab doctor` reports provider availability and full capability coverage.
 
 ---
 
