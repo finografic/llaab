@@ -28,6 +28,7 @@ export const COMMAND_CAPABILITIES: Record<Command['kind'], Capability[]> = {
   'agent.run': ['agent_run', 'skill_run', 'command_run'],
   'fs.read': ['memory_read', 'command_run'],
   'fs.list': ['memory_read', 'command_run'],
+  'shell.exec': ['shell_exec', 'command_run'],
 };
 
 export function getCommandCapabilities(command: Command): Capability[] {

@@ -27,11 +27,20 @@ export const FsListCommandSchema = z.object({
   path: z.string().min(1),
 });
 
+export const ShellExecCommandSchema = z.object({
+  kind: z.literal('shell.exec'),
+  command: z.string().min(1),
+  args: z.array(z.string()).default([]),
+  cwd: z.string().min(1).optional(),
+  confirmed: z.boolean().optional(),
+});
+
 export const CommandSchema = z.discriminatedUnion('kind', [
   AiRunCommandSchema,
   AgentRunCommandSchema,
   FsReadCommandSchema,
   FsListCommandSchema,
+  ShellExecCommandSchema,
 ]);
 
 export const CommandEnvelopeSchema = z.object({
@@ -93,6 +102,7 @@ export type AiRunCommand = z.infer<typeof AiRunCommandSchema>;
 export type AgentRunCommand = z.infer<typeof AgentRunCommandSchema>;
 export type FsReadCommand = z.infer<typeof FsReadCommandSchema>;
 export type FsListCommand = z.infer<typeof FsListCommandSchema>;
+export type ShellExecCommand = z.infer<typeof ShellExecCommandSchema>;
 export type CommandEnvelope = z.infer<typeof CommandEnvelopeSchema>;
 export type OutputEvent = z.infer<typeof OutputEventSchema>;
 export type OutputEnvelope = z.infer<typeof OutputEnvelopeSchema>;

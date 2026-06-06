@@ -45,6 +45,8 @@ export const doctorCommand = defineCommand({
     console.log('');
     console.log(`${pc.bold('Harness:')} @finografic/ai-harness installed, extraction prep active`);
     console.log(`${pc.bold('Control:')} packages/control orchestrator operational`);
-    console.log(`${pc.bold('Command Bus:')} 4 handlers registered (ai.run, agent.run, fs.read, fs.list)`);
+    console.log(
+      `${pc.bold('Command Bus:')} 5 handlers registered (ai.run, agent.run, fs.read, fs.list, shell.exec)`,
+    );
   },
 });

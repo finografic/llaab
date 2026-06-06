@@ -19,6 +19,7 @@ export {
   MetaOutputEventSchema,
   OutputEnvelopeSchema,
   OutputEventSchema,
+  ShellExecCommandSchema,
   StderrOutputEventSchema,
   StdoutOutputEventSchema,
   TokenOutputEventSchema,
@@ -33,6 +34,7 @@ export type {
   FsReadCommand,
   OutputEnvelope,
   OutputEvent,
+  ShellExecCommand,
 } from './command-protocol.js';
 export { deleteNode } from './utils/delete-node.utils.js';
 export { readMarkdownFiles } from './storage/reader.utils.js';

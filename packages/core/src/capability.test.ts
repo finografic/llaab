@@ -13,4 +13,15 @@ describe('getCommandCapabilities', () => {
 
     expect(getCommandCapabilities(command)).toEqual(['chat', 'extract', 'reason', 'command_run']);
   });
+
+  it('maps shell execution to explicit shell capability', () => {
+    const command: Command = {
+      kind: 'shell.exec',
+      command: 'node',
+      args: ['--version'],
+      confirmed: true,
+    };
+
+    expect(getCommandCapabilities(command)).toEqual(['shell_exec', 'command_run']);
+  });
 });

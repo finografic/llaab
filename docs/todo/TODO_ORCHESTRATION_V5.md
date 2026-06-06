@@ -1,7 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 9 done — external executor adapter contracts and OpenCode registration
-> are in place; optional shell execution remains Phase 10.
+> **Status:** Phase 10 partial — gated `shell.exec` plumbing exists, but runtime/browser
+> validation and session-level enablement remain before this phase is done.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -1295,21 +1295,52 @@ constraints, grounded in LLAAB's existing schema types.
 
 ---
 
-## Phase 10 — Optional Shell Adapter
+## Phase 10 — Optional Shell Adapter — PARTIAL
 
 > **This is intentionally last.** The typed command bus is LLAAB's orchestration model.
 > Shell execution is a power-user escape hatch, not the default path.
 
 ### Tasks
 
-- [ ] Add `shell.exec` to the command protocol only after Phase 4 is stable.
+- [x] Add `shell.exec` to the command protocol only after Phase 4 is stable.
 - [ ] Gate shell capability per session (not globally enabled).
-- [ ] Allowlist commands only; start with `git`, `pnpm`, `node`, and `yt-dlp`.
-- [ ] Deny arbitrary command strings by default.
-- [ ] Persist command, cwd, duration, exit code, stdout summary, and stderr summary in
+      Current implementation requires `confirmed: true` / `--confirm` on every command, but does
+      not yet have a durable per-session UI/server enablement switch.
+- [x] Allowlist commands only; start with `git`, `pnpm`, `node`, and `yt-dlp`.
+      `opencode` is also allowlisted because Phase 9 registered it as an external executor.
+- [x] Deny arbitrary command strings by default.
+- [x] Persist command, cwd, duration, exit code, stdout summary, and stderr summary in
       the `RunNode` trace.
-- [ ] Surface warnings in UI that this is power-user mode, not the default Terminal Panel
+- [x] Surface warnings in UI that this is power-user mode, not the default Terminal Panel
       behavior.
+
+### Phase 10 current implementation
+
+- `packages/core/src/command-protocol.ts` defines typed `shell.exec` as separate `command`,
+  `args`, optional `cwd`, and optional `confirmed` fields. It does not accept a raw shell string.
+- `apps/server/src/commands/shell-command.handler.ts` enforces the allowlist and rejects
+  unconfirmed shell commands.
+- `apps/server/src/commands/bus.ts` registers the handler, so command runs still persist through
+  the existing `runSkill(...)` / `RunNode` path.
+- `apps/client/src/components/TerminalPanel.tsx` parses
+  `shell.exec --confirm <git|pnpm|node|yt-dlp|opencode> [args...]` and displays a power-user
+  warning.
+- `packages/cli/src/commands/doctor.ts` now reports 5 command handlers.
+
+### Phase 10 validation result
+
+- `tsc -b packages/core apps/server packages/cli --pretty false` passes.
+- `astro check --root apps/client` passes.
+- `vitest run packages/core/src/capability.test.ts` passes.
+- Manual `tsx` smoke validation of `shellCommandHandler` with `node --version` emits `stdout`
+  plus `meta` containing `duration_ms`, `exit_code`, `stdout_summary`, and `stderr_summary`.
+
+### Phase 10 remaining work
+
+- Add true per-session enablement rather than only per-command confirmation.
+- Validate browser ↔ WebSocket execution from the Terminal Panel against the local server.
+- Decide whether to add app-level test discovery for `apps/server/**/*.test.ts` or keep server
+  command handler verification as smoke scripts.
 
 ### Done means
 
@@ -1332,7 +1363,7 @@ orchestration model.
 | 7     | Capability-based routing                   | Phases 2 + 3    | P2           |
 | 8     | CLI surface + diagnostics                  | Phase 7         | P3           |
 | 9     | External executor adapters                 | Phases 3 + 7    | P3           |
-| 10    | Optional shell adapter                     | Phase 4         | P3           |
+| 10    | Optional shell adapter                     | Phase 4         | Partial      |
 
 \*Phase 1 promoted Phase 6: current truncation succeeds but loses too much transcript content
 while using less than 20% of the available local model context window.

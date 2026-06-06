@@ -64,6 +64,21 @@ function parseTerminalCommand(input: string): Command {
     return { kind: 'fs.list', path: args[0] ?? '.' };
   }
 
+  if (kind === 'shell.exec') {
+    const confirmed = args.includes('--confirm');
+    const cwdIndex = args.indexOf('--cwd');
+    const cwd = cwdIndex === -1 ? undefined : args[cwdIndex + 1];
+    const commandParts = args.filter((arg, index) => {
+      if (arg === '--confirm') return false;
+      if (arg === '--cwd') return false;
+      if (cwdIndex !== -1 && index === cwdIndex + 1) return false;
+      return true;
+    });
+    const [command, ...commandArgs] = commandParts;
+    if (!command) throw new Error('Usage: shell.exec --confirm <git|pnpm|node|yt-dlp|opencode> [args...]');
+    return { kind: 'shell.exec', command, args: commandArgs, cwd, confirmed };
+  }
+
   throw new Error('Unknown command. Try: ai.run extract "summarize this"');
 }
 
@@ -84,7 +99,12 @@ export function TerminalPanel() {
     {
       id: 'welcome',
       kind: 'system',
-      text: 'Connected commands: ai.run, agent.run, fs.read, fs.list',
+      text: 'Connected commands: ai.run, agent.run, fs.read, fs.list, shell.exec',
+    },
+    {
+      id: 'shell-warning',
+      kind: 'system',
+      text: 'shell.exec is allowlisted power-user mode and requires --confirm on each command.',
     },
   ]);
   const [connected, setConnected] = useState(false);

@@ -30,9 +30,9 @@ Dependency chain (one-directional):
 | `control`   | Execution governance — `execute()`, retry/reject, decision traces                                                              |
 | `ingestion` | Fetch → clean → structure → store pipeline; extraction is a separate exported function                                         |
 | `icons`     | Workspace icon registry package — runs `icons-server` + `lucide-manager` (v0.12.8), exports app icons via `icons.generated.ts` |
-| `llm`       | Task router + real providers (Anthropic SDK, Ollama npm) — `routeLlm`, `streamLlm`, 24h cache                                  |
+| `llm`       | Task router + providers/executors — Ollama, Anthropic, OpenCode registration; `routeLlm`, `streamLlm`, capabilities, 24h cache |
 | `skills`    | Composed workflows — `captureIdea`, `ingestYouTube`, `runSkill`                                                                |
-| `cli`       | Binary entry point (`llaab`) — citty commands: ingest, vault, agent, mcp                                                       |
+| `cli`       | Binary entry point (`llaab`) — citty commands: ingest, vault, agent, mcp, doctor, adapters, route                              |
 | `client`    | Astro 6 + React 19 — pure UI, calls server via `src/lib/api.ts` (Hono typed RPC)                                               |
 | `server`    | Hono + Bun — REST API on port 3000, owns all non-UI logic                                                                      |
 | `vault/`    | Data directory — markdown files organized by node type (not a package)                                                         |
@@ -117,6 +117,7 @@ client does not receive false network failures while the server continues extrac
 | `POST /api/llm/stream`                    | SSE streaming LLM                                                               |
 | `GET /api/llm/models`                     | Lists installed Ollama models                                                   |
 | `GET /api/llm/status`                     | Task routing config + installed models cross-referenced                         |
+| `GET /api/llm/capabilities`               | Provider capability metadata + availability                                     |
 | `POST /api/agent/run`                     | One-shot agent processor; optional `{ nodeId?, force? }`                        |
 | `GET /api/agent/status`                   | Last run metadata                                                               |
 
@@ -157,9 +158,17 @@ Task routing (all env-configurable via `LLAAB_*_MODEL` vars):
 
 `getLlmStatus()` exported from `@llaab/llm` returns the live routing map (respects env overrides).
 Ollama provider uses `chat` API (not `generate`) for proper system/user separation.
-Extraction input is still truncated to 6 000 chars before the LLM call to avoid 8k context
-overflow, but that truncation now runs through a small harness-based prep pipeline inside
-`packages/ingestion/src/extract/`.
+Extraction prep is token-aware: long transcripts are chunked with overlap instead of blindly
+truncated, and chunk outputs are reduced/deduped.
+
+Capabilities are shared through `@llaab/core`. LLM providers, skill routes, typed commands, and
+executor adapters declare/query capabilities. `OpenCode` is registered as an external executor
+adapter but reports unavailable unless the `opencode` binary exists.
+
+Phase 10 is partial: `shell.exec` exists in the typed command protocol and server command bus,
+with per-command `--confirm`/`confirmed: true` and an allowlist (`git`, `pnpm`, `node`, `yt-dlp`,
+`opencode`). It is not phase-complete because there is no true per-session enablement yet and
+browser/WebSocket runtime validation still needs to be performed.
 
 ## Schema / Types
 
@@ -182,9 +191,10 @@ via regex. All ingest runs apply `d:ingest` + `autoTag`. Source nodes carry no d
 ## Roadmap & Planning
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
+Current orchestration plan: `docs/todo/TODO_ORCHESTRATION_V5.md`.
 UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07. P0 is empty.
-P1: install + validate `@finografic/ai-harness` in transcript extraction. P2: Terminal Panel and
-later harness extension. P3: Karpathy graph, Source Auto-Follow, Library Watch.
+Orchestration phases 0–9 are complete. Phase 10 is partial and should be resumed from the
+remaining-work checklist in `TODO_ORCHESTRATION_V5.md`.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.
 
 ## Local Dev Ops

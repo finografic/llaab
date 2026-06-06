@@ -6,12 +6,14 @@ import type { Command, CommandEnvelope, OutputEnvelope, OutputEvent } from '@lla
 import { agentCommandHandler } from './agent-command.handler.js';
 import { fsListCommandHandler, fsReadCommandHandler } from './fs-command.handler.js';
 import { llmCommandHandler } from './llm-command.handler.js';
+import { shellCommandHandler } from './shell-command.handler.js';
 
 export const defaultCommandHandlers: CommandHandler[] = [
   llmCommandHandler,
   agentCommandHandler,
   fsReadCommandHandler,
   fsListCommandHandler,
+  shellCommandHandler,
 ] as CommandHandler[];
 
 function outputEnvelope(id: string, event: OutputEvent): OutputEnvelope {
