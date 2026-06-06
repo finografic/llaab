@@ -3,6 +3,7 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { IdeaNode, InstructionNode, PromptNode, ResourceNode, SkillNode } from '@llaab/schemas';
+import ModelMetaCard from '../../../components/ModelMetaCard.astro';
 import AppLayout from '../../../layouts/AppLayout.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -81,6 +82,21 @@ const resource = node.type === 'resource' ? (node as ResourceNode) : null;
     }
 
     {/* ── Body ── */}
+    {
+      idea && (
+        <ModelMetaCard
+          title="Extraction model"
+          meta={{
+            model: idea.llm_model,
+            provider: idea.llm_provider,
+            durationMs: idea.llm_duration_ms,
+            promptTokens: idea.llm_prompt_tokens,
+            completionTokens: idea.llm_completion_tokens,
+          }}
+        />
+      )
+    }
+
     {
       node.body && (
         <section class="section">

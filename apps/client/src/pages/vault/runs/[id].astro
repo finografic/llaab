@@ -3,6 +3,7 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { RunNode } from '@llaab/schemas';
+import ModelMetaCard from '../../../components/ModelMetaCard.astro';
 import AppLayout from '../../../layouts/AppLayout.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -74,6 +75,21 @@ function fmtDate(ts?: string): string {
     </header>
 
     {/* ── Summary ── */}
+    {
+      run.llm && (
+        <ModelMetaCard
+          title="Run model"
+          meta={{
+            model: run.llm.model,
+            provider: run.llm.provider,
+            durationMs: run.llm.duration_ms,
+            promptTokens: run.llm.prompt_tokens,
+            completionTokens: run.llm.completion_tokens,
+          }}
+        />
+      )
+    }
+
     {
       (run.input_summary ?? run.output_summary) && (
         <section class="section">

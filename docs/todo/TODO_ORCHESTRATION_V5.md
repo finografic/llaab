@@ -1,7 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 4 vertical slice done — Terminal Panel route, WebSocket transport, and
-> React command panel are in place. Phase 6 remains promoted for extraction quality work.
+> **Status:** Phase 5 done — extraction model metadata is visible on transcript, idea, and run
+> detail pages. Phase 6 remains promoted for extraction quality work.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -828,7 +828,7 @@ workspace runtime.
 
 ---
 
-## Phase 5 — Terminal Panel Metadata Display (Elements Components)
+## Phase 5 — Terminal Panel Metadata Display (Elements Components) — DONE
 
 > **Depends on Phase 0 (metadata fields flowing) + Phase 4 (terminal panel exists).**
 > This is the UI payoff for the metadata groundwork.
@@ -846,19 +846,28 @@ components that map directly to the metadata Phase 0 captures:
 
 ### Tasks
 
-- [ ] Install Elements components into `packages/ui/src/components/` (or evaluate whether
+- [x] Install Elements components into `packages/ui/src/components/` (or evaluate whether
       to vendor or wrap them).
-- [ ] Create a `<ModelMetaCard>` composite that combines Latency Meter + Model Info + Token
+- [x] Create a `<ModelMetaCard>` composite that combines Latency Meter + Model Info + Token
       Viewer for a single extraction event.
-- [ ] Wire into `/vault/transcripts/[id]` detail page first — read `llm_*` fields from
+- [x] Wire into `/vault/transcripts/[id]` detail page first — read `llm_*` fields from
       frontmatter and render the card.
-- [ ] Wire into `/vault/nodes/[id]` for extracted idea nodes.
-- [ ] Wire into `/vault/runs/[id]` for the execution-level view using `RunLlmTrace` data.
+- [x] Wire into `/vault/nodes/[id]` for extracted idea nodes.
+- [x] Wire into `/vault/runs/[id]` for the execution-level view using `RunLlmTrace` data.
 
 ### Done means
 
 A user viewing a transcript or idea detail page can see at a glance which model produced it,
 how long it took, and what token budget it consumed — without opening the raw markdown file.
+
+### Phase 5 validation result
+
+Elements was evaluated as a design target rather than installed because no Elements package is
+available in the workspace and the shell has no package manager. A local `ModelMetaCard` wrapper
+now provides the same three surfaces with existing shadcn-compatible primitives and tokens:
+provider/model info, latency, and prompt/completion token usage. It renders from `llm_*`
+frontmatter on transcript and extracted idea detail pages, and from `RunNode.llm` on run detail
+pages. `astro check --root apps/client` passes.
 
 ---
 
@@ -1158,7 +1167,7 @@ orchestration model.
 | 2     | LLM provider interface                     | Phase 1 verdict | P1           |
 | 3     | Typed command protocol (no UI)             | Phase 2         | Done         |
 | 4     | Terminal / Command Panel vertical slice    | Phase 3 + 6     | Done         |
-| 5     | Terminal metadata display (Elements)       | Phases 0 + 4    | P2           |
+| 5     | Terminal metadata display (Elements)       | Phases 0 + 4    | Done         |
 | 6     | Token-aware harness extension              | Phase 1 verdict | P1           |
 | 7     | Capability-based routing                   | Phases 2 + 3    | P2           |
 | 8     | CLI surface + diagnostics                  | Phase 7         | P3           |

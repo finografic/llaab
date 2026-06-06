@@ -3,6 +3,7 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
+import ModelMetaCard from '../../../components/ModelMetaCard.astro';
 import AppLayout from '../../../layouts/AppLayout.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -37,13 +38,6 @@ function fmtDate(ts?: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function fmtSeconds(s?: number): string {
-  if (s == null) return '—';
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
 }
 ---
 
@@ -141,6 +135,17 @@ function fmtSeconds(s?: number): string {
     </section>
 
     {/* ── Summary ── */}
+    <ModelMetaCard
+      title="Extraction model"
+      meta={{
+        model: transcript.llm_model,
+        provider: transcript.llm_provider,
+        durationMs: transcript.llm_duration_ms,
+        promptTokens: transcript.llm_prompt_tokens,
+        completionTokens: transcript.llm_completion_tokens,
+      }}
+    />
+
     {
       transcript.summary && (
         <section class="section">
