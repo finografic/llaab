@@ -72,8 +72,11 @@ CSS entry points: `packages/ui/src/styles/globals.css` owns all framework import
 `tw-animate-css`, `shadcn/tailwind.css`, Roboto), the shadcn stone token `:root`/`.dark` blocks,
 and the `@theme inline` + `@custom-variant dark` directives. `apps/client/src/styles/app.css`
 imports `forms.css` only, then adds app-specific semantic tokens (`--bg`, `--surface`, `--text`,
-`--accent`, `--space-*`, `--font-mono`, etc.) and overrides the shadcn tokens with LLAAB's warm
-amber dark palette in `:root {}`. `BaseLayout.astro` imports both in order.
+`--accent`, `--space-*`, `--font-mono`, etc.), a `rem`-based type scale (`--text-2xs` 9px through
+`--text-4xl` 36px — all font sizes in the client use these so `html { font-size }` controls the
+whole UI), and overrides the shadcn tokens with LLAAB's warm amber dark palette in `:root {}`.
+`BaseLayout.astro` imports both in order. `forms.css` retains only native element resets for
+`input`, `textarea`, and `select` — all hand-rolled component classes were removed.
 Dark mode is always active via `class="dark"` on `<html>` (hardcoded — LLAAB is dark-only).
 Installed shadcn components in `packages/ui/src/components/`: `button`, `badge`, `breadcrumb`,
 `scroll-area`, `table`, `tooltip`.
@@ -175,6 +178,7 @@ via regex. All ingest runs apply `d:ingest` + `autoTag`. Source nodes carry no d
 ## Roadmap & Planning
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
+UI Refactor (all 3 phases) is complete as of 2026-06-06. P0 is now empty.
 P1: install + validate `@finografic/ai-harness` in transcript extraction. P2: Terminal Panel and
 later harness extension. P3: Karpathy graph, Source Auto-Follow, Library Watch.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.
