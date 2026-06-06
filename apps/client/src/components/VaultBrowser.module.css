@@ -45,7 +45,7 @@
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-base);
   text-align: left;
   cursor: pointer;
   transition:
@@ -90,12 +90,12 @@
 .viewerEmpty,
 .viewerLoading {
   color: var(--text-faint);
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 .viewerError {
   color: var(--error-text, #ef4444);
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 
 .viewerContent {
@@ -106,14 +106,14 @@
 
 .viewerPath {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-sm);
   color: var(--text-faint);
   letter-spacing: 0.04em;
 }
 
 .viewerPre {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-md);
   line-height: 1.7;
   color: var(--text);
   white-space: pre-wrap;

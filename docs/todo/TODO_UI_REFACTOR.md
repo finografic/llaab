@@ -59,16 +59,16 @@ Add to `apps/client/src/styles/app.css` `:root` block and use everywhere instead
 
 ### Phase 2 — Type scale tokens + px → rem conversion
 
-- [ ] Add type-scale tokens to `app.css` `:root`
-- [ ] Convert `forms.css` remaining font-size declarations to tokens
-- [ ] Convert `VaultBrowser.module.css` to tokens
-- [ ] Convert `NavbarVertical.module.css` to tokens
-- [ ] Convert `FileList.module.css` to tokens
-- [ ] Convert `NodesFileList.module.css` to tokens
-- [ ] Convert `AppHeader`, `AppHeaderV2`, `AppFooter` inline styles to tokens
-- [ ] Convert `PageHero` (already rem — verify alignment with token scale)
-- [ ] Convert all vault page `<style>` blocks (transcripts, sources, nodes, runs) to tokens
-- [ ] Convert `index.astro` and `ingest.astro` page styles to tokens
+- [x] Add type-scale tokens to `app.css` `:root` (`--text-2xs` … `--text-4xl`)
+- [x] Convert `forms.css` remaining font-size declarations to tokens
+- [x] Convert `VaultBrowser.module.css` to tokens
+- [x] Convert `NavbarVertical.module.css` to tokens
+- [x] Convert `FileList.module.css` to tokens
+- [x] Convert `NodesFileList.module.css` to tokens
+- [x] Convert `AppHeader`, `AppHeaderV2`, `AppFooter` to tokens
+- [x] Convert `PageHero` rem values to named tokens
+- [x] Convert all vault page `<style>` blocks (transcripts, sources, nodes, runs, login, llm) to tokens
+- [x] Convert `index.astro`, `ingest.astro`, `dev/icons.astro` page styles to tokens
 
 ### Phase 3 — Consolidate globals + cleanup
 

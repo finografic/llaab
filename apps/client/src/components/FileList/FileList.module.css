@@ -12,7 +12,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-size: 13px;
+  font-size: var(--text-base);
   color: var(--text);
 }
 
@@ -35,7 +35,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--text-sm);
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -61,7 +61,7 @@
 }
 
 .sortIcon {
-  font-size: 9px;
+  font-size: var(--text-2xs);
   opacity: 0.6;
 }
 
@@ -149,7 +149,7 @@
 
 .fileCellMeta {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: var(--text-sm);
   color: var(--text-faint);
   font-family: var(--font-mono);
 }
@@ -164,7 +164,7 @@
 }
 
 .emptyText {
-  font-size: 13px;
+  font-size: var(--text-base);
   color: var(--text-faint);
 }
 

@@ -30,26 +30,32 @@ const { eyebrow, title, bordered = true } = Astro.props;
       <div class="page-hero__title-row">
         <h1 class="page-hero__title">HERO: {title}</h1>
 
-        {Astro.slots.has('actions') && (
-          <div class="page-hero__actions">
-            <slot name="actions" />
-          </div>
-        )}
+        {
+          Astro.slots.has('actions') && (
+            <div class="page-hero__actions">
+              <slot name="actions" />
+            </div>
+          )
+        }
       </div>
 
-      {Astro.slots.has('description') && (
-        <p class="page-hero__description">
-          <slot name="description" />
-        </p>
-      )}
+      {
+        Astro.slots.has('description') && (
+          <p class="page-hero__description">
+            <slot name="description" />
+          </p>
+        )
+      }
     </div>
   </div>
 
-  {Astro.slots.has('meta') && (
-    <div class="page-hero__meta">
-      <slot name="meta" />
-    </div>
-  )}
+  {
+    Astro.slots.has('meta') && (
+      <div class="page-hero__meta">
+        <slot name="meta" />
+      </div>
+    )
+  }
 </header>
 
 <style>
@@ -102,7 +108,7 @@ const { eyebrow, title, bordered = true } = Astro.props;
 
   .page-hero__description {
     margin-top: var(--space-1);
-    font-size: 0.875rem;
+    font-size: var(--text-ui);
     color: var(--text-muted);
     line-height: 1.5;
   }
@@ -116,7 +122,7 @@ const { eyebrow, title, bordered = true } = Astro.props;
     display: flex;
     align-items: center;
     gap: var(--space-4);
-    font-size: 0.8125rem;
+    font-size: var(--text-base);
     color: var(--text-faint);
   }
 </style>

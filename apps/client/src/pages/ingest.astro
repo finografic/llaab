@@ -35,14 +35,14 @@ import { IngestForm } from '../components/IngestForm';
   }
 
   .ingest-page__heading {
-    font-size: 24px;
+    font-size: var(--text-2xl);
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--text);
   }
 
   .ingest-page__desc {
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text-muted);
     line-height: 1.5;
   }
@@ -82,11 +82,11 @@ import { IngestForm } from '../components/IngestForm';
   /* URL input uses monospace — intentional for this form */
   :global(.ingest-form .field input) {
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: var(--text-base);
   }
 
   :global(.ingest-dropzone__eyebrow) {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -94,13 +94,13 @@ import { IngestForm } from '../components/IngestForm';
   }
 
   :global(.ingest-dropzone__title) {
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: var(--text);
   }
 
   :global(.ingest-dropzone__desc) {
-    font-size: 13px;
+    font-size: var(--text-base);
     line-height: 1.5;
     color: var(--text-muted);
   }
@@ -108,7 +108,7 @@ import { IngestForm } from '../components/IngestForm';
   :global(.field-hint) {
     display: inline-block;
     margin-top: var(--space-2);
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-muted);
   }
 
@@ -126,7 +126,7 @@ import { IngestForm } from '../components/IngestForm';
 
   :global(.tag-suggestion) {
     border-radius: 99px !important;
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-family: var(--font-mono);
     font-weight: 500;
     background: var(--surface);
@@ -162,7 +162,7 @@ import { IngestForm } from '../components/IngestForm';
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
-    font-size: 13px;
+    font-size: var(--text-base);
     font-family: var(--font-mono);
   }
 
@@ -171,7 +171,7 @@ import { IngestForm } from '../components/IngestForm';
     margin-top: var(--space-1);
     padding: 4px 10px;
     border-radius: var(--radius);
-    font-size: 12px;
+    font-size: var(--text-md);
     font-weight: 500;
     background: var(--surface-raised);
     border: 1px solid var(--border);
@@ -249,7 +249,7 @@ import { IngestForm } from '../components/IngestForm';
   }
 
   :global(.pipeline-card__label) {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -257,7 +257,7 @@ import { IngestForm } from '../components/IngestForm';
 
   :global(.pipeline-card__elapsed) {
     flex-shrink: 0;
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-family: var(--font-mono);
     font-weight: 500;
     opacity: 0.5;
@@ -300,12 +300,12 @@ import { IngestForm } from '../components/IngestForm';
   }
 
   :global(.pipeline-card__text) {
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-muted);
   }
 
   :global(.pipeline-card__path) {
-    font-size: 12px;
+    font-size: var(--text-md);
     font-family: var(--font-mono);
     word-break: break-all;
   }
@@ -328,7 +328,7 @@ import { IngestForm } from '../components/IngestForm';
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
-    font-size: 12px;
+    font-size: var(--text-md);
     font-family: var(--font-mono);
   }
 
@@ -341,7 +341,7 @@ import { IngestForm } from '../components/IngestForm';
   :global(.pipeline-card__item-list li::before) {
     content: '▪';
     flex-shrink: 0;
-    font-size: 10px;
+    font-size: var(--text-xs);
     opacity: 0.5;
   }
 

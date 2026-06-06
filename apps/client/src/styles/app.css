@@ -49,6 +49,18 @@
      --font-mono has no shadcn equivalent, so it is defined here. */
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
 
+  /* ── Type scale (rem so html { font-size } scales the whole UI) ────────────── */
+  --text-2xs:  0.5625rem; /* 9px  */
+  --text-xs:   0.625rem;  /* 10px */
+  --text-sm:   0.6875rem; /* 11px */
+  --text-md:   0.75rem;   /* 12px */
+  --text-base: 0.8125rem; /* 13px */
+  --text-ui:   0.875rem;  /* 14px */
+  --text-lg:   1.25rem;   /* 20px */
+  --text-xl:   1.375rem;  /* 22px */
+  --text-2xl:  1.5rem;    /* 24px */
+  --text-4xl:  2.25rem;   /* 36px */
+
   /* ── Spacing scale ────────────────────────────────────────────────────────── */
   --space-1: 4px;
   --space-2: 8px;
@@ -148,7 +160,7 @@
 
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -195,7 +207,7 @@
   align-items: center;
   padding: 2px 7px;
   border-radius: 99px;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-family: var(--font-mono);
   font-weight: 500;
   background: color-mix(in srgb, var(--tag-color, var(--accent)) 12%, transparent);
@@ -203,7 +215,7 @@
   border: 1px solid color-mix(in srgb, var(--tag-color, var(--accent)) 30%, transparent);
 }
 
-.tag--sm { font-size: 9px; padding: 1px 5px; }
+.tag--sm { font-size: var(--text-2xs); padding: 1px 5px; }
 
 .tag[data-tag='d:llm']         { --tag-color: #3b82f6; }
 .tag[data-tag='d:automation']  { --tag-color: #8b5cf6; }
@@ -221,7 +233,7 @@
   align-items: center;
   padding: 2px 7px;
   border-radius: 99px;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 500;
   font-family: var(--font-mono);
   letter-spacing: 0.03em;

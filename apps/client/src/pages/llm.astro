@@ -26,7 +26,7 @@ try {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (API_KEY) headers['X-API-Key'] = API_KEY;
   const res = await fetch(`${SERVER_ORIGIN}/api/llm/status`, { headers });
-  status = await res.json() as LlmStatusResponse;
+  status = (await res.json()) as LlmStatusResponse;
 } catch (err) {
   fetchError = err instanceof Error ? err.message : 'Failed to reach server';
 }
@@ -51,88 +51,97 @@ function isInstalled(model: string, installed: string[]): boolean {
 
 <AppLayout title="LLM Status">
   <div class="llm-page">
-
     <header class="llm-page__header">
       <p class="eyebrow">System</p>
       <h1 class="llm-page__heading">LLM Status</h1>
       <p class="llm-page__desc">Active model routing and installed Ollama models.</p>
     </header>
 
-    {fetchError && (
-      <div class="alert alert--error">
-        <span class="alert__label">Server unreachable</span>
-        <span class="alert__msg">{fetchError}</span>
-      </div>
-    )}
+    {
+      fetchError && (
+        <div class="alert alert--error">
+          <span class="alert__label">Server unreachable</span>
+          <span class="alert__msg">{fetchError}</span>
+        </div>
+      )
+    }
 
-    {status && (
-      <div class="llm-sections">
+    {
+      status && (
+        <div class="llm-sections">
+          {/* ── Task routing ── */}
+          <section class="llm-section">
+            <h2 class="llm-section__heading">Task routing</h2>
+            <div class="route-grid">
+              {Object.entries(status.routing).map(([task, entry]) => {
+                const installed = isInstalled(entry.model, status!.installedModels);
+                return (
+                  <div class="route-row">
+                    <span class="route-task">{TASK_LABELS[task] ?? task}</span>
+                    <span class="route-arrow">→</span>
+                    <span class="route-tier">{TIER_LABELS[entry.tier] ?? entry.tier}</span>
+                    <span class="route-arrow">→</span>
+                    <span class={`route-model ${installed ? 'route-model--ok' : 'route-model--missing'}`}>
+                      {entry.model}
+                      <span class={`route-dot route-dot--${installed ? 'ok' : 'missing'}`} />
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
 
-        {/* ── Task routing ── */}
-        <section class="llm-section">
-          <h2 class="llm-section__heading">Task routing</h2>
-          <div class="route-grid">
-            {Object.entries(status.routing).map(([task, entry]) => {
-              const installed = isInstalled(entry.model, status!.installedModels);
-              return (
-                <div class="route-row">
-                  <span class="route-task">{TASK_LABELS[task] ?? task}</span>
-                  <span class="route-arrow">→</span>
-                  <span class="route-tier">{TIER_LABELS[entry.tier] ?? entry.tier}</span>
-                  <span class="route-arrow">→</span>
-                  <span class={`route-model ${installed ? 'route-model--ok' : 'route-model--missing'}`}>
-                    {entry.model}
-                    <span class={`route-dot route-dot--${installed ? 'ok' : 'missing'}`} />
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+          {/* ── Installed models ── */}
+          <section class="llm-section">
+            <h2 class="llm-section__heading">
+              Installed Ollama models
+              {status.ollamaError && <span class="llm-section__badge llm-section__badge--err">offline</span>}
+              {!status.ollamaError && (
+                <span class="llm-section__badge llm-section__badge--ok">
+                  {status.installedModels.length} models
+                </span>
+              )}
+            </h2>
 
-        {/* ── Installed models ── */}
-        <section class="llm-section">
-          <h2 class="llm-section__heading">
-            Installed Ollama models
-            {status.ollamaError && <span class="llm-section__badge llm-section__badge--err">offline</span>}
-            {!status.ollamaError && (
-              <span class="llm-section__badge llm-section__badge--ok">{status.installedModels.length} models</span>
+            {status.ollamaError && <p class="llm-empty">{status.ollamaError}</p>}
+
+            {!status.ollamaError && status.installedModels.length === 0 && (
+              <p class="llm-empty">No models found — is Ollama running?</p>
             )}
-          </h2>
 
-          {status.ollamaError && (
-            <p class="llm-empty">{status.ollamaError}</p>
-          )}
+            {status.installedModels.length > 0 && (
+              <ul class="model-list">
+                {status.installedModels.map((model) => (
+                  <li class="model-item">
+                    <span class="route-dot route-dot--ok" />
+                    <span class="model-name">{model}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-          {!status.ollamaError && status.installedModels.length === 0 && (
-            <p class="llm-empty">No models found — is Ollama running?</p>
-          )}
-
-          {status.installedModels.length > 0 && (
-            <ul class="model-list">
-              {status.installedModels.map((model) => (
-                <li class="model-item">
-                  <span class="route-dot route-dot--ok" />
-                  <span class="model-name">{model}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* ── Env overrides hint ── */}
-        <section class="llm-section llm-section--muted">
-          <h2 class="llm-section__heading">Env overrides</h2>
-          <dl class="env-grid">
-            <dt>LLAAB_LOCAL_SMALL_MODEL</dt><dd>local-small tier default</dd>
-            <dt>LLAAB_LOCAL_MID_MODEL</dt><dd>local-mid tier default</dd>
-            <dt>LLAAB_REMOTE_MODEL</dt><dd>remote tier default</dd>
-          </dl>
-        </section>
-
-      </div>
-    )}
-
+          {/* ── Env overrides hint ── */}
+          <section class="llm-section llm-section--muted">
+            <h2 class="llm-section__heading">Env overrides</h2>
+            <dl class="env-grid">
+              <>
+                <dt>LLAAB_LOCAL_SMALL_MODEL</dt>
+                <dd>local-small tier default</dd>
+              </>
+              <>
+                <dt>LLAAB_LOCAL_MID_MODEL</dt>
+                <dd>local-mid tier default</dd>
+              </>
+              <>
+                <dt>LLAAB_REMOTE_MODEL</dt>
+                <dd>remote tier default</dd>
+              </>
+            </dl>
+          </section>
+        </div>
+      )
+    }
   </div>
 </AppLayout>
 
@@ -151,14 +160,14 @@ function isInstalled(model: string, installed: string[]): boolean {
   }
 
   .llm-page__heading {
-    font-size: 24px;
+    font-size: var(--text-2xl);
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--text);
   }
 
   .llm-page__desc {
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text-muted);
   }
 
@@ -179,7 +188,7 @@ function isInstalled(model: string, installed: string[]): boolean {
   }
 
   .alert__label {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -187,7 +196,7 @@ function isInstalled(model: string, installed: string[]): boolean {
   }
 
   .alert__msg {
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--error-text);
   }
 
@@ -209,7 +218,7 @@ function isInstalled(model: string, installed: string[]): boolean {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -219,7 +228,7 @@ function isInstalled(model: string, installed: string[]): boolean {
   }
 
   .llm-section__badge {
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
     border-radius: 99px;
     padding: 1px 6px;
@@ -247,7 +256,7 @@ function isInstalled(model: string, installed: string[]): boolean {
   }
 
   .llm-empty {
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text-faint);
   }
 
@@ -263,7 +272,7 @@ function isInstalled(model: string, installed: string[]): boolean {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    font-size: 13px;
+    font-size: var(--text-base);
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius);
     background: var(--surface);
@@ -284,7 +293,7 @@ function isInstalled(model: string, installed: string[]): boolean {
 
   .route-tier {
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: var(--text-md);
     width: 120px;
     flex-shrink: 0;
   }
@@ -294,12 +303,16 @@ function isInstalled(model: string, installed: string[]): boolean {
     align-items: center;
     gap: var(--space-2);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--text-md);
     flex: 1;
   }
 
-  .route-model--ok { color: var(--text); }
-  .route-model--missing { color: var(--warning-text); }
+  .route-model--ok {
+    color: var(--text);
+  }
+  .route-model--missing {
+    color: var(--warning-text);
+  }
 
   .route-dot {
     display: inline-block;
@@ -310,8 +323,12 @@ function isInstalled(model: string, installed: string[]): boolean {
     margin-left: auto;
   }
 
-  .route-dot--ok      { background: var(--success-text); }
-  .route-dot--missing { background: var(--warning-text); }
+  .route-dot--ok {
+    background: var(--success-text);
+  }
+  .route-dot--missing {
+    background: var(--warning-text);
+  }
 
   /* ── Model list ── */
 
@@ -336,7 +353,7 @@ function isInstalled(model: string, installed: string[]): boolean {
 
   .model-name {
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text);
   }
 
@@ -346,7 +363,7 @@ function isInstalled(model: string, installed: string[]): boolean {
     display: grid;
     grid-template-columns: max-content 1fr;
     gap: var(--space-2) var(--space-5);
-    font-size: 12px;
+    font-size: var(--text-md);
   }
 
   .env-grid dt {

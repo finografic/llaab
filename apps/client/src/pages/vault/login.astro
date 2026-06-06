@@ -84,21 +84,21 @@ if (Astro.request.method === 'POST') {
   }
 
   h1 {
-    font-size: 24px;
+    font-size: var(--text-2xl);
     font-weight: 600;
     letter-spacing: -0.02em;
   }
 
   .hint {
     margin-top: 16px;
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-muted);
     line-height: 1.6;
   }
 
   code {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--text-sm);
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 3px;

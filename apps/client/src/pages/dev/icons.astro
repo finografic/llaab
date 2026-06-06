@@ -27,18 +27,11 @@ const iconsUrl = `http://${pickerHost}:${pickerPort}/`;
     <header class="dev-icons-page__header">
       <p class="eyebrow">Development</p>
       <h1 class="dev-icons-page__heading">Icons</h1>
-      <p class="dev-icons-page__desc">
-        Embedded Lucide picker for the local `@llaab/icons` registry.
-      </p>
+      <p class="dev-icons-page__desc">Embedded Lucide picker for the local `@llaab/icons` registry.</p>
     </header>
 
     <div class="dev-icons-frame-shell">
-      <iframe
-        src={iconsUrl}
-        title="Lucide Manager"
-        loading="lazy"
-        class="dev-icons-frame"
-      ></iframe>
+      <iframe src={iconsUrl} title="Lucide Manager" loading="lazy" class="dev-icons-frame"></iframe>
     </div>
 
     <div class="dev-icons-toolbar">
@@ -65,14 +58,14 @@ const iconsUrl = `http://${pickerHost}:${pickerPort}/`;
   }
 
   .dev-icons-page__heading {
-    font-size: 24px;
+    font-size: var(--text-2xl);
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--text);
   }
 
   .dev-icons-page__desc {
-    font-size: 13px;
+    font-size: var(--text-base);
     line-height: 1.6;
     color: var(--text-muted);
   }
@@ -89,7 +82,7 @@ const iconsUrl = `http://${pickerHost}:${pickerPort}/`;
   }
 
   .dev-icons-link {
-    font-size: 13px;
+    font-size: var(--text-base);
     font-weight: 600;
     color: var(--accent);
     text-decoration: none;
@@ -100,7 +93,7 @@ const iconsUrl = `http://${pickerHost}:${pickerPort}/`;
   }
 
   .dev-icons-meta {
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-faint);
   }
 

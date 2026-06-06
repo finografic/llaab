@@ -31,25 +31,31 @@ const nodes: LabNode[] = all
     <PageHero slot="hero" eyebrow="Vault" title="Nodes">
       <Fragment slot="meta">
         <span>{nodes.length} node{nodes.length !== 1 ? 's' : ''}</span>
-        {Object.entries(Object.groupBy(nodes, (n) => n.type)).map(([type, items]) => (
-          <span>{type} · {items?.length ?? 0}</span>
-        ))}
+        {
+          Object.entries(Object.groupBy(nodes, (n) => n.type)).map(([type, items]) => (
+            <span>
+              {type} · {items?.length ?? 0}
+            </span>
+          ))
+        }
       </Fragment>
       <CreateIdeaPanel slot="actions" client:only="react" />
     </PageHero>
 
-    {nodes.length === 0 ? (
-      <p class="empty">No nodes yet. Use the button above or ingest a video to get started.</p>
-    ) : (
-      <NodesFileList client:only="react" nodes={nodes} />
-    )}
+    {
+      nodes.length === 0 ? (
+        <p class="empty">No nodes yet. Use the button above or ingest a video to get started.</p>
+      ) : (
+        <NodesFileList client:only="react" nodes={nodes} />
+      )
+    }
   </PageLayout>
 </AppLayout>
 
 <style>
   .empty {
     padding: var(--space-6);
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text-muted);
   }
 </style>

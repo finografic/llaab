@@ -177,7 +177,7 @@ function fmtDate(ts?: string): string {
   /* ── Header ── */
 
   .detail-header__title {
-    font-size: 20px;
+    font-size: var(--text-lg);
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--text);
@@ -196,19 +196,19 @@ function fmtDate(ts?: string): string {
     color: var(--text-faint);
   }
   .meta-text {
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-faint);
   }
   .meta-mono {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-muted);
   }
 
   .meta-link {
     color: var(--accent);
     text-decoration: none;
-    font-size: 12px;
+    font-size: var(--text-md);
   }
   .meta-link:hover {
     text-decoration: underline;
@@ -226,7 +226,7 @@ function fmtDate(ts?: string): string {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -236,7 +236,7 @@ function fmtDate(ts?: string): string {
   }
 
   .section__count {
-    font-size: 10px;
+    font-size: var(--text-xs);
     font-family: var(--font-mono);
     background: var(--surface-raised);
     border: 1px solid var(--border-subtle);
@@ -254,11 +254,11 @@ function fmtDate(ts?: string): string {
     display: grid;
     grid-template-columns: max-content 1fr;
     gap: var(--space-2) var(--space-5);
-    font-size: 13px;
+    font-size: var(--text-base);
   }
 
   .meta-grid dt {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-weight: 500;
     color: var(--text-faint);
     text-transform: uppercase;
@@ -275,7 +275,7 @@ function fmtDate(ts?: string): string {
   /* ── Body ── */
 
   .body-text {
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text-muted);
     line-height: 1.6;
   }
@@ -289,7 +289,7 @@ function fmtDate(ts?: string): string {
   }
 
   .platform {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-family: var(--font-mono);
     color: var(--text-faint);
     background: var(--surface-raised);
@@ -329,7 +329,7 @@ function fmtDate(ts?: string): string {
   }
 
   .transcript-title {
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text);
     line-height: 1.4;
     flex: 1;
@@ -343,13 +343,13 @@ function fmtDate(ts?: string): string {
   }
 
   .transcript-ideas {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-family: var(--font-mono);
     color: oklch(0.65 0.18 264);
   }
 
   .transcript-date {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-family: var(--font-mono);
     color: var(--text-faint);
     white-space: nowrap;

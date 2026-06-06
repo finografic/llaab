@@ -95,19 +95,19 @@ function fmtDuration(ms?: number): string {
   }
 
   .list-page__heading {
-    font-size: 22px;
+    font-size: var(--text-xl);
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--text);
   }
 
   .list-page__count {
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-faint);
   }
 
   .empty {
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text-muted);
   }
 
@@ -122,13 +122,13 @@ function fmtDuration(ms?: number): string {
   .runs-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px;
+    font-size: var(--text-md);
   }
 
   .runs-table th {
     padding: var(--space-2) var(--space-4);
     text-align: left;
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-weight: 500;
     color: var(--text-faint);
     letter-spacing: 0.04em;
@@ -163,7 +163,7 @@ function fmtDuration(ms?: number): string {
     color: var(--text);
     text-decoration: none;
     font-weight: 500;
-    font-size: 13px;
+    font-size: var(--text-base);
   }
 
   .run-link:hover {
@@ -172,7 +172,7 @@ function fmtDuration(ms?: number): string {
   }
 
   .run-input {
-    font-size: 11px;
+    font-size: var(--text-sm);
     color: var(--text-faint);
     font-family: var(--font-mono);
     white-space: nowrap;

@@ -99,14 +99,14 @@ const followed = sources.filter((s) => s.follow);
   }
 
   .list-page__heading {
-    font-size: 22px;
+    font-size: var(--text-xl);
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--text);
   }
 
   .list-page__count {
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-faint);
   }
 
@@ -115,7 +115,7 @@ const followed = sources.filter((s) => s.follow);
   }
 
   .empty {
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text-muted);
   }
 
@@ -159,14 +159,14 @@ const followed = sources.filter((s) => s.follow);
   }
 
   .node-card__title {
-    font-size: 14px;
+    font-size: var(--text-ui);
     font-weight: 600;
     color: var(--text);
     line-height: 1.4;
   }
 
   .node-card__body {
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-muted);
     line-height: 1.6;
     display: -webkit-box;
@@ -176,7 +176,7 @@ const followed = sources.filter((s) => s.follow);
   }
 
   .node-card__date {
-    font-size: 11px;
+    font-size: var(--text-sm);
     color: var(--text-faint);
     font-family: var(--font-mono);
     margin-left: auto;
@@ -191,7 +191,7 @@ const followed = sources.filter((s) => s.follow);
   }
 
   .platform {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-family: var(--font-mono);
     color: var(--text-faint);
     background: var(--surface-raised);

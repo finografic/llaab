@@ -203,7 +203,7 @@ function fmtDate(ts?: string): string {
   /* ── Header ── */
 
   .detail-header__title {
-    font-size: 20px;
+    font-size: var(--text-lg);
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--text);
@@ -223,7 +223,7 @@ function fmtDate(ts?: string): string {
   }
 
   .meta-text {
-    font-size: 12px;
+    font-size: var(--text-md);
     color: var(--text-faint);
   }
 
@@ -240,7 +240,7 @@ function fmtDate(ts?: string): string {
   }
 
   .section__heading {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -259,11 +259,11 @@ function fmtDate(ts?: string): string {
     display: grid;
     grid-template-columns: max-content 1fr;
     gap: var(--space-2) var(--space-5);
-    font-size: 13px;
+    font-size: var(--text-base);
   }
 
   .summary-grid dt {
-    font-size: 11px;
+    font-size: var(--text-sm);
     font-weight: 500;
     color: var(--text-faint);
     text-transform: uppercase;
@@ -287,7 +287,7 @@ function fmtDate(ts?: string): string {
 
   .produced-id {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--text-sm);
     color: var(--text-faint);
     background: var(--surface);
     border: 1px solid var(--border-subtle);
@@ -315,7 +315,7 @@ function fmtDate(ts?: string): string {
     display: flex;
     align-items: baseline;
     gap: var(--space-3);
-    font-size: 13px;
+    font-size: var(--text-base);
     color: var(--text-muted);
   }
 
@@ -328,7 +328,7 @@ function fmtDate(ts?: string): string {
   .error-pre,
   .body-pre {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--text-md);
     line-height: 1.7;
     white-space: pre-wrap;
     word-break: break-word;
