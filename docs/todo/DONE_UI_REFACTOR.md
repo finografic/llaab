@@ -1,6 +1,9 @@
-# TODO — UI Refactor: shadcn Expansion + Typography System
+# DONE — UI Refactor: shadcn Expansion + Typography System
 
-> **Status:** Phase 1 in progress (2026-06-06). Phases 2–3 not started.
+> **Completed:** 2026-06-06 — shadcn component adoption, `--text-2xs`…`--text-4xl` type scale,
+> px → rem conversion across client, `!important` removal, inline style cleanup.
+> Deferred polish: shadcn `Tabs` for tab-like patterns; end-to-end font-scale verification
+> (tracked in [`NEXT_STEPS.md`](./NEXT_STEPS.md) manual testing checklist).
 
 Refactor the client UI to eliminate hand-rolled CSS components in favour of shadcn primitives,
 and replace all hard `px` font-size declarations with a `rem`-based type scale so the root
@@ -55,7 +58,7 @@ Add to `apps/client/src/styles/app.css` `:root` block and use everywhere instead
 - [x] Extract shared `.tag-row`, `.tag`, `.tag--sm`, data-tag colors, `.badge` base CSS to `app.css`; remove duplication from 7 vault pages
 - [x] Remove hand-rolled class groups from `forms.css` (`.field`, `.btn`, `.status`, `.status-card`, `.tag-chip`); keep native element resets
 - [x] Replace `runs/[id].astro` stages `<table>` with Tailwind-styled table (shadcn Table class equivalents applied inline)
-- [ ] Identify tab-like patterns → shadcn `Tabs`
+- [ ] Identify tab-like patterns → shadcn `Tabs` (deferred)
 
 ### Phase 2 — Type scale tokens + px → rem conversion
 
@@ -76,7 +79,7 @@ Add to `apps/client/src/styles/app.css` `:root` block and use everywhere instead
 - [x] Remove `!important` from `html { font-size: 16px }` in `app.css` — no competing declarations remain
 - [x] Audit inline `style=` in `.astro` files — one found (`text-transform:none`) converted to `normal-case`; dynamic depth-padding in VaultBrowser.tsx is intentional (computed value)
 - [x] `forms.css` cleanup — already completed in Phase 1
-- [ ] Verify end-to-end: change `html { font-size }` in `app.css` → entire UI should scale uniformly
+- [ ] Verify end-to-end: change `html { font-size }` in `app.css` → entire UI should scale uniformly (deferred to manual testing)
 
 ---
 

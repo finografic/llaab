@@ -1,4 +1,12 @@
-# LLAAB — Next Steps
+# DONE — Foundational Schema Usage Layer
+
+> **Completed:** 2026-04-18 — `writeNode`/`updateNode`, `@llaab/control`, persistent `RunNode` logging,
+> YouTube ingestion v1, and controlled idea extraction from transcripts.
+>
+> **Current work:** [`NEXT_STEPS.md`](./NEXT_STEPS.md) and [`ROADMAP.md`](./ROADMAP.md).
+> Step-by-step completion tracker: [`docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`](../05_CONTROL_LAYER_AND_EXECUTION_MODEL.md) §9.
+
+---
 
 The project now has a solid enough foundation to stop debating structure and start tightening the loop:
 
@@ -221,3 +229,9 @@ If you want the most immediately satisfying move, start here:
 - Best first feature after the core helpers are ready: YouTube ingestion.
 - Best new architectural refinement to thread into that work: a lightweight control layer.
 - If forced to choose only one, I would still choose the schema usage layer first.
+
+## Carry-Forward (not part of this milestone)
+
+- `llaab idea` and `llaab read` CLI commands — not built; `llaab vault list` covers partial list needs
+- Skill node extraction from transcripts — ideas only; tracked in [`NEXT_STEPS.md`](./NEXT_STEPS.md)
+- `--tag` / `--search` vault list filters — not built

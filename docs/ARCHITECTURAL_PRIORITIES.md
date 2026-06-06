@@ -1,4 +1,10 @@
-# LLAAB — TODO Improvements
+# LLAAB — Architectural Priorities
+
+> **Reference document** — ranked architectural improvements from an external LLM-system analysis,
+> filtered for LLAAB. Informed the control-layer work completed in April 2026.
+>
+> **Living implementation tracker:** [`docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`](./05_CONTROL_LAYER_AND_EXECUTION_MODEL.md)
+> **Active backlog:** [`docs/todo/ROADMAP.md`](./todo/ROADMAP.md)
 
 This document summarizes the most important architectural improvements suggested by the external LLM-system analysis, filtered through the actual needs and current state of LLAAB.
 
@@ -46,7 +52,7 @@ It is trying to become a lab where knowledge, execution, and refinement all rema
 
 ## 1. Add an explicit control layer
 
-**Priority:** highest
+**Priority:** highest — **implemented** (`packages/control`, 2026-04-08)
 
 This is the most important improvement to lock into the architecture now.
 
@@ -74,7 +80,7 @@ Suggested first implementation moves:
 
 ## 2. Treat all LLM output as untrusted until validated
 
-**Priority:** very high
+**Priority:** very high — **implemented** for ingestion extraction (`control.execute()` + schema validation)
 
 This is already partially aligned with LLAAB’s philosophy, but it should become stricter.
 
@@ -101,7 +107,7 @@ validated output = admissible system state
 
 ## 3. Strengthen the retrieval and context-assembly layer
 
-**Priority:** very high
+**Priority:** very high — **open** (ROADMAP P3)
 
 The external analysis is correct that “reasoning operates on context” and that retrieval is a system concern, not intelligence.
 
@@ -134,7 +140,7 @@ This is especially relevant once YouTube ingestion begins producing many transcr
 
 ## 4. Make deterministic boundaries first-class
 
-**Priority:** high
+**Priority:** high — **implemented** in ingestion pipeline stages
 
 The manifesto already leans this way, but the system should make the boundary more explicit:
 
@@ -157,7 +163,7 @@ This improvement pairs naturally with the control layer.
 
 ## 5. Upgrade run logging into real observability
 
-**Priority:** high
+**Priority:** high — **implemented** (`RunNode` persistence via `runSkill`; P2 adds LLM metadata to frontmatter)
 
 This is not just a feature request.
 It is an architectural necessity if LLAAB is going to behave like a lab.
@@ -183,7 +189,7 @@ Run logging is one of the main defenses against that.
 
 ## 6. Add promotion states between raw capture and trusted knowledge
 
-**Priority:** medium-high
+**Priority:** medium-high — **open** (ROADMAP P3)
 
 This is my own addition, but it follows directly from the outside analysis.
 
@@ -203,7 +209,7 @@ But the concept should be kept in mind.
 
 ## 7. Design duplicate-handling and canonicalization rules early
 
-**Priority:** medium-high
+**Priority:** medium-high — **mostly implemented** for YouTube; broader dedupe TBD
 
 This becomes important quickly once ingestion starts in earnest.
 
@@ -227,7 +233,7 @@ Good early targets:
 
 ## 8. Keep the “LLM as speculative execution engine” mental model
 
-**Priority:** medium
+**Priority:** medium — **captured** in `docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`
 
 This is not an immediate code task, but it is an important architectural stance.
 
@@ -256,7 +262,7 @@ This should influence architecture, even if it does not appear as a named module
 
 ## 9. Delay database and graph expansion until the control path is real
 
-**Priority:** medium
+**Priority:** medium — **aligned** with ROADMAP P3 ordering
 
 This is more of a sequencing recommendation than a new idea.
 
@@ -296,13 +302,13 @@ These are valid themes, but not the next most important improvements for LLAAB:
 
 If I translate this analysis into an action order for the actual project, I would recommend:
 
-1. complete `writeNode()` and `updateNode()`
-2. persist `run` nodes
-3. introduce a lightweight control/orchestration boundary around LLM-backed flows
-4. harden YouTube ingestion as the first real feature
-5. improve validation and duplicate-handling rules
-6. improve retrieval/context selection
-7. only then expand indexing, graph views, or deeper LLM features
+1. complete `writeNode()` and `updateNode()` — **done**
+2. persist `run` nodes — **done**
+3. introduce a lightweight control/orchestration boundary around LLM-backed flows — **done**
+4. harden YouTube ingestion as the first real feature — **done**
+5. improve validation and duplicate-handling rules — **partial** (YouTube dedupe done)
+6. improve retrieval/context selection — **open** (ROADMAP P3)
+7. only then expand indexing, graph views, or deeper LLM features — **aligned**
 
 ---
 
