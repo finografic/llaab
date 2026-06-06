@@ -1,0 +1,54 @@
+---
+/**
+ * BalancedGrid — responsive grid that avoids a lone item on the last row.
+ *
+ * Uses `getResponsiveBalancedColumns` from `utils/balanced-grid.utils.ts`.
+ *
+ * Props:
+ *   itemCount   — number of direct children (required for column math)
+ *   maxColumns  — widest layout on large viewports (default 3)
+ *   class       — optional extra class names
+ */
+
+import { getResponsiveBalancedColumns } from 'utils/balanced-grid.utils';
+
+interface Props {
+  itemCount: number;
+  maxColumns?: number;
+  class?: string;
+}
+
+const { itemCount, maxColumns = 3, class: className } = Astro.props;
+const columns = getResponsiveBalancedColumns(itemCount, { maxColumns });
+---
+
+<div
+  class:list={['balanced-grid', className]}
+  style={{
+    '--balanced-grid-cols-sm': columns.sm,
+    '--balanced-grid-cols-md': columns.md,
+    '--balanced-grid-cols-lg': columns.lg,
+  }}
+>
+  <slot />
+</div>
+
+<style>
+  .balanced-grid {
+    display: grid;
+    gap: var(--balanced-grid-gap, var(--space-4));
+    grid-template-columns: repeat(var(--balanced-grid-cols-sm, 1), minmax(0, 1fr));
+  }
+
+  @media (min-width: 640px) {
+    .balanced-grid {
+      grid-template-columns: repeat(var(--balanced-grid-cols-md, 2), minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .balanced-grid {
+      grid-template-columns: repeat(var(--balanced-grid-cols-lg, 3), minmax(0, 1fr));
+    }
+  }
+</style>

@@ -1,9 +1,11 @@
 ---
 import AppLayout from 'layouts/AppLayout.astro';
+import BalancedGrid from 'components/BalancedGrid/BalancedGrid.astro';
 import { ArrowRightIcon, DownloadIcon, FolderKanbanIcon, PlayIcon, WindowIcon } from '@llaab/icons';
 import { Card, CardContent } from 'components/ui/card';
 
 const iconsRoute = '/dev/icons';
+const homeCalloutCount = 4;
 ---
 
 <AppLayout title="Home">
@@ -14,7 +16,7 @@ const iconsRoute = '/dev/icons';
       <p class="home__sub">Your vault for ingested knowledge, structured nodes, and agent run history.</p>
     </header>
 
-    <div class="home__grid">
+    <BalancedGrid itemCount={homeCalloutCount} class="home__grid">
       <a href="/ingest" class="home-card-link">
         <Card className="home-card">
           <CardContent className="home-card__content">
@@ -74,7 +76,7 @@ const iconsRoute = '/dev/icons';
           </CardContent>
         </Card>
       </a>
-    </div>
+    </BalancedGrid>
   </div>
 </AppLayout>
 
@@ -109,13 +111,7 @@ const iconsRoute = '/dev/icons';
     max-width: 480px;
   }
 
-  /* ── Cards grid ── */
-
-  .home__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: var(--space-4);
-  }
+  /* ── Cards grid (layout handled by BalancedGrid; class hooks page-specific overrides) ── */
 
   .home-card-link {
     display: block;
