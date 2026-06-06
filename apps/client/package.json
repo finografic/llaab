@@ -41,13 +41,13 @@
     "@llaab/core": "workspace:*",
     "@llaab/icons": "workspace:*",
     "@llaab/schemas": "workspace:*",
+    "@llaab/ui": "workspace:*",
     "@react-router/dev": "7.14.1",
     "@tanstack/query-sync-storage-persister": "5.99.0",
     "@tanstack/react-query": "^5.99.0",
     "@tanstack/react-query-devtools": "5.99.0",
     "@tanstack/react-query-persist-client": "5.99.0",
     "@tanstack/react-table": "^8.21.3",
-    "@llaab/ui": "workspace:*",
     "astro": "^6.1.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -77,6 +77,8 @@
     "oxfmt": "^0.52.0",
     "oxlint": "^1.67.0",
     "oxlint-tsgolint": "^0.23.0",
+    "prettier": "^3.8.3",
+    "prettier-plugin-astro": "^0.14.1",
     "tailwindcss": "^4.3.0"
   }
 }

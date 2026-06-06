@@ -12,7 +12,9 @@
   },
 
   "eslint.enable": false,
-  "prettier.enable": false,
+  "prettier.enable": true,
+  "prettier.prettierPath": "./node_modules/prettier/index.cjs",
+  "prettier.configPath": "apps/client/prettier.config.ts",
 
   "oxc.typeAware": true,
   "oxc.lint.run": "onSave",
@@ -52,6 +54,10 @@
   },
   "[html]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[astro]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
   },
   "[markdown]": {
     "editor.defaultFormatter": "oxc.oxc-vscode",

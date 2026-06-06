@@ -1,12 +1,6 @@
 ---
 import AppLayout from 'layouts/AppLayout.astro';
-import {
-  ArrowRightIcon,
-  DownloadIcon,
-  FolderKanbanIcon,
-  PlayIcon,
-  WindowIcon,
-} from '@llaab/icons';
+import { ArrowRightIcon, DownloadIcon, FolderKanbanIcon, PlayIcon, WindowIcon } from '@llaab/icons';
 import { Card, CardContent } from 'components/ui/card';
 
 const iconsRoute = '/dev/icons';
@@ -17,9 +11,7 @@ const iconsRoute = '/dev/icons';
     <header class="home__hero">
       <p class="eyebrow">Learning Loop &amp; Agent Automation Base</p>
       <h1 class="home__heading">LLAAB</h1>
-      <p class="home__sub">
-        Your vault for ingested knowledge, structured nodes, and agent run history.
-      </p>
+      <p class="home__sub">Your vault for ingested knowledge, structured nodes, and agent run history.</p>
     </header>
 
     <div class="home__grid">
@@ -68,10 +60,7 @@ const iconsRoute = '/dev/icons';
         </Card>
       </a>
 
-      <a
-        href={iconsRoute}
-        class="home-card-link"
-      >
+      <a href={iconsRoute} class="home-card-link">
         <Card className="home-card">
           <CardContent className="home-card__content">
             <div class="home-card__icon">
@@ -79,9 +68,7 @@ const iconsRoute = '/dev/icons';
             </div>
             <div class="home-card__body">
               <h2 class="home-card__title">Icons</h2>
-              <p class="home-card__desc">
-                Open the embedded Lucide picker and manage the local registry.
-              </p>
+              <p class="home-card__desc">Open the embedded Lucide picker and manage the local registry.</p>
             </div>
             <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
           </CardContent>
@@ -196,7 +183,9 @@ const iconsRoute = '/dev/icons';
     flex-shrink: 0;
     color: var(--text-faint);
     margin-top: 2px;
-    transition: color var(--duration) var(--ease), transform var(--duration) var(--ease);
+    transition:
+      color var(--duration) var(--ease),
+      transform var(--duration) var(--ease);
   }
 
   :global(.home-card-link:hover .home-card__arrow) {
