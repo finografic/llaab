@@ -3,7 +3,7 @@
 > Maintained working list. Larger initiatives live in [`ROADMAP.md`](./ROADMAP.md) — this doc
 > covers concrete near-term tasks, manual testing, and small fixes not large enough for ROADMAP.
 >
-> Last updated: 2026-06-01 (session 17)
+> Last updated: 2026-06-07 (Phase 0 orchestration metadata)
 
 ---
 
@@ -30,7 +30,7 @@ Things to verify end-to-end after recent pipeline changes:
 
 ## Up Next
 
-- [ ] **LLM execution metadata in frontmatter** — write `llm_model`, `llm_duration_ms`,
+- [x] **LLM execution metadata in frontmatter** — write `llm_model`, `llm_duration_ms`,
       `llm_prompt_tokens`, `llm_completion_tokens` to transcript and idea nodes at extraction time.
       See ROADMAP P2 for full implementation boundary.
 
@@ -47,6 +47,10 @@ Things to verify end-to-end after recent pipeline changes:
 - [ ] **`related` field on idea nodes** — currently always `[]`. Consider auto-linking extracted ideas
       to their transcript via `related` (in addition to `source_id`). Low priority — `source_id` is
       the primary provenance link.
+
+- [ ] **Expand LLM auto-tag triggers** — add conservative model-family terms such as `gemma`,
+      `llama`, `mistral`, `qwen`, `phi`, and `gemini` to the `d:llm` taxonomy trigger set so
+      transcript/idea nodes about specific models do not miss the LLM domain tag.
 
 - [x] **shadcn initial-setup audit** — fixed dark mode (`data-theme` → `class="dark"`), re-enabled
       `app.css`, removed duplicate framework imports, fixed light-mode badge hex colors across 6

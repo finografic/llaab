@@ -11,4 +11,8 @@ export interface LlmCompleteResult {
   text: string;
   model: string;
   cached: boolean;
+  provider: 'ollama' | 'anthropic';
+  durationMs: number;
+  promptTokens?: number;
+  completionTokens?: number;
 }

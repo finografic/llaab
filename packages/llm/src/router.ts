@@ -41,20 +41,31 @@ export async function routeLlm(
 ): Promise<LlmCompleteResult> {
   const { model, tier } = resolveModel(task, opts?.model);
   const completeOpts: LlmCompleteOptions = { model, system: opts?.system, maxTokens: opts?.maxTokens };
+  const provider = tier === 'remote' ? 'anthropic' : 'ollama';
 
   if (CACHEABLE.has(task)) {
     const hit = cacheGet(prompt, model);
-    if (hit) return { text: hit, model, cached: true };
+    if (hit) return { text: hit, model, cached: true, provider, durationMs: 0 };
   }
 
-  const text =
+  const start = performance.now();
+  const result =
     tier === 'remote'
       ? await anthropicComplete(prompt, completeOpts)
       : await ollamaComplete(prompt, completeOpts);
+  const durationMs = Math.round(performance.now() - start);
 
-  if (CACHEABLE.has(task)) cacheSet(prompt, model, text);
+  if (CACHEABLE.has(task)) cacheSet(prompt, model, result.text);
 
-  return { text, model, cached: false };
+  return {
+    text: result.text,
+    model,
+    cached: false,
+    provider,
+    durationMs,
+    promptTokens: result.promptTokens,
+    completionTokens: result.completionTokens,
+  };
 }
 
 export async function* streamLlm(

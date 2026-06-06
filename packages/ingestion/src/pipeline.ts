@@ -344,6 +344,11 @@ export async function extractKnowledgeFromTranscript(
     ...node,
     summary: extracted.summary,
     tags: [...new Set([...(node.tags ?? []), ...autoTag(node.title, extracted.summary)])],
+    llm_model: extracted.llmMeta.model,
+    llm_provider: extracted.llmMeta.provider,
+    llm_duration_ms: extracted.llmMeta.durationMs,
+    llm_prompt_tokens: extracted.llmMeta.promptTokens,
+    llm_completion_tokens: extracted.llmMeta.completionTokens,
   }));
 
   const ideas: Array<{ id: string; title: string }> = [];
@@ -357,6 +362,11 @@ export async function extractKnowledgeFromTranscript(
         origin: 'extracted',
         source_id: transcriptId,
         related: [transcriptId],
+        llm_model: extracted.llmMeta.model,
+        llm_provider: extracted.llmMeta.provider,
+        llm_duration_ms: extracted.llmMeta.durationMs,
+        llm_prompt_tokens: extracted.llmMeta.promptTokens,
+        llm_completion_tokens: extracted.llmMeta.completionTokens,
       },
     });
     ideas.push({ id: idea.id, title: ideaText });
@@ -367,6 +377,11 @@ export async function extractKnowledgeFromTranscript(
   await updateNode(transcriptPath, (node) => ({
     ...node,
     extracted_idea_ids: ideaIds,
+    llm_model: extracted.llmMeta.model,
+    llm_provider: extracted.llmMeta.provider,
+    llm_duration_ms: extracted.llmMeta.durationMs,
+    llm_prompt_tokens: extracted.llmMeta.promptTokens,
+    llm_completion_tokens: extracted.llmMeta.completionTokens,
   }));
 
   return { transcriptId, summary: extracted.summary, ideaIds, ideas };

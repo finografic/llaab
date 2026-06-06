@@ -1,5 +1,6 @@
 import { Ollama } from 'ollama';
 import type { LlmCompleteOptions } from '../types.js';
+import type { ProviderResult } from './types.js';
 
 let client: Ollama | null = null;
 
@@ -17,13 +18,17 @@ function buildMessages(prompt: string, system?: string) {
   return messages;
 }
 
-export async function ollamaComplete(prompt: string, opts: LlmCompleteOptions): Promise<string> {
+export async function ollamaComplete(prompt: string, opts: LlmCompleteOptions): Promise<ProviderResult> {
   const response = await getClient().chat({
     model: opts.model,
     messages: buildMessages(prompt, opts.system),
     stream: false,
   });
-  return response.message.content;
+  return {
+    text: response.message.content,
+    promptTokens: response.prompt_eval_count,
+    completionTokens: response.eval_count,
+  };
 }
 
 export async function* ollamaStream(prompt: string, opts: LlmCompleteOptions): AsyncGenerator<string> {

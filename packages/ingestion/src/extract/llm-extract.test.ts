@@ -19,8 +19,18 @@ describe('llmExtract', () => {
     vi.clearAllMocks();
   });
 
+  function mockRouteLlm(text: string): void {
+    vi.mocked(routeLlm).mockResolvedValue({
+      text,
+      model: 'llama3.1:8b',
+      cached: false,
+      provider: 'ollama',
+      durationMs: 150,
+    });
+  }
+
   it('returns structured ideas, skills, and summary from valid JSON response', async () => {
-    vi.mocked(routeLlm).mockResolvedValue({ text: VALID_RESPONSE, model: 'llama3.1:8b', cached: false });
+    mockRouteLlm(VALID_RESPONSE);
 
     const result = await llmExtract('example transcript');
 
@@ -31,7 +41,7 @@ describe('llmExtract', () => {
 
   it('strips markdown fences before parsing JSON', async () => {
     const fenced = '```json\n' + VALID_RESPONSE + '\n```';
-    vi.mocked(routeLlm).mockResolvedValue({ text: fenced, model: 'llama3.1:8b', cached: false });
+    mockRouteLlm(fenced);
 
     const result = await llmExtract('example transcript');
 
@@ -39,20 +49,20 @@ describe('llmExtract', () => {
   });
 
   it('rejects when LLM returns malformed JSON with no retries remaining', async () => {
-    vi.mocked(routeLlm).mockResolvedValue({ text: 'not json at all', model: 'llama3.1:8b', cached: false });
+    mockRouteLlm('not json at all');
 
     await expect(llmExtract('example transcript')).rejects.toThrow();
   });
 
   it('rejects when JSON is valid but summary is empty', async () => {
     const badSummary = JSON.stringify({ ideas: ['idea'], skills: [], summary: '' });
-    vi.mocked(routeLlm).mockResolvedValue({ text: badSummary, model: 'llama3.1:8b', cached: false });
+    mockRouteLlm(badSummary);
 
     await expect(llmExtract('example transcript')).rejects.toThrow();
   });
 
   it('returns control trace metadata with accept decision on success', async () => {
-    vi.mocked(routeLlm).mockResolvedValue({ text: VALID_RESPONSE, model: 'llama3.1:8b', cached: false });
+    mockRouteLlm(VALID_RESPONSE);
 
     const result = await llmExtractWithTrace('example transcript');
 
@@ -62,11 +72,20 @@ describe('llmExtract', () => {
       'control:extract-knowledge',
     ]);
     expect(result.runTrace.decisions.at(-1)?.type).toBe('accept');
-    expect(result.runTrace.llm?.model).toBe('ollama');
+    expect(result.runTrace.llm?.model).toBe('llama3.1:8b');
+    expect(result.runTrace.llm?.provider).toBe('ollama');
+    expect(result.runTrace.llm?.duration_ms).toBe(150);
+    expect(result.llmMeta).toEqual({
+      model: 'llama3.1:8b',
+      provider: 'ollama',
+      durationMs: 150,
+      promptTokens: undefined,
+      completionTokens: undefined,
+    });
   });
 
   it('truncates long inputs before calling the model', async () => {
-    vi.mocked(routeLlm).mockResolvedValue({ text: VALID_RESPONSE, model: 'llama3.1:8b', cached: false });
+    mockRouteLlm(VALID_RESPONSE);
 
     await llmExtractWithTrace('x'.repeat(6_500));
 

@@ -28,6 +28,10 @@ export interface ControlStage {
 
 export interface ControlLlmTrace {
   model?: string;
+  provider?: string;
+  duration_ms?: number;
+  prompt_tokens?: number;
+  completion_tokens?: number;
   raw_output?: string;
   parsed: boolean;
 }

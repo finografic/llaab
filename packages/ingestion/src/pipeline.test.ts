@@ -71,6 +71,11 @@ describe('runIngestionPipeline', () => {
       ideas: [],
       skills: [],
       summary: 'usable summary',
+      llmMeta: {
+        model: 'llama3.1:8b',
+        provider: 'ollama',
+        durationMs: 150,
+      },
       runTrace: {
         stages: [
           {
@@ -86,7 +91,9 @@ describe('runIngestionPipeline', () => {
           },
         ],
         llm: {
-          model: 'ollama',
+          model: 'llama3.1:8b',
+          provider: 'ollama',
+          duration_ms: 150,
           raw_output: '{"summary":"usable summary"}',
           parsed: true,
         },
@@ -201,6 +208,11 @@ describe('runIngestionPipeline', () => {
       ideas: [],
       skills: [],
       summary: 'usable summary',
+      llmMeta: {
+        model: 'llama3.1:8b',
+        provider: 'ollama',
+        durationMs: 150,
+      },
       runTrace: {
         stages: [
           {
@@ -216,7 +228,9 @@ describe('runIngestionPipeline', () => {
           },
         ],
         llm: {
-          model: 'ollama',
+          model: 'llama3.1:8b',
+          provider: 'ollama',
+          duration_ms: 150,
           raw_output: '{"summary":"usable summary"}',
           parsed: true,
         },

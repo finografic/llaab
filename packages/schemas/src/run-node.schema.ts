@@ -22,6 +22,10 @@ const RunDecisionSchema = z.object({
 
 const RunLlmTraceSchema = z.object({
   model: z.string().optional(),
+  provider: z.string().optional(),
+  duration_ms: z.number().int().nonnegative().optional(),
+  prompt_tokens: z.number().int().nonnegative().optional(),
+  completion_tokens: z.number().int().nonnegative().optional(),
   raw_output: z.string().optional(),
   parsed: z.boolean().optional(),
 });

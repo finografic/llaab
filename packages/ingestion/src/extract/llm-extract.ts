@@ -17,8 +17,17 @@ export interface ExtractionRunTrace {
   llm?: ControlLlmTrace;
 }
 
+export interface LlmExtractionMeta {
+  model: string;
+  provider: string;
+  durationMs: number;
+  promptTokens?: number;
+  completionTokens?: number;
+}
+
 export interface ExtractedKnowledgeWithTrace extends ExtractedKnowledge {
   runTrace: ExtractionRunTrace;
+  llmMeta: LlmExtractionMeta;
 }
 
 const ExtractedKnowledgeSchema = z.object({
@@ -60,6 +69,7 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
     cwd: process.cwd(),
     input,
   });
+  let llmMeta: LlmExtractionMeta | undefined;
   const controlled = await execute({
     task: 'extract-knowledge',
     input: prepared.preparedText,
@@ -70,17 +80,37 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
       onInvalid: 'retry',
       onFailure: 'retry',
     },
-    model: 'ollama',
+    model: 'extract',
     run: async () => {
-      const { text } = await routeLlm('extract', prepared.preparedText, {
+      const result = await routeLlm('extract', prepared.preparedText, {
         system: EXTRACTION_SYSTEM_PROMPT,
       });
-      return parseJsonFromText(text);
+      llmMeta = {
+        model: result.model,
+        provider: result.provider,
+        durationMs: result.durationMs,
+        promptTokens: result.promptTokens,
+        completionTokens: result.completionTokens,
+      };
+      return parseJsonFromText(result.text);
     },
   });
+  if (!llmMeta) throw new Error('LLM extraction completed without metadata');
+
+  const llmTrace: ControlLlmTrace | undefined = controlled.llm
+    ? {
+        ...controlled.llm,
+        model: llmMeta.model,
+        provider: llmMeta.provider,
+        duration_ms: llmMeta.durationMs,
+        prompt_tokens: llmMeta.promptTokens,
+        completion_tokens: llmMeta.completionTokens,
+      }
+    : undefined;
 
   return {
     ...controlled.data,
+    llmMeta,
     runTrace: {
       stages: [
         ...prepared.stages,
@@ -92,7 +122,7 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
         },
       ],
       decisions: controlled.decisions,
-      llm: controlled.llm,
+      llm: llmTrace,
     },
   };
 }

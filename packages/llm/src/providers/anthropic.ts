@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { LlmCompleteOptions } from '../types.js';
+import type { ProviderResult } from './types.js';
 
 let client: Anthropic | null = null;
 
@@ -10,7 +11,7 @@ function getClient(): Anthropic {
   return client;
 }
 
-export async function anthropicComplete(prompt: string, opts: LlmCompleteOptions): Promise<string> {
+export async function anthropicComplete(prompt: string, opts: LlmCompleteOptions): Promise<ProviderResult> {
   const response = await getClient().messages.create({
     model: opts.model,
     max_tokens: opts.maxTokens ?? 1024,
@@ -20,7 +21,11 @@ export async function anthropicComplete(prompt: string, opts: LlmCompleteOptions
 
   const block = response.content[0];
   if (block?.type !== 'text') throw new Error('Unexpected response type from Anthropic');
-  return block.text;
+  return {
+    text: block.text,
+    promptTokens: response.usage.input_tokens,
+    completionTokens: response.usage.output_tokens,
+  };
 }
 
 export async function* anthropicStream(prompt: string, opts: LlmCompleteOptions): AsyncGenerator<string> {

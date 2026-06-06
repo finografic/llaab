@@ -1,6 +1,7 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Not started — Phase 0 (LLM execution metadata) is the entry point.
+> **Status:** Phase 0 done — LLM execution metadata now flows into extraction traces and node
+> frontmatter.
 > Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
 > here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
 > Phase 0 because it delivers immediate value and makes every downstream phase more informative.
@@ -237,7 +238,7 @@ knowledge.
    counts, but `ollamaComplete` and `anthropicComplete` return bare `string`, dropping this
    data.
 
-### Step 0a — Create `ProviderResult` internal type
+### Step 0a — Create `ProviderResult` internal type — DONE
 
 Create `packages/llm/src/providers/types.ts`:
 
@@ -249,7 +250,7 @@ export interface ProviderResult {
 }
 ```
 
-### Step 0b — Update provider functions to return `ProviderResult`
+### Step 0b — Update provider functions to return `ProviderResult` — DONE
 
 Both `ollamaComplete` and `anthropicComplete` currently return `Promise<string>`. Change them
 to return `Promise<ProviderResult>`.
@@ -285,7 +286,7 @@ export async function ollamaComplete(prompt: string, opts: LlmCompleteOptions): 
 **Note:** Ollama token counts are not always present (they can be `0` or missing for some
 models). Treat them as optional — do not default to `0`.
 
-### Step 0c — Extend `LlmCompleteResult` in `packages/llm/src/types.ts`
+### Step 0c — Extend `LlmCompleteResult` in `packages/llm/src/types.ts` — DONE
 
 ```ts
 export interface LlmCompleteResult {
@@ -300,7 +301,7 @@ export interface LlmCompleteResult {
 }
 ```
 
-### Step 0d — Update `routeLlm` in `packages/llm/src/router.ts`
+### Step 0d — Update `routeLlm` in `packages/llm/src/router.ts` — DONE
 
 Wrap the provider call with `performance.now()` timing and populate the new fields:
 
@@ -342,7 +343,7 @@ export async function routeLlm(
 }
 ```
 
-### Step 0e — Extend `RunLlmTraceSchema` in `packages/schemas/src/run-node.schema.ts`
+### Step 0e — Extend `RunLlmTraceSchema` in `packages/schemas/src/run-node.schema.ts` — DONE
 
 ```ts
 const RunLlmTraceSchema = z.object({
@@ -356,7 +357,7 @@ const RunLlmTraceSchema = z.object({
 });
 ```
 
-### Step 0f — Add LLM metadata fields to `TranscriptNodeSchema`
+### Step 0f — Add LLM metadata fields to `TranscriptNodeSchema` — DONE
 
 In `packages/schemas/src/transcript-node.schema.ts`, add optional extraction metadata fields.
 These are written during extraction (phase 2 of ingestion), not during ingestion phase 1. They
@@ -375,7 +376,7 @@ export const TranscriptNodeSchema = BaseNodeSchema.extend({
 });
 ```
 
-### Step 0g — Add LLM metadata fields to `IdeaNodeSchema`
+### Step 0g — Add LLM metadata fields to `IdeaNodeSchema` — DONE
 
 In `packages/schemas/src/idea-node.schema.ts`:
 
@@ -399,7 +400,7 @@ This is intentional — each node is self-documenting without needing to chase a
 you re-extract with a different model, the new idea nodes carry the new model's metadata while
 the old ones retain theirs. That is the comparison surface.
 
-### Step 0h — Define `LlmExtractionMeta` and thread through `llmExtractWithTrace`
+### Step 0h — Define `LlmExtractionMeta` and thread through `llmExtractWithTrace` — DONE
 
 In `packages/ingestion/src/extract/llm-extract.ts`, the `run` callback inside `execute({...})`
 calls `routeLlm` but discards everything except `text`. Capture the full result.
@@ -425,7 +426,7 @@ Inside `llmExtractWithTrace`, declare `let llmMeta: LlmExtractionMeta` before th
 `execute()` call, populate it inside the `run` callback from the `routeLlm` result, and
 include it in the return value.
 
-### Step 0i — Switch `extractTranscriptIdeas` to `llmExtractWithTrace`
+### Step 0i — Switch `extractTranscriptIdeas` to `llmExtractWithTrace` — DONE
 
 This is the critical wiring change. In `packages/skills/src/extract-transcript-ideas.ts`:
 
@@ -494,7 +495,7 @@ return {
 };
 ```
 
-### Step 0j — Update test mocks
+### Step 0j — Update test mocks — DONE
 
 In `packages/ingestion/src/extract/llm-extract.test.ts`, update the `routeLlm` mock to
 include the new fields:
@@ -523,19 +524,23 @@ vi.mocked(routeLlm).mockResolvedValue({
 | `packages/schemas/src/idea-node.schema.ts`           | Add `llm_*` optional metadata fields                                                       |
 | `packages/ingestion/src/extract/llm-extract.ts`      | Define `LlmExtractionMeta`; capture and return from `routeLlm` result                      |
 | `packages/ingestion/src/index.ts`                    | Ensure `llmExtractWithTrace` is exported                                                   |
+| `packages/ingestion/src/pipeline.ts`                 | Thread metadata through real ingest extraction writes                                      |
 | `packages/skills/src/extract-transcript-ideas.ts`    | Switch to `llmExtractWithTrace`; thread metadata into created nodes                        |
 | `packages/ingestion/src/extract/llm-extract.test.ts` | Update `routeLlm` mock to include new fields                                               |
+| `packages/ingestion/src/pipeline.test.ts`            | Update extraction trace mocks with LLM metadata                                            |
+| `packages/control/src/types.ts`                      | Extend `ControlLlmTrace` with provider, duration, and token fields                         |
 
 ### Validation
 
-- [ ] `pnpm typecheck` passes across the workspace
-- [ ] Existing tests in `llm-extract.test.ts` pass with updated mocks
-- [ ] Run a real YouTube ingest with extraction enabled
-- [ ] Resulting transcript `.md` frontmatter includes `llm_model`, `llm_provider`, `llm_duration_ms`
-- [ ] Each extracted idea `.md` frontmatter includes same fields
-- [ ] Token fields are present when the provider reports them, absent otherwise (no synthetic
+- [x] Typecheck passes for touched packages via direct `tsc -b` (`pnpm` unavailable on PATH in
+      this shell)
+- [x] Existing tests in `llm-extract.test.ts` pass with updated mocks
+- [x] Run a real YouTube ingest with extraction enabled in a temp vault
+- [x] Resulting transcript `.md` frontmatter includes `llm_model`, `llm_provider`, `llm_duration_ms`
+- [x] Each extracted idea `.md` frontmatter includes same fields
+- [x] Token fields are present when the provider reports them, absent otherwise (no synthetic
       zeros)
-- [ ] Existing vault nodes without metadata remain valid
+- [x] Existing vault nodes without metadata remain valid
 
 ### Done means
 

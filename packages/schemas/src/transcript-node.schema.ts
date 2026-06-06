@@ -18,6 +18,11 @@ export const TranscriptNodeSchema = BaseNodeSchema.extend({
   structured_paragraphs: z.number().int().nonnegative().optional(),
   extracted_idea_ids: z.array(NodeIdSchema).default([]),
   extracted_skill_ids: z.array(NodeIdSchema).default([]),
+  llm_model: z.string().optional(),
+  llm_provider: z.string().optional(),
+  llm_duration_ms: z.number().int().nonnegative().optional(),
+  llm_prompt_tokens: z.number().int().nonnegative().optional(),
+  llm_completion_tokens: z.number().int().nonnegative().optional(),
 });
 
 export type TranscriptNode = z.infer<typeof TranscriptNodeSchema>;
