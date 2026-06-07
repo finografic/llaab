@@ -3,6 +3,9 @@
 Documents the ingestion pipeline for YouTube videos: how transcripts are fetched, parsed, and
 stored as `transcript` nodes in the vault.
 
+For the broader orchestration architecture around harness prep, control, command routing, and run
+observability, see [07 — Orchestration and adapters](07_ORCHESTRATION_AND_ADAPTERS.md).
+
 ---
 
 ## Overview
@@ -161,25 +164,28 @@ A new paragraph starts when **both** conditions are met:
 
 After the transcript is stored, `ingestYouTube` calls `extractKnowledgeFromTranscript`:
 
-```
-plainText (from parse phase)
-    │
-    ▼
-llmExtractWithTrace()    — routeLlm('extract', ...) → local-mid model (default: llama3.2:3b)
-    │
-    ▼
-control.execute()        — schema-validates JSON output; retries once on failure
-    │
-    ▼
-IdeaNode(s) created      — one per extracted idea phrase; origin: 'extracted', source_id: transcriptId
-    │
-    ▼
-updateNode(transcript)   — writes summary + merges autoTag(title, summary) into tags
+```mermaid
+flowchart TD
+  A["plainText from parse phase"] --> B["prepareExtractionInput(...)"]
+  B --> C["token estimate + chunk-if-needed"]
+  C --> D["llmExtractWithTrace(...)"]
+  D --> E["control.execute(...)"]
+  E --> F["routeLlm('extract', ...)"]
+  F --> G["ExtractedKnowledgeSchema"]
+  G --> H["IdeaNode(s) created"]
+  H --> I["merge domain tags + LLM content tags + manual tags"]
+  I --> J["updateNode(transcript)"]
 ```
 
 Extraction uses the `local-mid` model tier. Override with `LLAAB_LOCAL_MID_MODEL` in `.env`.
 If extraction fails, the transcript is unaffected — the error is logged and returned as
 `extractionError` in the API response.
+
+Generated ideas and updated transcripts merge three tag sources:
+
+- domain tags from `autoTag(title, body)`
+- normalized LLM content tags from extraction output
+- any existing/manual tags already present on the node
 
 ---
 

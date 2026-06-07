@@ -15,6 +15,10 @@ It focuses on:
 - strengthening **validation and observability**
 - establishing a **clear Phase 2 starting point**
 
+For the current completed orchestration architecture, including command bus, capability routing,
+harness prep, Terminal Panel, and adapter-like providers, see
+[07 — Orchestration and adapters](07_ORCHESTRATION_AND_ADAPTERS.md).
+
 ---
 
 ## 1. Core Architectural Shift

@@ -23,59 +23,62 @@ When an item is done, move it to the Done section at the bottom with a completio
 
 ## P0 — Active
 
-Nothing active — orchestration Phase 2 (LLM provider interface) is the next item to pick up.
+### Navigation Pages Unlocked by Orchestration
+
+Build the next simple frontend pages for nav items that were locked while orchestration, providers,
+capabilities, command bus, and diagnostics were still missing. Start with read-only observability
+pages before adding new ingestion types.
+
+Detail: [`docs/todo/TODO_NAV_UNLOCKED_PAGES.md`](./TODO_NAV_UNLOCKED_PAGES.md)
 
 ---
 
 ## P1 — Next Up
 
-### LLM provider interface
+### Execution UI Surfaces
 
-Formalize the provider contract in `packages/llm` now that Phase 0 established provider result
-metadata and Phase 1 validated the extraction path. This keeps future providers behind a stable
-interface before command routing and diagnostics expand.
+After provider/system observability pages exist, add the first execution pages unlocked by the
+agent loop and command bus: `/agent`, `/execute/skills`, and `/pipeline/extract`.
 
-Detail: [`docs/todo/TODO_ORCHESTRATION_V5.md`](./TODO_ORCHESTRATION_V5.md#phase-2--formalize-the-llm-provider-interface)
+Detail: [`docs/todo/TODO_NAV_UNLOCKED_PAGES.md`](./TODO_NAV_UNLOCKED_PAGES.md#phase-2--execution-pages)
 
-### Harness Layer — Token-Aware Control Pipeline
+### Extracted SkillNode Creation
 
-Real-flow validation showed that the current 6 000-character truncation succeeds but drops too
-much transcript content. A 19 207-char YouTube transcript retained only 31.4% of the text while
-using 18.8% of the `llama3:latest` context window. Promote token-aware counting, chunking, and
-context assembly ahead of Terminal / Command Panel.
+The LLM extraction schema already has a `skills` array, but the pipeline currently creates
+`IdeaNode`s only. Decide and implement whether extracted skills should become candidate
+`SkillNode`s, including provenance, status, tags, and review UX.
 
-Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
+Reference: [`NEXT_STEPS.md`](./NEXT_STEPS.md#open-questions-carry-forward-from-architecture)
 
 ---
 
 ## P2 — Planned
 
-### Terminal / Command Panel
+### Adapter Expansion Beyond the Foundation
 
-Typed command bus (WS) + xterm.js UI. Not a shell — a controlled execution surface for vault
-ops, LLM calls, and agent runs. Gated shell adapter as opt-in power-user mode.
+The adapter foundation is done: providers, capabilities, command handlers, OpenCode registration,
+and shell gating exist. Future work is adding more external execution adapters only when there is
+a concrete workflow driver.
 
-Priority rule: Phase 1 validation showed token-aware extraction prep is the sharper blocker, so
-Terminal Panel waits until the promoted harness extension is no longer blocking extraction
-quality.
+Detail: [`docs/todo/TODO_ADAPTERS.md`](./TODO_ADAPTERS.md)
 
-Detail: [`docs/todo/TODO_TERMINAL_PANEL.md`](./TODO_TERMINAL_PANEL.md)
+### Harness Package Graduation
+
+Token-aware extraction prep exists locally in LLAAB. The remaining harness work is deciding what
+should graduate into `@finografic/ai-harness` as reusable package functionality.
+
+Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
+
+### Search and Retrieval Discipline
+
+Define search/retrieval rules before implementing `/vault/search` or broader RAG behavior. Start
+with simple full-text search only if it does not conflict with future context assembly.
+
+Reference: [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) §3
 
 ---
 
 ## P3 — Backlog / Ideas
-
-### Retrieval & Context-Assembly Discipline
-
-Define per-workflow context rules before the vault outgrows naive prompt stuffing. Distinguish
-direct source material, derived summaries, operational instructions, and execution history.
-Decide when retrieval runs: before model call, after deterministic cleaning, or after failed
-validation. First driver: transcript extraction as transcript volume grows.
-
-Reference: [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) §3,
-[`TODO_ORCHESTRATION_V4.md`](./TODO_ORCHESTRATION_V4.md)
-
----
 
 ### Candidate / Promotion States for LLM-Created Nodes
 
@@ -102,6 +105,12 @@ Scope TBD pending research into Karpathy Pattern's data format requirements.
 new content appears. Agent loop registry already has the slot reserved (commented out).
 Trigger: `llaab agent run` or `POST /api/agent/run` on a user-controlled schedule.
 
+### Article and Document Ingestion
+
+Add `/ingest/article` and `/ingest/document` only after the nav-unlocked observability pages and
+execution pages are in place. These need new parsing/fetching paths and should preserve the
+transcript-first rule where applicable.
+
 ### Library Watch
 
 Track npm packages, frameworks, Homebrew tools, and other ecosystem dependencies as a new
@@ -113,6 +122,16 @@ date, version. `follow: true` nodes auto-refresh stats on `llaab agent run` via 
 Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
 
 ## Done
+
+### Orchestration and adapter foundation
+
+Completed 2026-06-07. LLAAB now has LLM provider interfaces, execution metadata, token-aware
+extraction prep, typed command bus, Terminal Panel vertical slice, capability routing, CLI
+diagnostics, OpenCode executor registration, session-gated `shell.exec`, and a consolidated
+architecture reference.
+
+Detail: [`docs/todo/DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md),
+[`docs/07_ORCHESTRATION_AND_ADAPTERS.md`](../07_ORCHESTRATION_AND_ADAPTERS.md)
 
 ### Install and validate `@finografic/ai-harness` in the transcript extraction path
 

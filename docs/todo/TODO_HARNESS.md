@@ -1,7 +1,9 @@
 # TODO — Harness Integration
 
-> **Status:** Phase 1 validation complete (2026-06-07). Token-aware harness extension is promoted
-> ahead of Terminal Panel.
+> **Status:** Token-aware extraction prep has been implemented as part of the orchestration work in
+> [DONE_ORCHESTRATION.md](DONE_ORCHESTRATION.md). The stable architecture reference is now
+> [07 — Orchestration and adapters](../07_ORCHESTRATION_AND_ADAPTERS.md). Keep remaining notes here
+> for future `@finografic/ai-harness` package evolution.
 
 ## Summary
 

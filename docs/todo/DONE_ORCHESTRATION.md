@@ -1,4 +1,4 @@
-# TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
+# DONE — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
 > **Status:** DONE — Phases 0–10 are complete.
 > Supersedes `TODO_ORCHESTRATION_V4.md`, `TODO_LLM_METADATA.md`, and the Phase 6b auto-tagging

@@ -163,11 +163,12 @@ Objects from `listNodes()` are already validated `LabNode` values. Use `readNode
 
 ## Related docs
 
-| Doc                                                         | Topics                                                                               |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [02 — Node types and schemas](02_NODE_TYPES_and_SCHEMAS.md) | Per-type fields, unions, relationships                                               |
-| [03 — Core utilities](03_CORE_UTILITIES.md)                 | `parseFrontmatter`, `createNode`, `writeNode`, `updateNode`, `listNodes`, `readNode` |
-| [04 — Ideas to skills](04_IDEAS_TO_SKILLS.md)               | `captureIdea`, inbox, auto-tags                                                      |
+| Doc                                                                 | Topics                                                                               |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [02 — Node types and schemas](02_NODE_TYPES_and_SCHEMAS.md)         | Per-type fields, unions, relationships                                               |
+| [03 — Core utilities](03_CORE_UTILITIES.md)                         | `parseFrontmatter`, `createNode`, `writeNode`, `updateNode`, `listNodes`, `readNode` |
+| [04 — Ideas to skills](04_IDEAS_TO_SKILLS.md)                       | `captureIdea`, inbox, auto-tags                                                      |
+| [07 — Orchestration and adapters](07_ORCHESTRATION_AND_ADAPTERS.md) | Command bus, adapters, harness, control, routes, and run traces                      |
 
 ---
 

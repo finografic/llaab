@@ -1,7 +1,10 @@
 # TODO — Terminal / Command Panel
 
-> **Status:** Not started. `apps/server` and LLM layer are now done — terminal is unblocked.
-> Tertiary priority — pick up after Agent Loop Infrastructure or as a parallel workstream.
+> **Status:** Vertical slice completed by the orchestration work in
+> [DONE_ORCHESTRATION.md](DONE_ORCHESTRATION.md): `/terminal` WebSocket, typed command bus,
+> `ai.run`, `agent.run`, `fs.read`, `fs.list`, and session-gated `shell.exec` are implemented.
+> The stable architecture reference is now
+> [07 — Orchestration and adapters](../07_ORCHESTRATION_AND_ADAPTERS.md).
 
 ---
 

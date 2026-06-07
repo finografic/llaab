@@ -3,15 +3,20 @@
 > Maintained working list. Larger initiatives live in [`ROADMAP.md`](./ROADMAP.md) — this doc
 > covers concrete near-term tasks, manual testing, and small fixes not large enough for ROADMAP.
 >
-> Last updated: 2026-06-07 (Phase 1 harness validation)
+> Last updated: 2026-06-07 (post-orchestration roadmap cleanup)
 
 ---
 
 ## Manual Testing Checklist
 
-Things to verify end-to-end after recent pipeline changes:
+Things to verify end-to-end after recent orchestration and UI changes:
 
 - [x] Ingest a fresh YouTube URL → confirm transcript + source nodes created
+- [ ] Open `/terminal` → confirm socket connects and typed commands stream output
+- [ ] Run `ai.run extract "..."` from `/terminal` → confirm a `RunNode` is created
+- [ ] Run `shell.exec --enable-session --confirm`, then `shell.exec --confirm node --version`,
+      then `shell.exec --disable-session`
+- [ ] View `/vault/runs/[id]` for a terminal command → confirm command metadata is readable
 - [ ] Verify dark mode renders correctly across all pages (no light backgrounds)
 - [ ] Verify badge colors look correct in dark mode (nodes/[id], runs, sources, transcripts)
 - [ ] Verify `/ingest` drag-and-drop still works after the shadcn migration
@@ -30,9 +35,17 @@ Things to verify end-to-end after recent pipeline changes:
 
 ## Up Next
 
-- [x] **LLM execution metadata in frontmatter** — write `llm_model`, `llm_duration_ms`,
-      `llm_prompt_tokens`, `llm_completion_tokens` to transcript and idea nodes at extraction time.
-      See ROADMAP P2 for full implementation boundary.
+- [ ] **Build nav-unlocked observability pages** — start with `/llm/providers`,
+      `/llm/capabilities`, `/system/doctor`, and `/system/harness`.
+      Detail: [`TODO_NAV_UNLOCKED_PAGES.md`](./TODO_NAV_UNLOCKED_PAGES.md).
+
+- [ ] **Update nav locks as pages land** — only flip `live: true` in
+      `apps/client/src/lib/nav-menu.config.ts` after the page/route exists and passes
+      `astro check`.
+
+- [ ] **Decide extracted SkillNode behavior** — extraction returns `skills`, but the pipeline
+      creates `IdeaNode`s only. Decide whether generated skill phrases become candidate
+      `SkillNode`s, and what review/status model they should use.
 
 ---
 
@@ -48,9 +61,9 @@ Things to verify end-to-end after recent pipeline changes:
       to their transcript via `related` (in addition to `source_id`). Low priority — `source_id` is
       the primary provenance link.
 
-- [ ] **Expand LLM auto-tag triggers** — add conservative model-family terms such as `gemma`,
-      `llama`, `mistral`, `qwen`, `phi`, and `gemini` to the `d:llm` taxonomy trigger set so
-      transcript/idea nodes about specific models do not miss the LLM domain tag.
+- [x] **Expand LLM auto-tag triggers** — model-family terms such as `gemma`, `llama`,
+      `mistral`, `qwen`, `phi`, and `gemini` now contribute to `d:llm` tagging through the
+      Phase 6b auto-tag expansion.
 
 - [x] **shadcn initial-setup audit** — fixed dark mode (`data-theme` → `class="dark"`), re-enabled
       `app.css`, removed duplicate framework imports, fixed light-mode badge hex colors across 6
@@ -90,14 +103,12 @@ Things to verify end-to-end after recent pipeline changes:
 - [x] **Capture one short implementation note after validation** — update `TODO_HARNESS.md` with:
       what was tested, what failed or held up, and whether Phase 2 or Terminal should come next.
 
-### Phase 1 harness verdict
+### Orchestration verdict
 
-Real YouTube validation succeeded, and persisted extraction RunNodes now include informative
-harness stage payloads. The current 6 000-character cap retained only 31.4% of a 19 207-char
-transcript while using 18.8% of the `llama3:latest` context window, so token-aware
-chunking/context assembly is the next extraction-quality blocker. Keep `prepareExtractionInput`
-local until the boundary contract is clearer, but promote the token-aware harness extension ahead
-of Terminal Panel.
+The orchestration foundation is complete: provider interface, LLM metadata, token-aware extraction
+prep, command bus, Terminal Panel, capability routing, diagnostics, OpenCode registration, and
+session-gated `shell.exec`. The next highest-value work is exposing this architecture through
+small nav pages rather than adding another backend layer immediately.
 
 ---
 
@@ -105,27 +116,31 @@ of Terminal Panel.
 
 See [`ROADMAP.md`](./ROADMAP.md) for full descriptions. Suggested order:
 
-1. **P1 — LLM provider interface** — next orchestration phase after metadata + harness validation
-2. **P1 — Harness layer extension** — promoted ahead of Terminal Panel after Phase 1 validation
-3. **P2 — Terminal / Command Panel** — wait until token-aware extraction prep is no longer the
-   sharper blocker
-4. **P3 — Source Auto-Follow** — agent loop slot already reserved; needs scheduled trigger story
-5. **P3 — Library Watch** — npmx.dev logic is portable; `PackageNode` schema needed first
-6. **P3 — Karpathy graph** — defer until vault has meaningful node density (50+ nodes)
+1. **P0 — Nav-unlocked observability pages** — `/llm/providers`, `/llm/capabilities`,
+   `/system/doctor`, `/system/harness`
+2. **P1 — Execution pages** — `/agent`, `/execute/skills`, `/pipeline/extract`
+3. **P1 — Extracted SkillNode creation** — decide and implement skill promotion from extraction
+4. **P2 — Adapter expansion** — only when a concrete workflow needs a new external executor
+5. **P2 — Harness package graduation** — move reusable token/chunk/context utilities into
+   `@finografic/ai-harness` when the package boundary is clear
+6. **P2 — Search and retrieval discipline** — design before unlocking `/vault/search`
+7. **P3 — Source Auto-Follow** — agent loop slot exists; needs explicit trigger story
+8. **P3 — Library Watch** — npmx.dev logic is portable; `PackageNode` schema needed first
+9. **P3 — Karpathy graph** — defer until vault has meaningful node density (50+ nodes)
 
 ---
 
 ## Open Questions (carry-forward from architecture)
 
-- **Harness priority call** — answered 2026-06-07: token-aware harness work is now sharper than
-  Terminal Panel for extraction quality.
+- **Harness priority call** — answered 2026-06-07: token-aware extraction prep was completed in
+  the orchestration work. Remaining harness work is package-boundary cleanup, not a blocker for
+  nav observability pages.
 
 - **Tag origin tracking** — separate `autoTags` / `manualTags` fields vs. derive post-hoc?
   Decide before building solid/outline tag UI. Tracked in `DONE_TAXONOMY.md`.
 
-- **LLM dev tools** — ping model, check connection, list installed Ollama models in UI.
-  `/llm` now covers status/routing; decide whether a lightweight global indicator (header/footer)
-  is still useful.
+- **LLM dev tools** — `/llm` covers status/routing; `/llm/providers`, `/llm/capabilities`, and
+  `/system/doctor` are now the preferred surfaces for deeper diagnostics.
 
 - **Skill extraction from transcripts** — the LLM currently extracts `ideas` and `skills` arrays
   from transcripts, but only `IdeaNode`s are created. `SkillNode`s from extraction are not yet

@@ -192,10 +192,10 @@ via regex. All ingest runs apply `d:ingest` + `autoTag`. Source nodes carry no d
 ## Roadmap & Planning
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
-Current orchestration plan: `docs/todo/TODO_ORCHESTRATION_V5.md`.
+Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
 UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07. P0 is empty.
 Orchestration phases 0–10 are complete. The Phase 6b addendum content is consolidated into
-`TODO_ORCHESTRATION_V5.md`; there is no separate addendum tracking file.
+`DONE_ORCHESTRATION.md`; there is no separate addendum tracking file.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.
 
 ## Local Dev Ops
@@ -216,5 +216,5 @@ last known-good build on failure. `.claude/settings.json` holds a project-level 
 
 - Tag origin tracking: separate `autoTags` / `manualTags` fields vs. post-hoc derivation?
 - Skill extraction: LLM returns `skills[]` but only `IdeaNode`s are created — should extracted skills become `SkillNode`s?
-- After real transcript testing, does the broader harness extension become a more urgent blocker
-  than Terminal / Command Panel?
+- Harness package graduation: which token/chunk/context helpers should move from LLAAB-local
+  extraction prep into `@finografic/ai-harness`?

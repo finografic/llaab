@@ -1,5 +1,10 @@
 # LLAAB Adapter Architecture Plan
 
+> **Status:** Substantially implemented by the orchestration work in
+> [DONE_ORCHESTRATION.md](DONE_ORCHESTRATION.md). The stable architecture reference is now
+> [07 — Orchestration and adapters](../07_ORCHESTRATION_AND_ADAPTERS.md). Keep this file as
+> historical planning context for future adapter expansion.
+
 ## Goal
 
 Introduce an adapter pattern so LLAAB remains the portable memory, context, planning, and skill layer, while external tools provide execution.

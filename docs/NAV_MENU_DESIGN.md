@@ -85,14 +85,14 @@ after model upgrades. The future ingestion types (article, document) align with 
 | ------------ | ------------------------------------------------------------- | ----------------- | ---------- |
 | **Runs**     | Inspect agent execution traces and skill run history          | `/vault/runs`     | Live       |
 | **Agent**    | Trigger a one-shot agent run and view status                  | `/agent`          | `[future]` |
-| **Terminal** | Command panel — dispatch typed commands with streaming output | `/terminal`       | `[future]` |
+| **Terminal** | Command panel — dispatch typed commands with streaming output | `/terminal`       | Live       |
 | **Skills**   | Browse registered skills and their capabilities               | `/execute/skills` | `[future]` |
 
 ### Design notes
 
 Runs already exists at `/vault/runs` — it moves here to sit alongside the execution surfaces
-that the orchestration plan introduces. The Terminal item maps to Phase 4 of the orchestration
-plan (command panel vertical slice). Agent is the dedicated surface for `POST /api/agent/run`
+that the orchestration plan introduced. The Terminal item is live as the typed command bus
+vertical slice. Agent is the dedicated surface for `POST /api/agent/run`
 with status feedback, currently only accessible via API or CLI. Skills is the registry browser
 that becomes relevant once capability-based routing (Phase 6) lands and skills declare their
 capabilities.
@@ -112,10 +112,8 @@ capabilities.
 ### Design notes
 
 The current `/llm` page already shows the task → tier → model routing map with installed/missing
-dots and the Ollama model list. Providers maps to the `LlmProvider` interface from Phase 1 of
-the orchestration plan — once providers are formalized, this page shows each provider's `id`,
-`displayName`, `isAvailable()` status, and configured models. Capabilities maps to Phase 6 —
-the queryable capability registry across providers and skills.
+dots and the Ollama model list. Providers and capabilities are now architecture-ready because the
+provider interface and capability map exist; the remaining work is route/page implementation.
 
 ---
 
@@ -133,10 +131,9 @@ the queryable capability registry across providers and skills.
 
 Icons is currently a homepage card linking to the icons service (port 5001 / lucide-manager on
 5199). It makes more sense as a System item since it's a dev tool, not a knowledge feature.
-Doctor maps to Phase 7's `llaab doctor` CLI command — this would be the web equivalent showing
-provider availability, API key status, binary paths, and capability gaps. Harness is a lighter
-addition: a simple view of the current harness prep pipeline configuration and the Phase 0
-validation status (what truncation limit is active, whether token-aware prep is enabled).
+Doctor maps to the `llaab doctor` CLI command — this would be the web equivalent showing provider
+availability, API key status, binary paths, and capability gaps. Harness is a lighter addition:
+a simple view of the current harness prep pipeline configuration and validation status.
 
 ---
 
@@ -212,10 +209,10 @@ should have redirects.
 | `/ingest`     | `/ingest` (keep)       | Stays; becomes "Ingest YouTube" in menu |
 | `/llm`        | `/llm` (keep)          | Stays; becomes "Status" in Models menu  |
 | —             | `/agent`               | New — dedicated agent trigger + status  |
-| —             | `/terminal`            | New — command panel (Phase 4)           |
-| —             | `/llm/providers`       | New — provider registry page (Phase 1)  |
-| —             | `/llm/capabilities`    | New — capability browser (Phase 6)      |
-| —             | `/system/doctor`       | New — health check page (Phase 7)       |
+| —             | `/terminal`            | Done — command panel route exists       |
+| —             | `/llm/providers`       | New — provider registry page            |
+| —             | `/llm/capabilities`    | New — capability browser                |
+| —             | `/system/doctor`       | New — health check page                 |
 | —             | `/system/harness`      | New — harness inspector                 |
 | —             | `/vault/search`        | New — full-text vault search            |
 | —             | `/ingest/article`      | New — article ingestion                 |
