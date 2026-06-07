@@ -110,6 +110,10 @@
     color: var(--foreground);
   }
 
+  button {
+    line-height: 1;
+  }
+
   a {
     color: var(--accent);
     text-decoration: none;
@@ -243,6 +247,16 @@
 }
 .tag[data-tag="d:meta"] {
   --tag-color: #22c55e;
+}
+
+/* ── Sonner toasts ──────────────────────────────────────────────────────────── */
+
+:global(.llaab-toast-success) {
+  flex-direction: row-reverse;
+}
+
+:global(.llaab-toast-success [data-icon]) {
+  color: var(--success-text);
 }
 
 /* ── Shared vault badge chips ───────────────────────────────────────────────── */

@@ -4,6 +4,7 @@ import { createNode, deleteNode, getNodeFilePath, listNodes, readNode, VAULT_ROO
 import { extractKnowledgeFromTranscript } from '@llaab/ingestion';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type { CreateNodeBody, ListNodesQuery } from './vault.schema.js';
+import { deleteRunQuerySchema } from './vault.schema.js';
 import type { RunNode, TranscriptNode } from '@llaab/schemas';
 
 export const file = {
@@ -157,6 +158,45 @@ export const discardTranscript = {
 
     await deleteNode('transcript', id);
     return c.json({ success: true });
+  },
+};
+
+export const deleteRun = {
+  path: '/runs/:id' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    const { deleteProduced: deleteProducedParam } = deleteRunQuerySchema.parse({
+      deleteProduced: c.req.query('deleteProduced'),
+    });
+    const deleteProduced = deleteProducedParam === 'true';
+
+    const runPath = getNodeFilePath('run', id);
+    let run: RunNode;
+    try {
+      run = (await readNode(runPath)) as RunNode;
+    } catch {
+      return c.json({ error: 'Run not found' }, 404);
+    }
+
+    let deletedProduced = 0;
+    if (deleteProduced && run.produced_node_ids.length > 0) {
+      const allNodes = await listNodes();
+      const nodesById = new Map(allNodes.map((node) => [node.id, node]));
+
+      for (const nodeId of run.produced_node_ids) {
+        const producedNode = nodesById.get(nodeId);
+        if (!producedNode) continue;
+        try {
+          await deleteNode(producedNode.type, nodeId);
+          deletedProduced++;
+        } catch {
+          /* best-effort */
+        }
+      }
+    }
+
+    await deleteNode('run', id);
+    return c.json({ success: true, deletedProduced });
   },
 };
 

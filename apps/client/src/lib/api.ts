@@ -25,3 +25,11 @@ const client = hc<AppType>(baseUrl, {
 
 /** Typed API client. Mirrors the server's /api/* route tree. */
 export const api = client.api;
+
+/** DELETE /api/vault/runs/:id — optional produced-node cascade. */
+export async function deleteVaultRun(id: string, deleteProduced: boolean) {
+  return api.vault.runs[':id'].$delete({
+    param: { id },
+    query: { deleteProduced: deleteProduced ? 'true' : 'false' },
+  } as { param: { id: string } });
+}

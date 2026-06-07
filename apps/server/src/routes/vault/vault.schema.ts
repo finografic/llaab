@@ -25,3 +25,9 @@ export const createNodeBodySchema = z.object({
 });
 
 export type CreateNodeBody = z.infer<typeof createNodeBodySchema>;
+
+export const deleteRunQuerySchema = z.object({
+  deleteProduced: z.enum(['true', 'false']).optional(),
+});
+
+export type DeleteRunQuery = z.infer<typeof deleteRunQuerySchema>;

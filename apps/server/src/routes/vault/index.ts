@@ -2,7 +2,7 @@ import { zValidator } from '@hono/zod-validator';
 
 import { createRouter } from '../../lib/create-app.js';
 import * as routes from './vault.routes.js';
-import { createNodeBodySchema, listNodesQuerySchema } from './vault.schema.js';
+import { createNodeBodySchema, deleteRunQuerySchema, listNodesQuerySchema } from './vault.schema.js';
 
 export const vaultRouter = createRouter()
   .get(routes.file.path, routes.file.handler)
@@ -12,4 +12,5 @@ export const vaultRouter = createRouter()
   .get(routes.nodeRaw.path, routes.nodeRaw.handler)
   .get(routes.transcriptIdeas.path, routes.transcriptIdeas.handler)
   .post(routes.extractTranscript.path, routes.extractTranscript.handler)
-  .delete(routes.discardTranscript.path, routes.discardTranscript.handler);
+  .delete(routes.discardTranscript.path, routes.discardTranscript.handler)
+  .delete(routes.deleteRun.path, zValidator('query', deleteRunQuerySchema), routes.deleteRun.handler);

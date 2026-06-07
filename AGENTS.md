@@ -117,6 +117,7 @@ Hand-rolling what shadcn provides is not permitted.
 ## Learned User Preferences
 
 - For personal or ecosystem-only repos, keep contributor workflow in `docs/process/`; add a root `CONTRIBUTING.md` mainly when a public repo needs GitHub’s usual discoverability.
+- Client `AppLayout` pages must use the canonical `PageLayout` + `<PageHero slot="hero">` pattern (`PageLayout.astro`, `PageHero.astro`); do not hand-roll page headers or alternate hero markup.
 
 ## Learned Workspace Facts
 
