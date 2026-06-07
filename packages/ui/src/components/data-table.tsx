@@ -1,7 +1,11 @@
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { ArrowUpDown } from 'lucide-react';
+import { useMemo } from 'react';
+import type { DataTableColumnAlign, DataTableColumnDef } from '../lib/data-table-utils';
 import type { Column, ColumnDef, TableOptions } from '@tanstack/react-table';
 
+import { minVisibleTableCellClass } from '../lib/breakpoints';
+import { cn } from '../lib/utils';
 import { Button } from './button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 
@@ -13,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
  * matching `data` array.
  */
 export interface DataTableProps<TData, TValue = unknown> {
-  columns: Array<ColumnDef<TData, TValue>>;
+  columns: Array<DataTableColumnDef<TData, TValue>>;
   data: TData[];
   /** Message shown in place of rows when `data` is empty. */
   emptyMessage?: string;
@@ -40,6 +44,31 @@ export function sortableHeader<TData>(label: string) {
   );
 }
 
+function resolveColumnId<TData, TValue>(column: DataTableColumnDef<TData, TValue>): string | undefined {
+  if (column.id) return column.id;
+
+  const accessorKey = 'accessorKey' in column ? column.accessorKey : undefined;
+  if (typeof accessorKey === 'string') return accessorKey;
+
+  return undefined;
+}
+
+const ALIGN_CLASS: Record<DataTableColumnAlign, string> = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+};
+
+function columnAlignClass(align?: DataTableColumnAlign): string {
+  return ALIGN_CLASS[align ?? 'center'];
+}
+
+function toTableColumns<TData, TValue>(
+  columns: Array<DataTableColumnDef<TData, TValue>>,
+): Array<ColumnDef<TData, TValue>> {
+  return columns.map(({ minVisible: _minVisible, align: _align, ...columnDef }) => columnDef);
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /**
@@ -56,9 +85,26 @@ export function DataTable<TData, TValue = unknown>({
   emptyMessage = 'No results.',
   options,
 }: DataTableProps<TData, TValue>) {
+  const tableColumns = useMemo(() => toTableColumns(columns), [columns]);
+
+  const { visibilityClassByColumnId, alignClassByColumnId } = useMemo(() => {
+    const visibility = new Map<string, string>();
+    const align = new Map<string, string>();
+
+    for (const column of columns) {
+      const columnId = resolveColumnId(column);
+      if (!columnId) continue;
+
+      visibility.set(columnId, minVisibleTableCellClass(column.minVisible));
+      align.set(columnId, columnAlignClass(column.align));
+    }
+
+    return { visibilityClassByColumnId: visibility, alignClassByColumnId: align };
+  }, [columns]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
     ...options,
   });
@@ -70,7 +116,13 @@ export function DataTable<TData, TValue = unknown>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead
+                  key={header.id}
+                  className={cn(
+                    visibilityClassByColumnId.get(header.column.id),
+                    alignClassByColumnId.get(header.column.id),
+                  )}
+                >
                   {header.isPlaceholder
                     ? null
                     : flexRender(header.column.columnDef.header, header.getContext())}
@@ -84,7 +136,13 @@ export function DataTable<TData, TValue = unknown>({
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell
+                    key={cell.id}
+                    className={cn(
+                      visibilityClassByColumnId.get(cell.column.id),
+                      alignClassByColumnId.get(cell.column.id),
+                    )}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

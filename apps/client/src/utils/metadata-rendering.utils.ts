@@ -49,8 +49,110 @@ export function extractMetadataUrl(value: string): string | undefined {
   const parsed = parseMetadataJson(value);
   if (!parsed || typeof parsed !== 'object' || parsed === null) return undefined;
 
-  const url = (parsed as Record<string, unknown>).url;
+  const { url } = parsed as Record<string, unknown>;
   return typeof url === 'string' && url.length > 0 ? url : undefined;
+}
+
+function readMetadataStringField(value: unknown, field: string): string | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+
+  const candidate = (value as Record<string, unknown>)[field];
+  if (typeof candidate !== 'string') return undefined;
+
+  const trimmed = candidate.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+/** Human-facing subject title for a run (video/article title, idea title, etc.). */
+export function extractRunSubjectTitle(run: {
+  stages?: Array<{ status?: string; output?: unknown }>;
+  output_summary?: string;
+}): string | undefined {
+  for (const stage of run.stages ?? []) {
+    if (stage.status !== 'completed') continue;
+
+    const stageTitle = readMetadataStringField(stage.output, 'title');
+    if (stageTitle) return stageTitle;
+  }
+
+  if (run.output_summary) {
+    const parsed = parseMetadataJson(run.output_summary);
+    const summaryTitle = readMetadataStringField(parsed, 'title');
+    if (summaryTitle) return summaryTitle;
+  }
+
+  return undefined;
+}
+
+/** Vault route for the primary artifact a run produced, when known. */
+export function extractRunSubjectHref(run: {
+  output_summary?: string;
+  stages?: Array<{ name?: string; status?: string; output?: unknown }>;
+}): string | undefined {
+  if (run.output_summary) {
+    const parsed = parseMetadataJson(run.output_summary);
+    if (parsed && typeof parsed === 'object' && parsed !== null) {
+      const record = parsed as Record<string, unknown>;
+      const id = readMetadataStringField(record, 'id');
+      if (id) {
+        const type = readMetadataStringField(record, 'type');
+        if (type === 'transcript') return `/vault/transcripts/${id}`;
+        if (type === 'source') return `/vault/sources/${id}`;
+
+        return `/vault/nodes/${id}`;
+      }
+    }
+  }
+
+  for (const stage of run.stages ?? []) {
+    if (stage.status !== 'completed') continue;
+
+    if (stage.name === 'store:transcript') {
+      const id = readMetadataStringField(stage.output, 'id');
+      if (id) return `/vault/transcripts/${id}`;
+    }
+
+    if (stage.name === 'store:source') {
+      const id = readMetadataStringField(stage.output, 'id');
+      if (id) return `/vault/sources/${id}`;
+    }
+  }
+
+  return undefined;
+}
+
+/** Channel or author name captured during ingestion (e.g. YouTube `fetch:youtube` stage). */
+export function extractRunAuthor(run: {
+  stages?: Array<{ name?: string; status?: string; output?: unknown }>;
+}): string | undefined {
+  for (const stage of run.stages ?? []) {
+    if (stage.status !== 'completed') continue;
+
+    const channel = readMetadataStringField(stage.output, 'channel');
+    if (channel) return channel;
+
+    const author = readMetadataStringField(stage.output, 'author');
+    if (author) return author;
+  }
+
+  return undefined;
+}
+
+/** Source node id produced or referenced by a run, when known. */
+export function extractRunSourceId(run: {
+  stages?: Array<{ name?: string; status?: string; output?: unknown; input?: unknown }>;
+}): string | undefined {
+  for (const stage of run.stages ?? []) {
+    if (stage.status !== 'completed' || stage.name !== 'store:source') continue;
+
+    const outputId = readMetadataStringField(stage.output, 'id');
+    if (outputId) return outputId;
+
+    const inputId = readMetadataStringField(stage.input, 'id');
+    if (inputId) return inputId;
+  }
+
+  return undefined;
 }
 
 export interface MetadataTextSegment {

@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import { listNodes } from '@llaab/core';
-import type { RunNode } from '@llaab/schemas';
+import type { RunNode, SourceNode } from '@llaab/schemas';
 import { RunsTable } from 'tables/RunsTable';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
@@ -20,6 +20,7 @@ if (cookie?.value !== password) return Astro.redirect('/vault/login', 302);
 
 const all = await listNodes({ type: 'run' });
 const runs = (all as RunNode[]).toSorted((a, b) => b.created_at.localeCompare(a.created_at));
+const sources = (await listNodes({ type: 'source' })) as SourceNode[];
 ---
 
 <AppLayout title="Runs">
@@ -31,7 +32,7 @@ const runs = (all as RunNode[]).toSorted((a, b) => b.created_at.localeCompare(a.
     </PageHero>
 
     <PageList width="wide">
-      <RunsTable runs={runs} client:load />
+      <RunsTable runs={runs} sources={sources} client:load />
     </PageList>
   </PageLayout>
 </AppLayout>

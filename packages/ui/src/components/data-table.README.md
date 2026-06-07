@@ -97,6 +97,36 @@ export const runColumns: DataTableColumns<RunNode> = [
 - `options` — `Partial<TableOptions<TData>>` merged into `useReactTable`'s config; use it for
   sorting/filtering/pagination row models, `state`, and the matching `on*Change` callbacks.
 
+## Responsive columns (`minVisible`)
+
+Each column may set `minVisible` to a Tailwind breakpoint name. The column is hidden below that
+width and shown from the breakpoint up (mobile-first). Values match Tailwind defaults via
+`BREAKPOINTS` in `@llaab/ui/lib/breakpoints`:
+
+`xs` · `sm` (640px) · `md` (768px) · `lg` (1024px) · `xl` (1280px) · `2xl` (1536px)
+
+Omit `minVisible` or use `xs` to keep a column visible at all widths.
+
+```tsx
+const columns: DataTableColumns<RunNode> = [
+  { accessorKey: 'title', header: 'Title' },
+  { accessorKey: 'run_status', header: 'Status' },
+  { accessorKey: 'duration_ms', header: 'Duration', minVisible: 'lg' },
+];
+```
+
+## Column alignment (`align`)
+
+Each column may set `align` to `left`, `center`, or `right`. Header and body cells use the same
+alignment. Defaults to `center` when omitted.
+
+```tsx
+const columns: DataTableColumns<RunNode> = [
+  { accessorKey: 'title', header: 'Title', align: 'left' },
+  { accessorKey: 'duration_ms', header: 'Duration' },
+];
+```
+
 ## Example: extracting a reusable table component
 
 If a `<DataTable columns={columns} data={data} />` pairing is used in more than one place, extract

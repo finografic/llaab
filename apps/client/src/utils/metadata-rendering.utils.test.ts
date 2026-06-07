@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   extractMetadataUrl,
+  extractRunAuthor,
+  extractRunSourceId,
+  extractRunSubjectHref,
+  extractRunSubjectTitle,
   formatMetadataJson,
   parseMetadataJson,
   splitMetadataTextWithUrls,
@@ -38,6 +42,77 @@ describe('extractMetadataUrl', () => {
     expect(extractMetadataUrl(String.raw`{\"url\":\"https://example.com/watch?v=abc\"}`)).toBe(
       'https://example.com/watch?v=abc',
     );
+  });
+});
+
+describe('extractRunSubjectTitle', () => {
+  it('prefers completed stage output titles', () => {
+    expect(
+      extractRunSubjectTitle({
+        stages: [
+          {
+            status: 'completed',
+            output: { title: 'Jira and Linear are legacy software' },
+          },
+        ],
+      }),
+    ).toBe('Jira and Linear are legacy software');
+  });
+});
+
+describe('extractRunSubjectHref', () => {
+  it('links transcript outputs to vault transcript routes', () => {
+    expect(
+      extractRunSubjectHref({
+        output_summary: '{"id":"jira-and-linear-are-legacy-software","type":"transcript"}',
+      }),
+    ).toBe('/vault/transcripts/jira-and-linear-are-legacy-software');
+  });
+
+  it('falls back to store:transcript stage output ids', () => {
+    expect(
+      extractRunSubjectHref({
+        stages: [
+          {
+            name: 'store:transcript',
+            status: 'completed',
+            output: { id: 'jira-and-linear-are-legacy-software' },
+          },
+        ],
+      }),
+    ).toBe('/vault/transcripts/jira-and-linear-are-legacy-software');
+  });
+});
+
+describe('extractRunAuthor', () => {
+  it('reads channel names from completed fetch stages', () => {
+    expect(
+      extractRunAuthor({
+        stages: [
+          {
+            name: 'fetch:youtube',
+            status: 'completed',
+            output: { channel: 'Theo - t3․gg' },
+          },
+        ],
+      }),
+    ).toBe('Theo - t3․gg');
+  });
+});
+
+describe('extractRunSourceId', () => {
+  it('reads source ids from completed store:source stages', () => {
+    expect(
+      extractRunSourceId({
+        stages: [
+          {
+            name: 'store:source',
+            status: 'completed',
+            output: { id: 'theo-t3-gg' },
+          },
+        ],
+      }),
+    ).toBe('theo-t3-gg');
   });
 });
 

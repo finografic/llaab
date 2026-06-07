@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import { listNodes } from '@llaab/core';
-import type { RunNode } from '@llaab/schemas';
+import type { RunNode, SourceNode } from '@llaab/schemas';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
@@ -12,6 +12,7 @@ import { RunsTable } from '../tables/RunsTable';
 
 const all = await listNodes({ type: 'run' });
 const runs = (all as RunNode[]).toSorted((a, b) => b.created_at.localeCompare(a.created_at));
+const sources = (await listNodes({ type: 'source' })) as SourceNode[];
 ---
 
 <AppLayout title="Ingest">
@@ -29,7 +30,7 @@ const runs = (all as RunNode[]).toSorted((a, b) => b.created_at.localeCompare(a.
         <IngestForm client:only="react" />
       </div>
 
-      <RunsTable runs={runs} showHeading client:load />
+      <RunsTable runs={runs} sources={sources} showHeading client:load />
     </div>
   </PageLayout>
 </AppLayout>

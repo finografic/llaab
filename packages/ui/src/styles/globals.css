@@ -7,6 +7,7 @@
 @source "../../../apps/**/*.{ts,tsx,astro}";
 @source "../../../components/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
+@source inline("hidden sm:table-cell", "hidden md:table-cell", "hidden lg:table-cell", "hidden xl:table-cell", "hidden 2xl:table-cell");
 
 @theme inline {
   --font-heading: var(--font-sans);
