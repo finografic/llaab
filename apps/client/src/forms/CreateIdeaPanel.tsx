@@ -1,4 +1,3 @@
-import { TagInputField } from 'components/TagInputField';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
@@ -8,6 +7,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { api } from 'lib/api';
+
+import { TagInputField } from './TagInputField';
 
 const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
 const KNOWN_TAGS = KNOWN_DOMAINS.map((domain) => `d:${domain}`);

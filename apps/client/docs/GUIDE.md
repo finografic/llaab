@@ -28,14 +28,23 @@ which is the point.
 ```
 apps/client/
   src/
-    components/          # Shared UI components
+    components/          # App shell, nav, page chrome — not forms/tables
       AppHeader/
         AppHeader.astro
       AppFooter/
         AppFooter.astro
-      NavbarVertical/
-        NavbarVertical.tsx         # React island (needs client:load)
-        NavbarVertical.module.css  # CSS Modules — scoped to this component
+      NavMenu/
+        NavMenu.tsx
+    forms/               # React form islands (ingest, create idea, shared fields)
+      IngestForm.tsx
+      CreateIdeaPanel.tsx
+      TagInputField.tsx
+    tables/              # DataTable wrappers + FileList / NodesFileList
+      RunsTable.tsx
+      SourcesTable.tsx
+      TranscriptsTable.tsx
+      FileList/
+      NodesFileList/
     layouts/
       AppLayout.astro    # Main shell — sidebar + header + footer + <slot />
       BaseLayout.astro   # Bare html/head/body wrapper (login, error pages)
@@ -55,6 +64,29 @@ apps/client/
   docs/
     GUIDE.md             # ← you are here
 ```
+
+### Forms and tables (`src/forms/`, `src/tables/`)
+
+Feature **forms** and vault **tables** live at the root of `src/`, not under `components/`.
+`components/` is reserved for layout chrome (header, nav, hero) and other one-off UI.
+
+| Folder    | Contents                                                                     |
+| --------- | ---------------------------------------------------------------------------- |
+| `forms/`  | `IngestForm`, `CreateIdeaPanel`, `TagInputField`                             |
+| `tables/` | `RunsTable`, `SourcesTable`, `TranscriptsTable`, `FileList`, `NodesFileList` |
+
+**Imports** — prefer tsconfig aliases (see `apps/client/tsconfig.json`):
+
+```typescript
+import { IngestForm } from 'forms/IngestForm';
+import { RunsTable } from 'tables/RunsTable';
+import { TagInputField } from 'forms/TagInputField';
+```
+
+Relative imports from pages also work (e.g. `../forms/IngestForm` from `pages/ingest.astro`).
+
+New vault list tables: add `*Table.tsx` (+ optional `.module.css`) under `tables/`, with
+module-scoped cell renderers — copy `tables/SourcesTable.tsx` as the template.
 
 ---
 

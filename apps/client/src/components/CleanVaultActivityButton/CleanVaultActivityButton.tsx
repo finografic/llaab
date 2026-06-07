@@ -18,6 +18,7 @@ import type { RunNode } from '@llaab/schemas';
 import { api } from 'lib/api';
 import { apiPost } from 'lib/api-client';
 import { dispatchIngestFormReset } from 'lib/ingest-form-events';
+import { dispatchRunsChanged } from 'lib/runs-events';
 import { countRunsWithinHours } from 'utils/count-runs-within-hours.utils';
 
 import s from './CleanVaultActivityButton.module.css';
@@ -140,6 +141,7 @@ export function CleanVaultActivityButton({
       if (resetIngestFormOnSuccess) {
         dispatchIngestFormReset();
       }
+      dispatchRunsChanged();
       setOpen(false);
       setError(null);
       setHours(String(DEFAULT_HOURS));

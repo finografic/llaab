@@ -100,7 +100,8 @@ export const runColumns: DataTableColumns<RunNode> = [
 ## Example: extracting a reusable table component
 
 If a `<DataTable columns={columns} data={data} />` pairing is used in more than one place, extract
-it into its own component (as `RunsTable.tsx` does for `apps/client/src/pages/vault/runs/index.astro`):
+it into its own component under `apps/client/src/tables/` (see `RunsTable.tsx` for
+`apps/client/src/pages/vault/runs/index.astro`):
 
 ```tsx
 export interface RunsTableProps {

@@ -1,9 +1,17 @@
 ---
+export const prerender = false;
+
+import { listNodes } from '@llaab/core';
+import type { RunNode } from '@llaab/schemas';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
 import { CleanVaultActivityButton } from 'components/CleanVaultActivityButton/CleanVaultActivityButton';
-import { IngestForm } from 'components/IngestForm';
+import { IngestForm } from '../forms/IngestForm';
+import { RunsTable } from '../tables/RunsTable';
+
+const all = await listNodes({ type: 'run' });
+const runs = (all as RunNode[]).toSorted((a, b) => b.created_at.localeCompare(a.created_at));
 ---
 
 <AppLayout title="Ingest">
@@ -20,6 +28,8 @@ import { IngestForm } from 'components/IngestForm';
       <div class="card ingest-page__card">
         <IngestForm client:only="react" />
       </div>
+
+      <RunsTable runs={runs} showHeading client:load />
     </div>
   </PageLayout>
 </AppLayout>

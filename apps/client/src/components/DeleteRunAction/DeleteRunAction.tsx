@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import type { RunNode } from '@llaab/schemas';
 
 import { deleteVaultRun } from 'lib/api';
+import { dispatchRunsChanged } from 'lib/runs-events';
 
 import s from './DeleteRunAction.module.css';
 
@@ -20,7 +21,7 @@ type DialogStep = 'closed' | 'confirm-run' | 'confirm-produced';
 
 export interface DeleteRunActionProps {
   run: RunNode;
-  onDeleted: (runId: string) => void;
+  onDeleted?: (runId: string) => void;
 }
 
 export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
@@ -61,7 +62,8 @@ export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
           : 'Run deleted.',
       );
 
-      onDeleted(run.id);
+      onDeleted?.(run.id);
+      dispatchRunsChanged();
       setStep('closed');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete run.');

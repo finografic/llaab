@@ -8,11 +8,13 @@
       "@llaab/ui/*": ["../../packages/ui/src/*"],
       "components/ui/*": ["../../packages/ui/src/components/*"],
       "components/*": ["./src/components/*"],
+      "forms/*": ["./src/forms/*"],
       "layouts/*": ["./src/layouts/*"],
       "lib/*": ["./src/lib/*"],
-      "utils/*": ["./src/utils/*"],
       "pages/*": ["./src/pages/*"],
-      "styles/*": ["./src/styles/*"]
+      "styles/*": ["./src/styles/*"],
+      "tables/*": ["./src/tables/*"],
+      "utils/*": ["./src/utils/*"]
     }
   },
   "include": ["./.astro/types.d.ts", "**/*"],

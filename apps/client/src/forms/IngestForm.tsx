@@ -1,4 +1,3 @@
-import { TagInputField } from 'components/TagInputField';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
@@ -11,6 +10,9 @@ import { useForm } from 'react-hook-form';
 import { api } from 'lib/api';
 import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
 import { INGEST_FORM_RESET_EVENT } from 'lib/ingest-form-events';
+import { dispatchRunsChanged } from 'lib/runs-events';
+
+import { TagInputField } from './TagInputField';
 
 const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
 const KNOWN_TAGS = KNOWN_DOMAINS.map((domain) => `d:${domain}`);
@@ -472,6 +474,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setExtractionIdeas(result.ideas ?? []);
       const nodeTags = await fetchNodeTags(transcriptId);
       setLockedTags(nodeTags);
+      dispatchRunsChanged();
       return;
     }
 
@@ -480,6 +483,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setExtractionIdeas(result.ideas ?? []);
       const nodeTags = await fetchNodeTags(transcriptId);
       setLockedTags(nodeTags);
+      dispatchRunsChanged();
       return;
     }
 
@@ -487,11 +491,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setExtractionPhase('extractable');
       const nodeTags = await fetchNodeTags(transcriptId);
       setLockedTags(nodeTags);
+      dispatchRunsChanged();
       return;
     }
 
     setExtractionPhase('failed');
     setExtractionError(result.error ?? 'Unknown error.');
+    dispatchRunsChanged();
   };
 
   const onSubmit = async ({ url }: FormValues) => {
@@ -540,6 +546,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         setExtractionPhase('waiting');
         setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
         setBusy(false);
+        dispatchRunsChanged();
         return;
       }
 
@@ -568,6 +575,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         setLockedTags(nodeTags);
         setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
         setBusy(false);
+        dispatchRunsChanged();
         return;
       }
     } catch (error) {
@@ -576,11 +584,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setExtractionPhase('waiting');
       setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
       setBusy(false);
+      dispatchRunsChanged();
       return;
     }
 
     setExtractionPhase('pending');
     setExtractionStartedAt(Date.now());
+    dispatchRunsChanged();
     await applyExtractResult(await runExtract(transcriptId), transcriptId);
     setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
     setBusy(false);
@@ -620,6 +630,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setApiError('Network error — could not delete nodes.');
       return;
     }
+    dispatchRunsChanged();
     resetForm();
   };
 

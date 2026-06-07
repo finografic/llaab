@@ -118,11 +118,11 @@ The aside column only appears when the `aside` slot is filled — no empty colum
 
 ## FileList
 
-`components/FileList/FileList.tsx` — TanStack table rendered as a Finder list view.
+`tables/FileList/FileList.tsx` — TanStack table rendered as a Finder list view.
 No grid lines. 32px rows, 28px header. Column size `150` (TanStack default) = `flex: 1`.
 
 ```tsx
-import { FileList, FileCell } from '../components/FileList/FileList';
+import { FileList, FileCell } from 'tables/FileList/FileList';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const columns: ColumnDef<Transcript>[] = [
