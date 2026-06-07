@@ -189,6 +189,12 @@ Tags use a single `d:` prefix. 8 domain tags: `d:llm`, `d:automation`, `d:ingest
 `d:infra`, `d:integration`, `d:ui`, `d:meta`. `autoTag(title, body)` in `@llaab/core` infers tags
 via regex. All ingest runs apply `d:ingest` + `autoTag`. Source nodes carry no domain tags.
 
+LLM-extracted content tags (`IdeaNode.tags`) are required (`z.array(z.string()).min(1)`) and the
+extraction prompt's few-shot example deliberately uses an orthogonal domain (cooking) with an
+anti-copying instruction — small local models otherwise anchor on the example's wording/tags for
+in-domain (AI/LLM) input and either echo it verbatim or omit `tags`. `IngestForm` tag suggestions
+blend `KNOWN_TAGS` with tags ranked by usage across existing vault nodes (`vaultTagsByUsage`).
+
 ## Roadmap & Planning
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
@@ -211,6 +217,12 @@ The persistent Astro client builds into `apps/client/.persistent/builds/<timesta
 only successful builds to the `apps/client/.persistent/current` symlink, and falls back to the
 last known-good build on failure. `.claude/settings.json` holds a project-level allowlist for
 `pnpm typecheck` and `launchctl list` to reduce permission prompts.
+
+All workspace packages share one version (no independent publishing). `pnpm version:patch/minor/major`
+runs `scripts/bump-version.ts`, which bumps every `packages/*` and `apps/*` `package.json` to the
+same version in lockstep, re-syncs `pnpm-lock.yaml` (with `--ignore-scripts`, since plain
+`--lockfile-only` was observed to overwrite `apps/client/.vscode/launch.json`'s schema version),
+and auto-commits as `chore: <type> version bump to <version>`.
 
 ## Open Questions
 
