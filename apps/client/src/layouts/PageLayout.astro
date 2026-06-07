@@ -4,11 +4,11 @@
  *
  * Zone map:
  *   ┌─ slot: hero ───────────────────────────────────────────────┐
- *   │  PageHero goes here (title, eyebrow, actions)              │
- *   └────────────────────────────────────────────────────────────┘
+ *  │  PageHero goes here (title, eyebrow, actions)              │
+ * └────────────────────────────────────────────────────────────┘
  *   ┌─ slot: aside (optional) ──┐ ┌─ default slot ──────────────┐
- *   │  Filters, facets, sub-nav │ │  FileList, content, etc.    │
- *   └───────────────────────────┘ └─────────────────────────────┘
+ *  │  Filters, facets, sub-nav │ │  FileList, content, etc.    │
+ * └───────────────────────────┘ └─────────────────────────────┘
  *
  * Usage:
  *   <PageLayout>
@@ -31,18 +31,22 @@ const hasAside = Astro.slots.has('aside');
 ---
 
 <div class="page-layout">
-  {Astro.slots.has('hero') && (
-    <div class="page-hero-zone">
-      <slot name="hero" />
-    </div>
-  )}
+  {
+    Astro.slots.has('hero') && (
+      <div class="page-hero-zone">
+        <slot name="hero" />
+      </div>
+    )
+  }
 
   <div class="page-body" data-has-aside={hasAside || undefined}>
-    {hasAside && (
-      <aside class="page-aside" style={`--aside-w: ${asideWidth}`}>
-        <slot name="aside" />
-      </aside>
-    )}
+    {
+      hasAside && (
+        <aside class="page-aside" style={`--aside-w: ${asideWidth}`}>
+          <slot name="aside" />
+        </aside>
+      )
+    }
 
     <div class="page-main">
       <slot />

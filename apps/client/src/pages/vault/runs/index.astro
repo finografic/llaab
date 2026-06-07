@@ -3,8 +3,10 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { RunNode } from '@llaab/schemas';
-import { RunsTable } from '../../../components/RunsTable';
-import AppLayout from '../../../layouts/AppLayout.astro';
+import { RunsTable } from 'components/RunsTable';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 
@@ -20,40 +22,21 @@ const runs = (all as RunNode[]).sort((a, b) => b.created_at.localeCompare(a.crea
 ---
 
 <AppLayout title="Runs">
-  <div class="list-page">
-    <header class="list-page__header">
-      <p class="eyebrow">Vault</p>
-      <h1 class="list-page__heading">Runs</h1>
-      <p class="list-page__count">{runs.length} run{runs.length !== 1 ? 's' : ''}</p>
-    </header>
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Execute" title="Runs">
+      <Fragment slot="meta">
+        {runs.length} run{runs.length !== 1 ? 's' : ''}
+      </Fragment>
+    </PageHero>
 
-    <RunsTable runs={runs} client:load />
-  </div>
+    <div class="list-page">
+      <RunsTable runs={runs} client:load />
+    </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
   .list-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
     max-width: 900px;
-  }
-
-  .list-page__header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .list-page__heading {
-    font-size: var(--text-xl);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .list-page__count {
-    font-size: var(--text-md);
-    color: var(--text-faint);
   }
 </style>

@@ -3,8 +3,10 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { IdeaNode, InstructionNode, PromptNode, ResourceNode, SkillNode } from '@llaab/schemas';
-import ModelMetaCard from '../../../components/ModelMetaCard.astro';
-import AppLayout from '../../../layouts/AppLayout.astro';
+import ModelMetaCard from 'components/ModelMetaCard.astro';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 
@@ -41,18 +43,9 @@ const resource = node.type === 'resource' ? (node as ResourceNode) : null;
 ---
 
 <AppLayout title={node.title}>
-  <div class="detail-page">
-    {/* ── Header ── */}
-    <header class="detail-header">
-      <nav class="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-        <a href="/vault/nodes" class="text-accent hover:underline">Nodes</a>
-        <span>›</span>
-        <span>{node.title}</span>
-      </nav>
-
-      <h1 class="detail-header__title">{node.title}</h1>
-
-      <div class="detail-header__meta">
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Vault" title={node.title}>
+      <Fragment slot="meta">
         <span class={`badge badge--${node.type}`}>{node.type}</span>
         <span class={`badge badge--status badge--${node.status}`}>{node.status}</span>
         <span class="meta-sep">·</span>
@@ -65,275 +58,277 @@ const resource = node.type === 'resource' ? (node as ResourceNode) : null;
             </>
           )
         }
-      </div>
-    </header>
+      </Fragment>
+    </PageHero>
 
-    {/* ── Tags ── */}
-    {
-      node.tags.length > 0 && (
-        <div class="tag-row">
-          {node.tags.map((tag) => (
-            <span class="tag" data-tag={tag}>
-              {tag}
-            </span>
-          ))}
-        </div>
-      )
-    }
-
-    {/* ── Body ── */}
-    {
-      idea && (
-        <ModelMetaCard
-          title="Extraction model"
-          meta={{
-            model: idea.llm_model,
-            provider: idea.llm_provider,
-            durationMs: idea.llm_duration_ms,
-            promptTokens: idea.llm_prompt_tokens,
-            completionTokens: idea.llm_completion_tokens,
-          }}
-        />
-      )
-    }
-
-    {
-      node.body && (
-        <section class="section">
-          <h2 class="section__heading">Body</h2>
-          <pre class="body-pre">{node.body}</pre>
-        </section>
-      )
-    }
-
-    {/* ── Idea — origin + source ── */}
-    {
-      idea && (
-        <section class="section">
-          <h2 class="section__heading">Details</h2>
-          <dl class="meta-grid">
-            <dt>Origin</dt>
-            <dd>
-              <span class={`badge badge--origin-${idea.origin}`}>{idea.origin}</span>
-            </dd>
-            {idea.source_id && (
-              <>
-                <dt>Source</dt>
-                <dd>
-                  <a href={`/vault/nodes/${idea.source_id}`} class="meta-link">
-                    {idea.source_id}
-                  </a>
-                </dd>
-              </>
-            )}
-          </dl>
-        </section>
-      )
-    }
-
-    {/* ── Resource — url + resource_type + description ── */}
-    {
-      resource && (
-        <section class="section">
-          <h2 class="section__heading">Details</h2>
-          <dl class="meta-grid">
-            <dt>Type</dt>
-            <dd>
-              <span class="badge badge--resource-type">{resource.resource_type}</span>
-            </dd>
-            {resource.url && (
-              <>
-                <dt>URL</dt>
-                <dd>
-                  <a
-                    href={resource.url}
-                    class="meta-link meta-mono"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {resource.url}
-                  </a>
-                </dd>
-              </>
-            )}
-            {resource.description && (
-              <>
-                <dt>Description</dt>
-                <dd class="meta-text">{resource.description}</dd>
-              </>
-            )}
-            {resource.source_id && (
-              <>
-                <dt>Source</dt>
-                <dd>
-                  <a href={`/vault/nodes/${resource.source_id}`} class="meta-link">
-                    {resource.source_id}
-                  </a>
-                </dd>
-              </>
-            )}
-          </dl>
-        </section>
-      )
-    }
-
-    {/* ── Skill — inputs / outputs / tools / lineage ── */}
-    {
-      skill && (
-        <section class="section">
-          <h2 class="section__heading">Details</h2>
-          <dl class="meta-grid">
-            {skill.version && (
-              <>
-                <dt>Version</dt>
-                <dd class="meta-mono">{skill.version}</dd>
-              </>
-            )}
-            <dt>Generation</dt>
-            <dd class="meta-mono">{skill.generation}</dd>
-            {skill.inputs.length > 0 && (
-              <>
-                <dt>Inputs</dt>
-                <dd>
-                  <ul class="chip-list">
-                    {skill.inputs.map((s) => (
-                      <li class="chip">{s}</li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-            {skill.outputs.length > 0 && (
-              <>
-                <dt>Outputs</dt>
-                <dd>
-                  <ul class="chip-list">
-                    {skill.outputs.map((s) => (
-                      <li class="chip">{s}</li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-            {skill.tools.length > 0 && (
-              <>
-                <dt>Tools</dt>
-                <dd>
-                  <ul class="chip-list">
-                    {skill.tools.map((s) => (
-                      <li class="chip">{s}</li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-            {skill.source_id && (
-              <>
-                <dt>Source</dt>
-                <dd>
-                  <a href={`/vault/nodes/${skill.source_id}`} class="meta-link">
-                    {skill.source_id}
-                  </a>
-                </dd>
-              </>
-            )}
-            {skill.parent_skill_id && (
-              <>
-                <dt>Parent skill</dt>
-                <dd>
-                  <a href={`/vault/nodes/${skill.parent_skill_id}`} class="meta-link">
-                    {skill.parent_skill_id}
-                  </a>
-                </dd>
-              </>
-            )}
-            {skill.derived_from_ids.length > 0 && (
-              <>
-                <dt>Derived from</dt>
-                <dd>
-                  <ul class="chip-list">
-                    {skill.derived_from_ids.map((sid) => (
-                      <li class="chip">
-                        <a href={`/vault/nodes/${sid}`} class="meta-link">
-                          {sid}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-          </dl>
-        </section>
-      )
-    }
-
-    {/* ── Prompt — variables / model_hint / output_schema ── */}
-    {
-      prompt && (prompt.variables.length > 0 || prompt.model_hint || prompt.output_schema) && (
-        <section class="section">
-          <h2 class="section__heading">Details</h2>
-          <dl class="meta-grid">
-            {prompt.model_hint && (
-              <>
-                <dt>Model hint</dt>
-                <dd class="meta-mono">{prompt.model_hint}</dd>
-              </>
-            )}
-            {prompt.variables.length > 0 && (
-              <>
-                <dt>Variables</dt>
-                <dd>
-                  <ul class="chip-list">
-                    {prompt.variables.map((v) => (
-                      <li class="chip chip--var">{`{{${v}}}`}</li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-            {prompt.output_schema && (
-              <>
-                <dt>Output schema</dt>
-                <dd class="meta-mono">{prompt.output_schema}</dd>
-              </>
-            )}
-          </dl>
-        </section>
-      )
-    }
-
-    {/* ── Instruction — scope ── */}
-    {
-      instruction && instruction.scope && (
-        <section class="section">
-          <h2 class="section__heading">Details</h2>
-          <dl class="meta-grid">
-            <dt>Scope</dt>
-            <dd class="meta-text">{instruction.scope}</dd>
-          </dl>
-        </section>
-      )
-    }
-
-    {/* ── Related nodes ── */}
-    {
-      node.related.length > 0 && (
-        <section class="section">
-          <h2 class="section__heading">Related</h2>
-          <ul class="related-list">
-            {node.related.map((rel) => (
-              <li>
-                <a href={`/vault/nodes/${rel}`} class="meta-link meta-mono">
-                  {rel}
-                </a>
-              </li>
+    <div class="detail-page">
+      {/* ── Tags ── */}
+      {
+        node.tags.length > 0 && (
+          <div class="tag-row">
+            {node.tags.map((tag) => (
+              <span class="tag" data-tag={tag}>
+                {tag}
+              </span>
             ))}
-          </ul>
-        </section>
-      )
-    }
-  </div>
+          </div>
+        )
+      }
+
+      {/* ── Body ── */}
+      {
+        idea && (
+          <ModelMetaCard
+            title="Extraction model"
+            meta={{
+              model: idea.llm_model,
+              provider: idea.llm_provider,
+              durationMs: idea.llm_duration_ms,
+              promptTokens: idea.llm_prompt_tokens,
+              completionTokens: idea.llm_completion_tokens,
+            }}
+          />
+        )
+      }
+
+      {
+        node.body && (
+          <section class="section">
+            <h2 class="section__heading">Body</h2>
+            <pre class="body-pre">{node.body}</pre>
+          </section>
+        )
+      }
+
+      {/* ── Idea — origin + source ── */}
+      {
+        idea && (
+          <section class="section">
+            <h2 class="section__heading">Details</h2>
+            <dl class="meta-grid">
+              <dt>Origin</dt>
+              <dd>
+                <span class={`badge badge--origin-${idea.origin}`}>{idea.origin}</span>
+              </dd>
+              {idea.source_id && (
+                <>
+                  <dt>Source</dt>
+                  <dd>
+                    <a href={`/vault/nodes/${idea.source_id}`} class="meta-link">
+                      {idea.source_id}
+                    </a>
+                  </dd>
+                </>
+              )}
+            </dl>
+          </section>
+        )
+      }
+
+      {/* ── Resource — url + resource_type + description ── */}
+      {
+        resource && (
+          <section class="section">
+            <h2 class="section__heading">Details</h2>
+            <dl class="meta-grid">
+              <dt>Type</dt>
+              <dd>
+                <span class="badge badge--resource-type">{resource.resource_type}</span>
+              </dd>
+              {resource.url && (
+                <>
+                  <dt>URL</dt>
+                  <dd>
+                    <a
+                      href={resource.url}
+                      class="meta-link meta-mono"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {resource.url}
+                    </a>
+                  </dd>
+                </>
+              )}
+              {resource.description && (
+                <>
+                  <dt>Description</dt>
+                  <dd class="meta-text">{resource.description}</dd>
+                </>
+              )}
+              {resource.source_id && (
+                <>
+                  <dt>Source</dt>
+                  <dd>
+                    <a href={`/vault/nodes/${resource.source_id}`} class="meta-link">
+                      {resource.source_id}
+                    </a>
+                  </dd>
+                </>
+              )}
+            </dl>
+          </section>
+        )
+      }
+
+      {/* ── Skill — inputs / outputs / tools / lineage ── */}
+      {
+        skill && (
+          <section class="section">
+            <h2 class="section__heading">Details</h2>
+            <dl class="meta-grid">
+              {skill.version && (
+                <>
+                  <dt>Version</dt>
+                  <dd class="meta-mono">{skill.version}</dd>
+                </>
+              )}
+              <dt>Generation</dt>
+              <dd class="meta-mono">{skill.generation}</dd>
+              {skill.inputs.length > 0 && (
+                <>
+                  <dt>Inputs</dt>
+                  <dd>
+                    <ul class="chip-list">
+                      {skill.inputs.map((s) => (
+                        <li class="chip">{s}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </>
+              )}
+              {skill.outputs.length > 0 && (
+                <>
+                  <dt>Outputs</dt>
+                  <dd>
+                    <ul class="chip-list">
+                      {skill.outputs.map((s) => (
+                        <li class="chip">{s}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </>
+              )}
+              {skill.tools.length > 0 && (
+                <>
+                  <dt>Tools</dt>
+                  <dd>
+                    <ul class="chip-list">
+                      {skill.tools.map((s) => (
+                        <li class="chip">{s}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </>
+              )}
+              {skill.source_id && (
+                <>
+                  <dt>Source</dt>
+                  <dd>
+                    <a href={`/vault/nodes/${skill.source_id}`} class="meta-link">
+                      {skill.source_id}
+                    </a>
+                  </dd>
+                </>
+              )}
+              {skill.parent_skill_id && (
+                <>
+                  <dt>Parent skill</dt>
+                  <dd>
+                    <a href={`/vault/nodes/${skill.parent_skill_id}`} class="meta-link">
+                      {skill.parent_skill_id}
+                    </a>
+                  </dd>
+                </>
+              )}
+              {skill.derived_from_ids.length > 0 && (
+                <>
+                  <dt>Derived from</dt>
+                  <dd>
+                    <ul class="chip-list">
+                      {skill.derived_from_ids.map((sid) => (
+                        <li class="chip">
+                          <a href={`/vault/nodes/${sid}`} class="meta-link">
+                            {sid}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </dd>
+                </>
+              )}
+            </dl>
+          </section>
+        )
+      }
+
+      {/* ── Prompt — variables / model_hint / output_schema ── */}
+      {
+        prompt && (prompt.variables.length > 0 || prompt.model_hint || prompt.output_schema) && (
+          <section class="section">
+            <h2 class="section__heading">Details</h2>
+            <dl class="meta-grid">
+              {prompt.model_hint && (
+                <>
+                  <dt>Model hint</dt>
+                  <dd class="meta-mono">{prompt.model_hint}</dd>
+                </>
+              )}
+              {prompt.variables.length > 0 && (
+                <>
+                  <dt>Variables</dt>
+                  <dd>
+                    <ul class="chip-list">
+                      {prompt.variables.map((v) => (
+                        <li class="chip chip--var">{`{{${v}}}`}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </>
+              )}
+              {prompt.output_schema && (
+                <>
+                  <dt>Output schema</dt>
+                  <dd class="meta-mono">{prompt.output_schema}</dd>
+                </>
+              )}
+            </dl>
+          </section>
+        )
+      }
+
+      {/* ── Instruction — scope ── */}
+      {
+        instruction && instruction.scope && (
+          <section class="section">
+            <h2 class="section__heading">Details</h2>
+            <dl class="meta-grid">
+              <dt>Scope</dt>
+              <dd class="meta-text">{instruction.scope}</dd>
+            </dl>
+          </section>
+        )
+      }
+
+      {/* ── Related nodes ── */}
+      {
+        node.related.length > 0 && (
+          <section class="section">
+            <h2 class="section__heading">Related</h2>
+            <ul class="related-list">
+              {node.related.map((rel) => (
+                <li>
+                  <a href={`/vault/nodes/${rel}`} class="meta-link meta-mono">
+                    {rel}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
@@ -342,24 +337,6 @@ const resource = node.type === 'resource' ? (node as ResourceNode) : null;
     flex-direction: column;
     gap: var(--space-6);
     max-width: 760px;
-  }
-
-  /* ── Header ── */
-
-  .detail-header__title {
-    font-size: var(--text-lg);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    line-height: 1.3;
-  }
-
-  .detail-header__meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-    margin-top: var(--space-2);
   }
 
   .meta-sep {

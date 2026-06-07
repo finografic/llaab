@@ -3,7 +3,9 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { SourceNode } from '@llaab/schemas';
-import AppLayout from '../../../layouts/AppLayout.astro';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 
@@ -22,66 +24,66 @@ const followed = sources.filter((s) => s.follow);
 ---
 
 <AppLayout title="Sources">
-  <div class="list-page">
-    <header class="list-page__header">
-      <p class="eyebrow">Vault</p>
-      <h1 class="list-page__heading">Sources</h1>
-      <p class="list-page__count">
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Vault" title="Sources">
+      <Fragment slot="meta">
         {sources.length} source{sources.length !== 1 ? 's' : ''}
         {followed.length > 0 && <span class="follow-count"> · {followed.length} followed</span>}
-      </p>
-    </header>
+      </Fragment>
+    </PageHero>
 
-    {
-      sources.length === 0 && (
-        <p class="empty">No sources yet. Sources are created automatically when ingesting content.</p>
-      )
-    }
-
-    <ul class="node-list" role="list">
+    <div class="list-page">
       {
-        sources.map((s) => (
-          <li class="node-card">
-            <a href={`/vault/sources/${s.id}`} class="node-card__link" aria-label={s.title}>
-              <div class="node-card__meta">
-                <span class={`badge badge--${s.source_kind}`}>{s.source_kind}</span>
-                {s.follow && <span class="badge badge--follow">following</span>}
-                <time class="node-card__date" datetime={s.created_at}>
-                  {new Date(s.created_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </time>
-              </div>
-
-              <h2 class="node-card__title">{s.title}</h2>
-
-              {s.body && <p class="node-card__body">{s.body}</p>}
-
-              {s.platforms.length > 0 && (
-                <div class="platform-row">
-                  {s.platforms.map((p) => (
-                    <span class="platform">{p}</span>
-                  ))}
-                </div>
-              )}
-
-              {s.tags.length > 0 && (
-                <div class="tag-row">
-                  {s.tags.map((tag) => (
-                    <span class="tag" data-tag={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </a>
-          </li>
-        ))
+        sources.length === 0 && (
+          <p class="empty">No sources yet. Sources are created automatically when ingesting content.</p>
+        )
       }
-    </ul>
-  </div>
+
+      <ul class="node-list" role="list">
+        {
+          sources.map((s) => (
+            <li class="node-card">
+              <a href={`/vault/sources/${s.id}`} class="node-card__link" aria-label={s.title}>
+                <div class="node-card__meta">
+                  <span class={`badge badge--${s.source_kind}`}>{s.source_kind}</span>
+                  {s.follow && <span class="badge badge--follow">following</span>}
+                  <time class="node-card__date" datetime={s.created_at}>
+                    {new Date(s.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </time>
+                </div>
+
+                <h2 class="node-card__title">{s.title}</h2>
+
+                {s.body && <p class="node-card__body">{s.body}</p>}
+
+                {s.platforms.length > 0 && (
+                  <div class="platform-row">
+                    {s.platforms.map((p) => (
+                      <span class="platform">{p}</span>
+                    ))}
+                  </div>
+                )}
+
+                {s.tags.length > 0 && (
+                  <div class="tag-row">
+                    {s.tags.map((tag) => (
+                      <span class="tag" data-tag={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
@@ -90,24 +92,6 @@ const followed = sources.filter((s) => s.follow);
     flex-direction: column;
     gap: var(--space-6);
     max-width: 760px;
-  }
-
-  .list-page__header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .list-page__heading {
-    font-size: var(--text-xl);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .list-page__count {
-    font-size: var(--text-md);
-    color: var(--text-faint);
   }
 
   .follow-count {

@@ -3,8 +3,10 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { RunNode } from '@llaab/schemas';
-import ModelMetaCard from '../../../components/ModelMetaCard.astro';
-import AppLayout from '../../../layouts/AppLayout.astro';
+import ModelMetaCard from 'components/ModelMetaCard.astro';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 
@@ -40,18 +42,9 @@ function fmtDate(ts?: string): string {
 ---
 
 <AppLayout title={run.title}>
-  <div class="detail-page">
-    {/* ── Header ── */}
-    <header class="detail-header">
-      <nav class="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-        <a href="/vault/runs" class="text-accent hover:underline">Runs</a>
-        <span>›</span>
-        <span>{run.title}</span>
-      </nav>
-
-      <h1 class="detail-header__title">{run.title}</h1>
-
-      <div class="detail-header__meta">
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Execute" title={run.title}>
+      <Fragment slot="meta">
         <span class={`badge badge--${run.run_status}`}>{run.run_status}</span>
         <span class="meta-sep">·</span>
         <span class="meta-text">{fmtDate(run.started_at ?? run.created_at)}</span>
@@ -71,141 +64,143 @@ function fmtDate(ts?: string): string {
             </>
           )
         }
-      </div>
-    </header>
+      </Fragment>
+    </PageHero>
 
-    {/* ── Summary ── */}
-    {
-      run.llm && (
-        <ModelMetaCard
-          title="Run model"
-          meta={{
-            model: run.llm.model,
-            provider: run.llm.provider,
-            durationMs: run.llm.duration_ms,
-            promptTokens: run.llm.prompt_tokens,
-            completionTokens: run.llm.completion_tokens,
-          }}
-        />
-      )
-    }
+    <div class="detail-page">
+      {/* ── Summary ── */}
+      {
+        run.llm && (
+          <ModelMetaCard
+            title="Run model"
+            meta={{
+              model: run.llm.model,
+              provider: run.llm.provider,
+              durationMs: run.llm.duration_ms,
+              promptTokens: run.llm.prompt_tokens,
+              completionTokens: run.llm.completion_tokens,
+            }}
+          />
+        )
+      }
 
-    {
-      (run.input_summary ?? run.output_summary) && (
-        <section class="section">
-          <h2 class="section__heading">Summary</h2>
-          <dl class="summary-grid">
-            {run.input_summary && (
-              <>
-                <dt>Input</dt>
-                <dd>{run.input_summary}</dd>
-              </>
-            )}
-            {run.output_summary && (
-              <>
-                <dt>Output</dt>
-                <dd>{run.output_summary}</dd>
-              </>
-            )}
-            {run.produced_node_ids.length > 0 && (
-              <>
-                <dt>Produced</dt>
-                <dd>
-                  <ul class="produced-list">
-                    {run.produced_node_ids.map((nid) => (
-                      <li class="produced-id">{nid}</li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )}
-          </dl>
-        </section>
-      )
-    }
+      {
+        (run.input_summary ?? run.output_summary) && (
+          <section class="section">
+            <h2 class="section__heading">Summary</h2>
+            <dl class="summary-grid">
+              {run.input_summary && (
+                <>
+                  <dt>Input</dt>
+                  <dd>{run.input_summary}</dd>
+                </>
+              )}
+              {run.output_summary && (
+                <>
+                  <dt>Output</dt>
+                  <dd>{run.output_summary}</dd>
+                </>
+              )}
+              {run.produced_node_ids.length > 0 && (
+                <>
+                  <dt>Produced</dt>
+                  <dd>
+                    <ul class="produced-list">
+                      {run.produced_node_ids.map((nid) => (
+                        <li class="produced-id">{nid}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </>
+              )}
+            </dl>
+          </section>
+        )
+      }
 
-    {/* ── Stages ── */}
-    {
-      run.stages.length > 0 && (
-        <section class="section">
-          <h2 class="section__heading">Stages</h2>
-          <div class="overflow-x-auto rounded-md border border-border">
-            <table class="w-full border-collapse text-xs">
-              <thead>
-                <tr class="border-b border-border bg-[var(--bg-subtle)]">
-                  <th class="w-10 px-4 py-2 text-center font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
-                    #
-                  </th>
-                  <th class="px-4 py-2 text-left font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
-                    Stage
-                  </th>
-                  <th class="px-4 py-2 text-left font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
-                    Status
-                  </th>
-                  <th class="px-4 py-2 text-left font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
-                    Notes
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {run.stages.map((stage, i) => (
-                  <tr class="border-b border-border-subtle last:border-0">
-                    <td class="w-10 px-4 py-3 text-center font-mono text-muted-foreground align-middle">
-                      {i + 1}
-                    </td>
-                    <td class="px-4 py-3 font-medium text-foreground align-middle">{stage.name}</td>
-                    <td class="px-4 py-3 align-middle">
-                      <span class={`badge badge--stage-${stage.status}`}>{stage.status}</span>
-                    </td>
-                    <td class="px-4 py-3 text-[11px] align-middle">
-                      {stage.error && <span class="stage-error">{stage.error}</span>}
-                    </td>
+      {/* ── Stages ── */}
+      {
+        run.stages.length > 0 && (
+          <section class="section">
+            <h2 class="section__heading">Stages</h2>
+            <div class="overflow-x-auto rounded-md border border-border">
+              <table class="w-full border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-border bg-[var(--bg-subtle)]">
+                    <th class="w-10 px-4 py-2 text-center font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
+                      #
+                    </th>
+                    <th class="px-4 py-2 text-left font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
+                      Stage
+                    </th>
+                    <th class="px-4 py-2 text-left font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
+                      Status
+                    </th>
+                    <th class="px-4 py-2 text-left font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap">
+                      Notes
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )
-    }
+                </thead>
+                <tbody>
+                  {run.stages.map((stage, i) => (
+                    <tr class="border-b border-border-subtle last:border-0">
+                      <td class="w-10 px-4 py-3 text-center font-mono text-muted-foreground align-middle">
+                        {i + 1}
+                      </td>
+                      <td class="px-4 py-3 font-medium text-foreground align-middle">{stage.name}</td>
+                      <td class="px-4 py-3 align-middle">
+                        <span class={`badge badge--stage-${stage.status}`}>{stage.status}</span>
+                      </td>
+                      <td class="px-4 py-3 text-[11px] align-middle">
+                        {stage.error && <span class="stage-error">{stage.error}</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )
+      }
 
-    {/* ── Decisions ── */}
-    {
-      run.decisions.length > 0 && (
-        <section class="section">
-          <h2 class="section__heading">Decisions</h2>
-          <ul class="decision-list">
-            {run.decisions.map((d) => (
-              <li class="decision-item">
-                <span class={`badge badge--decision-${d.type}`}>{d.type}</span>
-                <span class="decision-reason">{d.reason}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )
-    }
+      {/* ── Decisions ── */}
+      {
+        run.decisions.length > 0 && (
+          <section class="section">
+            <h2 class="section__heading">Decisions</h2>
+            <ul class="decision-list">
+              {run.decisions.map((d) => (
+                <li class="decision-item">
+                  <span class={`badge badge--decision-${d.type}`}>{d.type}</span>
+                  <span class="decision-reason">{d.reason}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
 
-    {/* ── Error ── */}
-    {
-      run.error && (
-        <section class="section">
-          <h2 class="section__heading section__heading--error">Error</h2>
-          <pre class="error-pre">{run.error}</pre>
-        </section>
-      )
-    }
+      {/* ── Error ── */}
+      {
+        run.error && (
+          <section class="section">
+            <h2 class="section__heading section__heading--error">Error</h2>
+            <pre class="error-pre">{run.error}</pre>
+          </section>
+        )
+      }
 
-    {/* ── Body / notes ── */}
-    {
-      run.body && (
-        <section class="section">
-          <h2 class="section__heading">Notes</h2>
-          <pre class="body-pre">{run.body}</pre>
-        </section>
-      )
-    }
-  </div>
+      {/* ── Body / notes ── */}
+      {
+        run.body && (
+          <section class="section">
+            <h2 class="section__heading">Notes</h2>
+            <pre class="body-pre">{run.body}</pre>
+          </section>
+        )
+      }
+    </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
@@ -214,24 +209,6 @@ function fmtDate(ts?: string): string {
     flex-direction: column;
     gap: var(--space-8);
     max-width: 820px;
-  }
-
-  /* ── Header ── */
-
-  .detail-header__title {
-    font-size: var(--text-lg);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    line-height: 1.3;
-  }
-
-  .detail-header__meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-    margin-top: var(--space-2);
   }
 
   .meta-sep {

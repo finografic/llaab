@@ -2,7 +2,9 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
-import AppLayout from '../../layouts/AppLayout.astro';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
 
 // Anchor to this file's location (apps/client/src/pages/dev/) — 5 levels up = workspace root
 const configPath = resolve(
@@ -29,24 +31,24 @@ const iconsUrl = `http://${pickerHost}:${pickerPort}/`;
 ---
 
 <AppLayout title="Dev · Icons">
-  <div class="dev-icons-page">
-    <header class="dev-icons-page__header">
-      <p class="eyebrow">Development</p>
-      <h1 class="dev-icons-page__heading">Icons</h1>
-      <p class="dev-icons-page__desc">Embedded Lucide picker for the local `@llaab/icons` registry.</p>
-    </header>
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="System" title="Icons">
+      <Fragment slot="description">Embedded Lucide picker for the local `@llaab/icons` registry.</Fragment>
+    </PageHero>
 
-    <div class="dev-icons-frame-shell">
-      <iframe src={iconsUrl} title="Lucide Manager" loading="lazy" class="dev-icons-frame"></iframe>
-    </div>
+    <div class="dev-icons-page">
+      <div class="dev-icons-frame-shell">
+        <iframe src={iconsUrl} title="Lucide Manager" loading="lazy" class="dev-icons-frame"></iframe>
+      </div>
 
-    <div class="dev-icons-toolbar">
-      <a href={iconsUrl} target="_blank" rel="noreferrer noopener" class="dev-icons-link">
-        Open standalone picker
-      </a>
-      <span class="dev-icons-meta">Source: {iconsUrl}</span>
+      <div class="dev-icons-toolbar">
+        <a href={iconsUrl} target="_blank" rel="noreferrer noopener" class="dev-icons-link">
+          Open standalone picker
+        </a>
+        <span class="dev-icons-meta">Source: {iconsUrl}</span>
+      </div>
     </div>
-  </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
@@ -54,26 +56,6 @@ const iconsUrl = `http://${pickerHost}:${pickerPort}/`;
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
-  }
-
-  .dev-icons-page__header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    max-width: 680px;
-  }
-
-  .dev-icons-page__heading {
-    font-size: var(--text-2xl);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .dev-icons-page__desc {
-    font-size: var(--text-base);
-    line-height: 1.6;
-    color: var(--text-muted);
   }
 
   .dev-icons-toolbar {

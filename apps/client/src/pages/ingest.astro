@@ -1,23 +1,25 @@
 ---
-import AppLayout from '../layouts/AppLayout.astro';
-import { IngestForm } from '../components/IngestForm';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
+import { IngestForm } from 'components/IngestForm';
 ---
 
 <AppLayout title="Ingest">
-  <div class="ingest-page">
-    <header class="ingest-page__header">
-      <p class="eyebrow">Ingest</p>
-      <h1 class="ingest-page__heading">Ingest Source URL</h1>
-      <p class="ingest-page__desc">
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Pipeline" title="Ingest Source URL">
+      <Fragment slot="description">
         Paste or drop a browser URL. The form will classify the source asset and adapt the ingest action when
         the URL is supported.
-      </p>
-    </header>
+      </Fragment>
+    </PageHero>
 
-    <div class="card ingest-page__card">
-      <IngestForm client:only="react" />
+    <div class="ingest-page">
+      <div class="card ingest-page__card">
+        <IngestForm client:only="react" />
+      </div>
     </div>
-  </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
@@ -26,25 +28,6 @@ import { IngestForm } from '../components/IngestForm';
     flex-direction: column;
     gap: var(--space-8);
     max-width: 800px;
-  }
-
-  .ingest-page__header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-
-  .ingest-page__heading {
-    font-size: var(--text-2xl);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .ingest-page__desc {
-    font-size: var(--text-base);
-    color: var(--text-muted);
-    line-height: 1.5;
   }
 
   /* IngestForm root — flex column for the form + status blocks */

@@ -1,7 +1,9 @@
 ---
 export const prerender = false;
 
-import AppLayout from '../layouts/AppLayout.astro';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
 
 // ── Fetch status from server ───────────────────────────────────────────────────
 
@@ -50,99 +52,101 @@ function isInstalled(model: string, installed: string[]): boolean {
 ---
 
 <AppLayout title="LLM Status">
-  <div class="llm-page">
-    <header class="llm-page__header">
-      <p class="eyebrow">System</p>
-      <h1 class="llm-page__heading">LLM Status</h1>
-      <p class="llm-page__desc">Active model routing and installed Ollama models.</p>
-    </header>
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Models" title="Status">
+      <Fragment slot="description">Active model routing and installed Ollama models.</Fragment>
+    </PageHero>
 
-    {
-      fetchError && (
-        <div class="alert alert--error">
-          <span class="alert__label">Server unreachable</span>
-          <span class="alert__msg">{fetchError}</span>
-        </div>
-      )
-    }
+    <div class="llm-page">
+      {
+        fetchError && (
+          <div class="alert alert--error">
+            <span class="alert__label">Server unreachable</span>
+            <span class="alert__msg">{fetchError}</span>
+          </div>
+        )
+      }
 
-    {
-      status && (
-        <div class="llm-sections">
-          {/* ── Task routing ── */}
-          <section class="llm-section">
-            <h2 class="llm-section__heading">Task routing</h2>
-            <div class="route-grid">
-              {Object.entries(status.routing).map(([task, entry]) => {
-                const installed = isInstalled(entry.model, status!.installedModels);
-                return (
-                  <div class="route-row">
-                    <span class="route-task">{TASK_LABELS[task] ?? task}</span>
-                    <span class="route-arrow">→</span>
-                    <span class="route-tier">{TIER_LABELS[entry.tier] ?? entry.tier}</span>
-                    <span class="route-arrow">→</span>
-                    <span class={`route-model ${installed ? 'route-model--ok' : 'route-model--missing'}`}>
-                      {entry.model}
-                      <span class={`route-dot route-dot--${installed ? 'ok' : 'missing'}`} />
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+      {
+        status && (
+          <div class="llm-sections">
+            {/* ── Task routing ── */}
+            <section class="llm-section">
+              <h2 class="llm-section__heading">Task routing</h2>
+              <div class="route-grid">
+                {Object.entries(status.routing).map(([task, entry]) => {
+                  const installed = isInstalled(entry.model, status!.installedModels);
+                  return (
+                    <div class="route-row">
+                      <span class="route-task">{TASK_LABELS[task] ?? task}</span>
+                      <span class="route-arrow">→</span>
+                      <span class="route-tier">{TIER_LABELS[entry.tier] ?? entry.tier}</span>
+                      <span class="route-arrow">→</span>
+                      <span class={`route-model ${installed ? 'route-model--ok' : 'route-model--missing'}`}>
+                        {entry.model}
+                        <span class={`route-dot route-dot--${installed ? 'ok' : 'missing'}`} />
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
 
-          {/* ── Installed models ── */}
-          <section class="llm-section">
-            <h2 class="llm-section__heading">
-              Installed Ollama models
-              {status.ollamaError && <span class="llm-section__badge llm-section__badge--err">offline</span>}
-              {!status.ollamaError && (
-                <span class="llm-section__badge llm-section__badge--ok">
-                  {status.installedModels.length} models
-                </span>
+            {/* ── Installed models ── */}
+            <section class="llm-section">
+              <h2 class="llm-section__heading">
+                Installed Ollama models
+                {status.ollamaError && (
+                  <span class="llm-section__badge llm-section__badge--err">offline</span>
+                )}
+                {!status.ollamaError && (
+                  <span class="llm-section__badge llm-section__badge--ok">
+                    {status.installedModels.length} models
+                  </span>
+                )}
+              </h2>
+
+              {status.ollamaError && <p class="llm-empty">{status.ollamaError}</p>}
+
+              {!status.ollamaError && status.installedModels.length === 0 && (
+                <p class="llm-empty">No models found — is Ollama running?</p>
               )}
-            </h2>
 
-            {status.ollamaError && <p class="llm-empty">{status.ollamaError}</p>}
+              {status.installedModels.length > 0 && (
+                <ul class="model-list">
+                  {status.installedModels.map((model) => (
+                    <li class="model-item">
+                      <span class="route-dot route-dot--ok" />
+                      <span class="model-name">{model}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
 
-            {!status.ollamaError && status.installedModels.length === 0 && (
-              <p class="llm-empty">No models found — is Ollama running?</p>
-            )}
-
-            {status.installedModels.length > 0 && (
-              <ul class="model-list">
-                {status.installedModels.map((model) => (
-                  <li class="model-item">
-                    <span class="route-dot route-dot--ok" />
-                    <span class="model-name">{model}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* ── Env overrides hint ── */}
-          <section class="llm-section llm-section--muted">
-            <h2 class="llm-section__heading">Env overrides</h2>
-            <dl class="env-grid">
-              <>
-                <dt>LLAAB_LOCAL_SMALL_MODEL</dt>
-                <dd>local-small tier default</dd>
-              </>
-              <>
-                <dt>LLAAB_LOCAL_MID_MODEL</dt>
-                <dd>local-mid tier default</dd>
-              </>
-              <>
-                <dt>LLAAB_REMOTE_MODEL</dt>
-                <dd>remote tier default</dd>
-              </>
-            </dl>
-          </section>
-        </div>
-      )
-    }
-  </div>
+            {/* ── Env overrides hint ── */}
+            <section class="llm-section llm-section--muted">
+              <h2 class="llm-section__heading">Env overrides</h2>
+              <dl class="env-grid">
+                <>
+                  <dt>LLAAB_LOCAL_SMALL_MODEL</dt>
+                  <dd>local-small tier default</dd>
+                </>
+                <>
+                  <dt>LLAAB_LOCAL_MID_MODEL</dt>
+                  <dd>local-mid tier default</dd>
+                </>
+                <>
+                  <dt>LLAAB_REMOTE_MODEL</dt>
+                  <dd>remote tier default</dd>
+                </>
+              </dl>
+            </section>
+          </div>
+        )
+      }
+    </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
@@ -151,24 +155,6 @@ function isInstalled(model: string, installed: string[]): boolean {
     flex-direction: column;
     gap: var(--space-8);
     max-width: 640px;
-  }
-
-  .llm-page__header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-
-  .llm-page__heading {
-    font-size: var(--text-2xl);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .llm-page__desc {
-    font-size: var(--text-base);
-    color: var(--text-muted);
   }
 
   /* ── Alert ── */

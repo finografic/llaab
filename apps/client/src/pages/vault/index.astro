@@ -3,8 +3,10 @@ export const prerender = false;
 
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
-import AppLayout from '../../layouts/AppLayout.astro';
-import { VaultBrowser } from '../../components/VaultBrowser';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
+import { VaultBrowser } from 'components/VaultBrowser';
 import type { VaultNode } from '../../components/VaultBrowser';
 import { VAULT_ROOT } from '@llaab/core';
 
@@ -46,7 +48,10 @@ const tree = await readTree(VAULT_ROOT);
 ---
 
 <AppLayout title="Vault">
-  <VaultBrowser tree={tree} client:load />
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Vault" title="Browse Vault" />
+    <VaultBrowser tree={tree} client:load />
+  </PageLayout>
 </AppLayout>
 
 <style>

@@ -28,7 +28,7 @@ const { eyebrow, title, bordered = true } = Astro.props;
       {eyebrow && <p class="eyebrow page-hero__eyebrow">{eyebrow}</p>}
 
       <div class="page-hero__title-row">
-        <h1 class="page-hero__title">HERO: {title}</h1>
+        <h1 class="page-hero__title">{title}</h1>
 
         {
           Astro.slots.has('actions') && (
@@ -60,16 +60,17 @@ const { eyebrow, title, bordered = true } = Astro.props;
 
 <style>
   .page-hero {
-    background: var(--bg-subtle);
     flex-shrink: 0;
+    margin-bottom: var(--space-4);
   }
 
   .page-hero[data-bordered] {
+    padding-bottom: var(--space-1);
     border-bottom: 1px solid var(--border-subtle);
   }
 
   .page-hero__inner {
-    padding: var(--space-4) var(--space-6);
+    padding: 0 0 var(--space-2);
   }
 
   /* ─── Eyebrow ────────────────────────────────────────────────── */
@@ -88,8 +89,9 @@ const { eyebrow, title, bordered = true } = Astro.props;
   }
 
   .page-hero__title {
-    font-size: 1.125rem;
+    font-size: var(--text-xl);
     font-weight: 600;
+    letter-spacing: -0.02em;
     line-height: 1.3;
     color: var(--text);
     margin: 0;
@@ -116,8 +118,7 @@ const { eyebrow, title, bordered = true } = Astro.props;
   /* ─── Meta row ───────────────────────────────────────────────── */
 
   .page-hero__meta {
-    padding: var(--space-2) var(--space-6);
-    border-top: 1px solid var(--border-subtle);
+    padding: var(--space-1) 0 var(--space-3);
     background: var(--bg);
     display: flex;
     align-items: center;

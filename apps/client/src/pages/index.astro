@@ -1,5 +1,7 @@
 ---
 import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
 import BalancedGrid from 'components/BalancedGrid/BalancedGrid.astro';
 import { ActivityIcon, ArrowRightIcon, DownloadIcon, FolderKanbanIcon, PlayIcon } from '@llaab/icons';
 import { Card, CardContent } from 'components/ui/card';
@@ -8,75 +10,77 @@ const homeCalloutCount = 4;
 ---
 
 <AppLayout title="Home">
-  <div class="home">
-    <header class="home__hero">
-      <p class="eyebrow">Learning Loop &amp; Agent Automation Base</p>
-      <h1 class="home__heading">LLAAB</h1>
-      <p class="home__sub">Your vault for ingested knowledge, structured nodes, and agent run history.</p>
-    </header>
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Learning Loop & Agent Automation Base" title="LLAAB">
+      <Fragment slot="description">
+        Your vault for ingested knowledge, structured nodes, and agent run history.
+      </Fragment>
+    </PageHero>
 
-    <BalancedGrid itemCount={homeCalloutCount} class="home__grid">
-      <a href="/ingest" class="home-card-link">
-        <Card className="home-card">
-          <CardContent className="home-card__content">
-            <div class="home-card__icon">
-              <DownloadIcon size={18} aria-hidden="true" />
-            </div>
-            <div class="home-card__body">
-              <h2 class="home-card__title">Ingest</h2>
-              <p class="home-card__desc">Fetch a YouTube transcript and store it as a vault node.</p>
-            </div>
-            <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
-          </CardContent>
-        </Card>
-      </a>
+    <div class="home">
+      <BalancedGrid itemCount={homeCalloutCount} class="home__grid">
+        <a href="/ingest" class="home-card-link">
+          <Card className="home-card">
+            <CardContent className="home-card__content">
+              <div class="home-card__icon">
+                <DownloadIcon size={18} aria-hidden="true" />
+              </div>
+              <div class="home-card__body">
+                <h2 class="home-card__title">Ingest</h2>
+                <p class="home-card__desc">Fetch a YouTube transcript and store it as a vault node.</p>
+              </div>
+              <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
+            </CardContent>
+          </Card>
+        </a>
 
-      <a href="/vault" class="home-card-link">
-        <Card className="home-card">
-          <CardContent className="home-card__content">
-            <div class="home-card__icon">
-              <FolderKanbanIcon size={18} aria-hidden="true" />
-            </div>
-            <div class="home-card__body">
-              <h2 class="home-card__title">Vault</h2>
-              <p class="home-card__desc">Browse transcripts, nodes, and structured vault content.</p>
-            </div>
-            <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
-          </CardContent>
-        </Card>
-      </a>
+        <a href="/vault" class="home-card-link">
+          <Card className="home-card">
+            <CardContent className="home-card__content">
+              <div class="home-card__icon">
+                <FolderKanbanIcon size={18} aria-hidden="true" />
+              </div>
+              <div class="home-card__body">
+                <h2 class="home-card__title">Vault</h2>
+                <p class="home-card__desc">Browse transcripts, nodes, and structured vault content.</p>
+              </div>
+              <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
+            </CardContent>
+          </Card>
+        </a>
 
-      <a href="/vault/runs" class="home-card-link">
-        <Card className="home-card">
-          <CardContent className="home-card__content">
-            <div class="home-card__icon">
-              <PlayIcon size={18} aria-hidden="true" />
-            </div>
-            <div class="home-card__body">
-              <h2 class="home-card__title">Runs</h2>
-              <p class="home-card__desc">Inspect agent execution traces and skill run history.</p>
-            </div>
-            <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
-          </CardContent>
-        </Card>
-      </a>
+        <a href="/vault/runs" class="home-card-link">
+          <Card className="home-card">
+            <CardContent className="home-card__content">
+              <div class="home-card__icon">
+                <PlayIcon size={18} aria-hidden="true" />
+              </div>
+              <div class="home-card__body">
+                <h2 class="home-card__title">Runs</h2>
+                <p class="home-card__desc">Inspect agent execution traces and skill run history.</p>
+              </div>
+              <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
+            </CardContent>
+          </Card>
+        </a>
 
-      <a href="/llm" class="home-card-link">
-        <Card className="home-card">
-          <CardContent className="home-card__content">
-            <div class="home-card__icon">
-              <ActivityIcon size={18} aria-hidden="true" />
-            </div>
-            <div class="home-card__body">
-              <h2 class="home-card__title">Models</h2>
-              <p class="home-card__desc">Task routing, provider status, and installed model indicators.</p>
-            </div>
-            <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
-          </CardContent>
-        </Card>
-      </a>
-    </BalancedGrid>
-  </div>
+        <a href="/llm" class="home-card-link">
+          <Card className="home-card">
+            <CardContent className="home-card__content">
+              <div class="home-card__icon">
+                <ActivityIcon size={18} aria-hidden="true" />
+              </div>
+              <div class="home-card__body">
+                <h2 class="home-card__title">Models</h2>
+                <p class="home-card__desc">Task routing, provider status, and installed model indicators.</p>
+              </div>
+              <ArrowRightIcon size={14} className="home-card__arrow" aria-hidden="true" />
+            </CardContent>
+          </Card>
+        </a>
+      </BalancedGrid>
+    </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
@@ -85,29 +89,6 @@ const homeCalloutCount = 4;
     flex-direction: column;
     gap: var(--space-10);
     max-width: var(--content-max);
-  }
-
-  /* ── Hero ── */
-
-  .home__hero {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .home__heading {
-    font-family: var(--font-mono);
-    font-size: var(--text-4xl);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .home__sub {
-    font-size: var(--text-ui);
-    color: var(--text-muted);
-    line-height: 1.6;
-    max-width: 480px;
   }
 
   /* ── Cards grid (layout handled by BalancedGrid; class hooks page-specific overrides) ── */

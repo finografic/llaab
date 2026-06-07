@@ -1,10 +1,15 @@
 ---
 export const prerender = false;
 
-import { TerminalPanel } from '../components/TerminalPanel';
-import AppLayout from '../layouts/AppLayout.astro';
+import { TerminalPanel } from 'components/TerminalPanel';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
 ---
 
 <AppLayout title="Terminal">
-  <TerminalPanel client:only="react" />
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Execute" title="Terminal" />
+    <TerminalPanel client:only="react" />
+  </PageLayout>
 </AppLayout>

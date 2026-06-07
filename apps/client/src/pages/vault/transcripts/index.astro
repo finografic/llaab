@@ -3,7 +3,9 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { TranscriptNode } from '@llaab/schemas';
-import AppLayout from '../../../layouts/AppLayout.astro';
+import AppLayout from 'layouts/AppLayout.astro';
+import PageLayout from 'layouts/PageLayout.astro';
+import PageHero from 'components/PageHero/PageHero.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 
@@ -20,68 +22,72 @@ transcripts.sort((a, b) => b.created_at.localeCompare(a.created_at));
 ---
 
 <AppLayout title="Transcripts">
-  <div class="list-page">
-    <header class="list-page__header">
-      <p class="eyebrow">Vault</p>
-      <h1 class="list-page__heading">Transcripts</h1>
-      <p class="list-page__count">{transcripts.length} transcript{transcripts.length !== 1 ? 's' : ''}</p>
-    </header>
+  <PageLayout>
+    <PageHero slot="hero" eyebrow="Vault" title="Transcripts">
+      <Fragment slot="meta">
+        {transcripts.length} transcript{transcripts.length !== 1 ? 's' : ''}
+      </Fragment>
+    </PageHero>
 
-    {
-      transcripts.length === 0 && (
-        <p class="empty">
-          No transcripts yet. <a href="/ingest">Ingest a YouTube video</a> to get started.
-        </p>
-      )
-    }
-
-    <ul class="node-list" role="list">
+    <div class="list-page">
       {
-        transcripts.map((t) => (
-          <li class="node-card">
-            <a href={`/vault/transcripts/${t.id}`} class="node-card__link" aria-label={t.title}>
-              <div class="node-card__meta">
-                <span class={`badge badge--${t.source_type}`}>{t.source_type}</span>
-                <time class="node-card__date" datetime={t.created_at}>
-                  {new Date(t.created_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </time>
-              </div>
-
-              <h2 class="node-card__title">{t.title}</h2>
-
-              {t.author && <p class="node-card__author">{t.author}</p>}
-
-              {t.summary && <p class="node-card__summary">{t.summary}</p>}
-
-              {t.tags.length > 0 && (
-                <div class="tag-row">
-                  {t.tags.map((tag) => (
-                    <span class="tag" data-tag={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div class="node-card__stats">
-                {t.clean_length != null && <span class="stat">{t.clean_length.toLocaleString()} chars</span>}
-                {t.structured_paragraphs != null && <span class="stat">{t.structured_paragraphs} §</span>}
-                {t.extracted_idea_ids.length > 0 && (
-                  <span class="stat stat--ideas">
-                    {t.extracted_idea_ids.length} idea{t.extracted_idea_ids.length !== 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-            </a>
-          </li>
-        ))
+        transcripts.length === 0 && (
+          <p class="empty">
+            No transcripts yet. <a href="/ingest">Ingest a YouTube video</a> to get started.
+          </p>
+        )
       }
-    </ul>
-  </div>
+
+      <ul class="node-list" role="list">
+        {
+          transcripts.map((t) => (
+            <li class="node-card">
+              <a href={`/vault/transcripts/${t.id}`} class="node-card__link" aria-label={t.title}>
+                <div class="node-card__meta">
+                  <span class={`badge badge--${t.source_type}`}>{t.source_type}</span>
+                  <time class="node-card__date" datetime={t.created_at}>
+                    {new Date(t.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </time>
+                </div>
+
+                <h2 class="node-card__title">{t.title}</h2>
+
+                {t.author && <p class="node-card__author">{t.author}</p>}
+
+                {t.summary && <p class="node-card__summary">{t.summary}</p>}
+
+                {t.tags.length > 0 && (
+                  <div class="tag-row">
+                    {t.tags.map((tag) => (
+                      <span class="tag" data-tag={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div class="node-card__stats">
+                  {t.clean_length != null && (
+                    <span class="stat">{t.clean_length.toLocaleString()} chars</span>
+                  )}
+                  {t.structured_paragraphs != null && <span class="stat">{t.structured_paragraphs} §</span>}
+                  {t.extracted_idea_ids.length > 0 && (
+                    <span class="stat stat--ideas">
+                      {t.extracted_idea_ids.length} idea{t.extracted_idea_ids.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </PageLayout>
 </AppLayout>
 
 <style>
@@ -90,24 +96,6 @@ transcripts.sort((a, b) => b.created_at.localeCompare(a.created_at));
     flex-direction: column;
     gap: var(--space-6);
     max-width: 760px;
-  }
-
-  .list-page__header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .list-page__heading {
-    font-size: var(--text-xl);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .list-page__count {
-    font-size: var(--text-md);
-    color: var(--text-faint);
   }
 
   .empty {
