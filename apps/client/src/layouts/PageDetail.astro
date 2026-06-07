@@ -1,0 +1,37 @@
+---
+/**
+ * PageDetail — content column for vault entity detail routes.
+ *
+ * Props:
+ *   variant — max-width preset (default 820px content column)
+ *   gap     — vertical spacing between stacked sections
+ */
+
+interface Props {
+  variant?: 'narrow' | 'default';
+  gap?: 'md' | 'lg';
+}
+
+const { variant = 'default', gap = 'md' } = Astro.props;
+---
+
+<div class="page-detail" data-variant={variant} data-gap={gap}>
+  <slot />
+</div>
+
+<style>
+  .page-detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-width: var(--content-max);
+  }
+
+  .page-detail[data-variant='narrow'] {
+    max-width: 820px;
+  }
+
+  .page-detail[data-gap='lg'] {
+    gap: var(--space-8);
+  }
+</style>

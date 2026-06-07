@@ -1,4 +1,5 @@
 @import "./forms.css";
+@import "./page-detail.css";
 
 :root {
   /* ── Layout surfaces ──────────────────────────────────────────────────────── */
@@ -83,7 +84,7 @@
   /* ── Layout dimensions ────────────────────────────────────────────────────── */
   --sidebar-w: 220px;
   --header-h: 52px;
-  --content-max: 800px;
+  --content-max: 1000px;
 
   /* ── Motion ───────────────────────────────────────────────────────────────── */
   --duration-fast: 100ms;

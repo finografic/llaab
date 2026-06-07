@@ -1,0 +1,31 @@
+---
+/**
+ * PageList — content column for vault list routes (tables, file lists).
+ *
+ * Props:
+ *   width — max-width preset
+ */
+
+interface Props {
+  width?: 'standard' | 'wide';
+}
+
+const { width = 'standard' } = Astro.props;
+---
+
+<div class="page-list" data-width={width}>
+  <slot />
+</div>
+
+<style>
+  .page-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-width: 820px;
+  }
+
+  .page-list[data-width='wide'] {
+    max-width: var(--content-max);
+  }
+</style>

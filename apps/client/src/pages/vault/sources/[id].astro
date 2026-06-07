@@ -5,6 +5,7 @@ import { listNodes } from '@llaab/core';
 import type { SourceNode, TranscriptNode } from '@llaab/schemas';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
+import PageDetail from 'layouts/PageDetail.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -50,7 +51,7 @@ function fmtDate(ts?: string): string {
       </Fragment>
     </PageHero>
 
-    <div class="detail-page">
+    <PageDetail variant="narrow">
       {/* ── Tags ── */}
       {
         source.tags.length > 0 && (
@@ -138,10 +139,14 @@ function fmtDate(ts?: string): string {
                     <span class="transcript-meta">
                       <span class={`badge badge--${t.source_type}`}>{t.source_type}</span>
                       {t.extracted_idea_ids.length > 0 && (
-                        <span class="transcript-ideas">
-                          {t.extracted_idea_ids.length} idea{t.extracted_idea_ids.length !== 1 ? 's' : ''}
-                        </span>
+                        <>
+                          <span class="meta-sep">·</span>
+                          <span class="transcript-ideas">
+                            {t.extracted_idea_ids.length} idea{t.extracted_idea_ids.length !== 1 ? 's' : ''}
+                          </span>
+                        </>
                       )}
+                      <span class="meta-sep">·</span>
                       <time class="transcript-date" datetime={t.created_at}>
                         {new Date(t.created_at).toLocaleDateString('en-US', {
                           month: 'short',
@@ -157,106 +162,11 @@ function fmtDate(ts?: string): string {
           </section>
         )
       }
-    </div>
+    </PageDetail>
   </PageLayout>
 </AppLayout>
 
 <style>
-  .detail-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-    max-width: 760px;
-  }
-
-  .meta-sep {
-    color: var(--text-faint);
-  }
-  .meta-text {
-    font-size: var(--text-md);
-    color: var(--text-faint);
-  }
-  .meta-mono {
-    font-family: var(--font-mono);
-    font-size: var(--text-md);
-    color: var(--text-muted);
-  }
-
-  .meta-link {
-    color: var(--accent);
-    text-decoration: none;
-    font-size: var(--text-md);
-  }
-  .meta-link:hover {
-    text-decoration: underline;
-  }
-
-  /* ── Sections ── */
-
-  .section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .section__heading {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-    padding-bottom: var(--space-2);
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .section__count {
-    font-size: var(--text-xs);
-    font-family: var(--font-mono);
-    background: var(--surface-raised);
-    border: 1px solid var(--border-subtle);
-    border-radius: 99px;
-    padding: 1px 6px;
-    color: var(--text-faint);
-    text-transform: none;
-    letter-spacing: 0;
-    font-weight: 500;
-  }
-
-  /* ── Meta grid ── */
-
-  .meta-grid {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: var(--space-2) var(--space-5);
-    font-size: var(--text-base);
-  }
-
-  .meta-grid dt {
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--text-faint);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-top: 2px;
-    white-space: nowrap;
-  }
-
-  .meta-grid dd {
-    color: var(--text-muted);
-    line-height: 1.5;
-  }
-
-  /* ── Body ── */
-
-  .body-text {
-    font-size: var(--text-base);
-    color: var(--text-muted);
-    line-height: 1.6;
-  }
-
   /* ── Platform chips ── */
 
   .platform-row {
@@ -299,8 +209,8 @@ function fmtDate(ts?: string): string {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: var(--space-4);
-    padding: var(--space-2) var(--space-3);
+    gap: var(--space-6);
+    padding: var(--space-3) var(--space-4);
     text-decoration: none;
     color: inherit;
   }
@@ -315,7 +225,7 @@ function fmtDate(ts?: string): string {
   .transcript-meta {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-3);
     flex-shrink: 0;
   }
 

@@ -6,6 +6,7 @@ import type { IdeaNode, InstructionNode, PromptNode, ResourceNode, SkillNode } f
 import ModelMetaCard from 'components/ModelMetaCard.astro';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
+import PageDetail from 'layouts/PageDetail.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -61,7 +62,7 @@ const resource = node.type === 'resource' ? (node as ResourceNode) : null;
       </Fragment>
     </PageHero>
 
-    <div class="detail-page">
+    <PageDetail variant="narrow">
       {/* ── Tags ── */}
       {
         node.tags.length > 0 && (
@@ -327,100 +328,11 @@ const resource = node.type === 'resource' ? (node as ResourceNode) : null;
           </section>
         )
       }
-    </div>
+    </PageDetail>
   </PageLayout>
 </AppLayout>
 
 <style>
-  .detail-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-    max-width: 760px;
-  }
-
-  .meta-sep {
-    color: var(--text-faint);
-  }
-
-  .meta-text {
-    font-size: var(--text-md);
-    color: var(--text-faint);
-  }
-
-  .meta-mono {
-    font-family: var(--font-mono);
-    font-size: var(--text-md);
-    color: var(--text-muted);
-  }
-
-  .meta-link {
-    color: var(--accent);
-    text-decoration: none;
-    font-size: var(--text-md);
-  }
-
-  .meta-link:hover {
-    text-decoration: underline;
-  }
-
-  /* ── Sections ── */
-
-  .section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .section__heading {
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-    padding-bottom: var(--space-2);
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  /* ── Meta grid (key/value) ── */
-
-  .meta-grid {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: var(--space-2) var(--space-5);
-    font-size: var(--text-base);
-  }
-
-  .meta-grid dt {
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--text-faint);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-top: 2px;
-    white-space: nowrap;
-  }
-
-  .meta-grid dd {
-    color: var(--text-muted);
-    line-height: 1.5;
-  }
-
-  /* ── Body pre ── */
-
-  .body-pre {
-    font-family: var(--font-mono);
-    font-size: var(--text-md);
-    line-height: 1.7;
-    white-space: pre-wrap;
-    word-break: break-word;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: var(--space-4);
-    color: var(--text-muted);
-  }
-
   /* ── Chip list ── */
 
   .chip-list {

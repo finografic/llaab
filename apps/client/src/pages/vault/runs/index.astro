@@ -6,6 +6,7 @@ import type { RunNode } from '@llaab/schemas';
 import { RunsTable } from 'components/RunsTable';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
+import PageList from 'layouts/PageList.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -29,14 +30,8 @@ const runs = (all as RunNode[]).toSorted((a, b) => b.created_at.localeCompare(a.
       </Fragment>
     </PageHero>
 
-    <div class="list-page">
+    <PageList width="wide">
       <RunsTable runs={runs} client:load />
-    </div>
+    </PageList>
   </PageLayout>
 </AppLayout>
-
-<style>
-  .list-page {
-    max-width: 1100px;
-  }
-</style>

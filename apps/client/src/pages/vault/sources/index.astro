@@ -5,7 +5,9 @@ import { listNodes } from '@llaab/core';
 import type { SourceNode } from '@llaab/schemas';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
+import PageList from 'layouts/PageList.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
+import { SourcesTable } from 'components/SourcesTable';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 
@@ -32,189 +34,14 @@ const followed = sources.filter((s) => s.follow);
       </Fragment>
     </PageHero>
 
-    <div class="list-page">
-      {
-        sources.length === 0 && (
-          <p class="empty">No sources yet. Sources are created automatically when ingesting content.</p>
-        )
-      }
-
-      <ul class="node-list" role="list">
-        {
-          sources.map((s) => (
-            <li class="node-card">
-              <a href={`/vault/sources/${s.id}`} class="node-card__link" aria-label={s.title}>
-                <div class="node-card__meta">
-                  <span class={`badge badge--${s.source_kind}`}>{s.source_kind}</span>
-                  {s.follow && <span class="badge badge--follow">following</span>}
-                  <time class="node-card__date" datetime={s.created_at}>
-                    {new Date(s.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </time>
-                </div>
-
-                <h2 class="node-card__title">{s.title}</h2>
-
-                {s.body && <p class="node-card__body">{s.body}</p>}
-
-                {s.platforms.length > 0 && (
-                  <div class="platform-row">
-                    {s.platforms.map((p) => (
-                      <span class="platform">{p}</span>
-                    ))}
-                  </div>
-                )}
-
-                {s.tags.length > 0 && (
-                  <div class="tag-row">
-                    {s.tags.map((tag) => (
-                      <span class="tag" data-tag={tag}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </div>
+    <PageList width="wide">
+      <SourcesTable sources={sources} client:load />
+    </PageList>
   </PageLayout>
 </AppLayout>
 
 <style>
-  .list-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-    max-width: 760px;
-  }
-
   .follow-count {
     color: oklch(0.65 0.18 264);
-  }
-
-  .empty {
-    font-size: var(--text-base);
-    color: var(--text-muted);
-  }
-
-  /* ── Node list ── */
-
-  .node-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .node-card {
-    display: flex;
-    flex-direction: column;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    transition: border-color var(--duration) var(--ease);
-  }
-
-  .node-card:hover {
-    border-color: var(--accent);
-  }
-
-  .node-card__link {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4) var(--space-5);
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .node-card__meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .node-card__title {
-    font-size: var(--text-ui);
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.4;
-  }
-
-  .node-card__body {
-    font-size: var(--text-md);
-    color: var(--text-muted);
-    line-height: 1.6;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .node-card__date {
-    font-size: var(--text-sm);
-    color: var(--text-faint);
-    font-family: var(--font-mono);
-    margin-left: auto;
-  }
-
-  /* ── Platform chips ── */
-
-  .platform-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
-  }
-
-  .platform {
-    font-size: var(--text-sm);
-    font-family: var(--font-mono);
-    color: var(--text-faint);
-    background: var(--surface-raised);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius);
-    padding: 1px 6px;
-  }
-
-  /* ── Source kind badge variants (base in app.css) ── */
-
-  .badge--person {
-    background: oklch(0.22 0.04 264 / 0.25);
-    color: oklch(0.65 0.18 264);
-    border-color: oklch(0.4 0.12 264 / 0.4);
-  }
-  .badge--channel {
-    background: oklch(0.22 0.04 25 / 0.25);
-    color: oklch(0.68 0.2 25);
-    border-color: oklch(0.42 0.12 25 / 0.4);
-  }
-  .badge--repo {
-    background: oklch(0.22 0.04 295 / 0.25);
-    color: oklch(0.65 0.18 295);
-    border-color: oklch(0.4 0.12 295 / 0.4);
-  }
-  .badge--publication {
-    background: oklch(0.22 0.04 155 / 0.25);
-    color: oklch(0.6 0.17 155);
-    border-color: oklch(0.4 0.12 155 / 0.4);
-  }
-  .badge--organization {
-    background: oklch(0.24 0.05 40 / 0.25);
-    color: oklch(0.7 0.19 40);
-    border-color: oklch(0.42 0.12 40 / 0.4);
-  }
-  .badge--follow {
-    background: oklch(0.22 0.04 264 / 0.25);
-    color: oklch(0.65 0.18 264);
-    border-color: oklch(0.4 0.12 264 / 0.4);
-    border-radius: 4px;
   }
 </style>
