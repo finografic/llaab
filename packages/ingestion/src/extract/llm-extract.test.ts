@@ -68,7 +68,7 @@ describe('llmExtract', () => {
     await expect(llmExtract('example transcript')).rejects.toThrow();
   });
 
-  it('defaults omitted tags to an empty array', async () => {
+  it('rejects when tags are omitted', async () => {
     mockRouteLlm(
       JSON.stringify({
         ideas: ['LLMs require careful prompt engineering'],
@@ -77,9 +77,7 @@ describe('llmExtract', () => {
       }),
     );
 
-    const result = await llmExtract('example transcript');
-
-    expect(result.tags).toEqual([]);
+    await expect(llmExtract('example transcript')).rejects.toThrow();
   });
 
   it('returns control trace metadata with accept decision on success', async () => {

@@ -35,7 +35,7 @@ const ExtractedKnowledgeSchema = z.object({
   ideas: z.array(z.string()),
   skills: z.array(z.string()),
   summary: z.string().min(1),
-  tags: z.array(z.string()).default([]),
+  tags: z.array(z.string()).min(1),
 });
 
 const EXTRACTION_SYSTEM_PROMPT = `You are a knowledge extraction assistant. Analyze the provided content and extract structured knowledge.
@@ -50,9 +50,11 @@ Rules:
 - Output raw JSON only — no markdown fences, no explanation, no commentary
 - ideas array must have at least 1 item if the content is substantive
 - Every string must be plain text with no nested quotes
+- The example below illustrates FORMAT ONLY, using a topic unrelated to typical input — never copy its
+  wording or tags; every field must be derived from the actual input content
 
 Example output format:
-{"ideas":["Large language models require careful prompt engineering","Fine-tuning outperforms prompting for narrow tasks"],"skills":["prompt engineering","model fine-tuning","RLHF"],"summary":"Overview of LLM training and deployment strategies.","tags":["prompt-engineering","fine-tuning","rlhf","deployment-strategies"]}`;
+{"ideas":["Slow-roasting at low heat keeps tougher cuts of meat moist","Resting meat after cooking redistributes its juices evenly"],"skills":["dry brining","reverse searing","probe thermometry"],"summary":"Techniques for cooking tender, evenly-seasoned roasts at home.","tags":["reverse-sear","dry-brine","meat-thermometer","roasting-technique"]}`;
 
 function parseJsonFromText(text: string): unknown {
   // Strip optional markdown code fences (```json ... ``` or ``` ... ```)

@@ -325,6 +325,23 @@ async function fetchNodeTags(nodeId: string): Promise<string[]> {
   }
 }
 
+/** Tags already used across the vault, ranked by usage count (most-used first). */
+async function fetchVaultTagsByUsage(): Promise<string[]> {
+  try {
+    const res = await api.vault.nodes.$get({ query: { tags: undefined, limit: undefined } });
+    const json = (await res.json()) as { nodes?: Array<{ tags?: string[] }> };
+    const counts = new Map<string, number>();
+    for (const node of json.nodes ?? []) {
+      for (const tag of node.tags ?? []) {
+        counts.set(tag, (counts.get(tag) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()].toSorted((a, b) => b[1] - a[1]).map(([tag]) => tag);
+  } catch {
+    return [];
+  }
+}
+
 async function runExtract(transcriptId: string): Promise<{
   phase: 'success' | 'existing' | 'extractable' | 'failed';
   ideas?: Array<{ id: string; title: string }>;
@@ -360,6 +377,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [lockedTags, setLockedTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [vaultTagsByUsage, setVaultTagsByUsage] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [isDropActive, setIsDropActive] = useState(false);
   const [dropMessage, setDropMessage] = useState<string | null>(null);
@@ -399,6 +417,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     }
     return 'Address-bar drags and in-page links should both work. The form classifies the source asset and adapts the ingest action.';
   }, [sourceKind]);
+
+  useEffect(() => {
+    fetchVaultTagsByUsage().then(setVaultTagsByUsage);
+  }, []);
 
   useEffect(() => {
     const preventWindowDropNavigation = (event: DragEvent) => {
@@ -601,9 +623,11 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     });
   };
 
-  const suggestions = KNOWN_TAGS.filter((tag) => {
+  const suggestionPool = [...KNOWN_TAGS, ...vaultTagsByUsage.filter((tag) => !KNOWN_TAGS.includes(tag))];
+
+  const suggestions = suggestionPool.filter((tag) => {
     if (tags.includes(tag) || lockedTags.includes(tag)) return false;
-    if (!tagInput) return true;
+    if (!tagInput) return KNOWN_TAGS.includes(tag);
     const normalized = normalizeTag(tagInput);
     return tag.includes(normalized) || tag.includes(tagInput.toLowerCase());
   });
