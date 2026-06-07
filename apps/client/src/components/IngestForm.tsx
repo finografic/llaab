@@ -5,11 +5,12 @@ import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { Spinner } from 'components/ui/spinner';
 import { CheckIcon as LucideCheck, RotateCcwIcon, Trash2Icon } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { api } from 'lib/api';
 import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
+import { INGEST_FORM_RESET_EVENT } from 'lib/ingest-form-events';
 
 const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
 const KNOWN_TAGS = KNOWN_DOMAINS.map((domain) => `d:${domain}`);
@@ -437,11 +438,12 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     };
   }, []);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setValue('url', '');
     setTags([]);
     setLockedTags([]);
     setTagInput('');
+    setBusy(false);
     setTranscriptPhase('idle');
     setTranscriptData(null);
     setTranscriptError(null);
@@ -454,7 +456,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setTotalElapsedSecs(null);
     setApiError(null);
     setDropMessage(null);
-  };
+  }, [setValue]);
+
+  useEffect(() => {
+    const handleReset = () => resetForm();
+    window.addEventListener(INGEST_FORM_RESET_EVENT, handleReset);
+    return () => window.removeEventListener(INGEST_FORM_RESET_EVENT, handleReset);
+  }, [resetForm]);
 
   const applyExtractResult = async (result: Awaited<ReturnType<typeof runExtract>>, transcriptId: string) => {
     setExtractionError(null);

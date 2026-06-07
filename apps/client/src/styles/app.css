@@ -26,6 +26,9 @@
   --accent-subtle: oklch(0.77 0.22 130 / 0.12);
   --accent-dim: oklch(0.65 0.18 130);
 
+  --input-selection-bg: oklch(31.24% 0.06 124.86 / 50%);
+  --input-selection-text: var(--text);
+
   /* ── Semantic status colors ───────────────────────────────────────────────── */
   --success-bg: oklch(0.37 0.08 155 / 0.2);
   --success-border: oklch(0.62 0.15 155 / 0.6);
@@ -34,10 +37,14 @@
   --error-bg: oklch(0.32 0.09 28 / 0.22);
   --error-border: oklch(0.56 0.16 28 / 0.6);
   --error-text: oklch(0.72 0.16 28);
+  --error-dim: oklch(0.52 0.14 28);
+  --error-border-dim: oklch(0.4 0.12 28 / 0.55);
 
   --warning-bg: oklch(0.34 0.08 68 / 0.22);
   --warning-border: oklch(0.62 0.12 68 / 0.65);
   --warning-text: oklch(0.79 0.13 72);
+  --warning-dim: oklch(0.58 0.11 72);
+  --warning-border-dim: oklch(0.45 0.09 68 / 0.55);
 
   --pending-bg: var(--surface-raised);
   --pending-border: var(--border-subtle);

@@ -37,6 +37,7 @@ export type {
   ShellExecCommand,
 } from './command-protocol.js';
 export { deleteNode } from './utils/delete-node.utils.js';
+export { cleanRecentVaultActivity, countRecentVaultRuns } from './utils/clean-vault-activity.utils.js';
 export { readMarkdownFiles } from './storage/reader.utils.js';
 export { writeTextFile } from './storage/writer.utils.js';
 export { createNode } from './utils/create-node.utils.js';

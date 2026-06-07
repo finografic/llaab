@@ -3,7 +3,8 @@
  * PageHero — page-level header / hero zone.
  *
  * Slots:
- *   actions     — right-side buttons (default slot on the actions side)
+ *   actions     — right-side controls in the title row (legacy name)
+ *   right       — optional right-side slot in the title row (same row as title)
  *   description — optional subtitle below the title row
  *   meta        — optional row of stats/badges below description
  *
@@ -31,9 +32,10 @@ const { eyebrow, title, bordered = true } = Astro.props;
         <h1 class="page-hero__title">{title}</h1>
 
         {
-          Astro.slots.has('actions') && (
+          (Astro.slots.has('actions') || Astro.slots.has('right')) && (
             <div class="page-hero__actions">
               <slot name="actions" />
+              <slot name="right" />
             </div>
           )
         }

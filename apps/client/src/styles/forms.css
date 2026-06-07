@@ -40,6 +40,18 @@
     color: var(--text-faint);
   }
 
+  input[type="text"]::selection,
+  input[type="email"]::selection,
+  input[type="url"]::selection,
+  input[type="search"]::selection,
+  input[type="password"]::selection,
+  input[type="number"]::selection,
+  textarea::selection,
+  select::selection {
+    background: var(--input-selection-bg);
+    color: var(--input-selection-text);
+  }
+
   input[type="text"]:focus,
   input[type="email"]:focus,
   input[type="url"]:focus,
