@@ -433,20 +433,20 @@ Renderers should only transform a normalized LLAAB task/context object into adap
 Add or extend CLI commands such as:
 
 ```sh
-llaab adapters list
-llaab adapters doctor
-llaab route "<task>"
-llaab plan "<task>"
-llaab execute "<task>" --adapter opencode
-llaab reduce --model gemma
-llaab skill create
-llaab skill sync --adapter hermes
+lab adapters list
+lab adapters doctor
+lab route "<task>"
+lab plan "<task>"
+lab execute "<task>" --adapter opencode
+lab reduce --model gemma
+lab skill create
+lab skill sync --adapter hermes
 ```
 
 Useful diagnostics:
 
 ```sh
-llaab adapters doctor
+lab adapters doctor
 ```
 
 Should report:

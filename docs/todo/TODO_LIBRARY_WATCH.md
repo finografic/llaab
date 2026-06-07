@@ -9,7 +9,7 @@
 
 A `/vault/packages` page where you track npm packages, frameworks, Homebrew tools, and other
 ecosystem dependencies. Each entry is a `PackageNode` — a vault node that stores stats, metadata,
-and a `follow` flag. Followed packages auto-refresh on `llaab agent run`.
+and a `follow` flag. Followed packages auto-refresh on `lab agent run`.
 
 ---
 
@@ -204,6 +204,6 @@ Add panel: package name input + ecosystem selector → calls `POST /api/packages
 ## Notes
 
 - `follow: false` by default — you opt packages in explicitly, not a firehose
-- Stats refresh is cheap (two small JSON fetches per package) — safe to run on every `llaab agent run`
+- Stats refresh is cheap (two small JSON fetches per package) — safe to run on every `lab agent run`
 - No always-on background refresh — follows the project-wide agent execution rule
 - Vulnerability count via npm audit API is optional and can be Phase 5 if needed

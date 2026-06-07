@@ -2,7 +2,7 @@
 
 > **Completed:** 2026-04-16 — all three phases implemented: registry + dedup index, one-shot
 > processor, HTTP routes (`POST /api/agent/run`, `GET /api/agent/status`), CLI command
-> (`llaab agent run [--node] [--force]`). Source Auto-Follow slot reserved in registry (commented out).
+> (`lab agent run [--node] [--force]`). Source Auto-Follow slot reserved in registry (commented out).
 
 ---
 
@@ -33,7 +33,7 @@ Three trigger surfaces — LLAAB provides the mechanism, you control the schedul
 
 | Trigger                   | When to use                                  |
 | ------------------------- | -------------------------------------------- |
-| `llaab agent run`         | On demand from terminal                      |
+| `lab agent run`           | On demand from terminal                      |
 | `POST /api/agent/run`     | From UI button, CLI, or external integration |
 | OS crontab / external job | Automated schedule — not owned by LLAAB      |
 
@@ -57,7 +57,7 @@ apps/server/src/routes/agent/
   index.ts          — POST /api/agent/run, GET /api/agent/status
 
 packages/cli/src/commands/
-  agent.ts          — llaab agent run
+  agent.ts          — lab agent run
 ```
 
 ---
@@ -124,10 +124,10 @@ The handler calls `runAgentLoop()` and returns when it completes. No background 
 ## `captureIdea` wiring — what changes
 
 Today `captureIdea` is triggered manually. After this, it fires automatically each time
-`llaab agent run` is invoked and finds unprocessed `TranscriptNode`s:
+`lab agent run` is invoked and finds unprocessed `TranscriptNode`s:
 
 ```
-llaab agent run
+lab agent run
   → finds transcript.i-am-scared-but-excited (not yet processed)
   → REGISTRY: transcript → captureIdea
   → runSkill('captureIdea', execute, { transcriptId, content })
@@ -157,7 +157,7 @@ The skill itself does not change. Only the trigger is new.
 
 - [ ] `POST /api/agent/run` handler — calls `runAgentLoop`, returns summary JSON
 - [ ] `GET /api/agent/status` — reads last-run metadata from processed index
-- [ ] `llaab agent run [--node <id>] [--force]` CLI command via citty
+- [ ] `lab agent run [--node <id>] [--force]` CLI command via citty
 
 ---
 

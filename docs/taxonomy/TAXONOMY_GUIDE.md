@@ -49,20 +49,20 @@ feel noisy.
 
 ### Common confusions
 
-**`d:meta` ≠ "knowledge management".**  
+**`d:meta` ≠ "knowledge management".**
 A Karpathy video about using LLMs + Obsidian is `d:llm` + `d:integration`, _not_ `d:meta`.
 It's inspiration for LLAAB, but it isn't LLAAB reasoning about itself. `d:meta` is reserved for
 things like: restructuring how nodes relate, this taxonomy doc, a skill that modifies the vault.
 
-**`d:integration` ≠ "anything external".**  
+**`d:integration` ≠ "anything external".**
 `d:integration` is specifically for named external tools (MCP, Cursor, Tauri, Obsidian, Astro).
 A generic API integration does not qualify unless it's one of those tools.
 
-**`d:infra` ≠ `d:integration`.**  
+**`d:infra` ≠ `d:integration`.**
 `d:infra` is the build/dev system: CLIs, bash scripts, monorepo config, CI pipelines.
 `d:integration` is external _product_ integrations.
 
-**Source nodes carry no domain tags.**  
+**Source nodes carry no domain tags.**
 A `source` node (e.g. a YouTube channel) is a container entity, not content. It produces content
 across many domains, so tagging it `d:llm` + `d:ui` + `d:infra` would be meaningless. Domain tags
 live on `transcript` and `idea` nodes — the content, not the container.

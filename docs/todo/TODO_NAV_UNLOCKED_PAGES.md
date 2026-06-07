@@ -61,7 +61,7 @@ These are the highest-leverage unlocked pages because the backend architecture a
 ### 3. `/system/doctor`
 
 - [ ] Add a server route for web diagnostics, likely `GET /api/system/doctor`.
-- [ ] Reuse the same checks as `llaab doctor` where possible instead of duplicating logic.
+- [ ] Reuse the same checks as `lab doctor` where possible instead of duplicating logic.
 - [ ] Show provider availability, Ollama status, command handler count, executor availability,
       and important binary checks (`yt-dlp`, `opencode`, `node`, `git`, `pnpm`).
 - [ ] Unlock **System → Doctor** in `apps/client/src/lib/nav-menu.config.ts`.

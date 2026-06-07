@@ -103,7 +103,7 @@ Scope TBD pending research into Karpathy Pattern's data format requirements.
 
 `SourceNode` has a `follow` field. Build a scheduled job that re-ingests followed sources when
 new content appears. Agent loop registry already has the slot reserved (commented out).
-Trigger: `llaab agent run` or `POST /api/agent/run` on a user-controlled schedule.
+Trigger: `lab agent run` or `POST /api/agent/run` on a user-controlled schedule.
 
 ### Article and Document Ingestion
 
@@ -115,7 +115,7 @@ transcript-first rule where applicable.
 
 Track npm packages, frameworks, Homebrew tools, and other ecosystem dependencies as a new
 `PackageNode` vault type. Cards show weekly downloads, dep count, bundle size, last published
-date, version. `follow: true` nodes auto-refresh stats on `llaab agent run` via a new
+date, version. `follow: true` nodes auto-refresh stats on `lab agent run` via a new
 `refreshPackageStats` skill in the agent loop registry. Fetch logic ported from npmx.dev
 (`app/utils/npm/api.ts` + `shared/types/npm-registry.ts`) — strip Nuxt wrappers, use plain fetch.
 
@@ -162,12 +162,12 @@ Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 | 2026-04-18 | Dark theme + two-phase ingestion — layout refactor, transcript-first save, best-effort extraction                                                                                                                           |
 | 2026-04-17 | Vault page coverage — detail pages for nodes, transcripts, sources; all list pages linked; Sources in nav                                                                                                                   |
 | 2026-04-17 | Fix `llmExtract` — JSON system prompt, fence stripping, `parseJsonFromText`; agent loop now produces IdeaNodes                                                                                                              |
-| 2026-04-16 | MCP server — `llaab mcp` stdio command, vault resources + vault_list/vault_read tools                                                                                                                                       |
+| 2026-04-16 | MCP server — `lab mcp` stdio command, vault resources + vault_list/vault_read tools                                                                                                                                         |
 | 2026-04-16 | Hono RPC — typed `hc<AppType>` client, routers refactored to chain form, `api.ts` in client                                                                                                                                 |
-| 2026-04-16 | Agent loop — one-shot processor, skill registry, dedup index, `/api/agent/*`, `llaab agent run`                                                                                                                             |
+| 2026-04-16 | Agent loop — one-shot processor, skill registry, dedup index, `/api/agent/*`, `lab agent run`                                                                                                                               |
 | 2026-04-16 | LLM communication layer — real Anthropic + Ollama providers, task router, cache, `/api/llm/*`                                                                                                                               |
 | 2026-04-16 | Vault browser write — `POST /api/vault/nodes`, `CreateIdeaPanel` island on nodes page                                                                                                                                       |
-| 2026-04-16 | CLI — `llaab ingest <url>` and `llaab vault list [--type]` via citty                                                                                                                                                        |
+| 2026-04-16 | CLI — `lab ingest <url>` and `lab vault list [--type]` via citty                                                                                                                                                            |
 | 2026-04-16 | `apps/server` — Hono server + client migration (`api-client.ts`, remove skills/ingestion deps)                                                                                                                              |
 | 2026-04-16 | Taxonomy system — `autoTag`, `d:` tags, TagsInput on IngestForm, tag pills, skills doc                                                                                                                                      |
 | 2026-04-16 | Vault browser sub-pages — transcripts, nodes, runs list + run detail                                                                                                                                                        |

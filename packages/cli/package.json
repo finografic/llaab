@@ -3,13 +3,15 @@
   "version": "0.0.1",
   "private": true,
   "bin": {
-    "llaab": "./dist/index.js"
+    "lab": "./dist/index.js"
   },
   "type": "module",
   "scripts": {
-    "build": "tsc",
     "dev": "tsc --watch",
     "dev:run": "bun src/index.ts",
+    "build": "tsc",
+    "link": "pnpm build && pnpm link --global",
+    "unlink": "pnpm unlink --global",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

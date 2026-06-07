@@ -667,7 +667,7 @@ export async function getLlmStatus(): Promise<{ ... availableProviders: string[]
 ```
 
 - [x] Make `getLlmStatus()` call `isAvailable()` on each registered provider asynchronously.
-- [x] This unblocks the `llaab doctor` diagnostic (Phase 8) and the `/llm` status page
+- [x] This unblocks the `lab doctor` diagnostic (Phase 8) and the `/llm` status page
       live check without requiring callers to know SDK details.
 
 ### Validation
@@ -1179,13 +1179,13 @@ Skills now declare what they provide, making the agent loop queryable.
 ### New commands
 
 ```sh
-llaab doctor                       # check provider availability, API keys, binary paths
-llaab adapters list                # list registered providers + capabilities + availability
-llaab route "<capability>"         # show which provider would be selected for a capability
-llaab route --explain "<task>"     # show routing decision chain with tier resolution
+lab doctor                       # check provider availability, API keys, binary paths
+lab adapters list                # list registered providers + capabilities + availability
+lab route "<capability>"         # show which provider would be selected for a capability
+lab route --explain "<task>"     # show routing decision chain with tier resolution
 ```
 
-### `llaab doctor` output
+### `lab doctor` output
 
 ```
 LLM Providers
@@ -1203,11 +1203,11 @@ Command Bus: 4 handlers registered (ai.run, agent.run, fs.read, fs.list)
 
 ### Tasks
 
-- [x] Add `llaab doctor` command using `isAvailable()` from Phase 2 and capability
+- [x] Add `lab doctor` command using `isAvailable()` from Phase 2 and capability
       metadata from Phase 7.
-- [x] Add `llaab adapters list` command using `findProvidersByCapability` from Phase 7.
-- [x] Add `llaab route` command with capability → provider resolution chain.
-- [x] Wire `llaab route` to the same routing logic used by `routeLlm` (not a
+- [x] Add `lab adapters list` command using `findProvidersByCapability` from Phase 7.
+- [x] Add `lab route` command with capability → provider resolution chain.
+- [x] Wire `lab route` to the same routing logic used by `routeLlm` (not a
       reimplementation).
 
 ### Phase 8 validation result
@@ -1215,11 +1215,11 @@ Command Bus: 4 handlers registered (ai.run, agent.run, fs.read, fs.list)
 - `tsc -b packages/core packages/llm packages/skills packages/cli --pretty false` passes.
 - `vitest run packages/core/src/capability.test.ts packages/llm/src/router.test.ts packages/skills/src/agent/registry.test.ts`
   passes.
-- `llaab route extract` lists Ollama and Anthropic.
-- `llaab route --explain extract` resolves the current `extract` task to the local-mid
+- `lab route extract` lists Ollama and Anthropic.
+- `lab route --explain extract` resolves the current `extract` task to the local-mid
   Ollama route.
-- `llaab adapters list --capability extract` lists both extraction-capable providers.
-- `llaab doctor` reports provider availability and full capability coverage.
+- `lab adapters list --capability extract` lists both extraction-capable providers.
+- `lab doctor` reports provider availability and full capability coverage.
 
 ---
 
@@ -1287,8 +1287,8 @@ constraints, grounded in LLAAB's existing schema types.
 - `tsc -b packages/core packages/llm packages/skills packages/cli --pretty false` passes.
 - `vitest run packages/core/src/capability.test.ts packages/llm/src/router.test.ts packages/llm/src/executor-router.test.ts packages/skills/src/agent/registry.test.ts`
   passes.
-- `llaab route code_edit` lists OpenCode as the registered executor adapter.
-- `llaab adapters list --capability code_edit` reports OpenCode unavailable on this machine
+- `lab route code_edit` lists OpenCode as the registered executor adapter.
+- `lab adapters list --capability code_edit` reports OpenCode unavailable on this machine
   because `opencode` is not installed.
 
 ---
@@ -1394,7 +1394,7 @@ The orchestration layer is in place when:
   tokens).
 - A new LLM provider can be added by implementing `LlmProvider` and registering it — no
   router edits needed.
-- `llaab doctor` reports which providers are live and which capabilities are missing.
+- `lab doctor` reports which providers are live and which capabilities are missing.
 - The Terminal Panel can dispatch `ai.run`, `agent.run`, and `fs.read` commands with
   streaming output and a vault trace.
 - Extraction prep uses the harness pipeline and surfaces truncation or budget decisions as

@@ -32,7 +32,7 @@ Dependency chain (one-directional):
 | `icons`     | Workspace icon registry package — runs `icons-server` + `lucide-manager` (v0.12.8), exports app icons via `icons.generated.ts` |
 | `llm`       | Task router + providers/executors — Ollama, Anthropic, OpenCode registration; `routeLlm`, `streamLlm`, capabilities, 24h cache |
 | `skills`    | Composed workflows — `captureIdea`, `ingestYouTube`, `runSkill`                                                                |
-| `cli`       | Binary entry point (`llaab`) — citty commands: ingest, vault, agent, mcp, doctor, adapters, route                              |
+| `cli`       | Binary entry point (`lab`) — citty commands: ingest, vault, agent, mcp, doctor, adapters, route                                |
 | `client`    | Astro 6 + React 19 — pure UI, calls server via `src/lib/api.ts` (Hono typed RPC)                                               |
 | `server`    | Hono + Bun — REST API on port 3000, owns all non-UI logic                                                                      |
 | `vault/`    | Data directory — markdown files organized by node type (not a package)                                                         |

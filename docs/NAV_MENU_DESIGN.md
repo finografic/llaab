@@ -131,7 +131,7 @@ provider interface and capability map exist; the remaining work is route/page im
 
 Icons is currently a homepage card linking to the icons service (port 5001 / lucide-manager on
 5199). It makes more sense as a System item since it's a dev tool, not a knowledge feature.
-Doctor maps to the `llaab doctor` CLI command — this would be the web equivalent showing provider
+Doctor maps to the `lab doctor` CLI command — this would be the web equivalent showing provider
 availability, API key status, binary paths, and capability gaps. Harness is a lighter addition:
 a simple view of the current harness prep pipeline configuration and validation status.
 

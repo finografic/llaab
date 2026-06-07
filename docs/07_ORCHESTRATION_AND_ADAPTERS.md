@@ -265,15 +265,21 @@ Current command capability mapping lives in `packages/core/src/capability.ts`:
 LLM providers and executor providers also declare capabilities. This lets CLI diagnostics and
 future routing decisions ask "who can do `extract`?" rather than "is Ollama installed?"
 
-Useful CLI commands:
+Useful CLI commands, run from your normal OS/project terminal at the repo root, not from the
+browser Terminal Panel:
 
 ```bash
-llaab doctor
-llaab adapters list
-llaab adapters list --capability extract
-llaab route extract
-llaab route code_edit
+pnpm dev:cli -- doctor
+pnpm dev:cli -- adapters list
+pnpm dev:cli -- adapters list --capability extract
+pnpm dev:cli -- route extract
+pnpm dev:cli -- route code_edit
 ```
+
+If the `@llaab/cli` package has been built and linked onto your shell `PATH`, the shorter
+`lab doctor` form is equivalent. The browser Terminal Panel accepts typed orchestration
+commands such as `ai.run`, `agent.run`, `fs.read`, `fs.list`, and gated `shell.exec`; it is not the
+primary place to run `lab ...` CLI diagnostics.
 
 ---
 

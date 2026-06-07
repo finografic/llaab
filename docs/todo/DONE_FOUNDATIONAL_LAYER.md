@@ -170,15 +170,15 @@ Why:
 Suggested order:
 
 1. Add CLI commands for:
-   - `llaab idea`
-   - `llaab list`
-   - `llaab read`
+   - `lab idea`
+   - `lab list`
+   - `lab read`
 2. Add filtering flags for `list`:
    - `--type`
    - `--status`
    - `--tag`
    - `--search`
-3. Add a basic `llaab ingest youtube <url>` path.
+3. Add a basic `lab ingest youtube <url>` path.
 4. Only then extend CLI coverage to editing or execution commands.
 
 Why this is second:
@@ -218,9 +218,9 @@ If you want the best long-term move, start here:
 
 If you want the most immediately satisfying move, start here:
 
-1. `llaab idea`
-2. `llaab list`
-3. `llaab read`
+1. `lab idea`
+2. `lab list`
+3. `lab read`
 
 ## Short Version
 
@@ -232,6 +232,6 @@ If you want the most immediately satisfying move, start here:
 
 ## Carry-Forward (not part of this milestone)
 
-- `llaab idea` and `llaab read` CLI commands — not built; `llaab vault list` covers partial list needs
+- `lab idea` and `lab read` CLI commands — not built; `lab vault list` covers partial list needs
 - Skill node extraction from transcripts — ideas only; tracked in [`NEXT_STEPS.md`](./NEXT_STEPS.md)
 - `--tag` / `--search` vault list filters — not built

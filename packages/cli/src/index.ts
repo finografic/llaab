@@ -11,7 +11,7 @@ import { vaultCommand } from './commands/vault.js';
 
 const main = defineCommand({
   meta: {
-    name: 'llaab',
+    name: 'lab',
     version: '0.0.1',
     description: 'Learning Loop & Agent Automation Base',
   },
