@@ -29,10 +29,13 @@ export const FsListCommandSchema = z.object({
 
 export const ShellExecCommandSchema = z.object({
   kind: z.literal('shell.exec'),
-  command: z.string().min(1),
+  command: z.string().min(1).optional(),
   args: z.array(z.string()).default([]),
   cwd: z.string().min(1).optional(),
   confirmed: z.boolean().optional(),
+  sessionId: z.string().min(1),
+  enableSession: z.boolean().optional(),
+  disableSession: z.boolean().optional(),
 });
 
 export const CommandSchema = z.discriminatedUnion('kind', [

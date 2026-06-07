@@ -3,8 +3,11 @@ import type { CommandContext, CommandHandler } from './handler.js';
 import type { OutputEvent, ShellExecCommand } from '@llaab/core';
 
 const ALLOWED_SHELL_COMMANDS = new Set(['git', 'pnpm', 'node', 'yt-dlp', 'opencode']);
+const enabledShellSessions = new Set<string>();
 
-function runAllowedCommand(command: ShellExecCommand): Promise<{
+type ExecutableShellCommand = ShellExecCommand & { command: string };
+
+function runAllowedCommand(command: ExecutableShellCommand): Promise<{
   durationMs: number;
   exitCode: number;
   stderr: string;
@@ -42,15 +45,48 @@ function runAllowedCommand(command: ShellExecCommand): Promise<{
 export const shellCommandHandler: CommandHandler<ShellExecCommand> = {
   kind: 'shell.exec',
   async *handle(command: ShellExecCommand, _context: CommandContext): AsyncGenerator<OutputEvent> {
+    if (command.disableSession) {
+      enabledShellSessions.delete(command.sessionId);
+      yield {
+        type: 'meta',
+        data: {
+          shell_session_enabled: false,
+          session_id: command.sessionId,
+        },
+      };
+      return;
+    }
+
     if (!command.confirmed) {
       throw new Error('shell.exec requires explicit per-command confirmation.');
+    }
+
+    if (command.enableSession) {
+      enabledShellSessions.add(command.sessionId);
+      yield {
+        type: 'meta',
+        data: {
+          shell_session_enabled: true,
+          session_id: command.sessionId,
+        },
+      };
+      return;
+    }
+
+    if (!enabledShellSessions.has(command.sessionId)) {
+      throw new Error('shell.exec requires an enabled shell session.');
+    }
+
+    if (!command.command) {
+      throw new Error('shell.exec requires an allowlisted command.');
     }
 
     if (!ALLOWED_SHELL_COMMANDS.has(command.command)) {
       throw new Error(`Command "${command.command}" is not allowlisted for shell.exec.`);
     }
 
-    const result = await runAllowedCommand(command);
+    const executableCommand: ExecutableShellCommand = { ...command, command: command.command };
+    const result = await runAllowedCommand(executableCommand);
     if (result.stdout) yield { type: 'stdout', data: result.stdout };
     if (result.stderr) yield { type: 'stderr', data: result.stderr };
     yield {
@@ -67,4 +103,4 @@ export const shellCommandHandler: CommandHandler<ShellExecCommand> = {
   },
 };
 
-export { ALLOWED_SHELL_COMMANDS };
+export { ALLOWED_SHELL_COMMANDS, enabledShellSessions };

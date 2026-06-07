@@ -35,7 +35,7 @@ function splitCommand(input: string): string[] {
   });
 }
 
-function parseTerminalCommand(input: string): Command {
+function parseTerminalCommand(input: string, shellSessionId: string): Command {
   const [kind, ...args] = splitCommand(input.trim());
 
   if (kind === 'ai.run') {
@@ -66,17 +66,34 @@ function parseTerminalCommand(input: string): Command {
 
   if (kind === 'shell.exec') {
     const confirmed = args.includes('--confirm');
+    const enableSession = args.includes('--enable-session');
+    const disableSession = args.includes('--disable-session');
     const cwdIndex = args.indexOf('--cwd');
     const cwd = cwdIndex === -1 ? undefined : args[cwdIndex + 1];
     const commandParts = args.filter((arg, index) => {
       if (arg === '--confirm') return false;
+      if (arg === '--enable-session') return false;
+      if (arg === '--disable-session') return false;
       if (arg === '--cwd') return false;
       if (cwdIndex !== -1 && index === cwdIndex + 1) return false;
       return true;
     });
     const [command, ...commandArgs] = commandParts;
-    if (!command) throw new Error('Usage: shell.exec --confirm <git|pnpm|node|yt-dlp|opencode> [args...]');
-    return { kind: 'shell.exec', command, args: commandArgs, cwd, confirmed };
+    if (!command && !enableSession && !disableSession) {
+      throw new Error(
+        'Usage: shell.exec --enable-session --confirm | shell.exec --confirm <git|pnpm|node|yt-dlp|opencode> [args...]',
+      );
+    }
+    return {
+      kind: 'shell.exec',
+      command,
+      args: commandArgs,
+      cwd,
+      confirmed,
+      sessionId: shellSessionId,
+      enableSession,
+      disableSession,
+    };
   }
 
   throw new Error('Unknown command. Try: ai.run extract "summarize this"');
@@ -104,13 +121,14 @@ export function TerminalPanel() {
     {
       id: 'shell-warning',
       kind: 'system',
-      text: 'shell.exec is allowlisted power-user mode and requires --confirm on each command.',
+      text: 'shell.exec is allowlisted power-user mode. Run shell.exec --enable-session --confirm once, then use --confirm on each command.',
     },
   ]);
   const [connected, setConnected] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
+  const shellSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const socket = new WebSocket(websocketUrl());
@@ -146,7 +164,8 @@ export function TerminalPanel() {
     if (!trimmed) return;
 
     try {
-      const parsed = parseTerminalCommand(trimmed);
+      shellSessionIdRef.current ??= crypto.randomUUID();
+      const parsed = parseTerminalCommand(trimmed, shellSessionIdRef.current);
       socketRef.current?.send(
         JSON.stringify({
           id: crypto.randomUUID(),

@@ -20,6 +20,7 @@ describe('getCommandCapabilities', () => {
       command: 'node',
       args: ['--version'],
       confirmed: true,
+      sessionId: 'test-session',
     };
 
     expect(getCommandCapabilities(command)).toEqual(['shell_exec', 'command_run']);

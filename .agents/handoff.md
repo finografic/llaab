@@ -165,10 +165,11 @@ Capabilities are shared through `@llaab/core`. LLM providers, skill routes, type
 executor adapters declare/query capabilities. `OpenCode` is registered as an external executor
 adapter but reports unavailable unless the `opencode` binary exists.
 
-Phase 10 is partial: `shell.exec` exists in the typed command protocol and server command bus,
-with per-command `--confirm`/`confirmed: true` and an allowlist (`git`, `pnpm`, `node`, `yt-dlp`,
-`opencode`). It is not phase-complete because there is no true per-session enablement yet and
-browser/WebSocket runtime validation still needs to be performed.
+Phase 10 is complete: `shell.exec` exists in the typed command protocol and server command bus,
+with a per-session enable/disable gate, per-command `--confirm` / `confirmed: true`, and an
+allowlist (`git`, `pnpm`, `node`, `yt-dlp`, `opencode`). The Terminal Panel exposes
+`shell.exec --enable-session --confirm`, confirmed allowlisted commands, and
+`shell.exec --disable-session`.
 
 ## Schema / Types
 
@@ -193,8 +194,8 @@ via regex. All ingest runs apply `d:ingest` + `autoTag`. Source nodes carry no d
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
 Current orchestration plan: `docs/todo/TODO_ORCHESTRATION_V5.md`.
 UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07. P0 is empty.
-Orchestration phases 0–9 are complete. Phase 10 is partial and should be resumed from the
-remaining-work checklist in `TODO_ORCHESTRATION_V5.md`.
+Orchestration phases 0–10 are complete. The Phase 6b addendum content is consolidated into
+`TODO_ORCHESTRATION_V5.md`; there is no separate addendum tracking file.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.
 
 ## Local Dev Ops

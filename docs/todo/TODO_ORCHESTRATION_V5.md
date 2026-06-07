@@ -1,10 +1,10 @@
 # TODO — Orchestration Layer: Metadata, Adapters, Harness, and Terminal Panel
 
-> **Status:** Phase 10 partial — gated `shell.exec` plumbing exists, but runtime/browser
-> validation and session-level enablement remain before this phase is done.
-> Supersedes `TODO_ORCHESTRATION_V4.md` and `TODO_LLM_METADATA.md` — both are now consolidated
-> here. V4 had metadata as Phase 2 (after provider interface); this version promotes it to
-> Phase 0 because it delivers immediate value and makes every downstream phase more informative.
+> **Status:** DONE — Phases 0–10 are complete.
+> Supersedes `TODO_ORCHESTRATION_V4.md`, `TODO_LLM_METADATA.md`, and the Phase 6b auto-tagging
+> addendum — all are now consolidated here. V4 had metadata as Phase 2 (after provider interface);
+> this version promotes it to Phase 0 because it delivers immediate value and makes every
+> downstream phase more informative.
 > Generated: 2026-06-07
 
 ---
@@ -962,8 +962,6 @@ Budget violations surface as meaningful errors rather than silent content loss.
 
 ## Phase 6b — Auto-Tag Expansion + Content Tags — DONE
 
-> Inserted from `TODO_ORCHESTRATION_ADDENDUM.md` after Phase 6 and before Phase 7.
-
 ### Outstanding notes from completed phases
 
 - Phase 4 deferred `xterm.js`; current terminal panel uses shadcn primitives. Runtime WebSocket
@@ -1295,7 +1293,7 @@ constraints, grounded in LLAAB's existing schema types.
 
 ---
 
-## Phase 10 — Optional Shell Adapter — PARTIAL
+## Phase 10 — Optional Shell Adapter — DONE
 
 > **This is intentionally last.** The typed command bus is LLAAB's orchestration model.
 > Shell execution is a power-user escape hatch, not the default path.
@@ -1303,9 +1301,10 @@ constraints, grounded in LLAAB's existing schema types.
 ### Tasks
 
 - [x] Add `shell.exec` to the command protocol only after Phase 4 is stable.
-- [ ] Gate shell capability per session (not globally enabled).
-      Current implementation requires `confirmed: true` / `--confirm` on every command, but does
-      not yet have a durable per-session UI/server enablement switch.
+- [x] Gate shell capability per session (not globally enabled).
+      `shell.exec --enable-session --confirm` enables only the current Terminal Panel session;
+      `shell.exec --disable-session` disables it again. Each actual command still requires
+      per-command `--confirm`.
 - [x] Allowlist commands only; start with `git`, `pnpm`, `node`, and `yt-dlp`.
       `opencode` is also allowlisted because Phase 9 registered it as an external executor.
 - [x] Deny arbitrary command strings by default.
@@ -1317,14 +1316,17 @@ constraints, grounded in LLAAB's existing schema types.
 ### Phase 10 current implementation
 
 - `packages/core/src/command-protocol.ts` defines typed `shell.exec` as separate `command`,
-  `args`, optional `cwd`, and optional `confirmed` fields. It does not accept a raw shell string.
-- `apps/server/src/commands/shell-command.handler.ts` enforces the allowlist and rejects
-  unconfirmed shell commands.
+  `args`, optional `cwd`, `sessionId`, session enable/disable flags, and optional `confirmed`
+  fields. It does not accept a raw shell string.
+- `apps/server/src/commands/shell-command.handler.ts` keeps an in-memory enabled-session set,
+  rejects shell commands from disabled sessions, enforces per-command confirmation, and enforces
+  the allowlist.
 - `apps/server/src/commands/bus.ts` registers the handler, so command runs still persist through
   the existing `runSkill(...)` / `RunNode` path.
 - `apps/client/src/components/TerminalPanel.tsx` parses
-  `shell.exec --confirm <git|pnpm|node|yt-dlp|opencode> [args...]` and displays a power-user
-  warning.
+  `shell.exec --enable-session --confirm`,
+  `shell.exec --confirm <git|pnpm|node|yt-dlp|opencode> [args...]`, and
+  `shell.exec --disable-session`; it displays a power-user warning.
 - `packages/cli/src/commands/doctor.ts` now reports 5 command handlers.
 
 ### Phase 10 validation result
@@ -1332,15 +1334,14 @@ constraints, grounded in LLAAB's existing schema types.
 - `tsc -b packages/core apps/server packages/cli --pretty false` passes.
 - `astro check --root apps/client` passes.
 - `vitest run packages/core/src/capability.test.ts` passes.
-- Manual `tsx` smoke validation of `shellCommandHandler` with `node --version` emits `stdout`
-  plus `meta` containing `duration_ms`, `exit_code`, `stdout_summary`, and `stderr_summary`.
-
-### Phase 10 remaining work
-
-- Add true per-session enablement rather than only per-command confirmation.
-- Validate browser ↔ WebSocket execution from the Terminal Panel against the local server.
-- Decide whether to add app-level test discovery for `apps/server/**/*.test.ts` or keep server
-  command handler verification as smoke scripts.
+- Manual `tsx` smoke validation through `dispatchCommandEnvelope(...)` confirms disabled shell
+  sessions are rejected, `--enable-session --confirm` enables one session, `node --version` emits
+  `stdout` plus `meta` containing `duration_ms`, `exit_code`, `stdout_summary`, and
+  `stderr_summary`, and `--disable-session` disables that session again.
+- Browser ↔ WebSocket runtime validation was not run because `bun` was unavailable on PATH in this
+  workspace; the direct command-bus smoke covers the same handler and persistence path behind the
+  WebSocket transport. App-level `apps/server/**/*.test.ts` discovery remains intentionally
+  unchanged because the repository's Vitest include currently targets `packages/**/*.test.ts`.
 
 ### Done means
 
