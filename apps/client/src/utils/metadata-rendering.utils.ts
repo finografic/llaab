@@ -8,21 +8,27 @@ export interface MetadataLinkTargetOptions {
 
 /**
  * Parse JSON stored in run/node metadata fields.
- * Handles YAML double-encoding where quotes appear as literal `\"` sequences.
+ * Handles YAML double- (and triple-) encoding where quotes appear as literal
+ * `\"` / `\\\"` sequences — the frontmatter writer can re-stringify an already-
+ * JSON-stringified summary, nesting the escaping a level deeper each time.
  */
 export function parseMetadataJson(value: string): unknown {
   const trimmed = value.trim();
   if (!trimmed) return undefined;
 
-  const candidates = [trimmed, trimmed.replace(/\\"/g, '"')];
-
-  for (const candidate of candidates) {
-    if (!candidate.startsWith('{') && !candidate.startsWith('[')) continue;
-    try {
-      return JSON.parse(candidate) as unknown;
-    } catch {
-      continue;
+  let candidate = trimmed;
+  for (let pass = 0; pass < 4; pass++) {
+    if (candidate.startsWith('{') || candidate.startsWith('[')) {
+      try {
+        return JSON.parse(candidate) as unknown;
+      } catch {
+        // Not parseable at this escape depth — unescape one more level and retry.
+      }
     }
+
+    const unescaped = candidate.replace(/\\"/g, '"');
+    if (unescaped === candidate) break;
+    candidate = unescaped;
   }
 
   try {

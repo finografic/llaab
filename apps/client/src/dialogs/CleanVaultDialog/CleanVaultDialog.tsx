@@ -10,15 +10,14 @@ import {
 } from 'components/ui/dialog';
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from 'components/ui/input-group';
 import { Label } from 'components/ui/label';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRuns } from 'queries/runs';
+import { useVaultClean } from 'queries/vault';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
 import type { RunNode } from '@llaab/schemas';
 
-import { api } from 'lib/api';
-import { apiPost } from 'lib/api-client';
 import { dispatchIngestFormReset } from 'lib/ingest-form-events';
-import { dispatchRunsChanged } from 'lib/runs-events';
 import { countRunsWithinHours } from 'utils/count-runs-within-hours.utils';
 
 import styles from './CleanVaultDialog.module.css';
@@ -55,68 +54,20 @@ export function CleanVaultDialog({ resetIngestFormOnSuccess = false }: CleanVaul
   const [open, setOpen] = useState(false);
   const [hours, setHours] = useState(String(DEFAULT_HOURS));
   const [debouncedHours] = useDebounce(hours, HOURS_DEBOUNCE_MS);
-  const [cleaning, setCleaning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [runs, setRuns] = useState<RunNode[] | null>(null);
-  const [runsError, setRunsError] = useState(false);
-  const [runsLoading, setRunsLoading] = useState(false);
 
-  const resetDialogState = useCallback(() => {
-    setRuns(null);
-    setRunsError(false);
-    setRunsLoading(false);
-  }, []);
+  const { data: runs, isLoading: runsLoading, isError: runsError } = useRuns({ enabled: open });
+  const vaultClean = useVaultClean();
+  const cleaning = vaultClean.isPending;
 
-  useEffect(() => {
-    if (!open) {
-      resetDialogState();
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadRuns = async () => {
-      setRunsLoading(true);
-      setRunsError(false);
-
-      try {
-        const res = await api.runs.$get();
-        const body = (await res.json()) as { runs?: RunNode[] };
-
-        if (!res.ok || !body.runs) {
-          throw new Error('Failed to load runs.');
-        }
-
-        if (!cancelled) {
-          setRuns(body.runs);
-        }
-      } catch {
-        if (!cancelled) {
-          setRunsError(true);
-          setRuns(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setRunsLoading(false);
-        }
-      }
-    };
-
-    void loadRuns();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, resetDialogState]);
-
-  const runCount = useMemo(() => runCountForHours(runs, debouncedHours), [debouncedHours, runs]);
+  const runsList: RunNode[] | null = runs ?? null;
+  const runCount = useMemo(() => runCountForHours(runsList, debouncedHours), [debouncedHours, runsList]);
 
   const closeDialog = () => {
     if (cleaning) return;
     setOpen(false);
     setError(null);
     setHours(String(DEFAULT_HOURS));
-    resetDialogState();
   };
 
   const handleClean = async () => {
@@ -126,35 +77,28 @@ export function CleanVaultDialog({ resetIngestFormOnSuccess = false }: CleanVaul
       return;
     }
 
-    setCleaning(true);
     setError(null);
 
     try {
-      await apiPost<{ success: true; removedCount: number }>('/api/vault/clean-recent', {
-        hours: parsedHours,
-      });
+      await vaultClean.mutateAsync(parsedHours);
 
-      const deletedRunCount = runCountForHours(runs, hours);
+      const deletedRunCount = runCountForHours(runsList, hours);
       toast.success(formatRunDeletedToast(deletedRunCount));
       if (resetIngestFormOnSuccess) {
         dispatchIngestFormReset();
       }
-      dispatchRunsChanged();
       setOpen(false);
       setError(null);
       setHours(String(DEFAULT_HOURS));
-      resetDialogState();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Vault clean failed.');
-    } finally {
-      setCleaning(false);
     }
   };
 
   const parsedHours = Number(hours);
   const hasValidHours = Number.isFinite(parsedHours) && parsedHours > 0;
   const showRunNote = open && hasValidHours;
-  const hoursPending = runs !== null && !runsLoading && debouncedHours !== hours;
+  const hoursPending = runsList !== null && !runsLoading && debouncedHours !== hours;
 
   const runNoteText = (() => {
     if (runsLoading || hoursPending) return 'Checking runs…';

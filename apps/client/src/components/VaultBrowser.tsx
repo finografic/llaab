@@ -1,7 +1,6 @@
 import { ChevronRight, FileText, Folder, FolderOpen } from 'lucide-react';
+import { useVaultFile } from 'queries/vault';
 import { useMemo, useState } from 'react';
-
-import { api } from 'lib/api';
 
 import styles from './VaultBrowser.module.css';
 
@@ -18,14 +17,14 @@ interface Props {
 
 export function VaultBrowser({ tree }: Props) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [content, setContent] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(
     new Set(tree.filter((node) => node.type === 'dir').map((node) => node.path)),
   );
 
   const rootNodes = useMemo(() => tree, [tree]);
+
+  const { data: content, isLoading: loading, error: fileError } = useVaultFile(selectedPath);
+  const error = fileError instanceof Error ? fileError.message : fileError ? 'Failed to load file.' : null;
 
   const toggleDirectory = (path: string) => {
     setExpandedDirs((prev) => {
@@ -39,23 +38,8 @@ export function VaultBrowser({ tree }: Props) {
     });
   };
 
-  const selectFile = async (path: string) => {
-    if (selectedPath === path) return;
+  const selectFile = (path: string) => {
     setSelectedPath(path);
-    setContent(null);
-    setError(null);
-    setLoading(true);
-
-    try {
-      const res = await api.vault.file.$get({ query: { path } });
-      const json = await res.json();
-      if ('error' in json) throw new Error(json.error);
-      setContent(json.content);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Failed to load file.');
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -80,7 +64,7 @@ export function VaultBrowser({ tree }: Props) {
         {!selectedPath ? <p className={styles.viewerEmpty}>Select a file to view its contents.</p> : null}
         {selectedPath && loading ? <p className={styles.viewerLoading}>Loading…</p> : null}
         {selectedPath && error ? <p className={styles.viewerError}>{error}</p> : null}
-        {selectedPath && !loading && content !== null ? (
+        {selectedPath && !loading && content != null ? (
           <div className={styles.viewerContent}>
             <p className={styles.viewerPath}>{selectedPath}</p>
             <pre className={styles.viewerPre}>{content}</pre>

@@ -13,9 +13,11 @@
       "layouts/*": ["./src/layouts/*"],
       "lib/*": ["./src/lib/*"],
       "pages/*": ["./src/pages/*"],
+      "providers/*": ["./src/providers/*"],
       "styles/*": ["./src/styles/*"],
       "tables/*": ["./src/tables/*"],
-      "utils/*": ["./src/utils/*"]
+      "utils/*": ["./src/utils/*"],
+      "queries/*": ["./src/queries/*"]
     }
   },
   "include": ["./.astro/types.d.ts", "**/*"],

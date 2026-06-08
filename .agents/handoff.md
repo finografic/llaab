@@ -195,6 +195,20 @@ anti-copying instruction — small local models otherwise anchor on the example'
 in-domain (AI/LLM) input and either echo it verbatim or omit `tags`. `IngestForm` tag suggestions
 blend `KNOWN_TAGS` with tags ranked by usage across existing vault nodes (`vaultTagsByUsage`).
 
+## Client Data Fetching
+
+`apps/client` reads/mutates vault data via TanStack Query hooks grouped by domain under
+`src/queries/<domain>/` (`runs`, `transcripts`, `nodes`, `vault`) — each a barrel exporting
+`QUERY_KEYS.<domain>` plus typed query/mutation hooks that call `api.*` (`lib/api`, the typed
+Hono RPC client) directly, no hand-written `endpoints/` layer. A single `QueryClient` singleton
+(`providers/QueryClientProvider/queryClient.ts`) is shared across all Astro islands — each
+`client:load`/`client:only` mounts an independent React root, so every island root that reads or
+mutates query state is wrapped directly in `<QueryClientProvider client:*>` in its `.astro` page
+(only the wrapper carries the `client:*` directive). The old `lib/runs-events`
+(`dispatchRunsChanged`/`RUNS_CHANGED_EVENT`) custom event bus and `lib/use-runs` are gone —
+mutation hooks declare `invalidateQueries` against `QUERY_KEYS` in their `onSuccess`/`onSettled`.
+Full migration writeup: `docs/todo/DONE_QUERIES_MIGRATION.md`.
+
 ## Roadmap & Planning
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.

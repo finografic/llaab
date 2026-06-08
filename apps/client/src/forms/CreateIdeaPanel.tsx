@@ -3,10 +3,9 @@ import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { Textarea } from 'components/ui/textarea';
+import { useCreateIdea } from 'queries/nodes';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { api } from 'lib/api';
 
 import { TagInputField } from './TagInputField';
 
@@ -25,46 +24,31 @@ interface FormValues {
   body: string;
 }
 
-interface CreateResult {
-  id: string;
-  path: string;
-  type: string;
-}
-
 export function CreateIdeaPanel() {
   const [open, setOpen] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [result, setResult] = useState<CreateResult | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const createIdea = useCreateIdea();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     reset,
   } = useForm<FormValues>();
 
+  const isSubmitting = createIdea.isPending;
+  const result = createIdea.data ?? null;
+
   const onSubmit = async ({ title, body }: FormValues) => {
-    setResult(null);
     setApiError(null);
 
     const pendingTag = tagInput.trim() ? normalizeTag(tagInput) : null;
     const allTags = pendingTag ? [...new Set([...tags, pendingTag])] : tags;
 
     try {
-      const res = await api.vault.nodes.$post({
-        json: {
-          type: 'idea',
-          title,
-          body: body || undefined,
-          tags: allTags.length > 0 ? allTags : undefined,
-        },
-      });
-      const json = await res.json();
-      if ('error' in json) throw new Error(json.error);
-
-      setResult(json);
+      await createIdea.mutateAsync({ title, body: body || undefined, tags: allTags });
       reset();
       setTags([]);
       setTagInput('');
@@ -83,7 +67,7 @@ export function CreateIdeaPanel() {
 
   const closePanel = () => {
     setOpen(false);
-    setResult(null);
+    createIdea.reset();
     setApiError(null);
     reset();
     setTags([]);

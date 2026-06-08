@@ -8,6 +8,7 @@ import PageLayout from 'layouts/PageLayout.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
 import { VaultBrowser } from 'components/VaultBrowser';
 import type { VaultNode } from '../../components/VaultBrowser';
+import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import { VAULT_ROOT } from '@llaab/core';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -50,7 +51,9 @@ const tree = await readTree(VAULT_ROOT);
 <AppLayout title="Vault">
   <PageLayout>
     <PageHero slot="hero" eyebrow="Vault" title="Browse Vault" />
-    <VaultBrowser tree={tree} client:load />
+    <QueryClientProvider client:load>
+      <VaultBrowser tree={tree} />
+    </QueryClientProvider>
   </PageLayout>
 </AppLayout>
 

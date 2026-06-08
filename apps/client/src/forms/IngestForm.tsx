@@ -4,13 +4,19 @@ import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { Spinner } from 'components/ui/spinner';
 import { CheckIcon as LucideCheck, RotateCcwIcon, Trash2Icon } from 'lucide-react';
+import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
+import {
+  fetchExistingIdeas,
+  useDiscardTranscript,
+  useExtractTranscript,
+  useIngestYoutube,
+} from 'queries/transcripts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import type { ExtractTranscriptResult } from 'queries/transcripts';
 
-import { api } from 'lib/api';
 import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
 import { INGEST_FORM_RESET_EVENT } from 'lib/ingest-form-events';
-import { dispatchRunsChanged } from 'lib/runs-events';
 
 import { TagInputField } from './TagInputField';
 
@@ -93,6 +99,14 @@ function SvgCheckIcon() {
   );
 }
 
+function SvgXIcon() {
+  return (
+    <svg className="pipeline-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M3 3l10 10M13 3 3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function WaitingIcon() {
   return (
     <svg className="pipeline-icon pipeline-icon--waiting" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -135,33 +149,60 @@ function RetryButton({ onClick, disabled }: { onClick: () => void; disabled: boo
   );
 }
 
+function NodeCountMeta({ nodeCount, hasElapsed }: { nodeCount?: number | null; hasElapsed: boolean }) {
+  const hasNodeCount = nodeCount != null && nodeCount > 0;
+  if (!hasNodeCount) return null;
+
+  return (
+    <>
+      <span className="pipeline-card__node-count">
+        {nodeCount} {nodeCount === 1 ? 'node' : 'nodes'}
+      </span>
+      {hasElapsed ? (
+        <span className="pipeline-card__meta-sep" aria-hidden="true">
+          •
+        </span>
+      ) : null}
+    </>
+  );
+}
+
 function PipelineCard({
   phase,
   label,
   statusSlot,
   startedAt,
+  finalElapsedSecs,
+  nodeCount,
   children,
 }: {
   phase: 'success' | 'warning' | 'neutral' | 'active';
   label: string;
   statusSlot: React.ReactNode;
   startedAt?: number | null;
+  finalElapsedSecs?: number | null;
+  nodeCount?: number | null;
   children?: React.ReactNode;
 }) {
-  const elapsed = useElapsedSeconds(phase === 'active' ? (startedAt ?? null) : null);
+  const liveElapsed = useElapsedSeconds(phase === 'active' ? (startedAt ?? null) : null);
+  const displayElapsed = phase === 'active' ? liveElapsed : (finalElapsedSecs ?? null);
   const bodyChildren = React.Children.toArray(children);
   const hasBody = bodyChildren.length > 0;
+  const hasElapsed = startedAt != null && displayElapsed != null;
 
   return (
     <div className={`pipeline-card pipeline-card--${phase}`}>
       <div className="pipeline-card__main">
         <div className="pipeline-card__row">
-          <span className="pipeline-card__label">{label}</span>
-          <div className="pipeline-card__meta">
-            {phase === 'active' && startedAt != null ? (
-              <span className="pipeline-card__elapsed">{formatElapsed(elapsed)}</span>
-            ) : null}
+          <div className="pipeline-card__title">
             <div className="pipeline-card__status">{statusSlot}</div>
+            <span className="pipeline-card__label">{label}</span>
+          </div>
+          <div className="pipeline-card__meta">
+            <NodeCountMeta nodeCount={nodeCount} hasElapsed={hasElapsed} />
+            {hasElapsed ? (
+              <span className="pipeline-card__elapsed">{formatElapsed(displayElapsed)}</span>
+            ) : null}
           </div>
         </div>
         {hasBody ? <div className="pipeline-card__body">{bodyChildren}</div> : null}
@@ -220,6 +261,7 @@ function RunSummaryCard({
   busy,
   runStartedAt,
   totalElapsedSecs,
+  nodeCount,
   onKeep,
   onDiscard,
   onRetry,
@@ -229,6 +271,7 @@ function RunSummaryCard({
   busy: boolean;
   runStartedAt: number | null;
   totalElapsedSecs: number | null;
+  nodeCount?: number | null;
   onKeep: () => void;
   onDiscard: () => Promise<void>;
   onRetry: () => void;
@@ -256,19 +299,22 @@ function RunSummaryCard({
       <SvgCheckIcon />
     ) : null;
 
+  const hasElapsed = runStartedAt != null;
+
   return (
     <div className={`pipeline-card pipeline-card--${phase} pipeline-card--summary`}>
       <div className="pipeline-card__main">
         <div className="pipeline-card__row">
           <div className="pipeline-summary__left">
+            <div className="pipeline-card__status">{statusIcon}</div>
             <span className="pipeline-card__label">Run</span>
             <span className="pipeline-summary__step">{stepLabel(transcriptPhase, extractionPhase)}</span>
           </div>
           <div className="pipeline-card__meta">
-            {runStartedAt != null ? (
+            <NodeCountMeta nodeCount={nodeCount} hasElapsed={hasElapsed} />
+            {hasElapsed ? (
               <span className="pipeline-card__elapsed">{formatElapsed(displayElapsed)}</span>
             ) : null}
-            <div className="pipeline-card__status">{statusIcon}</div>
           </div>
         </div>
 
@@ -310,66 +356,6 @@ function RunSummaryCard({
   );
 }
 
-// ── API helpers ───────────────────────────────────────────────────────────────
-
-async function fetchExistingIdeas(transcriptId: string): Promise<Array<{ id: string; title: string }>> {
-  const res = await api.vault.transcripts[':id'].ideas.$get({ param: { id: transcriptId } });
-  const json = (await res.json()) as { ideas?: Array<{ id: string; title: string }> };
-  return json.ideas ?? [];
-}
-
-async function fetchNodeTags(nodeId: string): Promise<string[]> {
-  try {
-    const res = await api.vault.nodes[':id'].$get({ param: { id: nodeId } });
-    const json = (await res.json()) as { node?: { tags?: string[] } };
-    return json.node?.tags ?? [];
-  } catch {
-    return [];
-  }
-}
-
-/** Tags already used across the vault, ranked by usage count (most-used first). */
-async function fetchVaultTagsByUsage(): Promise<string[]> {
-  try {
-    const res = await api.vault.nodes.$get({ query: { tags: undefined, limit: undefined } });
-    const json = (await res.json()) as { nodes?: Array<{ tags?: string[] }> };
-    const counts = new Map<string, number>();
-    for (const node of json.nodes ?? []) {
-      for (const tag of node.tags ?? []) {
-        counts.set(tag, (counts.get(tag) ?? 0) + 1);
-      }
-    }
-    return [...counts.entries()].toSorted((a, b) => b[1] - a[1]).map(([tag]) => tag);
-  } catch {
-    return [];
-  }
-}
-
-async function runExtract(transcriptId: string): Promise<{
-  phase: 'success' | 'existing' | 'extractable' | 'failed';
-  ideas?: Array<{ id: string; title: string }>;
-  error?: string;
-}> {
-  try {
-    const res = await api.vault.transcripts[':id'].extract.$post({ param: { id: transcriptId } });
-    const json = (await res.json()) as {
-      success: boolean;
-      ideas?: Array<{ id: string; title: string }>;
-      error?: string;
-    };
-
-    if (json.success) return { phase: 'success', ideas: json.ideas ?? [] };
-    if (json.error?.includes('already exists')) {
-      const ideas = await fetchExistingIdeas(transcriptId);
-      return ideas.length > 0 ? { phase: 'existing', ideas } : { phase: 'extractable' };
-    }
-
-    return { phase: 'failed', error: json.error };
-  } catch {
-    return { phase: 'failed', error: 'Network error during extraction.' };
-  }
-}
-
 // ── IngestForm ────────────────────────────────────────────────────────────────
 
 interface IngestFormProps {
@@ -380,7 +366,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [lockedTags, setLockedTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [vaultTagsByUsage, setVaultTagsByUsage] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [isDropActive, setIsDropActive] = useState(false);
   const [dropMessage, setDropMessage] = useState<string | null>(null);
@@ -390,10 +375,12 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const [transcriptData, setTranscriptData] = useState<TranscriptData | null>(null);
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
   const [transcriptStartedAt, setTranscriptStartedAt] = useState<number | null>(null);
+  const [transcriptElapsedSecs, setTranscriptElapsedSecs] = useState<number | null>(null);
   const [extractionPhase, setExtractionPhase] = useState<ExtractionPhase>('idle');
   const [extractionIdeas, setExtractionIdeas] = useState<Array<{ id: string; title: string }>>([]);
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [extractionStartedAt, setExtractionStartedAt] = useState<number | null>(null);
+  const [extractionElapsedSecs, setExtractionElapsedSecs] = useState<number | null>(null);
 
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [totalElapsedSecs, setTotalElapsedSecs] = useState<number | null>(null);
@@ -405,6 +392,11 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setValue,
     watch,
   } = useForm<FormValues>({ defaultValues: { url: '' } });
+
+  const ingestYoutube = useIngestYoutube();
+  const extractTranscript = useExtractTranscript();
+  const discardTranscript = useDiscardTranscript();
+  const { data: vaultTagsByUsage = [] } = useVaultTagsByUsage();
 
   const urlValue = watch('url');
   const sourceKind = useMemo(() => classifyUrl(urlValue.trim()), [urlValue]);
@@ -420,10 +412,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     }
     return 'The form classifies the source asset and adapts the ingest action.';
   }, [sourceKind]);
-
-  useEffect(() => {
-    fetchVaultTagsByUsage().then(setVaultTagsByUsage);
-  }, []);
 
   useEffect(() => {
     const preventWindowDropNavigation = (event: DragEvent) => {
@@ -450,10 +438,12 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setTranscriptData(null);
     setTranscriptError(null);
     setTranscriptStartedAt(null);
+    setTranscriptElapsedSecs(null);
     setExtractionPhase('idle');
     setExtractionIdeas([]);
     setExtractionError(null);
     setExtractionStartedAt(null);
+    setExtractionElapsedSecs(null);
     setRunStartedAt(null);
     setTotalElapsedSecs(null);
     setApiError(null);
@@ -466,7 +456,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     return () => window.removeEventListener(INGEST_FORM_RESET_EVENT, handleReset);
   }, [resetForm]);
 
-  const applyExtractResult = async (result: Awaited<ReturnType<typeof runExtract>>, transcriptId: string) => {
+  const applyExtractResult = async (result: ExtractTranscriptResult, transcriptId: string) => {
     setExtractionError(null);
 
     if (result.phase === 'success') {
@@ -474,7 +464,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setExtractionIdeas(result.ideas ?? []);
       const nodeTags = await fetchNodeTags(transcriptId);
       setLockedTags(nodeTags);
-      dispatchRunsChanged();
       return;
     }
 
@@ -483,7 +472,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setExtractionIdeas(result.ideas ?? []);
       const nodeTags = await fetchNodeTags(transcriptId);
       setLockedTags(nodeTags);
-      dispatchRunsChanged();
       return;
     }
 
@@ -491,13 +479,11 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setExtractionPhase('extractable');
       const nodeTags = await fetchNodeTags(transcriptId);
       setLockedTags(nodeTags);
-      dispatchRunsChanged();
       return;
     }
 
     setExtractionPhase('failed');
     setExtractionError(result.error ?? 'Unknown error.');
-    dispatchRunsChanged();
   };
 
   const onSubmit = async ({ url }: FormValues) => {
@@ -518,10 +504,12 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setTranscriptData(null);
     setTranscriptError(null);
     setTranscriptStartedAt(now);
+    setTranscriptElapsedSecs(null);
     setExtractionPhase('waiting');
     setExtractionIdeas([]);
     setExtractionError(null);
     setExtractionStartedAt(null);
+    setExtractionElapsedSecs(null);
     setApiError(null);
     setDropMessage(null);
     setLockedTags([]);
@@ -535,28 +523,25 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     let transcriptId: string;
 
     try {
-      const res = await api.ingest.youtube.$post({
-        json: { url: trimmedUrl, tags: allTags, skipExtraction: true },
-      });
-      const json = await res.json();
+      const json = await ingestYoutube.mutateAsync({ url: trimmedUrl, tags: allTags, skipExtraction: true });
 
-      if (!json.success) {
+      if (!json.success || !json.result) {
         setTranscriptPhase('failed');
-        setTranscriptError((json as { error?: string }).error ?? 'Ingestion failed.');
+        setTranscriptError(json.error ?? 'Ingestion failed.');
+        setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
         setExtractionPhase('waiting');
         setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
         setBusy(false);
-        dispatchRunsChanged();
         return;
       }
 
-      const data = json as { result: { id: string; path: string; reused?: boolean } };
-      transcriptId = data.result.id;
-      const filename = data.result.path.split('/').pop() ?? data.result.path;
-      const reused = data.result.reused ?? false;
+      transcriptId = json.result.id;
+      const filename = json.result.path.split('/').pop() ?? json.result.path;
+      const reused = json.result.reused ?? false;
 
       setTranscriptData({ id: transcriptId, filename });
       setTranscriptPhase(reused ? 'reused' : 'saved');
+      setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
       setTags([]);
       setTagInput('');
 
@@ -575,23 +560,23 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         setLockedTags(nodeTags);
         setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
         setBusy(false);
-        dispatchRunsChanged();
         return;
       }
     } catch (error) {
       setTranscriptPhase('failed');
       setTranscriptError(error instanceof Error ? error.message : 'Ingestion failed.');
+      setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
       setExtractionPhase('waiting');
       setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
       setBusy(false);
-      dispatchRunsChanged();
       return;
     }
 
+    const extractionStart = Date.now();
     setExtractionPhase('pending');
-    setExtractionStartedAt(Date.now());
-    dispatchRunsChanged();
-    await applyExtractResult(await runExtract(transcriptId), transcriptId);
+    setExtractionStartedAt(extractionStart);
+    await applyExtractResult(await extractTranscript.mutateAsync(transcriptId), transcriptId);
+    setExtractionElapsedSecs(Math.floor((Date.now() - extractionStart) / 1000));
     setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
     setBusy(false);
   };
@@ -605,9 +590,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setBusy(true);
     setExtractionPhase('pending');
     setExtractionError(null);
+    setExtractionElapsedSecs(null);
     setTotalElapsedSecs(null);
     const started = runStartedAt ?? Date.now();
-    await applyExtractResult(await runExtract(transcriptData.id), transcriptData.id);
+    const extractionStart = Date.now();
+    setExtractionStartedAt(extractionStart);
+    await applyExtractResult(await extractTranscript.mutateAsync(transcriptData.id), transcriptData.id);
+    setExtractionElapsedSecs(Math.floor((Date.now() - extractionStart) / 1000));
     setTotalElapsedSecs(Math.floor((Date.now() - started) / 1000));
     setBusy(false);
   };
@@ -620,17 +609,11 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       return;
     }
     try {
-      const res = await api.vault.transcripts[':id'].$delete({ param: { id: transcriptData.id } });
-      if (!res.ok) {
-        const json = (await res.json()) as { error?: string };
-        setApiError(json.error ?? `Delete failed (${res.status})`);
-        return;
-      }
-    } catch {
-      setApiError('Network error — could not delete nodes.');
+      await discardTranscript.mutateAsync(transcriptData.id);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : 'Network error — could not delete nodes.');
       return;
     }
-    dispatchRunsChanged();
     resetForm();
   };
 
@@ -755,7 +738,9 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       <Spinner className="size-4" aria-hidden />
     ) : extractionPhase === 'success' || extractionPhase === 'existing' ? (
       <SvgCheckIcon />
-    ) : extractionPhase === 'failed' || extractionPhase === 'extractable' ? (
+    ) : extractionPhase === 'failed' ? (
+      <SvgXIcon />
+    ) : extractionPhase === 'extractable' ? (
       <RetryButton onClick={onRetryExtract} disabled={busy} />
     ) : (
       <WaitingIcon />
@@ -858,6 +843,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
             busy={busy}
             runStartedAt={runStartedAt}
             totalElapsedSecs={totalElapsedSecs}
+            nodeCount={(transcriptData ? 1 : 0) + extractionIdeas.length}
             onKeep={onKeep}
             onDiscard={onDiscard}
             onRetry={onRetry}
@@ -868,6 +854,8 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
             label={transcriptCardLabel}
             statusSlot={transcriptStatusSlot}
             startedAt={transcriptStartedAt}
+            finalElapsedSecs={transcriptElapsedSecs}
+            nodeCount={transcriptData ? 1 : null}
           >
             {transcriptData ? (
               <ul className="pipeline-card__item-list">
@@ -888,13 +876,27 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
             label={extractionCardLabel}
             statusSlot={extractionStatusSlot}
             startedAt={extractionStartedAt}
+            finalElapsedSecs={extractionElapsedSecs}
+            nodeCount={extractionIdeas.length}
           >
             {(extractionPhase === 'success' || extractionPhase === 'existing') &&
             extractionIdeas.length > 0 ? (
               <IdeaList ideas={extractionIdeas} />
             ) : null}
-            {extractionPhase === 'failed' && extractionError ? (
-              <span className="pipeline-card__text">{extractionError}</span>
+            {extractionPhase === 'failed' ? (
+              <div className="pipeline-card__failure">
+                {extractionError ? <span className="pipeline-card__text">{extractionError}</span> : null}
+                <button
+                  type="button"
+                  className="pipeline-action-btn pipeline-action-btn--retry"
+                  onClick={onRetryExtract}
+                  disabled={busy}
+                  aria-label="Retry — re-run extraction against the saved transcript"
+                >
+                  <RotateCcwIcon size={14} aria-hidden />
+                  <span>Retry</span>
+                </button>
+              </div>
             ) : null}
           </PipelineCard>
         </div>

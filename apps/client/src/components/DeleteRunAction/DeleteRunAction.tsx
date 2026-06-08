@@ -8,12 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from 'components/ui/dialog';
+import { useDeleteRun } from 'queries/runs';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { RunNode } from '@llaab/schemas';
-
-import { deleteVaultRun } from 'lib/api';
-import { dispatchRunsChanged } from 'lib/runs-events';
 
 import styles from './DeleteRunAction.module.css';
 
@@ -26,8 +24,9 @@ export interface DeleteRunActionProps {
 
 export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
   const [step, setStep] = useState<DialogStep>('closed');
-  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const deleteRun = useDeleteRun();
+  const deleting = deleteRun.isPending;
 
   const producedCount = run.produced_node_ids.length;
   const producedLabel = producedCount === 1 ? '1 node' : `${producedCount} nodes`;
@@ -39,22 +38,10 @@ export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
   };
 
   const performDelete = async (deleteProduced: boolean) => {
-    setDeleting(true);
     setError(null);
 
     try {
-      const res = await deleteVaultRun(run.id, deleteProduced);
-
-      const body = (await res.json().catch(() => null)) as {
-        error?: string;
-        deletedProduced?: number;
-      } | null;
-
-      if (!res.ok) {
-        throw new Error(body?.error ?? 'Failed to delete run.');
-      }
-
-      const deletedProduced = body?.deletedProduced ?? 0;
+      const { deletedProduced } = await deleteRun.mutateAsync({ id: run.id, deleteProduced });
 
       toast.success(
         deletedProduced > 0
@@ -63,12 +50,9 @@ export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
       );
 
       onDeleted?.(run.id);
-      dispatchRunsChanged();
       setStep('closed');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete run.');
-    } finally {
-      setDeleting(false);
     }
   };
 

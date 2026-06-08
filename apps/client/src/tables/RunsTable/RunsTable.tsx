@@ -1,5 +1,6 @@
 import { getSortedRowModel } from '@tanstack/react-table';
 import { DataTable, sortableHeader } from 'components/ui/data-table';
+import { useRuns } from 'queries/runs';
 import { useMemo } from 'react';
 import {
   buildSourcesById,
@@ -15,7 +16,6 @@ import {
 import type { RunNode, SourceNode } from '@llaab/schemas';
 import type { DataTableColumns } from '@llaab/ui/lib/data-table-utils';
 
-import { useRuns } from 'lib/use-runs';
 import { extractRunAuthor, extractRunSourceId } from 'utils/metadata-rendering.utils';
 
 import styles from './RunsTable.module.css';
@@ -87,7 +87,7 @@ export interface RunsTableProps {
 }
 
 export function RunsTable({ runs: initialRuns, sources = [], showHeading = false }: RunsTableProps) {
-  const { runs } = useRuns(initialRuns);
+  const { data: runs = initialRuns } = useRuns({ initialData: initialRuns });
   const columns = useMemo(() => buildRunsColumns(buildSourcesById(sources)), [sources]);
 
   return (
