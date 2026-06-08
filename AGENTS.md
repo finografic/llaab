@@ -52,6 +52,7 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 
 - TypeScript patterns: `.github/instructions/code/typescript-patterns.instructions.md`
 - Modern TS patterns: `.github/instructions/code/modern-typescript-patterns.instructions.md`
+- Component file organization: `.github/instructions/code/component-file-organization.instructions.md`
 - Oxlint & style: `.github/instructions/code/linting-code-style.instructions.md`
 - Provider/context patterns: `.github/instructions/code/provider-context-patterns.instructions.md`
 - Picocolors CLI styling: `.github/instructions/code/picocolors-cli-styling.instructions.md`

@@ -1,9 +1,10 @@
+import { CheckIcon, CountdownTimerIcon, XIcon } from '@llaab/icons';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { Spinner } from 'components/ui/spinner';
-import { CheckIcon as LucideCheck, RotateCcwIcon, Trash2Icon } from 'lucide-react';
+import { RotateCcwIcon } from 'lucide-react';
 import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
 import {
   fetchExistingIdeas,
@@ -13,352 +14,21 @@ import {
 } from 'queries/transcripts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import type { ExtractionPhase, FormValues, TranscriptData, TranscriptPhase } from './ingest-form.types';
 import type { ExtractTranscriptResult } from 'queries/transcripts';
 
-import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
 import { INGEST_FORM_RESET_EVENT } from 'lib/ingest-form-events';
 
-import { TagInputField } from './TagInputField';
+import { KNOWN_TAGS, normalizeTag } from 'constants/taxonomy.constants';
 
-const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
-const KNOWN_TAGS = KNOWN_DOMAINS.map((domain) => `d:${domain}`);
+import { TagInputField } from '../TagInputField';
+import { IdeaList } from './components/IdeaList';
+import { PipelineCard } from './components/PipelineCard';
+import { RetryButton } from './components/RetryButton';
+import { RunSummaryCard } from './components/RunSummaryCard';
+import { classifyUrl, extractDroppedUrl, isHttpUrl } from './ingest-form.utils';
 
-function normalizeTag(raw: string): string {
-  const trimmed = raw.trim().toLowerCase();
-  if (trimmed.startsWith('d:')) return trimmed;
-  if (KNOWN_DOMAINS.includes(trimmed)) return `d:${trimmed}`;
-  return trimmed;
-}
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-function isYouTubeUrl(value: string): boolean {
-  if (!isHttpUrl(value)) return false;
-  const { hostname } = new URL(value);
-  return hostname.replace(/^www\./, '').toLowerCase() === 'youtube.com' || hostname === 'youtu.be';
-}
-
-function classifyUrl(value: string): SourceKind {
-  if (!isHttpUrl(value)) return 'unknown';
-  return isYouTubeUrl(value) ? 'youtube' : 'webpage';
-}
-
-function extractDroppedUrl(dataTransfer: DataTransfer): string | null {
-  const uriList = dataTransfer.getData('text/uri-list');
-  if (uriList) {
-    const firstUri = uriList
-      .split('\n')
-      .map((line) => line.trim())
-      .find((line) => line.length > 0 && !line.startsWith('#'));
-    if (firstUri) return firstUri;
-  }
-
-  const plainText = dataTransfer.getData('text/plain').trim();
-  if (plainText && isHttpUrl(plainText)) return plainText;
-
-  const downloadUrl = dataTransfer.getData('DownloadURL');
-  if (downloadUrl) {
-    const maybeUrl = downloadUrl.split(':').at(-1)?.trim() ?? '';
-    if (isHttpUrl(maybeUrl)) return maybeUrl;
-  }
-
-  return null;
-}
-
-interface FormValues {
-  url: string;
-}
-
-type SourceKind = 'youtube' | 'webpage' | 'unknown';
-type TranscriptPhase = 'idle' | 'processing' | 'saved' | 'reused' | 'failed';
-type ExtractionPhase = 'idle' | 'waiting' | 'pending' | 'success' | 'existing' | 'extractable' | 'failed';
-
-interface TranscriptData {
-  id: string;
-  filename: string;
-}
-
-function SvgCheckIcon() {
-  return (
-    <svg className="pipeline-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <polyline
-        points="2,9 6,13 14,3"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function SvgXIcon() {
-  return (
-    <svg className="pipeline-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M3 3l10 10M13 3 3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function WaitingIcon() {
-  return (
-    <svg className="pipeline-icon pipeline-icon--waiting" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path
-        d="M5 2h6M5 14h6M6 2v3.5l-2 2.5 2 2.5V14M10 2v3.5l2 2.5-2 2.5V14"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function RetryButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
-  return (
-    <button
-      type="button"
-      className="pipeline-retry-btn"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label="Retry"
-    >
-      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path
-          d="M2.5 8a5.5 5.5 0 1 0 1.1-3.4"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-        <polyline
-          points="0.5,3 3.5,6 6,3"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </button>
-  );
-}
-
-function NodeCountMeta({ nodeCount, hasElapsed }: { nodeCount?: number | null; hasElapsed: boolean }) {
-  const hasNodeCount = nodeCount != null && nodeCount > 0;
-  if (!hasNodeCount) return null;
-
-  return (
-    <>
-      <span className="pipeline-card__node-count">
-        {nodeCount} {nodeCount === 1 ? 'node' : 'nodes'}
-      </span>
-      {hasElapsed ? (
-        <span className="pipeline-card__meta-sep" aria-hidden="true">
-          •
-        </span>
-      ) : null}
-    </>
-  );
-}
-
-function PipelineCard({
-  phase,
-  label,
-  statusSlot,
-  startedAt,
-  finalElapsedSecs,
-  nodeCount,
-  children,
-}: {
-  phase: 'success' | 'warning' | 'neutral' | 'active';
-  label: string;
-  statusSlot: React.ReactNode;
-  startedAt?: number | null;
-  finalElapsedSecs?: number | null;
-  nodeCount?: number | null;
-  children?: React.ReactNode;
-}) {
-  const liveElapsed = useElapsedSeconds(phase === 'active' ? (startedAt ?? null) : null);
-  const displayElapsed = phase === 'active' ? liveElapsed : (finalElapsedSecs ?? null);
-  const bodyChildren = React.Children.toArray(children);
-  const hasBody = bodyChildren.length > 0;
-  const hasElapsed = startedAt != null && displayElapsed != null;
-
-  return (
-    <div className={`pipeline-card pipeline-card--${phase}`}>
-      <div className="pipeline-card__main">
-        <div className="pipeline-card__row">
-          <div className="pipeline-card__title">
-            <div className="pipeline-card__status">{statusSlot}</div>
-            <span className="pipeline-card__label">{label}</span>
-          </div>
-          <div className="pipeline-card__meta">
-            <NodeCountMeta nodeCount={nodeCount} hasElapsed={hasElapsed} />
-            {hasElapsed ? (
-              <span className="pipeline-card__elapsed">{formatElapsed(displayElapsed)}</span>
-            ) : null}
-          </div>
-        </div>
-        {hasBody ? <div className="pipeline-card__body">{bodyChildren}</div> : null}
-      </div>
-    </div>
-  );
-}
-
-function IdeaList({ ideas }: { ideas: Array<{ id: string; title: string }> }) {
-  if (ideas.length === 0) return null;
-
-  return (
-    <ul className="pipeline-card__item-list">
-      {ideas.map((idea) => (
-        <li key={idea.id}>
-          <a href={`/vault/nodes/${idea.id}`} className="pipeline-card__link">
-            {idea.title}
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-// ── Run summary card ──────────────────────────────────────────────────────────
-
-function stepLabel(transcriptPhase: TranscriptPhase, extractionPhase: ExtractionPhase): string {
-  if (transcriptPhase === 'processing') return 'Fetching transcript…';
-  if (transcriptPhase === 'failed') return 'Transcript fetch failed';
-  if (extractionPhase === 'waiting') return 'Waiting for extraction';
-  if (extractionPhase === 'pending') return 'Extracting ideas…';
-  if (extractionPhase === 'success' || extractionPhase === 'existing') return 'Complete';
-  if (extractionPhase === 'extractable') return 'No ideas extracted';
-  if (extractionPhase === 'failed') return 'Extraction failed';
-  if (transcriptPhase === 'saved') return 'Transcript saved';
-  if (transcriptPhase === 'reused') return 'Transcript already saved';
-  return 'Starting…';
-}
-
-function runPhase(
-  transcriptPhase: TranscriptPhase,
-  extractionPhase: ExtractionPhase,
-  busy: boolean,
-): 'active' | 'success' | 'warning' | 'neutral' {
-  if (busy || transcriptPhase === 'idle') return busy ? 'active' : 'neutral';
-  const transcriptDone = ['saved', 'reused', 'failed'].includes(transcriptPhase);
-  const extractionDone = ['success', 'existing', 'extractable', 'failed'].includes(extractionPhase);
-  if (!transcriptDone || !extractionDone) return 'active';
-  if (transcriptPhase === 'failed' || extractionPhase === 'failed') return 'warning';
-  return 'success';
-}
-
-function RunSummaryCard({
-  transcriptPhase,
-  extractionPhase,
-  busy,
-  runStartedAt,
-  totalElapsedSecs,
-  nodeCount,
-  onKeep,
-  onDiscard,
-  onRetry,
-}: {
-  transcriptPhase: TranscriptPhase;
-  extractionPhase: ExtractionPhase;
-  busy: boolean;
-  runStartedAt: number | null;
-  totalElapsedSecs: number | null;
-  nodeCount?: number | null;
-  onKeep: () => void;
-  onDiscard: () => Promise<void>;
-  onRetry: () => void;
-}) {
-  const phase = runPhase(transcriptPhase, extractionPhase, busy);
-  const liveElapsed = useElapsedSeconds(phase === 'active' ? runStartedAt : null);
-  const displayElapsed = totalElapsedSecs != null ? totalElapsedSecs : liveElapsed;
-
-  const transcriptDone = ['saved', 'reused', 'failed'].includes(transcriptPhase);
-  const extractionDone = ['success', 'existing', 'extractable', 'failed'].includes(extractionPhase);
-  const isComplete = transcriptDone && extractionDone && !busy;
-
-  const [discarding, setDiscarding] = useState(false);
-
-  const handleDiscard = async () => {
-    setDiscarding(true);
-    await onDiscard();
-    setDiscarding(false);
-  };
-
-  const statusIcon =
-    phase === 'active' ? (
-      <Spinner className="size-4" aria-hidden />
-    ) : phase === 'success' || phase === 'warning' ? (
-      <SvgCheckIcon />
-    ) : null;
-
-  const hasElapsed = runStartedAt != null;
-
-  return (
-    <div className={`pipeline-card pipeline-card--${phase} pipeline-card--summary`}>
-      <div className="pipeline-card__main">
-        <div className="pipeline-card__row">
-          <div className="pipeline-summary__left">
-            <div className="pipeline-card__status">{statusIcon}</div>
-            <span className="pipeline-card__label">Run</span>
-            <span className="pipeline-summary__step">{stepLabel(transcriptPhase, extractionPhase)}</span>
-          </div>
-          <div className="pipeline-card__meta">
-            <NodeCountMeta nodeCount={nodeCount} hasElapsed={hasElapsed} />
-            {hasElapsed ? (
-              <span className="pipeline-card__elapsed">{formatElapsed(displayElapsed)}</span>
-            ) : null}
-          </div>
-        </div>
-
-        {isComplete ? (
-          <div className="pipeline-summary__actions">
-            <button
-              type="button"
-              className="pipeline-action-btn pipeline-action-btn--keep"
-              onClick={onKeep}
-              aria-label="Keep — confirm ingestion and clear the form"
-            >
-              <LucideCheck size={14} aria-hidden />
-              <span>Keep</span>
-            </button>
-            <button
-              type="button"
-              className="pipeline-action-btn pipeline-action-btn--discard"
-              onClick={handleDiscard}
-              disabled={discarding}
-              aria-label="Discard — delete ingested nodes and clear the form"
-            >
-              <Trash2Icon size={14} aria-hidden />
-              <span>Discard</span>
-            </button>
-            <button
-              type="button"
-              className="pipeline-action-btn pipeline-action-btn--retry"
-              onClick={onRetry}
-              disabled={discarding}
-              aria-label="Retry — delete ingested nodes and re-run this ingest"
-            >
-              <RotateCcwIcon size={14} aria-hidden />
-              <span>Retry</span>
-            </button>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-// ── IngestForm ────────────────────────────────────────────────────────────────
-
-interface IngestFormProps {
+export interface IngestFormProps {
   submitOnDrop?: boolean;
 }
 
@@ -710,7 +380,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     ) : transcriptPhase === 'failed' ? (
       <RetryButton onClick={onRetryIngest} disabled={busy} />
     ) : (
-      <SvgCheckIcon />
+      <CheckIcon className="pipeline-icon" aria-hidden />
     );
 
   const extractionCardPhase =
@@ -737,13 +407,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     extractionPhase === 'pending' ? (
       <Spinner className="size-4" aria-hidden />
     ) : extractionPhase === 'success' || extractionPhase === 'existing' ? (
-      <SvgCheckIcon />
+      <CheckIcon className="pipeline-icon" aria-hidden />
     ) : extractionPhase === 'failed' ? (
-      <SvgXIcon />
+      <XIcon className="pipeline-icon" aria-hidden />
     ) : extractionPhase === 'extractable' ? (
       <RetryButton onClick={onRetryExtract} disabled={busy} />
     ) : (
-      <WaitingIcon />
+      <CountdownTimerIcon className="pipeline-icon pipeline-icon--waiting" aria-hidden />
     );
 
   return (

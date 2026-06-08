@@ -7,17 +7,9 @@ import { useCreateIdea } from 'queries/nodes';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { KNOWN_TAGS, normalizeTag } from 'constants/taxonomy.constants';
+
 import { TagInputField } from './TagInputField';
-
-const KNOWN_DOMAINS = ['llm', 'automation', 'ingest', 'schema', 'infra', 'integration', 'ui', 'meta'];
-const KNOWN_TAGS = KNOWN_DOMAINS.map((domain) => `d:${domain}`);
-
-function normalizeTag(raw: string): string {
-  const trimmed = raw.trim().toLowerCase();
-  if (trimmed.startsWith('d:')) return trimmed;
-  if (KNOWN_DOMAINS.includes(trimmed)) return `d:${trimmed}`;
-  return trimmed;
-}
 
 interface FormValues {
   title: string;
