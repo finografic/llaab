@@ -8,7 +8,6 @@ import PageLayout from 'layouts/PageLayout.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
 import { CleanVaultDialog } from 'dialogs/CleanVaultDialog/CleanVaultDialog';
 import { IngestForm } from 'forms/IngestForm/IngestForm';
-import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import { RunsTable } from 'tables/RunsTable/RunsTable';
 
 const all = await listNodes({ type: 'run' });
@@ -19,9 +18,7 @@ const sources = (await listNodes({ type: 'source' })) as SourceNode[];
 <AppLayout title="Ingest">
   <PageLayout>
     <PageHero slot="hero" eyebrow="Pipeline" title="Ingest Source URL">
-      <QueryClientProvider slot="right" client:only="react">
-        <CleanVaultDialog resetIngestFormOnSuccess />
-      </QueryClientProvider>
+      <CleanVaultDialog slot="right" client:only="react" resetIngestFormOnSuccess />
       <Fragment slot="description">
         Paste or drop a browser URL. The form will classify the source asset and adapt the ingest action when
         the URL is supported.
@@ -30,14 +27,10 @@ const sources = (await listNodes({ type: 'source' })) as SourceNode[];
 
     <div class="ingest-page">
       <div class="card ingest-page__card">
-        <QueryClientProvider client:only="react">
-          <IngestForm />
-        </QueryClientProvider>
+        <IngestForm client:only="react" />
       </div>
 
-      <QueryClientProvider client:load>
-        <RunsTable runs={runs} sources={sources} showHeading />
-      </QueryClientProvider>
+      <RunsTable client:load runs={runs} sources={sources} showHeading />
     </div>
   </PageLayout>
 </AppLayout>

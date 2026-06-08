@@ -307,6 +307,73 @@ All other React components (no DS deps) can use `client:load` normally.
 
 ---
 
+## Gotcha: providers cannot wrap islands across the `.astro` boundary
+
+**Symptom:** a React island that calls a context-dependent hook (`useQuery`, `useQueryClient`,
+or any custom hook backed by `useContext`) throws at render time — e.g. `"No QueryClient set,
+use QueryClientProvider to set one"` — and Astro silently drops the island from the page (no
+`<astro-island>` placeholder is even emitted; it just isn't there).
+
+**Cause:** this looks like ordinary React composition, but it isn't:
+
+```astro
+<!-- looks right, is broken -->
+<QueryClientProvider client:load>
+  <RunsTable runs={runs} sources={sources} />
+</QueryClientProvider>
+```
+
+`.astro` template syntax is Astro's own templating language — it is compiled by Astro, not
+React. When one framework component appears nested inside another in a `.astro` template,
+Astro does **not** hand React a single `<Provider><Consumer /></Provider>` element to render
+as one tree. It renders each framework component to an HTML string **independently**, then
+splices the inner component's output into the outer one's `children` slot as static markup.
+`RunsTable` therefore gets server-rendered with zero ancestors — no `QueryClientProvider`
+anywhere above it — so `useQueryClient()` throws immediately, and the render of that subtree
+is abandoned.
+
+This is a direct consequence of how **islands work**: they're isolated by design (ship less
+JS, hydrate independently), so React Context cannot cross an Astro template boundary between
+two separately-declared framework components — no matter which `client:*` directive you pick,
+and whether the failing render happens at SSR or build time.
+
+**Fix:** keep the provider and its consumer in the _same_ React component tree by wrapping
+**inside** the component file — never around it in the `.astro` template:
+
+```tsx
+// ✅ correct — provider + consumer in one React tree, mounted as a single island
+export function RunsTable(props: RunsTableProps) {
+  return (
+    <QueryClientProvider>
+      <RunsTableRoot {...props} />
+    </QueryClientProvider>
+  );
+}
+
+function RunsTableRoot({ runs: initialRuns, sources = [], showHeading = false }: RunsTableProps) {
+  const { data: runs = initialRuns } = useRuns({ initialData: initialRuns });
+  // ...
+}
+```
+
+```astro
+<!-- ✅ mount the self-wrapping component directly — no nesting in the template -->
+<RunsTable client:load runs={runs} sources={sources} />
+```
+
+`providers/QueryClientProvider/QueryClientProvider.tsx` wraps a shared `queryClient` singleton,
+so re-providing it from multiple islands is harmless — every island still reads from and
+invalidates the same cache. Reference implementations, all wrapping themselves this exact way:
+`forms/IngestForm/IngestForm.tsx`, `dialogs/CleanVaultDialog/CleanVaultDialog.tsx`,
+`tables/RunsTable/RunsTable.tsx`, `components/VaultBrowser.tsx`, `forms/CreateIdeaPanel.tsx`.
+
+**Rule of thumb:** if a component (or anything it renders) calls a hook backed by React
+Context, that component must be the thing Astro mounts with `client:*`, and it must supply
+its own context internally. Never rely on a `.astro`-level wrapper to provide context to a
+nested island — it will not reach it.
+
+---
+
 ## Vault routes
 
 | URL                       | Description                                                        |

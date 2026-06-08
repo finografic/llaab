@@ -4,7 +4,6 @@ export const prerender = false;
 import { listNodes } from '@llaab/core';
 import type { RunNode, SourceNode } from '@llaab/schemas';
 import { RunsTable } from 'tables/RunsTable/RunsTable';
-import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
 import PageList from 'layouts/PageList.astro';
@@ -33,9 +32,7 @@ const sources = (await listNodes({ type: 'source' })) as SourceNode[];
     </PageHero>
 
     <PageList width="wide">
-      <QueryClientProvider client:load>
-        <RunsTable runs={runs} sources={sources} />
-      </QueryClientProvider>
+      <RunsTable client:load runs={runs} sources={sources} />
     </PageList>
   </PageLayout>
 </AppLayout>

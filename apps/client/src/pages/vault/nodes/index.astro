@@ -7,7 +7,6 @@ import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
 import { CreateIdeaPanel } from 'forms/CreateIdeaPanel';
-import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import { NodesFileList } from 'tables/NodesFileList/NodesFileList';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -40,9 +39,7 @@ const nodes: LabNode[] = all
           ))
         }
       </Fragment>
-      <QueryClientProvider slot="actions" client:only="react">
-        <CreateIdeaPanel />
-      </QueryClientProvider>
+      <CreateIdeaPanel slot="actions" client:only="react" />
     </PageHero>
 
     {

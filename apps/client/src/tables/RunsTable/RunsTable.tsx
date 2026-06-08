@@ -1,5 +1,6 @@
 import { getSortedRowModel } from '@tanstack/react-table';
 import { DataTable, sortableHeader } from 'components/ui/data-table';
+import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import { useRuns } from 'queries/runs';
 import { useMemo } from 'react';
 import {
@@ -86,7 +87,22 @@ export interface RunsTableProps {
   showHeading?: boolean;
 }
 
-export function RunsTable({ runs: initialRuns, sources = [], showHeading = false }: RunsTableProps) {
+/**
+ * Astro renders nested framework children to static HTML independently of their
+ * wrapping provider — so `<QueryClientProvider><RunsTable /></QueryClientProvider>`
+ * in an `.astro` template would SSR `RunsTable` outside the provider's React tree
+ * and throw "No QueryClient set". Wrapping here keeps provider and consumer in the
+ * same component tree, mounted as a single island.
+ */
+export function RunsTable(props: RunsTableProps) {
+  return (
+    <QueryClientProvider>
+      <RunsTableRoot {...props} />
+    </QueryClientProvider>
+  );
+}
+
+function RunsTableRoot({ runs: initialRuns, sources = [], showHeading = false }: RunsTableProps) {
   const { data: runs = initialRuns } = useRuns({ initialData: initialRuns });
   const columns = useMemo(() => buildRunsColumns(buildSourcesById(sources)), [sources]);
 
