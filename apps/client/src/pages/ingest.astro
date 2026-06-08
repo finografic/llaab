@@ -43,6 +43,10 @@ const sources = (await listNodes({ type: 'source' })) as SourceNode[];
     max-width: var(--content-max);
   }
 
+  .ingest-page__card {
+    min-height: 352px;
+  }
+
   /* IngestForm root — flex column for the form + status blocks */
   :global(.ingest-form) {
     display: flex;

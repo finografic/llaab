@@ -418,7 +418,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     if (sourceKind === 'webpage') {
       return 'Website or online reference detected. Drop recognition works; this source type is not yet wired for ingestion.';
     }
-    return 'Address-bar drags and in-page links should both work. The form classifies the source asset and adapts the ingest action.';
+    return 'The form classifies the source asset and adapts the ingest action.';
   }, [sourceKind]);
 
   useEffect(() => {

@@ -99,8 +99,8 @@ export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
           <DialogHeader>
             <DialogTitle>Delete run?</DialogTitle>
             <DialogDescription>
-              This removes the run record for <span className={styles.runTitle}>{run.title}</span>. This
-              action cannot be undone.
+              <div className={styles.runTitle}>{run.title}</div>
+              <span className="text-red-400">This action cannot be undone.</span>
             </DialogDescription>
           </DialogHeader>
 
