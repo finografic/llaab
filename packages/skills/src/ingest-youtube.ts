@@ -2,7 +2,7 @@ import { extractKnowledgeFromTranscript, runIngestionPipeline } from '@llaab/ing
 import type { SkillRunRecord } from './runner.js';
 import type { ExtractionResult, IngestionResult } from '@llaab/ingestion';
 
-import { runSkill } from './runner.js';
+import { appendProducedNodeIds, runSkill } from './runner.js';
 
 export interface IngestYouTubeInput {
   url: string;
@@ -52,6 +52,7 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYo
         result.plainText,
         input.tags,
       );
+      await appendProducedNodeIds(record.runNodeId, extraction.ideaIds);
       console.log(`  extraction: ${extraction.ideaIds.length} ideas, summary written`);
       return { record, result, extraction };
     } catch (err) {

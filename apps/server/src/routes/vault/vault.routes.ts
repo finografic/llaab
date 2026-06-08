@@ -2,10 +2,12 @@ import { readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { createNode, deleteNode, getNodeFilePath, listNodes, readNode, VAULT_ROOT } from '@llaab/core';
 import { extractKnowledgeFromTranscript } from '@llaab/ingestion';
+import { appendProducedNodeIds } from '@llaab/skills';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type { CreateNodeBody, ListNodesQuery } from './vault.schema.js';
-import { deleteRunQuerySchema } from './vault.schema.js';
 import type { RunNode, TranscriptNode } from '@llaab/schemas';
+
+import { deleteRunQuerySchema } from './vault.schema.js';
 
 export const file = {
   path: '/file' as const,
@@ -101,6 +103,15 @@ export const extractTranscript = {
     const filePath = getNodeFilePath(node.type, node.id);
     try {
       const result = await extractKnowledgeFromTranscript(id, filePath, node.body);
+
+      // Extraction runs as a follow-on step after the originating run was persisted —
+      // append the newly created idea node ids so the run's produced-node count stays accurate.
+      const runNodes = await listNodes({ type: 'run' });
+      const originatingRun = (runNodes as RunNode[]).find((n) => n.produced_node_ids?.includes(id));
+      if (originatingRun) {
+        await appendProducedNodeIds(originatingRun.id, result.ideaIds);
+      }
+
       return c.json({ success: true, ...result });
     } catch (err) {
       return c.json({ success: false, error: err instanceof Error ? err.message : 'Extraction failed' }, 500);

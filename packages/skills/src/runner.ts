@@ -1,4 +1,4 @@
-import { createNode } from '@llaab/core';
+import { createNode, getNodeFilePath, updateNode } from '@llaab/core';
 import {
   buildRunNodeId,
   formatIsoUtcForTranscriptBody,
@@ -6,9 +6,15 @@ import {
   NodeIdSchema,
   toNodeId,
 } from '@llaab/schemas';
+import type { RunNode } from '@llaab/schemas';
 
 export interface SkillRunRecord {
   name: string;
+  /**
+   * Id of the persisted run node — pass to `appendProducedNodeIds` for nodes produced after the run
+   * completes.
+   */
+  runNodeId: string;
   startedAt: string;
   completedAt?: string;
   status: 'pending' | 'completed' | 'failed';
@@ -16,6 +22,24 @@ export interface SkillRunRecord {
   output?: Record<string, unknown>;
   /** Present when `status` is `failed` — same message persisted on the run node. */
   error?: string;
+}
+
+/**
+ * Append node ids onto a persisted run's `produced_node_ids` — for nodes created by
+ * follow-on processes (e.g. knowledge extraction) that complete after `persistRunNode`
+ * has already written the run record.
+ */
+export async function appendProducedNodeIds(runNodeId: string, nodeIds: string[]): Promise<void> {
+  if (nodeIds.length === 0) return;
+
+  const runPath = getNodeFilePath('run', runNodeId);
+  await updateNode(runPath, (node) => {
+    const run = node as RunNode;
+    return {
+      ...run,
+      produced_node_ids: [...new Set([...run.produced_node_ids, ...nodeIds])],
+    };
+  });
 }
 
 interface NestedRunTrace {
@@ -86,10 +110,27 @@ function stripRunTrace<T>(value: T): T {
   return rest as T;
 }
 
+const SUMMARY_STRING_LIMIT = 200;
+
+/**
+ * Truncates long string values before stringifying so `summarizeValue` always
+ * produces syntactically valid JSON — slicing the serialized JSON text instead
+ * (the previous approach) could cut off mid-string and drop closing brackets.
+ */
+function truncateLongStrings(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return value.length > SUMMARY_STRING_LIMIT ? `${value.slice(0, SUMMARY_STRING_LIMIT)}...` : value;
+  }
+  if (Array.isArray(value)) return value.map(truncateLongStrings);
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, truncateLongStrings(val)]));
+  }
+  return value;
+}
+
 function summarizeValue(value: unknown): string {
-  const json = JSON.stringify(value);
-  if (!json) return String(value);
-  return json.length > 400 ? `${json.slice(0, 397)}...` : json;
+  const json = JSON.stringify(truncateLongStrings(value));
+  return json ?? String(value);
 }
 
 function collectProducedNodeIds(value: unknown): string[] {
@@ -189,6 +230,7 @@ export async function runSkill<TInput, TOutput>(
     return {
       record: {
         name,
+        runNodeId,
         startedAt,
         completedAt,
         status: 'completed',
@@ -215,6 +257,7 @@ export async function runSkill<TInput, TOutput>(
     return {
       record: {
         name,
+        runNodeId,
         startedAt,
         completedAt,
         status: 'failed',
