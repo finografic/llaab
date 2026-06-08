@@ -3,6 +3,7 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { RunNode } from '@llaab/schemas';
+import { JsonData } from 'components/JsonData/JsonData';
 import ModelMetaCard from 'components/ModelMetaCard.astro';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
@@ -93,13 +94,17 @@ function fmtDate(ts?: string): string {
               {run.input_summary && (
                 <>
                   <dt>Input</dt>
-                  <dd>{run.input_summary}</dd>
+                  <dd>
+                    <JsonData value={run.input_summary} client:load />
+                  </dd>
                 </>
               )}
               {run.output_summary && (
                 <>
                   <dt>Output</dt>
-                  <dd>{run.output_summary}</dd>
+                  <dd>
+                    <JsonData value={run.output_summary} client:load />
+                  </dd>
                 </>
               )}
               {run.produced_node_ids.length > 0 && (
