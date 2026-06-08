@@ -121,6 +121,16 @@ date, version. `follow: true` nodes auto-refresh stats on `lab agent run` via a 
 
 Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
 
+### Cross-Island / Cross-Tab Sync
+
+Exploratory only — no concrete need yet. The `queryClient` singleton already syncs islands on
+the same page; it cannot reach a second tab or window. `BroadcastChannel` is the candidate if
+that ever becomes a real workflow (e.g. live run-status updates across tabs); WebSocket is
+ruled out as it would require an always-on server connection, conflicting with the "LLAAB does
+not own a scheduler" rule.
+
+Detail: [`docs/todo/TODO_CROSS_ISLAND_SYNC.md`](./TODO_CROSS_ISLAND_SYNC.md)
+
 ## Done
 
 ### Orchestration and adapter foundation
