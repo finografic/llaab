@@ -158,7 +158,17 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
           promptTokens: addOptionalTokenCount(nextLlmMeta?.promptTokens, result.promptTokens),
           completionTokens: addOptionalTokenCount(nextLlmMeta?.completionTokens, result.completionTokens),
         };
-        const parsed = ExtractedKnowledgeSchema.safeParse(parseJsonFromText(result.text));
+        let json: unknown;
+        try {
+          json = parseJsonFromText(result.text);
+        } catch (parseError) {
+          // The model returned text with no parseable JSON object — evict it so retries
+          // re-query the LLM instead of replaying the same unparsable cached response forever.
+          invalidateLlmCache('extract', prompt, prepared.model);
+          throw parseError;
+        }
+
+        const parsed = ExtractedKnowledgeSchema.safeParse(json);
         if (!parsed.success) {
           // The model returned schema-incompatible JSON — evict it so retries re-query
           // the LLM instead of replaying the same broken cached response forever.
