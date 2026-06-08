@@ -476,7 +476,7 @@ Right now in the repo:
 
 - [`packages/skills/src/agent/`] — agent loop, skill registry, dedup index
 - `POST /api/agent/run` — one-shot agent processor
-- `llaab agent run` — CLI entry point
+- `lab agent run` — CLI entry point
 
 ---
 

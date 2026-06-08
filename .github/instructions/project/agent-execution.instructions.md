@@ -30,7 +30,7 @@ The trigger is always explicit. The processor always terminates. There is no idl
 ## LLAAB does not own scheduling
 
 If the user wants automation to run on a schedule, they add an OS crontab entry or use
-an external scheduler. LLAAB provides the mechanism (`llaab agent run`, `POST /api/agent/run`);
+an external scheduler. LLAAB provides the mechanism (`lab agent run`, `POST /api/agent/run`);
 the user controls the frequency. Never build an internal scheduler into `apps/server`.
 
 ## LLM calls follow the same rule
