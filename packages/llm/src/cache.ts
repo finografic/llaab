@@ -27,3 +27,11 @@ export function cacheGet(prompt: string, model: string): string | null {
 export function cacheSet(prompt: string, model: string, value: string): void {
   store.set(cacheKey(prompt, model), { value, expiresAt: Date.now() + TTL_MS });
 }
+
+/**
+ * Evict a cached response — used when a cached value turns out to be unusable (e.g. fails schema validation),
+ * so retries re-query the LLM instead of replaying the same bad output.
+ */
+export function cacheDelete(prompt: string, model: string): void {
+  store.delete(cacheKey(prompt, model));
+}

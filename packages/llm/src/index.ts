@@ -2,6 +2,7 @@ export { findExecutorProvidersByCapability, getExecutorStatus } from './executor
 export {
   findProvidersByCapability,
   getLlmStatus,
+  invalidateLlmCache,
   ollamaListModels,
   resolveLlmRoute,
   routeLlm,

@@ -1,5 +1,5 @@
 import { execute } from '@llaab/control';
-import { resolveLlmRoute, routeLlm } from '@llaab/llm';
+import { invalidateLlmCache, resolveLlmRoute, routeLlm } from '@llaab/llm';
 import { z } from 'zod';
 import type { ControlDecision, ControlLlmTrace, ControlStage } from '@llaab/control';
 
@@ -158,7 +158,14 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
           promptTokens: addOptionalTokenCount(nextLlmMeta?.promptTokens, result.promptTokens),
           completionTokens: addOptionalTokenCount(nextLlmMeta?.completionTokens, result.completionTokens),
         };
-        chunkResults.push(ExtractedKnowledgeSchema.parse(parseJsonFromText(result.text)));
+        const parsed = ExtractedKnowledgeSchema.safeParse(parseJsonFromText(result.text));
+        if (!parsed.success) {
+          // The model returned schema-incompatible JSON — evict it so retries re-query
+          // the LLM instead of replaying the same broken cached response forever.
+          invalidateLlmCache('extract', prompt, prepared.model);
+          throw parsed.error;
+        }
+        chunkResults.push(parsed.data);
       }
 
       llmMeta = nextLlmMeta;

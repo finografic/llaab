@@ -2,7 +2,7 @@ import type { LlmProvider } from './provider.js';
 import type { LlmCompleteOptions, LlmCompleteResult, ModelTier, TaskType } from './types.js';
 import type { Capability } from '@llaab/core';
 
-import { cacheGet, cacheSet } from './cache.js';
+import { cacheDelete, cacheGet, cacheSet } from './cache.js';
 import { anthropicProvider } from './providers/anthropic.js';
 import { ollamaListModels, ollamaProvider } from './providers/ollama.js';
 
@@ -32,6 +32,17 @@ const PROVIDERS: Record<ModelTier, LlmProvider> = {
 // ── Cacheable tasks ───────────────────────────────────────────────────────────
 
 const CACHEABLE = new Set<TaskType>(['format', 'extract']);
+
+/**
+ * Evict a cached `routeLlm` response for a cacheable task. Call this when the cached response turns
+ * out to be unusable (e.g. fails downstream schema validation) — otherwise every retry replays the
+ * same broken output instead of re-querying the model.
+ */
+export function invalidateLlmCache(task: TaskType, prompt: string, override?: string): void {
+  if (!CACHEABLE.has(task)) return;
+  const { model } = resolveModel(task, override);
+  cacheDelete(prompt, model);
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
