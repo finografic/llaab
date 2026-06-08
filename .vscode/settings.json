@@ -66,5 +66,9 @@
 
   "markdown.styles": ["node_modules/@finografic/md-lint/styles/markdown-github-light.css"],
 
-  "css.lint.unknownAtRules": "ignore"
+  "css.lint.unknownAtRules": "ignore",
+
+  "cssvar.ignore": ["**/dist/**", "**/.astro/**", "**/node_modules/**"],
+  "cssvar.files": ["apps/client/src/**/*.css", "packages/ui/src/**/*.css"],
+  "tailwindCSS.files.exclude": ["**/dist/**", "**/.astro/**", "**/node_modules/**"]
 }

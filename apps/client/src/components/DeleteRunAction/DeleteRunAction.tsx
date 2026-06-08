@@ -15,7 +15,7 @@ import type { RunNode } from '@llaab/schemas';
 import { deleteVaultRun } from 'lib/api';
 import { dispatchRunsChanged } from 'lib/runs-events';
 
-import s from './DeleteRunAction.module.css';
+import styles from './DeleteRunAction.module.css';
 
 type DialogStep = 'closed' | 'confirm-run' | 'confirm-produced';
 
@@ -87,11 +87,11 @@ export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
         type="button"
         variant="ghost"
         size="icon-sm"
-        className={`${s.deleteButton} text-[var(--error-text)] opacity-60 hover:bg-[var(--error-bg)] hover:text-[var(--error-text)] hover:opacity-100`}
+        className={`${styles.deleteButton} text-[var(--error-text)] opacity-60 hover:bg-[var(--error-bg)] hover:text-[var(--error-text)] hover:opacity-100`}
         aria-label={`Delete run ${run.title}`}
         onClick={() => setStep('confirm-run')}
       >
-        <TrashIcon className={s.deleteIcon} aria-hidden />
+        <TrashIcon className={styles.deleteIcon} aria-hidden />
       </Button>
 
       <Dialog open={step === 'confirm-run'} onOpenChange={(open) => !open && closeDialogs()}>
@@ -99,12 +99,12 @@ export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
           <DialogHeader>
             <DialogTitle>Delete run?</DialogTitle>
             <DialogDescription>
-              This removes the run record for <span className={s.runTitle}>{run.title}</span>. This action
-              cannot be undone.
+              This removes the run record for <span className={styles.runTitle}>{run.title}</span>. This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
-          {error && <p className={s.error}>{error}</p>}
+          {error && <p className={styles.error}>{error}</p>}
 
           <DialogFooter>
             <Button type="button" variant="outline" disabled={deleting} onClick={closeDialogs}>
@@ -128,16 +128,16 @@ export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
           </DialogHeader>
 
           {producedCount > 0 && (
-            <ul className={s.producedList}>
+            <ul className={styles.producedList}>
               {run.produced_node_ids.map((nodeId) => (
-                <li key={nodeId} className={s.producedItem}>
+                <li key={nodeId} className={styles.producedItem}>
                   {nodeId}
                 </li>
               ))}
             </ul>
           )}
 
-          {error && <p className={s.error}>{error}</p>}
+          {error && <p className={styles.error}>{error}</p>}
 
           <DialogFooter>
             <Button type="button" variant="outline" disabled={deleting} onClick={closeDialogs}>

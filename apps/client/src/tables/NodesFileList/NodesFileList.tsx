@@ -2,7 +2,7 @@ import type { LabNode } from '@llaab/schemas';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import { FileCell, FileList } from '../FileList/FileList';
-import s from './NodesFileList.module.css';
+import styles from './NodesFileList.module.css';
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ const COLUMNS: Array<ColumnDef<LabNode>> = [
     cell: ({ getValue }) => {
       const v = getValue() as string;
       const cls = `status${v.charAt(0).toUpperCase()}${v.slice(1)}` as keyof typeof s;
-      return <span className={`${s.status} ${s[cls] ?? ''}`}>{v}</span>;
+      return <span className={`${styles.status} ${styles[cls] ?? ''}`}>{v}</span>;
     },
   },
   {
@@ -33,9 +33,9 @@ const COLUMNS: Array<ColumnDef<LabNode>> = [
       const tags = getValue() as string[];
       if (!tags.length) return null;
       return (
-        <span className={s.tagList}>
+        <span className={styles.tagList}>
           {tags.slice(0, 3).map((t) => (
-            <span key={t} className={s.tag}>
+            <span key={t} className={styles.tag}>
               {t}
             </span>
           ))}
@@ -68,16 +68,16 @@ export function NodesFileList({ nodes }: NodesFileListProps) {
   const byType = Object.groupBy(nodes, (n) => n.type);
 
   return (
-    <div className={s.root}>
+    <div className={styles.root}>
       {TYPE_ORDER.map((type) => {
         const group = byType[type];
         if (!group?.length) return null;
 
         return (
-          <section key={type} className={s.group}>
-            <div className={s.groupHeader}>
-              <span className={s.groupType}>{type}</span>
-              <span className={s.groupCount}>{group.length}</span>
+          <section key={type} className={styles.group}>
+            <div className={styles.groupHeader}>
+              <span className={styles.groupType}>{type}</span>
+              <span className={styles.groupCount}>{group.length}</span>
             </div>
             <FileList
               data={group}
@@ -100,7 +100,7 @@ export function NodesFileList({ nodes }: NodesFileListProps) {
 function NodeTypeIcon({ type }: { type: string }) {
   const cls = `icon${type.charAt(0).toUpperCase()}${type.slice(1)}` as keyof typeof s;
   return (
-    <span className={s[cls]}>
+    <span className={styles[cls]}>
       {type === 'idea' && <IconIdea />}
       {type === 'resource' && <IconResource />}
       {type === 'prompt' && <IconPrompt />}

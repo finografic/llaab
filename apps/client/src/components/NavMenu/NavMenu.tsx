@@ -17,7 +17,7 @@ import { useMemo, useState } from 'react';
 import { NAV_MENU_SECTIONS } from 'lib/nav-menu.config';
 import { getActiveNavSectionId } from 'lib/nav-menu.utils';
 
-import s from './NavMenu.module.css';
+import styles from './NavMenu.module.css';
 
 interface NavMenuProps {
   pathname: string;
@@ -61,7 +61,7 @@ export function NavMenu({ pathname }: NavMenuProps) {
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-6">
-      <a href="/" className={s.brand} aria-current={pathname === '/' ? 'page' : undefined}>
+      <a href="/" className={styles.brand} aria-current={pathname === '/' ? 'page' : undefined}>
         LLAAB
       </a>
 

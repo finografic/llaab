@@ -91,4 +91,11 @@
     background-position: right 12px center;
   }
 
+  [data-slot="input-group"] .icon {
+    display: flex;
+    align-items: center;
+    stroke: var(--text-muted);
+    margin-right: var(--space-2);
+    opacity: 0.5;
+  }
 } /* @layer base */

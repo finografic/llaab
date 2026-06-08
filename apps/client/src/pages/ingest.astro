@@ -6,9 +6,9 @@ import type { RunNode, SourceNode } from '@llaab/schemas';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
-import { CleanVaultActivityButton } from 'components/CleanVaultActivityButton/CleanVaultActivityButton';
-import { IngestForm } from '../forms/IngestForm';
-import { RunsTable } from '../tables/RunsTable';
+import { CleanVaultDialog } from 'dialogs/CleanVaultDialog/CleanVaultDialog';
+import { IngestForm } from 'forms/IngestForm';
+import { RunsTable } from 'tables/RunsTable/RunsTable';
 
 const all = await listNodes({ type: 'run' });
 const runs = (all as RunNode[]).toSorted((a, b) => b.created_at.localeCompare(a.created_at));
@@ -18,7 +18,7 @@ const sources = (await listNodes({ type: 'source' })) as SourceNode[];
 <AppLayout title="Ingest">
   <PageLayout>
     <PageHero slot="hero" eyebrow="Pipeline" title="Ingest Source URL">
-      <CleanVaultActivityButton slot="right" client:only="react" resetIngestFormOnSuccess />
+      <CleanVaultDialog slot="right" client:only="react" resetIngestFormOnSuccess />
       <Fragment slot="description">
         Paste or drop a browser URL. The form will classify the source asset and adapt the ingest action when
         the URL is supported.

@@ -2,7 +2,7 @@ import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@
 import { useState } from 'react';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 
-import s from './FileList.module.css';
+import styles from './FileList.module.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,9 +48,9 @@ export function FileList<TData>({
   });
 
   return (
-    <div className={s.root} role="grid" aria-label={label} aria-rowcount={data.length}>
+    <div className={styles.root} role="grid" aria-label={label} aria-rowcount={data.length}>
       {/* ── Column headers ──────────────────────────────────────── */}
-      <div className={s.headerRow} role="row">
+      <div className={styles.headerRow} role="row">
         {table.getHeaderGroups().map((group) =>
           group.headers.map((header) => {
             const canSort = header.column.getCanSort();
@@ -59,7 +59,7 @@ export function FileList<TData>({
             return (
               <div
                 key={header.id}
-                className={s.headerCell}
+                className={styles.headerCell}
                 style={columnFlex(header.column.getSize())}
                 onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                 data-sortable={canSort || undefined}
@@ -71,7 +71,7 @@ export function FileList<TData>({
                   ? null
                   : flexRender(header.column.columnDef.header, header.getContext())}
                 {canSort && (
-                  <span className={s.sortIcon} aria-hidden="true">
+                  <span className={styles.sortIcon} aria-hidden="true">
                     {sorted === 'asc' ? '↑' : sorted === 'desc' ? '↓' : '↕'}
                   </span>
                 )}
@@ -82,12 +82,12 @@ export function FileList<TData>({
       </div>
 
       {/* ── Body ────────────────────────────────────────────────── */}
-      <div className={s.body} role="rowgroup">
+      <div className={styles.body} role="rowgroup">
         {loading ? (
           <SkeletonRows count={8} />
         ) : table.getRowModel().rows.length === 0 ? (
-          <div className={s.emptyState} role="row">
-            <span className={s.emptyText}>{emptyMessage}</span>
+          <div className={styles.emptyState} role="row">
+            <span className={styles.emptyText}>{emptyMessage}</span>
           </div>
         ) : (
           table.getRowModel().rows.map((row) => {
@@ -96,7 +96,7 @@ export function FileList<TData>({
             return (
               <div
                 key={row.id}
-                className={s.row}
+                className={styles.row}
                 data-selected={isSelected || undefined}
                 data-clickable={onRowClick ? true : undefined}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
@@ -113,7 +113,7 @@ export function FileList<TData>({
                 {row.getVisibleCells().map((cell) => (
                   <div
                     key={cell.id}
-                    className={s.cell}
+                    className={styles.cell}
                     style={columnFlex(cell.column.getSize())}
                     role="gridcell"
                   >
@@ -139,14 +139,14 @@ export function FileList<TData>({
  */
 export function FileCell({ icon, name, meta }: { icon?: React.ReactNode; name: string; meta?: string }) {
   return (
-    <div className={s.fileCell}>
+    <div className={styles.fileCell}>
       {icon && (
-        <span className={s.fileCellIcon} aria-hidden="true">
+        <span className={styles.fileCellIcon} aria-hidden="true">
           {icon}
         </span>
       )}
-      <span className={s.fileCellName}>{name}</span>
-      {meta && <span className={s.fileCellMeta}>{meta}</span>}
+      <span className={styles.fileCellName}>{name}</span>
+      {meta && <span className={styles.fileCellMeta}>{meta}</span>}
     </div>
   );
 }
@@ -162,10 +162,10 @@ function SkeletonRows({ count }: { count: number }) {
   return (
     <>
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className={`${s.row} ${s.rowSkeleton}`} role="row" aria-hidden="true">
-          <div className={s.skeletonBar} style={{ width: '40%' }} />
-          <div className={s.skeletonBar} style={{ width: '20%' }} />
-          <div className={s.skeletonBar} style={{ width: '15%' }} />
+        <div key={i} className={`${styles.row} ${styles.rowSkeleton}`} role="row" aria-hidden="true">
+          <div className={styles.skeletonBar} style={{ width: '40%' }} />
+          <div className={styles.skeletonBar} style={{ width: '20%' }} />
+          <div className={styles.skeletonBar} style={{ width: '15%' }} />
         </div>
       ))}
     </>

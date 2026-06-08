@@ -83,7 +83,7 @@ import { RunsTable } from 'tables/RunsTable';
 import { TagInputField } from 'forms/TagInputField';
 ```
 
-Relative imports from pages also work (e.g. `../forms/IngestForm` from `pages/ingest.astro`).
+Relative imports from pages also work (e.g. `forms/IngestForm` from `pages/ingest.astro`).
 
 New vault list tables: add `*Table.tsx` (+ optional `.module.css`) under `tables/`, with
 module-scoped cell renderers — copy `tables/SourcesTable.tsx` as the template.
@@ -347,12 +347,12 @@ components/
 
 ```tsx
 // MyComponent.tsx
-import s from './MyComponent.module.css';
+import styles from './MyComponent.module.css';
 
 export function MyComponent() {
   return (
-    <div className={s.wrapper}>
-      <h2 className={s.title}>Hello</h2>
+    <div className={styles.wrapper}>
+      <h2 className={styles.title}>Hello</h2>
     </div>
   );
 }

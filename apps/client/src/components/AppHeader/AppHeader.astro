@@ -1,5 +1,9 @@
 ---
 import { NavMenu } from 'components/NavMenu/NavMenu';
+import { buttonVariants } from 'components/ui/button';
+import { LandPlotIcon, PipetteIcon } from '@llaab/icons';
+
+const iconButtonClass = buttonVariants({ variant: 'outline', size: 'icon' });
 
 interface Props {
   title?: string;
@@ -16,6 +20,12 @@ const { pathname } = Astro.url;
 
   <div class="app-header__actions">
     <slot name="actions" />
+    <a href="/ingest" class={iconButtonClass} aria-label="Ingest source">
+      <PipetteIcon className="icon" aria-hidden />
+    </a>
+    <a href="/dev/icons" class={iconButtonClass} aria-label="LLAAB Icons">
+      <LandPlotIcon className="icon" aria-hidden />
+    </a>
   </div>
 </header>
 

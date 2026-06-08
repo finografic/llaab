@@ -4,50 +4,50 @@ import type { TranscriptNode } from '@llaab/schemas';
 import type { DataTableColumns } from '@llaab/ui/lib/data-table-utils';
 import type { CellContext } from '@tanstack/react-table';
 
-import s from './TranscriptsTable.module.css';
+import styles from './TranscriptsTable.module.css';
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 const SOURCE_TYPE_CLASS: Record<TranscriptNode['source_type'], string> = {
-  youtube: s.typeYoutube,
-  article: s.typeArticle,
-  repo: s.typeRepo,
-  chat: s.typeChat,
-  other: s.typeOther,
+  youtube: styles.typeYoutube,
+  article: styles.typeArticle,
+  repo: styles.typeRepo,
+  chat: styles.typeChat,
+  other: styles.typeOther,
 };
 
 function renderTranscriptTitleCell({ row }: CellContext<TranscriptNode, unknown>) {
   return (
-    <div className={s.titleCell}>
-      <a href={`/vault/transcripts/${row.original.id}`} className={s.titleLink}>
+    <div className={styles.titleCell}>
+      <a href={`/vault/transcripts/${row.original.id}`} className={styles.titleLink}>
         {row.original.title}
       </a>
-      {row.original.summary && <span className={s.summary}>{row.original.summary}</span>}
+      {row.original.summary && <span className={styles.summary}>{row.original.summary}</span>}
     </div>
   );
 }
 
 function renderTranscriptSourceTypeCell({ getValue }: CellContext<TranscriptNode, unknown>) {
   const sourceType = getValue<TranscriptNode['source_type']>();
-  return <span className={`${s.type} ${SOURCE_TYPE_CLASS[sourceType]}`}>{sourceType}</span>;
+  return <span className={`${styles.type} ${SOURCE_TYPE_CLASS[sourceType]}`}>{sourceType}</span>;
 }
 
 function renderTranscriptAuthorCell({ getValue }: CellContext<TranscriptNode, unknown>) {
   const author = getValue<string | undefined>();
-  return author ? <span className={s.author}>{author}</span> : <span className={s.muted}>—</span>;
+  return author ? <span className={styles.author}>{author}</span> : <span className={styles.muted}>—</span>;
 }
 
 function renderTranscriptIdeasCell({ getValue }: CellContext<TranscriptNode, unknown>) {
   const count = getValue<number>();
-  return count > 0 ? <span className={s.ideas}>{count}</span> : <span className={s.muted}>—</span>;
+  return count > 0 ? <span className={styles.ideas}>{count}</span> : <span className={styles.muted}>—</span>;
 }
 
 function renderTranscriptDateCell({ getValue }: CellContext<TranscriptNode, unknown>) {
   const createdAt = getValue<string>();
   return (
-    <time className={s.mono} dateTime={createdAt}>
+    <time className={styles.mono} dateTime={createdAt}>
       {fmtDate(createdAt)}
     </time>
   );

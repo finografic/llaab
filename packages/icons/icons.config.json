@@ -370,5 +370,17 @@
   {
     "exportName": "Download",
     "lucideName": "download"
+  },
+  {
+    "exportName": "Clock",
+    "lucideName": "clock"
+  },
+  {
+    "exportName": "LandPlot",
+    "lucideName": "land-plot"
+  },
+  {
+    "exportName": "Pipette",
+    "lucideName": "pipette"
   }
 ]

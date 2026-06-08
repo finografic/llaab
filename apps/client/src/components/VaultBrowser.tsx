@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { api } from 'lib/api';
 
-import s from './VaultBrowser.module.css';
+import styles from './VaultBrowser.module.css';
 
 export interface VaultNode {
   name: string;
@@ -59,9 +59,9 @@ export function VaultBrowser({ tree }: Props) {
   };
 
   return (
-    <div className={s.browser}>
-      <nav className={s.tree} aria-label="Vault files">
-        <ul className={s.treeList}>
+    <div className={styles.browser}>
+      <nav className={styles.tree} aria-label="Vault files">
+        <ul className={styles.treeList}>
           {rootNodes.map((node) => (
             <VaultTreeNode
               key={node.path}
@@ -76,14 +76,14 @@ export function VaultBrowser({ tree }: Props) {
         </ul>
       </nav>
 
-      <div className={s.viewer}>
-        {!selectedPath ? <p className={s.viewerEmpty}>Select a file to view its contents.</p> : null}
-        {selectedPath && loading ? <p className={s.viewerLoading}>Loading…</p> : null}
-        {selectedPath && error ? <p className={s.viewerError}>{error}</p> : null}
+      <div className={styles.viewer}>
+        {!selectedPath ? <p className={styles.viewerEmpty}>Select a file to view its contents.</p> : null}
+        {selectedPath && loading ? <p className={styles.viewerLoading}>Loading…</p> : null}
+        {selectedPath && error ? <p className={styles.viewerError}>{error}</p> : null}
         {selectedPath && !loading && content !== null ? (
-          <div className={s.viewerContent}>
-            <p className={s.viewerPath}>{selectedPath}</p>
-            <pre className={s.viewerPre}>{content}</pre>
+          <div className={styles.viewerContent}>
+            <p className={styles.viewerPath}>{selectedPath}</p>
+            <pre className={styles.viewerPre}>{content}</pre>
           </div>
         ) : null}
       </div>
@@ -110,20 +110,20 @@ function VaultTreeNode({
     const expanded = expandedDirs.has(node.path);
 
     return (
-      <li className={s.treeNode}>
+      <li className={styles.treeNode}>
         <button
           type="button"
-          className={s.treeButton}
+          className={styles.treeButton}
           style={{ paddingLeft: `${12 + depth * 16}px` }}
           onClick={() => toggleDirectory(node.path)}
         >
-          <ChevronRight size={12} className={expanded ? s.chevronOpen : s.chevron} aria-hidden />
+          <ChevronRight size={12} className={expanded ? styles.chevronOpen : styles.chevron} aria-hidden />
           {expanded ? <FolderOpen size={14} aria-hidden /> : <Folder size={14} aria-hidden />}
           <span>{node.name}</span>
         </button>
 
         {expanded && node.children?.length ? (
-          <ul className={s.treeChildren}>
+          <ul className={styles.treeChildren}>
             {node.children.map((child) => (
               <VaultTreeNode
                 key={child.path}
@@ -144,10 +144,10 @@ function VaultTreeNode({
   const active = selectedPath === node.path;
 
   return (
-    <li className={s.treeNode}>
+    <li className={styles.treeNode}>
       <button
         type="button"
-        className={s.treeButton}
+        className={styles.treeButton}
         data-active={active || undefined}
         style={{ paddingLeft: `${28 + depth * 16}px` }}
         onClick={() => selectFile(node.path)}

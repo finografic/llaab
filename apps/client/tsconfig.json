@@ -8,6 +8,7 @@
       "@llaab/ui/*": ["../../packages/ui/src/*"],
       "components/ui/*": ["../../packages/ui/src/components/*"],
       "components/*": ["./src/components/*"],
+      "dialogs/*": ["./src/dialogs/*"],
       "forms/*": ["./src/forms/*"],
       "layouts/*": ["./src/layouts/*"],
       "lib/*": ["./src/lib/*"],

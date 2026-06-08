@@ -16,7 +16,7 @@ import {
   extractRunSubjectTitle,
 } from 'utils/metadata-rendering.utils';
 
-import s from './RunsTable.module.css';
+import styles from './RunsTable.module.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -31,11 +31,11 @@ function fmtDate(iso: string): string {
 }
 
 const STATUS_CLASS: Record<RunNode['run_status'], string> = {
-  pending: s.statusPending,
-  running: s.statusRunning,
-  completed: s.statusCompleted,
-  failed: s.statusFailed,
-  cancelled: s.statusCancelled,
+  pending: styles.statusPending,
+  running: styles.statusRunning,
+  completed: styles.statusCompleted,
+  failed: styles.statusFailed,
+  cancelled: styles.statusCancelled,
 };
 
 function renderRunTitleCell({ row }: CellContext<RunNode, unknown>) {
@@ -45,18 +45,18 @@ function renderRunTitleCell({ row }: CellContext<RunNode, unknown>) {
   const subjectHref = extractRunSubjectHref(run) ?? inputUrl;
 
   return (
-    <div className={s.title}>
+    <div className={styles.title}>
       {subjectTitle && subjectHref && (
-        <a href={subjectHref} className={s.subjectTitle}>
+        <a href={subjectHref} className={styles.subjectTitle}>
           {subjectTitle}
         </a>
       )}
-      {subjectTitle && !subjectHref && <span className={s.subjectTitle}>{subjectTitle}</span>}
-      <a href={`/vault/runs/${run.id}`} className={s.runLabel}>
+      {subjectTitle && !subjectHref && <span className={styles.subjectTitle}>{subjectTitle}</span>}
+      <a href={`/vault/runs/${run.id}`} className={styles.runLabel}>
         {run.title}
       </a>
       {inputUrl && (
-        <MetadataLink href={inputUrl} className={s.inputUrl}>
+        <MetadataLink href={inputUrl} className={styles.inputUrl}>
           {inputUrl}
         </MetadataLink>
       )}
@@ -66,21 +66,21 @@ function renderRunTitleCell({ row }: CellContext<RunNode, unknown>) {
 
 function renderRunStatusCell({ getValue }: CellContext<RunNode, unknown>) {
   const status = getValue<RunNode['run_status']>();
-  return <span className={`${s.status} ${STATUS_CLASS[status]}`}>{status}</span>;
+  return <span className={`${styles.status} ${STATUS_CLASS[status]}`}>{status}</span>;
 }
 
 function renderRunProducedCell({ getValue }: CellContext<RunNode, unknown>) {
-  return <span className={s.mono}>{getValue<number>()}</span>;
+  return <span className={styles.mono}>{getValue<number>()}</span>;
 }
 
 function renderRunDurationCell({ getValue }: CellContext<RunNode, unknown>) {
-  return <span className={s.mono}>{fmtDuration(getValue<number | undefined>())}</span>;
+  return <span className={styles.mono}>{fmtDuration(getValue<number | undefined>())}</span>;
 }
 
 function renderRunDateCell({ getValue }: CellContext<RunNode, unknown>) {
   const createdAt = getValue<string>();
   return (
-    <time className={s.mono} dateTime={createdAt}>
+    <time className={styles.mono} dateTime={createdAt}>
       {fmtDate(createdAt)}
     </time>
   );
@@ -101,23 +101,23 @@ function renderRunAuthorCell(run: RunNode, sourcesById: Map<string, SourceNode>)
   const follow = source?.follow;
 
   if (!author && follow !== true) {
-    return <span className={s.muted}>—</span>;
+    return <span className={styles.muted}>—</span>;
   }
 
   return (
-    <div className={s.authorCell}>
+    <div className={styles.authorCell}>
       {author &&
         (sourceId ? (
-          <a href={`/vault/sources/${sourceId}`} className={s.authorLink}>
+          <a href={`/vault/sources/${sourceId}`} className={styles.authorLink}>
             {author}
           </a>
         ) : (
-          <span className={s.authorName}>{author}</span>
+          <span className={styles.authorName}>{author}</span>
         ))}
       {follow === true ? (
-        <span className={`${s.badge} ${s.follow}`}>following</span>
+        <span className={`${styles.badge} ${styles.follow}`}>following</span>
       ) : (
-        <span className={s.muted}>—</span>
+        <span className={styles.muted}>—</span>
       )}
     </div>
   );
@@ -185,11 +185,11 @@ export function RunsTable({ runs: initialRuns, sources = [], showHeading = false
   const columns = useMemo(() => buildRunsColumns(buildSourcesById(sources)), [sources]);
 
   return (
-    <div className={showHeading ? s.withHeading : undefined}>
+    <div className={showHeading ? styles.withHeading : undefined}>
       {showHeading && (
-        <div className={s.heading}>
-          <h2 className={s.headingTitle}>Runs</h2>
-          <span className={s.headingCount}>{runs.length}</span>
+        <div className={styles.heading}>
+          <h2 className={styles.headingTitle}>Runs</h2>
+          <span className={styles.headingCount}>{runs.length}</span>
         </div>
       )}
       <DataTable

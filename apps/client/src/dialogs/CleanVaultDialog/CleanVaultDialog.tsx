@@ -1,4 +1,4 @@
-import { BrushCleaningIcon } from '@llaab/icons';
+import { BrushCleaningIcon, ClockIcon, LoaderIcon } from '@llaab/icons';
 import { Button } from 'components/ui/button';
 import {
   Dialog,
@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from 'components/ui/dialog';
-import { Input } from 'components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from 'components/ui/input-group';
 import { Label } from 'components/ui/label';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -21,12 +21,12 @@ import { dispatchIngestFormReset } from 'lib/ingest-form-events';
 import { dispatchRunsChanged } from 'lib/runs-events';
 import { countRunsWithinHours } from 'utils/count-runs-within-hours.utils';
 
-import s from './CleanVaultActivityButton.module.css';
+import styles from './CleanVaultDialog.module.css';
 
 const DEFAULT_HOURS = 6;
 const HOURS_DEBOUNCE_MS = 300;
 
-interface CleanVaultActivityButtonProps {
+interface CleanVaultDialogProps {
   resetIngestFormOnSuccess?: boolean;
 }
 
@@ -51,9 +51,7 @@ function runCountForHours(runs: RunNode[] | null, hoursValue: string): number {
   return countRunsWithinHours(runs, parsedHours);
 }
 
-export function CleanVaultActivityButton({
-  resetIngestFormOnSuccess = false,
-}: CleanVaultActivityButtonProps) {
+export function CleanVaultDialog({ resetIngestFormOnSuccess = false }: CleanVaultDialogProps) {
   const [open, setOpen] = useState(false);
   const [hours, setHours] = useState(String(DEFAULT_HOURS));
   const [debouncedHours] = useDebounce(hours, HOURS_DEBOUNCE_MS);
@@ -165,7 +163,7 @@ export function CleanVaultActivityButton({
   })();
 
   const runNoteClassName =
-    runsLoading || hoursPending || runsError || runCount === 0 ? s.runNoteMuted : s.runNoteDanger;
+    runsLoading || hoursPending || runsError || runCount === 0 ? styles.runNoteMuted : styles.runNoteDanger;
 
   return (
     <>
@@ -173,11 +171,11 @@ export function CleanVaultActivityButton({
         type="button"
         variant="outline"
         size="icon"
-        className={s.trigger}
+        className={styles.trigger}
         aria-label="Clean recent vault activity"
         onClick={() => setOpen(true)}
       >
-        <BrushCleaningIcon className={s.triggerIcon} aria-hidden />
+        <BrushCleaningIcon className={styles.triggerIcon} aria-hidden />
       </Button>
 
       <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && closeDialog()}>
@@ -190,28 +188,38 @@ export function CleanVaultActivityButton({
             </DialogDescription>
           </DialogHeader>
 
-          <div className={s.fieldRow}>
-            <Label htmlFor="clean-vault-hours" className={s.fieldLabel}>
+          <div className={styles.fieldRow}>
+            <Label htmlFor="clean-vault-hours" className={styles.fieldLabel}>
               Window
             </Label>
-            <div className={s.hoursInputRow}>
-              <Input
-                id="clean-vault-hours"
-                type="number"
-                min={1}
-                step={1}
-                inputMode="numeric"
-                value={hours}
-                disabled={cleaning}
-                className={s.hoursInput}
-                onChange={(event) => setHours(event.target.value)}
-              />
-              <span className={s.hoursSuffix}>hours</span>
+            <div className={styles.hoursInputRow}>
+              <InputGroup>
+                <InputGroupInput
+                  id="clean-vault-hours"
+                  type="number"
+                  min={1}
+                  step={1}
+                  inputMode="numeric"
+                  value={hours}
+                  disabled={cleaning}
+                  onChange={(event) => setHours(event.target.value)}
+                  placeholder="Clean past N hours..."
+                />
+                <InputGroupAddon>
+                  {cleaning ? (
+                    <LoaderIcon className="animate-spin" />
+                  ) : (
+                    <ClockIcon className={styles.hoursInputIcon} aria-hidden />
+                  )}
+                </InputGroupAddon>
+                <InputGroupAddon align="inline-end">
+                  <InputGroupText className="text-muted-foreground">hours</InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
+              {showRunNote && <p className={runNoteClassName}>{runNoteText}</p>}
+              {error && <p className={styles.error}>{error}</p>}
             </div>
-            {showRunNote && <p className={runNoteClassName}>{runNoteText}</p>}
           </div>
-
-          {error && <p className={s.error}>{error}</p>}
 
           <DialogFooter>
             <Button type="button" variant="outline" disabled={cleaning} onClick={closeDialog}>
@@ -220,7 +228,7 @@ export function CleanVaultActivityButton({
             <Button
               type="button"
               variant="outline"
-              className={s.cleanButton}
+              className={styles.cleanButton}
               disabled={cleaning}
               onClick={handleClean}
             >

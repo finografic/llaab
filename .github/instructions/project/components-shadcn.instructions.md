@@ -93,7 +93,7 @@ Never hard-code hex or rgb colours in component files or Astro pages. Instead us
 Only LLAAB-specific application components that are not shadcn primitives:
 
 - `AppHeader/`, `AppFooter/`, `NavMenu/`, `PageHero/` — shell/layout
-- `VaultBrowser.tsx`, `CleanVaultActivityButton/`, `DeleteRunAction/` — feature UI
+- `VaultBrowser.tsx`, `CleanVaultDialog/`, `DeleteRunAction/` — feature UI
 
 **Forms** (`apps/client/src/forms/`): `IngestForm`, `CreateIdeaPanel`, `TagInputField`.
 
