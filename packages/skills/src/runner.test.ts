@@ -43,6 +43,8 @@ describe('runSkill', () => {
     if (runNode.type !== 'run') return;
 
     expect(runNode.run_status).toBe('completed');
+    expect(runNode.title).toMatch(/^demo-skill run \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+    expect(runNode.title).not.toMatch(/T|Z/);
     expect(runNode.stages).toHaveLength(1);
     expect(runNode.stages[0]?.name).toBe('execute');
     expect(runNode.decisions).toHaveLength(1);

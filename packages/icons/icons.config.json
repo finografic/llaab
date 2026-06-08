@@ -220,10 +220,6 @@
     "lucideName": "user-lock"
   },
   {
-    "exportName": "UserRoundCheck",
-    "lucideName": "user-round-check"
-  },
-  {
     "exportName": "UserShield",
     "lucideName": "shield-user"
   },
@@ -382,5 +378,17 @@
   {
     "exportName": "Pipette",
     "lucideName": "pipette"
+  },
+  {
+    "exportName": "UserX",
+    "lucideName": "user-x"
+  },
+  {
+    "exportName": "UserCheck",
+    "lucideName": "user-check"
+  },
+  {
+    "exportName": "ExternalLink",
+    "lucideName": "external-link"
   }
 ]

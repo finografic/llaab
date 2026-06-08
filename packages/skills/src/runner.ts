@@ -1,5 +1,11 @@
 import { createNode } from '@llaab/core';
-import { buildRunNodeId, formatIsoUtcSeconds, NodeIdSchema, toNodeId } from '@llaab/schemas';
+import {
+  buildRunNodeId,
+  formatIsoUtcForTranscriptBody,
+  formatIsoUtcSeconds,
+  NodeIdSchema,
+  toNodeId,
+} from '@llaab/schemas';
 
 export interface SkillRunRecord {
   name: string;
@@ -116,7 +122,7 @@ async function persistRunNode(input: {
   await createNode({
     type: 'run',
     id: input.runNodeId,
-    title: `${input.name} run ${input.startedAt}`,
+    title: `${input.name} run ${formatIsoUtcForTranscriptBody(input.startedAt)}`,
     body: '',
     tags: ['run', input.name],
     extra: {

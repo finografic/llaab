@@ -120,6 +120,8 @@ Hand-rolling what shadcn provides is not permitted.
 - For personal or ecosystem-only repos, keep contributor workflow in `docs/process/`; add a root `CONTRIBUTING.md` mainly when a public repo needs GitHub’s usual discoverability.
 - Client `AppLayout` pages must use the canonical `PageLayout` + `<PageHero slot="hero">` pattern (`PageLayout.astro`, `PageHero.astro`); do not hand-roll page headers or alternate hero markup. Use the optional `right` slot for hero-row actions (e.g. ingest clean control).
 - **CSS Modules:** import as `styles` — `import styles from './Component.module.css'`; access classes as `styles.className`. Do not use `s` or other shorthand aliases.
+- In Astro headers and other static nav controls, use native `<a href>` with `buttonVariants` for route shortcuts—not React `Button` with `onClick`—so navigation works without client hydration.
+- Feature **dialogs** live in `apps/client/src/dialogs/` (alongside `forms/` and `tables/` at `src/` root).
 - For darker resting states on semantic outline controls (warning, error, accent), use `--*-dim` / `--*-border-dim` tokens in `app.css` rather than stacking opacity on the bright semantic colors.
 - Vault entity **detail** routes wrap body content in `PageDetail.astro`; vault **list** routes use `PageList.astro`—do not duplicate `.detail-page` / list-column markup per page.
 - Vault node list pages should use shadcn `DataTable` via wrappers in `apps/client/src/tables/`; avoid one-off HTML tables for node lists. In `*Table.tsx` wrappers, define column cell renderers at module scope with explicit `CellContext<T, unknown>` typing—copy `SourcesTable`/`TranscriptsTable` as templates; do not nest renderers inside `useMemo`.
@@ -136,5 +138,5 @@ Hand-rolling what shadcn provides is not permitted.
 - ESLint is removed repo-wide; oxlint + oxfmt (`@finografic/oxc-config`) handle TS/JS lint and format; Prettier remains only for Astro files in `apps/client`.
 - TypeScript is pinned to 6.x via root `pnpm.overrides`; TS 6 no longer auto-includes `@types/*`—set explicit `compilerOptions.types` (base: `["node"]`, `apps/server`: `["node", "bun"]`).
 - In `apps/client`, imports use tsconfig path aliases (`components/*`, `lib/*`, `utils/*`, …)—not `@/*`.
-- Client primary nav is shadcn `NavigationMenu` (`components/NavMenu/NavMenu.tsx`); menu structure lives in `apps/client/src/lib/nav-menu.config.ts`. Use `viewport={false}` so megamenu panels anchor under each trigger; rightmost sections (e.g. System) may need `left-auto right-0` on content.
-- NavMenu responsive show/hide uses Tailwind only (`hidden md:flex`, `md:hidden`); do not set `display` on CSS-module wrappers—it overrides Tailwind `hidden` after hydration.
+- Client primary nav is shadcn `NavigationMenu` (`components/NavMenu/NavMenu.tsx`); menu structure lives in `apps/client/src/lib/nav-menu.config.ts`. Use `viewport={false}` so megamenu panels anchor under each trigger; rightmost sections (e.g. System) may need `left-auto right-0` on content. Responsive show/hide uses Tailwind only (`hidden md:flex`, `md:hidden`)—do not set `display` on CSS-module wrappers (overrides Tailwind `hidden` after hydration).
+- Workspace `.vscode/settings.json` excludes `dist/`, `.astro/`, and `node_modules/` from cssvar and Tailwind IntelliSense scanning; limits cssvar to source CSS under `apps/client/src/` and `packages/ui/src/`.

@@ -1,14 +1,15 @@
-.title {
+.cellTitle {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.25rem;
   min-width: 0;
 }
 
 .subjectTitle {
   color: var(--accent);
+  color: var(--text);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 400;
   font-size: var(--text-base);
   line-height: 1.4;
 }
@@ -47,21 +48,17 @@ a.subjectTitle:hover {
   text-decoration: underline;
 }
 
-.inputUrl {
-  display: block;
-  font-size: var(--text-sm);
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 420px;
+.sourceLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
   text-decoration: none;
+  transition: color var(--duration) var(--ease);
 }
 
-.inputUrl:hover {
+.sourceLink:hover {
   color: var(--accent);
-  text-decoration: underline;
 }
 
 .mono {
@@ -149,8 +146,7 @@ a.subjectTitle:hover {
 
 .authorCell {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 0.66rem;
   min-width: 0;
 }
 
@@ -169,6 +165,7 @@ a.subjectTitle:hover {
 
 .muted {
   color: var(--text-faint);
+  opacity: 0.66;
 }
 
 .badge {
