@@ -4,6 +4,8 @@
 
 Project-specific rules live in `.github/instructions/project/*.instructions.md`
 
+- Component file organization: `.github/instructions/project/component-file-organization.instructions.md`
+
 ## Rules — Global
 
 Rules are canonical in `.github/instructions/` — see `README.md` there for folder structure.
