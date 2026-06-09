@@ -1,5 +1,6 @@
 import { cn } from '@llaab/ui/lib/utils';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
+import { Col, Container, Row } from 'components/ui/grid';
 import {
   SidebarContent,
   SidebarGroup,
@@ -67,6 +68,51 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                 const subtitle = transcript.author ?? transcript.source_type;
                 const hasLatency = transcript.llm_duration_ms != null;
 
+                // NEW: V2
+                return (
+                  <a
+                    key={transcript.id}
+                    href={`/vault/transcripts/${transcript.id}`}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={cn(
+                      'flex w-full border-b leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                      isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
+                    )}
+                  >
+                    <Container className="py-2">
+                      <Row justify="space-between" className="px-3">
+                        <Col xs={8} className="text-sm">
+                          {subtitle}
+                        </Col>
+                        <Col xs={4} className="text-sm text-muted-foreground text-align-right text-right">
+                          + {fmtListDate(transcript.created_at)}
+                        </Col>
+
+                        <Col xs={12} className="py-1">
+                          <span className="text-md line-clamp-2 font-medium">{transcript.title}</span>
+                          {transcript.summary ? (
+                            <span className="text-sm line-clamp-2 whitespace-normal text-xs text-muted-foreground">
+                              {transcript.summary}
+                            </span>
+                          ) : null}
+                        </Col>
+
+                        <Col xs={12} className="flex items-center justify-end pt-1">
+                          {hasLatency ? (
+                            <div>
+                              <ExtractionModelCard
+                                variant="compact"
+                                durationMs={transcript.llm_duration_ms}
+                              />
+                            </div>
+                          ) : null}
+                        </Col>
+                      </Row>
+                    </Container>
+                  </a>
+                );
+
+                // NOTE: V1
                 return (
                   <a
                     key={transcript.id}
@@ -78,7 +124,7 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                     )}
                   >
                     {/* Left 60%: transcript metadata */}
-                    <div className="flex min-w-0 flex-[3] flex-col gap-2 p-4 pr-2">
+                    <div className="flex min-w-0 flex-3 flex-col gap-2 p-4 pr-2">
                       <div className="flex w-full items-center gap-2">
                         <span className="truncate">{subtitle}</span>
                         <span className="ml-auto shrink-0 text-xs text-muted-foreground">
@@ -94,7 +140,7 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                     </div>
                     {/* Right 40%: extraction latency badge */}
                     {hasLatency ? (
-                      <div className="flex flex-[2] items-center justify-end border-l border-border p-3">
+                      <div className="flex flex-2 items-center justify-end border-l border-border p-3">
                         <ExtractionModelCard variant="compact" durationMs={transcript.llm_duration_ms} />
                       </div>
                     ) : null}

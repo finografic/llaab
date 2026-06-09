@@ -67,6 +67,9 @@ export function TranscriptsSplitView({
     <SidebarSplitLayout
       sidebarPanelId={SIDEBAR_PANEL_ID}
       toggleLabel="Toggle transcripts panel"
+      minSidebarWidth="500px"
+      maxSidebarWidth="500px"
+      defaultSidebarWidth="500px"
       header={renderHeader(transcript)}
       sidebar={renderSidebar(transcripts, selectedId)}
     >

@@ -70,5 +70,7 @@
 
   "cssvar.ignore": ["**/dist/**", "**/.astro/**", "**/node_modules/**"],
   "cssvar.files": ["apps/client/src/**/*.css", "packages/ui/src/**/*.css"],
-  "tailwindCSS.files.exclude": ["**/dist/**", "**/.astro/**", "**/node_modules/**"]
+
+  "tailwindCSS.files.exclude": ["**/dist/**", "**/.astro/**", "**/node_modules/**"],
+  "tailwindCSS.classFunctions": ["cva", "cx"]
 }
