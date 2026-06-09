@@ -99,6 +99,16 @@ function toCssSize(value: number | string, _fallback: string): string {
   return `${value}%`;
 }
 
+/**
+ * True when a sidebar size value is a pure percentage (or bare number treated as %).
+ * Absolute units like "600px" or "20rem" return false.
+ */
+function isPercentOrBare(v: number | string): boolean {
+  if (typeof v === 'number') return true;
+  const s = v.trim();
+  return s.endsWith('%') || /^\d+(\.\d+)?$/.test(s);
+}
+
 function SidebarColumn({
   children,
   position,
@@ -169,13 +179,17 @@ export function AppSidebarLayout({
   const sidebarMax = toCssSize(maxWidth, '45%');
   const sidebarDefault = toCssSize(defaultWidth, '28%');
 
-  // Derive complement sizes for the main panel from the sidebar's numeric percentage.
+  // Complement sizes for the main panel only make sense when sidebar values are pure
+  // percentages. Pixel-based sidebar sizes (e.g. "600px") produce invalid negative
+  // results like "-500%" which collapse the main panel to 0 width.
+  const sidebarUsesPercent =
+    isPercentOrBare(minWidth) && isPercentOrBare(maxWidth) && isPercentOrBare(defaultWidth);
   const numDefault = parseFloat(String(defaultWidth));
   const numMin = parseFloat(String(minWidth));
   const numMax = parseFloat(String(maxWidth));
-  const mainDefault = `${100 - numDefault}%`;
-  const mainMin = `${100 - numMax}%`;
-  const mainMax = `${100 - numMin}%`;
+  const mainDefault = sidebarUsesPercent ? `${100 - numDefault}%` : undefined;
+  const mainMin = sidebarUsesPercent ? `${100 - numMax}%` : '1%';
+  const mainMax = sidebarUsesPercent ? `${100 - numMin}%` : undefined;
 
   const inset = (
     <SidebarInset
