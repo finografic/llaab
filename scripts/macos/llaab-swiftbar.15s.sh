@@ -12,6 +12,7 @@
 set -euo pipefail
 
 readonly control_script="/Users/justin/LLAAB/scripts/macos/llaab-service.sh"
+readonly dev_refresh_script="/Users/justin/LLAAB/scripts/macos/dev-refresh.sh"
 readonly logs_dir="/Users/justin/Library/Logs/llaab"
 readonly client_log="$logs_dir/client.stdout.log"
 readonly icons_log="$logs_dir/icons.stdout.log"
@@ -40,6 +41,14 @@ status_output="$("$control_script" status)"
 server_state="$(printf '%s\n' "$status_output" | awk -F= '/^server=/{print $2}')"
 client_state="$(printf '%s\n' "$status_output" | awk -F= '/^client=/{print $2}')"
 icons_state="$(printf '%s\n' "$status_output"  | awk -F= '/^icons=/{print $2}')"
+
+# While a dev refresh is in progress, show server and client as launching (yellow)
+# regardless of current launchctl state — file is written by dev-refresh.sh and
+# removed on exit; stale sentinels older than 15 min are ignored.
+if [[ -n "$(find /tmp/llaab-dev-refreshing -maxdepth 0 -mmin -15 -type f 2>/dev/null)" ]]; then
+  server_state="launching"
+  client_state="launching"
+fi
 
 traffic_light() {
   case "$1" in
@@ -103,6 +112,7 @@ echo "Start All Services | bash=$control_script param1=start terminal=false refr
 echo "Stop All Services | bash=$control_script param1=stop terminal=false refresh=true"
 echo "---"
 echo "Restart All Services | bash=$control_script param1=restart terminal=false refresh=true"
+echo "Dev Refresh | bash=$dev_refresh_script terminal=false refresh=true"
 echo "---"
 echo "Local URL: $app_url | href=$app_url"
 echo "GitHub: finografic | href=$github_url"
