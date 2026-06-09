@@ -84,6 +84,8 @@
   /* ── Layout dimensions ────────────────────────────────────────────────────── */
   --sidebar-w: 220px;
   --header-h: 52px;
+  --footer-h: 40px;
+  --content-area-h: calc(100dvh - var(--header-h) - var(--footer-h));
   --content-max: 1200px;
 
   /* ── Motion ───────────────────────────────────────────────────────────────── */
@@ -287,4 +289,28 @@
   color: var(--text-muted);
   border: 1px solid var(--border-subtle);
   white-space: nowrap;
+}
+
+.badge--youtube {
+  background: oklch(0.22 0.04 25 / 0.25);
+  color: oklch(0.68 0.2 25);
+  border-color: oklch(0.42 0.12 25 / 0.4);
+}
+
+.badge--article {
+  background: oklch(0.22 0.04 155 / 0.25);
+  color: oklch(0.6 0.17 155);
+  border-color: oklch(0.4 0.12 155 / 0.4);
+}
+
+.badge--repo {
+  background: oklch(0.22 0.04 295 / 0.25);
+  color: oklch(0.65 0.18 295);
+  border-color: oklch(0.4 0.12 295 / 0.4);
+}
+
+.badge--chat {
+  background: oklch(0.24 0.05 40 / 0.25);
+  color: oklch(0.7 0.19 40);
+  border-color: oklch(0.42 0.12 40 / 0.4);
 }

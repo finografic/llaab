@@ -7,9 +7,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from 'components/ui/breadcrumb';
+import { Button } from 'components/ui/button';
+import { usePanelRef } from 'components/ui/resizable';
 import { Separator } from 'components/ui/separator';
-import { SidebarTrigger } from 'components/ui/sidebar';
 import { TooltipProvider } from 'components/ui/tooltip';
+import { PanelLeftIcon } from 'lucide-react';
+import { useState } from 'react';
 import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
 
 import { TranscriptDetail } from './components/TranscriptDetail';
@@ -24,6 +27,8 @@ export interface TranscriptsSplitViewProps {
 }
 
 const EMPTY_IDEAS: IdeaNode[] = [];
+const SIDEBAR_PANEL_ID = 'transcripts-sidebar';
+const SIDEBAR_DEFAULT_WIDTH = '600px';
 
 export function TranscriptsSplitView({
   transcripts,
@@ -32,6 +37,23 @@ export function TranscriptsSplitView({
   extractedIdeas,
 }: TranscriptsSplitViewProps) {
   const ideas = extractedIdeas ?? EMPTY_IDEAS;
+  const sidebarPanelRef = usePanelRef();
+  const [isTogglingSidebar, setIsTogglingSidebar] = useState(false);
+
+  function toggleSidebarPanel() {
+    const sidebarPanel = sidebarPanelRef.current;
+    if (!sidebarPanel) return;
+
+    setIsTogglingSidebar(true);
+    window.setTimeout(() => setIsTogglingSidebar(false), 220);
+
+    if (sidebarPanel.isCollapsed() || sidebarPanel.getSize().inPixels <= 1) {
+      sidebarPanel.resize(SIDEBAR_DEFAULT_WIDTH);
+      return;
+    }
+
+    sidebarPanel.collapse();
+  }
 
   return (
     <TooltipProvider>
@@ -44,9 +66,23 @@ export function TranscriptsSplitView({
           defaultWidth="600px"
           collapsible
           collapsedSize="0%"
+          sidebarPanelId={SIDEBAR_PANEL_ID}
+          sidebarPanelRef={sidebarPanelRef}
+          sidebarPanelClassName={
+            isTogglingSidebar ? 'transition-[flex-basis,width] duration-200 ease-out' : undefined
+          }
           header={
             <>
-              <SidebarTrigger className="-ml-1" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="-ml-1 size-8"
+                aria-label="Toggle transcripts panel"
+                onClick={toggleSidebarPanel}
+              >
+                <PanelLeftIcon />
+              </Button>
               <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
               <Breadcrumb>
                 <BreadcrumbList>

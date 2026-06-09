@@ -126,7 +126,9 @@ Hand-rolling what shadcn provides is not permitted.
 - In Astro headers and other static nav controls, use native `<a href>` with `buttonVariants` for route shortcuts—not React `Button` with `onClick`—so navigation works without client hydration.
 - Feature **dialogs** live in `apps/client/src/dialogs/` (alongside `forms/` and `tables/` at `src/` root).
 - For darker resting states on semantic outline controls (warning, error, accent), use `--*-dim` / `--*-border-dim` tokens in `app.css` rather than stacking opacity on the bright semantic colors.
-- Vault entity **detail** routes wrap body content in `PageDetail.astro`; vault **list** routes use `PageList.astro`—do not duplicate `.detail-page` / list-column markup per page.
+- Vault entity **detail** routes wrap body content in `PageDetail.astro`; vault **list** routes use `PageList.astro`—except `/vault/transcripts` (+ `/:id`), which share `TranscriptsSplitView` via `AppSidebarLayout` (sidebar-16 header row + resizable inline sidebar; empty state when unselected). Use `AppLayout fullBleed` and `h-(--content-area-h)` for full-height split views.
+- **Sticky app header:** `AppHeader` is sticky on all pages (`--header-h`). Sidebars must use `AppSidebarLayout` with `position="inline"`—never shadcn fixed `inset-y-0` sidebars under the app header (they overlap the nav). See `.github/instructions/project/components-shadcn.instructions.md` § Sidebars.
+- Tag groups use `<div class="tags">` with `tag-row` children—generic `div` for layout, not `section`/`article`; prefer `tags` over `-wrapper`/`-container` class names.
 - Vault node list pages should use shadcn `DataTable` via wrappers in `apps/client/src/tables/`; avoid one-off HTML tables for node lists. In `*Table.tsx` wrappers, define column cell renderers at module scope with explicit `CellContext<T, unknown>` typing—copy `SourcesTable`/`TranscriptsTable` as templates; do not nest renderers inside `useMemo`.
 
 ## Learned Workspace Facts
@@ -138,8 +140,7 @@ Hand-rolling what shadcn provides is not permitted.
 - Ubiquitous-language terms are defined in [`LLAAB_GLOSSARY.md`](/LLAAB_GLOSSARY.md) (the glossary artifact); **shared vocabulary** is the broader goal in prose—do not use _vocabulary_ and _glossary_ interchangeably for that file.
 - YouTube transcript ingestion deduplicates existing nodes by matching `sourceType === 'youtube'` and `sourceItemId` to the video id.
 - `@finografic/md-lint` (`pnpm run lint:md`) classifies markdown as **standard**, **agent**, or **vault** (`vault/**/*.md`). Root `.markdownlint.jsonc` rule keys apply globally; optional **`standard` / `agent` / `vault`** objects are md-lint-only scope overrides (not upstream markdownlint) merged preset → global → category.
-- ESLint is removed repo-wide; oxlint + oxfmt (`@finografic/oxc-config`) handle TS/JS lint and format; Prettier remains only for Astro files in `apps/client`.
-- TypeScript is pinned to 6.x via root `pnpm.overrides`; TS 6 no longer auto-includes `@types/*`—set explicit `compilerOptions.types` (base: `["node"]`, `apps/server`: `["node", "bun"]`).
+- Tooling: ESLint removed (oxlint + oxfmt for TS/JS, Prettier for Astro); TypeScript pinned to 6.x—set explicit `compilerOptions.types` (base `["node"]`, `apps/server` `["node", "bun"]`).
 - In `apps/client`, imports use tsconfig path aliases (`components/*`, `lib/*`, `utils/*`, …)—not `@/*`.
 - Client primary nav is shadcn `NavigationMenu` (`components/NavMenu/NavMenu.tsx`); menu structure lives in `apps/client/src/lib/nav-menu.config.ts`. Use `viewport={false}` so megamenu panels anchor under each trigger; rightmost sections (e.g. System) may need `left-auto right-0` on content. Responsive show/hide uses Tailwind only (`hidden md:flex`, `md:hidden`)—do not set `display` on CSS-module wrappers (overrides Tailwind `hidden` after hydration).
 - Workspace `.vscode/settings.json` excludes `dist/`, `.astro/`, and `node_modules/` from cssvar and Tailwind IntelliSense scanning; limits cssvar to source CSS under `apps/client/src/` and `packages/ui/src/`.

@@ -3,11 +3,8 @@ export const prerender = false;
 
 import { listNodes } from '@llaab/core';
 import type { TranscriptNode } from '@llaab/schemas';
+import { TranscriptsSplitView } from 'components/TranscriptsSplitView/TranscriptsSplitView';
 import AppLayout from 'layouts/AppLayout.astro';
-import PageLayout from 'layouts/PageLayout.astro';
-import PageList from 'layouts/PageList.astro';
-import PageHero from 'components/PageHero/PageHero.astro';
-import { TranscriptsTable } from 'tables/TranscriptsTable/TranscriptsTable';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
 
@@ -23,16 +20,6 @@ const transcripts = all as TranscriptNode[];
 transcripts.sort((a, b) => b.created_at.localeCompare(a.created_at));
 ---
 
-<AppLayout title="Transcripts">
-  <PageLayout>
-    <PageHero slot="hero" eyebrow="Vault" title="Transcripts">
-      <Fragment slot="meta">
-        {transcripts.length} transcript{transcripts.length !== 1 ? 's' : ''}
-      </Fragment>
-    </PageHero>
-
-    <PageList width="wide">
-      <TranscriptsTable transcripts={transcripts} client:load />
-    </PageList>
-  </PageLayout>
+<AppLayout title="Transcripts" fullBleed>
+  <TranscriptsSplitView transcripts={transcripts} client:load />
 </AppLayout>

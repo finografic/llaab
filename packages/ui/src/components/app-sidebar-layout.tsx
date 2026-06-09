@@ -33,6 +33,7 @@ export interface AppSidebarLayoutProps {
   position?: AppSidebarPosition;
   className?: string;
   sidebarClassName?: string;
+  sidebarPanelClassName?: string;
   insetClassName?: string;
   style?: React.CSSProperties;
 
@@ -144,6 +145,7 @@ export function AppSidebarLayout({
   position = 'inline',
   className,
   sidebarClassName,
+  sidebarPanelClassName,
   insetClassName,
   style,
   sidebarPanelId = 'sidebar',
@@ -215,7 +217,7 @@ export function AppSidebarLayout({
       collapsedSize={collapsedSize}
       onResize={(onCollapse ?? onExpand) ? handleSidebarResize : undefined}
       panelRef={sidebarPanelRef}
-      className="min-w-0"
+      className={cn('min-w-0', sidebarPanelClassName)}
     >
       {sidebarColumn}
     </ResizablePanel>

@@ -1,7 +1,6 @@
 import { cn } from '@llaab/ui/lib/utils';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import {
-  Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
@@ -43,7 +42,7 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
   }, [query, transcripts]);
 
   return (
-    <Sidebar collapsible="offcanvas" className="h-full shrink-0 border-r">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground">
       <SidebarHeader className="gap-3.5 border-b p-4">
         <div className="flex w-full items-center justify-between">
           <div className="text-base font-medium text-foreground">Transcripts</div>
@@ -106,6 +105,6 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-    </Sidebar>
+    </div>
   );
 }

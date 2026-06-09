@@ -21,9 +21,11 @@ import BaseLayout from './BaseLayout.astro';
 
 interface Props {
   title?: string;
+  /** Remove page padding and clip overflow — for full-height split views (e.g. vault transcripts). */
+  fullBleed?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, fullBleed = false } = Astro.props;
 const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
 ---
 
@@ -31,7 +33,7 @@ const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
   <div class="app-shell">
     <AppHeader title={title} />
 
-    <main class="page-content">
+    <main class="page-content" data-bleed={fullBleed ? 'true' : undefined}>
       <slot />
     </main>
 
@@ -45,14 +47,22 @@ const pageTitle = title ? `${title} — LLAAB` : 'LLAAB';
   .app-shell {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100dvh;
     width: 100%;
     background: var(--bg);
   }
 
   .page-content {
+    display: flex;
     flex: 1;
+    flex-direction: column;
+    min-height: 0;
     padding: 1.5rem;
     overflow-y: auto;
+  }
+
+  .page-content[data-bleed='true'] {
+    padding: 0;
+    overflow: hidden;
   }
 </style>
