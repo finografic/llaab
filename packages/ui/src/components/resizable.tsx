@@ -3,6 +3,10 @@
 import * as ResizablePrimitive from 'react-resizable-panels';
 import { cn } from 'utils';
 
+// Re-export hooks and types so consumers don't need a direct react-resizable-panels dep.
+export { useDefaultLayout, usePanelCallbackRef, usePanelRef } from 'react-resizable-panels';
+export type { Layout, LayoutStorage, PanelImperativeHandle, PanelSize } from 'react-resizable-panels';
+
 function ResizablePanelGroup({ className, ...props }: ResizablePrimitive.GroupProps) {
   return (
     <ResizablePrimitive.Group

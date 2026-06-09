@@ -101,3 +101,50 @@ Only LLAAB-specific application components that are not shadcn primitives:
 `FileList/`, `NodesFileList/`.
 
 These import shadcn primitives from `components/ui/*`.
+
+## Sidebars and the sticky app header
+
+`AppHeader` is **sticky** (`top: 0`, `z-index: 50`) on every `AppLayout` page. Layout tokens:
+
+- `--header-h` — app header height (52px)
+- `--footer-h` — app footer height (40px)
+- `--content-area-h` — `calc(100dvh - var(--header-h) - var(--footer-h))` for full-height panes
+
+**Do not** use shadcn's default fixed sidebar (`position: fixed; inset-y: 0`) under the app header — it spans the full viewport and overlaps the nav.
+
+For split views (list + detail), use `AppSidebarLayout` from `components/ui/app-sidebar-layout`:
+
+- `position="inline"` (default) — sidebar in flex flow; top edge starts below the layout header row (sidebar-16 pattern)
+- `position="fixed"` — only when there is no global sticky header above
+- `resizable` — wraps columns in `ResizablePanelGroup`
+- `header` — full-width row above sidebar + main (breadcrumb, toolbar, etc.)
+- Full-height routes: `AppLayout` with `fullBleed` and a root `h-(--content-area-h)` wrapper
+
+**Size props (`minWidth`, `maxWidth`, `defaultWidth`)** — pass CSS unit strings. Bare numbers are treated as **pixels** by `react-resizable-panels` v4 (not percentages). Defaults are already `"18%"` / `"45%"` / `"28%"`. Use strings for any override: `minWidth="200px"`, `maxWidth="40%"`.
+
+**Collapsible sidebar** — add `collapsible` (+ optional `collapsedSize`, `onCollapse`, `onExpand`):
+
+```tsx
+<AppSidebarLayout resizable collapsible collapsedSize="0%" onCollapse={handleCollapse} ...>
+```
+
+**Persistent layout** — import `useDefaultLayout` from `components/ui/resizable` and pass results through. Panel ids must be stable across renders:
+
+```tsx
+import { useDefaultLayout } from 'components/ui/resizable';
+
+const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+  id: "transcripts-split",        // unique storage key
+  storage: localStorage,
+});
+<AppSidebarLayout
+  resizable
+  sidebarPanelId="transcripts-sidebar"   // must match across renders
+  mainPanelId="transcripts-main"
+  defaultLayout={defaultLayout}
+  onLayoutChanged={onLayoutChanged}
+  ...
+/>
+```
+
+Install new shadcn sidebar **blocks** with `pnpm dlx shadcn@latest add sidebar-XX` from `apps/client`, then adapt imports and wire through `AppSidebarLayout` — do not copy fixed-sidebar positioning verbatim.
