@@ -30,6 +30,7 @@ vi.mock('./extract/llm-extract.js', () => ({
   normalizeContentTags: vi.fn((tags: string[]) =>
     tags.map((tag) => tag.toLocaleLowerCase().replace(/\s+/g, '-')).filter((tag) => tag.length > 0),
   ),
+  normalizeDomainTags: vi.fn((tags: string[]) => tags.filter((tag) => tag.startsWith('d:'))),
 }));
 
 import { autoTag, createNode, getNodeFilePath, listNodes, updateNode } from '@llaab/core';
@@ -326,10 +327,23 @@ describe('runIngestionPipeline', () => {
     expect(result.runTrace?.decisions.map((decision) => decision.type)).toEqual(['accept']);
   });
 
-  it('merges domain, content, and manual tags onto extracted transcript ideas', async () => {
-    vi.mocked(autoTag).mockImplementation((_title, body) => (body.includes('Gemma') ? ['d:llm'] : []));
+  it('tags extracted ideas from their own title, not the transcript-wide tag set', async () => {
+    vi.mocked(autoTag).mockImplementation((title, body) =>
+      title.includes('Gemma') || body.includes('Gemma') ? ['d:llm'] : [],
+    );
     vi.mocked(llmExtractWithTrace).mockResolvedValue({
-      ideas: ['Gemma 4 runs as an open-weight local model'],
+      ideas: [
+        {
+          title: 'Gemma 4 runs as an open-weight local model',
+          domainTags: ['d:llm'],
+          tags: ['gemma-4', 'open-weight'],
+        },
+        {
+          title: 'Edge inference needs small local models',
+          domainTags: ['d:llm', 'd:infra'],
+          tags: ['edge-inference'],
+        },
+      ],
       skills: ['local inference'],
       summary: 'Gemma 4 supports local open-weight inference.',
       tags: ['Gemma 4', 'Open Weight', 'edge inference'],
@@ -364,11 +378,17 @@ describe('runIngestionPipeline', () => {
         extracted_skill_ids: [],
       }),
     }));
-    vi.mocked(createNode).mockResolvedValue({
-      id: 'idea.gemma-4-runs-as-an-open-weight-local-model',
-      path: '/vault/ideas/idea.gemma-4-runs-as-an-open-weight-local-model.md',
-      node: {} as never,
-    });
+    vi.mocked(createNode)
+      .mockResolvedValueOnce({
+        id: 'idea.gemma-4-runs-as-an-open-weight-local-model',
+        path: '/vault/ideas/idea.gemma-4-runs-as-an-open-weight-local-model.md',
+        node: {} as never,
+      })
+      .mockResolvedValueOnce({
+        id: 'idea.edge-inference-needs-small-local-models',
+        path: '/vault/ideas/idea.edge-inference-needs-small-local-models.md',
+        node: {} as never,
+      });
 
     await extractKnowledgeFromTranscript(
       'transcript.gemma',
@@ -387,11 +407,20 @@ describe('runIngestionPipeline', () => {
         tags: ['d:ingest', 'manual', 'd:llm', 'gemma-4', 'open-weight', 'edge-inference'],
       },
     });
-    expect(createNode).toHaveBeenCalledWith(
+    expect(createNode).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         type: 'idea',
-        tags: ['d:ingest', 'manual', 'd:llm', 'gemma-4', 'open-weight', 'edge-inference'],
+        tags: ['d:ingest', 'manual', 'd:llm', 'gemma-4', 'open-weight'],
       }),
     );
+    expect(createNode).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        type: 'idea',
+        tags: ['d:ingest', 'manual', 'd:llm', 'edge-inference'],
+      }),
+    );
+    expect(autoTag).toHaveBeenCalledWith('Edge inference needs small local models', 'edge-inference');
   });
 });

@@ -32,6 +32,13 @@ if (transcript.extracted_idea_ids.length > 0) {
   extractedIdeas = (ideaNodes as IdeaNode[]).filter((n) => ideaSet.has(n.id));
 }
 
+function splitTags(tags: string[]): { domain: string[]; generated: string[] } {
+  return {
+    domain: tags.filter((tag) => tag.startsWith('d:')),
+    generated: tags.filter((tag) => !tag.startsWith('d:')),
+  };
+}
+
 function fmtDate(ts?: string): string {
   if (!ts) return '—';
   return new Date(ts).toLocaleString('en-US', {
@@ -58,15 +65,32 @@ function fmtDate(ts?: string): string {
     <PageDetail>
       {/* ── Tags ── */}
       {
-        transcript.tags.length > 0 && (
-          <div class="tag-row">
-            {transcript.tags.map((tag) => (
-              <span class="tag" data-tag={tag}>
-                {tag}
-              </span>
-            ))}
-          </div>
-        )
+        transcript.tags.length > 0 &&
+          (() => {
+            const { domain, generated } = splitTags(transcript.tags);
+            return (
+              <div class="tags">
+                {domain.length > 0 && (
+                  <div class="tag-row tag-row--domain">
+                    {domain.map((tag) => (
+                      <span class="tag" data-tag={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {generated.length > 0 && (
+                  <div class="tag-row tag-row--topic">
+                    {generated.map((tag) => (
+                      <span class="tag" data-tag={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()
       }
 
       {/* ── Source metadata ── */}
@@ -173,22 +197,36 @@ function fmtDate(ts?: string): string {
         {
           transcript.extracted_idea_ids.length > 0 && extractedIdeas.length > 0 && (
             <ul class="idea-list">
-              {extractedIdeas.map((idea) => (
-                <li class="idea-item">
-                  <a href={`/vault/nodes/${idea.id}`} class="idea-link">
-                    <span class="idea-title">{idea.title}</span>
-                    {idea.tags.length > 0 && (
-                      <span class="idea-tags">
-                        {idea.tags.map((tag) => (
-                          <span class="tag tag--sm" data-tag={tag}>
-                            {tag}
+              {extractedIdeas.map((idea) => {
+                const { domain, generated } = splitTags(idea.tags);
+                return (
+                  <li class="idea-item">
+                    <a href={`/vault/nodes/${idea.id}`} class="idea-link">
+                      <p class="idea-title">{idea.title}</p>
+                      <div class="tags">
+                        {domain.length > 0 && (
+                          <span class="idea-tags idea-tags--domain">
+                            {domain.map((tag) => (
+                              <span class="tag tag--sm" data-tag={tag}>
+                                {tag}
+                              </span>
+                            ))}
                           </span>
-                        ))}
-                      </span>
-                    )}
-                  </a>
-                </li>
-              ))}
+                        )}
+                        {generated.length > 0 && (
+                          <span class="idea-tags idea-tags--topic">
+                            {generated.map((tag) => (
+                              <span class="tag tag--sm" data-tag={tag}>
+                                {tag}
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </div>
+                    </a>
+                  </li>
+                );
+              })}
             </ul>
           )
         }
@@ -271,7 +309,12 @@ function fmtDate(ts?: string): string {
 
   .idea-item {
     border-radius: var(--radius);
+    border-bottom: 1px solid var(--border);
     transition: background var(--duration) var(--ease);
+  }
+
+  .idea-item:last-child {
+    border-bottom: none;
   }
 
   .idea-item:hover {
@@ -280,8 +323,9 @@ function fmtDate(ts?: string): string {
 
   .idea-link {
     display: flex;
-    align-items: baseline;
-    gap: var(--space-3);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
     text-decoration: none;
     color: inherit;
@@ -291,14 +335,13 @@ function fmtDate(ts?: string): string {
     font-size: var(--text-base);
     color: var(--text);
     line-height: 1.4;
-    flex: 1;
+    margin: 0;
   }
 
   .idea-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    flex-shrink: 0;
   }
 
   .empty-note {

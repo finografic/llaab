@@ -1,5 +1,11 @@
-export { llmExtract, llmExtractWithTrace, normalizeContentTags } from './extract/llm-extract.js';
+export {
+  llmExtract,
+  llmExtractWithTrace,
+  normalizeContentTags,
+  normalizeDomainTags,
+} from './extract/llm-extract.js';
 export type {
+  ExtractedIdea,
   ExtractedKnowledge,
   ExtractedKnowledgeWithTrace,
   ExtractionRunTrace,

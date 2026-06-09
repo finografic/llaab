@@ -12,6 +12,7 @@ vi.mock('@llaab/ingestion', () => ({
   normalizeContentTags: vi.fn((tags: string[]) =>
     tags.map((tag) => tag.toLocaleLowerCase().replace(/\s+/g, '-')),
   ),
+  normalizeDomainTags: vi.fn((tags: string[]) => tags.filter((tag) => tag.startsWith('d:'))),
 }));
 
 vi.mock('./runner.js', () => ({
@@ -29,7 +30,7 @@ describe('extractTranscriptIdeas', () => {
     vi.clearAllMocks();
   });
 
-  it('passes transcript body to autoTag and merges normalized LLM tags', async () => {
+  it('tags extracted ideas from their own title, not the transcript-wide tag set', async () => {
     const transcript: TranscriptNode = {
       id: 'transcript.gemma',
       type: 'transcript',
@@ -47,9 +48,22 @@ describe('extractTranscriptIdeas', () => {
       extracted_idea_ids: [],
       extracted_skill_ids: [],
     };
-    vi.mocked(autoTag).mockImplementation((_title, body) => (body.includes('Gemma') ? ['d:llm'] : []));
+    vi.mocked(autoTag).mockImplementation((title, body) =>
+      title.includes('Gemma') || body.includes('Gemma') ? ['d:llm'] : [],
+    );
     vi.mocked(llmExtractWithTrace).mockResolvedValue({
-      ideas: ['Gemma 4 runs locally'],
+      ideas: [
+        {
+          title: 'Gemma 4 runs locally',
+          domainTags: ['d:llm'],
+          tags: ['gemma-4'],
+        },
+        {
+          title: 'Edge inference needs smaller models',
+          domainTags: ['d:llm', 'd:infra'],
+          tags: ['edge-inference'],
+        },
+      ],
       skills: ['local inference'],
       summary: 'Gemma 4 supports local inference.',
       tags: ['Gemma 4', 'Open Weight'],
@@ -64,11 +78,17 @@ describe('extractTranscriptIdeas', () => {
         llm: undefined,
       },
     });
-    vi.mocked(createNode).mockResolvedValue({
-      id: 'idea.gemma-4-runs-locally',
-      path: '/vault/ideas/idea.gemma-4-runs-locally.md',
-      node: {} as never,
-    });
+    vi.mocked(createNode)
+      .mockResolvedValueOnce({
+        id: 'idea.gemma-4-runs-locally',
+        path: '/vault/ideas/idea.gemma-4-runs-locally.md',
+        node: {} as never,
+      })
+      .mockResolvedValueOnce({
+        id: 'idea.edge-inference-needs-smaller-models',
+        path: '/vault/ideas/idea.edge-inference-needs-smaller-models.md',
+        node: {} as never,
+      });
     vi.mocked(getNodeFilePath).mockReturnValue('/vault/transcripts/transcript.gemma.md');
     vi.mocked(updateNode).mockImplementation(async (_path, updater) => ({
       path: '/vault/transcripts/transcript.gemma.md',
@@ -78,11 +98,20 @@ describe('extractTranscriptIdeas', () => {
     await extractTranscriptIdeas({ transcript });
 
     expect(autoTag).toHaveBeenCalledWith(transcript.title, transcript.body);
-    expect(autoTag).toHaveBeenCalledWith('Gemma 4 runs locally', transcript.body);
-    expect(createNode).toHaveBeenCalledWith(
+    expect(autoTag).toHaveBeenCalledWith('Gemma 4 runs locally', 'gemma-4');
+    expect(autoTag).toHaveBeenCalledWith('Edge inference needs smaller models', 'edge-inference');
+    expect(createNode).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         type: 'idea',
-        tags: ['d:ingest', 'd:llm', 'gemma-4', 'open-weight'],
+        tags: ['d:ingest', 'd:llm', 'gemma-4'],
+      }),
+    );
+    expect(createNode).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        type: 'idea',
+        tags: ['d:ingest', 'd:llm', 'edge-inference'],
       }),
     );
     await expect(vi.mocked(updateNode).mock.results[0]?.value).resolves.toMatchObject({

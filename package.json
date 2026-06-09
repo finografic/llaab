@@ -5,6 +5,7 @@
   "scripts": {
     "---------- DEV_AND_BUILD": "---------------------------------------------",
     "services:start": "scripts/macos/llaab-service.sh start",
+    "dev:refresh": "scripts/macos/dev-refresh.sh",
     "dev:clean:vault:recent:6h": "bun scripts/clean-recent-vault-activity.ts --hours 6 --yes",
     "dev:clean:vault:recent": "bun scripts/clean-recent-vault-activity.ts",
     "dev:reset": "run-s reset",

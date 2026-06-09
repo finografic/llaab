@@ -35,6 +35,11 @@ Things to verify end-to-end after recent orchestration and UI changes:
 
 ## Up Next
 
+- [ ] **Verify per-idea tag fix and confirm distinct tag sets** — extracted ideas were all
+      showing the transcript's full, identical tag set; the fix now asks the LLM for tags
+      per idea directly. Needs a rebuild + fresh extraction to confirm it actually works.
+      Detail: [`TODO_IDEA_TAG_RELEVANCE.md`](./TODO_IDEA_TAG_RELEVANCE.md).
+
 - [ ] **Build nav-unlocked observability pages** — start with `/llm/providers`,
       `/llm/capabilities`, `/system/doctor`, and `/system/harness`.
       Detail: [`TODO_NAV_UNLOCKED_PAGES.md`](./TODO_NAV_UNLOCKED_PAGES.md).

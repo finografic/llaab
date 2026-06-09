@@ -5,7 +5,7 @@ import type { TranscriptSourceType } from '@llaab/schemas';
 
 import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
 import { cleanTranscript } from './clean/transcript.js';
-import { llmExtractWithTrace, normalizeContentTags } from './extract/llm-extract.js';
+import { llmExtractWithTrace, normalizeContentTags, normalizeDomainTags } from './extract/llm-extract.js';
 import { fetchArticle } from './fetch/article.js';
 import { fetchRepo } from './fetch/repo.js';
 import { fetchYouTube, parseYouTubeUrl } from './fetch/youtube.js';
@@ -365,19 +365,22 @@ export async function extractKnowledgeFromTranscript(
     };
   });
 
+  const transcriptDomainTags = normalizeDomainTags(transcriptTags);
   const ideas: Array<{ id: string; title: string }> = [];
-  for (const ideaText of extracted.ideas) {
-    const idea = await createNode({
+  for (const extractedIdea of extracted.ideas) {
+    const ideaDomainTags = extractedIdea.domainTags.filter((tag) => transcriptDomainTags.includes(tag));
+    const inferredIdeaDomainTags = autoTag(extractedIdea.title, extractedIdea.tags.join(' '));
+    const createdIdea = await createNode({
       type: 'idea',
-      title: ideaText,
+      title: extractedIdea.title,
       body: '',
       tags: [
         ...new Set([
           'd:ingest',
           ...manualTags,
-          ...transcriptTags,
-          ...autoTag(ideaText, plainText),
-          ...normalizedLlmTags,
+          ...ideaDomainTags,
+          ...inferredIdeaDomainTags,
+          ...extractedIdea.tags,
         ]),
       ],
       extra: {
@@ -391,7 +394,7 @@ export async function extractKnowledgeFromTranscript(
         llm_completion_tokens: extracted.llmMeta.completionTokens,
       },
     });
-    ideas.push({ id: idea.id, title: ideaText });
+    ideas.push({ id: createdIdea.id, title: extractedIdea.title });
   }
 
   const ideaIds = ideas.map((i) => i.id);
