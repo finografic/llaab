@@ -6,9 +6,15 @@ import type { ControlDecision, ControlLlmTrace, ControlStage } from '@llaab/cont
 import { prepareExtractionInput } from './harness-prep.js';
 
 export interface ExtractedKnowledge {
-  ideas: string[];
+  ideas: ExtractedIdea[];
   skills: string[];
   summary: string;
+  tags: string[];
+}
+
+export interface ExtractedIdea {
+  title: string;
+  domainTags: string[];
   tags: string[];
 }
 
@@ -31,8 +37,26 @@ export interface ExtractedKnowledgeWithTrace extends ExtractedKnowledge {
   llmMeta: LlmExtractionMeta;
 }
 
+const ExtractedIdeaSchema = z.union([
+  z.string().transform((title) => ({ title, domainTags: [], tags: [] })),
+  z
+    .object({
+      title: z.string(),
+      domainTags: z.array(z.string()).default([]),
+      domain_tags: z.array(z.string()).default([]),
+      // "topic_tags" is the current prompt field name; "tags" accepted for cached/legacy responses
+      topic_tags: z.array(z.string()).default([]),
+      tags: z.array(z.string()).default([]),
+    })
+    .transform((idea) => ({
+      title: idea.title,
+      domainTags: idea.domainTags.length > 0 ? idea.domainTags : idea.domain_tags,
+      tags: idea.topic_tags.length > 0 ? idea.topic_tags : idea.tags,
+    })),
+]);
+
 const ExtractedKnowledgeSchema = z.object({
-  ideas: z.array(z.string()),
+  ideas: z.array(ExtractedIdeaSchema),
   skills: z.array(z.string()),
   summary: z.string().min(1),
   tags: z.array(z.string()).min(1),
@@ -41,20 +65,25 @@ const ExtractedKnowledgeSchema = z.object({
 const EXTRACTION_SYSTEM_PROMPT = `You are a knowledge extraction assistant. Analyze the provided content and extract structured knowledge.
 
 Return ONLY a valid JSON object with exactly these four fields:
-- "ideas": array of distinct insights, concepts, or takeaways as concise phrases (5–15 words each)
+- "ideas": array of distinct insights, concepts, or takeaways. Each item must be an object with:
+  - "title": concise phrase (5–15 words)
+  - "domain_tags": 0–3 domain tags that apply to this idea only, chosen only from: d:llm, d:automation, d:ingest, d:schema, d:infra, d:integration, d:ui, d:meta
+  - "topic_tags": 1–3 concise topic tags that apply to this idea only. These are content tags, not domain categories.
 - "skills": array of specific techniques, tools, methods, or practices mentioned
 - "summary": a single sentence (max 30 words) summarising the core topic
-- "tags": array of 2–5 concise topic tags (1–3 words each, lowercase, hyphenated) describing the specific subjects covered. These are content tags, not domain categories. Good tags name concrete topics: "open-weight-models", "edge-inference", "multimodal", "gemma-4", "context-window". Bad tags are vague categories: "ai", "technology", "interesting".
+- "tags": array of 2–5 concise topic tags (1–3 words each, lowercase, hyphenated) describing the overall subjects covered. These are content tags, not domain categories. Good tags name concrete topics: "open-weight-models", "edge-inference", "multimodal", "gemma-4", "context-window". Bad tags are vague categories: "ai", "technology", "interesting".
 
 Rules:
 - Output raw JSON only — no markdown fences, no explanation, no commentary
 - ideas array must have at least 1 item if the content is substantive
+- Domain tags may repeat across ideas when several ideas share the same broad domain
+- Topic tags (inside each idea) should be specific to that idea and vary more than domain tags
+- The root-level "tags" field describes the overall content; per-idea "topic_tags" describe individual ideas
 - Every string must be plain text with no nested quotes
-- The example below illustrates FORMAT ONLY, using a topic unrelated to typical input — never copy its
-  wording or tags; every field must be derived from the actual input content
+- The example below illustrates JSON shape only — never copy its placeholder wording or tags
 
 Example output format:
-{"ideas":["Slow-roasting at low heat keeps tougher cuts of meat moist","Resting meat after cooking redistributes its juices evenly"],"skills":["dry brining","reverse searing","probe thermometry"],"summary":"Techniques for cooking tender, evenly-seasoned roasts at home.","tags":["reverse-sear","dry-brine","meat-thermometer","roasting-technique"]}`;
+{"ideas":[{"title":"First specific extracted idea from the input","domain_tags":["d:llm"],"topic_tags":["specific-topic-one","specific-method"]},{"title":"Second specific extracted idea from the input","domain_tags":["d:automation"],"topic_tags":["specific-topic-two"]}],"skills":["specific technique"],"summary":"Single-sentence summary derived from the input.","tags":["overall-topic","specific-tool"]}`;
 
 function parseJsonFromText(text: string): unknown {
   // Strip optional markdown code fences (```json ... ``` or ``` ... ```)
@@ -95,16 +124,44 @@ export function normalizeContentTags(tags: string[]): string[] {
   );
 }
 
+export function normalizeDomainTags(tags: string[]): string[] {
+  return dedupeValues(
+    tags
+      .map((tag) => tag.toLocaleLowerCase().trim().replace(/\s+/g, '-'))
+      .filter((tag) => /^d:[a-z0-9-]+$/.test(tag)),
+  );
+}
+
+function normalizeExtractedIdeas(ideas: ExtractedIdea[]): ExtractedIdea[] {
+  const seen = new Set<string>();
+  const normalizedIdeas: ExtractedIdea[] = [];
+
+  for (const idea of ideas) {
+    const title = idea.title.trim();
+    const key = title.toLocaleLowerCase();
+    if (key.length === 0 || seen.has(key)) continue;
+    seen.add(key);
+    normalizedIdeas.push({
+      title,
+      domainTags: normalizeDomainTags(idea.domainTags),
+      tags: normalizeContentTags(idea.tags),
+    });
+  }
+
+  return normalizedIdeas;
+}
+
 function reduceChunkedExtraction(parts: ExtractedKnowledge[]): ExtractedKnowledge {
   if (parts.length === 1) {
     return {
       ...parts[0],
+      ideas: normalizeExtractedIdeas(parts[0]?.ideas ?? []),
       tags: normalizeContentTags(parts[0]?.tags ?? []),
     } as ExtractedKnowledge;
   }
 
   return {
-    ideas: dedupeValues(parts.flatMap((part) => part.ideas)),
+    ideas: normalizeExtractedIdeas(parts.flatMap((part) => part.ideas)),
     skills: dedupeValues(parts.flatMap((part) => part.skills)),
     summary: dedupeValues(parts.map((part) => part.summary)).join(' '),
     tags: normalizeContentTags(parts.flatMap((part) => part.tags)),

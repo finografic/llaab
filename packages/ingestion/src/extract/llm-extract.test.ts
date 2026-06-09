@@ -14,10 +14,35 @@ import { routeLlm } from '@llaab/llm';
 import { llmExtract, llmExtractWithTrace } from './llm-extract.js';
 
 const VALID_RESPONSE = JSON.stringify({
-  ideas: ['LLMs require careful prompt engineering', 'Fine-tuning outperforms prompting for narrow tasks'],
+  ideas: [
+    {
+      title: 'LLMs require careful prompt engineering',
+      domain_tags: ['d:llm'],
+      topic_tags: ['Prompt Engineering'],
+    },
+    {
+      title: 'Fine-tuning outperforms prompting for narrow tasks',
+      domain_tags: ['d:llm'],
+      topic_tags: ['fine tuning'],
+    },
+  ],
   skills: ['prompt engineering', 'fine-tuning'],
   summary: 'Overview of LLM training and prompting strategies.',
   tags: ['Prompt Engineering', 'fine tuning', 'RLHF'],
+});
+
+// Legacy format: ideas with "tags" instead of "topic_tags" — accepted as a fallback
+const LEGACY_RESPONSE = JSON.stringify({
+  ideas: [
+    {
+      title: 'LLMs require careful prompt engineering',
+      domain_tags: ['d:llm'],
+      tags: ['prompt-engineering'],
+    },
+  ],
+  skills: ['prompt engineering'],
+  summary: 'Overview of LLM prompting strategies.',
+  tags: ['prompt-engineering'],
 });
 
 describe('llmExtract', () => {
@@ -62,22 +87,41 @@ describe('llmExtract', () => {
   });
 
   it('rejects when JSON is valid but summary is empty', async () => {
-    const badSummary = JSON.stringify({ ideas: ['idea'], skills: [], summary: '' });
+    const badSummary = JSON.stringify({
+      ideas: [{ title: 'idea', domain_tags: [], topic_tags: [] }],
+      skills: [],
+      summary: '',
+    });
     mockRouteLlm(badSummary);
 
     await expect(llmExtract('example transcript')).rejects.toThrow();
   });
 
-  it('rejects when tags are omitted', async () => {
+  it('rejects when root-level tags are omitted', async () => {
     mockRouteLlm(
       JSON.stringify({
-        ideas: ['LLMs require careful prompt engineering'],
+        ideas: [
+          {
+            title: 'LLMs require careful prompt engineering',
+            domain_tags: ['d:llm'],
+            topic_tags: ['prompt-engineering'],
+          },
+        ],
         skills: ['prompt engineering'],
         summary: 'Overview of LLM prompting strategies.',
+        // no root-level "tags" field
       }),
     );
 
     await expect(llmExtract('example transcript')).rejects.toThrow();
+  });
+
+  it('accepts legacy idea "tags" field as fallback for "topic_tags"', async () => {
+    mockRouteLlm(LEGACY_RESPONSE);
+
+    const result = await llmExtract('example transcript');
+
+    expect(result.ideas[0]?.tags).toEqual(['prompt-engineering']);
   });
 
   it('returns control trace metadata with accept decision on success', async () => {
@@ -117,8 +161,16 @@ describe('llmExtract', () => {
     expect(result.skills).toHaveLength(2);
     expect(result.runTrace.stages.at(-1)?.output).toEqual({
       ideas: [
-        'LLMs require careful prompt engineering',
-        'Fine-tuning outperforms prompting for narrow tasks',
+        {
+          title: 'LLMs require careful prompt engineering',
+          domainTags: ['d:llm'],
+          tags: ['prompt-engineering'],
+        },
+        {
+          title: 'Fine-tuning outperforms prompting for narrow tasks',
+          domainTags: ['d:llm'],
+          tags: ['fine-tuning'],
+        },
       ],
       skills: ['prompt engineering', 'fine-tuning'],
       summary: 'Overview of LLM training and prompting strategies.',
