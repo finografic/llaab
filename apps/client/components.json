@@ -10,15 +10,15 @@
     "cssVariables": true
   },
   "iconLibrary": "lucide",
-  "aliases": {
-    "components": "components",
-    "hooks": "hooks",
-    "lib": "lib",
-    "utils": "@llaab/ui/lib/utils",
-    "ui": "@llaab/ui/components"
-  },
   "rtl": false,
   "menuColor": "default",
   "menuAccent": "subtle",
+  "aliases": {
+    "components": "components",
+    "utils": "@llaab/ui/lib/utils",
+    "ui": "@llaab/ui/components",
+    "lib": "lib",
+    "hooks": "hooks"
+  },
   "registries": {}
 }

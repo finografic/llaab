@@ -1,8 +1,8 @@
 'use client';
 
+import { cn } from '@llaab/ui/lib/utils';
 import { Clock, Timer, Zap } from 'lucide-react';
 import * as React from 'react';
-import { cn } from 'utils';
 
 type LatencyLevel = 'fast' | 'moderate' | 'slow';
 
@@ -63,7 +63,7 @@ function AiLatencyMeter({
         data-loading={isLoading}
         data-level={level}
         className={cn(
-          'overflow-hidden rounded-lg border border-border bg-card text-card-foreground',
+          'rounded-lg border border-border bg-card text-card-foreground overflow-hidden',
           variant === 'compact' && 'inline-flex items-center gap-2 px-3 py-2',
           variant === 'expanded' && 'p-4',
           className,
@@ -85,15 +85,24 @@ function AiLatencyMeterHeader({ title = 'Response Time', className }: AiLatencyM
 
   const levelConfig = React.useMemo(() => {
     const configs: Record<LatencyLevel, { icon: React.ReactNode; color: string }> = {
-      fast: { icon: <Zap className="size-4" />, color: 'text-green-500' },
-      moderate: { icon: <Clock className="size-4" />, color: 'text-yellow-500' },
-      slow: { icon: <Timer className="size-4" />, color: 'text-red-500' },
+      fast: {
+        icon: <Zap className="size-4" />,
+        color: 'text-green-500',
+      },
+      moderate: {
+        icon: <Clock className="size-4" />,
+        color: 'text-yellow-500',
+      },
+      slow: {
+        icon: <Timer className="size-4" />,
+        color: 'text-red-500',
+      },
     };
     return configs[level];
   }, [level]);
 
   return (
-    <div data-slot="ai-latency-meter-header" className={cn('mb-3 flex items-center gap-2', className)}>
+    <div data-slot="ai-latency-meter-header" className={cn('flex items-center gap-2 mb-3', className)}>
       <div
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-md bg-muted',
@@ -102,7 +111,7 @@ function AiLatencyMeterHeader({ title = 'Response Time', className }: AiLatencyM
       >
         <span className={levelConfig.color}>{levelConfig.icon}</span>
       </div>
-      <span className="text-sm font-medium">{title}</span>
+      <span className="font-medium text-sm">{title}</span>
     </div>
   );
 }
@@ -127,19 +136,28 @@ function AiLatencyMeterBar({ className }: AiLatencyMeterBarProps) {
 
   const levelColors = React.useMemo(() => {
     const colors: Record<LatencyLevel, { bg: string; fill: string }> = {
-      fast: { bg: 'bg-green-100 dark:bg-green-950', fill: 'bg-green-500' },
-      moderate: { bg: 'bg-yellow-100 dark:bg-yellow-950', fill: 'bg-yellow-500' },
-      slow: { bg: 'bg-red-100 dark:bg-red-950', fill: 'bg-red-500' },
+      fast: {
+        bg: 'bg-green-100 dark:bg-green-950',
+        fill: 'bg-green-500',
+      },
+      moderate: {
+        bg: 'bg-yellow-100 dark:bg-yellow-950',
+        fill: 'bg-yellow-500',
+      },
+      slow: {
+        bg: 'bg-red-100 dark:bg-red-950',
+        fill: 'bg-red-500',
+      },
     };
     return colors[level];
   }, [level]);
 
   return (
     <div data-slot="ai-latency-meter-bar" className={cn('space-y-2', className)}>
-      <div className={cn('relative h-3 w-full overflow-hidden rounded-full', levelColors.bg)}>
+      <div className={cn('relative h-3 w-full rounded-full overflow-hidden', levelColors.bg)}>
         {isLoading ? (
           <div
-            className={cn('absolute inset-y-0 left-0 animate-pulse rounded-full', levelColors.fill)}
+            className={cn('absolute inset-y-0 left-0 rounded-full animate-pulse', levelColors.fill)}
             style={{ width: '60%' }}
           />
         ) : (
@@ -183,12 +201,12 @@ function AiLatencyMeterStats({ className }: AiLatencyMeterStatsProps) {
   }, []);
 
   return (
-    <div data-slot="ai-latency-meter-stats" className={cn('mt-3 grid grid-cols-2 gap-4', className)}>
+    <div data-slot="ai-latency-meter-stats" className={cn('grid grid-cols-2 gap-4 mt-3', className)}>
       <div className="space-y-1">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">TTFB</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">TTFB</span>
         <p
           className={cn(
-            'font-mono text-lg font-semibold',
+            'text-lg font-semibold font-mono',
             isLoading && 'animate-pulse text-muted-foreground',
           )}
         >
@@ -196,10 +214,10 @@ function AiLatencyMeterStats({ className }: AiLatencyMeterStatsProps) {
         </p>
       </div>
       <div className="space-y-1">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Total</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total</span>
         <p
           className={cn(
-            'font-mono text-lg font-semibold',
+            'text-lg font-semibold font-mono',
             isLoading && 'animate-pulse text-muted-foreground',
           )}
         >
@@ -250,7 +268,7 @@ function AiLatencyMeterCompact({ className }: AiLatencyMeterCompactProps) {
     <div data-slot="ai-latency-meter-compact" className={cn('flex items-center gap-2', className)}>
       <span
         className={cn(
-          'inline-flex size-6 items-center justify-center rounded',
+          'inline-flex items-center justify-center size-6 rounded',
           levelConfig.bgColor,
           isLoading && 'animate-pulse',
         )}
@@ -258,7 +276,7 @@ function AiLatencyMeterCompact({ className }: AiLatencyMeterCompactProps) {
         <span className={levelConfig.color}>{levelConfig.icon}</span>
       </span>
       <span
-        className={cn('font-mono text-sm font-medium', isLoading && 'animate-pulse text-muted-foreground')}
+        className={cn('text-sm font-mono font-medium', isLoading && 'animate-pulse text-muted-foreground')}
       >
         {isLoading ? '...' : formatDuration(displayValue)}
       </span>

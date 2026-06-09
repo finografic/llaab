@@ -1,8 +1,8 @@
 'use client';
 
+import { cn } from '@llaab/ui/lib/utils';
 import { ArrowDown, ArrowUp, DollarSign, Hash } from 'lucide-react';
 import * as React from 'react';
-import { cn } from 'utils';
 
 type TokenType = 'text' | 'special' | 'control';
 
@@ -78,7 +78,7 @@ function AiTokenViewer({
       <div
         data-slot="ai-token-viewer"
         className={cn(
-          'overflow-hidden rounded-lg border border-border bg-card text-card-foreground',
+          'rounded-lg border border-border bg-card text-card-foreground overflow-hidden',
           className,
         )}
       >
@@ -100,17 +100,17 @@ function AiTokenViewerHeader({ title = 'Token Usage', className }: AiTokenViewer
   return (
     <div
       data-slot="ai-token-viewer-header"
-      className={cn('flex items-center gap-3 border-b border-border bg-muted/30 px-4 py-3', className)}
+      className={cn('flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/30', className)}
     >
       <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
         <Hash className="size-4 text-muted-foreground" />
       </div>
       <div className="flex flex-1 items-center gap-2">
-        <span className="text-sm font-medium">{title}</span>
-        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-mono text-xs font-medium text-muted-foreground">
+        <span className="font-medium text-sm">{title}</span>
+        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground font-mono">
           {totalTokens.toLocaleString()}
         </span>
-        {model ? <span className="text-xs text-muted-foreground">{model}</span> : null}
+        {model && <span className="text-xs text-muted-foreground">{model}</span>}
       </div>
     </div>
   );
@@ -131,7 +131,11 @@ function AiTokenViewerStats({ className }: AiTokenViewerStatsProps) {
 
     const inputCost = (inputTokens / 1000) * pricing.inputCostPer1k;
     const outputCost = (outputTokens / 1000) * pricing.outputCostPer1k;
-    return { input: inputCost, output: outputCost, total: inputCost + outputCost };
+    return {
+      input: inputCost,
+      output: outputCost,
+      total: inputCost + outputCost,
+    };
   }, [showCost, model, inputTokens, outputTokens]);
 
   const formatCost = React.useCallback((value: number) => {
@@ -143,30 +147,30 @@ function AiTokenViewerStats({ className }: AiTokenViewerStatsProps) {
     <div data-slot="ai-token-viewer-stats" className={cn('p-4', className)}>
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             <ArrowUp className="size-3" />
             Input
           </div>
-          <p className="font-mono text-lg font-semibold">{inputTokens.toLocaleString()}</p>
-          {cost ? <p className="text-xs text-muted-foreground">{formatCost(cost.input)}</p> : null}
+          <p className="text-lg font-semibold font-mono">{inputTokens.toLocaleString()}</p>
+          {cost && <p className="text-xs text-muted-foreground">{formatCost(cost.input)}</p>}
         </div>
         <div className="space-y-1">
-          <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             <ArrowDown className="size-3" />
             Output
           </div>
-          <p className="font-mono text-lg font-semibold">{outputTokens.toLocaleString()}</p>
-          {cost ? <p className="text-xs text-muted-foreground">{formatCost(cost.output)}</p> : null}
+          <p className="text-lg font-semibold font-mono">{outputTokens.toLocaleString()}</p>
+          {cost && <p className="text-xs text-muted-foreground">{formatCost(cost.output)}</p>}
         </div>
         <div className="space-y-1">
-          <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             <Hash className="size-3" />
             Total
           </div>
-          <p className="font-mono text-lg font-semibold">{totalTokens.toLocaleString()}</p>
-          {cost ? (
-            <p className="text-xs font-medium text-green-600 dark:text-green-400">{formatCost(cost.total)}</p>
-          ) : null}
+          <p className="text-lg font-semibold font-mono">{totalTokens.toLocaleString()}</p>
+          {cost && (
+            <p className="text-xs text-green-600 dark:text-green-400 font-medium">{formatCost(cost.total)}</p>
+          )}
         </div>
       </div>
     </div>
@@ -187,14 +191,18 @@ function AiTokenViewerCost({ className }: AiTokenViewerCostProps) {
 
     const inputCost = (inputTokens / 1000) * pricing.inputCostPer1k;
     const outputCost = (outputTokens / 1000) * pricing.outputCostPer1k;
-    return { input: inputCost, output: outputCost, total: inputCost + outputCost };
+    return {
+      input: inputCost,
+      output: outputCost,
+      total: inputCost + outputCost,
+    };
   }, [model, inputTokens, outputTokens]);
 
   if (!cost) {
     return (
       <div
         data-slot="ai-token-viewer-cost"
-        className={cn('border-t border-border px-4 py-3 text-sm text-muted-foreground', className)}
+        className={cn('px-4 py-3 border-t border-border text-sm text-muted-foreground', className)}
       >
         Cost estimation unavailable for this model
       </div>
@@ -204,7 +212,7 @@ function AiTokenViewerCost({ className }: AiTokenViewerCostProps) {
   return (
     <div
       data-slot="ai-token-viewer-cost"
-      className={cn('flex items-center gap-3 border-t border-border bg-muted/20 px-4 py-3', className)}
+      className={cn('flex items-center gap-3 px-4 py-3 border-t border-border bg-muted/20', className)}
     >
       <DollarSign className="size-4 text-green-500" />
       <span className="text-sm text-muted-foreground">Estimated cost:</span>
@@ -226,7 +234,7 @@ function AiTokenViewerBreakdown({ className }: AiTokenViewerBreakdownProps) {
     return (
       <div
         data-slot="ai-token-viewer-breakdown"
-        className={cn('border-t border-border p-4 text-center text-sm text-muted-foreground', className)}
+        className={cn('p-4 border-t border-border text-sm text-muted-foreground text-center', className)}
       >
         No token breakdown available
       </div>
@@ -234,8 +242,8 @@ function AiTokenViewerBreakdown({ className }: AiTokenViewerBreakdownProps) {
   }
 
   return (
-    <div data-slot="ai-token-viewer-breakdown" className={cn('border-t border-border p-4', className)}>
-      <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <div data-slot="ai-token-viewer-breakdown" className={cn('p-4 border-t border-border', className)}>
+      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
         Token Breakdown
       </span>
       <div className="flex flex-wrap gap-0.5 font-mono text-xs">
@@ -259,7 +267,10 @@ function AiTokenViewerToken({ token, index: _index, className }: AiTokenViewerTo
   const typeConfig = React.useMemo(() => {
     const type = token.type ?? 'text';
     const configs: Record<TokenType, { bg: string; border: string }> = {
-      text: { bg: 'bg-blue-50 dark:bg-blue-950/50', border: 'border-blue-200 dark:border-blue-800' },
+      text: {
+        bg: 'bg-blue-50 dark:bg-blue-950/50',
+        border: 'border-blue-200 dark:border-blue-800',
+      },
       special: {
         bg: 'bg-purple-50 dark:bg-purple-950/50',
         border: 'border-purple-200 dark:border-purple-800',
@@ -281,7 +292,7 @@ function AiTokenViewerToken({ token, index: _index, className }: AiTokenViewerTo
       data-slot="ai-token-viewer-token"
       data-type={token.type ?? 'text'}
       className={cn(
-        'relative inline-flex cursor-default items-center rounded border px-1 py-0.5 transition-colors',
+        'relative inline-flex items-center px-1 py-0.5 rounded border transition-colors cursor-default',
         typeConfig.bg,
         typeConfig.border,
         isHovered && 'ring-2 ring-primary ring-offset-1',
@@ -292,7 +303,7 @@ function AiTokenViewerToken({ token, index: _index, className }: AiTokenViewerTo
     >
       <span className="whitespace-pre">{displayText}</span>
       {isHovered && (token.id !== undefined || token.type) && (
-        <span className="absolute -top-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-foreground px-1.5 py-0.5 text-[10px] text-background">
+        <span className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-foreground text-background text-[10px] whitespace-nowrap z-10">
           {token.id !== undefined && `#${token.id}`}
           {token.id !== undefined && token.type && ' - '}
           {token.type}

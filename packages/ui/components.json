@@ -10,14 +10,17 @@
     "cssVariables": true
   },
   "iconLibrary": "lucide",
+  "rtl": false,
+  "menuColor": "default",
+  "menuAccent": "subtle",
   "aliases": {
     "components": "@llaab/ui/components",
     "utils": "@llaab/ui/lib/utils",
-    "hooks": "@llaab/ui/hooks",
+    "ui": "@llaab/ui/components",
     "lib": "@llaab/ui/lib",
-    "ui": "@llaab/ui/components"
+    "hooks": "@llaab/ui/hooks"
   },
-  "rtl": false,
-  "menuColor": "default",
-  "menuAccent": "subtle"
+  "registries": {
+    "@elements": "https://www.tryelements.dev/r/{name}.json"
+  }
 }

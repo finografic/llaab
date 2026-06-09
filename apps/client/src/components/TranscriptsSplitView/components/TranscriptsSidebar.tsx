@@ -56,10 +56,10 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
         />
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup className="px-0">
+        <SidebarGroup className="p-0">
           <SidebarGroupContent>
             {filtered.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              <p className="px-4 text-center text-sm text-muted-foreground">
                 {query ? 'No transcripts match your search.' : 'No transcripts yet.'}
               </p>
             ) : (
@@ -68,14 +68,13 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                 const subtitle = transcript.author ?? transcript.source_type;
                 const hasLatency = transcript.llm_duration_ms != null;
 
-                // NEW: V2
                 return (
                   <a
                     key={transcript.id}
                     href={`/vault/transcripts/${transcript.id}`}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(
-                      'flex w-full border-b leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                      'flex w-full leading-tight border-b hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
                       isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
                     )}
                   >
@@ -84,66 +83,36 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                         <Col xs={8} className="text-sm">
                           {subtitle}
                         </Col>
-                        <Col xs={4} className="text-sm text-muted-foreground text-align-right text-right">
-                          + {fmtListDate(transcript.created_at)}
+                        <Col
+                          xs={4}
+                          className="text-sm text- text-muted-foreground text-align-right text-right"
+                        >
+                          {fmtListDate(transcript.created_at)}
                         </Col>
 
-                        <Col xs={12} className="py-1">
-                          <span className="text-md line-clamp-2 font-medium">{transcript.title}</span>
+                        <Col xs={12}>
+                          <span className="text-base line-clamp-2 font-medium py-1">{transcript.title}</span>
                           {transcript.summary ? (
-                            <span className="text-sm line-clamp-2 whitespace-normal text-xs text-muted-foreground">
+                            <span className="text-xs line-clamp-2 whitespace-normal text-muted-foreground">
                               {transcript.summary}
                             </span>
                           ) : null}
                         </Col>
 
-                        <Col xs={12} className="flex items-center justify-end pt-1">
+                        <Col xs={12} className="flex items-center justify-end pt-2">
                           {hasLatency ? (
-                            <div>
-                              <ExtractionModelCard
-                                variant="compact"
-                                durationMs={transcript.llm_duration_ms}
-                              />
-                            </div>
+                            <ExtractionModelCard
+                              variant="compact-bar"
+                              model={transcript.llm_model}
+                              provider={transcript.llm_provider}
+                              promptTokens={transcript.llm_prompt_tokens}
+                              completionTokens={transcript.llm_completion_tokens}
+                              durationMs={transcript.llm_duration_ms}
+                            />
                           ) : null}
                         </Col>
                       </Row>
                     </Container>
-                  </a>
-                );
-
-                // NOTE: V1
-                return (
-                  <a
-                    key={transcript.id}
-                    href={`/vault/transcripts/${transcript.id}`}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={cn(
-                      'flex w-full border-b text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                      isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
-                    )}
-                  >
-                    {/* Left 60%: transcript metadata */}
-                    <div className="flex min-w-0 flex-3 flex-col gap-2 p-4 pr-2">
-                      <div className="flex w-full items-center gap-2">
-                        <span className="truncate">{subtitle}</span>
-                        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                          {fmtListDate(transcript.created_at)}
-                        </span>
-                      </div>
-                      <span className="line-clamp-1 font-medium">{transcript.title}</span>
-                      {transcript.summary ? (
-                        <span className="line-clamp-2 whitespace-normal text-xs text-muted-foreground">
-                          {transcript.summary}
-                        </span>
-                      ) : null}
-                    </div>
-                    {/* Right 40%: extraction latency badge */}
-                    {hasLatency ? (
-                      <div className="flex flex-2 items-center justify-end border-l border-border p-3">
-                        <ExtractionModelCard variant="compact" durationMs={transcript.llm_duration_ms} />
-                      </div>
-                    ) : null}
                   </a>
                 );
               })
