@@ -98,6 +98,27 @@ Homepage (`index.astro`) callout cards: Ingest, Vault, Runs, Models (2×2 via `B
 | `/vault/sources/[id]`     | Detail: kind/follow/url/platforms, linked transcripts with idea count                                     |
 | `/vault/runs/[id]`        | Detail: summary grid, stages table, decisions list, error block                                           |
 
+`AppSidebarLayout` (`packages/ui/src/components/app-sidebar-layout.tsx`) supports both
+percentage and absolute-unit (`px`/`rem`) sidebar sizing — `isPercentOrBare()` only computes
+main-panel percentage complements when `minWidth`/`maxWidth`/`defaultWidth` are all percent/bare
+numbers; absolute-unit sidebars give the main panel `minSize="1%"` and `undefined` default/max so
+it doesn't collapse. `SidebarSplitLayout` (`apps/client/src/components/SidebarSplitLayout/`) wraps
+`AppSidebarLayout` with a `PanelLeftIcon` collapse/expand toggle (`usePanelRef`) alongside the
+manual resize handle; `TranscriptsSplitView` uses it with a 600px-minimum sidebar containing the
+transcript list. Each sidebar list item can show `ExtractionModelCard`
+(`apps/client/src/components/ExtractionModelCard/`) variants: `compact` for a latency-only badge,
+`compact-bar` for inline model/provider pills plus right-aligned token/latency metrics, and `full`
+for the transcript detail card. `ExtractionModelCard` wraps `ai-latency-meter`/`ai-token-viewer`
+(`packages/ui/src/components/`, ported from tryelements.dev) — cost display is omitted because
+local models have no pricing data.
+
+A 12-column flexbox grid (`Container`/`Row`/`Col`, Bootstrap-style, Tailwind-matching breakpoints,
+no Context/runtime JS) lives at `packages/ui/src/components/grid/` (ported from
+`@finografic/design-system`), imported via `components/ui/grid`; CSS auto-included via
+`packages/ui/src/styles/globals.css`. Grid utilities coexist with Tailwind classes, but Tailwind
+font utilities still follow Tailwind names (`text-base`, `text-lg`, etc.); app CSS tokens such as
+`--text-md` do not automatically create a `text-md` utility. Docs: `docs/components/grid.md`.
+
 ### `@llaab/server` — Hono + Bun (port 3000)
 
 Auth: `X-API-Key` vs `SERVER_API_KEY` env. No key set = dev mode, auth skipped.
