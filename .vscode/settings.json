@@ -55,10 +55,6 @@
   "[html]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-  "[astro]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
   "[markdown]": {
     "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.formatOnSave": true
@@ -68,9 +64,9 @@
 
   "css.lint.unknownAtRules": "ignore",
 
-  "cssvar.ignore": ["**/dist/**", "**/.astro/**", "**/node_modules/**"],
+  "cssvar.ignore": ["**/dist/**", "**/node_modules/**"],
   "cssvar.files": ["apps/client/src/**/*.css", "packages/ui/src/**/*.css"],
 
-  "tailwindCSS.files.exclude": ["**/dist/**", "**/.astro/**", "**/node_modules/**"],
+  "tailwindCSS.files.exclude": ["**/dist/**", "**/node_modules/**"],
   "tailwindCSS.classFunctions": ["cva", "cx"]
 }

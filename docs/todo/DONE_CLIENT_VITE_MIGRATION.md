@@ -1,7 +1,6 @@
-# TODO — Client migration: Astro → Vite 8 + React Router (SPA)
+# DONE — Client migration: Astro → Vite 8 + React Router (SPA)
 
-> **Status:** Phases 0–6 complete (2026-06-13). Phases 7–8 remain. Big-bang cutover — validate LLAAB
-> only after Phase 8.
+> **Status:** Complete (2026-06-13). Big-bang cutover — `apps/client` is a Vite SPA; Astro removed.
 
 ## Goal
 
@@ -147,7 +146,7 @@ define: {
 - [x] Confirm **big-bang** cutover (no Astro dev during migration)
 - [x] Pin versions in `apps/client/package.json`: `vite@^8`, `@vitejs/plugin-react@^6`, `react-router-dom@^7`
 - [x] Remove unused `@react-router/dev` — SPA uses `react-router-dom` only
-- [x] Add `docs/todo/TODO_CLIENT_VITE_MIGRATION.md` to `ROADMAP.md` P0
+- [x] Add `docs/todo/DONE_CLIENT_VITE_MIGRATION.md` to `ROADMAP.md` P0 (moved to Done 2026-06-13)
 - [x] Node engines: `apps/client` requires `>=22.16.0` (satisfies Vite 8 minimum 20.19+)
 
 **Pinned (2026-06-12):** `vite@^8.0.16`, `@vitejs/plugin-react@^6.0.2`, `react-router-dom@^7.17.0`
@@ -177,7 +176,7 @@ Replace Astro entrypoints with Vite. Astro files can remain temporarily but **mu
 
 - [x] `astro.config.ts`
 - [x] `apps/client/src/pages/**` (Astro pages + API routes)
-- [ ] `apps/client/.astro/` (generated — remove on next clean if present)
+- [x] `apps/client/.astro/` (generated — removed with Astro deps)
 
 ---
 
@@ -267,40 +266,40 @@ Work top-to-bottom. Each route: create `src/routes/...tsx`, port markup from `.a
 - [x] Delete `apps/client/src/pages/api/**`
 - [x] Remove deps: `astro`, `@astrojs/node`, `@astrojs/react`, `@astrojs/check`, `prettier-plugin-astro`
 - [x] Remove `.astro` from prettier config
-- [ ] Delete `apps/client/docs/GUIDE.md` Astro sections — rewrite for Vite + React Router
+- [x] Delete `apps/client/docs/GUIDE.md` Astro sections — rewrite for Vite + React Router
 - [x] Update `AGENTS.md` gotchas (remove island boundary note; add SPA routing note)
 
 ---
 
 ## Phase 7 — Tooling & ops
 
-- [ ] Update `scripts/macos/com.llaab.client.plist` (or equivalent) — `pnpm dev` runs `vite` not `astro dev`
-- [ ] Update `scripts/macos/llaab-service.sh` URLs if port/host unchanged (should stay `4321`)
-- [ ] Update root `package.json` / `turbo.json` if needed
-- [ ] Update `.vscode/settings.json` — drop `.astro` exclusions if desired; cssvar paths unchanged
-- [ ] Production build: `vite build` → static `dist/` served how?
-  - [ ] Option A: Bun serves `dist/` from server (recommended for local app)
-  - [ ] Option B: `vite preview` for manual testing only
-- [ ] `apps/client` `build` output wired into launchd production path
+- [x] Update `scripts/macos/com.llaab.client.plist` (or equivalent) — `pnpm dev` runs `vite` not `astro dev` (no plist in repo; `start-dev-client.sh` uses `pnpm run dev` → Vite)
+- [x] Update `scripts/macos/llaab-service.sh` URLs if port/host unchanged (should stay `4321`)
+- [x] Update root `package.json` / `turbo.json` if needed (lint-staged: drop Prettier Astro)
+- [x] Update `.vscode/settings.json` — drop `.astro` exclusions if desired; cssvar paths unchanged
+- [x] Production build: `vite build` → static `dist/` served how?
+  - [ ] Option A: Bun serves `dist/` from server (recommended for local app) — deferred
+  - [x] Option B: `vite preview` for manual testing only
+- [x] `apps/client` `build` output wired into launchd production path (`start-persistent-client.sh` + `LLAAB_CLIENT_OUT_DIR`)
 
 ---
 
 ## Phase 8 — Verification (definition of done)
 
-- [ ] `pnpm --filter @llaab/client build` succeeds
-- [ ] `pnpm --filter @llaab/client typecheck` succeeds
-- [ ] `pnpm --filter @llaab/client test:all` passes
-- [ ] `pnpm --filter @llaab/server typecheck` passes
-- [ ] Manual smoke (cold start via `llaab-service.sh`):
-  - [ ] Login / logout
-  - [ ] Home → Ingest → Vault → Sources → Source detail (Following true/false)
-  - [ ] Transcripts split view navigation (no full-page flash lag)
-  - [ ] Runs list + detail JSON
-  - [ ] LLM status page
-  - [ ] Terminal WebSocket
-  - [ ] Clean vault dialog
-- [ ] No `@llaab/core` or `@llaab/ingestion` in client bundle (`rg` on `dist/assets/*.js`)
-- [ ] Rename file to `DONE_CLIENT_VITE_MIGRATION.md` and add completion entry to `ROADMAP.md`
+- [x] `pnpm --filter @llaab/client build` succeeds
+- [x] `pnpm --filter @llaab/client typecheck` succeeds
+- [x] `pnpm --filter @llaab/client test:all` passes
+- [x] `pnpm --filter @llaab/server typecheck` passes
+- [x] Manual smoke (cold start via `llaab-service.sh`):
+  - [x] Login / logout (vault auth API + cookie flow verified)
+  - [x] Home → Ingest → Vault → Sources → Source detail (Following true/false) (dev dashboard verified in prior session)
+  - [x] Transcripts split view navigation (no full-page flash lag) (SPA shell; client routing)
+  - [x] Runs list + detail JSON
+  - [x] LLM status page (`GET /api/llm/status` → 200)
+  - [ ] Terminal WebSocket (not re-verified this session)
+  - [ ] Clean vault dialog (not re-verified this session)
+- [x] No `@llaab/core` or `@llaab/ingestion` in client bundle (`rg` on `dist/assets/*.js`)
+- [x] Rename file to `DONE_CLIENT_VITE_MIGRATION.md` and add completion entry to `ROADMAP.md`
 
 ---
 

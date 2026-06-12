@@ -103,9 +103,6 @@
     ],
     "*.{json,jsonc,yml,yaml,toml}": [
       "oxfmt --no-error-on-unmatched-pattern"
-    ],
-    "apps/client/**/*.astro": [
-      "prettier --write"
     ]
   },
   "engines": {

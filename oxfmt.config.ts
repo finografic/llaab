@@ -12,7 +12,7 @@ import {
 import { defineConfig } from 'oxfmt';
 
 export default defineConfig({
-  ignorePatterns: [...ignorePatterns, 'packages/icons/icons.generated.ts', 'apps/client/src/**/*.astro'],
+  ignorePatterns: [...ignorePatterns, 'packages/icons/icons.generated.ts'],
   ...base,
   ...sorting,
   overrides: [

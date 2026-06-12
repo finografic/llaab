@@ -1,43 +1,29 @@
-# Astro Starter Kit: Minimal
+# @llaab/client
 
-```sh
-pnpm create astro@latest -- --template minimal
-```
+Local-first React SPA for LLAAB — Vite 8 + React Router v7.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Commands
 
-## 🚀 Project Structure
+| Command          | Action                         |
+| ---------------- | ------------------------------ |
+| `pnpm dev`       | Vite dev server on `:4321`     |
+| `pnpm build`     | Production bundle → `dist/`    |
+| `pnpm preview`   | Serve `dist/` (proxies `/api`) |
+| `pnpm typecheck` | TypeScript check               |
 
-Inside of your Astro project, you'll see the following folders and files:
+## Architecture
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+- **Entry:** `index.html` → `src/main.tsx`
+- **Routes:** `src/router.tsx` (`createBrowserRouter`)
+- **Data:** TanStack Query + Hono RPC (`lib/api.ts`)
+- **API proxy:** Vite dev/preview forwards `/api/*` → `apps/server` (`SERVER_URL`)
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Path aliases
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Same tsconfig aliases as before (`components/*`, `forms/*`, `lib/*`, …). Vite resolves them in
+`vite.config.ts`.
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Persistent client (launchd)
 
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                | Action                                           |
-| :--------------------- | :----------------------------------------------- |
-| `pnpm install`         | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+`scripts/macos/start-persistent-client.sh` builds with `LLAAB_CLIENT_OUT_DIR`, then runs
+`vite preview` against the staged `dist/` output.

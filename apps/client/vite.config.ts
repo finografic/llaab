@@ -12,6 +12,9 @@ export default defineConfig(({ mode }) => {
   const serverUrl = env['SERVER_URL'] ?? 'http://localhost:3000';
   const devHost = env['HOST'] ?? '127.0.0.1';
   const devPort = Number(env['PORT'] ?? 4321);
+  const outDir = process.env['LLAAB_CLIENT_OUT_DIR']
+    ? path.resolve(process.env['LLAAB_CLIENT_OUT_DIR'])
+    : path.resolve(clientRoot, 'dist');
 
   return {
     envDir: repoRoot,
@@ -53,8 +56,19 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    preview: {
+      host: devHost,
+      port: devPort,
+      strictPort: true,
+      proxy: {
+        '/api': {
+          target: serverUrl,
+          changeOrigin: true,
+        },
+      },
+    },
     build: {
-      outDir: 'dist',
+      outDir,
       emptyOutDir: true,
     },
   };

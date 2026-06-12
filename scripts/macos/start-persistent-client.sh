@@ -38,15 +38,16 @@ trim_old_builds() {
 }
 
 run_current_build() {
-  exec /Users/justin/.nvm/versions/node/v24.3.0/bin/node "$current_link/server/entry.mjs"
+  export LLAAB_CLIENT_OUT_DIR="$current_link"
+  exec /opt/homebrew/bin/pnpm --filter @llaab/client exec vite preview
 }
 
 rm -rf "$staging_dir"
 mkdir -p "$staging_dir"
 
 if LLAAB_CLIENT_OUT_DIR="$staging_dir" /opt/homebrew/bin/pnpm --filter @llaab/client build; then
-  if [[ ! -f "$staging_dir/server/entry.mjs" ]]; then
-    echo "[persistent-client] Build succeeded but server entry is missing: $staging_dir/server/entry.mjs" >&2
+  if [[ ! -f "$staging_dir/index.html" ]]; then
+    echo "[persistent-client] Build succeeded but index.html is missing: $staging_dir/index.html" >&2
     rm -rf "$staging_dir"
   else
     promote_build
@@ -57,7 +58,7 @@ fi
 
 rm -rf "$staging_dir"
 
-if [[ -f "$current_link/server/entry.mjs" ]]; then
+if [[ -f "$current_link/index.html" ]]; then
   echo "[persistent-client] Falling back to last known-good build." >&2
   run_current_build
 fi

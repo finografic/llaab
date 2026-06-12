@@ -107,7 +107,7 @@ export default {
     // Prettier
     {
       label: 'Prettier — same range',
-      dependencies: ['prettier', 'prettier-plugin-astro'],
+      dependencies: ['prettier'],
       policy: 'sameRange',
     },
   ],

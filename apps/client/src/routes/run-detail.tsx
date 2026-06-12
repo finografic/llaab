@@ -24,7 +24,7 @@ const RUN_JSON_LINK_RULES = [
 export function RunDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: node, isLoading } = useVaultNode(id);
-  const run = node?.type === 'run' ? (node) : undefined;
+  const run: RunNode | undefined = node?.type === 'run' ? (node) : undefined;
 
   usePageTitle(run?.title ?? 'Run');
 

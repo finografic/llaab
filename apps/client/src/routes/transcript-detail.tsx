@@ -15,11 +15,13 @@ export function TranscriptDetailPage() {
   const { data: runNodes = [] } = useVaultNodes({ type: 'run' });
 
   const transcripts = useMemo(
-    () => [...(allTranscripts as TranscriptNode[])].toSorted((a, b) => b.created_at.localeCompare(a.created_at)),
+    () =>
+      [...(allTranscripts as TranscriptNode[])].toSorted((a, b) => b.created_at.localeCompare(a.created_at)),
     [allTranscripts],
   );
 
-  const transcript = transcriptNode?.type === 'transcript' ? (transcriptNode) : undefined;
+  const transcript: TranscriptNode | undefined =
+    transcriptNode?.type === 'transcript' ? (transcriptNode) : undefined;
 
   usePageTitle(transcript?.title ?? 'Transcripts');
 
