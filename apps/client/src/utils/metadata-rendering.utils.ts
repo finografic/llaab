@@ -88,6 +88,15 @@ function readMetadataStringField(value: unknown, field: string): string | undefi
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function readMetadataStringFields(value: unknown, fields: string[]): string | undefined {
+  for (const field of fields) {
+    const candidate = readMetadataStringField(value, field);
+    if (candidate) return candidate;
+  }
+
+  return undefined;
+}
+
 /** Human-facing subject title for a run (video/article title, idea title, etc.). */
 export function extractRunSubjectTitle(run: {
   stages?: Array<{ status?: string; output?: unknown }>;
@@ -165,10 +174,25 @@ export function extractRunAuthor(run: {
 
 /** Source node id produced or referenced by a run, when known. */
 export function extractRunSourceId(run: {
+  output_summary?: string;
   stages?: Array<{ name?: string; status?: string; output?: unknown; input?: unknown }>;
 }): string | undefined {
+  if (run.output_summary) {
+    const parsed = parseMetadataJson(run.output_summary);
+    const summarySourceId = readMetadataStringFields(parsed, ['sourceId', 'source_id']);
+    if (summarySourceId) return summarySourceId;
+  }
+
   for (const stage of run.stages ?? []) {
-    if (stage.status !== 'completed' || stage.name !== 'store:source') continue;
+    if (stage.status !== 'completed') continue;
+
+    const outputSourceId = readMetadataStringFields(stage.output, ['sourceId', 'source_id']);
+    if (outputSourceId) return outputSourceId;
+
+    const inputSourceId = readMetadataStringFields(stage.input, ['sourceId', 'source_id']);
+    if (inputSourceId) return inputSourceId;
+
+    if (stage.name !== 'store:source') continue;
 
     const outputId = readMetadataStringField(stage.output, 'id');
     if (outputId) return outputId;

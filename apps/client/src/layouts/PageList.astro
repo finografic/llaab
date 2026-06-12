@@ -7,7 +7,7 @@
  */
 
 interface Props {
-  width?: 'standard' | 'wide';
+  width?: 'standard' | 'wide' | 'narrow';
 }
 
 const { width = 'standard' } = Astro.props;
@@ -22,7 +22,11 @@ const { width = 'standard' } = Astro.props;
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
-    max-width: 820px;
+    max-width: var(--page-list-max);
+  }
+
+  .page-list[data-width='narrow'] {
+    max-width: var(--content-narrow-max);
   }
 
   .page-list[data-width='wide'] {

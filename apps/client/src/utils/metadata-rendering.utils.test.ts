@@ -126,6 +126,26 @@ describe('extractRunSourceId', () => {
       }),
     ).toBe('theo-t3-gg');
   });
+
+  it('reads source ids from reused transcript run summaries', () => {
+    expect(
+      extractRunSourceId({
+        output_summary:
+          '{"id":"jira-and-linear-are-legacy-software","type":"transcript","sourceId":"theo-t3-gg","reused":true}',
+        stages: [
+          {
+            name: 'dedupe:transcript',
+            status: 'completed',
+            output: {
+              id: 'jira-and-linear-are-legacy-software',
+              sourceId: 'theo-t3-gg',
+              reused: true,
+            },
+          },
+        ],
+      }),
+    ).toBe('theo-t3-gg');
+  });
 });
 
 describe('splitMetadataTextWithUrls', () => {

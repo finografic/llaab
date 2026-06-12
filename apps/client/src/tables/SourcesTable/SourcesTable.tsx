@@ -37,18 +37,18 @@ function renderSourceKindCell({ getValue }: CellContext<SourceNode, unknown>) {
   return <span className={`${styles.kind} ${KIND_CLASS[kind]}`}>{kind}</span>;
 }
 
-function renderSourceFollowingCell({ row }: CellContext<SourceNode, unknown>) {
+function renderSourceYouTubeCell({ row }: CellContext<SourceNode, unknown>) {
   const source = row.original;
   if (!isYouTubeChannelSource(source)) {
     return <span className={styles.muted}>—</span>;
   }
 
   if (source.youtube_subscribed === true) {
-    return <span className={`${styles.kind} ${styles.follow}`}>true</span>;
+    return <span className={`${styles.kind} ${styles.subscribed}`}>Subscribed</span>;
   }
 
   if (source.youtube_subscribed === false) {
-    return <span className={styles.muted}>false</span>;
+    return <span className={`${styles.kind} ${styles.notSubscribed}`}>Not subscribed</span>;
   }
 
   return <span className={styles.muted}>—</span>;
@@ -83,9 +83,9 @@ const SOURCES_COLUMNS: DataTableColumns<SourceNode> = [
     cell: renderSourceKindCell,
   },
   {
-    id: 'following',
-    header: 'Following',
-    cell: renderSourceFollowingCell,
+    id: 'youtubeSubscription',
+    header: 'YouTube',
+    cell: renderSourceYouTubeCell,
   },
   {
     id: 'platforms',

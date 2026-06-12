@@ -36,12 +36,20 @@ export interface DataTableProps<TData, TValue = unknown> {
  *   { accessorKey: 'email', header: sortableHeader('Email') }
  */
 export function sortableHeader<TData>(label: string) {
-  return ({ column }: { column: Column<TData> }) => (
-    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-      {label}
-      <ArrowUpDown />
-    </Button>
-  );
+  return ({ column }: { column: Column<TData> }) => {
+    const isSorted = column.getIsSorted() !== false;
+
+    return (
+      <Button
+        variant="ghost"
+        className={cn(isSorted ? 'text-foreground' : 'text-muted-foreground opacity-70')}
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      >
+        {label}
+        <ArrowUpDown />
+      </Button>
+    );
+  };
 }
 
 function resolveColumnId<TData, TValue>(column: DataTableColumnDef<TData, TValue>): string | undefined {
@@ -110,7 +118,7 @@ export function DataTable<TData, TValue = unknown>({
   });
 
   return (
-    <div className="overflow-hidden rounded-md border">
+    <div className="overflow-x-auto rounded-md border">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

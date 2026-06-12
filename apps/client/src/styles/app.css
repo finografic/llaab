@@ -87,6 +87,10 @@
   --footer-h: 40px;
   --content-area-h: calc(100dvh - var(--header-h) - var(--footer-h));
   --content-max: 1200px;
+  --content-narrow-max: 820px;
+  --page-list-max: var(--content-max);
+  --page-detail-max: var(--content-max);
+  --page-dashboard-max: var(--content-max);
 
   /* ── Motion ───────────────────────────────────────────────────────────────── */
   --duration-fast: 100ms;

@@ -6,6 +6,8 @@ import { enrichSourceMetadata, formatAudienceCount, hasYouTubeOAuthConfig } from
 import type { SourceNode, TranscriptNode } from '@llaab/schemas';
 import { buttonVariants } from 'components/ui/button';
 import { youTubeSubscribeUrl } from 'utils/youtube-source.utils';
+import { SourceTranscriptsTable } from 'tables/SourceTranscriptsTable/SourceTranscriptsTable';
+import type { SourceTranscriptsTableRow } from 'tables/SourceTranscriptsTable/SourceTranscriptsTable';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
 import PageDetail from 'layouts/PageDetail.astro';
@@ -42,6 +44,15 @@ if (source.platforms.includes('youtube') && source.url) {
 const transcriptNodes = await listNodes({ type: 'transcript' });
 const linkedTranscripts = (transcriptNodes as TranscriptNode[]).filter((t) => t.source_id === source.id);
 linkedTranscripts.sort((a, b) => b.created_at.localeCompare(a.created_at));
+const linkedTranscriptRows: SourceTranscriptsTableRow[] = linkedTranscripts.map((transcript) => ({
+  id: transcript.id,
+  title: transcript.title,
+  sourceType: transcript.source_type,
+  sourceUrl: transcript.source_url,
+  publishedAt: parseYouTubePublishedAt(transcript.body),
+  transcriptCreatedAt: transcript.created_at,
+  ideaCount: transcript.extracted_idea_ids.length,
+}));
 
 const isYouTubeChannel = source.platforms.includes('youtube') && source.source_kind === 'channel';
 const youTubeSubscribeHref = isYouTubeChannel ? youTubeSubscribeUrl(source) : undefined;
@@ -51,6 +62,12 @@ const videoLabel =
   source.video_count != null
     ? `${source.video_count.toLocaleString('en-US')} video${source.video_count === 1 ? '' : 's'}`
     : undefined;
+const youtubeSubscriptionLabel =
+  source.youtube_subscribed === true
+    ? 'Subscribed on YouTube'
+    : source.youtube_subscribed === false
+      ? 'Not subscribed on YouTube'
+      : undefined;
 
 function fmtDate(ts?: string): string {
   if (!ts) return '—';
@@ -62,6 +79,14 @@ function fmtDate(ts?: string): string {
     minute: '2-digit',
   });
 }
+
+function parseYouTubePublishedAt(body: string): string | undefined {
+  const match = body.match(/^\*\*uploaded:\*\*\s*(.+)$/m);
+  if (!match?.[1]) return undefined;
+
+  const parsed = new Date(`${match[1].trim().replace(' ', 'T')}Z`);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+}
 ---
 
 <AppLayout title={source.title}>
@@ -70,13 +95,14 @@ function fmtDate(ts?: string): string {
       <Fragment slot="meta">
         <span class={`badge badge--${source.source_kind}`}>{source.source_kind}</span>
         {
-          isYouTubeChannel && source.youtube_subscribed === true && (
-            <span class="badge badge--subscribed">true</span>
-          )
-        }
-        {
-          isYouTubeChannel && source.youtube_subscribed === false && (
-            <span class="badge badge--not-following">false</span>
+          isYouTubeChannel && youtubeSubscriptionLabel && (
+            <span
+              class={`badge ${
+                source.youtube_subscribed === true ? 'badge--subscribed' : 'badge--not-subscribed'
+              }`}
+            >
+              {youtubeSubscriptionLabel}
+            </span>
           )
         }
         <span class="meta-sep">·</span>
@@ -84,7 +110,7 @@ function fmtDate(ts?: string): string {
       </Fragment>
     </PageHero>
 
-    <PageDetail variant="narrow">
+    <PageDetail>
       {
         enrichError && (
           <p class="enrich-error" role="status">
@@ -186,13 +212,13 @@ function fmtDate(ts?: string): string {
           {
             isYouTubeChannel && (
               <>
-                <dt>Following</dt>
+                <dt>YouTube Subscription</dt>
                 <dd class="following-row">
                   {source.youtube_subscribed === true ? (
-                    <span class="badge badge--subscribed">true</span>
+                    <span class="badge badge--subscribed">Subscribed</span>
                   ) : source.youtube_subscribed === false ? (
                     <>
-                      <span class="meta-text">false</span>
+                      <span class="badge badge--not-subscribed">Not subscribed</span>
                       {youTubeSubscribeHref && (
                         <a
                           href={youTubeSubscribeHref}
@@ -219,6 +245,17 @@ function fmtDate(ts?: string): string {
               </>
             )
           }
+
+          <dt>LLAAB Follow</dt>
+          <dd>
+            {
+              source.follow ? (
+                <span class="badge badge--follow">Auto-refresh enabled</span>
+              ) : (
+                <span class="meta-text">Auto-refresh off</span>
+              )
+            }
+          </dd>
 
           {
             source.platform_id && (
@@ -276,34 +313,7 @@ function fmtDate(ts?: string): string {
               Transcripts
               <span class="section__count">{linkedTranscripts.length}</span>
             </h2>
-            <ul class="transcript-list">
-              {linkedTranscripts.map((t) => (
-                <li class="transcript-item">
-                  <a href={`/vault/transcripts/${t.id}`} class="transcript-link">
-                    <span class="transcript-title">{t.title}</span>
-                    <span class="transcript-meta">
-                      <span class={`badge badge--${t.source_type}`}>{t.source_type}</span>
-                      {t.extracted_idea_ids.length > 0 && (
-                        <>
-                          <span class="meta-sep">·</span>
-                          <span class="transcript-ideas">
-                            {t.extracted_idea_ids.length} idea{t.extracted_idea_ids.length !== 1 ? 's' : ''}
-                          </span>
-                        </>
-                      )}
-                      <span class="meta-sep">·</span>
-                      <time class="transcript-date" datetime={t.created_at}>
-                        {new Date(t.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </time>
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <SourceTranscriptsTable client:load transcripts={linkedTranscriptRows} />
           </section>
         )
       }
@@ -427,63 +437,6 @@ function fmtDate(ts?: string): string {
     padding: 1px 6px;
   }
 
-  /* ── Transcript list ── */
-
-  .transcript-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .transcript-item {
-    border-radius: var(--radius);
-    transition: background var(--duration) var(--ease);
-  }
-
-  .transcript-item:hover {
-    background: var(--surface-raised);
-  }
-
-  .transcript-link {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-6);
-    padding: var(--space-3) var(--space-4);
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .transcript-title {
-    font-size: var(--text-base);
-    color: var(--text);
-    line-height: 1.4;
-    flex: 1;
-  }
-
-  .transcript-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    flex-shrink: 0;
-  }
-
-  .transcript-ideas {
-    font-size: var(--text-sm);
-    font-family: var(--font-mono);
-    color: oklch(0.65 0.18 264);
-  }
-
-  .transcript-date {
-    font-size: var(--text-sm);
-    font-family: var(--font-mono);
-    color: var(--text-faint);
-    white-space: nowrap;
-  }
-
   /* ── Source kind badges (base in app.css) ── */
 
   .badge--person {
@@ -532,10 +485,16 @@ function fmtDate(ts?: string): string {
     border-color: oklch(0.4 0.12 155 / 0.4);
     border-radius: 4px;
   }
-  .badge--not-following {
+  .badge--not-subscribed {
     background: oklch(0.24 0.04 40 / 0.2);
     color: oklch(0.7 0.12 40);
     border-color: oklch(0.42 0.1 40 / 0.35);
+    border-radius: 4px;
+  }
+  .badge--follow {
+    background: oklch(0.22 0.04 264 / 0.25);
+    color: oklch(0.65 0.18 264);
+    border-color: oklch(0.4 0.12 264 / 0.4);
     border-radius: 4px;
   }
 </style>
