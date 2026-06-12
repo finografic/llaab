@@ -17,12 +17,10 @@ const _base = createApp();
 
 _base.use(
   cors({
-    origin: [
-      'http://localhost:4321', // Astro client dev
-      'http://localhost:3000',
-    ],
+    origin: ['http://localhost:4321', 'http://llaab.localhost:4321', 'http://localhost:3000'],
     allowHeaders: ['Content-Type', 'X-API-Key'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
   }),
 );
 

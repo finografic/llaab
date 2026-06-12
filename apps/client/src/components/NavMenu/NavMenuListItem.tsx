@@ -1,6 +1,7 @@
 import { cn } from '@llaab/ui/lib/utils';
 import { NavigationMenuLink } from 'components/ui/navigation-menu';
 import { LockIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import type { NavMenuItem } from 'lib/nav-menu.config';
 import { isNavItemActive } from 'lib/nav-menu.utils';
@@ -55,9 +56,9 @@ export function NavMenuListItem({ item, pathname, onNavigate }: NavMenuListItemP
           active && 'bg-accent/50',
         )}
       >
-        <a href={item.href} onClick={onNavigate}>
+        <Link to={item.href} onClick={onNavigate}>
           <NavMenuItemContent item={item} />
-        </a>
+        </Link>
       </NavigationMenuLink>
     </li>
   );
@@ -81,8 +82,8 @@ export function NavMenuMobileItem({ item, pathname, onNavigate }: NavMenuListIte
 
   return (
     <li>
-      <a
-        href={item.href}
+      <Link
+        to={item.href}
         className={cn(
           'block space-y-0.5 rounded-md px-2 py-2.5 no-underline transition-colors',
           'hover:bg-muted hover:text-foreground',
@@ -92,7 +93,7 @@ export function NavMenuMobileItem({ item, pathname, onNavigate }: NavMenuListIte
         onClick={onNavigate}
       >
         <NavMenuItemContent item={item} />
-      </a>
+      </Link>
     </li>
   );
 }

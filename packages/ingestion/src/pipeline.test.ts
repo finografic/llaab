@@ -148,6 +148,7 @@ describe('runIngestionPipeline', () => {
           url: 'https://www.youtube.com/@ExampleChannel',
           platforms: ['youtube'],
           follow: false,
+          profiles: [],
         },
       });
 

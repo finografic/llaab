@@ -20,7 +20,7 @@ const COLUMNS: Array<ColumnDef<LabNode>> = [
     size: 90,
     cell: ({ getValue }) => {
       const v = getValue() as string;
-      const cls = `status${v.charAt(0).toUpperCase()}${v.slice(1)}` as keyof typeof s;
+      const cls = `status${v.charAt(0).toUpperCase()}${v.slice(1)}` as keyof typeof styles;
       return <span className={`${styles.status} ${styles[cls] ?? ''}`}>{v}</span>;
     },
   },
@@ -98,7 +98,7 @@ export function NodesFileList({ nodes }: NodesFileListProps) {
 // ─── Node type icon ───────────────────────────────────────────────────────────
 
 function NodeTypeIcon({ type }: { type: string }) {
-  const cls = `icon${type.charAt(0).toUpperCase()}${type.slice(1)}` as keyof typeof s;
+  const cls = `icon${type.charAt(0).toUpperCase()}${type.slice(1)}` as keyof typeof styles;
   return (
     <span className={styles[cls]}>
       {type === 'idea' && <IconIdea />}

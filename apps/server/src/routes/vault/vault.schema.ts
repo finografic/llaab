@@ -37,3 +37,15 @@ export const updateSourceProfilesBodySchema = z.object({
 });
 
 export type UpdateSourceProfilesBody = z.infer<typeof updateSourceProfilesBodySchema>;
+
+export const vaultLoginBodySchema = z.object({
+  password: z.string().min(1, 'Password is required'),
+});
+
+export type VaultLoginBody = z.infer<typeof vaultLoginBodySchema>;
+
+export const cleanRecentBodySchema = z.object({
+  hours: z.number().finite().positive().max(8760),
+});
+
+export type CleanRecentBody = z.infer<typeof cleanRecentBodySchema>;

@@ -1,0 +1,21 @@
+.appShell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  width: 100%;
+  background: var(--bg);
+}
+
+.pageContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.pageContentBleed {
+  padding: 0;
+  overflow: hidden;
+}

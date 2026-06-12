@@ -11,11 +11,16 @@
 import { hc } from 'hono/client';
 import type { AppType } from '../../../server/src/app.js';
 
-const API_KEY: string | undefined = import.meta.env['SERVER_API_KEY'] as string | undefined;
+const API_KEY: string | undefined = import.meta.env['SERVER_API_KEY'];
 
 const baseUrl = globalThis.window?.location.origin ?? 'http://localhost:4321';
 
 const client = hc<AppType>(baseUrl, {
+  fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+    fetch(input, {
+      ...init,
+      credentials: 'include',
+    }),
   headers: () => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (API_KEY) headers['X-API-Key'] = API_KEY;
@@ -24,7 +29,7 @@ const client = hc<AppType>(baseUrl, {
 });
 
 /** Typed API client. Mirrors the server's /api/* route tree. */
-export const api = client.api;
+export const {api} = client;
 
 /** DELETE /api/vault/runs/:id — optional produced-node cascade. */
 export async function deleteVaultRun(id: string, deleteProduced: boolean) {

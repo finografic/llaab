@@ -1,0 +1,14 @@
+.pageList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: var(--page-list-max);
+}
+
+.narrow {
+  max-width: var(--content-narrow-max);
+}
+
+.wide {
+  max-width: var(--content-max);
+}

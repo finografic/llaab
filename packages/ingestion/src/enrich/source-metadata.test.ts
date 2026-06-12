@@ -34,6 +34,7 @@ const baseSource: SourceNode = {
   url: 'https://www.youtube.com/@t3dotgg',
   platforms: ['youtube'],
   follow: false,
+  profiles: [],
 };
 
 describe('enrichSourceMetadata', () => {

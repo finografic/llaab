@@ -10,9 +10,9 @@
  * | Auth header  | (none — key not required) | SERVER_API_KEY env var |
  */
 
-const API_KEY: string | undefined = import.meta.env['SERVER_API_KEY'] as string | undefined;
+const API_KEY: string | undefined = import.meta.env['SERVER_API_KEY'];
 
-function buildHeaders(): Headers {
+export function buildApiHeaders(): Headers {
   const headers = new Headers();
   headers.set('Content-Type', 'application/json');
   if (API_KEY) headers.set('X-API-Key', API_KEY);
@@ -21,7 +21,8 @@ function buildHeaders(): Headers {
 
 export async function apiGet<T = unknown>(path: string): Promise<T> {
   const res = await fetch(path, {
-    headers: buildHeaders(),
+    credentials: 'include',
+    headers: buildApiHeaders(),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -33,7 +34,8 @@ export async function apiGet<T = unknown>(path: string): Promise<T> {
 export async function apiPost<T = unknown>(path: string, body: unknown): Promise<T> {
   const res = await fetch(path, {
     method: 'POST',
-    headers: buildHeaders(),
+    credentials: 'include',
+    headers: buildApiHeaders(),
     body: JSON.stringify(body),
   });
   if (!res.ok) {

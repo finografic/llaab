@@ -13,6 +13,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from 'components/ui/sheet';
 import { MenuIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { NAV_MENU_SECTIONS } from 'lib/nav-menu.config';
 import { getActiveNavSectionId } from 'lib/nav-menu.utils';
@@ -61,9 +62,9 @@ export function NavMenu({ pathname }: NavMenuProps) {
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-6">
-      <a href="/" className={styles.brand} aria-current={pathname === '/' ? 'page' : undefined}>
+      <Link to="/" className={styles.brand} aria-current={pathname === '/' ? 'page' : undefined}>
         LLAAB
-      </a>
+      </Link>
 
       {/* Desktop — Tailwind owns display toggling; do not set display in CSS modules (it overrides hidden). */}
       <NavigationMenu

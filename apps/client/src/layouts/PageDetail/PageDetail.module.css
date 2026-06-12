@@ -1,0 +1,14 @@
+.pageDetail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: var(--page-detail-max);
+}
+
+.narrow {
+  max-width: var(--content-narrow-max);
+}
+
+.gapLg {
+  gap: var(--space-8);
+}

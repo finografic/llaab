@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import {
+  cleanRecentVaultActivity,
   createNode,
   deleteNode,
   getNodeFilePath,
@@ -12,11 +13,85 @@ import {
 import { enrichSourceMetadata, extractKnowledgeFromTranscript } from '@llaab/ingestion';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
 import { appendProducedNodeIds } from '@llaab/skills';
+import { deleteCookie, setCookie } from 'hono/cookie';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
-import type { CreateNodeBody, ListNodesQuery, UpdateSourceProfilesBody } from './vault.schema.js';
+import type {
+  CleanRecentBody,
+  CreateNodeBody,
+  ListNodesQuery,
+  UpdateSourceProfilesBody,
+  VaultLoginBody,
+} from './vault.schema.js';
 import type { RunNode, SourceNode, TranscriptNode } from '@llaab/schemas';
 
+import {
+  getVaultPassword,
+  isVaultSessionValid,
+  VAULT_COOKIE_MAX_AGE,
+  VAULT_COOKIE_NAME,
+} from '../../lib/vault-auth.js';
+import { readVaultRootTree } from '../../lib/vault-tree.js';
 import { deleteRunQuerySchema } from './vault.schema.js';
+
+export const vaultAuthLogin = {
+  path: '/auth/login' as const,
+  handler: async (c: AppCtxJson<VaultLoginBody>) => {
+    const { password } = c.req.valid('json');
+    if (password !== getVaultPassword()) {
+      return c.json({ ok: false, error: 'Incorrect password.' }, 401);
+    }
+
+    setCookie(c, VAULT_COOKIE_NAME, password, {
+      path: '/',
+      maxAge: VAULT_COOKIE_MAX_AGE,
+      httpOnly: true,
+      sameSite: 'Lax',
+    });
+
+    return c.json({ ok: true });
+  },
+};
+
+export const vaultAuthLogout = {
+  path: '/auth/logout' as const,
+  handler: (c: AppCtx) => {
+    deleteCookie(c, VAULT_COOKIE_NAME, { path: '/' });
+    return c.json({ ok: true });
+  },
+};
+
+export const vaultAuthSession = {
+  path: '/auth/session' as const,
+  handler: (c: AppCtx) => {
+    if (!isVaultSessionValid(c)) {
+      return c.json({ ok: false }, 401);
+    }
+    return c.json({ ok: true });
+  },
+};
+
+export const vaultTree = {
+  path: '/tree' as const,
+  handler: async (c: AppCtx) => {
+    const tree = await readVaultRootTree();
+    return c.json({ tree });
+  },
+};
+
+export const cleanRecent = {
+  path: '/clean-recent' as const,
+  handler: async (c: AppCtxJson<CleanRecentBody>) => {
+    const { hours } = c.req.valid('json');
+
+    try {
+      const removedCount = await cleanRecentVaultActivity(hours);
+      return c.json({ success: true, removedCount });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Vault clean failed.';
+      return c.json({ success: false, error: message }, 500);
+    }
+  },
+};
 
 export const file = {
   path: '/file' as const,

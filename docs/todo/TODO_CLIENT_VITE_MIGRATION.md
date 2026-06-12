@@ -1,7 +1,7 @@
 # TODO — Client migration: Astro → Vite 8 + React Router (SPA)
 
-> **Status:** Not started (2026-06-12). Target: replace `apps/client` Astro SSR with a Vite 8
-> client-only SPA. No parallel runtime required — migrate directly, validate at the end.
+> **Status:** Phases 0–3 complete (2026-06-12). Phase 4 not started. Big-bang cutover — validate LLAAB
+> only after Phase 8.
 
 ## Goal
 
@@ -143,11 +143,15 @@ define: {
 
 ## Phase 0 — Decisions & prerequisites
 
-- [ ] Confirm **big-bang** cutover (no Astro dev during migration)
-- [ ] Pin versions in `apps/client/package.json`: `vite@^8`, `@vitejs/plugin-react@^6`, `react-router-dom@^7`
-- [ ] Remove unused `@react-router/dev` **or** keep only if using RR build tooling — for SPA, `react-router-dom` alone is enough
-- [ ] Add `docs/todo/TODO_CLIENT_VITE_MIGRATION.md` to `ROADMAP.md` P0/P1 when work starts
-- [ ] Read [Vite 8 migration guide](https://vite.dev/guide/migration) — note Node 20.19+ requirement
+- [x] Confirm **big-bang** cutover (no Astro dev during migration)
+- [x] Pin versions in `apps/client/package.json`: `vite@^8`, `@vitejs/plugin-react@^6`, `react-router-dom@^7`
+- [x] Remove unused `@react-router/dev` — SPA uses `react-router-dom` only
+- [x] Add `docs/todo/TODO_CLIENT_VITE_MIGRATION.md` to `ROADMAP.md` P0
+- [x] Node engines: `apps/client` requires `>=22.16.0` (satisfies Vite 8 minimum 20.19+)
+
+**Pinned (2026-06-12):** `vite@^8.0.16`, `@vitejs/plugin-react@^6.0.2`, `react-router-dom@^7.17.0`
+
+Reference: [Vite 8 migration guide](https://vite.dev/guide/migration)
 
 ---
 
@@ -155,20 +159,20 @@ define: {
 
 Replace Astro entrypoints with Vite. Astro files can remain temporarily but **must not** be the dev entry.
 
-- [ ] Add `apps/client/index.html` → `<div id="root">` + `/src/main.tsx`
-- [ ] Add `apps/client/vite.config.ts`
-  - [ ] `envDir` → repo root
-  - [ ] `@tailwindcss/vite` plugin
-  - [ ] `resolve.alias` for `components/*`, `ui`, `hooks`, `utils`, `@llaab/ui`
-  - [ ] Dev proxy `/api` → `SERVER_URL` (no bypass hacks)
-  - [ ] `server.host` / `port` 4321 (match `llaab.localhost`)
-- [ ] Add `src/main.tsx` — `createRoot`, `RouterProvider`, `QueryClientProvider`, `Toaster`
-- [ ] Add `src/router.tsx` — `createBrowserRouter` with placeholder routes
-- [ ] Update `apps/client/package.json` scripts: `"dev": "vite"`, `"build": "vite build"`, `"preview": "vite preview"`
-- [ ] Replace `tsconfig.json` — remove `extends: astro/tsconfigs/strict`; add `vite/client` types
-- [ ] Verify `pnpm --filter @llaab/client dev` serves a blank routed shell
+- [x] Add `apps/client/index.html` → `<div id="root">` + `/src/main.tsx`
+- [x] Add `apps/client/vite.config.ts`
+  - [x] `envDir` → repo root
+  - [x] `@tailwindcss/vite` plugin
+  - [x] `resolve.alias` for `components/*`, `ui`, `hooks`, `utils`, `@llaab/ui`
+  - [x] Dev proxy `/api` → `SERVER_URL` (no bypass hacks)
+  - [x] `server.host` / `port` 4321 (match `llaab.localhost`)
+- [x] Add `src/main.tsx` — `createRoot`, `RouterProvider`, `QueryClientProvider`, `Toaster`
+- [x] Add `src/router.tsx` — `createBrowserRouter` with placeholder routes
+- [x] Update `apps/client/package.json` scripts: `"dev": "vite"`, `"build": "vite build"`, `"preview": "vite preview"`
+- [x] Replace `tsconfig.json` — remove `extends: astro/tsconfigs/strict`; add `vite/client` types
+- [x] Verify `pnpm --filter @llaab/client dev` serves a blank routed shell
 
-**Delete when Phase 1 validates:**
+**Delete when Phase 6 completes:**
 
 - [ ] `astro.config.ts`
 - [ ] `apps/client/.astro/` (generated)
@@ -179,28 +183,28 @@ Replace Astro entrypoints with Vite. Astro files can remain temporarily but **mu
 
 Centralize everything the Astro layer did in Node into Bun.
 
-- [ ] `POST /api/vault/auth/login` — body `{ password }`, set `vault_key` httpOnly cookie
-- [ ] `GET /api/vault/auth/logout` — clear cookie, return `{ ok: true }` (SPA navigates to login)
-- [ ] `GET /api/vault/auth/session` — `200` if cookie valid, `401` otherwise
-- [ ] `POST /api/vault/clean-recent` — move from `apps/client/src/pages/api/vault/clean-recent.ts`
-- [ ] `GET /api/vault/tree` — return vault file tree (move `readTree` from `vault/index.astro`)
-- [ ] Ensure `POST /api/vault/sources/:id/enrich` is the **only** enrich entry (no client ingestion)
-- [ ] Add Zod schemas + wire routes in `vault.schema.ts` / `vault.routes.ts` / `index.ts`
-- [ ] Update `AppType` / Hono RPC exports if new routes added
-- [ ] Remove duplicated auth logic from future React routes (one `requireVaultSession` helper on server)
+- [x] `POST /api/vault/auth/login` — body `{ password }`, set `vault_key` httpOnly cookie
+- [x] `GET /api/vault/auth/logout` — clear cookie, return `{ ok: true }` (SPA navigates to login)
+- [x] `GET /api/vault/auth/session` — `200` if cookie valid, `401` otherwise
+- [x] `POST /api/vault/clean-recent` — moved to `apps/server` (`requireVaultSession` middleware)
+- [x] `GET /api/vault/tree` — return vault file tree (`readVaultRootTree` in server)
+- [x] Ensure `POST /api/vault/sources/:id/enrich` is the **only** enrich entry (no client ingestion)
+- [x] Add Zod schemas + wire routes in `vault.schema.ts` / `vault.routes.ts` / `index.ts`
+- [x] `AppType` picks up new routes via chained vault router
+- [x] `requireVaultSession` middleware guards all vault routes after `/auth/*`
 
 ---
 
 ## Phase 3 — App shell + routing skeleton
 
-- [ ] `AppLayout.tsx` — header, main, footer, `<Outlet />`
-- [ ] `AppHeader.tsx` — `useLocation()` for `NavMenu`; `<Link>` from React Router
-- [ ] `PageLayout`, `PageHero`, `PageDetail`, `PageList` React ports (CSS → module or keep global)
-- [ ] `routes/vault.layout.tsx` — loader calls `/api/vault/auth/session`; redirect to `/vault/login` on 401
-- [ ] `routes/login.tsx` — form POST to `/api/vault/auth/login`; navigate to `/vault` on success
-- [ ] `routes/root.tsx` — public home route
-- [ ] Wire route tree in `router.tsx` (nested layouts for `/vault/*`)
-- [ ] Document title via `useEffect` or RR `meta` helper / small `usePageTitle` hook
+- [x] `AppLayout.tsx` — header, main, footer, `<Outlet />`
+- [x] `AppHeader.tsx` — `useLocation()` for `NavMenu`; `<Link>` from React Router
+- [x] `PageLayout`, `PageHero`, `PageDetail`, `PageList` React ports (CSS modules)
+- [x] `routes/vault-layout.tsx` — loader calls `/api/vault/auth/session`; redirect to `/vault/login` on 401
+- [x] `routes/login.tsx` — form POST to `/api/vault/auth/login`; navigate to `/vault` on success
+- [x] `routes/root.tsx` — public home route (callout grid)
+- [x] Wire route tree in `router.tsx` (nested layouts for `/vault/*`)
+- [x] `lib/use-page-title.ts` — `document.title` sync per route
 
 ---
 

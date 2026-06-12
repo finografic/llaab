@@ -1,0 +1,31 @@
+.pageLayout {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100%;
+}
+
+.heroZone {
+  flex-shrink: 0;
+}
+
+.pageBody {
+  display: grid;
+  grid-template-columns: 1fr;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.pageBodyWithAside {
+  grid-template-columns: var(--aside-w, 200px) 1fr;
+}
+
+.aside {
+  border-right: 1px solid var(--border-subtle);
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.main {
+  overflow-y: auto;
+  min-width: 0;
+}

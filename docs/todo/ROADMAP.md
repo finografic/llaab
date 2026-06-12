@@ -23,6 +23,13 @@ When an item is done, move it to the Done section at the bottom with a completio
 
 ## P0 — Active
 
+### Client migration: Astro → Vite 8 + React Router (SPA)
+
+Replace `apps/client` Astro SSR with a client-only Vite 8 SPA. Big-bang cutover when complete —
+no parallel runtime during migration.
+
+Detail: [`docs/todo/TODO_CLIENT_VITE_MIGRATION.md`](./TODO_CLIENT_VITE_MIGRATION.md)
+
 ### Navigation Pages Unlocked by Orchestration
 
 Build the next simple frontend pages for nav items that were locked while orchestration, providers,
