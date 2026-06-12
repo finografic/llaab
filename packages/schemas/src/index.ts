@@ -48,6 +48,10 @@ export {
   SourceKindSchema,
   type SourceNode,
   SourceNodeSchema,
+  type SourceProfile,
+  SourceProfilePlatformSchema,
+  type SourceProfilePlatform,
+  SourceProfileSchema,
 } from './source-node.schema.js';
 export {
   type TranscriptNode,

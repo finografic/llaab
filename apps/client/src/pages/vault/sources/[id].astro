@@ -8,6 +8,7 @@ import { buttonVariants } from 'components/ui/button';
 import { youTubeSubscribeUrl } from 'utils/youtube-source.utils';
 import { SourceTranscriptsTable } from 'tables/SourceTranscriptsTable/SourceTranscriptsTable';
 import type { SourceTranscriptsTableRow } from 'tables/SourceTranscriptsTable/SourceTranscriptsTable';
+import SourceProfilesDialog from 'dialogs/SourceProfilesDialog/SourceProfilesDialog.astro';
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
 import PageDetail from 'layouts/PageDetail.astro';
@@ -56,6 +57,10 @@ const linkedTranscriptRows: SourceTranscriptsTableRow[] = linkedTranscripts.map(
 
 const isYouTubeChannel = source.platforms.includes('youtube') && source.source_kind === 'channel';
 const youTubeSubscribeHref = isYouTubeChannel ? youTubeSubscribeUrl(source) : undefined;
+const primaryProfilePlatform = isYouTubeChannel ? 'youtube' : undefined;
+const suggestedGithubUrl = source.handle
+  ? `https://github.com/${source.handle.replace(/^@/, '')}`
+  : undefined;
 const subscriberLabel =
   source.subscriber_count != null ? `${formatAudienceCount(source.subscriber_count)} subscribers` : undefined;
 const videoLabel =
@@ -293,11 +298,14 @@ function parseYouTubePublishedAt(body: string): string | undefined {
               <>
                 <dt>Platforms</dt>
                 <dd>
-                  <div class="platform-row">
-                    {source.platforms.map((p) => (
-                      <span class="platform">{p}</span>
-                    ))}
-                  </div>
+                  <SourceProfilesDialog
+                    sourceId={source.id}
+                    sourceTitle={source.title}
+                    profiles={source.profiles}
+                    primaryUrl={source.url}
+                    primaryPlatform={primaryProfilePlatform}
+                    suggestedGithubUrl={suggestedGithubUrl}
+                  />
                 </dd>
               </>
             )
@@ -417,24 +425,6 @@ function parseYouTubePublishedAt(body: string): string | undefined {
 
   .channel-profile__description {
     white-space: pre-wrap;
-  }
-
-  /* ── Platform chips ── */
-
-  .platform-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
-  }
-
-  .platform {
-    font-size: var(--text-sm);
-    font-family: var(--font-mono);
-    color: var(--text-faint);
-    background: var(--surface-raised);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius);
-    padding: 1px 6px;
   }
 
   /* ── Source kind badges (base in app.css) ── */

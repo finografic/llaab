@@ -95,7 +95,7 @@ Homepage (`index.astro`) callout cards: Ingest, Vault, Runs, Models (2×2 via `B
 | `/vault/transcripts/[id]` | Detail: source metadata, summary, extracted ideas (linked), Re-extract button                             |
 | `/vault/nodes`            | PageLayout + NodesFileList island; nodes by type (idea/resource/prompt/skill/instruction)                 |
 | `/vault/nodes/[id]`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                              |
-| `/vault/sources/[id]`     | Detail: kind/follow/url/platforms, linked transcripts with idea count                                     |
+| `/vault/sources/[id]`     | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count            |
 | `/vault/runs/[id]`        | Detail: summary grid, stages table, decisions list, error block                                           |
 
 `AppSidebarLayout` (`packages/ui/src/components/app-sidebar-layout.tsx`) supports both
@@ -131,6 +131,7 @@ client does not receive false network failures while the server continues extrac
 | `POST /api/ingest/youtube`                | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`               |
 | `GET /api/vault/nodes`                    | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`                |
 | `GET /api/vault/nodes/:id`                | Single node by id                                                               |
+| `PATCH /api/vault/sources/:id/profiles`   | Updates linked source profiles (GitHub first)                                   |
 | `GET /api/vault/transcripts/:id/ideas`    | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`       |
 | `POST /api/vault/transcripts/:id/extract` | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }` |
 | `GET /api/runs`, `/:id`                   | Run list + detail with full stage/decision trace                                |
@@ -201,7 +202,7 @@ allowlist (`git`, `pnpm`, `node`, `yt-dlp`, `opencode`). The Terminal Panel expo
 | `TranscriptNode` | Ingested content; `source_url`, `source_type`, `summary` (optional), length stats |
 | `IdeaNode`       | Captured thought; `origin` (manual/extracted/generated), optional `source_id`     |
 | `SkillNode`      | Executable knowledge; inputs/outputs/tools, lineage                               |
-| `SourceNode`     | Person/channel/repo origin; `platforms`, `follow` flag                            |
+| `SourceNode`     | Person/channel/repo origin; `platforms`, linked `profiles`, `follow` flag         |
 | `RunNode`        | Execution trace; `stages`, `decisions`, LLM trace, `produced_node_ids`            |
 
 ## Taxonomy

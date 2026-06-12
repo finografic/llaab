@@ -1,0 +1,468 @@
+---
+import { buttonVariants } from 'components/ui/button';
+import { CirclePlusIcon, GitBranchIcon, PlaySquareIcon, XIcon } from 'lucide-react';
+import type { SourceProfile } from '@llaab/schemas';
+
+interface PlatformPill {
+  platform: SourceProfile['platform'];
+  label: string;
+  url: string;
+  primary?: boolean;
+}
+
+export interface Props {
+  sourceId: string;
+  sourceTitle: string;
+  profiles: SourceProfile[];
+  primaryUrl?: string;
+  primaryPlatform?: 'youtube';
+  suggestedGithubUrl?: string;
+}
+
+const { sourceId, sourceTitle, profiles, primaryUrl, primaryPlatform, suggestedGithubUrl } = Astro.props;
+
+function githubHandleFromUrl(url: string): string | undefined {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== 'github.com') return undefined;
+    const [handle] = parsed.pathname.split('/').filter(Boolean);
+    return handle;
+  } catch {
+    return undefined;
+  }
+}
+
+function platformLabel(platform: SourceProfile['platform']): string {
+  switch (platform) {
+    case 'github':
+      return 'GitHub';
+    case 'youtube':
+      return 'YouTube';
+    case 'x':
+      return 'X';
+    case 'bluesky':
+      return 'Bluesky';
+    case 'website':
+      return 'Website';
+    case 'twitch':
+      return 'Twitch';
+    case 'npm':
+      return 'npm';
+  }
+}
+
+function buildPills(): PlatformPill[] {
+  const primaryPill =
+    primaryUrl && primaryPlatform
+      ? [{ platform: primaryPlatform, label: platformLabel(primaryPlatform), url: primaryUrl, primary: true }]
+      : [];
+
+  const linkedPills = profiles.map((profile) => ({
+    platform: profile.platform,
+    label: profile.label ?? platformLabel(profile.platform),
+    url: profile.url,
+    primary: profile.primary,
+  }));
+
+  return [...primaryPill, ...linkedPills];
+}
+
+const initialGithub = profiles.find((profile) => profile.platform === 'github');
+const initialGithubUrl = initialGithub?.url ?? suggestedGithubUrl ?? '';
+const initialGithubEnabled = Boolean(initialGithub);
+const dialogId = `source-profiles-dialog-${sourceId}`;
+const githubInputId = `source-profile-github-${sourceId}`;
+const pills = buildPills();
+---
+
+<div class="source-profiles" data-source-profiles={sourceId}>
+  <div class="platform-row">
+    {
+      pills.map((pill) => (
+        <a
+          href={pill.url}
+          class:list={['platform-pill', pill.primary && 'primary-pill']}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {pill.platform === 'github' && <GitBranchIcon aria-hidden="true" />}
+          {pill.platform === 'youtube' && <PlaySquareIcon aria-hidden="true" />}
+          <span>{pill.label}</span>
+        </a>
+      ))
+    }
+
+    <button
+      type="button"
+      class:list={[buttonVariants({ variant: 'ghost', size: 'icon-xs' }), 'add-button']}
+      aria-label="Add linked platform"
+      aria-controls={dialogId}
+      data-source-profiles-open
+    >
+      <CirclePlusIcon aria-hidden="true" />
+    </button>
+  </div>
+
+  <dialog id={dialogId} class="profiles-dialog" data-source-profiles-dialog>
+    <div class="dialog-panel">
+      <header class="dialog-header">
+        <div>
+          <h2>Linked platforms</h2>
+          <p>Add platform profiles for this source.</p>
+        </div>
+        <button
+          type="button"
+          class:list={[buttonVariants({ variant: 'ghost', size: 'icon-xs' }), 'close-button']}
+          aria-label="Close linked platforms"
+          data-source-profiles-cancel
+        >
+          <XIcon aria-hidden="true" />
+        </button>
+      </header>
+
+      <div class="dialog-body">
+        <div class="platform-field">
+          <GitBranchIcon class="platform-icon" aria-hidden="true" />
+          <div class="input-stack">
+            <label for={githubInputId}>GitHub</label>
+            <input
+              id={githubInputId}
+              type="url"
+              value={initialGithubUrl}
+              placeholder={suggestedGithubUrl ?? 'https://github.com/t3dotgg'}
+              disabled={!initialGithubEnabled}
+              data-source-profiles-github-url
+            />
+          </div>
+          <input
+            type="checkbox"
+            aria-label="Enable GitHub profile"
+            checked={initialGithubEnabled}
+            data-source-profiles-github-enabled
+          />
+        </div>
+
+        <p class="error" hidden data-source-profiles-error></p>
+      </div>
+
+      <footer class="dialog-footer">
+        <button
+          type="button"
+          class:list={buttonVariants({ variant: 'outline', size: 'default' })}
+          data-source-profiles-cancel
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class:list={buttonVariants({ variant: 'outline', size: 'default' })}
+          data-source-profiles-save
+        >
+          OK
+        </button>
+      </footer>
+    </div>
+  </dialog>
+</div>
+
+<script
+  is:inline
+  define:vars={{
+    sourceId,
+    sourceTitle,
+    profiles,
+    initialGithubUrl,
+    initialGithubEnabled,
+    suggestedGithubUrl,
+  }}
+>
+  {
+    const root = document.querySelector(`[data-source-profiles="${sourceId}"]`);
+
+    if (root && !root.dataset.sourceProfilesBound) {
+      root.dataset.sourceProfilesBound = 'true';
+
+      const dialog = root.querySelector('[data-source-profiles-dialog]');
+      const openButton = root.querySelector('[data-source-profiles-open]');
+      const cancelButtons = root.querySelectorAll('[data-source-profiles-cancel]');
+      const saveButton = root.querySelector('[data-source-profiles-save]');
+      const githubInput = root.querySelector('[data-source-profiles-github-url]');
+      const githubCheckbox = root.querySelector('[data-source-profiles-github-enabled]');
+      const error = root.querySelector('[data-source-profiles-error]');
+
+      const githubHandleFromUrl = (url) => {
+        try {
+          const parsed = new URL(url);
+          if (parsed.hostname !== 'github.com') return undefined;
+          return parsed.pathname.split('/').filter(Boolean)[0];
+        } catch {
+          return undefined;
+        }
+      };
+
+      const normalizeGithubUrl = (value) => {
+        const trimmed = value.trim();
+        if (!trimmed) return undefined;
+
+        const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+        try {
+          const parsed = new URL(withProtocol);
+          if (parsed.hostname !== 'github.com') return undefined;
+          const handle = githubHandleFromUrl(parsed.toString());
+          return handle ? `https://github.com/${handle}` : undefined;
+        } catch {
+          return undefined;
+        }
+      };
+
+      const resetDialog = () => {
+        error.hidden = true;
+        error.textContent = '';
+        githubCheckbox.checked = initialGithubEnabled;
+        githubInput.value = initialGithubUrl;
+        githubInput.disabled = !initialGithubEnabled;
+        saveButton.disabled = false;
+      };
+
+      openButton.addEventListener('click', () => {
+        resetDialog();
+        dialog.showModal();
+      });
+
+      cancelButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          if (saveButton.disabled) return;
+          dialog.close();
+        });
+      });
+
+      githubCheckbox.addEventListener('change', () => {
+        githubInput.disabled = !githubCheckbox.checked;
+        if (githubCheckbox.checked && !githubInput.value.trim()) {
+          githubInput.value = suggestedGithubUrl ?? '';
+        }
+      });
+
+      saveButton.addEventListener('click', async () => {
+        error.hidden = true;
+        error.textContent = '';
+
+        const nextProfiles = profiles.filter((profile) => profile.platform !== 'github');
+        const normalizedGithubUrl = normalizeGithubUrl(githubInput.value);
+
+        if (githubCheckbox.checked) {
+          if (!normalizedGithubUrl) {
+            error.textContent = 'Enter a valid GitHub profile URL.';
+            error.hidden = false;
+            return;
+          }
+
+          nextProfiles.push({
+            platform: 'github',
+            url: normalizedGithubUrl,
+            handle: githubHandleFromUrl(normalizedGithubUrl),
+          });
+        }
+
+        saveButton.disabled = true;
+
+        try {
+          const response = await fetch(`/api/vault/sources/${sourceId}/profiles`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profiles: nextProfiles }),
+          });
+
+          if (!response.ok) {
+            const body = await response.json().catch(() => null);
+            throw new Error(body?.error ?? 'Failed to update profiles.');
+          }
+
+          window.location.reload();
+        } catch (err) {
+          error.textContent = err instanceof Error ? err.message : 'Failed to update profiles.';
+          error.hidden = false;
+          saveButton.disabled = false;
+        }
+      });
+    }
+  }
+</script>
+
+<style>
+  .platform-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .platform-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 1px 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    background: var(--surface-raised);
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    text-decoration: none;
+  }
+
+  .platform-pill:hover {
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .platform-pill svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .primary-pill {
+    color: var(--text-muted);
+  }
+
+  .add-button {
+    width: 1.25rem;
+    height: 1.25rem;
+    min-height: 1.25rem;
+    color: var(--accent);
+  }
+
+  .add-button:hover {
+    color: var(--accent-bright);
+  }
+
+  .profiles-dialog {
+    position: fixed;
+    inset: 0;
+    width: min(100vw - var(--space-8), 34rem);
+    max-height: min(100vh - var(--space-8), 32rem);
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .profiles-dialog::backdrop {
+    background: rgb(0 0 0 / 0.72);
+    backdrop-filter: blur(6px);
+  }
+
+  .dialog-panel {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .dialog-header,
+  .dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .dialog-header {
+    padding-bottom: 0;
+  }
+
+  .dialog-header h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .dialog-header p {
+    margin: var(--space-1) 0 0;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+  }
+
+  .close-button {
+    align-self: start;
+    color: var(--text-muted);
+  }
+
+  .dialog-body {
+    display: grid;
+    gap: var(--space-2);
+    padding: 0 var(--space-4);
+  }
+
+  .platform-field {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .platform-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--text-muted);
+  }
+
+  .input-stack {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .input-stack label {
+    color: var(--text);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .input-stack input {
+    width: 100%;
+    min-width: 0;
+    height: 2rem;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--input);
+    border-radius: var(--radius-lg);
+    background: transparent;
+    color: var(--text);
+    font-size: var(--text-sm);
+    outline: none;
+  }
+
+  .input-stack input:focus-visible {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring), transparent 50%);
+  }
+
+  .input-stack input:disabled {
+    cursor: not-allowed;
+    background: var(--input);
+    opacity: 0.55;
+  }
+
+  [data-source-profiles-github-enabled] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--accent);
+  }
+
+  .error {
+    margin: 0;
+    color: var(--error);
+    font-size: var(--text-sm);
+  }
+
+  .dialog-footer {
+    justify-content: end;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--surface-raised);
+  }
+</style>

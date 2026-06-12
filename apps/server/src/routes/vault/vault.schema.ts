@@ -1,4 +1,4 @@
-import { NodeTypeSchema } from '@llaab/schemas';
+import { NodeTypeSchema, SourceProfileSchema } from '@llaab/schemas';
 import { z } from 'zod';
 
 export const listNodesQuerySchema = z.object({
@@ -31,3 +31,9 @@ export const deleteRunQuerySchema = z.object({
 });
 
 export type DeleteRunQuery = z.infer<typeof deleteRunQuerySchema>;
+
+export const updateSourceProfilesBodySchema = z.object({
+  profiles: z.array(SourceProfileSchema),
+});
+
+export type UpdateSourceProfilesBody = z.infer<typeof updateSourceProfilesBodySchema>;

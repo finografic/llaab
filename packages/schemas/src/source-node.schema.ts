@@ -3,6 +3,23 @@ import { z } from 'zod';
 import { BaseNodeSchema } from './base-node.schema.js';
 
 export const SourceKindSchema = z.enum(['person', 'channel', 'repo', 'publication', 'organization', 'other']);
+export const SourceProfilePlatformSchema = z.enum([
+  'youtube',
+  'github',
+  'x',
+  'bluesky',
+  'website',
+  'twitch',
+  'npm',
+]);
+
+export const SourceProfileSchema = z.object({
+  platform: SourceProfilePlatformSchema,
+  url: z.string().url(),
+  handle: z.string().optional(),
+  label: z.string().optional(),
+  primary: z.boolean().optional(),
+});
 
 export const SourceNodeSchema = BaseNodeSchema.extend({
   type: z.literal('source'),
@@ -23,7 +40,10 @@ export const SourceNodeSchema = BaseNodeSchema.extend({
   metadata_fetched_at: z.string().optional(),
   /** Whether the configured Google account subscribes to this channel, when checkable. */
   youtube_subscribed: z.boolean().optional(),
+  profiles: z.array(SourceProfileSchema).default([]),
 });
 
 export type SourceNode = z.infer<typeof SourceNodeSchema>;
 export type SourceKind = z.infer<typeof SourceKindSchema>;
+export type SourceProfile = z.infer<typeof SourceProfileSchema>;
+export type SourceProfilePlatform = z.infer<typeof SourceProfilePlatformSchema>;

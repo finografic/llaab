@@ -41,6 +41,9 @@ export default defineConfig({
             if (pathname === '/api/vault/clean-recent') {
               return pathname;
             }
+            if (/^\/api\/vault\/sources\/[^/]+\/profiles$/.test(pathname)) {
+              return pathname;
+            }
           },
         },
       },
