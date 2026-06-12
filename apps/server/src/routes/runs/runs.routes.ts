@@ -1,4 +1,5 @@
 import { listNodes } from '@llaab/core';
+import { ingestYouTube } from '@llaab/skills';
 import type { AppCtx } from '../../types/app.types.js';
 import type { LabNode, RunMonitorItem, RunMonitorStep, RunNode } from '@llaab/schemas';
 
@@ -129,6 +130,7 @@ function runToMonitorItem(run: RunNode, nodesById: Map<string, LabNode>): RunMon
     primary_link: primaryNode ? { label: primaryNode.title, href: nodeHref(primaryNode) } : undefined,
     run_link: { label: run.id, href: `/vault/runs/${run.id}` },
     steps: run.stages.map(stageToStep),
+    events: run.events,
     model: run.llm?.model ?? run.model_used,
     provider: run.llm?.provider,
     prompt_tokens: run.llm?.prompt_tokens,
@@ -172,5 +174,53 @@ export const detail = {
     const run = (all as RunNode[]).find((r) => r.id === id);
     if (!run) return c.json({ error: 'Run not found' }, 404);
     return c.json({ run });
+  },
+};
+
+export const retry = {
+  path: '/:id/retry' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    const all = await listNodes({ type: 'run' });
+    const run = (all as RunNode[]).find((r) => r.id === id);
+    if (!run) return c.json({ error: 'Run not found' }, 404);
+    if (run.run_status !== 'failed') {
+      return c.json({ error: 'Only failed runs can be retried.' }, 400);
+    }
+    if (run.skill_id !== 'ingest-youtube') {
+      return c.json({ error: 'Retry is only supported for ingest-youtube runs.' }, 400);
+    }
+
+    let input: { url?: string; title?: string; tags?: string[]; skipExtraction?: boolean };
+    try {
+      input = JSON.parse(run.input_summary ?? '');
+    } catch {
+      return c.json({ error: 'Unable to parse the original run input for retry.' }, 400);
+    }
+    if (!input.url) {
+      return c.json({ error: 'The original run input is missing a url.' }, 400);
+    }
+
+    const { record, result, extraction, extractionError } = await ingestYouTube({
+      url: input.url,
+      title: input.title,
+      tags: input.tags,
+      skipExtraction: input.skipExtraction,
+    });
+
+    if (record.status === 'failed') {
+      return c.json(
+        { success: false as const, runId: record.runNodeId, error: record.error ?? 'Retry failed.' },
+        500,
+      );
+    }
+
+    return c.json({
+      success: true as const,
+      runId: record.runNodeId,
+      result: { id: result.id },
+      extraction: extraction ? { ideaCount: extraction.ideaIds.length } : null,
+      extractionError: extractionError ?? null,
+    });
   },
 };

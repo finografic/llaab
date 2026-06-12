@@ -3,7 +3,7 @@ import { formatIsoUtcSeconds } from '@llaab/schemas';
 import type { SkillRunRecord } from './runner.js';
 import type { ExtractionResult, IngestionResult } from '@llaab/ingestion';
 
-import { appendProducedNodeIds, runSkill } from './runner.js';
+import { appendProducedNodeIds, appendRunEvent, runSkill } from './runner.js';
 
 export interface IngestYouTubeInput {
   url: string;
@@ -22,13 +22,23 @@ export interface IngestYouTubeOutput {
 export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYouTubeOutput> {
   const { record, result } = await runSkill(
     'ingest-youtube',
-    () =>
-      runIngestionPipeline({
+    async (skillInput, runNodeId) => {
+      const pipelineResult = await runIngestionPipeline({
         sourceType: 'youtube',
-        url: input.url,
-        ...(input.title !== undefined && input.title !== '' ? { title: input.title } : {}),
-        tags: input.tags,
-      }),
+        url: skillInput.url,
+        ...(skillInput.title !== undefined && skillInput.title !== '' ? { title: skillInput.title } : {}),
+        tags: skillInput.tags,
+      });
+
+      await appendRunEvent(runNodeId, {
+        level: 'success',
+        message: `Saved transcript "${pipelineResult.id}"`,
+        node_ids: [pipelineResult.id],
+        href: `/vault/transcripts/${pipelineResult.id}`,
+      });
+
+      return pipelineResult;
+    },
     input,
   );
 
@@ -46,6 +56,11 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYo
 
   // Auto-try extraction — transcript is already persisted, this is best-effort.
   if (result.plainText && !input.skipExtraction) {
+    await appendRunEvent(record.runNodeId, {
+      level: 'info',
+      message: 'Extracting ideas from transcript',
+    });
+
     try {
       const extraction = await extractKnowledgeFromTranscript(
         result.id,
@@ -56,10 +71,19 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYo
       await appendProducedNodeIds(record.runNodeId, extraction.ideaIds, {
         completedAt: formatIsoUtcSeconds(new Date()),
       });
+      await appendRunEvent(record.runNodeId, {
+        level: 'success',
+        message: `Extracted ${extraction.ideaIds.length} idea${extraction.ideaIds.length === 1 ? '' : 's'}`,
+        node_ids: extraction.ideaIds,
+      });
       console.log(`  extraction: ${extraction.ideaIds.length} ideas, summary written`);
       return { record, result, extraction };
     } catch (err) {
       const extractionError = err instanceof Error ? err.message : String(err);
+      await appendRunEvent(record.runNodeId, {
+        level: 'warning',
+        message: `Extraction failed (transcript saved): ${extractionError}`,
+      });
       console.warn(`  extraction failed (transcript saved): ${extractionError}`);
       return { record, result, extractionError };
     }

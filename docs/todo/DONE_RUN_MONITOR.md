@@ -1,6 +1,6 @@
-# TODO — App-Wide Run Monitor
+# DONE — App-Wide Run Monitor
 
-> **Status:** In progress.
+> **Completed:** 2026-06-13 — app-wide Run Monitor with durable run events, live polling, and retry.
 
 ---
 
@@ -71,28 +71,42 @@ inspiration, adapt the terminology to **Activity**, **Trace**, or **Execution Tr
 
 ## Progress
 
-- [ ] Phase 1 — data model for run steps and events.
+- [x] Phase 1 — data model for run steps and events.
 - [x] Phase 2 — server API for active/recent runs.
 - [x] Phase 3 — app-wide sidebar shell in `AppLayout`.
-- [ ] Phase 4 — ingestion and extraction write progress events.
-- [ ] Phase 5 — live refresh via polling or SSE.
-- [ ] Phase 6 — retry/navigation polish.
+- [x] Phase 4 — ingestion and extraction write progress events.
+- [x] Phase 5 — live refresh via polling or SSE.
+- [x] Phase 6 — retry/navigation polish.
 
 Current implementation:
 
-- `GET /api/runs/monitor` derives active and recent run summaries from existing `RunNode` data.
-- Existing `RunNode.stages` render as the first monitor task list.
-- `RunMonitor` lives once in `AppLayout` and shares the root TanStack Query cache.
+- `RunNodeSchema` carries a durable `events: RunEvent[]` trace (id, at, level, message, optional
+  `node_ids`/`href`) alongside `stages`/`decisions`. `RunMonitorItemSchema` exposes the same
+  `events` array to the client.
+- `runSkill` persists the run node immediately with `run_status: 'running'` (a pending `execute`
+  stage and a "Started ..." event) before the skill body runs, then finalizes it
+  (`run_status: completed | failed`, final stages/decisions, a "Completed/failed ..." event) once
+  it settles. `appendRunEvent(runNodeId, event)` lets skills append durable progress events
+  mid-run.
+- `ingestYouTube` emits events for transcript saved, extraction started, ideas extracted, and
+  extraction failures — visible in the monitor's Activity feed.
+- `GET /api/runs/monitor` derives active and recent run summaries (including `events`) from
+  `RunNode` data. `POST /api/runs/:id/retry` re-dispatches a failed `ingest-youtube` run from its
+  recorded input.
+- `RunMonitor` lives once in `AppLayout`, shares the root TanStack Query cache, and renders an
+  Activity feed per run plus a Retry action for failed ingest-youtube runs.
 - UI state uses a root `RunMonitorProvider` powered by `@finografic/zustand-context-creator`.
-- The monitor polls while open; smarter polling while active runs exist remains part of Phase 5.
+- `useRunMonitor` polls every 4s while any run is active (even when the sheet/trigger is closed)
+  and every 20s otherwise; the sheet polls every 3s while open. `IngestForm` invalidates the
+  monitor query when a run starts and again after extraction completes.
 
 ## Next TODO
 
-- Add durable `RunNode.events` or equivalent trace events for ingestion and extraction activity.
-- Make active runs invalidate or poll the monitor even when the drawer is closed.
-- Seed or invalidate the monitor query immediately after starting ingest/extract actions.
-- Add retry actions once server retry routes exist.
-- Add browser/manual coverage for an actually running ingestion job, not only recent completed runs.
+- Extraction currently runs after the `ingest-youtube` run's `execute` stage finalizes
+  (`run_status` flips to `completed` before extraction starts), so extraction-in-progress runs
+  show up in "recent" rather than "active". Revisit if extraction should keep the run "running".
+- Consider an SSE stream for active run updates instead of polling, if polling proves too coarse.
+- Extend retry to other skills/run types once there is a second one to generalize from.
 
 ## Phase 1 — Data Model
 

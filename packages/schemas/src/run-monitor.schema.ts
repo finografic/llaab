@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { NodeIdSchema, RunStatusSchema, TimestampSchema } from './primitives.schema.js';
+import { RunEventSchema } from './run-node.schema.js';
 
 export const RunMonitorStepStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'skipped']);
 
@@ -31,6 +32,7 @@ export const RunMonitorItemSchema = z.object({
   primary_link: RunMonitorLinkSchema.optional(),
   run_link: RunMonitorLinkSchema,
   steps: z.array(RunMonitorStepSchema),
+  events: z.array(RunEventSchema),
   model: z.string().optional(),
   provider: z.string().optional(),
   prompt_tokens: z.number().int().nonnegative().optional(),

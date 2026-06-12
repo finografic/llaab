@@ -6,7 +6,7 @@ import {
   NodeIdSchema,
   toNodeId,
 } from '@llaab/schemas';
-import type { RunNode } from '@llaab/schemas';
+import type { RunEvent, RunNode } from '@llaab/schemas';
 
 export interface SkillRunRecord {
   name: string;
@@ -51,6 +51,30 @@ export async function appendProducedNodeIds(
               : run.duration_ms,
           }
         : {}),
+    };
+  });
+}
+
+/**
+ * Appends a trace event onto a persisted run's `events` — for durable, timestamped progress
+ * updates (transcript fetched, extraction started, ideas written, etc.) that the run monitor
+ * displays as an activity feed while the run is still active.
+ */
+export async function appendRunEvent(
+  runNodeId: string,
+  event: Pick<RunEvent, 'level' | 'message'> & Partial<Pick<RunEvent, 'node_ids' | 'href'>>,
+): Promise<void> {
+  const runPath = getNodeFilePath('run', runNodeId);
+  await updateNode(runPath, (node) => {
+    const run = node as RunNode;
+    const nextEvent: RunEvent = {
+      id: `${run.events.length}-${formatIsoUtcSeconds(new Date())}`,
+      at: formatIsoUtcSeconds(new Date()),
+      ...event,
+    };
+    return {
+      ...run,
+      events: [...run.events, nextEvent],
     };
   });
 }
@@ -160,7 +184,44 @@ function collectProducedNodeIds(value: unknown): string[] {
   return [];
 }
 
-async function persistRunNode(input: {
+/**
+ * Creates the run node immediately, before `execute()` starts, so the run monitor can show it as
+ * "running" while the skill is still in progress.
+ */
+async function createRunningRunNode(input: {
+  name: string;
+  runNodeId: string;
+  startedAt: string;
+  rawInput: unknown;
+}): Promise<void> {
+  await createNode({
+    type: 'run',
+    id: input.runNodeId,
+    title: `${input.name} run ${formatIsoUtcForTranscriptBody(input.startedAt)}`,
+    body: '',
+    tags: ['run', input.name],
+    extra: {
+      status: 'mature',
+      skill_id: toNodeId(input.name),
+      run_status: 'running',
+      input_summary: summarizeValue(input.rawInput),
+      produced_node_ids: [],
+      started_at: input.startedAt,
+      stages: [{ name: 'execute', status: 'pending', input: input.rawInput }],
+      decisions: [],
+      events: [
+        {
+          id: 'start',
+          at: input.startedAt,
+          level: 'info',
+          message: `Started ${input.name}`,
+        },
+      ],
+    },
+  });
+}
+
+async function finalizeRunNode(input: {
   name: string;
   runNodeId: string;
   startedAt: string;
@@ -172,23 +233,17 @@ async function persistRunNode(input: {
   nestedTrace?: NestedRunTrace;
 }): Promise<void> {
   const stageOutput = input.rawOutput === undefined ? undefined : stripRunTrace(input.rawOutput);
+  const runPath = getNodeFilePath('run', input.runNodeId);
 
-  await createNode({
-    type: 'run',
-    id: input.runNodeId,
-    title: `${input.name} run ${formatIsoUtcForTranscriptBody(input.startedAt)}`,
-    body: '',
-    tags: ['run', input.name],
-    extra: {
-      status: 'mature',
-      skill_id: toNodeId(input.name),
+  await updateNode(runPath, (node) => {
+    const run = node as RunNode;
+    return {
+      ...run,
       run_status: input.status,
-      input_summary: summarizeValue(input.rawInput),
       output_summary: stageOutput === undefined ? undefined : summarizeValue(stageOutput),
       produced_node_ids: stageOutput === undefined ? [] : collectProducedNodeIds(stageOutput),
       duration_ms: Date.parse(input.completedAt) - Date.parse(input.startedAt),
       error: input.error,
-      started_at: input.startedAt,
       completed_at: input.completedAt,
       stages: [
         ...(input.nestedTrace?.stages ?? []),
@@ -210,26 +265,41 @@ async function persistRunNode(input: {
               : 'Skill execution failed before producing an acceptable output.',
         },
       ],
-      llm: input.nestedTrace?.llm,
-    },
+      events: [
+        ...run.events,
+        {
+          id: 'finish',
+          at: input.completedAt,
+          level: input.status === 'completed' ? 'success' : 'error',
+          message:
+            input.status === 'completed'
+              ? `Completed ${input.name}`
+              : `${input.name} failed: ${input.error ?? 'unknown error'}`,
+        },
+      ],
+      llm: input.nestedTrace?.llm ?? run.llm,
+    };
   });
 }
 
 export async function runSkill<TInput, TOutput>(
   name: string,
-  execute: (input: TInput) => Promise<TOutput>,
+  execute: (input: TInput, runNodeId: string) => Promise<TOutput>,
   input: TInput,
 ): Promise<{ record: SkillRunRecord; result: TOutput }> {
   const startTime = new Date();
   const startedAt = formatIsoUtcSeconds(startTime);
   const runNodeId = buildRunNodeId(name, startTime);
+
+  await createRunningRunNode({ name, runNodeId, startedAt, rawInput: input });
+
   try {
-    const result = await execute(input);
+    const result = await execute(input, runNodeId);
     const completedAt = formatIsoUtcSeconds(new Date());
     const nestedTrace = extractNestedRunTrace(result);
     const publicResult = stripRunTrace(result);
 
-    await persistRunNode({
+    await finalizeRunNode({
       name,
       runNodeId,
       startedAt,
@@ -256,7 +326,7 @@ export async function runSkill<TInput, TOutput>(
     const completedAt = formatIsoUtcSeconds(new Date());
     const nestedTrace = extractNestedRunTraceFromError(error);
 
-    await persistRunNode({
+    await finalizeRunNode({
       name,
       runNodeId,
       startedAt,

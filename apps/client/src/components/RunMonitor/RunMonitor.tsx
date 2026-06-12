@@ -1,5 +1,6 @@
 import { cn } from '@llaab/ui/lib/utils';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from 'components/ui/accordion';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
 import { ScrollArea } from 'components/ui/scroll-area';
@@ -11,14 +12,15 @@ import {
   ClockIcon,
   ExternalLinkIcon,
   LoaderCircleIcon,
+  RotateCcwIcon,
   XCircleIcon,
   XIcon,
 } from 'lucide-react';
 import { useRunMonitorState } from 'providers/RunMonitorProvider';
-import { useRunMonitor } from 'queries/runs';
+import { useRetryRun, useRunMonitor } from 'queries/runs';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import type { RunMonitorItem, RunMonitorStep } from '@llaab/schemas';
+import type { RunEvent, RunMonitorItem, RunMonitorStep } from '@llaab/schemas';
 
 import styles from './RunMonitor.module.css';
 
@@ -62,9 +64,43 @@ function StepIcon({ step }: { step: RunMonitorStep }) {
   return <CircleIcon className={styles.stepIcon} size={16} />;
 }
 
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function eventMessageClassName(level: RunEvent['level']) {
+  if (level === 'error') return styles.activityMessageError;
+  if (level === 'warning') return styles.activityMessageWarning;
+  if (level === 'success') return styles.activityMessageSuccess;
+  return styles.activityMessage;
+}
+
+function ActivityFeed({ events }: { events: RunEvent[] }) {
+  if (events.length === 0) return null;
+
+  return (
+    <div className={styles.activity}>
+      <span className={styles.activityTitle}>Activity</span>
+      {events.map((event) => (
+        <div key={event.id} className={styles.activityEvent}>
+          <time className={styles.activityTime} dateTime={event.at}>
+            {formatTime(event.at)}
+          </time>
+          <span className={eventMessageClassName(event.level)}>{event.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MonitorCard({ run }: { run: RunMonitorItem }) {
   const { dismissRun } = useRunMonitorState();
+  const retryRun = useRetryRun();
   const isActive = isActiveRun(run);
+  const isFailed = run.status === 'failed';
+  const canRetry = isFailed && run.skill_id === 'ingest-youtube';
+  const hasDetails =
+    run.steps.length > 0 || run.events.length > 0 || run.model !== undefined || run.provider !== undefined;
   const timestamp = formatDateTime(run.completed_at ?? run.started_at);
   const summary = run.output_summary ?? run.input_summary ?? run.error;
 
@@ -91,41 +127,64 @@ function MonitorCard({ run }: { run: RunMonitorItem }) {
         {run.produced_node_count > 0 ? <span>{run.produced_node_count} nodes</span> : null}
       </div>
 
-      {run.steps.length > 0 ? (
-        <div className={styles.steps}>
-          {run.steps.map((step) => (
-            <div key={step.id} className={styles.step}>
-              <StepIcon step={step} />
-              <div>
-                <div className={styles.stepTitle}>{step.title}</div>
-                {step.detail ? <div className={styles.stepDetail}>{step.detail}</div> : null}
-              </div>
-            </div>
-          ))}
-        </div>
+      {hasDetails ? (
+        <Accordion type="single" collapsible defaultValue={isActive || isFailed ? 'details' : undefined}>
+          <AccordionItem value="details" className={styles.accordionItem}>
+            <AccordionTrigger className={styles.accordionTrigger}>
+              {run.steps.length > 0
+                ? `${run.steps.length} step${run.steps.length === 1 ? '' : 's'}`
+                : 'Activity'}
+            </AccordionTrigger>
+            <AccordionContent className={styles.accordionContent}>
+              {run.steps.length > 0 ? (
+                <div className={styles.steps}>
+                  {run.steps.map((step) => (
+                    <div key={step.id} className={styles.step}>
+                      <StepIcon step={step} />
+                      <div>
+                        <div className={styles.stepTitle}>{step.title}</div>
+                        {step.detail ? <div className={styles.stepDetail}>{step.detail}</div> : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <ActivityFeed events={run.events} />
+
+              <ExtractionModelCard
+                variant="compact-bar"
+                model={run.model}
+                provider={run.provider}
+                durationMs={run.duration_ms}
+                promptTokens={run.prompt_tokens}
+                completionTokens={run.completion_tokens}
+                className={styles.modelBar}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       ) : null}
 
-      <ExtractionModelCard
-        variant="compact-bar"
-        model={run.model}
-        provider={run.provider}
-        durationMs={run.duration_ms}
-        promptTokens={run.prompt_tokens}
-        completionTokens={run.completion_tokens}
-        className={styles.modelBar}
-      />
-
       {!isActive ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="self-end"
-          onClick={() => dismissRun(run.id)}
-        >
-          <XIcon aria-hidden />
-          Dismiss
-        </Button>
+        <div className={styles.footer}>
+          {canRetry ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={retryRun.isPending}
+              onClick={() => retryRun.mutate(run.id)}
+            >
+              <RotateCcwIcon aria-hidden className={retryRun.isPending ? 'animate-spin' : undefined} />
+              Retry
+            </Button>
+          ) : null}
+          <Button type="button" variant="ghost" size="sm" onClick={() => dismissRun(run.id)}>
+            <XIcon aria-hidden />
+            Dismiss
+          </Button>
+        </div>
       ) : null}
     </article>
   );
@@ -176,7 +235,7 @@ export function RunMonitor() {
 
 export function RunMonitorTrigger() {
   const { openRunMonitor } = useRunMonitorState();
-  const { data } = useRunMonitor({ refetchInterval: false });
+  const { data } = useRunMonitor();
   const activeCount = data?.active.length ?? 0;
 
   return (

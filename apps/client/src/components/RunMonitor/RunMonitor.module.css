@@ -14,7 +14,7 @@
   padding: 0 4px;
   border: 1px solid var(--background);
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--info-text);
   color: var(--background);
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
@@ -188,4 +188,81 @@
 .modelBar {
   border-top: 1px solid var(--border);
   padding-top: var(--space-2);
+}
+
+.accordionItem {
+  border-bottom: none;
+}
+
+.accordionTrigger {
+  padding: var(--space-1) 0;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.accordionTrigger:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.accordionContent > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: 0;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.activity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+}
+
+.activityTitle {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.activityEvent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.activityTime {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+}
+
+.activityMessage {
+  color: var(--text-muted);
+}
+
+.activityMessageError {
+  color: var(--error-text);
+}
+
+.activityMessageWarning {
+  color: var(--warning-text);
+}
+
+.activityMessageSuccess {
+  color: var(--success-text);
 }

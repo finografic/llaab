@@ -1,4 +1,5 @@
 import { CheckIcon, CountdownTimerIcon, XIcon } from '@llaab/icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
@@ -6,6 +7,7 @@ import { Label } from 'components/ui/label';
 import { Spinner } from 'components/ui/spinner';
 import { RotateCcwIcon } from 'lucide-react';
 import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
+import { QUERY_KEYS } from 'queries/runs';
 import { useDiscardTranscript, useExtractTranscript, useIngestYoutube } from 'queries/transcripts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -59,6 +61,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     watch,
   } = useForm<FormValues>({ defaultValues: { url: '' } });
 
+  const queryClient = useQueryClient();
   const ingestYoutube = useIngestYoutube();
   const extractTranscript = useExtractTranscript();
   const discardTranscript = useDiscardTranscript();
@@ -186,6 +189,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     const pendingTag = tagInput.trim() ? normalizeTag(tagInput) : null;
     const allTags = pendingTag ? [...new Set([...tags, pendingTag])] : tags;
 
+    // The skill persists the run node immediately, so the monitor can show it as "running" as
+    // soon as the request lands — refresh now rather than waiting for the next poll.
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
+
     let transcriptId: string;
 
     try {
@@ -232,6 +239,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setExtractionElapsedSecs(Math.floor((Date.now() - extractionStart) / 1000));
     setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
     setBusy(false);
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
   };
 
   const onRetryIngest = () => {

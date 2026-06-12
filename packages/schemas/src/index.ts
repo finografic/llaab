@@ -37,7 +37,13 @@ export {
   RunMonitorStepSchema,
   RunMonitorStepStatusSchema,
 } from './run-monitor.schema.js';
-export { type RunNode, RunNodeSchema } from './run-node.schema.js';
+export {
+  type RunEvent,
+  RunEventLevelSchema,
+  RunEventSchema,
+  type RunNode,
+  RunNodeSchema,
+} from './run-node.schema.js';
 export {
   appendDatetimeFilenameSegment,
   buildRunNodeId,

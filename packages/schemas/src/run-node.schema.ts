@@ -20,6 +20,17 @@ const RunDecisionSchema = z.object({
   reason: z.string().min(1),
 });
 
+export const RunEventLevelSchema = z.enum(['info', 'success', 'warning', 'error']);
+
+export const RunEventSchema = z.object({
+  id: z.string().min(1),
+  at: TimestampSchema,
+  level: RunEventLevelSchema,
+  message: z.string().min(1),
+  node_ids: z.array(NodeIdSchema).optional(),
+  href: z.string().optional(),
+});
+
 const RunLlmTraceSchema = z.object({
   model: z.string().optional(),
   provider: z.string().optional(),
@@ -39,6 +50,7 @@ export const RunNodeSchema = BaseNodeSchema.extend({
   produced_node_ids: z.array(NodeIdSchema).default([]),
   stages: z.array(RunStageSchema).default([]),
   decisions: z.array(RunDecisionSchema).default([]),
+  events: z.array(RunEventSchema).default([]),
   llm: RunLlmTraceSchema.optional(),
   model_used: z.string().optional(),
   duration_ms: z.number().int().nonnegative().optional(),
@@ -48,3 +60,4 @@ export const RunNodeSchema = BaseNodeSchema.extend({
 });
 
 export type RunNode = z.infer<typeof RunNodeSchema>;
+export type RunEvent = z.infer<typeof RunEventSchema>;
