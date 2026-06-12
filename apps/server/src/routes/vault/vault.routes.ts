@@ -1,12 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { createNode, deleteNode, getNodeFilePath, listNodes, readNode, VAULT_ROOT } from '@llaab/core';
-import { extractKnowledgeFromTranscript } from '@llaab/ingestion';
+import { enrichSourceMetadata, extractKnowledgeFromTranscript } from '@llaab/ingestion';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
 import { appendProducedNodeIds } from '@llaab/skills';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type { CreateNodeBody, ListNodesQuery } from './vault.schema.js';
-import type { RunNode, TranscriptNode } from '@llaab/schemas';
+import type { RunNode, SourceNode, TranscriptNode } from '@llaab/schemas';
 
 import { deleteRunQuerySchema } from './vault.schema.js';
 
@@ -218,6 +218,29 @@ export const deleteRun = {
 
     await deleteNode('run', id);
     return c.json({ success: true, deletedProduced });
+  },
+};
+
+export const enrichSource = {
+  path: '/sources/:id/enrich' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    const force = c.req.query('force') === 'true';
+
+    const nodes = await listNodes({ type: 'source' });
+    const source = nodes.find((node) => node.id === id) as SourceNode | undefined;
+    if (!source) return c.json({ error: 'Source not found' }, 404);
+
+    try {
+      const result = await enrichSourceMetadata(source, { force });
+      return c.json({
+        source: result.source,
+        fetched: result.fetched,
+        subscriptionChecked: result.subscriptionChecked,
+      });
+    } catch (err) {
+      return c.json({ error: err instanceof Error ? err.message : 'Failed to enrich source metadata.' }, 500);
+    }
   },
 };
 

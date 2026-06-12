@@ -83,23 +83,23 @@ export function renderRunAuthorCell(run: RunNode, sourcesById: Map<string, Sourc
   const sourceId = extractRunSourceId(run);
   const source = sourceId ? sourcesById.get(sourceId) : undefined;
   const author = extractRunAuthor(run) ?? source?.title;
-  const follow = source?.follow;
+  const following = source?.youtube_subscribed;
 
-  if (!author && follow !== true) {
+  if (!author && following == null) {
     return <span className={styles.muted}>—</span>;
   }
 
   return (
     <div className={styles.authorCell}>
-      {follow === true ? (
+      {following === true ? (
         <span className={`${styles.badge} ${styles.follow}`}>
           <UserCheckIcon size={18} />
         </span>
-      ) : (
+      ) : following === false ? (
         <span className={styles.muted}>
           <UserXIcon size={18} />
         </span>
-      )}
+      ) : null}
       {author &&
         (sourceId ? (
           <a href={`/vault/sources/${sourceId}`} className={styles.authorLink}>

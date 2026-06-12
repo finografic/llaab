@@ -1,9 +1,11 @@
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import node from '@astrojs/node';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
 
+const repoRoot = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const SERVER_URL = process.env['SERVER_URL'] ?? 'http://localhost:3000';
 const OUT_DIR = process.env['LLAAB_CLIENT_OUT_DIR']
   ? path.resolve(process.env['LLAAB_CLIENT_OUT_DIR'])
@@ -25,6 +27,8 @@ export default defineConfig({
     port: DEV_PORT,
   },
   vite: {
+    /** Monorepo root `.env` — OAuth and API keys live there, not under `apps/client`. */
+    envDir: repoRoot,
     plugins: [tailwindcss()],
     server: {
       proxy: {

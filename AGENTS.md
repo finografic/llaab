@@ -130,6 +130,7 @@ Hand-rolling what shadcn provides is not permitted.
 - **Sticky app header:** `AppHeader` is sticky on all pages (`--header-h`). Sidebars must use `AppSidebarLayout` with `position="inline"`—never shadcn fixed `inset-y-0` sidebars under the app header (they overlap the nav). See `.github/instructions/project/components-shadcn.instructions.md` § Sidebars.
 - Tag groups use `<div class="tags">` with `tag-row` children—generic `div` for layout, not `section`/`article`; prefer `tags` over `-wrapper`/`-container` class names.
 - Vault node list pages should use shadcn `DataTable` via wrappers in `apps/client/src/tables/`; avoid one-off HTML tables for node lists. In `*Table.tsx` wrappers, define column cell renderers at module scope with explicit `CellContext<T, unknown>` typing—copy `SourcesTable`/`TranscriptsTable` as templates; do not nest renderers inside `useMemo`.
+- For shadcn sidebar **blocks**, the docs URL plus `pnpm dlx shadcn@latest add sidebar-XX` from `apps/client` is usually enough—adapt through `AppSidebarLayout`; a local v0 export is optional, not required.
 
 ## Learned Workspace Facts
 
@@ -138,7 +139,7 @@ Hand-rolling what shadcn provides is not permitted.
 - Commitlint: rule severity is numeric only (`0` / `1` / `2`, not `error`); commit types are `build`, `chore`, `ci`, `deps`, `docs`, `feat`, `fix`, `refactor`, `revert`, `style`, `test`—use `agents` / `skills` as scopes, not custom types.
 - Run `duration_ms` is wall-clock elapsed time (`completed_at − started_at`). For `ingest-youtube`, it covers only the ingestion pipeline inside `runSkill` (fetch/parse/store)—not post-run auto-extraction, which runs afterward outside the run record.
 - Ubiquitous-language terms are defined in [`LLAAB_GLOSSARY.md`](/LLAAB_GLOSSARY.md) (the glossary artifact); **shared vocabulary** is the broader goal in prose—do not use _vocabulary_ and _glossary_ interchangeably for that file.
-- YouTube transcript ingestion deduplicates existing nodes by matching `sourceType === 'youtube'` and `sourceItemId` to the video id.
+- YouTube: transcript ingestion deduplicates by `sourceType === 'youtube'` + `sourceItemId`; on `SourceNode`, `follow` is LLAAB auto-refresh—not YouTube subscription (`youtube_subscribed` is separate, optional Google OAuth).
 - `@finografic/md-lint` (`pnpm run lint:md`) classifies markdown as **standard**, **agent**, or **vault** (`vault/**/*.md`). Root `.markdownlint.jsonc` rule keys apply globally; optional **`standard` / `agent` / `vault`** objects are md-lint-only scope overrides (not upstream markdownlint) merged preset → global → category.
 - Tooling: ESLint removed (oxlint + oxfmt for TS/JS, Prettier for Astro); TypeScript pinned to 6.x—set explicit `compilerOptions.types` (base `["node"]`, `apps/server` `["node", "bun"]`).
 - In `apps/client`, imports use tsconfig path aliases (`components/*`, `lib/*`, `utils/*`, …)—not `@/*`.

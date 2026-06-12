@@ -4,6 +4,8 @@ import type { SourceNode } from '@llaab/schemas';
 import type { DataTableColumns } from '@llaab/ui/lib/data-table-utils';
 import type { CellContext } from '@tanstack/react-table';
 
+import { isYouTubeChannelSource } from 'utils/youtube-source.utils';
+
 import styles from './SourcesTable.module.css';
 
 function fmtDate(iso: string): string {
@@ -35,12 +37,21 @@ function renderSourceKindCell({ getValue }: CellContext<SourceNode, unknown>) {
   return <span className={`${styles.kind} ${KIND_CLASS[kind]}`}>{kind}</span>;
 }
 
-function renderSourceFollowCell({ getValue }: CellContext<SourceNode, unknown>) {
-  return getValue<boolean>() ? (
-    <span className={`${styles.kind} ${styles.follow}`}>following</span>
-  ) : (
-    <span className={styles.muted}>—</span>
-  );
+function renderSourceFollowingCell({ row }: CellContext<SourceNode, unknown>) {
+  const source = row.original;
+  if (!isYouTubeChannelSource(source)) {
+    return <span className={styles.muted}>—</span>;
+  }
+
+  if (source.youtube_subscribed === true) {
+    return <span className={`${styles.kind} ${styles.follow}`}>true</span>;
+  }
+
+  if (source.youtube_subscribed === false) {
+    return <span className={styles.muted}>false</span>;
+  }
+
+  return <span className={styles.muted}>—</span>;
 }
 
 function renderSourcePlatformsCell({ row }: CellContext<SourceNode, unknown>) {
@@ -72,9 +83,9 @@ const SOURCES_COLUMNS: DataTableColumns<SourceNode> = [
     cell: renderSourceKindCell,
   },
   {
-    accessorKey: 'follow',
-    header: 'Follow',
-    cell: renderSourceFollowCell,
+    id: 'following',
+    header: 'Following',
+    cell: renderSourceFollowingCell,
   },
   {
     id: 'platforms',

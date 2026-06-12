@@ -14,12 +14,15 @@ export interface CapturedYouTubeUrl {
 export interface FetchedYouTubeTranscript {
   title: string;
   channel: string;
+  channelId?: string;
   description: string;
   rawTranscript: string;
   duration: number;
   uploadDate: string;
   /** Channel or uploader page URL from yt-dlp when present. */
   channelUrl?: string;
+  channelVerified?: boolean;
+  channelSubscriberCount?: number;
   /**
    * UTC display string for transcript header (`YYYY-MM-DD HH:mm:ss`), from upload timestamp or date-only
    * fallback.
@@ -125,11 +128,15 @@ export async function fetchYouTube(url: string): Promise<FetchedYouTubeTranscrip
         : typeof metadata.uploader === 'string'
           ? metadata.uploader
           : 'Unknown',
+    channelId: typeof metadata.channel_id === 'string' ? metadata.channel_id : undefined,
     description: typeof metadata.description === 'string' ? metadata.description.slice(0, 2_000) : '',
     rawTranscript,
     duration: typeof metadata.duration === 'number' ? metadata.duration : 0,
     uploadDate,
     channelUrl: channelUrlFromMetadata(metadata),
+    channelVerified: metadata.channel_is_verified === true ? true : undefined,
+    channelSubscriberCount:
+      typeof metadata.channel_follower_count === 'number' ? metadata.channel_follower_count : undefined,
     uploadedDisplay: uploadedDisplayFromMetadata(metadata, uploadDate),
   };
 }

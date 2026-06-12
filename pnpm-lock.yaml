@@ -92,6 +92,9 @@ importers:
       '@llaab/icons':
         specifier: workspace:*
         version: link:../../packages/icons
+      '@llaab/ingestion':
+        specifier: workspace:*
+        version: link:../../packages/ingestion
       '@llaab/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas

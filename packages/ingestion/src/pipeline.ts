@@ -301,6 +301,9 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
         source_kind: 'channel',
         url: fetched.channelUrl ?? `https://www.youtube.com/@${fetched.channel.replace(/\s+/g, '')}`,
         platforms: ['youtube'],
+        platform_id: fetched.channelId,
+        subscriber_count: fetched.channelSubscriberCount,
+        verified: fetched.channelVerified,
         related: [transcriptResult.id],
       },
     });

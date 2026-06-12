@@ -22,7 +22,7 @@ const all = await listNodes({ type: 'source' });
 const sources = all as SourceNode[];
 sources.sort((a, b) => a.title.localeCompare(b.title));
 
-const followed = sources.filter((s) => s.follow);
+const following = sources.filter((s) => s.platforms.includes('youtube') && s.youtube_subscribed === true);
 ---
 
 <AppLayout title="Sources">
@@ -30,7 +30,7 @@ const followed = sources.filter((s) => s.follow);
     <PageHero slot="hero" eyebrow="Vault" title="Sources">
       <Fragment slot="meta">
         {sources.length} source{sources.length !== 1 ? 's' : ''}
-        {followed.length > 0 && <span class="follow-count"> · {followed.length} followed</span>}
+        {following.length > 0 && <span class="follow-count"> · {following.length} following on YouTube</span>}
       </Fragment>
     </PageHero>
 
