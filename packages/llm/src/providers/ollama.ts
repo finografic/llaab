@@ -17,6 +17,10 @@ export interface OllamaModelInfo {
   modified_at?: Date | string;
   name: string;
   size?: number;
+  /** Native capability flags reported by `ollama show` (e.g. "vision", "tools", "thinking"). */
+  capabilities?: string[];
+  /** Context window size, read from the model's architecture-specific `*.context_length`. */
+  contextLength?: number;
 }
 
 let client: Ollama | null = null;
@@ -69,15 +73,44 @@ export async function ollamaListModels(): Promise<string[]> {
   return models.map((m) => m.name);
 }
 
+/** Formats a raw `general.parameter_count` value (e.g. 27_400_000_000) as "27.4B". */
+function formatParameterCount(value: unknown): string | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return undefined;
+  const billions = value / 1_000_000_000;
+  return `${billions.toFixed(billions >= 10 ? 0 : 1)}B`;
+}
+
 export async function ollamaListModelDetails(): Promise<OllamaModelInfo[]> {
   const { models } = await getClient().list();
-  return models.map((model) => ({
-    digest: model.digest,
-    details: model.details,
-    modified_at: model.modified_at,
-    name: model.name,
-    size: model.size,
-  }));
+  return Promise.all(
+    models.map(async (model) => {
+      const show = await getClient()
+        .show({ model: model.name })
+        .catch(() => undefined);
+      const modelInfo = show?.model_info as Record<string, unknown> | undefined;
+      const architecture = modelInfo?.['general.architecture'] as string | undefined;
+      const contextLength = architecture
+        ? (modelInfo?.[`${architecture}.context_length`] as number | undefined)
+        : undefined;
+
+      return {
+        digest: model.digest,
+        details: {
+          ...model.details,
+          family: model.details?.family || show?.details?.family || architecture,
+          parameter_size:
+            model.details?.parameter_size ||
+            show?.details?.parameter_size ||
+            formatParameterCount(modelInfo?.['general.parameter_count']),
+        },
+        modified_at: model.modified_at,
+        name: model.name,
+        size: model.size,
+        capabilities: show?.capabilities,
+        contextLength: typeof contextLength === 'number' ? contextLength : undefined,
+      };
+    }),
+  );
 }
 
 export const ollamaProvider: LlmProvider = {

@@ -23,6 +23,8 @@ export interface OllamaModelInfo {
   modified_at?: Date | string;
   name: string;
   size?: number;
+  capabilities?: string[];
+  contextLength?: number;
 }
 
 export interface LlmModelInfoListProps {
@@ -51,8 +53,10 @@ function formatDate(value?: Date | string) {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function inferContextWindow(modelName: string) {
-  const normalized = modelName.toLowerCase();
+function inferContextWindow(model: OllamaModelInfo) {
+  if (model.contextLength) return model.contextLength;
+
+  const normalized = model.name.toLowerCase();
 
   if (normalized.includes('26b') || normalized.includes('31b') || normalized.includes('12b')) return 256000;
   if (normalized.includes('gemma4')) return 128000;
@@ -64,9 +68,24 @@ function inferContextWindow(modelName: string) {
   return 8192;
 }
 
-function inferCapabilities(modelName: string): ModelCapability[] {
-  const normalized = modelName.toLowerCase();
-  const capabilities: ModelCapability[] = ['streaming', 'json'];
+/** Maps Ollama's native `show` capability flags onto our display capabilities. */
+const OLLAMA_CAPABILITY_MAP: Record<string, ModelCapability> = {
+  vision: 'vision',
+  tools: 'tools',
+  thinking: 'reasoning',
+  audio: 'audio',
+};
+
+function mapOllamaCapabilities(capabilities?: string[]): ModelCapability[] {
+  if (!capabilities) return [];
+  return capabilities
+    .map((capability) => OLLAMA_CAPABILITY_MAP[capability])
+    .filter((capability): capability is ModelCapability => capability !== undefined);
+}
+
+function inferCapabilities(model: OllamaModelInfo): ModelCapability[] {
+  const normalized = model.name.toLowerCase();
+  const capabilities: ModelCapability[] = ['streaming', 'json', ...mapOllamaCapabilities(model.capabilities)];
 
   if (normalized.includes('gemma4')) {
     capabilities.push('vision', 'tools', 'reasoning');
@@ -87,8 +106,8 @@ function toModelInfo(model: OllamaModelInfo): ModelInfoData {
     id: model.name,
     name: model.name,
     provider: 'ollama',
-    contextWindow: inferContextWindow(model.name),
-    capabilities: inferCapabilities(model.name),
+    contextWindow: inferContextWindow(model),
+    capabilities: inferCapabilities(model),
   };
 }
 
