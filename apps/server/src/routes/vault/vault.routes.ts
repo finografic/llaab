@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { createNode, deleteNode, getNodeFilePath, listNodes, readNode, VAULT_ROOT } from '@llaab/core';
 import { extractKnowledgeFromTranscript } from '@llaab/ingestion';
+import { formatIsoUtcSeconds } from '@llaab/schemas';
 import { appendProducedNodeIds } from '@llaab/skills';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type { CreateNodeBody, ListNodesQuery } from './vault.schema.js';
@@ -107,9 +108,18 @@ export const extractTranscript = {
       // Extraction runs as a follow-on step after the originating run was persisted —
       // append the newly created idea node ids so the run's produced-node count stays accurate.
       const runNodes = await listNodes({ type: 'run' });
-      const originatingRun = (runNodes as RunNode[]).find((n) => n.produced_node_ids?.includes(id));
+      const matchingRuns = (runNodes as RunNode[])
+        .filter((n) => n.produced_node_ids?.includes(id))
+        .sort((a, b) => {
+          const left = a.started_at ?? a.created_at;
+          const right = b.started_at ?? b.created_at;
+          return right.localeCompare(left);
+        });
+      const originatingRun = matchingRuns[0];
       if (originatingRun) {
-        await appendProducedNodeIds(originatingRun.id, result.ideaIds);
+        await appendProducedNodeIds(originatingRun.id, result.ideaIds, {
+          completedAt: formatIsoUtcSeconds(new Date()),
+        });
       }
 
       return c.json({ success: true, ...result });

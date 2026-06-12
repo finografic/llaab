@@ -41,7 +41,7 @@ function parseTerminalCommand(input: string, shellSessionId: string): Command {
   if (kind === 'ai.run') {
     const [task, ...promptParts] = args;
     if (!task || !isAiRunTask(task)) {
-      throw new Error('Usage: ai.run <format|extract|code|reason> "prompt"');
+      throw new Error('Usage: ai.run <route|format|extract|code|reason|reason-plus|vision|speech> "prompt"');
     }
     const prompt = promptParts.join(' ').trim();
     if (!prompt) throw new Error('Usage: ai.run <task> "prompt"');
@@ -70,14 +70,15 @@ function parseTerminalCommand(input: string, shellSessionId: string): Command {
     const disableSession = args.includes('--disable-session');
     const cwdIndex = args.indexOf('--cwd');
     const cwd = cwdIndex === -1 ? undefined : args[cwdIndex + 1];
-    const commandParts = args.filter((arg, index) => {
-      if (arg === '--confirm') return false;
-      if (arg === '--enable-session') return false;
-      if (arg === '--disable-session') return false;
-      if (arg === '--cwd') return false;
-      if (cwdIndex !== -1 && index === cwdIndex + 1) return false;
-      return true;
-    });
+    const commandParts: string[] = [];
+    for (const [index, arg] of args.entries()) {
+      if (arg === '--confirm') continue;
+      if (arg === '--enable-session') continue;
+      if (arg === '--disable-session') continue;
+      if (arg === '--cwd') continue;
+      if (cwdIndex !== -1 && index === cwdIndex + 1) continue;
+      commandParts.push(arg);
+    }
     const [command, ...commandArgs] = commandParts;
     if (!command && !enableSession && !disableSession) {
       throw new Error(
@@ -100,7 +101,7 @@ function parseTerminalCommand(input: string, shellSessionId: string): Command {
 }
 
 function isAiRunTask(value: string): value is AiRunTask {
-  return ['format', 'extract', 'code', 'reason'].includes(value);
+  return ['route', 'format', 'extract', 'code', 'reason', 'reason-plus', 'vision', 'speech'].includes(value);
 }
 
 function eventText(event: OutputEvent): string {

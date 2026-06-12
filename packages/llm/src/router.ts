@@ -1,37 +1,62 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import type { LlmProvider } from './provider.js';
-import type { LlmCompleteOptions, LlmCompleteResult, ModelTier, TaskType } from './types.js';
+import type { LlmCompleteOptions, LlmCompleteResult, LlmProviderId, ModelTier, TaskType } from './types.js';
 import type { Capability } from '@llaab/core';
 
 import { cacheDelete, cacheGet, cacheSet } from './cache.js';
 import { anthropicProvider } from './providers/anthropic.js';
-import { ollamaListModels, ollamaProvider } from './providers/ollama.js';
+import { ollamaListModelDetails, ollamaListModels, ollamaProvider } from './providers/ollama.js';
 
 // ── Tier → model name (env-configurable) ─────────────────────────────────────
 
 const MODEL_MAP: Record<ModelTier, string> = {
   'local-small': process.env['LLAAB_LOCAL_SMALL_MODEL'] ?? 'llama3.2:3b',
   'local-mid': process.env['LLAAB_LOCAL_MID_MODEL'] ?? 'llama3:latest',
+  'local-strong': process.env['LLAAB_LOCAL_STRONG_MODEL'] ?? 'gpt-oss:20b',
   'remote': process.env['LLAAB_REMOTE_MODEL'] ?? 'claude-sonnet-4-6',
 };
 
-// ── Task → tier ───────────────────────────────────────────────────────────────
+// ── Task routing ──────────────────────────────────────────────────────────────
 
-const ROUTING: Record<TaskType, ModelTier> = {
-  format: 'local-small',
-  extract: 'local-mid',
-  code: 'local-mid',
-  reason: 'remote',
+interface TaskRoute {
+  tier: ModelTier;
+  model: string;
+  provider: LlmProviderId;
+}
+
+const DEFAULT_ROUTING: Record<TaskType, TaskRoute> = {
+  'route': { tier: 'local-mid', model: MODEL_MAP['local-mid'], provider: 'ollama' },
+  'format': { tier: 'local-small', model: MODEL_MAP['local-small'], provider: 'ollama' },
+  'extract': { tier: 'local-mid', model: MODEL_MAP['local-mid'], provider: 'ollama' },
+  'code': { tier: 'local-strong', model: MODEL_MAP['local-strong'], provider: 'ollama' },
+  'reason': { tier: 'local-strong', model: MODEL_MAP['local-strong'], provider: 'ollama' },
+  'reason-plus': { tier: 'remote', model: MODEL_MAP['remote'], provider: 'anthropic' },
+  'vision': { tier: 'local-mid', model: MODEL_MAP['local-mid'], provider: 'ollama' },
+  'speech': { tier: 'local-mid', model: MODEL_MAP['local-mid'], provider: 'ollama' },
 };
 
 const PROVIDERS: Record<ModelTier, LlmProvider> = {
   'local-small': ollamaProvider,
   'local-mid': ollamaProvider,
+  'local-strong': ollamaProvider,
   'remote': anthropicProvider,
 };
 
+const PROVIDERS_BY_ID: Record<LlmProviderId, LlmProvider> = {
+  ollama: ollamaProvider,
+  anthropic: anthropicProvider,
+};
+
+const ROUTING_CONFIG_PATH = resolve(process.cwd(), 'configs/llm-routing.json');
+
+interface RoutingConfigFile {
+  tasks?: Partial<Record<TaskType, Partial<TaskRoute>>>;
+}
+
 // ── Cacheable tasks ───────────────────────────────────────────────────────────
 
-const CACHEABLE = new Set<TaskType>(['format', 'extract']);
+const CACHEABLE = new Set<TaskType>(['route', 'format', 'extract']);
 
 /**
  * Evict a cached `routeLlm` response for a cacheable task. Call this when the cached response turns
@@ -50,8 +75,60 @@ function resolveModel(
   task: TaskType,
   override?: string,
 ): { model: string; tier: ModelTier; provider: LlmProvider } {
-  const tier = ROUTING[task];
-  return { model: override ?? MODEL_MAP[tier], tier, provider: PROVIDERS[tier] };
+  const route = getRouting()[task];
+  return {
+    model: override ?? route.model,
+    tier: route.tier,
+    provider: override ? PROVIDERS_BY_ID[route.provider] : PROVIDERS_BY_ID[route.provider],
+  };
+}
+
+function readRoutingConfig(): RoutingConfigFile {
+  if (!existsSync(ROUTING_CONFIG_PATH)) return {};
+
+  try {
+    return JSON.parse(readFileSync(ROUTING_CONFIG_PATH, 'utf8')) as RoutingConfigFile;
+  } catch {
+    return {};
+  }
+}
+
+function writeRoutingConfig(config: RoutingConfigFile): void {
+  mkdirSync(dirname(ROUTING_CONFIG_PATH), { recursive: true });
+  writeFileSync(ROUTING_CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`);
+}
+
+function isTaskType(value: string): value is TaskType {
+  return value in DEFAULT_ROUTING;
+}
+
+function isModelTier(value: string): value is ModelTier {
+  return value in MODEL_MAP;
+}
+
+function isProviderId(value: string): value is LlmProviderId {
+  return value in PROVIDERS_BY_ID;
+}
+
+function getRouting(): Record<TaskType, TaskRoute> {
+  const config = readRoutingConfig();
+  const routing = { ...DEFAULT_ROUTING };
+
+  for (const [task, override] of Object.entries(config.tasks ?? {})) {
+    if (!isTaskType(task)) continue;
+
+    const base = routing[task];
+    const tier = override.tier && isModelTier(override.tier) ? override.tier : base.tier;
+    const provider = override.provider && isProviderId(override.provider) ? override.provider : base.provider;
+
+    routing[task] = {
+      tier,
+      provider,
+      model: override.model ?? base.model,
+    };
+  }
+
+  return routing;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -59,9 +136,9 @@ function resolveModel(
 export function resolveLlmRoute(
   task: TaskType,
   override?: string,
-): { model: string; tier: ModelTier; provider: LlmProvider['id'] } {
+): { model: string; tier: ModelTier; provider: LlmProviderId } {
   const { model, tier, provider } = resolveModel(task, override);
-  return { model, tier, provider: provider.id };
+  return { model, tier, provider: provider.id as LlmProviderId };
 }
 
 export function findProvidersByCapability(capability: Capability): LlmProvider[] {
@@ -119,7 +196,7 @@ export async function getLlmStatus(): Promise<{
     provider: LlmProvider['id'];
   }>;
   modelMap: Record<ModelTier, string>;
-  routing: Record<TaskType, { tier: ModelTier; model: string; provider: LlmProvider['id'] }>;
+  routing: Record<TaskType, { tier: ModelTier; model: string; provider: LlmProviderId }>;
 }> {
   const uniqueProviders = [
     ...new Map(Object.values(PROVIDERS).map((provider) => [provider.id, provider])).values(),
@@ -146,14 +223,30 @@ export async function getLlmStatus(): Promise<{
       })),
     ),
     modelMap: { ...MODEL_MAP },
-    routing: Object.fromEntries(
-      Object.entries(ROUTING).map(([task, tier]) => [
-        task,
-        { tier, model: MODEL_MAP[tier], provider: PROVIDERS[tier].id },
-      ]),
-    ) as Record<TaskType, { tier: ModelTier; model: string; provider: LlmProvider['id'] }>,
+    routing: getRouting(),
   };
 }
 
-export { ollamaListModels };
-export type { LlmCompleteResult, ModelTier, TaskType };
+export function updateLlmTaskRoute(task: TaskType, route: Partial<TaskRoute>): Record<TaskType, TaskRoute> {
+  const current = readRoutingConfig();
+  const existingTaskRoutes = current.tasks ?? {};
+  const currentRoute = getRouting()[task];
+  const nextRoute: TaskRoute = {
+    tier: route.tier ?? currentRoute.tier,
+    provider: route.provider ?? currentRoute.provider,
+    model: route.model ?? currentRoute.model,
+  };
+
+  writeRoutingConfig({
+    ...current,
+    tasks: {
+      ...existingTaskRoutes,
+      [task]: nextRoute,
+    },
+  });
+
+  return getRouting();
+}
+
+export { ollamaListModelDetails, ollamaListModels };
+export type { LlmCompleteResult, LlmProviderId, ModelTier, TaskType };

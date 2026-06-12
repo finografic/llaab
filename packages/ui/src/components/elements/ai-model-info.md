@@ -1,0 +1,79 @@
+# AI Model Info
+
+https://www.tryelements.dev/docs/ai-elements/devtools/model-info
+
+## Overview
+
+A compound component for displaying AI model metadata including provider, context window, capabilities badges, pricing info, and release date. Supports multiple providers with themed colors for OpenAI, Anthropic, Google, Mistral, Cohere, and Meta.
+
+## Installation
+
+```bash
+bunx shadcn@latest add @elements/model-info
+```
+
+## Usage
+
+```tsx
+import {
+  ModelInfo,
+  ModelInfoHeader,
+  ModelInfoCapabilities,
+  ModelInfoPricing,
+  ModelInfoMeta,
+} from "@/components/elements/ai-elements/devtools/model-info";
+
+export function ModelInfoExample() {
+  return (
+    <ModelInfo
+      model={{
+        name: "GPT-4o",
+        provider: "openai",
+        contextWindow: 128000,
+        capabilities: ["vision", "tools", "streaming", "json"],
+        pricing: { input: 5, output: 15 },
+        releaseDate: "2024-05-13",
+      }}
+    >
+      <ModelInfoHeader />
+      <ModelInfoCapabilities />
+      <ModelInfoPricing />
+      <ModelInfoMeta />
+    </ModelInfo>
+  );
+}
+```
+
+## Props
+
+### ModelInfo
+
+| Prop    | Type        | Default | Description               |
+| ------- | ----------- | ------- | ------------------------- |
+| `model` | `ModelData` | -       | Model metadata to display |
+
+### ModelData
+
+```typescript
+interface ModelData {
+  name: string;
+  provider: Provider;
+  contextWindow: number;
+  capabilities: Capability[];
+  pricing?: { input: number; output: number }; // per 1M tokens
+  releaseDate?: string;
+}
+
+type Provider = "openai" | "anthropic" | "google" | "mistral" | "cohere" | "meta";
+
+type Capability = "vision" | "tools" | "streaming" | "json" | "functions";
+```
+
+## Features
+
+- Provider branding with automatic themed colors
+- Context window display with human-readable formatting
+- Capabilities badges (vision, tools, streaming, JSON, functions)
+- Pricing information per million tokens
+- Release date display
+- Supports OpenAI, Anthropic, Google, Mistral, Cohere, and Meta providers

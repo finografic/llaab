@@ -53,7 +53,10 @@ export function formatMetadataJson(value: string, indent = 0): string {
 /** Extract a top-level `url` field from skill run input metadata. */
 export function extractMetadataUrl(value: string): string | undefined {
   const parsed = parseMetadataJson(value);
-  if (!parsed || typeof parsed !== 'object' || parsed === null) return undefined;
+  if (!parsed || typeof parsed !== 'object' || parsed === null) {
+    const [fallbackUrl] = value.match(METADATA_URL_PATTERN) ?? [];
+    return fallbackUrl;
+  }
 
   const { url } = parsed as Record<string, unknown>;
   return typeof url === 'string' && url.length > 0 ? url : undefined;

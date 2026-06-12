@@ -7,6 +7,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from 'components/ui/breadcrumb';
+import type { TranscriptExtractionRun } from './components/TranscriptDetail';
 import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
 
 import { TranscriptDetail } from './components/TranscriptDetail';
@@ -18,9 +19,11 @@ export interface TranscriptsSplitViewProps {
   selectedId?: string;
   transcript?: TranscriptNode;
   extractedIdeas?: IdeaNode[];
+  extractionRuns?: TranscriptExtractionRun[];
 }
 
 const EMPTY_IDEAS: IdeaNode[] = [];
+const EMPTY_EXTRACTION_RUNS: TranscriptExtractionRun[] = [];
 const SIDEBAR_PANEL_ID = 'transcripts-sidebar';
 
 function renderHeader(transcript?: TranscriptNode) {
@@ -43,12 +46,16 @@ function renderHeader(transcript?: TranscriptNode) {
   );
 }
 
-function renderDetail(transcript: TranscriptNode | undefined, ideas: IdeaNode[]) {
+function renderDetail(
+  transcript: TranscriptNode | undefined,
+  ideas: IdeaNode[],
+  extractionRuns: TranscriptExtractionRun[],
+) {
   if (!transcript) {
     return <TranscriptsEmptyState />;
   }
 
-  return <TranscriptDetail transcript={transcript} extractedIdeas={ideas} />;
+  return <TranscriptDetail transcript={transcript} extractedIdeas={ideas} extractionRuns={extractionRuns} />;
 }
 
 function renderSidebar(transcripts: TranscriptNode[], selectedId?: string) {
@@ -60,6 +67,7 @@ export function TranscriptsSplitView({
   selectedId,
   transcript,
   extractedIdeas,
+  extractionRuns = EMPTY_EXTRACTION_RUNS,
 }: TranscriptsSplitViewProps) {
   const ideas = extractedIdeas ?? EMPTY_IDEAS;
 
@@ -73,7 +81,7 @@ export function TranscriptsSplitView({
       header={renderHeader(transcript)}
       sidebar={renderSidebar(transcripts, selectedId)}
     >
-      {renderDetail(transcript, ideas)}
+      {renderDetail(transcript, ideas, extractionRuns)}
     </SidebarSplitLayout>
   );
 }

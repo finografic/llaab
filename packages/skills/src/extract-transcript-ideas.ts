@@ -1,5 +1,6 @@
 import { autoTag, createNode, getNodeFilePath, updateNode } from '@llaab/core';
 import { llmExtractWithTrace, normalizeContentTags, normalizeDomainTags } from '@llaab/ingestion';
+import { appendDatetimeFilenameSegment, toNodeId } from '@llaab/schemas';
 import type { ExtractionRunTrace, LlmExtractionMeta } from '@llaab/ingestion';
 import type { TranscriptNode } from '@llaab/schemas';
 
@@ -32,11 +33,11 @@ export async function extractTranscriptIdeas(input: ExtractTranscriptIdeasInput)
       // Create an IdeaNode for each extracted idea.
       const ideaIds: string[] = [];
 
-      for (const idea of ideas) {
+      for (const [index, idea] of ideas.entries()) {
         const ideaDomainTags = idea.domainTags.filter((tag) => transcriptDomainTags.includes(tag));
         const inferredIdeaDomainTags = autoTag(idea.title, idea.tags.join(' '));
-        const { id } = await createNode({
-          type: 'idea',
+        const ideaInput = {
+          type: 'idea' as const,
           title: idea.title,
           body: '',
           tags: [...new Set(['d:ingest', ...ideaDomainTags, ...inferredIdeaDomainTags, ...idea.tags])],
@@ -49,7 +50,24 @@ export async function extractTranscriptIdeas(input: ExtractTranscriptIdeasInput)
             llm_prompt_tokens: llmMeta.promptTokens,
             llm_completion_tokens: llmMeta.completionTokens,
           },
-        });
+        };
+        let createdIdea: Awaited<ReturnType<typeof createNode>>;
+        try {
+          createdIdea = await createNode(ideaInput);
+        } catch (error) {
+          if (!(error instanceof Error) || !error.message.includes('already exists')) {
+            throw error;
+          }
+
+          createdIdea = await createNode({
+            ...ideaInput,
+            id: appendDatetimeFilenameSegment(
+              `${toNodeId(idea.title)}-${toNodeId(llmMeta.model)}-${index + 1}`,
+              new Date(),
+            ),
+          });
+        }
+        const { id } = createdIdea;
         ideaIds.push(id);
       }
 

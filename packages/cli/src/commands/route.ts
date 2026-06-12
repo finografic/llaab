@@ -5,7 +5,7 @@ import type { TaskType } from '@llaab/llm';
 
 import { pc } from '../utils/picocolors.js';
 
-const TASKS: TaskType[] = ['format', 'extract', 'code', 'reason'];
+const TASKS: TaskType[] = ['route', 'format', 'extract', 'code', 'reason', 'reason-plus', 'vision', 'speech'];
 
 export const routeCommand = defineCommand({
   meta: {

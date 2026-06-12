@@ -4,6 +4,8 @@ export const prerender = false;
 import AppLayout from 'layouts/AppLayout.astro';
 import PageLayout from 'layouts/PageLayout.astro';
 import PageHero from 'components/PageHero/PageHero.astro';
+import { LlmRoutingEditor } from 'components/LlmRoutingEditor/LlmRoutingEditor';
+import { LlmModelInfoList } from 'components/LlmModelInfoList/LlmModelInfoList';
 
 // ── Fetch status from server ───────────────────────────────────────────────────
 
@@ -11,12 +13,31 @@ const SERVER_ORIGIN = import.meta.env.SERVER_URL ?? 'http://localhost:3000';
 const API_KEY = import.meta.env.SERVER_API_KEY ?? '';
 
 interface RoutingEntry {
-  tier: string;
+  tier: 'local-small' | 'local-mid' | 'local-strong' | 'remote';
   model: string;
+  provider: 'ollama' | 'anthropic';
 }
 
 interface LlmStatusResponse {
-  routing: Record<string, RoutingEntry>;
+  routing: Record<
+    'route' | 'format' | 'extract' | 'code' | 'reason' | 'reason-plus' | 'vision' | 'speech',
+    RoutingEntry
+  >;
+  modelMap: Record<string, string>;
+  installedModelDetails: Array<{
+    digest?: string;
+    details?: {
+      families?: string[];
+      family?: string;
+      format?: string;
+      parameter_size?: string;
+      parent_model?: string;
+      quantization_level?: string;
+    };
+    modified_at?: Date | string;
+    name: string;
+    size?: number;
+  }>;
   installedModels: string[];
   ollamaError?: string;
 }
@@ -31,23 +52,6 @@ try {
   status = (await res.json()) as LlmStatusResponse;
 } catch (err) {
   fetchError = err instanceof Error ? err.message : 'Failed to reach server';
-}
-
-const TASK_LABELS: Record<string, string> = {
-  format: 'Format',
-  extract: 'Extract',
-  code: 'Code',
-  reason: 'Reason',
-};
-
-const TIER_LABELS: Record<string, string> = {
-  'local-small': 'Local — small',
-  'local-mid': 'Local — mid',
-  'remote': 'Remote',
-};
-
-function isInstalled(model: string, installed: string[]): boolean {
-  return installed.some((m) => m === model || m.startsWith(model + ':') || model.startsWith(m));
 }
 ---
 
@@ -73,23 +77,12 @@ function isInstalled(model: string, installed: string[]): boolean {
             {/* ── Task routing ── */}
             <section class="llm-section">
               <h2 class="llm-section__heading">Task routing</h2>
-              <div class="route-grid">
-                {Object.entries(status.routing).map(([task, entry]) => {
-                  const installed = isInstalled(entry.model, status!.installedModels);
-                  return (
-                    <div class="route-row">
-                      <span class="route-task">{TASK_LABELS[task] ?? task}</span>
-                      <span class="route-arrow">→</span>
-                      <span class="route-tier">{TIER_LABELS[entry.tier] ?? entry.tier}</span>
-                      <span class="route-arrow">→</span>
-                      <span class={`route-model ${installed ? 'route-model--ok' : 'route-model--missing'}`}>
-                        {entry.model}
-                        <span class={`route-dot route-dot--${installed ? 'ok' : 'missing'}`} />
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              <LlmRoutingEditor
+                routing={status.routing}
+                installedModels={status.installedModels}
+                remoteModels={[status.modelMap.remote].filter(Boolean)}
+                client:load
+              />
             </section>
 
             {/* ── Installed models ── */}
@@ -112,12 +105,42 @@ function isInstalled(model: string, installed: string[]): boolean {
                 <p class="llm-empty">No models found — is Ollama running?</p>
               )}
 
-              {status.installedModels.length > 0 && (
+              {status.installedModelDetails.length > 0 && (
+                <LlmModelInfoList models={status.installedModelDetails} client:load />
+              )}
+            </section>
+
+            {/* ── Installed models list ── */}
+            <section class="llm-section">
+              <h2 class="llm-section__heading">
+                Installed Ollama models
+                {status.ollamaError && (
+                  <span class="llm-section__badge llm-section__badge--err">offline</span>
+                )}
+                {!status.ollamaError && (
+                  <span class="llm-section__badge llm-section__badge--ok">
+                    {status.installedModels.length} models
+                  </span>
+                )}
+              </h2>
+
+              {status.ollamaError && <p class="llm-empty">{status.ollamaError}</p>}
+
+              {!status.ollamaError && status.installedModels.length === 0 && (
+                <p class="llm-empty">No models found — is Ollama running?</p>
+              )}
+
+              {status.installedModelDetails.length > 0 && (
                 <ul class="model-list">
-                  {status.installedModels.map((model) => (
+                  {status.installedModelDetails.map((model) => (
                     <li class="model-item">
                       <span class="route-dot route-dot--ok" />
-                      <span class="model-name">{model}</span>
+                      <span class="model-name">{model.name}</span>
+                      <span class="model-meta">
+                        {model.details?.parameter_size && <span>{model.details.parameter_size}</span>}
+                        {model.details?.quantization_level && <span>{model.details.quantization_level}</span>}
+                        {model.size && <span>{(model.size / 1024 ** 3).toFixed(1)}GB</span>}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -341,6 +364,16 @@ function isInstalled(model: string, installed: string[]): boolean {
     font-family: var(--font-mono);
     font-size: var(--text-base);
     color: var(--text);
+  }
+
+  .model-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-faint);
   }
 
   /* ── Env grid ── */

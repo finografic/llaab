@@ -1,4 +1,5 @@
 import { extractKnowledgeFromTranscript, runIngestionPipeline } from '@llaab/ingestion';
+import { formatIsoUtcSeconds } from '@llaab/schemas';
 import type { SkillRunRecord } from './runner.js';
 import type { ExtractionResult, IngestionResult } from '@llaab/ingestion';
 
@@ -52,7 +53,9 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYo
         result.plainText,
         input.tags,
       );
-      await appendProducedNodeIds(record.runNodeId, extraction.ideaIds);
+      await appendProducedNodeIds(record.runNodeId, extraction.ideaIds, {
+        completedAt: formatIsoUtcSeconds(new Date()),
+      });
       console.log(`  extraction: ${extraction.ideaIds.length} ideas, summary written`);
       return { record, result, extraction };
     } catch (err) {

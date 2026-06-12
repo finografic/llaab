@@ -2,6 +2,23 @@ import { Ollama } from 'ollama';
 import type { LlmProvider, LlmProviderResult } from '../provider.js';
 import type { LlmCompleteOptions } from '../types.js';
 
+export interface OllamaModelDetails {
+  families?: string[];
+  family?: string;
+  format?: string;
+  parameter_size?: string;
+  parent_model?: string;
+  quantization_level?: string;
+}
+
+export interface OllamaModelInfo {
+  digest?: string;
+  details?: OllamaModelDetails;
+  modified_at?: Date | string;
+  name: string;
+  size?: number;
+}
+
 let client: Ollama | null = null;
 
 function getClient(): Ollama {
@@ -52,6 +69,17 @@ export async function ollamaListModels(): Promise<string[]> {
   return models.map((m) => m.name);
 }
 
+export async function ollamaListModelDetails(): Promise<OllamaModelInfo[]> {
+  const { models } = await getClient().list();
+  return models.map((model) => ({
+    digest: model.digest,
+    details: model.details,
+    modified_at: model.modified_at,
+    name: model.name,
+    size: model.size,
+  }));
+}
+
 export const ollamaProvider: LlmProvider = {
   id: 'ollama',
   displayName: 'Ollama',
@@ -60,7 +88,7 @@ export const ollamaProvider: LlmProvider = {
   stream: ollamaStream,
   async isAvailable() {
     try {
-      await ollamaListModels();
+      await ollamaListModelDetails();
       return true;
     } catch {
       return false;

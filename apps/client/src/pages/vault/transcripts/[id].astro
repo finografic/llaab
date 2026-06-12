@@ -2,8 +2,9 @@
 export const prerender = false;
 
 import { listNodes } from '@llaab/core';
-import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
+import type { IdeaNode, RunNode, TranscriptNode } from '@llaab/schemas';
 import { TranscriptsSplitView } from 'components/TranscriptsSplitView/TranscriptsSplitView';
+import type { TranscriptExtractionRun } from 'components/TranscriptsSplitView/components/TranscriptDetail';
 import AppLayout from 'layouts/AppLayout.astro';
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
@@ -24,11 +25,47 @@ const transcript = transcripts.find((t) => t.id === id);
 if (!transcript) return Astro.redirect('/vault/transcripts', 302);
 
 let extractedIdeas: IdeaNode[] = [];
+const ideaNodes = (await listNodes({ type: 'idea' })) as IdeaNode[];
+const ideasById = new Map(ideaNodes.map((idea) => [idea.id, idea]));
+
 if (transcript.extracted_idea_ids.length > 0) {
-  const ideaNodes = await listNodes({ type: 'idea' });
   const ideaSet = new Set(transcript.extracted_idea_ids);
-  extractedIdeas = (ideaNodes as IdeaNode[]).filter((n) => ideaSet.has(n.id));
+  extractedIdeas = ideaNodes.filter((n) => ideaSet.has(n.id));
 }
+
+const runNodes = (await listNodes({ type: 'run' })) as RunNode[];
+const extractionRuns: TranscriptExtractionRun[] = runNodes
+  .filter((run) => run.skill_id === 'ingest-youtube' && run.produced_node_ids.includes(transcript.id))
+  .map((run) => {
+    const ideas = run.produced_node_ids
+      .filter((nodeId) => nodeId !== transcript.id)
+      .map((nodeId) => ideasById.get(nodeId))
+      .filter((idea): idea is IdeaNode => idea !== undefined);
+    const modelIdea = ideas.find(
+      (idea) =>
+        idea.llm_model ||
+        idea.llm_provider ||
+        idea.llm_duration_ms != null ||
+        idea.llm_prompt_tokens != null ||
+        idea.llm_completion_tokens != null,
+    );
+
+    return {
+      id: run.id,
+      title: run.title,
+      startedAt: run.started_at,
+      completedAt: run.completed_at,
+      durationMs: modelIdea?.llm_duration_ms ?? run.duration_ms,
+      model: modelIdea?.llm_model,
+      provider: modelIdea?.llm_provider,
+      promptTokens: modelIdea?.llm_prompt_tokens,
+      completionTokens: modelIdea?.llm_completion_tokens,
+      ideaIds: ideas.map((idea) => idea.id),
+      ideas,
+    };
+  })
+  // oxlint-disable-next-line unicorn/no-array-sort -- ES2022 target does not include Array#toSorted.
+  .sort((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''));
 ---
 
 <AppLayout title={transcript.title} fullBleed>
@@ -37,6 +74,7 @@ if (transcript.extracted_idea_ids.length > 0) {
     selectedId={id}
     transcript={transcript}
     extractedIdeas={extractedIdeas}
+    extractionRuns={extractionRuns}
     client:load
   />
 </AppLayout>

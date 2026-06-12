@@ -1,7 +1,14 @@
-import { getLlmStatus, ollamaListModels, routeLlm, streamLlm } from '@llaab/llm';
+import {
+  getLlmStatus,
+  ollamaListModelDetails,
+  ollamaListModels,
+  routeLlm,
+  streamLlm,
+  updateLlmTaskRoute,
+} from '@llaab/llm';
 import { streamSSE } from 'hono/streaming';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
-import type { CompleteLlmBody } from './llm.schema.js';
+import type { CompleteLlmBody, UpdateLlmRouteBody } from './llm.schema.js';
 
 export const complete = {
   path: '/complete' as const,
@@ -61,18 +68,36 @@ export const status = {
   handler: async (c: AppCtx) => {
     const config = await getLlmStatus();
     let installedModels: string[] = [];
+    let installedModelDetails: Awaited<ReturnType<typeof ollamaListModelDetails>> = [];
     let ollamaError: string | undefined;
     try {
-      installedModels = await ollamaListModels();
+      installedModelDetails = await ollamaListModelDetails();
+      installedModels = installedModelDetails.map((model) => model.name);
     } catch {
       ollamaError = 'Ollama unavailable';
     }
     return c.json({
       availableProviders: config.availableProviders,
+      modelMap: config.modelMap,
       routing: config.routing,
       installedModels,
+      installedModelDetails,
       ollamaError,
     });
+  },
+};
+
+export const updateRouting = {
+  path: '/routing' as const,
+  handler: async (c: AppCtxJson<UpdateLlmRouteBody>) => {
+    const body = c.req.valid('json');
+    const routing = updateLlmTaskRoute(body.task, {
+      model: body.model,
+      tier: body.tier,
+      provider: body.provider,
+    });
+
+    return c.json({ routing });
   },
 };
 

@@ -29,15 +29,28 @@ export interface SkillRunRecord {
  * follow-on processes (e.g. knowledge extraction) that complete after `persistRunNode`
  * has already written the run record.
  */
-export async function appendProducedNodeIds(runNodeId: string, nodeIds: string[]): Promise<void> {
+export async function appendProducedNodeIds(
+  runNodeId: string,
+  nodeIds: string[],
+  options: { completedAt?: string } = {},
+): Promise<void> {
   if (nodeIds.length === 0) return;
 
   const runPath = getNodeFilePath('run', runNodeId);
   await updateNode(runPath, (node) => {
     const run = node as RunNode;
+    const completedAt = options.completedAt;
     return {
       ...run,
       produced_node_ids: [...new Set([...run.produced_node_ids, ...nodeIds])],
+      ...(completedAt
+        ? {
+            completed_at: completedAt,
+            duration_ms: run.started_at
+              ? Date.parse(completedAt) - Date.parse(run.started_at)
+              : run.duration_ms,
+          }
+        : {}),
     };
   });
 }

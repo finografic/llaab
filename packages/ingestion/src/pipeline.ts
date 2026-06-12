@@ -1,7 +1,7 @@
 import { autoTag, createNode, getNodeFilePath, listNodes, updateNode } from '@llaab/core';
 import { appendDatetimeFilenameSegment, formatIsoUtcForTranscriptBody, now, toNodeId } from '@llaab/schemas';
 import type { ExtractionRunTrace } from './extract/llm-extract.js';
-import type { TranscriptSourceType } from '@llaab/schemas';
+import type { TranscriptNode, TranscriptSourceType } from '@llaab/schemas';
 
 import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
 import { cleanTranscript } from './clean/transcript.js';
@@ -65,9 +65,15 @@ export interface IngestionResult {
   id: string;
   path: string;
   type: 'transcript' | 'resource';
+  title?: string;
+  sourceId?: string;
+  sourceItemId?: string;
+  sourceUrl?: string;
+  author?: string;
   producedNodeIds?: string[];
+  reused?: boolean;
   runTrace?: ExtractionRunTrace;
-  /** Plain text available for extraction — present on fresh transcript ingestion, absent on dedup. */
+  /** Plain text available for extraction. Deduped transcripts reuse the persisted transcript body. */
   plainText?: string;
 }
 
@@ -89,7 +95,7 @@ async function findExistingYouTubeTranscript(sourceItemId: string): Promise<Inge
   const existing = nodes.find(
     (node) =>
       node.type === 'transcript' && node.source_type === 'youtube' && node.source_item_id === sourceItemId,
-  );
+  ) as TranscriptNode | undefined;
 
   if (!existing) {
     return undefined;
@@ -99,13 +105,29 @@ async function findExistingYouTubeTranscript(sourceItemId: string): Promise<Inge
     id: existing.id,
     path: getNodeFilePath('transcript', existing.id),
     type: 'transcript',
+    title: existing.title,
+    sourceId: existing.source_id,
+    sourceItemId: existing.source_item_id,
+    sourceUrl: existing.source_url,
+    author: existing.author,
     producedNodeIds: [existing.id],
+    reused: true,
+    plainText: existing.body,
     runTrace: {
       stages: [
         completedStage(
           'dedupe:transcript',
           { sourceType: 'youtube', sourceItemId },
-          { id: existing.id, reused: true },
+          {
+            id: existing.id,
+            path: getNodeFilePath('transcript', existing.id),
+            title: existing.title,
+            sourceId: existing.source_id,
+            sourceItemId: existing.source_item_id,
+            sourceUrl: existing.source_url,
+            author: existing.author,
+            reused: true,
+          },
         ),
       ],
       decisions: [
@@ -315,6 +337,11 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
     id: transcriptResult.id,
     path: transcriptResult.path,
     type: 'transcript',
+    title: transcriptTitle,
+    sourceId,
+    sourceItemId: captured.videoId,
+    sourceUrl: input.url,
+    author: fetched.channel,
     producedNodeIds: [...producedNodeIds],
     plainText: plainTextForExtraction,
     runTrace: { stages, decisions: [], llm: undefined },
@@ -367,11 +394,11 @@ export async function extractKnowledgeFromTranscript(
 
   const transcriptDomainTags = normalizeDomainTags(transcriptTags);
   const ideas: Array<{ id: string; title: string }> = [];
-  for (const extractedIdea of extracted.ideas) {
+  for (const [index, extractedIdea] of extracted.ideas.entries()) {
     const ideaDomainTags = extractedIdea.domainTags.filter((tag) => transcriptDomainTags.includes(tag));
     const inferredIdeaDomainTags = autoTag(extractedIdea.title, extractedIdea.tags.join(' '));
-    const createdIdea = await createNode({
-      type: 'idea',
+    const ideaInput = {
+      type: 'idea' as const,
       title: extractedIdea.title,
       body: '',
       tags: [
@@ -393,7 +420,23 @@ export async function extractKnowledgeFromTranscript(
         llm_prompt_tokens: extracted.llmMeta.promptTokens,
         llm_completion_tokens: extracted.llmMeta.completionTokens,
       },
-    });
+    };
+    let createdIdea: Awaited<ReturnType<typeof createNode>>;
+    try {
+      createdIdea = await createNode(ideaInput);
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.includes('already exists')) {
+        throw error;
+      }
+
+      createdIdea = await createNode({
+        ...ideaInput,
+        id: appendDatetimeFilenameSegment(
+          `${toNodeId(extractedIdea.title)}-${toNodeId(extracted.llmMeta.model)}-${index + 1}`,
+          new Date(),
+        ),
+      });
+    }
     ideas.push({ id: createdIdea.id, title: extractedIdea.title });
   }
 

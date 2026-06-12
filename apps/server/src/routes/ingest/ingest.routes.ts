@@ -17,14 +17,13 @@ export const youtube = {
       return c.json({ success: false as const, error: record.error ?? 'Ingestion failed.' }, 500);
     }
 
-    const reused = result.runTrace?.stages.some((s) => s.name === 'dedupe:transcript') ?? false;
     return c.json({
       success: true as const,
       result: {
         id: result.id,
         path: result.path,
         type: result.type,
-        reused,
+        reused: result.reused ?? false,
       },
       extraction: extraction ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary } : null,
       extractionError: extractionError ?? null,

@@ -1,6 +1,7 @@
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Button } from 'components/ui/button';
-import { useState } from 'react';
+import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
+import { useMemo, useState } from 'react';
 import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
 
 import { fmtDetailDate, splitTags } from '../transcript-split.utils';
@@ -9,20 +10,75 @@ import styles from './TranscriptDetail.module.css';
 export interface TranscriptDetailProps {
   transcript: TranscriptNode;
   extractedIdeas: IdeaNode[];
+  extractionRuns?: TranscriptExtractionRun[];
 }
 
-export function TranscriptDetail({ transcript, extractedIdeas }: TranscriptDetailProps) {
+export interface TranscriptExtractionRun {
+  id: string;
+  title: string;
+  startedAt?: string;
+  completedAt?: string;
+  durationMs?: number;
+  model?: string;
+  provider?: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  ideaIds: string[];
+  ideas: IdeaNode[];
+}
+
+const EMPTY_EXTRACTION_RUNS: TranscriptExtractionRun[] = [];
+
+function fmtRunDate(value?: string) {
+  if (!value) return 'Run';
+  return new Date(value).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function hasExtractionMeta(run: TranscriptExtractionRun) {
+  return Boolean(
+    run.model ||
+    run.provider ||
+    run.durationMs != null ||
+    run.promptTokens != null ||
+    run.completionTokens != null,
+  );
+}
+
+export function TranscriptDetail({
+  transcript,
+  extractedIdeas,
+  extractionRuns = EMPTY_EXTRACTION_RUNS,
+}: TranscriptDetailProps) {
   const [extractStatus, setExtractStatus] = useState('');
   const [extractStatusClass, setExtractStatusClass] = useState('text-[11px]');
   const [isExtracting, setIsExtracting] = useState(false);
+  const [selectedRunId, setSelectedRunId] = useState(() => extractionRuns[0]?.id ?? 'transcript');
 
   const { domain, generated } = splitTags(transcript.tags);
+  const selectedRun = useMemo(
+    () => extractionRuns.find((run) => run.id === selectedRunId) ?? extractionRuns[0],
+    [extractionRuns, selectedRunId],
+  );
+  const visibleIdeas = selectedRun?.ideas ?? extractedIdeas;
+  const visibleIdeaCount = selectedRun?.ideaIds.length ?? transcript.extracted_idea_ids.length;
+  const selectedMeta = selectedRun ?? {
+    model: transcript.llm_model,
+    provider: transcript.llm_provider,
+    durationMs: transcript.llm_duration_ms,
+    promptTokens: transcript.llm_prompt_tokens,
+    completionTokens: transcript.llm_completion_tokens,
+  };
   const hasModelMeta = Boolean(
-    transcript.llm_model ||
-    transcript.llm_provider ||
-    transcript.llm_duration_ms != null ||
-    transcript.llm_prompt_tokens != null ||
-    transcript.llm_completion_tokens != null,
+    selectedMeta.model ||
+    selectedMeta.provider ||
+    selectedMeta.durationMs != null ||
+    selectedMeta.promptTokens != null ||
+    selectedMeta.completionTokens != null,
   );
 
   async function handleReExtract() {
@@ -141,14 +197,53 @@ export function TranscriptDetail({ transcript, extractedIdeas }: TranscriptDetai
         </dl>
       </section>
 
+      {extractionRuns.length > 1 ? (
+        <section className="section">
+          <h2 className="section__heading">
+            Extraction runs
+            <span className="section__count">{extractionRuns.length}</span>
+          </h2>
+          <RadioGroup
+            value={selectedRun?.id ?? selectedRunId}
+            onValueChange={setSelectedRunId}
+            className={styles.runSelector}
+          >
+            {extractionRuns.map((run) => {
+              const inputId = `transcript-run-${run.id}`;
+              return (
+                <label key={run.id} htmlFor={inputId} className={styles.runOption}>
+                  <RadioGroupItem id={inputId} value={run.id} className={styles.runOptionRadio} />
+                  <span className={styles.runOptionBody}>
+                    <span className={styles.runOptionHeader}>
+                      <span className={styles.runOptionTitle}>{fmtRunDate(run.startedAt)}</span>
+                      <span className={styles.runOptionCount}>{run.ideaIds.length} ideas</span>
+                    </span>
+                    {hasExtractionMeta(run) ? (
+                      <ExtractionModelCard
+                        variant="compact-bar"
+                        model={run.model}
+                        provider={run.provider}
+                        promptTokens={run.promptTokens}
+                        completionTokens={run.completionTokens}
+                        durationMs={run.durationMs}
+                      />
+                    ) : null}
+                  </span>
+                </label>
+              );
+            })}
+          </RadioGroup>
+        </section>
+      ) : null}
+
       {hasModelMeta ? (
         <ExtractionModelCard
           variant="full"
-          model={transcript.llm_model}
-          provider={transcript.llm_provider}
-          durationMs={transcript.llm_duration_ms}
-          promptTokens={transcript.llm_prompt_tokens}
-          completionTokens={transcript.llm_completion_tokens}
+          model={selectedMeta.model}
+          provider={selectedMeta.provider}
+          durationMs={selectedMeta.durationMs}
+          promptTokens={selectedMeta.promptTokens}
+          completionTokens={selectedMeta.completionTokens}
         />
       ) : null}
 
@@ -162,9 +257,7 @@ export function TranscriptDetail({ transcript, extractedIdeas }: TranscriptDetai
       <section className="section">
         <h2 className="section__heading">
           Extracted ideas
-          {transcript.extracted_idea_ids.length > 0 ? (
-            <span className="section__count">{transcript.extracted_idea_ids.length}</span>
-          ) : null}
+          {visibleIdeaCount > 0 ? <span className="section__count">{visibleIdeaCount}</span> : null}
           <Button
             type="button"
             variant="outline"
@@ -173,11 +266,7 @@ export function TranscriptDetail({ transcript, extractedIdeas }: TranscriptDetai
             disabled={isExtracting}
             onClick={handleReExtract}
           >
-            {isExtracting
-              ? 'Extracting…'
-              : transcript.extracted_idea_ids.length > 0
-                ? 'Re-extract'
-                : 'Extract now'}
+            {isExtracting ? 'Extracting...' : visibleIdeaCount > 0 ? 'Re-extract' : 'Extract now'}
           </Button>
           {extractStatus ? (
             <span className={`normal-case text-[11px] font-normal tracking-normal ${extractStatusClass}`}>
@@ -186,12 +275,10 @@ export function TranscriptDetail({ transcript, extractedIdeas }: TranscriptDetai
           ) : null}
         </h2>
 
-        {transcript.extracted_idea_ids.length === 0 ? (
-          <p className={styles.emptyNote}>No ideas extracted yet.</p>
-        ) : null}
-        {transcript.extracted_idea_ids.length > 0 && extractedIdeas.length > 0 ? (
+        {visibleIdeaCount === 0 ? <p className={styles.emptyNote}>No ideas extracted yet.</p> : null}
+        {visibleIdeaCount > 0 && visibleIdeas.length > 0 ? (
           <ul className={styles.ideaList}>
-            {extractedIdeas.map((idea) => {
+            {visibleIdeas.map((idea) => {
               const ideaTags = splitTags(idea.tags);
               return (
                 <li key={idea.id} className={styles.ideaItem}>
@@ -223,7 +310,7 @@ export function TranscriptDetail({ transcript, extractedIdeas }: TranscriptDetai
             })}
           </ul>
         ) : null}
-        {transcript.extracted_idea_ids.length > 0 && extractedIdeas.length === 0 ? (
+        {visibleIdeaCount > 0 && visibleIdeas.length === 0 ? (
           <p className={styles.emptyNote}>Ideas listed in IDs but nodes not found in vault.</p>
         ) : null}
       </section>

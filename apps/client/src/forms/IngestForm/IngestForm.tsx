@@ -7,12 +7,7 @@ import { Spinner } from 'components/ui/spinner';
 import { RotateCcwIcon } from 'lucide-react';
 import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
-import {
-  fetchExistingIdeas,
-  useDiscardTranscript,
-  useExtractTranscript,
-  useIngestYoutube,
-} from 'queries/transcripts';
+import { useDiscardTranscript, useExtractTranscript, useIngestYoutube } from 'queries/transcripts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { ExtractionPhase, FormValues, TranscriptData, TranscriptPhase } from './ingest-form.types';
@@ -232,21 +227,8 @@ function IngestFormRoot({ submitOnDrop = true }: IngestFormProps) {
       setTagInput('');
 
       if (reused) {
-        setExtractionPhase('pending');
-        const ideas = await fetchExistingIdeas(transcriptId);
-
-        if (ideas.length > 0) {
-          setExtractionPhase('existing');
-          setExtractionIdeas(ideas);
-        } else {
-          setExtractionPhase('extractable');
-        }
-
         const nodeTags = await fetchNodeTags(transcriptId);
         setLockedTags(nodeTags);
-        setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
-        setBusy(false);
-        return;
       }
     } catch (error) {
       setTranscriptPhase('failed');
