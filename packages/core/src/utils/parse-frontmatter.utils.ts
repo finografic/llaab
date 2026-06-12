@@ -86,7 +86,7 @@ function parseYamlLike(raw: string): Record<string, unknown> {
       const itemIndent = arrayMatch[1]?.length ?? 0;
       const itemContent = arrayMatch[2] ?? '';
 
-      if (itemContent.includes(':')) {
+      if (/^[^\s:]+:(\s|$)/.test(itemContent)) {
         const continuation: string[] = [];
         let nextIndex = lineIndex + 1;
 
