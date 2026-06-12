@@ -6,7 +6,7 @@ Local-first React SPA for LLAAB — Vite 8 + React Router v7.
 
 | Command          | Action                         |
 | ---------------- | ------------------------------ |
-| `pnpm dev`       | Vite dev server on `:4321`     |
+| `pnpm dev`       | Vite dev server on `:3000`     |
 | `pnpm build`     | Production bundle → `dist/`    |
 | `pnpm preview`   | Serve `dist/` (proxies `/api`) |
 | `pnpm typecheck` | TypeScript check               |
@@ -16,7 +16,7 @@ Local-first React SPA for LLAAB — Vite 8 + React Router v7.
 - **Entry:** `index.html` → `src/main.tsx`
 - **Routes:** `src/router.tsx` (`createBrowserRouter`)
 - **Data:** TanStack Query + Hono RPC (`lib/api.ts`)
-- **API proxy:** Vite dev/preview forwards `/api/*` → `apps/server` (`SERVER_URL`)
+- **API proxy:** Vite dev/preview forwards `/api/*` and `/terminal` → `apps/server` (`LLAAB_API_URL`)
 
 ## Path aliases
 

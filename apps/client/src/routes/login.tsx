@@ -1,13 +1,31 @@
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { useState } from 'react';
+import { redirect, useNavigate } from 'react-router-dom';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { buildApiHeaders } from 'lib/api-client';
 import { usePageTitle } from 'lib/use-page-title';
 
 import styles from './login.module.css';
+
+export async function vaultLoginLoader() {
+  const res = await fetch('/api/vault/auth/session', {
+    credentials: 'include',
+    headers: buildApiHeaders(),
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  const body = (await res.json()) as { authRequired?: boolean };
+  if (body.authRequired === false) {
+    throw redirect('/vault');
+  }
+
+  return null;
+}
 
 export function VaultLoginPage() {
   usePageTitle('Vault');
@@ -78,8 +96,8 @@ export function VaultLoginPage() {
           </form>
 
           <p className={styles.hint}>
-            Default password is <code>llaab</code>. Override with <code>VAULT_PASSWORD</code> in{' '}
-            <code>.env</code>.
+            Set <code>VAULT_PASSWORD</code> in <code>.env</code> to require a vault login. Leave it unset for
+            open local access.
           </p>
         </div>
       </main>

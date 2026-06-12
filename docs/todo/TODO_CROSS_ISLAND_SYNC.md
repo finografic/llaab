@@ -6,9 +6,9 @@
 
 ## The issue
 
-React islands on the same page already share live state via the `queryClient` singleton
-(`providers/QueryClientProvider/queryClient.ts`) — see the gotcha in
-[`docs/astro/ASTRO_FETCH_AND_PAGES.md`](../astro/ASTRO_FETCH_AND_PAGES.md#gotcha-providers-cannot-wrap-islands-across-the-astro-boundary).
+React components on the same page already share live state via the `queryClient` singleton
+(`providers/QueryClientProvider/queryClient.ts`) mounted once in `main.tsx` — see
+[`docs/CLIENT_DATA_FETCHING.md`](../CLIENT_DATA_FETCHING.md).
 That singleton solves **same-page** sync only. It does not — and cannot — reach:
 
 - a second browser tab open on `/vault/runs`
@@ -28,8 +28,8 @@ just cross-tab instead of same-document.
 
 **WebSocket is explicitly not a fit:** it requires a long-lived server connection, which
 conflicts with `.github/instructions/project/agent-execution.instructions.md`'s "no
-always-on background processes... LLAAB does not own a scheduler" rule, and with the
-"local dev tool only, never built for production" framing in `ASTRO_FETCH_AND_PAGES.md`.
+always-on background processes... LLAAB does not own a scheduler" rule, and with LLAAB's
+local-first SPA model (no long-lived client↔server push channel required today).
 `BroadcastChannel` needs none of that — it lives entirely in the browser.
 
 ## How we'd know "the need has arisen"

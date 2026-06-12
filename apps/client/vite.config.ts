@@ -9,16 +9,15 @@ const clientRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, repoRoot, '');
-  const serverUrl = env['SERVER_URL'] ?? 'http://localhost:3000';
+  const serverUrl = env['LLAAB_API_URL'] ?? 'http://localhost:8888';
   const devHost = env['HOST'] ?? '127.0.0.1';
-  const devPort = Number(env['PORT'] ?? 4321);
+  const devPort = Number(env['PORT'] ?? 3000);
   const outDir = process.env['LLAAB_CLIENT_OUT_DIR']
     ? path.resolve(process.env['LLAAB_CLIENT_OUT_DIR'])
     : path.resolve(clientRoot, 'dist');
 
   return {
     envDir: repoRoot,
-    envPrefix: ['VITE_', 'SERVER_'],
     plugins: [react(), tailwindcss()],
     resolve: {
       dedupe: ['react', 'react-dom'],
@@ -54,6 +53,11 @@ export default defineConfig(({ mode }) => {
           target: serverUrl,
           changeOrigin: true,
         },
+        '/terminal': {
+          target: serverUrl,
+          changeOrigin: true,
+          ws: true,
+        },
       },
     },
     preview: {
@@ -64,6 +68,11 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: serverUrl,
           changeOrigin: true,
+        },
+        '/terminal': {
+          target: serverUrl,
+          changeOrigin: true,
+          ws: true,
         },
       },
     },

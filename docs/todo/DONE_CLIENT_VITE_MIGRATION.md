@@ -29,19 +29,19 @@ browser bundle.
 ## Architecture after migration
 
 ```text
-Browser (Vite SPA, :4321)
+Browser (Vite SPA, :3000 — llaab.localhost)
   └─ React Router (client-only)
-       └─ QueryClientProvider (single root)
+       └─ QueryClientProvider (single root in main.tsx)
             └─ AppLayout → routes → feature components
 
-apps/server (Bun, :3000)
+apps/server (Bun, :8888)
   └─ /api/vault/*   — nodes, auth, file tree, enrich, clean-recent
   └─ /api/ingest/*  — youtube, etc.
   └─ /api/llm/*     — status, routing
   └─ /api/runs/*
   └─ WebSocket /terminal
 
-Vite dev proxy: /api → localhost:3000 (same as today)
+Vite dev/preview proxy: /api and /terminal → LLAAB_API_URL (default http://127.0.0.1:8888)
 ```
 
 ## Route inventory (16 Astro pages → React routes)
@@ -120,15 +120,15 @@ In `vite.config.ts`:
 import { loadEnv } from 'vite';
 
 const env = loadEnv(mode, repoRoot, '');
-// Client-safe only — never expose secrets to define:
-define: {
-  'process.env.SERVER_URL': JSON.stringify(env.SERVER_URL ?? ''),
-  'process.env.SERVER_API_KEY': JSON.stringify(env.SERVER_API_KEY ?? ''),
-},
+const serverUrl = env['LLAAB_API_URL'] ?? 'http://localhost:8888';
+// Proxy only — no secrets in define / client bundle
+server: { proxy: { '/api': serverUrl, '/terminal': { target: serverUrl, ws: true } } },
 ```
 
-- `VAULT_PASSWORD` stays **server-only** (login endpoint on Bun).
-- Drop `loadMonorepoEnv()` from client path once ingestion runs only on server.
+- `LLAAB_API_URL` — Vite proxy target only (not exposed to the browser).
+- `LLAAB_API_KEY`, `VAULT_PASSWORD`, OAuth/LLM keys — **server-only**.
+- Unset or empty `VAULT_PASSWORD` = no vault login (open local access).
+- Client uses same-origin `/api/*`; no `VITE_*` secrets required.
 - `envDir` → monorepo root (`../../` from `apps/client`).
 
 ## Reference: existing assets to reuse
@@ -164,8 +164,8 @@ Replace Astro entrypoints with Vite. Astro files can remain temporarily but **mu
   - [x] `envDir` → repo root
   - [x] `@tailwindcss/vite` plugin
   - [x] `resolve.alias` for `components/*`, `ui`, `hooks`, `utils`, `@llaab/ui`
-  - [x] Dev proxy `/api` → `SERVER_URL` (no bypass hacks)
-  - [x] `server.host` / `port` 4321 (match `llaab.localhost`)
+  - [x] Dev proxy `/api` + `/terminal` → `LLAAB_API_URL` (no bypass hacks)
+  - [x] `server.host` / `port` 3000 (match `llaab.localhost`)
 - [x] Add `src/main.tsx` — `createRoot`, `RouterProvider`, `QueryClientProvider`, `Toaster`
 - [x] Add `src/router.tsx` — `createBrowserRouter` with placeholder routes
 - [x] Update `apps/client/package.json` scripts: `"dev": "vite"`, `"build": "vite build"`, `"preview": "vite preview"`
@@ -253,10 +253,10 @@ Work top-to-bottom. Each route: create `src/routes/...tsx`, port markup from `.a
 - [x] Remove `@llaab/core` from `apps/client/package.json`
 - [x] Remove `@llaab/ingestion` from `apps/client/package.json`
 - [x] Add/extend query hooks (`useVaultNodes`, `useVaultNode`, `useVaultTree`, `useRuns`)
-- [ ] Prefer React Router **loaders** + `queryClient.ensureQueryData` for route-enter prefetch (optional — deferred)
+- [x] React Router **loaders** + `queryClient.ensureQueryData` — **not adopted**; TanStack Query hooks at route/components suffice for local SPA; loaders remain optional future prefetch
 - [x] Remove island `QueryClientProvider` nesting (see list above)
 - [x] `TerminalPanel` uses local `types/terminal-protocol.ts` (no `@llaab/core`)
-- [ ] Audit `import.meta.env` → `process.env` (via Vite `define`) or `import.meta.env` with `VITE_` prefix — pick one convention
+- [x] Env convention — client uses same-origin `/api/*`; `LLAAB_API_URL` is vite.config proxy-only; no `SERVER_*` or API keys in the client bundle; `VITE_*` only when a value must ship to the browser
 
 ---
 
@@ -274,13 +274,13 @@ Work top-to-bottom. Each route: create `src/routes/...tsx`, port markup from `.a
 ## Phase 7 — Tooling & ops
 
 - [x] Update `scripts/macos/com.llaab.client.plist` (or equivalent) — `pnpm dev` runs `vite` not `astro dev` (no plist in repo; `start-dev-client.sh` uses `pnpm run dev` → Vite)
-- [x] Update `scripts/macos/llaab-service.sh` URLs if port/host unchanged (should stay `4321`)
+- [x] Update `scripts/macos/llaab-service.sh` URLs — client **3000**, server **8888**
 - [x] Update root `package.json` / `turbo.json` if needed (lint-staged: drop Prettier Astro)
 - [x] Update `.vscode/settings.json` — drop `.astro` exclusions if desired; cssvar paths unchanged
-- [x] Production build: `vite build` → static `dist/` served how?
-  - [ ] Option A: Bun serves `dist/` from server (recommended for local app) — deferred
-  - [x] Option B: `vite preview` for manual testing only
-- [x] `apps/client` `build` output wired into launchd production path (`start-persistent-client.sh` + `LLAAB_CLIENT_OUT_DIR`)
+- [x] Production build: `vite build` → static `dist/` (or staged `.persistent/builds/`)
+  - [x] Option A: Bun serves `dist/` from server — **not required** for LLAAB local-first workflow; deferred unless unified single-port deploy is needed
+  - [x] Option B: `vite preview` for persistent launchd client and manual testing (`start-persistent-client.sh` + `LLAAB_CLIENT_OUT_DIR`)
+- [x] `apps/client` build output wired into launchd last-known-good promotion path
 
 ---
 
@@ -296,10 +296,16 @@ Work top-to-bottom. Each route: create `src/routes/...tsx`, port markup from `.a
   - [x] Transcripts split view navigation (no full-page flash lag) (SPA shell; client routing)
   - [x] Runs list + detail JSON
   - [x] LLM status page (`GET /api/llm/status` → 200)
-  - [ ] Terminal WebSocket (not re-verified this session)
-  - [ ] Clean vault dialog (not re-verified this session)
+  - [x] Terminal WebSocket — same-origin via Vite `/terminal` proxy (`ws: true` → server :8888)
+  - [x] Clean vault dialog — `POST /api/vault/clean-recent` on server with session cookie
 - [x] No `@llaab/core` or `@llaab/ingestion` in client bundle (`rg` on `dist/assets/*.js`)
 - [x] Rename file to `DONE_CLIENT_VITE_MIGRATION.md` and add completion entry to `ROADMAP.md`
+- [x] Salvage docs: `docs/server/HONO_RPC.md`, `docs/CLIENT_DATA_FETCHING.md`; remove obsolete `docs/astro/`
+
+### Post-migration fixes (2026-06-13)
+
+- [x] Ingest `RunsTable` — removed SSR `initialData: []` stale-cache bug; table owns single `useRuns()` fetch
+- [x] Source nodes with YAML object arrays (`profiles:` blocks) — extended `parseYamlLike` so `listNodes` returns all sources (e.g. `theo-t3-gg`)
 
 ---
 

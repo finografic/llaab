@@ -85,8 +85,11 @@ track the cumulative route shape through each call.
 import { hc } from 'hono/client';
 import type { AppType } from '../../../server/src/app.js';   // type-only import, erased at build
 
-export const api = client.api; // client = hc<AppType>(baseUrl, { headers })
+export const api = client.api; // client = hc<AppType>(baseUrl, { credentials: 'include' })
 ```
+
+The client uses same-origin requests (`window.location.origin`). Vite dev/preview proxies
+`/api/*` and `/terminal` to `LLAAB_API_URL` (default `http://127.0.0.1:8888`).
 
 `hc<AppType>` returns a proxy whose property path mirrors the server's URL structure:
 
@@ -105,7 +108,7 @@ export const api = client.api; // client = hc<AppType>(baseUrl, { headers })
 ## Using `api` in a component
 
 ```tsx
-import { api } from '../lib/api';
+import { api } from 'lib/api';
 
 // GET with query params
 const res = await api.vault.nodes.$get({ query: { type: 'idea' } });
@@ -133,6 +136,9 @@ if ('error' in data) {
 }
 // data.nodes is LabNode[] here
 ```
+
+Prefer TanStack Query hooks in `apps/client/src/queries/` for shared cache and invalidation.
+See `docs/CLIENT_DATA_FETCHING.md` for vault page patterns.
 
 ---
 

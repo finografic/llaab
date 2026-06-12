@@ -17,18 +17,20 @@ async function fetchRuns(): Promise<RunNode[]> {
 }
 
 export interface UseRunsOptions {
-  /** SSR-rendered data — lets islands hydrate without a refetch flash. */
+  /** Prefetched data for hydration; pass `initialDataUpdatedAt: 0` so the query still refetches. */
   initialData?: RunNode[];
+  initialDataUpdatedAt?: number;
   /** Defaults to `true`. Set `false` to defer fetching (e.g. until a dialog opens). */
   enabled?: boolean;
 }
 
 /** List runs, sorted newest-first. */
-export function useRuns({ initialData, enabled = true }: UseRunsOptions = {}) {
+export function useRuns({ initialData, initialDataUpdatedAt, enabled = true }: UseRunsOptions = {}) {
   return useQuery({
     queryKey: QUERY_KEYS.runs.list(),
     queryFn: fetchRuns,
     initialData,
+    initialDataUpdatedAt,
     enabled,
   });
 }

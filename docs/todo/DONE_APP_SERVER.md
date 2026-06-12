@@ -138,7 +138,7 @@ isolation.
 **`index.ts`** — Pure composition. Imports schemas and route handlers, wires them:
 `createRouter().get(routes.list.path, routes.list.handler)`. Exports a named router.
 
-See `docs/astro/HONO_RPC.md` for the full guide including step-by-step for adding routes.
+See `docs/server/HONO_RPC.md` for the full guide including step-by-step for adding routes.
 
 ---
 

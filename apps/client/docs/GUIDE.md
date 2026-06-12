@@ -49,10 +49,10 @@ with `credentials: 'include'` (configured in `lib/api.ts` and `lib/api-client.ts
 
 ## Dev vs production
 
-| Mode       | Client URL                    | API                    |
-| ---------- | ----------------------------- | ---------------------- |
-| `pnpm dev` | `http://127.0.0.1:4321`       | Vite proxy → `:3000`   |
-| launchd    | `http://llaab.localhost:4321` | `vite preview` + proxy |
+| Mode       | Client URL                    | API                           |
+| ---------- | ----------------------------- | ----------------------------- |
+| `pnpm dev` | `http://127.0.0.1:3000`       | Vite proxy → `:8888`          |
+| launchd    | `http://llaab.localhost:3000` | `vite dev` or preview + proxy |
 
 Run server separately: `pnpm --filter @llaab/server dev`.
 

@@ -26,6 +26,7 @@ import type { RunNode, SourceNode, TranscriptNode } from '@llaab/schemas';
 
 import {
   getVaultPassword,
+  isVaultAuthEnabled,
   isVaultSessionValid,
   VAULT_COOKIE_MAX_AGE,
   VAULT_COOKIE_NAME,
@@ -36,8 +37,13 @@ import { deleteRunQuerySchema } from './vault.schema.js';
 export const vaultAuthLogin = {
   path: '/auth/login' as const,
   handler: async (c: AppCtxJson<VaultLoginBody>) => {
+    if (!isVaultAuthEnabled()) {
+      return c.json({ ok: true, authRequired: false });
+    }
+
     const { password } = c.req.valid('json');
-    if (password !== getVaultPassword()) {
+    const expected = getVaultPassword();
+    if (expected === null || password !== expected) {
       return c.json({ ok: false, error: 'Incorrect password.' }, 401);
     }
 
@@ -48,7 +54,7 @@ export const vaultAuthLogin = {
       sameSite: 'Lax',
     });
 
-    return c.json({ ok: true });
+    return c.json({ ok: true, authRequired: true });
   },
 };
 
@@ -63,10 +69,15 @@ export const vaultAuthLogout = {
 export const vaultAuthSession = {
   path: '/auth/session' as const,
   handler: (c: AppCtx) => {
-    if (!isVaultSessionValid(c)) {
-      return c.json({ ok: false }, 401);
+    if (!isVaultAuthEnabled()) {
+      return c.json({ ok: true, authRequired: false });
     }
-    return c.json({ ok: true });
+
+    if (!isVaultSessionValid(c)) {
+      return c.json({ ok: false, authRequired: true }, 401);
+    }
+
+    return c.json({ ok: true, authRequired: true });
   },
 };
 

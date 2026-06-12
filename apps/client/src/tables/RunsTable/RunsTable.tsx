@@ -81,13 +81,12 @@ export function buildRunsColumns(sourcesById: Map<string, SourceNode>): DataTabl
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export interface RunsTableProps {
-  runs: RunNode[];
   sources?: SourceNode[];
   showHeading?: boolean;
 }
 
-export function RunsTable({ runs: initialRuns, sources = [], showHeading = false }: RunsTableProps) {
-  const { data: runs = initialRuns } = useRuns({ initialData: initialRuns });
+export function RunsTable({ sources = [], showHeading = false }: RunsTableProps) {
+  const { data: runs = [] } = useRuns();
   const columns = useMemo(() => buildRunsColumns(buildSourcesById(sources)), [sources]);
 
   return (

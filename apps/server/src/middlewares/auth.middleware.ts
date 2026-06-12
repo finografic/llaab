@@ -2,11 +2,11 @@ import { StatusCodes } from 'http-status-codes';
 import type { MiddlewareHandler } from 'hono';
 
 /**
- * X-API-Key guard. Reads `SERVER_API_KEY` from `process.env`. If the env var is not set, auth is disabled
+ * X-API-Key guard. Reads `LLAAB_API_KEY` from `process.env`. If the env var is not set, auth is disabled
  * (dev convenience — always allow).
  */
 export const auth: MiddlewareHandler = async (c, next) => {
-  const requiredKey = process.env['SERVER_API_KEY'];
+  const requiredKey = process.env['LLAAB_API_KEY'];
 
   if (!requiredKey) {
     await next();

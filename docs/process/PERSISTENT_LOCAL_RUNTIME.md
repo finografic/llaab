@@ -12,8 +12,8 @@ This setup is meant for a "laboratory" workflow:
 
 Current local persistent services:
 
-- `com.llaab.server` — Bun API on `3000`
-- `com.llaab.client` — Astro standalone client on `4321`
+- `com.llaab.server` — Bun API on `8888`
+- `com.llaab.client` — Vite SPA on `3000`
 - `com.llaab.icons` — icons write-back server + Lucide Manager picker on `5001` / `5199`
 
 These are managed by macOS `launchd` user agents and controlled through:
@@ -43,10 +43,10 @@ The persistent client now uses a **last-known-good build** model.
 
 `scripts/macos/start-persistent-client.sh` does this:
 
-1. builds the Astro app into a fresh staged output directory under `apps/client/.persistent/builds/`
-2. verifies the standalone server entry exists
+1. builds the Vite app into a fresh staged output directory under `apps/client/.persistent/builds/`
+2. verifies `index.html` exists in the staged output
 3. promotes that staged build to `apps/client/.persistent/current` only after success
-4. starts Node from the promoted `current` build
+4. starts `vite preview` from the promoted `current` build (`LLAAB_CLIENT_OUT_DIR`)
 
 If a new build fails:
 
@@ -80,7 +80,7 @@ With staged promotion:
 
 Potential future hardening:
 
-- explicit health endpoint for the Astro client runtime
+- explicit health check for the Vite preview client (e.g. `GET /` on :3000)
 - a deploy script that separates "build new runtime" from "restart runtime"
 - same last-known-good promotion model for other built local tools if needed
 

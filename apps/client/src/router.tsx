@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { DevIconsPage } from 'routes/dev-icons';
 import { IngestPage } from 'routes/ingest';
 import { LlmPage } from 'routes/llm';
-import { VaultLoginPage } from 'routes/login';
+import { VaultLoginPage, vaultLoginLoader } from 'routes/login';
 import { NodeDetailPage } from 'routes/node-detail';
 import { NodesPage } from 'routes/nodes';
 import { HomePage } from 'routes/root';
@@ -21,6 +21,7 @@ import type { RouteHandle } from 'layouts/AppLayout/AppLayout';
 export const router = createBrowserRouter([
   {
     path: '/vault/login',
+    loader: vaultLoginLoader,
     element: <VaultLoginPage />,
   },
   {

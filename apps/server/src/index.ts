@@ -3,7 +3,7 @@ import { pc } from './utils/picocolors.js';
 import { app } from './app.js';
 import { dispatchCommandEnvelope } from './commands/index.js';
 
-const port = Number(process.env['PORT'] ?? 3000);
+const port = Number(process.env['PORT'] ?? 8888);
 const COMMAND_TIMEOUT_MS = 120_000;
 const LONG_RUNNING_PATHS = [
   /^\/api\/ingest\/youtube$/,

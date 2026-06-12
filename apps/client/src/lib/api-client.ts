@@ -1,21 +1,13 @@
 /**
  * Thin fetch wrapper for @llaab/server.
  *
- * In dev, Vite proxies /api/* → SERVER_URL (apps/server). The client always fetches relative paths so no
+ * In dev, Vite proxies /api/* → `LLAAB_API_URL` (apps/server). The client always fetches relative paths so no
  * cross-origin setup is needed in the browser.
- *
- * | Config       | Default (dev)             | Override via           |
- * | ------------ | ------------------------- | ---------------------- |
- * | Proxy target | http://localhost:3000     | SERVER_URL env var     |
- * | Auth header  | (none — key not required) | SERVER_API_KEY env var |
  */
-
-const API_KEY: string | undefined = import.meta.env['SERVER_API_KEY'];
 
 export function buildApiHeaders(): Headers {
   const headers = new Headers();
   headers.set('Content-Type', 'application/json');
-  if (API_KEY) headers.set('X-API-Key', API_KEY);
   return headers;
 }
 

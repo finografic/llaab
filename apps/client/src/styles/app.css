@@ -270,11 +270,11 @@
 
 /* ── Sonner toasts ──────────────────────────────────────────────────────────── */
 
-:global(.llaab-toast-success) {
+.llaab-toast-success {
   flex-direction: row-reverse;
 }
 
-:global(.llaab-toast-success [data-icon]) {
+.llaab-toast-success [data-icon] {
   color: var(--success-text);
 }
 

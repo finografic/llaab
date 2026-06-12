@@ -5,7 +5,7 @@
 # <xbar.author.github>finografic</xbar.author.github>
 # <xbar.desc>Persistent local control for the LLAAB client and API services.</xbar.desc>
 # <xbar.dependencies>zsh,curl</xbar.dependencies>
-# <xbar.abouturl>http://llaab.localhost:4321</xbar.abouturl>
+# <xbar.abouturl>http://llaab.localhost:3000</xbar.abouturl>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>true</swiftbar.hideLastUpdated>
 
@@ -17,8 +17,8 @@ readonly logs_dir="/Users/justin/Library/Logs/llaab"
 readonly client_log="$logs_dir/client.stdout.log"
 readonly icons_log="$logs_dir/icons.stdout.log"
 readonly server_log="$logs_dir/server.stdout.log"
-readonly app_url="http://llaab.localhost:4321"
-readonly ingest_url="http://llaab.localhost:4321/ingest"
+readonly app_url="http://llaab.localhost:3000"
+readonly ingest_url="http://llaab.localhost:3000/ingest"
 readonly icons_url="$(
   /Users/justin/.nvm/versions/node/v24.3.0/bin/node --input-type=module <<'NODE'
 import { readFileSync } from 'node:fs';

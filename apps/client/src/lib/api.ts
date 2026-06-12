@@ -4,16 +4,13 @@
  * Usage: const res = await api.vault.nodes.$get({ query: { type: 'idea' } }); const { nodes } = await
  * res.json(); // typed as { nodes: LabNode[] }
  *
- * In dev, Vite proxies /api/* → localhost:3000 (apps/server). The base URL is the Astro dev-server origin so
- * requests stay same-origin and the proxy fires correctly.
+ * In dev, Vite proxies /api/* → apps/server. Requests stay same-origin so the proxy fires correctly.
  */
 
 import { hc } from 'hono/client';
 import type { AppType } from '../../../server/src/app.js';
 
-const API_KEY: string | undefined = import.meta.env['SERVER_API_KEY'];
-
-const baseUrl = globalThis.window?.location.origin ?? 'http://localhost:4321';
+const baseUrl = globalThis.window?.location.origin ?? 'http://localhost:3000';
 
 const client = hc<AppType>(baseUrl, {
   fetch: (input: RequestInfo | URL, init?: RequestInit) =>
@@ -21,15 +18,11 @@ const client = hc<AppType>(baseUrl, {
       ...init,
       credentials: 'include',
     }),
-  headers: () => {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (API_KEY) headers['X-API-Key'] = API_KEY;
-    return headers;
-  },
+  headers: () => ({ 'Content-Type': 'application/json' }),
 });
 
 /** Typed API client. Mirrors the server's /api/* route tree. */
-export const {api} = client;
+export const { api } = client;
 
 /** DELETE /api/vault/runs/:id — optional produced-node cascade. */
 export async function deleteVaultRun(id: string, deleteProduced: boolean) {

@@ -78,17 +78,17 @@ flowchart TD
 
 The system is intentionally layered:
 
-| Layer            | Primary files                                                                 | Responsibility                                      |
-| ---------------- | ----------------------------------------------------------------------------- | --------------------------------------------------- |
-| Schema           | `packages/schemas/src/*.schema.ts`                                            | Defines valid node and trace shapes.                |
-| Core             | `packages/core/src/*`                                                         | Vault IO, taxonomy, command protocol, capabilities. |
-| Harness prep     | `packages/ingestion/src/extract/harness-prep.ts`                              | Token-aware context preparation for extraction.     |
-| Control          | `packages/control/src/orchestrator.ts`                                        | Governed model execution and schema validation.     |
-| LLM routing      | `packages/llm/src/router.ts`, `packages/llm/src/providers/*`                  | Task-to-provider/model routing.                     |
-| Skills           | `packages/skills/src/*`                                                       | Ingest, agent, and reusable execution flows.        |
-| Server routes    | `apps/server/src/routes/*`, `apps/server/src/commands/*`                      | HTTP, WebSocket, and command dispatch.              |
-| Client surfaces  | `apps/client/src/pages/*`, `apps/client/src/components/TerminalPanel.tsx`     | Browser pages and terminal command surface.         |
-| CLI diagnostics  | `packages/cli/src/commands/*`                                                 | Local diagnostics and adapter visibility.           |
+| Layer           | Primary files                                                             | Responsibility                                      |
+| --------------- | ------------------------------------------------------------------------- | --------------------------------------------------- |
+| Schema          | `packages/schemas/src/*.schema.ts`                                        | Defines valid node and trace shapes.                |
+| Core            | `packages/core/src/*`                                                     | Vault IO, taxonomy, command protocol, capabilities. |
+| Harness prep    | `packages/ingestion/src/extract/harness-prep.ts`                          | Token-aware context preparation for extraction.     |
+| Control         | `packages/control/src/orchestrator.ts`                                    | Governed model execution and schema validation.     |
+| LLM routing     | `packages/llm/src/router.ts`, `packages/llm/src/providers/*`              | Task-to-provider/model routing.                     |
+| Skills          | `packages/skills/src/*`                                                   | Ingest, agent, and reusable execution flows.        |
+| Server routes   | `apps/server/src/routes/*`, `apps/server/src/commands/*`                  | HTTP, WebSocket, and command dispatch.              |
+| Client surfaces | `apps/client/src/pages/*`, `apps/client/src/components/TerminalPanel.tsx` | Browser pages and terminal command surface.         |
+| CLI diagnostics | `packages/cli/src/commands/*`                                             | Local diagnostics and adapter visibility.           |
 
 ---
 
@@ -96,17 +96,17 @@ The system is intentionally layered:
 
 These are the main browser routes that expose orchestration state:
 
-| Browser route                 | Purpose                                                               |
-| ----------------------------- | --------------------------------------------------------------------- |
-| `/ingest`                     | YouTube ingestion form; creates transcripts and optionally extracts.  |
-| `/llm`                        | LLM status/model interaction surface.                                 |
-| `/terminal`                   | Typed command bus UI over the `/terminal` WebSocket.                  |
-| `/vault/transcripts`          | Transcript index.                                                     |
-| `/vault/transcripts/[id]`     | Transcript detail, extraction metadata, ideas, and retry extraction.  |
-| `/vault/nodes`                | General node index.                                                   |
-| `/vault/nodes/[id]`           | Idea/skill/resource/source node detail.                               |
-| `/vault/runs`                 | Run trace index.                                                      |
-| `/vault/runs/[id]`            | Execution trace detail, including command and model metadata.         |
+| Browser route             | Purpose                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| `/ingest`                 | YouTube ingestion form; creates transcripts and optionally extracts. |
+| `/llm`                    | LLM status/model interaction surface.                                |
+| `/terminal`               | Typed command bus UI over the `/terminal` WebSocket.                 |
+| `/vault/transcripts`      | Transcript index.                                                    |
+| `/vault/transcripts/[id]` | Transcript detail, extraction metadata, ideas, and retry extraction. |
+| `/vault/nodes`            | General node index.                                                  |
+| `/vault/nodes/[id]`       | Idea/skill/resource/source node detail.                              |
+| `/vault/runs`             | Run trace index.                                                     |
+| `/vault/runs/[id]`        | Execution trace detail, including command and model metadata.        |
 
 The UI should read orchestration state from nodes and run traces rather than reconstructing hidden
 state from client memory.
@@ -140,7 +140,7 @@ WebSocket at `/terminal`.
 ### Example LLM request
 
 ```ts
-await fetch('http://localhost:3000/api/llm/complete', {
+await fetch('http://localhost:8888/api/llm/complete', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -398,7 +398,7 @@ one hard-to-debug function.
 
 ## Terminal Panel
 
-The Terminal Panel is a browser UI for typed commands. It connects to `ws://localhost:3000/terminal`
+The Terminal Panel is a browser UI for typed commands. It connects to the same origin via Vite proxy (`ws://localhost:3000/terminal` → Bun on `:8888`).
 by default, derived from `PUBLIC_SERVER_URL`.
 
 Supported commands:
@@ -506,12 +506,12 @@ When adding orchestration behavior:
 
 ## Related Documentation
 
-| Doc                                                                                 | Relationship                                      |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------- |
-| [01 — Overview](01_OVERVIEW.md)                                                     | Schema/vault foundation.                          |
-| [02 — Node types and schemas](02_NODE_TYPES_and_SCHEMAS.md)                         | Node and `RunNode` shapes.                        |
-| [05 — Control layer and execution model](05_CONTROL_LAYER_AND_EXECUTION_MODEL.md)   | Control-layer principles.                         |
-| [06 — YouTube transcript ingestion](06_YOUTUBE_TRANSCRIPT_INGESTION.md)             | Detailed ingest/extract pipeline.                 |
-| [Taxonomy guide](taxonomy/TAXONOMY_GUIDE.md)                                        | Domain tag vocabulary and auto-tagging rules.     |
-| [Terminal Panel plan](todo/TODO_TERMINAL_PANEL.md)                                  | Historical terminal design plan.                  |
-| [Orchestration implementation plan](todo/DONE_ORCHESTRATION.md)                     | Completed implementation checklist.               |
+| Doc                                                                               | Relationship                                  |
+| --------------------------------------------------------------------------------- | --------------------------------------------- |
+| [01 — Overview](01_OVERVIEW.md)                                                   | Schema/vault foundation.                      |
+| [02 — Node types and schemas](02_NODE_TYPES_and_SCHEMAS.md)                       | Node and `RunNode` shapes.                    |
+| [05 — Control layer and execution model](05_CONTROL_LAYER_AND_EXECUTION_MODEL.md) | Control-layer principles.                     |
+| [06 — YouTube transcript ingestion](06_YOUTUBE_TRANSCRIPT_INGESTION.md)           | Detailed ingest/extract pipeline.             |
+| [Taxonomy guide](taxonomy/TAXONOMY_GUIDE.md)                                      | Domain tag vocabulary and auto-tagging rules. |
+| [Terminal Panel plan](todo/TODO_TERMINAL_PANEL.md)                                | Historical terminal design plan.              |
+| [Orchestration implementation plan](todo/DONE_ORCHESTRATION.md)                   | Completed implementation checklist.           |

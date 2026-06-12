@@ -6,7 +6,7 @@ export PATH="/Users/justin/.bun/bin:/Users/justin/.nvm/versions/node/v24.3.0/bin
 
 readonly client_label="com.llaab.client"
 readonly client_plist="$HOME/Library/LaunchAgents/$client_label.plist"
-readonly client_url="http://llaab.localhost:4321"
+readonly client_url="http://llaab.localhost:3000"
 readonly wait_seconds=90
 
 label_exists() {

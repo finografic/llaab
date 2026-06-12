@@ -12,8 +12,8 @@ readonly server_plist="$launch_agents_dir/$server_label.plist"
 readonly client_plist="$launch_agents_dir/$client_label.plist"
 readonly icons_plist="$launch_agents_dir/$icons_label.plist"
 readonly client_log="$logs_dir/client.stdout.log"
-readonly server_url="http://127.0.0.1:3000"
-readonly client_url="http://llaab.localhost:4321"
+readonly server_url="http://127.0.0.1:8888"
+readonly client_url="http://llaab.localhost:3000"
 readonly icons_url="$(
   /Users/justin/.nvm/versions/node/v24.3.0/bin/node --input-type=module <<'NODE'
 import { readFileSync } from 'node:fs';

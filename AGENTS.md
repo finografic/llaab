@@ -131,6 +131,7 @@ Hand-rolling what shadcn provides is not permitted.
 - Tag groups use `<div class="tags">` with `tag-row` children—generic `div` for layout, not `section`/`article`; prefer `tags` over `-wrapper`/`-container` class names.
 - Vault node list pages should use shadcn `DataTable` via wrappers in `apps/client/src/tables/`; avoid one-off HTML tables for node lists. In `*Table.tsx` wrappers, define column cell renderers at module scope with explicit `CellContext<T, unknown>` typing—copy `SourcesTable`/`TranscriptsTable` as templates; do not nest renderers inside `useMemo`.
 - For shadcn sidebar **blocks**, the docs URL plus `pnpm dlx shadcn@latest add sidebar-XX` from `apps/client` is usually enough—adapt through `AppSidebarLayout`; a local v0 export is optional, not required.
+- Server/tooling env vars use `LLAAB_*` (`LLAAB_API_URL`, `LLAAB_API_KEY`); do not widen Vite `envPrefix` to expose server-named vars to the client bundle—client code uses same-origin `/api/*` and proxied `/terminal`.
 
 ## Learned Workspace Facts
 
@@ -144,5 +145,6 @@ Hand-rolling what shadcn provides is not permitted.
 - Tooling: ESLint removed (oxlint + oxfmt for TS/JS, Prettier for Astro); TypeScript pinned to 6.x—set explicit `compilerOptions.types` (base `["node"]`, `apps/server` `["node", "bun"]`).
 - In `apps/client`, imports use tsconfig path aliases (`components/*`, `lib/*`, `utils/*`, …)—not `@/*`.
 - Client primary nav is shadcn `NavigationMenu` (`components/NavMenu/NavMenu.tsx`); menu structure lives in `apps/client/src/lib/nav-menu.config.ts`. Use `viewport={false}` so megamenu panels anchor under each trigger; rightmost sections (e.g. System) may need `left-auto right-0` on content. Responsive show/hide uses Tailwind only (`hidden md:flex`, `md:hidden`)—do not set `display` on CSS-module wrappers (overrides Tailwind `hidden` after hydration).
-- **Gotcha:** Monorepo `.env` lives at repo root; Vite loads it via `envDir` in `vite.config.ts` (`envPrefix` includes `SERVER_` for the dev proxy).
+- **Env / client:** Monorepo `.env` at repo root; Vite `envDir` points there. `LLAAB_API_URL` configures dev/preview proxy for `/api` and `/terminal` only (not in the browser bundle). `LLAAB_API_KEY`, `VAULT_PASSWORD`, OAuth/LLM keys are server-only—client uses relative same-origin paths. `VITE_*` exposes values to the client bundle; unset or empty `VAULT_PASSWORD` disables vault login.
+- **Local ports:** client (Vite) on **3000** (`llaab.localhost:3000`); server (Bun API) on **8888**; icons on **5001** / **5199**. Set `PORT` + `LLAAB_API_URL` in `.env` or launchd plists.
 - **SPA routing:** `apps/client` is a Vite + React Router SPA. Routes live in `src/routes/` and are wired in `src/router.tsx`. Vault routes use `vaultSessionLoader` + nested `VaultLayout`; set `handle: { title, fullBleed? }` for `AppLayout` chrome. Data fetching uses TanStack Query hooks in `src/queries/` with a single root `QueryClientProvider` in `main.tsx`.

@@ -11,7 +11,7 @@
 ## Project
 
 `llaab` — Learning Loop & Agent Automation Base. Turborepo + pnpm monorepo. Two-process
-architecture: `apps/server` (Hono + Bun, business logic) + `apps/client` (Astro + React, UI).
+architecture: `apps/server` (Hono + Bun, business logic) + `apps/client` (Vite + React Router SPA, UI).
 Core pipeline: ingest YouTube → transcript → ideas → skills → run traces, all stored as markdown
 vault nodes.
 
@@ -33,8 +33,8 @@ Dependency chain (one-directional):
 | `llm`       | Task router + providers/executors — Ollama, Anthropic, OpenCode registration; `routeLlm`, `streamLlm`, capabilities, 24h cache |
 | `skills`    | Composed workflows — `captureIdea`, `ingestYouTube`, `runSkill`                                                                |
 | `cli`       | Binary entry point (`lab`) — citty commands: ingest, vault, agent, mcp, doctor, adapters, route                                |
-| `client`    | Astro 6 + React 19 — pure UI, calls server via `src/lib/api.ts` (Hono typed RPC)                                               |
-| `server`    | Hono + Bun — REST API on port 3000, owns all non-UI logic                                                                      |
+| `client`    | Vite 8 + React 19 + React Router v7 — pure SPA UI, calls server via `src/lib/api.ts` (Hono typed RPC)                          |
+| `server`    | Hono + Bun — REST API on port 8888, owns all non-UI logic                                                                      |
 | `vault/`    | Data directory — markdown files organized by node type (not a package)                                                         |
 
 ## Stack
@@ -45,30 +45,34 @@ Dependency chain (one-directional):
 - Tests: Vitest 4.x
 - Icons: `@finografic/icons` + `@finografic/lucide-manager` via `@llaab/icons`
 - Server: Hono 4.x, http-status-codes, @hono/zod-validator
-- Client: Astro 6, React 19, React Hook Form 7.x, @astrojs/react
+- Client: Vite 8, React 19, React Router v7, React Hook Form 7.x
 - CSS: Tailwind CSS 4, shadcn/ui, app-local semantic CSS variables
-- Linting: oxlint + oxfmt (`@finografic/oxc-config`); Prettier retained for Astro files only
+- Linting: oxlint + oxfmt (`@finografic/oxc-config`); Prettier for markdown and legacy formats where needed
 - Hooks: husky + lint-staged (pre-commit: lint + format + typecheck)
 - Commits: commitlint
 
 ## Apps
 
-### `@llaab/client` — Astro 6 + React 19 (port 4321)
+### `@llaab/client` — Vite 8 + React Router SPA (port 3000)
 
 Pure UI. All data calls go to `@llaab/server` via `src/lib/api.ts` (Hono typed RPC client).
-Vite dev proxy forwards `/api/*` → `SERVER_URL` (default `http://localhost:3000`).
+Vite dev proxy forwards `/api/*` and `/terminal` → `LLAAB_API_URL` (default `http://localhost:8888`).
+
+Auth: optional `X-API-Key` vs `LLAAB_API_KEY` env. No key set = dev mode, auth skipped.
 Client styling: Tailwind v4 + shadcn/ui. shadcn components live in `packages/ui/src/components/`
 (imported via `@llaab/ui/components/<name>`); a parallel set of app-local copies with local import
 paths lives in `src/components/ui/` and is what all current React code imports via `components/ui/`.
 The old PandaCSS + linked design-system stack has been removed from the client.
-Vault pages load data directly via `@llaab/core` in frontmatter (no API hop); auth gate at top.
+Vault pages fetch via TanStack Query hooks + Hono RPC (`/api/vault/*`); optional vault login when
+`VAULT_PASSWORD` is set (unset = open local access).
 
-Layout hierarchy: `BaseLayout` owns `<html class="dark">/<head>/<body>` + CSS imports.
-`AppLayout` wraps `BaseLayout` with horizontal header + main + footer (sidebar removed 2026-06-07).
-`AppHeader` hosts the `NavMenu` React island (brand link + shadcn megamenus + mobile sheet).
-Inner pages use `PageLayout` (hero / optional aside / main zones) + `PageHero`. See `LAYOUT_AND_PAGES_GUIDE.md`.
-Navigation structure: `lib/nav-menu.config.ts`; design spec: `docs/NAV_MENU_DESIGN.md`.
-Home dashboard uses `BalancedGrid` + `utils/balanced-grid.utils.ts` to avoid orphan cards in multi-column grids.
+Layout hierarchy: `index.html` + `main.tsx` mount a single React tree. `AppLayout` wraps horizontal
+header + main + footer (sidebar removed 2026-06-07). `AppHeader` hosts `NavMenu` (brand link +
+shadcn megamenus + mobile sheet). Inner pages use `PageLayout` (hero / optional aside / main zones)
+
+- `PageHero`. See `LAYOUT_AND_PAGES_GUIDE.md`.
+  Navigation structure: `lib/nav-menu.config.ts`; design spec: `docs/NAV_MENU_DESIGN.md`.
+  Home dashboard uses `BalancedGrid` + `utils/balanced-grid.utils.ts` to avoid orphan cards in multi-column grids.
 
 CSS entry points: `packages/ui/src/styles/globals.css` owns all framework imports (Tailwind,
 `tw-animate-css`, `shadcn/tailwind.css`, Roboto), the shadcn stone token `:root`/`.dark` blocks,
@@ -77,26 +81,26 @@ imports `forms.css` only, then adds app-specific semantic tokens (`--bg`, `--sur
 `--accent`, `--space-*`, `--font-mono`, etc.), a `rem`-based type scale (`--text-2xs` 9px through
 `--text-4xl` 36px — all font sizes in the client use these so `html { font-size }` controls the
 whole UI), and overrides the shadcn tokens with LLAAB's warm amber dark palette in `:root {}`.
-`BaseLayout.astro` imports both in order. `forms.css` retains only native element resets for
+`main.tsx` imports globals then `app.css`. `forms.css` retains only native element resets for
 `input`, `textarea`, and `select` — all hand-rolled component classes were removed.
 Dark mode is always active via `class="dark"` on `<html>` (hardcoded — LLAAB is dark-only).
 Installed shadcn components in `packages/ui/src/components/` include `navigation-menu`, `sheet`,
 `accordion`, `button`, `badge`, `breadcrumb`, `scroll-area`, `table`, `tooltip`.
-Homepage (`index.astro`) callout cards: Ingest, Vault, Runs, Models (2×2 via `BalancedGrid`).
+Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models (2×2 via `BalancedGrid`).
 `/icons` redirects to `/dev/icons` (Lucide picker / registry).
 
-| Route                     | Description                                                                                               |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `/`                       | Home dashboard — four callout cards (Ingest, Vault, Runs, Models)                                         |
-| `/ingest`                 | URL form with card-wide drag/drop; two-phase: ingest fires first → Transcript Saved card, then extraction |
-| `/llm`                    | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list              |
-| `/icons`                  | Redirect to `/dev/icons` (embedded Lucide picker)                                                         |
-| `/vault`                  | Gated file-tree browser — local recursive tree + raw file viewer                                          |
-| `/vault/transcripts/[id]` | Detail: source metadata, summary, extracted ideas (linked), Re-extract button                             |
-| `/vault/nodes`            | PageLayout + NodesFileList island; nodes by type (idea/resource/prompt/skill/instruction)                 |
-| `/vault/nodes/[id]`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                              |
-| `/vault/sources/[id]`     | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count            |
-| `/vault/runs/[id]`        | Detail: summary grid, stages table, decisions list, error block                                           |
+| Route                    | Description                                                                                               |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `/`                      | Home dashboard — four callout cards (Ingest, Vault, Runs, Models)                                         |
+| `/ingest`                | URL form with card-wide drag/drop; two-phase: ingest fires first → Transcript Saved card, then extraction |
+| `/llm`                   | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list              |
+| `/icons`                 | Redirect to `/dev/icons` (embedded Lucide picker)                                                         |
+| `/vault`                 | Gated file-tree browser — local recursive tree + raw file viewer                                          |
+| `/vault/transcripts/:id` | Detail: source metadata, summary, extracted ideas (linked), Re-extract button                             |
+| `/vault/nodes`           | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                        |
+| `/vault/nodes/:id`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                              |
+| `/vault/sources/:id`     | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count            |
+| `/vault/runs/:id`        | Detail: summary grid, stages table, decisions list, error block                                           |
 
 `AppSidebarLayout` (`packages/ui/src/components/app-sidebar-layout.tsx`) supports both
 percentage and absolute-unit (`px`/`rem`) sidebar sizing — `isPercentOrBare()` only computes
@@ -119,9 +123,9 @@ no Context/runtime JS) lives at `packages/ui/src/components/grid/` (ported from
 font utilities still follow Tailwind names (`text-base`, `text-lg`, etc.); app CSS tokens such as
 `--text-md` do not automatically create a `text-md` utility. Docs: `docs/components/grid.md`.
 
-### `@llaab/server` — Hono + Bun (port 3000)
+### `@llaab/server` — Hono + Bun (port 8888)
 
-Auth: `X-API-Key` vs `SERVER_API_KEY` env. No key set = dev mode, auth skipped.
+Auth: optional `X-API-Key` vs `LLAAB_API_KEY` env. No key set = dev mode, auth skipped.
 Each route group: `*.schema.ts` (Zod), `*.routes.ts` (`{ path, handler }` exports), `index.ts` (wiring).
 Long-running ingest and extract routes explicitly disable Bun's per-request idle timeout so the
 client does not receive false network failures while the server continues extracting.
@@ -217,19 +221,26 @@ anti-copying instruction — small local models otherwise anchor on the example'
 in-domain (AI/LLM) input and either echo it verbatim or omit `tags`. `IngestForm` tag suggestions
 blend `KNOWN_TAGS` with tags ranked by usage across existing vault nodes (`vaultTagsByUsage`).
 
-## Client Data Fetching
+## Client data fetching
 
 `apps/client` reads/mutates vault data via TanStack Query hooks grouped by domain under
 `src/queries/<domain>/` (`runs`, `transcripts`, `nodes`, `vault`) — each a barrel exporting
 `QUERY_KEYS.<domain>` plus typed query/mutation hooks that call `api.*` (`lib/api`, the typed
-Hono RPC client) directly, no hand-written `endpoints/` layer. A single `QueryClient` singleton
-(`providers/QueryClientProvider/queryClient.ts`) is shared across all Astro islands — each
-`client:load`/`client:only` mounts an independent React root, so every island root that reads or
-mutates query state is wrapped directly in `<QueryClientProvider client:*>` in its `.astro` page
-(only the wrapper carries the `client:*` directive). The old `lib/runs-events`
-(`dispatchRunsChanged`/`RUNS_CHANGED_EVENT`) custom event bus and `lib/use-runs` are gone —
-mutation hooks declare `invalidateQueries` against `QUERY_KEYS` in their `onSuccess`/`onSettled`.
-Full migration writeup: `docs/todo/DONE_QUERIES_MIGRATION.md`.
+Hono RPC client) directly. A single `QueryClientProvider` in `main.tsx` wraps the whole SPA
+(shared `queryClient` singleton). Mutation hooks invalidate via `QUERY_KEYS` on success.
+Docs: `docs/CLIENT_DATA_FETCHING.md`, `docs/server/HONO_RPC.md`. Migration writeup:
+`docs/todo/DONE_CLIENT_VITE_MIGRATION.md`.
+
+## Vite migration (2026-06-13) — notable changes
+
+Astro removed; client is Vite 8 + React Router v7 SPA. All former Astro API routes and vault
+auth live on `apps/server`. **Ports:** client **3000**, server **8888** (icons 5001/5199).
+**Env:** `LLAAB_API_URL` (Vite proxy only), `LLAAB_API_KEY` (server), optional `VAULT_PASSWORD`
+(unset = open vault). Client uses same-origin `/api/*` and proxied `/terminal` WebSocket — no
+API keys in the browser bundle. `@llaab/core` / `@llaab/ingestion` removed from client deps.
+Persistent launchd client uses staged `vite build` + `vite preview` (`.persistent/builds/`).
+Post-migration fixes: ingest `RunsTable` stale-cache (`useRuns` without SSR `initialData`);
+YAML `profiles` object-array parsing so all source nodes load for runs author links.
 
 ## Roadmap & Planning
 
@@ -249,9 +260,9 @@ macOS persistence via `launchd` user agents (`com.llaab.server`, `com.llaab.clie
 `start-*` commands wait for HTTP health before exiting so SwiftBar `refresh=true` fires only once
 the service is genuinely up. Repair Client lives in the LLAAB Client submenu.
 
-The persistent Astro client builds into `apps/client/.persistent/builds/<timestamp>`, promotes
-only successful builds to the `apps/client/.persistent/current` symlink, and falls back to the
-last known-good build on failure. `.claude/settings.json` holds a project-level allowlist for
+The persistent Vite client builds into `apps/client/.persistent/builds/<timestamp>`, promotes
+only successful builds to the `apps/client/.persistent/current` symlink, and runs `vite preview`
+from that directory on failure fallback to the last known-good build. `.claude/settings.json` holds a project-level allowlist for
 `pnpm typecheck` and `launchctl list` to reduce permission prompts.
 
 All workspace packages share one version (no independent publishing). `pnpm version:patch/minor/major`

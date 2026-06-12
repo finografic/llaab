@@ -15,15 +15,9 @@ interface TerminalLine {
   text: string;
 }
 
-const SERVER_URL =
-  (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.PUBLIC_SERVER_URL ??
-  'http://localhost:3000';
-
 function websocketUrl(): string {
-  const url = new URL(SERVER_URL);
-  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-  url.pathname = '/terminal';
-  return url.toString();
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}/terminal`;
 }
 
 function splitCommand(input: string): string[] {

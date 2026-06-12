@@ -33,7 +33,7 @@ export function RunsPage() {
         {runsLoading || sourcesLoading ? (
           <p className="text-muted-foreground text-sm">Loading runs…</p>
         ) : (
-          <RunsTable runs={runs} sources={sources} />
+          <RunsTable sources={sources} />
         )}
       </PageList>
     </PageLayout>
