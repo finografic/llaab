@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-export PATH="/Users/justin/.bun/bin:/Users/justin/.nvm/versions/node/v24.3.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="/Users/justin/.bun/bin:/Users/justin/.nvm/versions/node/v24.16.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 readonly client_label="com.llaab.client"
 readonly client_plist="$HOME/Library/LaunchAgents/$client_label.plist"

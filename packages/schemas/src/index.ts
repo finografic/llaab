@@ -28,6 +28,15 @@ export {
   type ResourceType,
   ResourceTypeSchema,
 } from './resource-node.schema.js';
+export {
+  type RunMonitorItem,
+  RunMonitorItemSchema,
+  type RunMonitorResponse,
+  RunMonitorResponseSchema,
+  type RunMonitorStep,
+  RunMonitorStepSchema,
+  RunMonitorStepStatusSchema,
+} from './run-monitor.schema.js';
 export { type RunNode, RunNodeSchema } from './run-node.schema.js';
 export {
   appendDatetimeFilenameSegment,

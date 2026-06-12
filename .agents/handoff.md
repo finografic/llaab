@@ -39,7 +39,7 @@ Dependency chain (one-directional):
 
 ## Stack
 
-- Runtime: Node.js 24, pnpm 10.32.1, Bun 1.2.2
+- Runtime: Node.js 24.16.0, pnpm 10.32.1, Bun 1.2.2
 - Build: Turborepo 2.x, TypeScript 5.9.3
 - Validation: Zod 4.x
 - Tests: Vitest 4.x
@@ -68,11 +68,14 @@ Vault pages fetch via TanStack Query hooks + Hono RPC (`/api/vault/*`); optional
 
 Layout hierarchy: `index.html` + `main.tsx` mount a single React tree. `AppLayout` wraps horizontal
 header + main + footer (sidebar removed 2026-06-07). `AppHeader` hosts `NavMenu` (brand link +
-shadcn megamenus + mobile sheet). Inner pages use `PageLayout` (hero / optional aside / main zones)
-and `PageHero`. `src/router.tsx` lazy-loads route components so the initial SPA chunk stays smaller;
-route handles set title/full-bleed page chrome. Navigation structure: `lib/nav-menu.config.ts`;
-design spec: `docs/NAV_MENU_DESIGN.md`. Home dashboard uses `utils/balanced-grid.utils.ts` to avoid
-orphan cards in multi-column grids.
+shadcn megamenus + mobile sheet) plus the app-wide Run Monitor trigger. `RunMonitor` is mounted
+once in `AppLayout`, uses a root `RunMonitorProvider` powered by
+`@finografic/zustand-context-creator`, and reads durable run data through TanStack Query. Inner
+pages use `PageLayout` (hero / optional aside / main zones) and `PageHero`. `src/router.tsx`
+lazy-loads route components so the initial SPA chunk stays smaller; route handles set
+title/full-bleed page chrome. Navigation structure: `lib/nav-menu.config.ts`; design spec:
+`docs/NAV_MENU_DESIGN.md`. Home dashboard uses `utils/balanced-grid.utils.ts` to avoid orphan cards
+in multi-column grids.
 
 CSS entry points: `packages/ui/src/styles/globals.css` owns all framework imports (Tailwind,
 `tw-animate-css`, `shadcn/tailwind.css`, Roboto), the shadcn stone token `:root`/`.dark` blocks,
@@ -139,6 +142,7 @@ client does not receive false network failures while the server continues extrac
 | `GET /api/vault/transcripts/:id/ideas`    | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`       |
 | `POST /api/vault/transcripts/:id/extract` | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }` |
 | `GET /api/runs`, `/:id`                   | Run list + detail with full stage/decision trace                                |
+| `GET /api/runs/monitor`                   | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries  |
 | `POST /api/llm/complete`                  | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`         |
 | `POST /api/llm/stream`                    | SSE streaming LLM                                                               |
 | `GET /api/llm/models`                     | Lists installed Ollama models                                                   |

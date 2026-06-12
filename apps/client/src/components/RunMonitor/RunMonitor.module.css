@@ -1,0 +1,191 @@
+.trigger {
+  position: relative;
+}
+
+.triggerBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border: 1px solid var(--background);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--background);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.content {
+  width: min(100vw, 460px);
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border);
+}
+
+.sectionTitle {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.count {
+  color: var(--text-faint);
+}
+
+.empty {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  color: var(--text-muted);
+}
+
+.error {
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.titleGroup {
+  min-width: 0;
+}
+
+.title {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.title:hover {
+  color: var(--accent-hover);
+}
+
+.summary {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+}
+
+.link {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--accent);
+}
+
+.linkText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  column-gap: var(--space-2);
+  align-items: start;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.stepIcon {
+  margin-top: 1px;
+  color: var(--text-faint);
+}
+
+.stepIconCompleted {
+  color: var(--success-text);
+}
+
+.stepIconRunning {
+  color: var(--accent);
+}
+
+.stepIconFailed {
+  color: var(--error-text);
+}
+
+.stepTitle {
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.stepDetail {
+  color: var(--error-text);
+  line-height: 1.4;
+}
+
+.modelBar {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+}

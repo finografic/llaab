@@ -20,7 +20,7 @@ readonly server_log="$logs_dir/server.stdout.log"
 readonly app_url="http://llaab.localhost:3000"
 readonly ingest_url="http://llaab.localhost:3000/ingest"
 readonly icons_url="$(
-  /Users/justin/.nvm/versions/node/v24.3.0/bin/node --input-type=module <<'NODE'
+  /Users/justin/.nvm/versions/node/v24.16.0/bin/node --input-type=module <<'NODE'
 import { readFileSync } from 'node:fs';
 
 const configPath = '/Users/justin/LLAAB/packages/icons/lucide-manager.config.json';

@@ -1,6 +1,6 @@
 # TODO — App-Wide Run Monitor
 
-> **Status:** Not started.
+> **Status:** In progress.
 
 ---
 
@@ -72,11 +72,27 @@ inspiration, adapt the terminology to **Activity**, **Trace**, or **Execution Tr
 ## Progress
 
 - [ ] Phase 1 — data model for run steps and events.
-- [ ] Phase 2 — server API for active/recent runs.
-- [ ] Phase 3 — app-wide sidebar shell in `AppLayout`.
+- [x] Phase 2 — server API for active/recent runs.
+- [x] Phase 3 — app-wide sidebar shell in `AppLayout`.
 - [ ] Phase 4 — ingestion and extraction write progress events.
 - [ ] Phase 5 — live refresh via polling or SSE.
 - [ ] Phase 6 — retry/navigation polish.
+
+Current implementation:
+
+- `GET /api/runs/monitor` derives active and recent run summaries from existing `RunNode` data.
+- Existing `RunNode.stages` render as the first monitor task list.
+- `RunMonitor` lives once in `AppLayout` and shares the root TanStack Query cache.
+- UI state uses a root `RunMonitorProvider` powered by `@finografic/zustand-context-creator`.
+- The monitor polls while open; smarter polling while active runs exist remains part of Phase 5.
+
+## Next TODO
+
+- Add durable `RunNode.events` or equivalent trace events for ingestion and extraction activity.
+- Make active runs invalidate or poll the monitor even when the drawer is closed.
+- Seed or invalidate the monitor query immediately after starting ingest/extract actions.
+- Add retry actions once server retry routes exist.
+- Add browser/manual coverage for an actually running ingestion job, not only recent completed runs.
 
 ## Phase 1 — Data Model
 

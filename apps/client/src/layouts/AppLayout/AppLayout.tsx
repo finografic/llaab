@@ -1,6 +1,7 @@
 import { cn } from '@llaab/ui/lib/utils';
 import { AppFooter } from 'components/AppFooter/AppFooter';
 import { AppHeader } from 'components/AppHeader/AppHeader';
+import { RunMonitor } from 'components/RunMonitor';
 import { Outlet, useMatches } from 'react-router-dom';
 
 import styles from './AppLayout.module.css';
@@ -22,6 +23,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <AppFooter />
+      <RunMonitor />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import 'styles/app.css';
 import { QueryClientProvider as TanStackQueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'components/ui/sonner';
 import { queryClient } from 'providers/QueryClientProvider/queryClient';
+import { RunMonitorProvider } from 'providers/RunMonitorProvider';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
@@ -17,8 +18,10 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <TanStackQueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <Toaster />
+      <RunMonitorProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+      </RunMonitorProvider>
     </TanStackQueryClientProvider>
   </StrictMode>,
 );

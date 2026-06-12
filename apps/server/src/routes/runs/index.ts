@@ -3,4 +3,5 @@ import * as routes from './runs.routes.js';
 
 export const runsRouter = createRouter()
   .get(routes.list.path, routes.list.handler)
+  .get(routes.monitor.path, routes.monitor.handler)
   .get(routes.detail.path, routes.detail.handler);
