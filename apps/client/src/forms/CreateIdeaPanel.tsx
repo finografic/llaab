@@ -3,7 +3,6 @@ import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { Textarea } from 'components/ui/textarea';
-import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import { useCreateIdea } from 'queries/nodes';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -17,22 +16,7 @@ interface FormValues {
   body: string;
 }
 
-/**
- * Astro renders nested framework children to static HTML independently of their
- * wrapping provider — so `<QueryClientProvider><CreateIdeaPanel /></QueryClientProvider>`
- * in an `.astro` template would SSR `CreateIdeaPanel` outside the provider's React
- * tree and throw "No QueryClient set". Wrapping here keeps provider and consumer in
- * the same component tree, mounted as a single island.
- */
 export function CreateIdeaPanel() {
-  return (
-    <QueryClientProvider>
-      <CreateIdeaPanelRoot />
-    </QueryClientProvider>
-  );
-}
-
-function CreateIdeaPanelRoot() {
   const [open, setOpen] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');

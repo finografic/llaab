@@ -40,6 +40,7 @@ export default defineConfig(({ mode }) => {
         { find: 'routes', replacement: path.resolve(clientRoot, 'src/routes') },
         { find: 'styles', replacement: path.resolve(clientRoot, 'src/styles') },
         { find: 'tables', replacement: path.resolve(clientRoot, 'src/tables') },
+        { find: 'types', replacement: path.resolve(clientRoot, 'src/types') },
       ],
     },
     server: {

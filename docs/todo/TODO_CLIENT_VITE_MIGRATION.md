@@ -1,6 +1,6 @@
 # TODO — Client migration: Astro → Vite 8 + React Router (SPA)
 
-> **Status:** Phases 0–3 complete (2026-06-12). Phase 4 not started. Big-bang cutover — validate LLAAB
+> **Status:** Phases 0–6 complete (2026-06-13). Phases 7–8 remain. Big-bang cutover — validate LLAAB
 > only after Phase 8.
 
 ## Goal
@@ -105,10 +105,11 @@ Remove Astro proxy `bypass` for `clean-recent` once the route lives on the serve
 
 Remove nested `QueryClientProvider` wrappers from:
 
-- [ ] `VaultBrowser.tsx`
-- [ ] `IngestForm/IngestForm.tsx`
-- [ ] `CreateIdeaPanel.tsx`
-- [ ] `CleanVaultDialog/CleanVaultDialog.tsx`
+- [x] `VaultBrowser.tsx`
+- [x] `IngestForm/IngestForm.tsx`
+- [x] `CreateIdeaPanel.tsx`
+- [x] `CleanVaultDialog/CleanVaultDialog.tsx`
+- [x] `RunsTable/RunsTable.tsx`
 
 Remove all `client:load` / `client:only` directives (N/A in Vite).
 
@@ -174,8 +175,9 @@ Replace Astro entrypoints with Vite. Astro files can remain temporarily but **mu
 
 **Delete when Phase 6 completes:**
 
-- [ ] `astro.config.ts`
-- [ ] `apps/client/.astro/` (generated)
+- [x] `astro.config.ts`
+- [x] `apps/client/src/pages/**` (Astro pages + API routes)
+- [ ] `apps/client/.astro/` (generated — remove on next clean if present)
 
 ---
 
@@ -215,57 +217,58 @@ Work top-to-bottom. Each route: create `src/routes/...tsx`, port markup from `.a
 
 ### 4a — Low complexity
 
-- [ ] `/` — `HomePage.tsx` (from `index.astro`)
-- [ ] `/terminal` — `TerminalPage.tsx`
-- [ ] `/vault/login` — done in Phase 3
+- [x] `/` — `HomePage.tsx` (from `index.astro`)
+- [x] `/terminal` — `TerminalPage.tsx`
+- [x] `/vault/login` — done in Phase 3
 
 ### 4b — Vault lists (data via `GET /api/vault/nodes`)
 
-- [ ] `/vault/sources` — `SourcesPage.tsx`; `useQuery` or loader prefetch for `type=source`
-- [ ] `/vault/runs` — `RunsPage.tsx`; nodes `run` + `source`
-- [ ] `/vault/nodes` — `NodesPage.tsx`; `CreateIdeaPanel` in hero actions slot
+- [x] `/vault/sources` — `SourcesPage.tsx`; `useVaultNodes({ type: 'source' })`
+- [x] `/vault/runs` — `RunsPage.tsx`; `useRuns` + sources
+- [x] `/vault/nodes` — `NodesPage.tsx`; `CreateIdeaPanel` in hero actions slot
 
 ### 4c — Vault details
 
-- [ ] `/vault/runs/:id` — `RunDetailPage.tsx`; `JsonData`, link rules
-- [ ] `/vault/nodes/:id` — `NodeDetailPage.tsx`
-- [ ] `/vault/sources/:id` — `SourceDetailPage.tsx`
-  - [ ] Call `POST …/enrich` on mount (or loader) instead of `enrichSourceMetadata` import
-  - [ ] Port channel profile / Following UI from `[id].astro`
+- [x] `/vault/runs/:id` — `RunDetailPage.tsx`; `JsonData`, link rules
+- [x] `/vault/nodes/:id` — `NodeDetailPage.tsx`
+- [x] `/vault/sources/:id` — `SourceDetailPage.tsx`
+  - [x] Call `POST …/enrich` on mount instead of `enrichSourceMetadata` import
+  - [x] Port channel profile / Following UI + `SourceProfilesDialog`
 
 ### 4d — Split view & ingest
 
-- [ ] `/vault/transcripts` — `TranscriptsPage.tsx`; `TranscriptsSplitView` full height
-- [ ] `/vault/transcripts/:id` — align with current redirect/detail behavior
-- [ ] `/ingest` — `IngestPage.tsx`; `CleanVaultDialog` in hero slot; drop duplicate providers
+- [x] `/vault/transcripts` — `TranscriptsPage.tsx`; `TranscriptsSplitView` full height
+- [x] `/vault/transcripts/:id` — detail with extraction data
+- [x] `/ingest` — `IngestPage.tsx`; `CleanVaultDialog` in hero slot
 
 ### 4e — LLM & misc
 
-- [ ] `/llm` — `LlmPage.tsx`; loader fetches `/api/llm/status`
-- [ ] `/vault` — `VaultBrowsePage.tsx`; `GET /api/vault/tree`
-- [ ] `/icons`, `/dev/icons` — port or defer
+- [x] `/llm` — `LlmPage.tsx`; fetches `/api/llm/status`
+- [x] `/vault` — `VaultBrowsePage.tsx`; `GET /api/vault/tree`
+- [x] `/icons` → redirect; `/dev/icons` — `DevIconsPage.tsx`
 
 ---
 
 ## Phase 5 — Data layer cleanup
 
-- [ ] Remove `@llaab/core` from `apps/client/package.json`
-- [ ] Remove `@llaab/ingestion` from `apps/client/package.json`
-- [ ] Add/extend query hooks for repeated node fetches (`useSources`, `useRuns`, `useTranscripts`, etc.)
-- [ ] Prefer React Router **loaders** + `queryClient.ensureQueryData` for route-enter prefetch (optional but nice)
-- [ ] Remove island `QueryClientProvider` nesting (see list above)
+- [x] Remove `@llaab/core` from `apps/client/package.json`
+- [x] Remove `@llaab/ingestion` from `apps/client/package.json`
+- [x] Add/extend query hooks (`useVaultNodes`, `useVaultNode`, `useVaultTree`, `useRuns`)
+- [ ] Prefer React Router **loaders** + `queryClient.ensureQueryData` for route-enter prefetch (optional — deferred)
+- [x] Remove island `QueryClientProvider` nesting (see list above)
+- [x] `TerminalPanel` uses local `types/terminal-protocol.ts` (no `@llaab/core`)
 - [ ] Audit `import.meta.env` → `process.env` (via Vite `define`) or `import.meta.env` with `VITE_` prefix — pick one convention
 
 ---
 
 ## Phase 6 — Remove Astro completely
 
-- [ ] Delete `apps/client/src/pages/**/*.astro`
-- [ ] Delete `apps/client/src/pages/api/**`
-- [ ] Remove deps: `astro`, `@astrojs/node`, `@astrojs/react`, `@astrojs/check`, `prettier-plugin-astro`
-- [ ] Remove `.astro` from prettier / lint configs
+- [x] Delete `apps/client/src/pages/**/*.astro`
+- [x] Delete `apps/client/src/pages/api/**`
+- [x] Remove deps: `astro`, `@astrojs/node`, `@astrojs/react`, `@astrojs/check`, `prettier-plugin-astro`
+- [x] Remove `.astro` from prettier config
 - [ ] Delete `apps/client/docs/GUIDE.md` Astro sections — rewrite for Vite + React Router
-- [ ] Update `AGENTS.md` gotchas (remove island boundary note; add SPA routing note)
+- [x] Update `AGENTS.md` gotchas (remove island boundary note; add SPA routing note)
 
 ---
 

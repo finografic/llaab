@@ -1,4 +1,3 @@
-import * as prettierPluginAstro from 'prettier-plugin-astro';
 import type { Config } from 'prettier';
 
 export default {
@@ -10,7 +9,7 @@ export default {
   htmlWhitespaceSensitivity: 'css',
   jsxSingleQuote: false,
   objectWrap: 'preserve',
-  plugins: [prettierPluginAstro],
+  plugins: [],
   printWidth: 110,
   proseWrap: 'preserve',
   quoteProps: 'consistent',
@@ -24,12 +23,6 @@ export default {
       files: ['*.ts', '*.tsx', '*.js', '*.jsx', '*.mjs', '*.json'],
       options: {
         printWidth: 110,
-      },
-    },
-    {
-      files: ['*.astro'],
-      options: {
-        parser: 'astro',
       },
     },
   ],

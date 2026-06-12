@@ -5,7 +5,6 @@ import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { Spinner } from 'components/ui/spinner';
 import { RotateCcwIcon } from 'lucide-react';
-import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
 import { useDiscardTranscript, useExtractTranscript, useIngestYoutube } from 'queries/transcripts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -28,22 +27,7 @@ export interface IngestFormProps {
   submitOnDrop?: boolean;
 }
 
-/**
- * Astro renders nested framework children to static HTML independently of their
- * wrapping provider — so `<QueryClientProvider><IngestForm /></QueryClientProvider>`
- * in an `.astro` template would SSR `IngestForm` outside the provider's React tree
- * and throw "No QueryClient set". Wrapping here keeps provider and consumer in the
- * same component tree, mounted as a single island.
- */
-export function IngestForm(props: IngestFormProps) {
-  return (
-    <QueryClientProvider>
-      <IngestFormRoot {...props} />
-    </QueryClientProvider>
-  );
-}
-
-function IngestFormRoot({ submitOnDrop = true }: IngestFormProps) {
+export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [lockedTags, setLockedTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');

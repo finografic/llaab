@@ -1,0 +1,44 @@
+.producedList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.producedId {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 1px 6px;
+}
+
+.stageError {
+  color: oklch(0.68 0.2 25);
+  font-family: var(--font-mono);
+}
+
+.decisionList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.decisionItem {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--text-base);
+  color: var(--text-muted);
+}
+
+.decisionReason {
+  line-height: 1.5;
+}

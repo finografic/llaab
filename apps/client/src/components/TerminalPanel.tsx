@@ -4,7 +4,8 @@ import { Input } from 'components/ui/input';
 import { ScrollArea } from 'components/ui/scroll-area';
 import { Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import type { Command, OutputEnvelope, OutputEvent } from '@llaab/core';
+
+import type { Command, OutputEnvelope, OutputEvent } from 'types/terminal-protocol';
 
 type AiRunTask = Extract<Command, { kind: 'ai.run' }>['task'];
 

@@ -1,0 +1,60 @@
+.devIconsPage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.devIconsToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.devIconsLink {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.devIconsLink:hover {
+  text-decoration: underline;
+}
+
+.devIconsMeta {
+  font-size: var(--text-md);
+  color: var(--text-faint);
+}
+
+.devIconsFrameShell {
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  overflow: hidden;
+  background: #000;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.devIconsFrame {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 330px);
+  min-height: 580px;
+  border: 0;
+  background: transparent;
+}
+
+@media (max-width: 768px) {
+  .devIconsToolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .devIconsFrame {
+    height: 72vh;
+  }
+}

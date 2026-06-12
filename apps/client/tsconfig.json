@@ -32,9 +32,9 @@
       "styles/*": ["./src/styles/*"],
       "tables/*": ["./src/tables/*"],
       "utils/*": ["./src/utils/*"],
-      "queries/*": ["./src/queries/*"]
+      "queries/*": ["./src/queries/*"],
+      "types/*": ["./src/types/*"]
     }
   },
-  "include": ["src/**/*", "vite.config.ts", "index.html"],
-  "exclude": ["dist", "src/pages"]
+  "include": ["src/**/*", "vite.config.ts", "index.html"]
 }

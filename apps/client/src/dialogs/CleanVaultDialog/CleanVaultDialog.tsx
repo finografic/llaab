@@ -10,7 +10,6 @@ import {
 } from 'components/ui/dialog';
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from 'components/ui/input-group';
 import { Label } from 'components/ui/label';
-import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import { useRuns } from 'queries/runs';
 import { useVaultClean } from 'queries/vault';
 import { useMemo, useState } from 'react';
@@ -51,22 +50,7 @@ function runCountForHours(runs: RunNode[] | null, hoursValue: string): number {
   return countRunsWithinHours(runs, parsedHours);
 }
 
-/**
- * Astro renders nested framework children to static HTML independently of their
- * wrapping provider — so `<QueryClientProvider><CleanVaultDialog /></QueryClientProvider>`
- * in an `.astro` template would SSR `CleanVaultDialog` outside the provider's React
- * tree and throw "No QueryClient set". Wrapping here keeps provider and consumer in
- * the same component tree, mounted as a single island.
- */
-export function CleanVaultDialog(props: CleanVaultDialogProps) {
-  return (
-    <QueryClientProvider>
-      <CleanVaultDialogRoot {...props} />
-    </QueryClientProvider>
-  );
-}
-
-function CleanVaultDialogRoot({ resetIngestFormOnSuccess = false }: CleanVaultDialogProps) {
+export function CleanVaultDialog({ resetIngestFormOnSuccess = false }: CleanVaultDialogProps) {
   const [open, setOpen] = useState(false);
   const [hours, setHours] = useState(String(DEFAULT_HOURS));
   const [debouncedHours] = useDebounce(hours, HOURS_DEBOUNCE_MS);

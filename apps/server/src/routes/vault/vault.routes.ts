@@ -326,6 +326,7 @@ export const enrichSource = {
         source: result.source,
         fetched: result.fetched,
         subscriptionChecked: result.subscriptionChecked,
+        subscriptionError: result.subscriptionError,
       });
     } catch (err) {
       return c.json(

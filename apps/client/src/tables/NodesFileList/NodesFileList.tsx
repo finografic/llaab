@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import type { LabNode } from '@llaab/schemas';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -65,6 +66,7 @@ export interface NodesFileListProps {
 }
 
 export function NodesFileList({ nodes }: NodesFileListProps) {
+  const navigate = useNavigate();
   const byType = Object.groupBy(nodes, (n) => n.type);
 
   return (
@@ -84,7 +86,7 @@ export function NodesFileList({ nodes }: NodesFileListProps) {
               columns={COLUMNS}
               getRowId={(row) => row.id}
               onRowClick={(row) => {
-                window.location.href = `/vault/nodes/${row.id}`;
+                void navigate(`/vault/nodes/${row.id}`);
               }}
               label={`${type} nodes`}
             />

@@ -1,0 +1,107 @@
+.llmPage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 640px;
+}
+
+.alert {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+}
+
+.alertError {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+}
+
+.alertLabel {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--error-text);
+}
+
+.alertMsg {
+  font-size: var(--text-base);
+  color: var(--error-text);
+}
+
+.llmSections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.llmSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.llmSectionHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.llmSectionBadge {
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  border-radius: 99px;
+  padding: 1px 6px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  border: 1px solid transparent;
+}
+
+.llmSectionBadgeOk {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success-text);
+}
+
+.llmSectionBadgeErr {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error-text);
+}
+
+.llmSectionMuted .llmSectionHeading {
+  color: var(--text-faint);
+  opacity: 0.6;
+}
+
+.llmEmpty {
+  font-size: var(--text-base);
+  color: var(--text-faint);
+}
+
+.envGrid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-5);
+  font-size: var(--text-md);
+}
+
+.envGrid dt {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.envGrid dd {
+  color: var(--text-faint);
+}

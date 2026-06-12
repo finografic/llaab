@@ -1,5 +1,4 @@
 import { ChevronRight, FileText, Folder, FolderOpen } from 'lucide-react';
-import { QueryClientProvider } from 'providers/QueryClientProvider/QueryClientProvider';
 import { useVaultFile } from 'queries/vault';
 import { useMemo, useState } from 'react';
 
@@ -16,22 +15,7 @@ interface Props {
   tree: VaultNode[];
 }
 
-/**
- * Astro renders nested framework children to static HTML independently of their
- * wrapping provider — so `<QueryClientProvider><VaultBrowser /></QueryClientProvider>`
- * in an `.astro` template would SSR `VaultBrowser` outside the provider's React tree
- * and throw "No QueryClient set". Wrapping here keeps provider and consumer in the
- * same component tree, mounted as a single island.
- */
-export function VaultBrowser(props: Props) {
-  return (
-    <QueryClientProvider>
-      <VaultBrowserRoot {...props} />
-    </QueryClientProvider>
-  );
-}
-
-function VaultBrowserRoot({ tree }: Props) {
+export function VaultBrowser({ tree }: Props) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(
     new Set(tree.filter((node) => node.type === 'dir').map((node) => node.path)),
