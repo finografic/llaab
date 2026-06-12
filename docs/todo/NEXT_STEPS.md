@@ -46,7 +46,7 @@ Things to verify end-to-end after recent orchestration and UI changes:
 
 - [ ] **Update nav locks as pages land** — only flip `live: true` in
       `apps/client/src/lib/nav-menu.config.ts` after the page/route exists and passes
-      `astro check`.
+      the relevant client typecheck/build verification.
 
 - [ ] **Decide extracted SkillNode behavior** — extraction returns `skills`, but the pipeline
       creates `IdeaNode`s only. Decide whether generated skill phrases become candidate

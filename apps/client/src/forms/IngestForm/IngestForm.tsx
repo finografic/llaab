@@ -9,6 +9,7 @@ import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
 import { useDiscardTranscript, useExtractTranscript, useIngestYoutube } from 'queries/transcripts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import type { ExtractionPhase, FormValues, TranscriptData, TranscriptPhase } from './ingest-form.types';
 import type { ExtractTranscriptResult } from 'queries/transcripts';
 
@@ -512,9 +513,9 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
             {transcriptData ? (
               <ul className="pipeline-card__item-list">
                 <li>
-                  <a href={`/vault/transcripts/${transcriptData.id}`} className="pipeline-card__link">
+                  <Link to={`/vault/transcripts/${transcriptData.id}`} className="pipeline-card__link">
                     {transcriptData.filename}
-                  </a>
+                  </Link>
                 </li>
               </ul>
             ) : null}

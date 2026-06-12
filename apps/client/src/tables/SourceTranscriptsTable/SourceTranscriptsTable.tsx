@@ -1,6 +1,7 @@
 import { getSortedRowModel } from '@tanstack/react-table';
 import { DataTable, sortableHeader } from 'components/ui/data-table';
 import { ExternalLinkIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { TranscriptSourceType } from '@llaab/schemas';
 import type { DataTableColumns } from '@llaab/ui/lib/data-table-utils';
 import type { CellContext } from '@tanstack/react-table';
@@ -31,9 +32,9 @@ const SOURCE_TYPE_CLASS: Record<TranscriptSourceType, string> = {
 
 function renderTitleCell({ row }: CellContext<SourceTranscriptsTableRow, unknown>) {
   return (
-    <a href={`/vault/transcripts/${row.original.id}`} className={styles.titleLink}>
+    <Link to={`/vault/transcripts/${row.original.id}`} className={styles.titleLink}>
       {row.original.title}
-    </a>
+    </Link>
   );
 }
 

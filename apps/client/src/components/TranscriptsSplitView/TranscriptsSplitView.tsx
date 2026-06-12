@@ -7,6 +7,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from 'components/ui/breadcrumb';
+import { Link } from 'react-router-dom';
 import type { TranscriptExtractionRun } from './components/TranscriptDetail';
 import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
 
@@ -31,7 +32,9 @@ function renderHeader(transcript?: TranscriptNode) {
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem className="hidden md:block">
-          <BreadcrumbLink href="/vault/transcripts">Vault</BreadcrumbLink>
+          <BreadcrumbLink asChild>
+            <Link to="/vault/transcripts">Vault</Link>
+          </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator className="hidden md:block" />
         <BreadcrumbItem>

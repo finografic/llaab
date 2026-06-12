@@ -74,7 +74,7 @@ topics) rather than reverse-engineering relevance from a shared pool after the f
    pnpm --filter @llaab/ingestion --filter @llaab/skills run build
    ```
 
-   then restart the Astro dev server so it picks up the new `dist/` output.
+   then restart the server/client dev processes so they pick up the new `dist/` output.
 
 2. Clear out any leftover `idea.*` nodes from earlier failed/partial extraction attempts —
    filename collisions can abort a re-extraction partway through and leave stale, identically

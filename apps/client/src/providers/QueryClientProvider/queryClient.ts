@@ -1,13 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 
 /**
- * Singleton TanStack Query client shared across all Astro islands.
- *
- * Each `client:load`/`client:only` component mounts as an independent React root —
- * a per-component `useState(() => new QueryClient())` would give every island its own
- * cache, so invalidating a query in one island (e.g. a mutation in `IngestForm`) would
- * never refresh another (e.g. `RunsTable`). Creating the client once at module scope
- * and importing it from every `QueryClientProvider` wrapper keeps one shared cache.
+ * Singleton TanStack Query client shared by the Vite SPA root.
  */
 export const queryClient = new QueryClient({
   defaultOptions: {

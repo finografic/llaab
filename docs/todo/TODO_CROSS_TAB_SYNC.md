@@ -1,4 +1,4 @@
-# TODO — Cross-Island / Cross-Tab Sync
+# TODO — Cross-Tab Sync
 
 > **Status:** Not started. Exploratory — revisit only if one of the trigger scenarios below occurs.
 
@@ -6,14 +6,12 @@
 
 ## The issue
 
-React components on the same page already share live state via the `queryClient` singleton
-(`providers/QueryClientProvider/queryClient.ts`) mounted once in `main.tsx` — see
-[`docs/CLIENT_DATA_FETCHING.md`](../CLIENT_DATA_FETCHING.md).
-That singleton solves **same-page** sync only. It does not — and cannot — reach:
+React components in the Vite SPA already share live state via the root TanStack Query provider in
+`main.tsx` — see [`docs/CLIENT_DATA_FETCHING.md`](../CLIENT_DATA_FETCHING.md).
+That solves **same-tab** sync only. It does not — and cannot — reach:
 
 - a second browser tab open on `/vault/runs`
 - a second window watching `/ingest` while another tab triggers a run
-- any island that isn't part of the current page's render tree
 
 Right now nothing in LLAAB needs that reach. This doc exists so the option (and the reasoning
 for picking it) isn't lost the next time the question comes up.

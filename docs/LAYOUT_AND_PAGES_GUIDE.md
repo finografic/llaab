@@ -1,228 +1,135 @@
 # Layout & Pages Guide
 
-Architecture reference for LLAAB's layout system, landmark components, and the Finder-style
-page template. All components live in `apps/client/src/`.
+Architecture reference for LLAAB's Vite + React Router client. All client app code lives in
+`apps/client/src/`.
 
 ---
 
-## Layout hierarchy
+## Layout Hierarchy
 
+```text
+index.html
+  src/main.tsx
+    QueryClientProvider
+      RouterProvider
+        AppLayout
+          AppHeader
+          main
+            route component
+              PageLayout / PageList / PageDetail
+                PageHero
+                content
+          AppFooter
 ```
-BaseLayout          ← <html> / <head> / CSS imports
-  AppLayout         ← app shell (header + main + footer)
-    AppHeader       ← brand + NavMenu + page title
-    [page slot]
-      PageLayout    ← finder-style inner-page template  ← YOU ARE HERE
-        PageHero    ← page title / actions bar
-        [aside]     ← filter sidebar (optional)
-        [main]      ← FileList or any content
+
+`src/router.tsx` owns the route tree. Route `handle` values can set the page title and full-bleed
+layout behavior:
+
+```tsx
+{
+  path: 'vault/transcripts',
+  element: <TranscriptsPage />,
+  handle: { title: 'Transcripts', fullBleed: true } satisfies RouteHandle,
+}
 ```
 
 ---
 
 ## AppLayout
 
-`layouts/AppLayout.astro` — shell for every main route. Horizontal header with megamenu nav; no sidebar.
+`layouts/AppLayout/AppLayout.tsx` is the shell for all non-login routes. It renders:
 
-```astro
-<AppLayout title="Transcripts">
-  <!-- page content here — AppHeader + AppFooter rendered automatically -->
-  <PageLayout>...</PageLayout>
-</AppLayout>
-```
+- `AppHeader` with the active route title
+- `<Outlet />` inside the main content region
+- `AppFooter`
 
-`page-content` div inside AppLayout has `padding: 1.5rem`. Remove it for full-bleed Finder
-pages by wrapping with a negative-margin reset or passing the PageLayout as a direct child.
+`fullBleed` route handles remove the normal page padding for split-view workflows such as
+`/vault/transcripts`.
 
 ---
 
 ## NavMenu
 
-`components/NavMenu/NavMenu.tsx` — horizontal shadcn `NavigationMenu` in `AppHeader`. Structure lives in
-`lib/nav-menu.config.ts`; route-prefix active matching in `lib/nav-menu.utils.ts`.
+`components/NavMenu/NavMenu.tsx` renders the horizontal shadcn `NavigationMenu` inside `AppHeader`.
+Menu structure lives in `lib/nav-menu.config.ts`; active route matching lives in
+`lib/nav-menu.utils.ts`.
 
-- **Desktop (`md+`):** five megamenus (Vault, Pipeline, Execute, Models, System) with label + description
-  list items; two-column panel when a section has 4+ items.
-- **Mobile:** hamburger opens a `Sheet` with the same sections in an `Accordion`.
-- **Future routes:** rendered disabled with reduced opacity and a lock icon — set `live: true` in config
-  when the route ships.
-- **CSS rule:** responsive show/hide uses Tailwind only (`hidden md:flex`, `md:hidden`). Do not set
-  `display` on NavMenu CSS-module wrappers — it overrides Tailwind `hidden` after hydration.
-
-**Adding or enabling a nav item:** edit `NAV_MENU_SECTIONS` in `nav-menu.config.ts`. See
-[`docs/NAV_MENU_DESIGN.md`](../NAV_MENU_DESIGN.md) for the full route map.
+- Desktop (`md+`): megamenus for Vault, Pipeline, Execute, Models, and System.
+- Mobile: sheet + accordion using the same config.
+- Future routes: disabled with lock icon until `live: true`.
+- Responsive visibility uses Tailwind classes only. Do not put `display` rules on the wrapper CSS
+  modules that would override `hidden md:flex` or `md:hidden`.
 
 ---
 
-## PageLayout
+## Page Layouts
 
-`layouts/PageLayout.astro` — Finder-style inner-page template. Three named slots.
+Use the route-level layout components instead of hand-rolling page shells:
 
-```astro
----
-import PageLayout from '../layouts/PageLayout.astro';
-import PageHero from '../components/PageHero/PageHero.astro';
----
+| Component    | Location                            | Use                                                 |
+| ------------ | ----------------------------------- | --------------------------------------------------- |
+| `PageLayout` | `layouts/PageLayout/PageLayout.tsx` | General pages with optional hero and aside          |
+| `PageList`   | `layouts/PageList/PageList.tsx`     | Vault list pages                                    |
+| `PageDetail` | `layouts/PageDetail/PageDetail.tsx` | Vault detail pages                                  |
+| `PageHero`   | `components/PageHero/PageHero.tsx`  | Eyebrow/title/description/meta/right actions header |
+| `FileList`   | `tables/FileList/FileList.tsx`      | Finder-style TanStack table/list                    |
 
-<PageLayout>
-  <!-- Hero zone (optional but typical) -->
-  <PageHero slot="hero" title="Transcripts" eyebrow="Vault">
-    <button slot="actions">+ Ingest</button>
-    <Fragment slot="description">All ingested YouTube transcripts.</Fragment>
-    <Fragment slot="meta">
-      <span>{count} transcripts</span>
-    </Fragment>
-  </PageHero>
-
-  <!-- Aside: filter panel, secondary tree nav, etc. (optional) -->
-  <aside slot="aside">
-    <!-- filter controls, tag list, date range, etc. -->
-  </aside>
-
-  <!-- Main: the content — usually a FileList -->
-  <TranscriptsFileList client:load data={transcripts} />
-</PageLayout>
-```
-
-**Props:**
-
-| Prop         | Type     | Default   | Notes                       |
-| ------------ | -------- | --------- | --------------------------- |
-| `asideWidth` | `string` | `"200px"` | CSS width of the aside pane |
-
-The aside column only appears when the `aside` slot is filled — no empty column left behind.
-
----
-
-## PageHero
-
-`components/PageHero/PageHero.astro` — page-level header.
-
-**Slots:**
-
-| Slot          | Notes                                     |
-| ------------- | ----------------------------------------- |
-| `actions`     | Right-side button group                   |
-| `description` | Subtitle paragraph below title row        |
-| `meta`        | Stat/badge bar below description (darker) |
-
-**Props:**
-
-| Prop       | Type      | Default | Notes                   |
-| ---------- | --------- | ------- | ----------------------- |
-| `title`    | `string`  | —       | `<h1>` text             |
-| `eyebrow`  | `string?` | —       | Small label above title |
-| `bordered` | `boolean` | `true`  | Bottom border separator |
-
----
-
-## FileList
-
-`tables/FileList/FileList.tsx` — TanStack table rendered as a Finder list view.
-No grid lines. 32px rows, 28px header. Column size `150` (TanStack default) = `flex: 1`.
+Example:
 
 ```tsx
-import { FileList, FileCell } from 'tables/FileList/FileList';
-import type { ColumnDef } from '@tanstack/react-table';
+import { PageHero } from "components/PageHero/PageHero";
+import { PageLayout } from "layouts/PageLayout/PageLayout";
 
-const columns: ColumnDef<Transcript>[] = [
-  {
-    accessorKey: 'title',
-    header: 'Name',
-    // size omitted → defaults to 150 → flex: 1 (fills remaining width)
-    cell: ({ row }) => (
-      <FileCell
-        icon={<TranscriptIcon />}
-        name={row.original.title}
-        meta={row.original.source_type}
-      />
-    ),
-  },
-  {
-    accessorKey: 'created_at',
-    header: 'Date',
-    size: 120,
-    cell: ({ getValue }) =>
-      new Date(getValue() as string).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric',
-      }),
-  },
-  {
-    accessorKey: 'clean_length',
-    header: 'Size',
-    size: 80,
-    enableSorting: false,
-    cell: ({ getValue }) => `${((getValue() as number) / 1000).toFixed(1)}k`,
-  },
-];
-
-// In the component:
-<FileList
-  data={transcripts}
-  columns={columns}
-  selectedId={selectedId}
-  getRowId={(row) => row.id}
-  onRowClick={(row) => navigate(`/vault/transcripts/${row.id}`)}
-  emptyMessage="No transcripts yet."
-  loading={isLoading}
-/>
-```
-
-**`FileCell` props:**
-
-| Prop   | Type        | Notes                                      |
-| ------ | ----------- | ------------------------------------------ |
-| `name` | `string`    | Primary label (truncated, fills flex 1)    |
-| `icon` | `ReactNode` | File-type icon (14×14, left of name)       |
-| `meta` | `string?`   | Secondary label, right of name, mono/faint |
-
-**Sorting:** Built-in via TanStack `getSortedRowModel`. Column header click toggles
-`asc → desc → none`. Add `enableSorting: false` to any column to suppress.
-
-**Loading:** Pass `loading={true}` to show 8 animated skeleton rows instead of data.
-
----
-
-## CSS system
-
-| Layer              | Location                                      | Owns                                       |
-| ------------------ | --------------------------------------------- | ------------------------------------------ |
-| Panda tokens       | `styled-system/styles.css` (generated)        | DS semantic CSS vars                       |
-| DS global          | `@finografic/design-system/styles/global.css` | Reset, keyframes, @layer order             |
-| App tokens         | `styles/app.css`                              | `--bg`, `--text`, `--accent`, space scale  |
-| Component styles   | `*.module.css` (unlayered)                    | Wins over all `@layer utilities` / recipes |
-| Page-scoped styles | `<style>` in `*.astro`                        | Scoped, auto-namespaced by Astro           |
-
-**Key rule:** CSS modules are unlayered → they beat Panda recipe classes.
-Use `!important` only when the recipe applies the same property at the same specificity.
-
-**App token aliases** (in `styles/app.css`):
-
-```css
---bg           → dark background
---bg-subtle    → slightly lighter surface
---surface      → card/hover surface
---text         → primary text
---text-muted   → secondary text
---text-faint   → tertiary / metadata
---accent       → primary accent color
---accent-subtle → tinted accent bg
---border       → default border
---border-subtle → subtle separator
---border-focus → focus ring
+export function ExamplePage() {
+  return (
+    <PageLayout
+      hero={
+        <PageHero
+          eyebrow="Vault"
+          title="Examples"
+          description="Browse local vault records."
+          right={<button type="button">Action</button>}
+        />
+      }
+    >
+      <YourContent />
+    </PageLayout>
+  );
+}
 ```
 
 ---
 
-## Adding a new Finder-style page (checklist)
+## Data Loading
 
-1. Create the Astro page file, e.g. `pages/vault/runs/index.astro`
-2. Import `AppLayout`, `PageLayout`, `PageHero`, and your `*FileList` React component
-3. Fetch data in the frontmatter
-4. Wrap with `AppLayout > PageLayout`
-5. Fill `PageHero` in the `hero` slot with title + optional actions
-6. Put the `FileList` in the default slot
-7. Add an `aside` slot only if you need filter controls
+The client is a single React tree. Use TanStack Query hooks under `src/queries/*` for server data.
+All calls use same-origin `/api/*`, proxied by Vite in development and preview.
 
-Reference: `pages/vault/transcripts/index.astro` (card layout, pre-Finder) for data
-fetching patterns and auth gate pattern.
+- Vault auth/session, tree, nodes, source enrich/profile updates live on `apps/server`.
+- Do not import `@llaab/core` or `@llaab/ingestion` in the client.
+- The root `QueryClientProvider` in `main.tsx` owns the shared query cache.
+
+---
+
+## CSS System
+
+| Layer            | Location                           | Owns                                     |
+| ---------------- | ---------------------------------- | ---------------------------------------- |
+| UI globals       | `@llaab/ui/globals.css`            | Tailwind, shadcn tokens, framework reset |
+| App tokens       | `styles/app.css`                   | LLAAB semantic tokens and app overrides  |
+| Component styles | `*.module.css`                     | Component-scoped layout and presentation |
+| Page styles      | `routes/*.module.css` or route CSS | Route-specific layout                    |
+
+`main.tsx` imports UI globals first and `styles/app.css` second. CSS Modules are imported as
+`styles` and should prefer app/shadcn tokens over hard-coded colors.
+
+---
+
+## Adding A Page
+
+1. Create `apps/client/src/routes/<name>.tsx`.
+2. Compose `PageLayout`, `PageList`, or `PageDetail` with `PageHero`.
+3. Fetch data through an existing `queries/*` hook or add a focused hook.
+4. Add the route to `src/router.tsx` with a `handle.title`.
+5. Add or unlock the nav entry in `lib/nav-menu.config.ts` only after the route works.
+6. Run the focused client verification command for the change.

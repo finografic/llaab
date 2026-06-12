@@ -9,6 +9,7 @@ import {
   SidebarInput,
 } from 'components/ui/sidebar';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { TranscriptNode } from '@llaab/schemas';
 import type { ChangeEvent } from 'react';
 
@@ -69,9 +70,9 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                 const hasLatency = transcript.llm_duration_ms != null;
 
                 return (
-                  <a
+                  <Link
                     key={transcript.id}
-                    href={`/vault/transcripts/${transcript.id}`}
+                    to={`/vault/transcripts/${transcript.id}`}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(
                       'flex w-full leading-tight border-b hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
@@ -83,10 +84,7 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                         <Col xs={8} className="text-sm">
                           {subtitle}
                         </Col>
-                        <Col
-                          xs={4}
-                          className="text-sm text- text-muted-foreground text-align-right text-right"
-                        >
+                        <Col xs={4} className="text-sm text-muted-foreground text-align-right text-right">
                           {fmtListDate(transcript.created_at)}
                         </Col>
 
@@ -113,7 +111,7 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                         </Col>
                       </Row>
                     </Container>
-                  </a>
+                  </Link>
                 );
               })
             )}

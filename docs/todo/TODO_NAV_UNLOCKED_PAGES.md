@@ -43,7 +43,7 @@ These are the highest-leverage unlocked pages because the backend architecture a
 
 ### 1. `/llm/providers`
 
-- [ ] Create `apps/client/src/pages/llm/providers.astro`.
+- [ ] Create `apps/client/src/routes/llm-providers.tsx`.
 - [ ] Read provider availability/routing from `GET /api/llm/status`.
 - [ ] Read provider capability declarations from `GET /api/llm/capabilities`.
 - [ ] Show provider id, display name, availability, configured models, and capabilities.
@@ -52,7 +52,7 @@ These are the highest-leverage unlocked pages because the backend architecture a
 
 ### 2. `/llm/capabilities`
 
-- [ ] Create `apps/client/src/pages/llm/capabilities.astro`.
+- [ ] Create `apps/client/src/routes/llm-capabilities.tsx`.
 - [ ] Show capability → provider mapping from `GET /api/llm/capabilities`.
 - [ ] Include command capabilities from `packages/core/src/capability.ts` in the page data.
 - [ ] Include executor capability status when available from CLI/server support.
@@ -80,7 +80,7 @@ These are the highest-leverage unlocked pages because the backend architecture a
 - The pages use existing shadcn primitives from `packages/ui/src/components/`.
 - No new always-on background work is introduced.
 - Nav items are live only after their routes exist.
-- `astro check --root apps/client` passes.
+- `pnpm --filter @llaab/client typecheck` passes.
 - Relevant server/client type checks pass.
 
 ---

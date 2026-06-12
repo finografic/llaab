@@ -10,6 +10,10 @@ Build an app-wide right sidebar that shows durable background run progress, so i
 extraction can continue visibly even when the user navigates away from the page that started the
 work.
 
+The Vite + React Router migration makes this straightforward: the monitor can live once in the
+single `AppLayout` React tree, share the root TanStack Query cache, and remain mounted across
+route transitions. There is no Astro SSR/island boundary to work around.
+
 This is a **Run Monitor**, not an Agent Monitor. It should support agent-driven runs later, but the
 first version should model ordinary app workflows: YouTube ingestion, transcript reuse, idea
 extraction, node writes, and failures.
@@ -95,7 +99,7 @@ Candidate step shape:
 interface RunStep {
   id: string;
   title: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+  status: "pending" | "running" | "completed" | "failed" | "skipped";
   started_at?: string;
   completed_at?: string;
   detail?: string;
@@ -109,7 +113,7 @@ Candidate event shape:
 interface RunEvent {
   id: string;
   at: string;
-  level: 'info' | 'success' | 'warning' | 'error';
+  level: "info" | "success" | "warning" | "error";
   message: string;
   node_ids?: string[];
   href?: string;
@@ -141,7 +145,7 @@ Likely placement:
 
 - shell trigger in `AppHeader`
 - collapsible right sidebar/drawer in `AppLayout`
-- state provider or client island inside the app shell
+- route-persistent state through the root Query provider; no page-local provider workaround
 
 Visual approach:
 
@@ -167,6 +171,9 @@ Update run-producing workflows to emit steps/events:
 The run should continue independently of the originating page's React state. Navigating away should
 not lose the visible run status.
 
+In the SPA, starting a run should invalidate or seed the shared monitor query rather than coupling
+the monitor to page-local component state.
+
 ## Phase 5 — Live Updates
 
 Start simple:
@@ -177,6 +184,7 @@ Consider later:
 
 - SSE stream for active run updates.
 - Browser notifications for completed/failed runs.
+- `BroadcastChannel` only if cross-tab monitor sync becomes a real workflow.
 
 Avoid watchers or always-on schedulers. This should remain request-driven and app-session-driven.
 

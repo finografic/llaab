@@ -4,11 +4,7 @@ import type { ReactNode } from 'react';
 import { queryClient } from './queryClient';
 
 /**
- * Wraps a React island in the shared TanStack Query client.
- *
- * Nest this directly around any island root that uses `queries/*` hooks — e.g.
- * `<QueryClientProvider client:load><IngestForm /></QueryClientProvider>` in an
- * `.astro` page — so every island reads from and invalidates the same cache.
+ * Wraps the SPA root in the shared TanStack Query client.
  */
 export function QueryClientProvider({ children }: { children: ReactNode }) {
   return <TanStackQueryClientProvider client={queryClient}>{children}</TanStackQueryClientProvider>;

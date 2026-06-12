@@ -41,12 +41,12 @@ All vault writes resolve to the same directory regardless of where the process s
 (`pnpm exec`, web server, test runner). The canonical path is exported from `@llaab/core`:
 
 ```ts
-import { VAULT_ROOT } from '@llaab/core';
+import { VAULT_ROOT } from "@llaab/core";
 ```
 
 The implementation in `packages/core/src/utils/vault-root.ts` anchors to its own file location
-via `import.meta.url` rather than `process.cwd()`. This means the Astro dev server running from
-`apps/client/` and a CLI script running from the monorepo root both resolve to the same
+via `import.meta.url` rather than `process.cwd()`. This means the server, tests, and CLI scripts
+all resolve to the same
 `vault/` at the monorepo root.
 
 Override with the `LLAAB_VAULT` env var for non-standard layouts:

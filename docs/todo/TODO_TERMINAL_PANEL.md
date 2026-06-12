@@ -22,7 +22,7 @@ Every command is introspectable, loggable, and replayable.
 ## Architecture
 
 ```
-apps/client (Astro + React)
+apps/client (Vite + React Router)
   └── TerminalPanel (xterm.js)
         ↕ WebSocket (ws://.../terminal)
 
@@ -48,19 +48,19 @@ Every message over the socket is wrapped — never raw command payloads.
 ```ts
 // Client → Server
 interface CommandEnvelope {
-  type: 'command';
+  type: "command";
   payload: {
-    id:      string;                               // client-assigned UUID
-    ts:      string;                               // ISO timestamp
-    source:  'terminal' | 'ui' | 'agent';          // who triggered this
+    id: string; // client-assigned UUID
+    ts: string; // ISO timestamp
+    source: "terminal" | "ui" | "agent"; // who triggered this
     command: Command;
   };
 }
 
 // Server → Client
 interface OutputEnvelope {
-  type:  'event';
-  cmdId: string;                                   // correlates to CommandEnvelope.id
+  type: "event";
+  cmdId: string; // correlates to CommandEnvelope.id
   event: OutputEvent;
 }
 ```
@@ -71,11 +71,17 @@ interface OutputEnvelope {
 
 ```ts
 type Command =
-  | { kind: 'ai.run';     task: TaskType; prompt: string; model?: string; context?: { files?: string[] } }
-  | { kind: 'fs.read';    path: string }
-  | { kind: 'fs.list';    path: string }
-  | { kind: 'agent.run';  agentId: string; input?: unknown }
-  | { kind: 'shell.exec'; cmd: string; cwd?: string }   // gated by capability
+  | {
+      kind: "ai.run";
+      task: TaskType;
+      prompt: string;
+      model?: string;
+      context?: { files?: string[] };
+    }
+  | { kind: "fs.read"; path: string }
+  | { kind: "fs.list"; path: string }
+  | { kind: "agent.run"; agentId: string; input?: unknown }
+  | { kind: "shell.exec"; cmd: string; cwd?: string }; // gated by capability
 ```
 
 `task` on `ai.run` maps directly to `TaskType` in `@llaab/llm` — the LLM adapter calls the
@@ -87,11 +93,11 @@ same `routeLlm` / `streamLlm` that the HTTP endpoints use. No parallel LLM logic
 
 ```ts
 type OutputEvent =
-  | { type: 'stdout'; data: string }
-  | { type: 'stderr'; data: string }
-  | { type: 'token';  data: string }         // LLM token stream
-  | { type: 'meta';   data: unknown }        // structured data (file links, progress)
-  | { type: 'done';   code: number }
+  | { type: "stdout"; data: string }
+  | { type: "stderr"; data: string }
+  | { type: "token"; data: string } // LLM token stream
+  | { type: "meta"; data: unknown } // structured data (file links, progress)
+  | { type: "done"; code: number };
 ```
 
 `meta` events allow the terminal to render clickable file links, progress bars, node cards —
@@ -143,7 +149,7 @@ automatically applies to terminal `ai.run` commands too — one source of truth.
 
 ### Phase 1 — Vertical slice
 
-- [ ] xterm.js React island in `apps/client`
+- [ ] xterm.js React component in `apps/client`
 - [ ] WS endpoint in `apps/server` (`/terminal`)
 - [ ] `ai.run` command → Ollama streaming → token events → terminal
 

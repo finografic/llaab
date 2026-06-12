@@ -2,6 +2,7 @@ import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Button } from 'components/ui/button';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
 
 import { fmtDetailDate, splitTags } from '../transcript-split.utils';
@@ -166,9 +167,9 @@ export function TranscriptDetail({
             <>
               <dt>Source node</dt>
               <dd>
-                <a href={`/vault/sources/${transcript.source_id}`} className="meta-link">
+                <Link to={`/vault/sources/${transcript.source_id}`} className="meta-link">
                   {transcript.source_id}
-                </a>
+                </Link>
               </dd>
             </>
           ) : null}
@@ -282,7 +283,7 @@ export function TranscriptDetail({
               const ideaTags = splitTags(idea.tags);
               return (
                 <li key={idea.id} className={styles.ideaItem}>
-                  <a href={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
+                  <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
                     <p className={styles.ideaTitle}>{idea.title}</p>
                     <div className="tags">
                       {ideaTags.domain.length > 0 ? (
@@ -304,7 +305,7 @@ export function TranscriptDetail({
                         </span>
                       ) : null}
                     </div>
-                  </a>
+                  </Link>
                 </li>
               );
             })}

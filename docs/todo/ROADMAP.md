@@ -94,7 +94,7 @@ Reference: [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) 
 ### Karpathy Pattern — Vault Graph Integration
 
 Andrej Karpathy's knowledge graph visualization is a purpose-built, battle-tested graph view.
-Integrate it with LLAAB's vault rather than building a custom React island from scratch.
+Integrate it with LLAAB's vault rather than building a custom graph UI from scratch.
 LLAAB's vault exposes node relationships (source → transcript → idea → skill lineage) via
 `listNodes` + `GET /api/vault/nodes` — the integration surface is an export/adapter, not a UI.
 Scope TBD pending research into Karpathy Pattern's data format requirements.
@@ -121,15 +121,15 @@ date, version. `follow: true` nodes auto-refresh stats on `lab agent run` via a 
 
 Detail: [`docs/todo/TODO_LIBRARY_WATCH.md`](./TODO_LIBRARY_WATCH.md)
 
-### Cross-Island / Cross-Tab Sync
+### Cross-Tab Sync
 
-Exploratory only — no concrete need yet. The `queryClient` singleton already syncs islands on
-the same page; it cannot reach a second tab or window. `BroadcastChannel` is the candidate if
-that ever becomes a real workflow (e.g. live run-status updates across tabs); WebSocket is
+Exploratory only — no concrete need yet. The root TanStack Query provider already syncs components
+within the current tab; it cannot reach a second tab or window. `BroadcastChannel` is the candidate
+if that ever becomes a real workflow (e.g. live run-status updates across tabs); WebSocket is
 ruled out as it would require an always-on server connection, conflicting with the "LLAAB does
 not own a scheduler" rule.
 
-Detail: [`docs/todo/TODO_CROSS_ISLAND_SYNC.md`](./TODO_CROSS_ISLAND_SYNC.md)
+Detail: [`docs/todo/TODO_CROSS_TAB_SYNC.md`](./TODO_CROSS_TAB_SYNC.md)
 
 ## Done
 
@@ -166,7 +166,6 @@ Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 | 2026-06-01 | Client UI migration — remove PandaCSS and `@finografic/design-system`; adopt app-local shadcn/ui + Tailwind 4                                                                                                                              |
 | 2026-05-28 | Repo public-readiness — vault privacy audit flow, initial `lab/` approvals, and prepare-to-publish cleanup                                                                                                                                 |
 | 2026-04-29 | Vault browser nodes page — `PageLayout` + `FileList` + DS TreeView integration                                                                                                                                                             |
-| 2026-04-28 | Fix client SSR React dedupe — cross-repo design-system / Ark / Zag single-instance resolution                                                                                                                                              |
 | 2026-04-27 | Layout system — `PageLayout`, `PageHero`, Finder-style `FileList`, sticky sidebar, layout guide                                                                                                                                            |
 | 2026-04-20 | Transcript extraction UX + linking — `related`, ideas endpoint, linked idea cards, improved re-extract flow                                                                                                                                |
 | 2026-04-19 | Ollama extraction stability — switch to chat API, local model fix, clean-vault script improvements                                                                                                                                         |
@@ -177,7 +176,6 @@ Detail: [`docs/todo/TODO_HARNESS.md`](./TODO_HARNESS.md)
 | 2026-04-16 | Hono RPC — typed `hc<AppType>` client, routers refactored to chain form, `api.ts` in client                                                                                                                                                |
 | 2026-04-16 | Agent loop — one-shot processor, skill registry, dedup index, `/api/agent/*`, `lab agent run`                                                                                                                                              |
 | 2026-04-16 | LLM communication layer — real Anthropic + Ollama providers, task router, cache, `/api/llm/*`                                                                                                                                              |
-| 2026-04-16 | Vault browser write — `POST /api/vault/nodes`, `CreateIdeaPanel` island on nodes page                                                                                                                                                      |
 | 2026-04-16 | CLI — `lab ingest <url>` and `lab vault list [--type]` via citty                                                                                                                                                                           |
 | 2026-04-16 | `apps/server` — Hono server + client migration (`api-client.ts`, remove skills/ingestion deps)                                                                                                                                             |
 | 2026-04-16 | Taxonomy system — `autoTag`, `d:` tags, TagsInput on IngestForm, tag pills, skills doc                                                                                                                                                     |

@@ -69,10 +69,10 @@ Vault pages fetch via TanStack Query hooks + Hono RPC (`/api/vault/*`); optional
 Layout hierarchy: `index.html` + `main.tsx` mount a single React tree. `AppLayout` wraps horizontal
 header + main + footer (sidebar removed 2026-06-07). `AppHeader` hosts `NavMenu` (brand link +
 shadcn megamenus + mobile sheet). Inner pages use `PageLayout` (hero / optional aside / main zones)
-
-- `PageHero`. See `LAYOUT_AND_PAGES_GUIDE.md`.
-  Navigation structure: `lib/nav-menu.config.ts`; design spec: `docs/NAV_MENU_DESIGN.md`.
-  Home dashboard uses `BalancedGrid` + `utils/balanced-grid.utils.ts` to avoid orphan cards in multi-column grids.
+and `PageHero`. `src/router.tsx` lazy-loads route components so the initial SPA chunk stays smaller;
+route handles set title/full-bleed page chrome. Navigation structure: `lib/nav-menu.config.ts`;
+design spec: `docs/NAV_MENU_DESIGN.md`. Home dashboard uses `utils/balanced-grid.utils.ts` to avoid
+orphan cards in multi-column grids.
 
 CSS entry points: `packages/ui/src/styles/globals.css` owns all framework imports (Tailwind,
 `tw-animate-css`, `shadcn/tailwind.css`, Roboto), the shadcn stone token `:root`/`.dark` blocks,

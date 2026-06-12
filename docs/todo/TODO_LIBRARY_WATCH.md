@@ -34,24 +34,24 @@ New node type in `packages/schemas/src/package-node.schema.ts`:
 
 ```ts
 PackageNodeSchema = BaseNodeSchema.extend({
-  type:             z.literal('package'),
-  ecosystem:        z.enum(['npm', 'brew', 'pip', 'cargo', 'gem']),
-  packageName:      z.string(),               // e.g. "citty", "@clack/prompts"
-  version:          z.string().optional(),    // latest version
-  description:      z.string().optional(),
-  license:          z.string().optional(),
-  weeklyDownloads:  z.number().int().optional(),
-  dependencyCount:  z.number().int().optional(),
-  installSize:      z.number().int().optional(), // bytes (unpackedSize from dist)
-  lastPublished:    z.string().optional(),    // ISO date of latest version
-  homepage:         z.string().url().optional(),
-  repository:       z.string().optional(),
-  follow:           z.boolean().default(false),
+  type: z.literal("package"),
+  ecosystem: z.enum(["npm", "brew", "pip", "cargo", "gem"]),
+  packageName: z.string(), // e.g. "citty", "@clack/prompts"
+  version: z.string().optional(), // latest version
+  description: z.string().optional(),
+  license: z.string().optional(),
+  weeklyDownloads: z.number().int().optional(),
+  dependencyCount: z.number().int().optional(),
+  installSize: z.number().int().optional(), // bytes (unpackedSize from dist)
+  lastPublished: z.string().optional(), // ISO date of latest version
+  homepage: z.string().url().optional(),
+  repository: z.string().optional(),
+  follow: z.boolean().default(false),
   // npm-specific
-  isEsm:            z.boolean().optional(),   // type === 'module'
-  hasTypes:         z.boolean().optional(),   // @types/* or types field present
-  vulnerabilities:  z.number().int().optional(), // 0 = clean
-})
+  isEsm: z.boolean().optional(), // type === 'module'
+  hasTypes: z.boolean().optional(), // @types/* or types field present
+  vulnerabilities: z.number().int().optional(), // 0 = clean
+});
 ```
 
 ---
@@ -99,7 +99,9 @@ input: { packageName: string; ecosystem: 'npm' | 'brew' | ...; tags?: string[] }
 ### `refreshPackageStats(node)` — agent loop skill
 
 ```ts
-input: { package: PackageNode }
+input: {
+  package: PackageNode;
+}
 ```
 
 1. Re-fetch stats for the package
@@ -128,9 +130,15 @@ plain `fetch`. Encode scoped package names (`@scope/pkg` → `@scope%2Fpkg`). Ad
 handling for 404 (package not found) and 429 (rate limit).
 
 ```ts
-export async function fetchNpmMeta(packageName: string): Promise<PackageMetaResponse>
-export async function fetchNpmWeeklyDownloads(packageName: string): Promise<number>
-export async function fetchBrewMeta(formulaName: string): Promise<BrewMetaResponse>
+export async function fetchNpmMeta(
+  packageName: string,
+): Promise<PackageMetaResponse>;
+export async function fetchNpmWeeklyDownloads(
+  packageName: string,
+): Promise<number>;
+export async function fetchBrewMeta(
+  formulaName: string,
+): Promise<BrewMetaResponse>;
 ```
 
 ---
@@ -194,9 +202,9 @@ Add panel: package name input + ecosystem selector → calls `POST /api/packages
 
 ### Phase 4 — UI
 
-- [ ] `apps/client/src/pages/vault/packages.astro` — page shell
+- [ ] `apps/client/src/routes/vault-packages.tsx` — page shell
 - [ ] `PackageCard` React component (reference: npmx.dev `Package/Card.vue`)
-- [ ] `AddPackagePanel` React island — ecosystem selector + name input
+- [ ] `AddPackagePanel` React component — ecosystem selector + name input
 - [ ] Follow toggle wired to `PATCH /api/packages/:id/follow`
 
 ---

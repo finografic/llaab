@@ -28,9 +28,9 @@ All vault I/O goes through the server API. The client bundle does **not** import
 Use `api` from `lib/api.ts` (Hono RPC). Full route guide: [`docs/server/HONO_RPC.md`](./server/HONO_RPC.md).
 
 ```tsx
-import { api } from 'lib/api';
+import { api } from "lib/api";
 
-const res = await api.vault.nodes.$get({ query: { type: 'source' } });
+const res = await api.vault.nodes.$get({ query: { type: "source" } });
 const { nodes } = await res.json();
 ```
 
@@ -86,7 +86,7 @@ Detail routes (`PageDetail`):
 Example — ingest runs table links authors to sources:
 
 ```tsx
-const { data: sourceNodes = [] } = useVaultNodes({ type: 'source' });
+const { data: sourceNodes = [] } = useVaultNodes({ type: "source" });
 return <RunsTable sources={sourceNodes} showHeading />;
 ```
 
@@ -97,14 +97,14 @@ source node loads from the API (requires valid vault frontmatter — see `@llaab
 
 ## Quick reference
 
-| Goal                      | Approach                                                    |
-| ------------------------- | ----------------------------------------------------------- |
-| Read vault nodes          | `useVaultNodes` / `useVaultNode` → `api.vault.nodes`        |
-| Ingest / extract          | Mutation hooks → `api.ingest.*`, `api.vault.*`              |
-| Runs list                 | `useRuns()` in `RunsTable` (single hook, no SSR seed)       |
-| File tree browser         | `useVaultTree()` → `GET /api/vault/tree`                    |
-| Add a new server endpoint | Server route + `AppType`; then hook or direct `api.*`       |
-| Cross-tab live sync       | Not implemented — see `docs/todo/TODO_CROSS_ISLAND_SYNC.md` |
+| Goal                      | Approach                                                 |
+| ------------------------- | -------------------------------------------------------- |
+| Read vault nodes          | `useVaultNodes` / `useVaultNode` → `api.vault.nodes`     |
+| Ingest / extract          | Mutation hooks → `api.ingest.*`, `api.vault.*`           |
+| Runs list                 | `useRuns()` in `RunsTable` (single hook, no SSR seed)    |
+| File tree browser         | `useVaultTree()` → `GET /api/vault/tree`                 |
+| Add a new server endpoint | Server route + `AppType`; then hook or direct `api.*`    |
+| Cross-tab live sync       | Not implemented — see `docs/todo/TODO_CROSS_TAB_SYNC.md` |
 
 ---
 

@@ -1,5 +1,6 @@
 import { DeleteRunAction } from 'components/DeleteRunAction/DeleteRunAction';
 import { ExternalLinkIcon, UserCheckIcon, UserXIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { RunNode, SourceNode } from '@llaab/schemas';
 import type { CellContext } from '@tanstack/react-table';
 
@@ -47,9 +48,9 @@ export function renderRunTitleCell({ row }: CellContext<RunNode, unknown>) {
   return (
     <div className={styles.cellTitle}>
       {subjectTitle && !subjectHref && <span className={styles.subjectTitle}>{subjectTitle}</span>}
-      <a href={`/vault/runs/${run.id}`} className={styles.runLabel}>
+      <Link to={`/vault/runs/${run.id}`} className={styles.runLabel}>
         {run.title}
-      </a>
+      </Link>
       {subjectTitle && subjectHref && (
         <a href={subjectHref} className={styles.subjectTitle}>
           {subjectTitle}
@@ -102,9 +103,9 @@ export function renderRunAuthorCell(run: RunNode, sourcesById: Map<string, Sourc
       ) : null}
       {author &&
         (sourceId ? (
-          <a href={`/vault/sources/${sourceId}`} className={styles.authorLink}>
+          <Link to={`/vault/sources/${sourceId}`} className={styles.authorLink}>
             {author}
-          </a>
+          </Link>
         ) : (
           <span className={styles.authorName}>{author}</span>
         ))}

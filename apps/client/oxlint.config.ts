@@ -6,7 +6,7 @@ export default defineConfig({
   ...oxlintClientConfig,
   rules: {
     ...oxlintClientConfig.rules,
-    // Side-effect CSS imports (Astro layouts, global styles) are intentional.
+    // Side-effect CSS imports for global styles are intentional.
     'import/no-unassigned-import': ['warn', { allow: ['**/*.css'] }],
   },
   options: {

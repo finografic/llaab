@@ -78,17 +78,17 @@ flowchart TD
 
 The system is intentionally layered:
 
-| Layer           | Primary files                                                             | Responsibility                                      |
-| --------------- | ------------------------------------------------------------------------- | --------------------------------------------------- |
-| Schema          | `packages/schemas/src/*.schema.ts`                                        | Defines valid node and trace shapes.                |
-| Core            | `packages/core/src/*`                                                     | Vault IO, taxonomy, command protocol, capabilities. |
-| Harness prep    | `packages/ingestion/src/extract/harness-prep.ts`                          | Token-aware context preparation for extraction.     |
-| Control         | `packages/control/src/orchestrator.ts`                                    | Governed model execution and schema validation.     |
-| LLM routing     | `packages/llm/src/router.ts`, `packages/llm/src/providers/*`              | Task-to-provider/model routing.                     |
-| Skills          | `packages/skills/src/*`                                                   | Ingest, agent, and reusable execution flows.        |
-| Server routes   | `apps/server/src/routes/*`, `apps/server/src/commands/*`                  | HTTP, WebSocket, and command dispatch.              |
-| Client surfaces | `apps/client/src/pages/*`, `apps/client/src/components/TerminalPanel.tsx` | Browser pages and terminal command surface.         |
-| CLI diagnostics | `packages/cli/src/commands/*`                                             | Local diagnostics and adapter visibility.           |
+| Layer           | Primary files                                                              | Responsibility                                      |
+| --------------- | -------------------------------------------------------------------------- | --------------------------------------------------- |
+| Schema          | `packages/schemas/src/*.schema.ts`                                         | Defines valid node and trace shapes.                |
+| Core            | `packages/core/src/*`                                                      | Vault IO, taxonomy, command protocol, capabilities. |
+| Harness prep    | `packages/ingestion/src/extract/harness-prep.ts`                           | Token-aware context preparation for extraction.     |
+| Control         | `packages/control/src/orchestrator.ts`                                     | Governed model execution and schema validation.     |
+| LLM routing     | `packages/llm/src/router.ts`, `packages/llm/src/providers/*`               | Task-to-provider/model routing.                     |
+| Skills          | `packages/skills/src/*`                                                    | Ingest, agent, and reusable execution flows.        |
+| Server routes   | `apps/server/src/routes/*`, `apps/server/src/commands/*`                   | HTTP, WebSocket, and command dispatch.              |
+| Client surfaces | `apps/client/src/routes/*`, `apps/client/src/components/TerminalPanel.tsx` | Browser routes and terminal command surface.        |
+| CLI diagnostics | `packages/cli/src/commands/*`                                              | Local diagnostics and adapter visibility.           |
 
 ---
 
@@ -140,12 +140,12 @@ WebSocket at `/terminal`.
 ### Example LLM request
 
 ```ts
-await fetch('http://localhost:8888/api/llm/complete', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+await fetch("http://localhost:8888/api/llm/complete", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    task: 'extract',
-    prompt: 'Extract three reusable ideas from this note.',
+    task: "extract",
+    prompt: "Extract three reusable ideas from this note.",
   }),
 });
 ```
@@ -183,16 +183,16 @@ sequenceDiagram
 Every inbound command is wrapped with correlation metadata:
 
 ```ts
-import type { CommandEnvelope } from '@llaab/core';
+import type { CommandEnvelope } from "@llaab/core";
 
 const envelope: CommandEnvelope = {
   id: crypto.randomUUID(),
-  source: 'terminal',
+  source: "terminal",
   timestamp: new Date().toISOString(),
   command: {
-    kind: 'ai.run',
-    task: 'extract',
-    prompt: 'Extract ideas from this note.',
+    kind: "ai.run",
+    task: "extract",
+    prompt: "Extract ideas from this note.",
   },
 };
 ```
@@ -201,12 +201,16 @@ const envelope: CommandEnvelope = {
 
 ```ts
 type Command =
-  | { kind: 'ai.run'; task: 'format' | 'extract' | 'code' | 'reason'; prompt: string }
-  | { kind: 'agent.run'; nodeId?: string; force?: boolean }
-  | { kind: 'fs.read'; path: string }
-  | { kind: 'fs.list'; path: string }
   | {
-      kind: 'shell.exec';
+      kind: "ai.run";
+      task: "format" | "extract" | "code" | "reason";
+      prompt: string;
+    }
+  | { kind: "agent.run"; nodeId?: string; force?: boolean }
+  | { kind: "fs.read"; path: string }
+  | { kind: "fs.list"; path: string }
+  | {
+      kind: "shell.exec";
       sessionId: string;
       command?: string;
       args?: string[];
@@ -224,12 +228,12 @@ summary to a `RunNode`.
 
 ```ts
 type OutputEvent =
-  | { type: 'token'; data: string }
-  | { type: 'stdout'; data: string }
-  | { type: 'stderr'; data: string }
-  | { type: 'meta'; data: Record<string, unknown> }
-  | { type: 'error'; message: string; code?: string }
-  | { type: 'done'; code: number };
+  | { type: "token"; data: string }
+  | { type: "stdout"; data: string }
+  | { type: "stderr"; data: string }
+  | { type: "meta"; data: Record<string, unknown> }
+  | { type: "error"; message: string; code?: string }
+  | { type: "done"; code: number };
 ```
 
 ---
@@ -344,7 +348,7 @@ without losing the transcript.
 ### Extraction handoff contract
 
 ```ts
-import { extractKnowledgeFromTranscript } from '@llaab/ingestion';
+import { extractKnowledgeFromTranscript } from "@llaab/ingestion";
 
 const extraction = await extractKnowledgeFromTranscript(
   transcriptId,
@@ -452,7 +456,13 @@ Rules:
 Current allowlist:
 
 ```ts
-const ALLOWED_SHELL_COMMANDS = new Set(['git', 'pnpm', 'node', 'yt-dlp', 'opencode']);
+const ALLOWED_SHELL_COMMANDS = new Set([
+  "git",
+  "pnpm",
+  "node",
+  "yt-dlp",
+  "opencode",
+]);
 ```
 
 ---
