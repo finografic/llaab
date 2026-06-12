@@ -1,10 +1,36 @@
+// import { JsonViewer } from 'components/ui/elements/json-viewer';
 import { Label } from 'components/ui/label';
 import { Switch } from 'components/ui/switch';
-import { useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { JSONTree } from 'react-json-tree';
 import type { ReactNode } from 'react';
+// import type { JsonValue } from 'components/ui/elements/json-viewer';
+
+import { formatMetadataJson, parseMetadataJson } from 'utils/metadata-rendering.utils';
 
 import styles from './JsonData.module.css';
+
+type JsonDataKey = string | number;
+
+export interface JsonDataLinkRule {
+  /** Match a JSON property name, e.g. `sourceId` or `id`. */
+  key?: string;
+  /** Match array values under a parent property, e.g. `producedNodeIds`. */
+  parentKey?: string;
+  /** Route template. `:value` is replaced with the current primitive value. */
+  href: string;
+  /** Optional sibling guard on the parent object, e.g. `{ key: 'type', equals: 'transcript' }`. */
+  when?: {
+    key: string;
+    equals: string | number | boolean;
+  };
+}
+
+interface JsonDataLinkContext {
+  key: JsonDataKey | undefined;
+  parentKey: JsonDataKey | undefined;
+  parent: unknown;
+}
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
@@ -30,24 +56,97 @@ const JSON_TREE_THEME = {
   base0F: 'var(--text-faint)',
 };
 
+const EMPTY_LINK_RULES: JsonDataLinkRule[] = [];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Stored summaries carry literal escaped quotes (`\"`) — clean them for display. */
-function cleanEscapedJson(value: string): string {
-  return value.replace(/\\"/g, '"');
+function readParent(root: unknown, keyPath: readonly JsonDataKey[]): unknown {
+  let cursor = root;
+
+  for (let index = keyPath.length - 1; index >= 1; index--) {
+    const segment = keyPath[index];
+    if (cursor == null || typeof cursor !== 'object') return undefined;
+    cursor = (cursor as Record<JsonDataKey, unknown>)[segment];
+  }
+
+  return cursor;
+}
+
+function getLinkContext(root: unknown, keyPath: readonly JsonDataKey[]): JsonDataLinkContext {
+  return {
+    key: keyPath[0],
+    parentKey: keyPath[1],
+    parent: readParent(root, keyPath),
+  };
+}
+
+function ruleMatches(rule: JsonDataLinkRule, context: JsonDataLinkContext): boolean {
+  if (rule.key !== undefined && rule.key !== context.key) return false;
+  if (rule.parentKey !== undefined && rule.parentKey !== context.parentKey) return false;
+  if (!rule.when) return true;
+  if (!context.parent || typeof context.parent !== 'object') return false;
+
+  return (context.parent as Record<string, unknown>)[rule.when.key] === rule.when.equals;
+}
+
+function getRuleHref(
+  value: unknown,
+  keyPath: readonly JsonDataKey[],
+  root: unknown,
+  linkRules: JsonDataLinkRule[],
+): string | undefined {
+  if (!['string', 'number'].includes(typeof value)) return undefined;
+
+  const context = getLinkContext(root, keyPath);
+  const rule = linkRules.find((candidate) => ruleMatches(candidate, context));
+  if (!rule) return undefined;
+
+  return rule.href.replace(':value', encodeURIComponent(String(value)));
 }
 
 /** Hotlinks string values that are entirely a URL — same look, but clickable. */
-function jsonValueRenderer(valueAsString: unknown, value: unknown): ReactNode {
+function renderLinkedValue(valueAsString: unknown, href: string, external = false): ReactNode {
   const rendered = valueAsString as ReactNode;
-  if (typeof value === 'string' && /^https?:\/\/\S+$/.test(value)) {
-    return (
-      <a href={value} target="_blank" rel="noopener noreferrer" className={styles.link}>
-        {rendered}
-      </a>
-    );
-  }
-  return rendered;
+  return (
+    <a
+      href={href}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noopener noreferrer' : undefined}
+      className={styles.link}
+    >
+      {rendered}
+    </a>
+  );
+}
+
+function createJsonValueRenderer(root: unknown, linkRules: JsonDataLinkRule[]) {
+  return function jsonValueRenderer(
+    valueAsString: unknown,
+    value: unknown,
+    ...keyPath: JsonDataKey[]
+  ): ReactNode {
+    const internalHref = getRuleHref(value, keyPath, root, linkRules);
+    if (internalHref) return renderLinkedValue(valueAsString, internalHref);
+
+    if (typeof value === 'string' && /^https?:\/\/\S+$/.test(value)) {
+      return renderLinkedValue(valueAsString, value, true);
+    }
+
+    return valueAsString as ReactNode;
+  };
+}
+
+function jsonItemStringRenderer(
+  _type: unknown,
+  _data: unknown,
+  itemType: ReactNode,
+  itemString: ReactNode,
+): ReactNode {
+  return (
+    <span className={styles.itemString}>
+      {itemType} {itemString}
+    </span>
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -57,49 +156,47 @@ export interface JsonDataProps {
   value: string;
   /** Label shown beside the toggle switch. Defaults to `'Raw'`. */
   label?: string;
+  /** Optional internal-link rules for known JSON keys. */
+  linkRules?: JsonDataLinkRule[];
 }
 
 /**
  * Renders a JSON string with a raw/formatted toggle — used for `input_summary` /
  * `output_summary` on run detail pages, and any other stored JSON-as-string field.
  *
- * Defaults to raw mode: the cleaned string shown inline (no prettifying). Toggling
- * off parses it and renders a foldable, syntax-coloured, monospaced tree via
+ * Defaults to formatted mode. Toggling raw on shows the normalized JSON string
+ * with line breaks. Formatted mode renders a foldable, syntax-coloured tree via
  * `react-json-tree`.
  */
-export function JsonData({ value, label = 'Raw' }: JsonDataProps) {
+export function JsonData({ value, label = 'Raw', linkRules = EMPTY_LINK_RULES }: JsonDataProps) {
   const switchId = useId();
-  const [raw, setRaw] = useState(true);
+  const [raw, setRaw] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const cleaned = useMemo(() => cleanEscapedJson(value), [value]);
-  const parsed = useMemo<unknown>(() => {
-    if (raw) return undefined;
-    try {
-      return JSON.parse(cleaned);
-    } catch {
-      return undefined;
-    }
-  }, [cleaned, raw]);
+  const rawDisplay = useMemo(() => formatMetadataJson(value, 2), [value]);
+  const parsed = useMemo(() => parseMetadataJson(value), [value]);
+  const valueRenderer = useMemo(() => createJsonValueRenderer(parsed, linkRules), [linkRules, parsed]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div className={styles.root}>
       <div className={styles.data}>
-        {!raw && parsed !== undefined ? (
+        {mounted && !raw && parsed !== undefined ? (
           <div className={styles.tree}>
+            {/* <JsonViewer data={parsed as JsonValue} searchable copyPath collapsed={1} /> */}
             <JSONTree
               data={parsed}
               theme={JSON_TREE_THEME}
               hideRoot
-              valueRenderer={jsonValueRenderer}
-              getItemString={(_type, _data, itemType, itemString) => (
-                <span className={styles.itemString}>
-                  {itemType} {itemString}
-                </span>
-              )}
+              valueRenderer={valueRenderer}
+              getItemString={jsonItemStringRenderer}
             />
           </div>
         ) : (
-          <code className={styles.raw}>{cleaned}</code>
+          <code className={styles.raw}>{rawDisplay}</code>
         )}
       </div>
 

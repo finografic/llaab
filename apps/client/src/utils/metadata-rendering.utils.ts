@@ -6,6 +6,18 @@ export interface MetadataLinkTargetOptions {
   target?: '_blank' | '_self' | '_parent' | '_top';
 }
 
+function decodeEscapedJsonQuotes(value: string): string {
+  let candidate = value;
+
+  for (let pass = 0; pass < 6; pass++) {
+    const decoded = candidate.replace(/\\+"/g, '"');
+    if (decoded === candidate) return candidate;
+    candidate = decoded;
+  }
+
+  return candidate;
+}
+
 /**
  * Parse JSON stored in run/node metadata fields.
  * Handles YAML double- (and triple-) encoding where quotes appear as literal
@@ -17,16 +29,20 @@ export function parseMetadataJson(value: string): unknown {
   if (!trimmed) return undefined;
 
   let candidate = trimmed;
-  for (let pass = 0; pass < 4; pass++) {
-    if (candidate.startsWith('{') || candidate.startsWith('[')) {
-      try {
-        return JSON.parse(candidate) as unknown;
-      } catch {
-        // Not parseable at this escape depth — unescape one more level and retry.
-      }
+  for (let pass = 0; pass < 6; pass++) {
+    try {
+      const decoded = JSON.parse(candidate) as unknown;
+      if (typeof decoded !== 'string') return decoded;
+
+      const nested = decoded.trim();
+      if (!nested || nested === candidate) return decoded;
+      candidate = nested;
+      continue;
+    } catch {
+      // Not parseable at this escape depth — unescape one more level and retry.
     }
 
-    const unescaped = candidate.replace(/\\"/g, '"');
+    const unescaped = decodeEscapedJsonQuotes(candidate);
     if (unescaped === candidate) break;
     candidate = unescaped;
   }
@@ -46,7 +62,7 @@ export function parseMetadataJson(value: string): unknown {
 /** Render metadata JSON as a readable string without escaped quote artifacts. */
 export function formatMetadataJson(value: string, indent = 0): string {
   const parsed = parseMetadataJson(value);
-  if (parsed === undefined) return value;
+  if (parsed === undefined) return decodeEscapedJsonQuotes(value);
   return indent > 0 ? JSON.stringify(parsed, null, indent) : JSON.stringify(parsed);
 }
 

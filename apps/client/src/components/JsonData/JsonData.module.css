@@ -9,6 +9,7 @@
 .data {
   flex: 1;
   min-width: 0;
+  overflow-x: auto;
 }
 
 .raw {
@@ -40,6 +41,8 @@
 }
 
 .toggle {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-shrink: 0;
   align-items: center;

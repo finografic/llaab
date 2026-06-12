@@ -27,12 +27,24 @@ describe('parseMetadataJson', () => {
       tags: [],
     });
   });
+
+  it('parses summaries with repeated escaped quote layers', () => {
+    expect(parseMetadataJson(String.raw`{\\\\\\\"url\\\\\\\":\\\\\\\"https://example.com\\\\\\\"}`)).toEqual({
+      url: 'https://example.com',
+    });
+  });
 });
 
 describe('formatMetadataJson', () => {
   it('returns readable JSON without escaped quote artifacts', () => {
     expect(formatMetadataJson(String.raw`{\"url\":\"https://example.com\"}`)).toBe(
       '{"url":"https://example.com"}',
+    );
+  });
+
+  it('pretty-prints readable JSON when indentation is requested', () => {
+    expect(formatMetadataJson(String.raw`{\\\\\\\"url\\\\\\\":\\\\\\\"https://example.com\\\\\\\"}`, 2)).toBe(
+      '{\n  "url": "https://example.com"\n}',
     );
   });
 });
