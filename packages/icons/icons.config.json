@@ -394,5 +394,17 @@
   {
     "exportName": "Brain",
     "lucideName": "brain"
+  },
+  {
+    "exportName": "Cpu",
+    "lucideName": "cpu"
+  },
+  {
+    "exportName": "MemoryStick",
+    "lucideName": "memory-stick"
+  },
+  {
+    "exportName": "Microchip",
+    "lucideName": "microchip"
   }
 ]
