@@ -310,10 +310,16 @@ export const deleteRun = {
     if (deleteProduced && run.produced_node_ids.length > 0) {
       const allNodes = await listNodes();
       const nodesById = new Map(allNodes.map((node) => [node.id, node]));
+      const otherRuns = allNodes.filter((node): node is RunNode => node.type === 'run' && node.id !== run.id);
 
       for (const nodeId of run.produced_node_ids) {
         const producedNode = nodesById.get(nodeId);
         if (!producedNode) continue;
+        const isReferencedByAnotherRun = otherRuns.some((otherRun) =>
+          otherRun.produced_node_ids.includes(nodeId),
+        );
+        if (isReferencedByAnotherRun) continue;
+
         try {
           await deleteNode(producedNode.type, nodeId);
           deletedProduced++;
