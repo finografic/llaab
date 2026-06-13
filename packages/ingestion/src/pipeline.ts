@@ -356,6 +356,13 @@ export interface ExtractionResult {
   summary: string;
   ideaIds: string[];
   ideas: Array<{ id: string; title: string }>;
+  llmMeta: {
+    model: string;
+    provider: string;
+    durationMs: number;
+    promptTokens?: number;
+    completionTokens?: number;
+  };
 }
 
 /**
@@ -455,7 +462,7 @@ export async function extractKnowledgeFromTranscript(
     llm_completion_tokens: extracted.llmMeta.completionTokens,
   }));
 
-  return { transcriptId, summary: extracted.summary, ideaIds, ideas };
+  return { transcriptId, summary: extracted.summary, ideaIds, ideas, llmMeta: extracted.llmMeta };
 }
 
 export async function runIngestionPipeline(input: IngestionInput): Promise<IngestionResult> {

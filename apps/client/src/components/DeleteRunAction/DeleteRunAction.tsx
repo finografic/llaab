@@ -20,9 +20,10 @@ type DialogStep = 'closed' | 'confirm-run' | 'confirm-produced';
 export interface DeleteRunActionProps {
   run: RunNode;
   onDeleted?: (runId: string) => void;
+  color?: 'dim' | 'error';
 }
 
-export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
+export function DeleteRunAction({ run, onDeleted, color = 'error' }: DeleteRunActionProps) {
   const [step, setStep] = useState<DialogStep>('closed');
   const [error, setError] = useState<string | null>(null);
   const deleteRun = useDeleteRun();
@@ -71,7 +72,7 @@ export function DeleteRunAction({ run, onDeleted }: DeleteRunActionProps) {
         type="button"
         variant="ghost"
         size="icon-sm"
-        className={`${styles.deleteButton} text-[var(--error-text)] opacity-60 hover:bg-[var(--error-bg)] hover:text-[var(--error-text)] hover:opacity-100`}
+        className={`${styles.deleteButton} text-[var(--${color}-text)] ${color === 'dim' ? 'opacity-30' : 'opacity-60'} hover:bg-[var(--${color}-bg)] hover:text-[var(--error-text)] hover:opacity-100`}
         aria-label={`Delete run ${run.title}`}
         onClick={() => setStep('confirm-run')}
       >

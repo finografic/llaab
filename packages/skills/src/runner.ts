@@ -56,6 +56,18 @@ export async function appendProducedNodeIds(
 }
 
 /**
+ * Records the LLM trace on a persisted run — for follow-on processes (e.g. knowledge extraction)
+ * that call a model after `persistRunNode` has already written the run record without one.
+ */
+export async function setRunLlmTrace(runNodeId: string, llm: NonNullable<RunNode['llm']>): Promise<void> {
+  const runPath = getNodeFilePath('run', runNodeId);
+  await updateNode(runPath, (node) => ({
+    ...(node as RunNode),
+    llm,
+  }));
+}
+
+/**
  * Appends a trace event onto a persisted run's `events` — for durable, timestamped progress
  * updates (transcript fetched, extraction started, ideas written, etc.) that the run monitor
  * displays as an activity feed while the run is still active.

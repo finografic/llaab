@@ -16,17 +16,17 @@ import styles from './RunsTable.module.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmtDuration(ms?: number): string {
+export function fmtDuration(ms?: number): string {
   if (ms == null) return '—';
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-function fmtDate(iso: string): string {
+export function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-const STATUS_CLASS: Record<RunNode['run_status'], string> = {
+export const STATUS_CLASS: Record<RunNode['run_status'], string> = {
   pending: styles.statusPending,
   running: styles.statusRunning,
   completed: styles.statusCompleted,
@@ -36,7 +36,7 @@ const STATUS_CLASS: Record<RunNode['run_status'], string> = {
 
 // ─── Cells ──────────────────────────────────────────────────────────────────
 
-function getRunInputUrl(run: RunNode): string | undefined {
+export function getRunInputUrl(run: RunNode): string | undefined {
   return run.input_summary ? extractMetadataUrl(run.input_summary) : undefined;
 }
 

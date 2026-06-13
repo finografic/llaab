@@ -1,82 +1,13 @@
-import { getSortedRowModel } from '@tanstack/react-table';
-import { DataTable, sortableHeader } from 'components/ui/data-table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'components/ui/table';
 import { useRuns } from 'queries/runs';
 import { useMemo } from 'react';
-import {
-  buildSourcesById,
-  renderRunActionsCell,
-  renderRunAuthorCell,
-  renderRunDateCell,
-  renderRunDurationCell,
-  renderRunProducedCell,
-  renderRunSourceCell,
-  renderRunStatusCell,
-  renderRunTitleCell,
-} from 'tables/RunsTable/RunsTableCells';
-import type { RunNode, SourceNode } from '@llaab/schemas';
-import type { DataTableColumns } from '@llaab/ui/lib/data-table-utils';
+import { RunGroupRow } from 'tables/RunsTable/RunGroupRow';
+import { buildSourcesById } from 'tables/RunsTable/RunsTableCells';
+import type { SourceNode } from '@llaab/schemas';
 
-import { extractRunAuthor, extractRunSourceId } from 'utils/metadata-rendering.utils';
+import { groupRunsBySubject } from 'utils/run-grouping.utils';
 
 import styles from './RunsTable.module.css';
-
-// ─── Columns ────────────────────────────────────────────────────────────────
-
-export function buildRunsColumns(sourcesById: Map<string, SourceNode>): DataTableColumns<RunNode> {
-  return [
-    {
-      accessorKey: 'title',
-      header: sortableHeader('Skill / Title'),
-      cell: renderRunTitleCell,
-      align: 'left',
-    },
-    {
-      id: 'source',
-      accessorFn: (run) => (run.input_summary ? run.input_summary : ''),
-      header: 'Source',
-      cell: renderRunSourceCell,
-      align: 'center',
-    },
-    {
-      id: 'author',
-      accessorFn: (run) => {
-        const sourceId = extractRunSourceId(run);
-        return extractRunAuthor(run) ?? (sourceId ? sourcesById.get(sourceId)?.title : undefined) ?? '';
-      },
-      header: sortableHeader('Author / Follow'),
-      cell: ({ row }) => renderRunAuthorCell(row.original, sourcesById),
-      align: 'left',
-    },
-    {
-      accessorKey: 'run_status',
-      header: 'Status',
-      cell: renderRunStatusCell,
-    },
-    {
-      id: 'produced',
-      accessorFn: (run) => run.produced_node_ids.length,
-      header: sortableHeader('Nodes'),
-      cell: renderRunProducedCell,
-      minVisible: 'lg',
-    },
-    {
-      accessorKey: 'duration_ms',
-      header: sortableHeader('Duration'),
-      cell: renderRunDurationCell,
-    },
-    {
-      accessorKey: 'created_at',
-      header: sortableHeader('Date'),
-      cell: renderRunDateCell,
-      minVisible: 'lg',
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: renderRunActionsCell,
-    },
-  ];
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -87,7 +18,8 @@ export interface RunsTableProps {
 
 export function RunsTable({ sources = [], showHeading = false }: RunsTableProps) {
   const { data: runs = [] } = useRuns();
-  const columns = useMemo(() => buildRunsColumns(buildSourcesById(sources)), [sources]);
+  const sourcesById = useMemo(() => buildSourcesById(sources), [sources]);
+  const groups = useMemo(() => groupRunsBySubject(runs, sourcesById), [runs, sourcesById]);
 
   return (
     <div className={showHeading ? styles.withHeading : undefined}>
@@ -97,12 +29,33 @@ export function RunsTable({ sources = [], showHeading = false }: RunsTableProps)
           <span className={styles.headingCount}>{runs.length}</span>
         </div>
       )}
-      <DataTable
-        columns={columns}
-        data={runs}
-        emptyMessage="No runs yet. Runs are created when a skill executes."
-        options={{ getSortedRowModel: getSortedRowModel() }}
-      />
+      <div className="overflow-x-auto rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-0" />
+              <TableHead>Title</TableHead>
+              <TableHead>Source</TableHead>
+              <TableHead>Author</TableHead>
+              <TableHead className="text-center">Nodes</TableHead>
+              <TableHead className="text-center">Duration</TableHead>
+              <TableHead className="text-center">Date</TableHead>
+              <TableHead className="text-center">Delete</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {groups.length ? (
+              groups.map((group) => <RunGroupRow key={group.key} group={group} />)
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                  No runs yet. Runs are created when a skill executes.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

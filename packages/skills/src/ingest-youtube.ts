@@ -3,7 +3,7 @@ import { formatIsoUtcSeconds } from '@llaab/schemas';
 import type { SkillRunRecord } from './runner.js';
 import type { ExtractionResult, IngestionResult } from '@llaab/ingestion';
 
-import { appendProducedNodeIds, appendRunEvent, runSkill } from './runner.js';
+import { appendProducedNodeIds, appendRunEvent, runSkill, setRunLlmTrace } from './runner.js';
 
 export interface IngestYouTubeInput {
   url: string;
@@ -70,6 +70,13 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYo
       );
       await appendProducedNodeIds(record.runNodeId, extraction.ideaIds, {
         completedAt: formatIsoUtcSeconds(new Date()),
+      });
+      await setRunLlmTrace(record.runNodeId, {
+        model: extraction.llmMeta.model,
+        provider: extraction.llmMeta.provider,
+        duration_ms: extraction.llmMeta.durationMs,
+        prompt_tokens: extraction.llmMeta.promptTokens,
+        completion_tokens: extraction.llmMeta.completionTokens,
       });
       await appendRunEvent(record.runNodeId, {
         level: 'success',

@@ -384,11 +384,11 @@
     "lucideName": "user-x"
   },
   {
-    "exportName": "UserCheck",
-    "lucideName": "user-check"
-  },
-  {
     "exportName": "ExternalLink",
     "lucideName": "external-link"
+  },
+  {
+    "exportName": "UserCheck",
+    "lucideName": "user-check"
   }
 ]

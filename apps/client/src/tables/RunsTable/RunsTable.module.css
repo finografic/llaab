@@ -1,6 +1,5 @@
 .cellTitle {
   display: flex;
-  flex-direction: column;
   gap: 0.25rem;
   min-width: 0;
 }
@@ -12,6 +11,9 @@
   font-weight: 400;
   font-size: var(--text-base);
   line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 a.subjectTitle {
@@ -23,17 +25,9 @@ a.subjectTitle:hover {
   text-decoration: underline;
 }
 
-.runLabel {
-  color: var(--text-muted);
-  text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  line-height: 1.4;
-}
-
-.runLabel:hover {
-  color: var(--accent);
-  text-decoration: underline;
+.runsBadge {
+  width: 2rem;
+  margin-left: 0.66rem;
 }
 
 .titleLink {
@@ -55,6 +49,8 @@ a.subjectTitle:hover {
   color: var(--text-muted);
   text-decoration: none;
   transition: color var(--duration) var(--ease);
+  width: 2rem;
+  transform: translateY(0.15rem);
 }
 
 .sourceLink:hover {
@@ -146,6 +142,7 @@ a.subjectTitle:hover {
 
 .authorCell {
   display: flex;
+  align-items: center;
   gap: 0.66rem;
   min-width: 0;
 }
@@ -183,4 +180,53 @@ a.subjectTitle:hover {
   background: oklch(0.22 0.04 264 / 0.25);
   color: oklch(0.65 0.18 264);
   border-color: oklch(0.4 0.12 264 / 0.4);
+}
+
+.groupRow {
+  background: var(--surface-raised);
+}
+
+.groupToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  margin-left: var(--space-2);
+}
+
+.groupToggle:hover .subjectTitle {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.childRow {
+  background: var(--surface);
+}
+
+.childRowContent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding-right: var(--space-1);
+}
+
+.childRowId {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: var(--text-sm);
+}
+
+.childRowId:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.childRowMeta {
+  flex: 1;
+  min-width: 0;
 }
