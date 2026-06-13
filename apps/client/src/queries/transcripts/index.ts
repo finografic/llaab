@@ -6,9 +6,11 @@ export const QUERY_KEYS = {
 };
 
 export { useTranscriptIdeas, fetchExistingIdeas } from './useTranscriptIdeas';
+export { useConsolidateCanonicalIdeas } from './useConsolidateCanonicalIdeas';
 export { useExtractTranscript } from './useExtractTranscript';
 export { useDiscardTranscript } from './useDiscardTranscript';
 export { useIngestYoutube } from './useIngestYoutube';
 export type { TranscriptIdea } from './useTranscriptIdeas';
+export type { ConsolidateCanonicalIdeasResult } from './useConsolidateCanonicalIdeas';
 export type { ExtractTranscriptResult } from './useExtractTranscript';
 export type { IngestYoutubeInput, IngestYoutubeResult } from './useIngestYoutube';

@@ -32,5 +32,6 @@ export const vaultRouter = createRouter()
   .get(routes.nodeRaw.path, routes.nodeRaw.handler)
   .get(routes.transcriptIdeas.path, routes.transcriptIdeas.handler)
   .post(routes.extractTranscript.path, routes.extractTranscript.handler)
+  .post(routes.consolidateTranscriptIdeas.path, routes.consolidateTranscriptIdeas.handler)
   .delete(routes.discardTranscript.path, routes.discardTranscript.handler)
   .delete(routes.deleteRun.path, zValidator('query', deleteRunQuerySchema), routes.deleteRun.handler);

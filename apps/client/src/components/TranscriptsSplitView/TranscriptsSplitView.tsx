@@ -1,6 +1,6 @@
 import { SidebarSplitLayout } from 'components/SidebarSplitLayout/SidebarSplitLayout';
 import type { TranscriptExtractionRun } from './components/TranscriptDetail';
-import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
+import type { CanonicalIdeaNode, IdeaNode, TranscriptNode } from '@llaab/schemas';
 
 import { TranscriptDetail } from './components/TranscriptDetail';
 import { TranscriptsEmptyState } from './components/TranscriptsEmptyState';
@@ -11,6 +11,7 @@ export interface TranscriptsSplitViewProps {
   selectedId?: string;
   transcript?: TranscriptNode;
   extractedIdeas?: IdeaNode[];
+  canonicalIdeas?: CanonicalIdeaNode[];
   extractionRuns?: TranscriptExtractionRun[];
 }
 
@@ -21,13 +22,21 @@ const SIDEBAR_PANEL_ID = 'transcripts-sidebar';
 function renderDetail(
   transcript: TranscriptNode | undefined,
   ideas: IdeaNode[],
+  canonicalIdeas: CanonicalIdeaNode[],
   extractionRuns: TranscriptExtractionRun[],
 ) {
   if (!transcript) {
     return <TranscriptsEmptyState />;
   }
 
-  return <TranscriptDetail transcript={transcript} extractedIdeas={ideas} extractionRuns={extractionRuns} />;
+  return (
+    <TranscriptDetail
+      transcript={transcript}
+      extractedIdeas={ideas}
+      canonicalIdeas={canonicalIdeas}
+      extractionRuns={extractionRuns}
+    />
+  );
 }
 
 function renderSidebar(transcripts: TranscriptNode[], selectedId?: string) {
@@ -39,6 +48,7 @@ export function TranscriptsSplitView({
   selectedId,
   transcript,
   extractedIdeas,
+  canonicalIdeas = [],
   extractionRuns = EMPTY_EXTRACTION_RUNS,
 }: TranscriptsSplitViewProps) {
   const ideas = extractedIdeas ?? EMPTY_IDEAS;
@@ -52,7 +62,7 @@ export function TranscriptsSplitView({
       defaultSidebarWidth="500px"
       sidebar={renderSidebar(transcripts, selectedId)}
     >
-      {renderDetail(transcript, ideas, extractionRuns)}
+      {renderDetail(transcript, ideas, canonicalIdeas, extractionRuns)}
     </SidebarSplitLayout>
   );
 }

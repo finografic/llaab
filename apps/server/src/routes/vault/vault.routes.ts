@@ -11,9 +11,11 @@ import {
   VAULT_ROOT,
 } from '@llaab/core';
 import { enrichSourceMetadata, extractKnowledgeFromTranscript } from '@llaab/ingestion';
-import { formatIsoUtcSeconds } from '@llaab/schemas';
+import { routeLlm } from '@llaab/llm';
+import { formatInstantForFilenameId, formatIsoUtcSeconds } from '@llaab/schemas';
 import { appendProducedNodeIds, appendRunEvent, setRunLlmTrace } from '@llaab/skills';
 import { deleteCookie, setCookie } from 'hono/cookie';
+import { z } from 'zod';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type {
   CleanRecentBody,
@@ -22,7 +24,7 @@ import type {
   UpdateSourceProfilesBody,
   VaultLoginBody,
 } from './vault.schema.js';
-import type { RunNode, SourceNode, TranscriptNode } from '@llaab/schemas';
+import type { CanonicalIdeaNode, IdeaNode, RunNode, SourceNode, TranscriptNode } from '@llaab/schemas';
 
 import {
   getVaultPassword,
@@ -33,6 +35,126 @@ import {
 } from '../../lib/vault-auth.js';
 import { readVaultRootTree } from '../../lib/vault-tree.js';
 import { deleteRunQuerySchema } from './vault.schema.js';
+
+const ConsolidatedIdeaDraftSchema = z
+  .object({
+    title: z.string().min(1),
+    body: z.string().optional().default(''),
+    tags: z.array(z.string()).default([]),
+    domains: z.array(z.string()).default([]),
+    sourceCandidateIdeaIds: z.array(z.string().min(1)).default([]),
+    source_candidate_idea_ids: z.array(z.string().min(1)).default([]),
+    confidence: z.enum(['low', 'medium', 'high']),
+  })
+  .transform((idea) => ({
+    title: idea.title,
+    body: idea.body,
+    tags: idea.tags,
+    domains: idea.domains,
+    sourceCandidateIdeaIds:
+      idea.sourceCandidateIdeaIds.length > 0 ? idea.sourceCandidateIdeaIds : idea.source_candidate_idea_ids,
+    confidence: idea.confidence,
+  }))
+  .pipe(
+    z.object({
+      title: z.string().min(1),
+      body: z.string(),
+      tags: z.array(z.string()),
+      domains: z.array(z.string()),
+      sourceCandidateIdeaIds: z.array(z.string().min(1)).min(1),
+      confidence: z.enum(['low', 'medium', 'high']),
+    }),
+  );
+
+const ConsolidatedIdeasResponseSchema = z.object({
+  ideas: z.array(ConsolidatedIdeaDraftSchema).min(1),
+});
+
+interface CandidateIdeaPayload {
+  id: string;
+  runId: string;
+  title: string;
+  body?: string;
+  domains: string[];
+  tags: string[];
+}
+
+function parseJsonFromLlmText(text: string): unknown {
+  const stripped = text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```\s*$/i, '')
+    .trim();
+  const start = stripped.indexOf('{');
+  const end = stripped.lastIndexOf('}');
+  if (start === -1 || end === -1) throw new Error('No JSON object found in LLM response');
+  return JSON.parse(stripped.slice(start, end + 1));
+}
+
+function splitIdeaTags(tags: string[]): { domains: string[]; topics: string[] } {
+  return {
+    domains: tags.filter((tag) => tag.startsWith('d:')),
+    topics: tags.filter((tag) => !tag.startsWith('d:')),
+  };
+}
+
+function normalizeTag(value: string): string {
+  return value
+    .toLocaleLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9:-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function dedupeTags(values: string[]): string[] {
+  const seen = new Set<string>();
+  const tags: string[] = [];
+  for (const value of values) {
+    const tag = normalizeTag(value);
+    if (tag.length === 0 || seen.has(tag)) continue;
+    seen.add(tag);
+    tags.push(tag);
+  }
+  return tags;
+}
+
+function buildConsolidationPrompt(transcript: TranscriptNode, candidates: CandidateIdeaPayload[]): string {
+  return JSON.stringify(
+    {
+      task: 'consolidate-canonical-ideas',
+      transcript: {
+        id: transcript.id,
+        title: transcript.title,
+        summary: transcript.summary,
+        tags: transcript.tags,
+      },
+      candidates,
+      instructions: [
+        'Merge duplicate or substantially overlapping candidate ideas.',
+        'Preserve related but distinct ideas as separate canonical ideas.',
+        'Do not create ideas unsupported by the candidates.',
+        'Every canonical idea must include sourceCandidateIdeaIds referencing one or more candidate ids.',
+        'Return concise, improved wording.',
+      ],
+    },
+    null,
+    2,
+  );
+}
+
+const CONSOLIDATION_SYSTEM_PROMPT = `You consolidate extracted transcript ideas into canonical ideas.
+
+Return ONLY valid JSON with this exact shape:
+{"ideas":[{"title":"Concise canonical idea","body":"Optional one or two sentence explanation","tags":["topic-tag"],"domains":["d:llm"],"sourceCandidateIdeaIds":["idea-id"],"confidence":"high"}]}
+
+Rules:
+- Use only candidate ids from the input.
+- Every canonical idea must reference at least one source candidate id.
+- Merge duplicates and near-duplicates.
+- Do not merge ideas that are merely related but distinct.
+- Preserve concrete technical meaning.
+- Do not include markdown fences, explanations, or comments.`;
 
 export const vaultAuthLogin = {
   path: '/auth/login' as const,
@@ -256,6 +378,111 @@ export const extractTranscript = {
   },
 };
 
+export const consolidateTranscriptIdeas = {
+  path: '/transcripts/:id/consolidate' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    const allNodes = await listNodes();
+    const transcript = allNodes.find((node) => node.id === id && node.type === 'transcript') as
+      | TranscriptNode
+      | undefined;
+    if (!transcript) return c.json({ error: 'Transcript not found' }, 404);
+
+    const runs = allNodes.filter(
+      (node): node is RunNode => node.type === 'run' && node.produced_node_ids.includes(transcript.id),
+    );
+    const ideasById = new Map(
+      allNodes.filter((node): node is IdeaNode => node.type === 'idea').map((idea) => [idea.id, idea]),
+    );
+    const candidatesById = new Map<string, CandidateIdeaPayload>();
+
+    for (const run of runs) {
+      for (const nodeId of run.produced_node_ids) {
+        const idea = ideasById.get(nodeId);
+        if (!idea || candidatesById.has(idea.id)) continue;
+        const { domains, topics } = splitIdeaTags(idea.tags);
+        candidatesById.set(idea.id, {
+          id: idea.id,
+          runId: run.id,
+          title: idea.title,
+          body: idea.body || undefined,
+          domains,
+          tags: topics,
+        });
+      }
+    }
+
+    const candidates = [...candidatesById.values()];
+    if (candidates.length === 0) {
+      return c.json({ error: 'No candidate ideas found for this transcript.' }, 400);
+    }
+
+    try {
+      const result = await routeLlm('consolidate', buildConsolidationPrompt(transcript, candidates), {
+        system: CONSOLIDATION_SYSTEM_PROMPT,
+        bypassCache: true,
+      });
+      const parsed = ConsolidatedIdeasResponseSchema.parse(parseJsonFromLlmText(result.text));
+      const candidateIds = new Set(candidates.map((candidate) => candidate.id));
+      const createdAt = new Date();
+      const timestamp = formatInstantForFilenameId(createdAt);
+      const canonicalIdeas: CanonicalIdeaNode[] = [];
+
+      for (const [index, draft] of parsed.ideas.entries()) {
+        const sourceCandidateIdeaIds = [...new Set(draft.sourceCandidateIdeaIds)].filter((candidateId) =>
+          candidateIds.has(candidateId),
+        );
+        if (sourceCandidateIdeaIds.length === 0) continue;
+
+        const tags = dedupeTags([...draft.domains.filter((tag) => tag.startsWith('d:')), ...draft.tags]);
+        const created = await createNode({
+          type: 'canonical-idea',
+          id: `canonical-${transcript.id}-${index + 1}-${timestamp}`,
+          title: draft.title,
+          body: draft.body,
+          tags,
+          extra: {
+            transcript_id: transcript.id,
+            source_candidate_idea_ids: sourceCandidateIdeaIds,
+            confidence: draft.confidence,
+            llm_model: result.model,
+            llm_provider: result.provider,
+            llm_duration_ms: result.durationMs,
+            llm_prompt_tokens: result.promptTokens,
+            llm_completion_tokens: result.completionTokens,
+          },
+        });
+        canonicalIdeas.push(created.node as CanonicalIdeaNode);
+      }
+
+      if (canonicalIdeas.length === 0) {
+        return c.json({ error: 'Consolidation returned no valid canonical ideas.' }, 422);
+      }
+
+      return c.json({
+        success: true,
+        canonicalIdeaIds: canonicalIdeas.map((idea) => idea.id),
+        canonicalIdeas,
+        llmMeta: {
+          model: result.model,
+          provider: result.provider,
+          durationMs: result.durationMs,
+          promptTokens: result.promptTokens,
+          completionTokens: result.completionTokens,
+        },
+      });
+    } catch (err) {
+      return c.json(
+        {
+          success: false,
+          error: err instanceof Error ? err.message : 'Consolidation failed',
+        },
+        500,
+      );
+    }
+  },
+};
+
 export const discardTranscript = {
   path: '/transcripts/:id' as const,
   handler: async (c: AppCtx) => {
@@ -277,6 +504,21 @@ export const discardTranscript = {
       } catch {
         /* best-effort */
       }
+    }
+
+    // Delete canonical idea nodes for this transcript
+    try {
+      const canonicalIdeaNodes = await listNodes({ type: 'canonical-idea' });
+      for (const canonicalIdea of canonicalIdeaNodes) {
+        if (canonicalIdea.type !== 'canonical-idea' || canonicalIdea.transcript_id !== id) continue;
+        try {
+          await deleteNode('canonical-idea', canonicalIdea.id);
+        } catch {
+          /* best-effort */
+        }
+      }
+    } catch {
+      /* best-effort */
     }
 
     // Delete source node

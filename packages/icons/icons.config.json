@@ -406,5 +406,9 @@
   {
     "exportName": "Microchip",
     "lucideName": "microchip"
+  },
+  {
+    "exportName": "Sparkles",
+    "lucideName": "sparkles"
   }
 ]

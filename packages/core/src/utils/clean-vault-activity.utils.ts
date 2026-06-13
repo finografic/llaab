@@ -3,7 +3,14 @@ import path from 'node:path';
 
 import { VAULT_ROOT } from './node-file.utils.js';
 
-const TARGET_DIRS = ['runs', 'sources', 'transcripts', 'nodes/ideas', '.tmp'] as const;
+const TARGET_DIRS = [
+  'runs',
+  'sources',
+  'transcripts',
+  'nodes/ideas',
+  'nodes/canonical-ideas',
+  '.tmp',
+] as const;
 
 async function listFilesRecursively(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });

@@ -6,15 +6,16 @@ import { VAULT_ROOT } from './vault-root.js';
 export { VAULT_ROOT };
 
 export const NODE_DIR_MAP: Record<NodeType, string> = {
-  decision: 'nodes/decisions',
-  idea: 'nodes/ideas',
-  instruction: 'nodes/instructions',
-  prompt: 'nodes/prompts',
-  resource: 'nodes/resources',
-  run: 'runs',
-  skill: 'nodes/skills',
-  source: 'sources',
-  transcript: 'transcripts',
+  'canonical-idea': 'nodes/canonical-ideas',
+  'decision': 'nodes/decisions',
+  'idea': 'nodes/ideas',
+  'instruction': 'nodes/instructions',
+  'prompt': 'nodes/prompts',
+  'resource': 'nodes/resources',
+  'run': 'runs',
+  'skill': 'nodes/skills',
+  'source': 'sources',
+  'transcript': 'transcripts',
 };
 
 const FRONTMATTER_KEY_ORDER = [

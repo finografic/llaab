@@ -89,6 +89,7 @@ export const {
   SettingsIcon,
   ShieldCheckIcon,
   ShuffleIcon,
+  SparklesIcon,
   SpeakerLoudIcon,
   StarIcon,
   StopIcon,

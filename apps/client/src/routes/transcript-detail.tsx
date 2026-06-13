@@ -2,7 +2,7 @@ import { TranscriptsSplitView } from 'components/TranscriptsSplitView/Transcript
 import { useVaultNode, useVaultNodes } from 'queries/vault';
 import { useMemo } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import type { IdeaNode, RunNode, TranscriptNode } from '@llaab/schemas';
+import type { CanonicalIdeaNode, IdeaNode, RunNode, TranscriptNode } from '@llaab/schemas';
 import type { TranscriptExtractionRun } from 'components/TranscriptsSplitView/components/TranscriptDetail';
 
 import { usePageTitle } from 'lib/use-page-title';
@@ -12,6 +12,7 @@ export function TranscriptDetailPage() {
   const { data: transcriptNode, isLoading: transcriptLoading } = useVaultNode(id);
   const { data: allTranscripts = [], isLoading: listLoading } = useVaultNodes({ type: 'transcript' });
   const { data: ideaNodes = [] } = useVaultNodes({ type: 'idea' });
+  const { data: canonicalIdeaNodes = [] } = useVaultNodes({ type: 'canonical-idea' });
   const { data: runNodes = [] } = useVaultNodes({ type: 'run' });
 
   const transcripts = useMemo(
@@ -21,7 +22,7 @@ export function TranscriptDetailPage() {
   );
 
   const transcript: TranscriptNode | undefined =
-    transcriptNode?.type === 'transcript' ? (transcriptNode) : undefined;
+    transcriptNode?.type === 'transcript' ? transcriptNode : undefined;
 
   usePageTitle(transcript?.title ?? 'Transcripts');
 
@@ -70,6 +71,14 @@ export function TranscriptDetailPage() {
       .toSorted((a, b) => (b.startedAt ?? '').localeCompare(a.startedAt ?? ''));
   }, [transcript, ideaNodes, runNodes]);
 
+  const canonicalIdeas = useMemo(() => {
+    if (!transcript) return [] as CanonicalIdeaNode[];
+
+    return (canonicalIdeaNodes as CanonicalIdeaNode[])
+      .filter((idea) => idea.transcript_id === transcript.id)
+      .toSorted((a, b) => b.created_at.localeCompare(a.created_at));
+  }, [transcript, canonicalIdeaNodes]);
+
   if (!id) return <Navigate to="/vault/transcripts" replace />;
   if (!transcriptLoading && !listLoading && !transcript) {
     return <Navigate to="/vault/transcripts" replace />;
@@ -85,6 +94,7 @@ export function TranscriptDetailPage() {
       selectedId={id}
       transcript={transcript}
       extractedIdeas={extractedIdeas}
+      canonicalIdeas={canonicalIdeas}
       extractionRuns={extractionRuns}
     />
   );

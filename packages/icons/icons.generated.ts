@@ -90,6 +90,7 @@ const ICONS = {
   SettingsIcon:             Lucide.Cog,
   ShieldCheckIcon:          Lucide.ShieldCheck,
   ShuffleIcon:              Lucide.Shuffle,
+  SparklesIcon:             Lucide.Sparkles,
   SpeakerLoudIcon:          Lucide.Volume2,
   StarIcon:                 Lucide.Star,
   StopIcon:                 Lucide.CircleStop,

@@ -2,9 +2,11 @@ import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
+import { SparklesIcon } from 'lucide-react';
+import { useConsolidateCanonicalIdeas } from 'queries/transcripts';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
+import type { CanonicalIdeaNode, IdeaNode, TranscriptNode } from '@llaab/schemas';
 
 import { fmtDetailDate, splitTags } from '../transcript-split.utils';
 import styles from './TranscriptDetail.module.css';
@@ -12,6 +14,7 @@ import styles from './TranscriptDetail.module.css';
 export interface TranscriptDetailProps {
   transcript: TranscriptNode;
   extractedIdeas: IdeaNode[];
+  canonicalIdeas?: CanonicalIdeaNode[];
   extractionRuns?: TranscriptExtractionRun[];
 }
 
@@ -30,6 +33,7 @@ export interface TranscriptExtractionRun {
 }
 
 const EMPTY_EXTRACTION_RUNS: TranscriptExtractionRun[] = [];
+const EMPTY_CANONICAL_IDEAS: CanonicalIdeaNode[] = [];
 
 function fmtRunDate(value?: string) {
   if (!value) return 'Run';
@@ -54,12 +58,14 @@ function hasExtractionMeta(run: TranscriptExtractionRun) {
 export function TranscriptDetail({
   transcript,
   extractedIdeas,
+  canonicalIdeas = EMPTY_CANONICAL_IDEAS,
   extractionRuns = EMPTY_EXTRACTION_RUNS,
 }: TranscriptDetailProps) {
   const [extractStatus, setExtractStatus] = useState('');
   const [extractStatusClass, setExtractStatusClass] = useState('text-[11px]');
   const [isExtracting, setIsExtracting] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState(() => extractionRuns[0]?.id ?? 'transcript');
+  const consolidateMutation = useConsolidateCanonicalIdeas();
 
   const { domain, generated } = splitTags(transcript.tags);
   const selectedRun = useMemo(
@@ -82,6 +88,12 @@ export function TranscriptDetail({
     selectedMeta.promptTokens != null ||
     selectedMeta.completionTokens != null,
   );
+  const canConsolidate = extractionRuns.some((run) => run.ideaIds.length > 0);
+  const consolidateStatus = consolidateMutation.isPending
+    ? 'Consolidating…'
+    : consolidateMutation.isError
+      ? 'Consolidation failed'
+      : '';
 
   async function handleReExtract() {
     setIsExtracting(true);
@@ -106,6 +118,10 @@ export function TranscriptDetail({
       setExtractStatusClass('text-[11px] text-destructive');
       setIsExtracting(false);
     }
+  }
+
+  function handleConsolidate() {
+    consolidateMutation.mutate(transcript.id);
   }
 
   return (
@@ -204,6 +220,33 @@ export function TranscriptDetail({
           <h2 className="section__heading">
             Extraction runs
             <span className="section__count">{extractionRuns.length}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={styles.consolidateButton}
+              disabled={!canConsolidate || consolidateMutation.isPending}
+              title={
+                canConsolidate
+                  ? 'Create canonical ideas from all extraction runs.'
+                  : 'No extracted ideas are available to consolidate.'
+              }
+              onClick={handleConsolidate}
+            >
+              <SparklesIcon aria-hidden="true" />
+              {consolidateMutation.isPending ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
+            </Button>
+            {consolidateStatus ? (
+              <span
+                className={
+                  consolidateMutation.isError
+                    ? styles.consolidateStatusError
+                    : styles.consolidateStatusPending
+                }
+              >
+                {consolidateStatus}
+              </span>
+            ) : null}
           </h2>
           <RadioGroup
             value={selectedRun?.id ?? selectedRunId}
@@ -261,6 +304,58 @@ export function TranscriptDetail({
           <p className="summary-text">{transcript.summary}</p>
         </section>
       ) : null}
+
+      <section className="section">
+        <h2 className="section__heading">
+          Canonical ideas
+          {canonicalIdeas.length > 0 ? <span className="section__count">{canonicalIdeas.length}</span> : null}
+        </h2>
+        {canonicalIdeas.length === 0 ? (
+          <p className={styles.emptyNote}>No canonical ideas consolidated yet.</p>
+        ) : (
+          <ul className={styles.ideaList}>
+            {canonicalIdeas.map((idea) => {
+              const ideaTags = splitTags(idea.tags);
+              return (
+                <li key={idea.id} className={styles.canonicalIdeaItem}>
+                  <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
+                    <span className={styles.canonicalIdeaHeader}>
+                      <p className={styles.ideaTitle}>{idea.title}</p>
+                      <span className={styles.canonicalIdeaMeta}>
+                        {idea.confidence ? `${idea.confidence} confidence` : 'canonical'}
+                        {' · '}
+                        {idea.source_candidate_idea_ids.length} source
+                        {idea.source_candidate_idea_ids.length === 1 ? '' : 's'}
+                      </span>
+                    </span>
+                    {idea.body ? <p className={styles.canonicalIdeaBody}>{idea.body}</p> : null}
+                    <div className="tags">
+                      {ideaTags.domain.length > 0 ? (
+                        <span className={`${styles.ideaTags} idea-tags--domain`}>
+                          {ideaTags.domain.map((tag) => (
+                            <span key={tag} className="tag tag--sm" data-tag={tag}>
+                              {tag}
+                            </span>
+                          ))}
+                        </span>
+                      ) : null}
+                      {ideaTags.generated.length > 0 ? (
+                        <span className={`${styles.ideaTags} idea-tags--topic`}>
+                          {ideaTags.generated.map((tag) => (
+                            <span key={tag} className="tag tag--sm" data-tag={tag}>
+                              {tag}
+                            </span>
+                          ))}
+                        </span>
+                      ) : null}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
       <section className="section">
         <h2 className="section__heading">

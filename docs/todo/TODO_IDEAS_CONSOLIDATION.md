@@ -98,6 +98,138 @@ Keep UX to a single button.
 
 ---
 
+## LLAAB Implementation Plan
+
+### Current App Context
+
+- Client is Vite + React Router.
+- Transcript detail UI lives in `apps/client/src/components/TranscriptsSplitView/components/TranscriptDetail.tsx`.
+- Transcript detail data is assembled in `apps/client/src/routes/transcript-detail.tsx`.
+- Vault API routes live in `apps/server/src/routes/vault/`.
+- Extraction currently stores candidate ideas as normal `idea` nodes under `vault/nodes/ideas/`.
+- Extraction runs are represented by `run` nodes whose `produced_node_ids` point at transcript and idea nodes.
+- The LLM route key for this work is `consolidate`.
+
+### Phase 1 — UI Entry Point
+
+- Add a disabled transcript-detail action button beside the `Extraction runs` heading.
+- Label: `Consolidate Canonical Ideas`.
+- Icon: `Sparkles`.
+- Color: purple/pink consolidation token.
+- Enable the button only after the backend action exists.
+
+### Phase 2 — Storage Shape
+
+Status: implemented in current working tree.
+
+Prefer a dedicated canonical idea node shape over mutating existing extracted idea nodes.
+
+Recommended path:
+
+- Add `CanonicalIdeaNodeSchema` in `packages/schemas`.
+- Add `canonical-idea` to the vault node type union.
+- Store files under `vault/nodes/canonical-ideas/`.
+- Extend node file path utilities in `packages/core`.
+
+Required fields:
+
+- `type: "canonical-idea"`
+- `transcript_id`
+- `source_candidate_idea_ids`
+- `confidence`
+- `title`
+- `body`
+- `tags`
+- `created_at`
+- `updated_at`
+
+Candidate ideas remain immutable and keep their current `idea` node type.
+
+### Phase 3 — Server Action
+
+Status: implemented in current working tree; needs verification against a real transcript.
+
+Add:
+
+```text
+POST /api/vault/transcripts/:id/consolidate
+```
+
+Server flow:
+
+1. Load the transcript node.
+2. Find all run nodes that produced the transcript id.
+3. Collect all produced `idea` nodes from those runs.
+4. Build candidate payloads with candidate id, run id, title, body, domain tags, and topic tags.
+5. Call `routeLlm("consolidate", prompt, { bypassCache: true })`.
+6. Parse and validate the JSON response with Zod.
+7. Write `canonical-idea` nodes.
+8. Return canonical idea ids plus LLM trace metadata.
+
+Do not include full transcript text in the prompt.
+
+### Phase 4 — Client Data Flow
+
+Status: implemented in current working tree.
+
+Add query/mutation helpers under `apps/client/src/queries/transcripts/`:
+
+- `useTranscriptCanonicalIdeas(transcriptId)`
+- `useConsolidateCanonicalIdeas(transcriptId)`
+
+On success:
+
+- invalidate transcript canonical ideas query
+- invalidate vault node queries if needed
+- optionally select/display canonical ideas immediately
+
+### Phase 5 — Transcript Detail Display
+
+Status: implemented in current working tree; needs browser verification.
+
+Add a `Canonical ideas` section above `Extracted ideas`.
+
+Display:
+
+- title
+- body, if present
+- domain tags
+- topic tags
+- confidence
+- source candidate count
+
+Keep `Extracted ideas` visible as candidate/run output.
+
+### Phase 6 — Later Editing
+
+Defer these until canonical idea generation exists:
+
+- edit canonical idea
+- delete canonical idea
+- view source candidates dialog
+- rerun consolidation with overwrite/replace choices
+
+### Current Verification
+
+Completed:
+
+- schema build
+- core build
+- core typecheck
+- server typecheck
+- client typecheck
+- markdown lint
+
+Still needed:
+
+- browser check on `/vault/transcripts/:id`
+- click `Consolidate Canonical Ideas` against a transcript with multiple extraction runs
+- confirm canonical idea files are written under `vault/nodes/canonical-ideas/`
+- confirm canonical ideas render above extracted candidate ideas after query invalidation
+- review generated canonical ideas for merge quality and provenance
+
+---
+
 ## Data Model
 
 ### Candidate Idea

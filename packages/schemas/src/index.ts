@@ -1,5 +1,11 @@
 export { z } from 'zod';
 export { type BaseNode, BaseNodeSchema } from './base-node.schema.js';
+export {
+  type CanonicalIdeaConfidence,
+  CanonicalIdeaConfidenceSchema,
+  type CanonicalIdeaNode,
+  CanonicalIdeaNodeSchema,
+} from './canonical-idea-node.schema.js';
 export { type DecisionNode, DecisionNodeSchema } from './decision-node.schema.js';
 export { type IdeaNode, IdeaNodeSchema } from './idea-node.schema.js';
 export { type InstructionNode, InstructionNodeSchema } from './instruction-node.schema.js';

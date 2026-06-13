@@ -10,6 +10,7 @@ export const NodeIdSchema = z
   );
 
 export const NodeTypeSchema = z.enum([
+  'canonical-idea',
   'idea',
   'skill',
   'prompt',
