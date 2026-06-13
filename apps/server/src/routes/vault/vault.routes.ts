@@ -12,7 +12,7 @@ import {
 } from '@llaab/core';
 import { enrichSourceMetadata, extractKnowledgeFromTranscript } from '@llaab/ingestion';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
-import { appendProducedNodeIds, setRunLlmTrace } from '@llaab/skills';
+import { appendProducedNodeIds, appendRunEvent, setRunLlmTrace } from '@llaab/skills';
 import { deleteCookie, setCookie } from 'hono/cookie';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type {
@@ -196,20 +196,28 @@ export const extractTranscript = {
     if (!node.body) return c.json({ error: 'Transcript has no body' }, 400);
 
     const filePath = getNodeFilePath(node.type, node.id);
+    const runNodes = await listNodes({ type: 'run' });
+    const matchingRuns = (runNodes as RunNode[])
+      .filter((n) => n.produced_node_ids?.includes(id))
+      .sort((a, b) => {
+        const left = a.started_at ?? a.created_at;
+        const right = b.started_at ?? b.created_at;
+        return right.localeCompare(left);
+      });
+    const originatingRun = matchingRuns[0];
+
+    if (originatingRun) {
+      await appendRunEvent(originatingRun.id, {
+        level: 'info',
+        message: 'Extracting ideas from transcript',
+      });
+    }
+
     try {
       const result = await extractKnowledgeFromTranscript(id, filePath, node.body);
 
       // Extraction runs as a follow-on step after the originating run was persisted —
       // append the newly created idea node ids so the run's produced-node count stays accurate.
-      const runNodes = await listNodes({ type: 'run' });
-      const matchingRuns = (runNodes as RunNode[])
-        .filter((n) => n.produced_node_ids?.includes(id))
-        .sort((a, b) => {
-          const left = a.started_at ?? a.created_at;
-          const right = b.started_at ?? b.created_at;
-          return right.localeCompare(left);
-        });
-      const originatingRun = matchingRuns[0];
       if (originatingRun) {
         await appendProducedNodeIds(originatingRun.id, result.ideaIds, {
           completedAt: formatIsoUtcSeconds(new Date()),
@@ -221,10 +229,22 @@ export const extractTranscript = {
           prompt_tokens: result.llmMeta.promptTokens,
           completion_tokens: result.llmMeta.completionTokens,
         });
+        await appendRunEvent(originatingRun.id, {
+          level: 'success',
+          message: `Extracted ${result.ideaIds.length} idea${result.ideaIds.length === 1 ? '' : 's'}`,
+          node_ids: result.ideaIds,
+        });
       }
 
       return c.json({ success: true, ...result });
     } catch (err) {
+      if (originatingRun) {
+        await appendRunEvent(originatingRun.id, {
+          level: 'warning',
+          message: `Extraction failed (transcript saved): ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
+
       return c.json(
         {
           success: false,

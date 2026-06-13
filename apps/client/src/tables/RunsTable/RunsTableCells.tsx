@@ -11,6 +11,7 @@ import {
   extractRunSubjectHref,
   extractRunSubjectTitle,
 } from 'utils/metadata-rendering.utils';
+import type { RunDisplayStatus } from 'utils/run-display.utils';
 
 import styles from './RunsTable.module.css';
 
@@ -26,9 +27,10 @@ export function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export const STATUS_CLASS: Record<RunNode['run_status'], string> = {
+export const STATUS_CLASS: Record<RunDisplayStatus, string> = {
   pending: styles.statusPending,
   running: styles.statusRunning,
+  extracting: styles.statusExtracting,
   completed: styles.statusCompleted,
   failed: styles.statusFailed,
   cancelled: styles.statusCancelled,

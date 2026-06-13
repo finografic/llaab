@@ -22,15 +22,22 @@ export interface UseRunsOptions {
   initialDataUpdatedAt?: number;
   /** Defaults to `true`. Set `false` to defer fetching (e.g. until a dialog opens). */
   enabled?: boolean;
+  refetchInterval?: false | number | ((query: { state: { data?: RunNode[] } }) => false | number);
 }
 
 /** List runs, sorted newest-first. */
-export function useRuns({ initialData, initialDataUpdatedAt, enabled = true }: UseRunsOptions = {}) {
+export function useRuns({
+  initialData,
+  initialDataUpdatedAt,
+  enabled = true,
+  refetchInterval,
+}: UseRunsOptions = {}) {
   return useQuery({
     queryKey: QUERY_KEYS.runs.list(),
     queryFn: fetchRuns,
     initialData,
     initialDataUpdatedAt,
     enabled,
+    refetchInterval,
   });
 }

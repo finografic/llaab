@@ -5,6 +5,7 @@ import { RunGroupRow } from 'tables/RunsTable/RunGroupRow';
 import { buildSourcesById } from 'tables/RunsTable/RunsTableCells';
 import type { SourceNode } from '@llaab/schemas';
 
+import { isRunExtracting } from 'utils/run-display.utils';
 import { groupRunsBySubject } from 'utils/run-grouping.utils';
 
 import styles from './RunsTable.module.css';
@@ -17,7 +18,12 @@ export interface RunsTableProps {
 }
 
 export function RunsTable({ sources = [], showHeading = false }: RunsTableProps) {
-  const { data: runs = [] } = useRuns();
+  const { data: runs = [] } = useRuns({
+    refetchInterval: (query) => {
+      const data = query.state.data ?? [];
+      return data.some(isRunExtracting) ? 1000 : false;
+    },
+  });
   const sourcesById = useMemo(() => buildSourcesById(sources), [sources]);
   const groups = useMemo(() => groupRunsBySubject(runs, sourcesById), [runs, sourcesById]);
 

@@ -4,9 +4,10 @@ import { DeleteRunGroupAction } from 'components/DeleteRunGroupAction/DeleteRunG
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Badge } from 'components/ui/badge';
 import { TableCell, TableRow } from 'components/ui/table';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { getRunDisplayStatus, getRunElapsedDurationMs, isRunExtracting } from 'utils/run-display.utils';
 import type { RunGroup } from 'utils/run-grouping.utils';
 
 import styles from './RunsTable.module.css';
@@ -21,6 +22,16 @@ const RUN_GROUP_COLUMN_COUNT = 8;
 /** Grouped row for the Runs table: a parent summary row plus collapsible per-run child rows. */
 export function RunGroupRow({ group }: RunGroupRowProps) {
   const [expanded, setExpanded] = useState(true);
+  const hasExtractingRun = useMemo(() => group.runs.some(isRunExtracting), [group.runs]);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!hasExtractingRun) return undefined;
+
+    setNow(Date.now());
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [hasExtractingRun]);
 
   return (
     <>
@@ -103,37 +114,42 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
           </time>
         </TableCell>
         <TableCell className="text-center pr-0.5">
-          <DeleteRunGroupAction title={group.title} runs={group.runs} />
+          {hasExtractingRun ? null : <DeleteRunGroupAction title={group.title} runs={group.runs} />}
         </TableCell>
       </TableRow>
 
       {/* Runs ------------------------------------------------------------- */}
 
       {expanded &&
-        group.runs.map((run) => (
-          <TableRow key={run.id} className={styles.childRow}>
-            <TableCell>
-              <span className={`${styles.status} ${STATUS_CLASS[run.run_status]}`}>{run.run_status}</span>
-            </TableCell>
-            <TableCell colSpan={RUN_GROUP_COLUMN_COUNT - 1}>
-              <div className={styles.childRowContent}>
-                <Link to={`/vault/runs/${run.id}`} className={`${styles.mono} ${styles.childRowId}`}>
-                  {run.id}
-                </Link>
-                <div className={styles.childRowMeta}>
-                  <ExtractionModelCard
-                    variant="compact-bar"
-                    model={run.llm?.model ?? run.model_used}
-                    durationMs={run.llm?.duration_ms ?? run.duration_ms}
-                    promptTokens={run.llm?.prompt_tokens}
-                    completionTokens={run.llm?.completion_tokens}
-                  />
+        group.runs.map((run) => {
+          const displayStatus = getRunDisplayStatus(run);
+          const extracting = displayStatus === 'extracting';
+
+          return (
+            <TableRow key={run.id} className={styles.childRow}>
+              <TableCell>
+                <span className={`${styles.status} ${STATUS_CLASS[displayStatus]}`}>{displayStatus}</span>
+              </TableCell>
+              <TableCell colSpan={RUN_GROUP_COLUMN_COUNT - 1}>
+                <div className={styles.childRowContent}>
+                  <Link to={`/vault/runs/${run.id}`} className={`${styles.mono} ${styles.childRowId}`}>
+                    {run.id}
+                  </Link>
+                  <div className={styles.childRowMeta}>
+                    <ExtractionModelCard
+                      variant="compact-bar"
+                      model={run.llm?.model ?? run.model_used}
+                      durationMs={getRunElapsedDurationMs(run, now)}
+                      promptTokens={run.llm?.prompt_tokens}
+                      completionTokens={run.llm?.completion_tokens}
+                    />
+                  </div>
+                  {extracting ? null : <DeleteRunAction run={run} color="dim" />}
                 </div>
-                <DeleteRunAction run={run} color="dim" />
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+              </TableCell>
+            </TableRow>
+          );
+        })}
     </>
   );
 }
