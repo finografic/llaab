@@ -22,6 +22,7 @@ const ICONS = {
   ArrowRightIcon:           Lucide.ArrowRight,
   ArrowUpIcon:              Lucide.ArrowUp,
   BadgeCheckIcon:           Lucide.BadgeCheck,
+  BrainIcon:                Lucide.Brain,
   BrushCleaningIcon:        Lucide.BrushCleaning,
   CheckIcon:                Lucide.Check,
   CheckCircleIcon:          Lucide.CheckCircle2,

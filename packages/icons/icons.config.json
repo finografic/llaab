@@ -390,5 +390,9 @@
   {
     "exportName": "UserCheck",
     "lucideName": "user-check"
+  },
+  {
+    "exportName": "Brain",
+    "lucideName": "brain"
   }
 ]

@@ -21,6 +21,7 @@ export const {
   ArrowRightIcon,
   ArrowUpIcon,
   BadgeCheckIcon,
+  BrainIcon,
   BrushCleaningIcon,
   CheckIcon,
   CheckCircleIcon,
