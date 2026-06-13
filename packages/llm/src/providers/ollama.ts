@@ -80,6 +80,13 @@ function formatParameterCount(value: unknown): string | undefined {
   return `${billions.toFixed(billions >= 10 ? 0 : 1)}B`;
 }
 
+function deriveContextLength(modelInfo: Record<string, unknown> | undefined): number | undefined {
+  const architecture = modelInfo?.['general.architecture'] as string | undefined;
+  if (!architecture || !modelInfo) return undefined;
+  const contextLength = modelInfo[`${architecture}.context_length`];
+  return typeof contextLength === 'number' ? contextLength : undefined;
+}
+
 export async function ollamaListModelDetails(): Promise<OllamaModelInfo[]> {
   const { models } = await getClient().list();
   return Promise.all(
@@ -87,11 +94,8 @@ export async function ollamaListModelDetails(): Promise<OllamaModelInfo[]> {
       const show = await getClient()
         .show({ model: model.name })
         .catch(() => undefined);
-      const modelInfo = show?.model_info as Record<string, unknown> | undefined;
+      const modelInfo = show?.model_info as unknown as Record<string, unknown> | undefined;
       const architecture = modelInfo?.['general.architecture'] as string | undefined;
-      const contextLength = architecture
-        ? (modelInfo?.[`${architecture}.context_length`] as number | undefined)
-        : undefined;
 
       return {
         digest: model.digest,
@@ -107,10 +111,28 @@ export async function ollamaListModelDetails(): Promise<OllamaModelInfo[]> {
         name: model.name,
         size: model.size,
         capabilities: show?.capabilities,
-        contextLength: typeof contextLength === 'number' ? contextLength : undefined,
+        contextLength: deriveContextLength(modelInfo),
       };
     }),
   );
+}
+
+const contextLengthCache = new Map<string, number | undefined>();
+
+/**
+ * Looks up a model's native context window via `ollama show`, caching results for the life of
+ * the process — harness extraction prep calls this once per run to size token budgets.
+ */
+export async function ollamaGetModelContextLength(model: string): Promise<number | undefined> {
+  if (contextLengthCache.has(model)) return contextLengthCache.get(model);
+
+  const contextLength = await getClient()
+    .show({ model })
+    .then((show) => deriveContextLength(show.model_info as unknown as Record<string, unknown> | undefined))
+    .catch(() => undefined);
+
+  contextLengthCache.set(model, contextLength);
+  return contextLength;
 }
 
 export const ollamaProvider: LlmProvider = {

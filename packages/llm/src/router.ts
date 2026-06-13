@@ -6,7 +6,12 @@ import type { Capability } from '@llaab/core';
 
 import { cacheDelete, cacheGet, cacheSet } from './cache.js';
 import { anthropicProvider } from './providers/anthropic.js';
-import { ollamaListModelDetails, ollamaListModels, ollamaProvider } from './providers/ollama.js';
+import {
+  ollamaGetModelContextLength,
+  ollamaListModelDetails,
+  ollamaListModels,
+  ollamaProvider,
+} from './providers/ollama.js';
 
 // ── Tier → model name (env-configurable) ─────────────────────────────────────
 
@@ -248,5 +253,5 @@ export function updateLlmTaskRoute(task: TaskType, route: Partial<TaskRoute>): R
   return getRouting();
 }
 
-export { ollamaListModelDetails, ollamaListModels };
+export { ollamaGetModelContextLength, ollamaListModelDetails, ollamaListModels };
 export type { LlmCompleteResult, LlmProviderId, ModelTier, TaskType };

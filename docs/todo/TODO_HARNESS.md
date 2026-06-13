@@ -185,14 +185,26 @@ Harness is now strong enough to move **up** in priority, but not as the full ori
 Recommended ordering:
 
 1. **Done:** validate the installed package in the real transcript extraction flow
-2. **Next:** decide and document the exact runtime boundary
-3. **Then:** extend the package for token-aware extraction prep
+2. **Done:** decide and document the exact runtime boundary — see
+   [07_ORCHESTRATION_AND_ADAPTERS.md](../07_ORCHESTRATION_AND_ADAPTERS.md) layer table
+   (`packages/ingestion/src/extract/harness-prep.ts` = "Token-aware context preparation for
+   extraction").
+3. **Done (2026-06-13):** model-aware extraction token budgets. `maxInputTokensForModel` in
+   `harness-prep.ts` now calls `ollamaGetModelContextLength(model)`
+   (`packages/llm/src/providers/ollama.ts`), which reads the model's real `*.context_length` via
+   `ollama show` (cached per process), falling back to `DEFAULT_MODEL_CONTEXT_TOKENS` (8192) for
+   non-Ollama/remote models. This replaces the previous hard-coded 8192-token ceiling — e.g.
+   gemma4:e4b-it-qat now gets a ~130K-token budget instead of ~7K, removing the blind truncation
+   the validation run flagged.
 
 That means:
 
 - harness consumer adoption is complete
-- full token-aware runtime harness should move ahead of Terminal Panel because real validation
-  showed silent content loss despite available model context
+- the runtime boundary is documented
+- model-aware token budgeting is in place; remaining Phase 3 work (real `countTokens` instead of
+  the char/4 approximation, richer context assembly, deterministic routing by input size) can
+  follow as needed — character approximation plus real per-model limits is a reasonable interim
+  state
 
 ---
 

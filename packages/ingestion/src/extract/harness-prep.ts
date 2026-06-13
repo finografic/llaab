@@ -1,5 +1,6 @@
 import { createContext, createPipeline } from '@finografic/ai-harness';
 import type { HarnessStep } from '@finografic/ai-harness';
+import { ollamaGetModelContextLength } from '@llaab/llm';
 import type { ControlContext, ControlStage } from '@llaab/control';
 
 export const APPROX_CHARS_PER_TOKEN = 4;
@@ -60,8 +61,15 @@ function estimateTokens(text: string): number {
   return Math.ceil(text.length / APPROX_CHARS_PER_TOKEN);
 }
 
-function maxInputTokensForModel(_model: string): number {
-  return EXTRACTION_MAX_INPUT_TOKENS;
+/**
+ * Resolves the extraction input token budget from the model's real context window (via
+ * `ollama show`), falling back to `DEFAULT_MODEL_CONTEXT_TOKENS` when the model is unknown or
+ * Ollama is unavailable (e.g. remote/Anthropic models).
+ */
+async function maxInputTokensForModel(model: string): Promise<number> {
+  const contextLength = await ollamaGetModelContextLength(model);
+  const total = contextLength ?? DEFAULT_MODEL_CONTEXT_TOKENS;
+  return Math.max(total - EXTRACTION_OUTPUT_TOKEN_RESERVE, APPROX_CHARS_PER_TOKEN);
 }
 
 function chunkText(text: string, maxInputTokens: number): PreparedExtractionChunk[] {
@@ -96,7 +104,7 @@ const countExtractionTokensStep: HarnessStep<ExtractionPreparationSeed, TokenCou
   name: 'count-extraction-tokens',
   async run(input) {
     const estimatedTokens = estimateTokens(input.originalText);
-    const maxInputTokens = maxInputTokensForModel(input.model);
+    const maxInputTokens = await maxInputTokensForModel(input.model);
 
     return {
       ...input,
