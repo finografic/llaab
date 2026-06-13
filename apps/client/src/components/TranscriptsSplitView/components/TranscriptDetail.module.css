@@ -15,12 +15,10 @@
 }
 
 .runOption {
-  display: flex;
-  align-items: flex-start;
   gap: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-2) var(--space-2);
   cursor: pointer;
   transition:
     border-color var(--duration) var(--ease),
@@ -32,7 +30,7 @@
   background: var(--surface-raised);
 }
 
-.runOption:has([data-state='checked']) {
+.runOption:has([data-state="checked"]) {
   border-color: var(--accent);
   background: var(--surface-raised);
 }

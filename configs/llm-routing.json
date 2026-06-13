@@ -13,7 +13,7 @@
     "extract": {
       "tier": "local-mid",
       "provider": "ollama",
-      "model": "qwen3.6:35b-a3b-q4_K_M"
+      "model": "gemma4:e4b-it-qat"
     },
     "reason": {
       "tier": "local-strong",

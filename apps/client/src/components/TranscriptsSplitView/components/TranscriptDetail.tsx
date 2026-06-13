@@ -1,5 +1,6 @@
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Button } from 'components/ui/button';
+import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -213,23 +214,29 @@ export function TranscriptDetail({
               const inputId = `transcript-run-${run.id}`;
               return (
                 <label key={run.id} htmlFor={inputId} className={styles.runOption}>
-                  <RadioGroupItem id={inputId} value={run.id} className={styles.runOptionRadio} />
-                  <span className={styles.runOptionBody}>
-                    <span className={styles.runOptionHeader}>
-                      <span className={styles.runOptionTitle}>{fmtRunDate(run.startedAt)}</span>
-                      <span className={styles.runOptionCount}>{run.ideaIds.length} ideas</span>
-                    </span>
-                    {hasExtractionMeta(run) ? (
-                      <ExtractionModelCard
-                        variant="compact-bar"
-                        model={run.model}
-                        provider={run.provider}
-                        promptTokens={run.promptTokens}
-                        completionTokens={run.completionTokens}
-                        durationMs={run.durationMs}
-                      />
-                    ) : null}
-                  </span>
+                  <Row justify="flex-start" align="center">
+                    <Col xs={1} className="flex justify-center">
+                      <RadioGroupItem id={inputId} value={run.id} className={styles.runOptionRadio} />
+                    </Col>
+                    <Col xs={11}>
+                      <span className={styles.runOptionBody}>
+                        <span className={styles.runOptionHeader}>
+                          <span className={styles.runOptionTitle}>{fmtRunDate(run.startedAt)}</span>
+                          <span className={styles.runOptionCount}>{run.ideaIds.length} ideas</span>
+                        </span>
+                        {hasExtractionMeta(run) ? (
+                          <ExtractionModelCard
+                            variant="compact-bar"
+                            model={run.model}
+                            provider={run.provider}
+                            promptTokens={run.promptTokens}
+                            completionTokens={run.completionTokens}
+                            durationMs={run.durationMs}
+                          />
+                        ) : null}
+                      </span>
+                    </Col>
+                  </Row>
                 </label>
               );
             })}
