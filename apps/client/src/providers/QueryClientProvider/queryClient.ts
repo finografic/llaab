@@ -8,7 +8,7 @@ export const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60, // 1 minute — local vault data changes frequently via ingestion/extraction
+      staleTime: 0,
       gcTime: 1000 * 60 * 30,
     },
   },

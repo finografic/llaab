@@ -14,6 +14,7 @@ export interface LlmCompleteOptions {
   model: string;
   system?: string;
   maxTokens?: number;
+  bypassCache?: boolean;
 }
 
 export interface LlmCompleteResult {

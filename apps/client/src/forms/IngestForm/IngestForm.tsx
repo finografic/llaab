@@ -189,9 +189,15 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     const pendingTag = tagInput.trim() ? normalizeTag(tagInput) : null;
     const allTags = pendingTag ? [...new Set([...tags, pendingTag])] : tags;
 
-    // The skill persists the run node immediately, so the monitor can show it as "running" as
-    // soon as the request lands — refresh now rather than waiting for the next poll.
+    // The skill persists the run node once the request lands server-side, so the monitor can show
+    // it as "running" almost immediately — but an invalidate fired in the same tick as the request
+    // can race ahead of that write and refetch an empty "active" list, which then backs the
+    // monitor's poll interval off to idle for the rest of the run. Refresh now and again shortly
+    // after to make sure we catch the run once it's persisted.
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
+    setTimeout(() => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
+    }, 1000);
 
     let transcriptId: string;
 

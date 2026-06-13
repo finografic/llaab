@@ -12,7 +12,7 @@ import {
 } from '@llaab/core';
 import { enrichSourceMetadata, extractKnowledgeFromTranscript } from '@llaab/ingestion';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
-import { appendProducedNodeIds } from '@llaab/skills';
+import { appendProducedNodeIds, setRunLlmTrace } from '@llaab/skills';
 import { deleteCookie, setCookie } from 'hono/cookie';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type {
@@ -213,6 +213,13 @@ export const extractTranscript = {
       if (originatingRun) {
         await appendProducedNodeIds(originatingRun.id, result.ideaIds, {
           completedAt: formatIsoUtcSeconds(new Date()),
+        });
+        await setRunLlmTrace(originatingRun.id, {
+          model: result.llmMeta.model,
+          provider: result.llmMeta.provider,
+          duration_ms: result.llmMeta.durationMs,
+          prompt_tokens: result.llmMeta.promptTokens,
+          completion_tokens: result.llmMeta.completionTokens,
         });
       }
 

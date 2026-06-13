@@ -156,12 +156,17 @@ export function findProvidersByCapability(capability: Capability): LlmProvider[]
 export async function routeLlm(
   task: TaskType,
   prompt: string,
-  opts?: { model?: string; system?: string; maxTokens?: number },
+  opts?: { model?: string; system?: string; maxTokens?: number; bypassCache?: boolean },
 ): Promise<LlmCompleteResult> {
   const { model, provider } = resolveModel(task, opts?.model);
-  const completeOpts: LlmCompleteOptions = { model, system: opts?.system, maxTokens: opts?.maxTokens };
+  const completeOpts: LlmCompleteOptions = {
+    model,
+    system: opts?.system,
+    maxTokens: opts?.maxTokens,
+    bypassCache: opts?.bypassCache,
+  };
 
-  if (CACHEABLE.has(task)) {
+  if (CACHEABLE.has(task) && !completeOpts.bypassCache) {
     const hit = cacheGet(prompt, model);
     if (hit) return { text: hit, model, cached: true, provider: provider.id, durationMs: 0 };
   }

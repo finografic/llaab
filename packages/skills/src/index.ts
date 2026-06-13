@@ -5,7 +5,7 @@ export {
   type ExtractTranscriptIdeasOutput,
 } from './extract-transcript-ideas.js';
 export { ingestYouTube, type IngestYouTubeInput, type IngestYouTubeOutput } from './ingest-youtube.js';
-export { appendProducedNodeIds, runSkill, type SkillRunRecord } from './runner.js';
+export { appendProducedNodeIds, runSkill, setRunLlmTrace, type SkillRunRecord } from './runner.js';
 export {
   findSkillRoutesByCapability,
   getAgentStatus,

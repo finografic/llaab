@@ -1,4 +1,5 @@
 import { cn } from '@llaab/ui/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Select,
   SelectContent,
@@ -9,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from 'components/ui/select';
-import { useMemo, useState } from 'react';
+import { QUERY_KEYS } from 'queries/llm';
+import { useEffect, useMemo, useState } from 'react';
 
 import { api } from 'lib/api';
 
@@ -71,9 +73,14 @@ function isInstalled(model: string, installedModels: string[]) {
 }
 
 export function LlmRoutingEditor({ routing, installedModels, remoteModels }: LlmRoutingEditorProps) {
+  const queryClient = useQueryClient();
   const [currentRouting, setCurrentRouting] = useState(routing);
   const [savingTask, setSavingTask] = useState<TaskType | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCurrentRouting(routing);
+  }, [routing]);
   const localModels = useMemo(
     () =>
       unique([
@@ -110,18 +117,30 @@ export function LlmRoutingEditor({ routing, installedModels, remoteModels }: Llm
     setSavingTask(task);
     setError(null);
 
-    const response = await api.llm.routing.$patch({ json: { task, ...nextEntry } });
+    try {
+      const response = await api.llm.routing.$patch({ json: { task, ...nextEntry } });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        setCurrentRouting((existing) => ({ ...existing, [task]: previous }));
+        setError(`Could not save ${TASK_LABELS[task]} routing.`);
+        setSavingTask(null);
+        return;
+      }
+
+      const body = await response.json();
+      const nextRouting = body.routing as Record<TaskType, RoutingEntry>;
+      setCurrentRouting(nextRouting);
+      queryClient.setQueryData<{ routing: Record<TaskType, RoutingEntry> }>(
+        QUERY_KEYS.llm.status(),
+        (existing) => (existing ? { ...existing, routing: nextRouting } : existing),
+      );
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.llm.status() });
+    } catch {
       setCurrentRouting((existing) => ({ ...existing, [task]: previous }));
       setError(`Could not save ${TASK_LABELS[task]} routing.`);
+    } finally {
       setSavingTask(null);
-      return;
     }
-
-    const body = await response.json();
-    setCurrentRouting(body.routing as Record<TaskType, RoutingEntry>);
-    setSavingTask(null);
   }
 
   return (

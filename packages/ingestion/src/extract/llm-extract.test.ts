@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@llaab/llm', () => ({
+  invalidateLlmCache: vi.fn(),
   resolveLlmRoute: vi.fn(() => ({
     model: 'llama3.1:8b',
     provider: 'ollama',
     tier: 'local-mid',
   })),
+  ollamaGetModelContextLength: vi.fn(() => Promise.resolve(undefined)),
   routeLlm: vi.fn(),
 }));
 
@@ -180,6 +182,7 @@ describe('llmExtract', () => {
       'extract',
       expect.stringContaining('[chunk 2/2]'),
       expect.objectContaining({
+        bypassCache: true,
         model: 'llama3.1:8b',
         system: expect.any(String),
       }),

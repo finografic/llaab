@@ -3,6 +3,7 @@ import { LlmModelInfoList } from 'components/LlmModelInfoList/LlmModelInfoList';
 import { LlmRoutingEditor } from 'components/LlmRoutingEditor/LlmRoutingEditor';
 import { PageHero } from 'components/PageHero/PageHero';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
+import { QUERY_KEYS } from 'queries/llm';
 
 import { apiGet } from 'lib/api-client';
 import { usePageTitle } from 'lib/use-page-title';
@@ -43,8 +44,10 @@ export function LlmPage() {
   usePageTitle('LLM Status');
 
   const { data: status, error } = useQuery({
-    queryKey: ['llm', 'status'],
+    queryKey: QUERY_KEYS.llm.status(),
     queryFn: () => apiGet<LlmStatusResponse>('/api/llm/status'),
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   const fetchError = error instanceof Error ? error.message : error ? 'Failed to reach server' : null;

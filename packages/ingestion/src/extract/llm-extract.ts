@@ -207,6 +207,7 @@ export async function llmExtractWithTrace(input: string): Promise<ExtractedKnowl
         const result = await routeLlm('extract', prompt, {
           model: prepared.model,
           system: EXTRACTION_SYSTEM_PROMPT,
+          bypassCache: true,
         });
         nextLlmMeta = {
           model: result.model,
