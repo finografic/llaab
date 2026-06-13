@@ -4,7 +4,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from 'co
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
 import { ScrollArea } from 'components/ui/scroll-area';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from 'components/ui/sheet';
 import {
   ActivityIcon,
   CheckCircle2Icon,
@@ -207,34 +206,43 @@ function MonitorSection({ title, runs, empty }: { title: string; runs: RunMonito
 }
 
 export function RunMonitor() {
-  const { isOpen, setRunMonitorIsOpen, dismissedRunIds } = useRunMonitorState();
+  const { isOpen, closeRunMonitor, dismissedRunIds } = useRunMonitorState();
   const { data, error, isLoading } = useRunMonitor({ refetchInterval: isOpen ? 3000 : false });
   const dismissedSet = useMemo(() => new Set(dismissedRunIds), [dismissedRunIds]);
   const active = data?.active ?? [];
   const recent = (data?.recent ?? []).filter((run) => !dismissedSet.has(run.id));
 
   return (
-    <Sheet open={isOpen} onOpenChange={setRunMonitorIsOpen}>
-      <SheetContent side="right" className={styles.content}>
-        <SheetHeader className="border-b border-border text-left">
-          <SheetTitle>Run Monitor</SheetTitle>
-          <SheetDescription>Durable run progress and recent outputs.</SheetDescription>
-        </SheetHeader>
-        <ScrollArea className={styles.scroll}>
-          <div className={styles.body}>
-            {error instanceof Error ? <p className={styles.error}>{error.message}</p> : null}
-            {isLoading ? <p className={styles.empty}>Loading runs...</p> : null}
-            <MonitorSection title="Active" runs={active} empty="No active runs." />
-            <MonitorSection title="Recent" runs={recent} empty="No recent runs." />
-          </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
+    <aside className={styles.panel} aria-label="Run Monitor">
+      <header className={styles.panelHeader}>
+        <div>
+          <h2 className={styles.panelTitle}>Run Monitor</h2>
+          <p className={styles.panelDescription}>Durable run progress and recent outputs.</p>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Close run monitor"
+          onClick={closeRunMonitor}
+        >
+          <XIcon aria-hidden />
+        </Button>
+      </header>
+      <ScrollArea className={styles.scroll}>
+        <div className={styles.body}>
+          {error instanceof Error ? <p className={styles.error}>{error.message}</p> : null}
+          {isLoading ? <p className={styles.empty}>Loading runs...</p> : null}
+          <MonitorSection title="Active" runs={active} empty="No active runs." />
+          <MonitorSection title="Recent" runs={recent} empty="No recent runs." />
+        </div>
+      </ScrollArea>
+    </aside>
   );
 }
 
 export function RunMonitorTrigger() {
-  const { openRunMonitor } = useRunMonitorState();
+  const { isOpen, toggleRunMonitor } = useRunMonitorState();
   const { data } = useRunMonitor();
   const activeCount = data?.active.length ?? 0;
 
@@ -244,8 +252,9 @@ export function RunMonitorTrigger() {
       variant="outline"
       size="icon"
       className={styles.trigger}
-      onClick={() => openRunMonitor()}
-      aria-label={activeCount > 0 ? `Open run monitor, ${activeCount} active` : 'Open run monitor'}
+      onClick={() => toggleRunMonitor()}
+      aria-pressed={isOpen}
+      aria-label={activeCount > 0 ? `Toggle run monitor, ${activeCount} active` : 'Toggle run monitor'}
     >
       <ActivityIcon aria-hidden />
       {activeCount > 0 ? <span className={styles.triggerBadge}>{activeCount}</span> : null}

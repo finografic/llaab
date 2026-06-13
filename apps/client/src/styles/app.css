@@ -5,6 +5,7 @@
   /* ── Layout surfaces ──────────────────────────────────────────────────────── */
   --bg: #0d0d0f;
   --bg-subtle: #151518;
+  --bg-secondary: #24201f;
   --surface: #1c1c20;
   --surface-raised: #24242a;
   --overlay: rgb(0 0 0 / 0.55);
@@ -90,8 +91,9 @@
   /* ── Layout dimensions ────────────────────────────────────────────────────── */
   --sidebar-w: 220px;
   --header-h: 52px;
+  --secondary-actions-h: 40px;
   --footer-h: 40px;
-  --content-area-h: calc(100dvh - var(--header-h) - var(--footer-h));
+  --content-area-h: calc(100dvh - var(--header-h) - var(--secondary-actions-h) - var(--footer-h));
   --content-max: 1200px;
   --content-narrow-max: 820px;
   --page-list-max: var(--content-max);

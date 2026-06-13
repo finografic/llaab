@@ -1,5 +1,15 @@
 .trigger {
   position: relative;
+  color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 35%, var(--border));
+  background: var(--accent-subtle);
+}
+
+.trigger:hover,
+.trigger[aria-pressed="true"] {
+  color: var(--accent-hover);
+  border-color: color-mix(in oklab, var(--accent-hover) 55%, var(--border));
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
 }
 
 .triggerBadge {
@@ -22,8 +32,38 @@
   line-height: 1;
 }
 
-.content {
-  width: min(100vw, 460px);
+.panel {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+.panelHeader {
+  display: flex;
+  min-height: var(--space-16);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--space-4);
+}
+
+.panelTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-ui);
+  font-weight: 600;
+}
+
+.panelDescription {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.4;
 }
 
 .scroll {

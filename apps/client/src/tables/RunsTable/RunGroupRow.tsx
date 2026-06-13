@@ -144,7 +144,9 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
                       completionTokens={run.llm?.completion_tokens}
                     />
                   </div>
-                  {extracting ? null : <DeleteRunAction run={run} color="dim" />}
+                  <div className={styles.childRowDeleteSlot} aria-hidden={extracting}>
+                    {extracting ? null : <DeleteRunAction run={run} color="dim" />}
+                  </div>
                 </div>
               </TableCell>
             </TableRow>

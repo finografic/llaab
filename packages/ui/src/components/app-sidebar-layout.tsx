@@ -32,6 +32,7 @@ export interface AppSidebarLayoutProps {
   align?: AppSidebarAlign;
   position?: AppSidebarPosition;
   className?: string;
+  headerClassName?: string;
   sidebarClassName?: string;
   sidebarPanelClassName?: string;
   insetClassName?: string;
@@ -144,6 +145,7 @@ export function AppSidebarLayout({
   align = 'left',
   position = 'inline',
   className,
+  headerClassName,
   sidebarClassName,
   sidebarPanelClassName,
   insetClassName,
@@ -266,7 +268,12 @@ export function AppSidebarLayout({
   return (
     <SidebarProvider className={cn('flex min-h-0 w-full flex-1 flex-col', className)} style={style}>
       {header ? (
-        <header className="z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+        <header
+          className={cn(
+            'z-40 flex h-(--secondary-actions-h) shrink-0 items-center gap-2 border-b bg-background px-4',
+            headerClassName,
+          )}
+        >
           {header}
         </header>
       ) : null}

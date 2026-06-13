@@ -63,8 +63,10 @@ a.subjectTitle:hover {
 }
 
 .status {
+  min-width: 5rem;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   padding: 2px 8px;
   border-radius: 4px;
   font-size: var(--text-xs);
@@ -235,4 +237,9 @@ a.subjectTitle:hover {
 .childRowMeta {
   flex: 1;
   min-width: 0;
+}
+
+.childRowDeleteSlot {
+  flex-shrink: 0;
+  width: 1.75rem;
 }

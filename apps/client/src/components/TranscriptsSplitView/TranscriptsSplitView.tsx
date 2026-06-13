@@ -1,13 +1,4 @@
 import { SidebarSplitLayout } from 'components/SidebarSplitLayout/SidebarSplitLayout';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from 'components/ui/breadcrumb';
-import { Link } from 'react-router-dom';
 import type { TranscriptExtractionRun } from './components/TranscriptDetail';
 import type { IdeaNode, TranscriptNode } from '@llaab/schemas';
 
@@ -26,28 +17,6 @@ export interface TranscriptsSplitViewProps {
 const EMPTY_IDEAS: IdeaNode[] = [];
 const EMPTY_EXTRACTION_RUNS: TranscriptExtractionRun[] = [];
 const SIDEBAR_PANEL_ID = 'transcripts-sidebar';
-
-function renderHeader(transcript?: TranscriptNode) {
-  return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem className="hidden md:block">
-          <BreadcrumbLink asChild>
-            <Link to="/vault/transcripts">Vault</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator className="hidden md:block" />
-        <BreadcrumbItem>
-          {transcript ? (
-            <BreadcrumbPage className="max-w-[40ch] truncate">{transcript.title}</BreadcrumbPage>
-          ) : (
-            <BreadcrumbPage>Transcripts</BreadcrumbPage>
-          )}
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
-  );
-}
 
 function renderDetail(
   transcript: TranscriptNode | undefined,
@@ -81,7 +50,6 @@ export function TranscriptsSplitView({
       minSidebarWidth="500px"
       maxSidebarWidth="500px"
       defaultSidebarWidth="500px"
-      header={renderHeader(transcript)}
       sidebar={renderSidebar(transcripts, selectedId)}
     >
       {renderDetail(transcript, ideas, extractionRuns)}
