@@ -1,4 +1,4 @@
-import { LandPlotIcon, PipetteIcon } from '@llaab/icons';
+import { BrainIcon, LandPlotIcon, PipetteIcon } from '@llaab/icons';
 import { NavMenu } from 'components/NavMenu/NavMenu';
 import { RunMonitorTrigger } from 'components/RunMonitor';
 import { buttonVariants } from 'components/ui/button';
@@ -25,9 +25,12 @@ export function AppHeader({ title, actions }: AppHeaderProps) {
 
       <div className={styles.actions}>
         {actions}
-        <RunMonitorTrigger />
         <Link to="/ingest" className={iconButtonClass} aria-label="Ingest source">
           <PipetteIcon className="icon" aria-hidden />
+        </Link>
+        <RunMonitorTrigger />
+        <Link to="/llm" className={iconButtonClass} aria-label="LLM models">
+          <BrainIcon className="icon" aria-hidden />
         </Link>
         <Link to="/dev/icons" className={iconButtonClass} aria-label="LLAAB Icons">
           <LandPlotIcon className="icon" aria-hidden />
