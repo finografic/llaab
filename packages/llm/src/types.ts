@@ -2,6 +2,7 @@ export type TaskType =
   | 'route'
   | 'format'
   | 'extract'
+  | 'consolidate'
   | 'code'
   | 'reason'
   | 'reason-plus'

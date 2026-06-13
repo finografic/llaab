@@ -15,7 +15,16 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { api } from 'lib/api';
 
-type TaskType = 'route' | 'format' | 'extract' | 'code' | 'reason' | 'reason-plus' | 'vision' | 'speech';
+type TaskType =
+  | 'route'
+  | 'format'
+  | 'extract'
+  | 'consolidate'
+  | 'code'
+  | 'reason'
+  | 'reason-plus'
+  | 'vision'
+  | 'speech';
 type ModelTier = 'local-small' | 'local-mid' | 'local-strong' | 'remote';
 type LlmProvider = 'ollama' | 'anthropic';
 
@@ -35,6 +44,7 @@ const TASK_LABELS: Record<TaskType, string> = {
   'route': 'Route',
   'format': 'Format',
   'extract': 'Extract',
+  'consolidate': 'Consolidation',
   'code': 'Code',
   'reason': 'Reason',
   'reason-plus': 'Reason+',
@@ -53,6 +63,7 @@ const TASK_ORDER: TaskType[] = [
   'route',
   'format',
   'extract',
+  'consolidate',
   'code',
   'reason',
   'reason-plus',

@@ -4,6 +4,7 @@ export const llmTaskSchema = z.enum([
   'route',
   'format',
   'extract',
+  'consolidate',
   'code',
   'reason',
   'reason-plus',

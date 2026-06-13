@@ -1,7 +1,7 @@
 import { cn } from '@llaab/ui/lib/utils';
 import { AppFooter } from 'components/AppFooter/AppFooter';
 import { AppHeader } from 'components/AppHeader/AppHeader';
-import { RunMonitor, RunMonitorTrigger } from 'components/RunMonitor';
+import { RunMonitor } from 'components/RunMonitor';
 import { AppSidebarLayout } from 'components/ui/app-sidebar-layout';
 import { usePanelRef } from 'components/ui/resizable';
 import { TooltipProvider } from 'components/ui/tooltip';
@@ -11,6 +11,7 @@ import { Outlet, useMatches } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
 import styles from './AppLayout.module.css';
+import { SecondaryActionBar } from './SecondaryActionBar';
 import { SecondaryActionBarContext } from './SecondaryActionBarContext';
 
 export interface RouteHandle {
@@ -61,14 +62,7 @@ export function AppLayout() {
             headerClassName={styles.secondaryBar}
             sidebarClassName={styles.runMonitorSidebar}
             insetClassName={styles.appInset}
-            header={
-              <div className={styles.secondaryActions}>
-                <div className={styles.secondaryLeading}>{leadingAction}</div>
-                <div className={styles.secondaryTrailing}>
-                  <RunMonitorTrigger />
-                </div>
-              </div>
-            }
+            header={<SecondaryActionBar leadingAction={leadingAction} />}
             sidebar={<RunMonitor />}
           >
             <main className={cn(styles.pageContent, fullBleed && styles.pageContentBleed)}>

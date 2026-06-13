@@ -4,7 +4,17 @@ export const CommandSourceSchema = z.enum(['terminal', 'ui', 'cli', 'agent']);
 
 export const AiRunCommandSchema = z.object({
   kind: z.literal('ai.run'),
-  task: z.enum(['route', 'format', 'extract', 'code', 'reason', 'reason-plus', 'vision', 'speech']),
+  task: z.enum([
+    'route',
+    'format',
+    'extract',
+    'consolidate',
+    'code',
+    'reason',
+    'reason-plus',
+    'vision',
+    'speech',
+  ]),
   prompt: z.string().min(1),
   model: z.string().min(1).optional(),
   system: z.string().min(1).optional(),

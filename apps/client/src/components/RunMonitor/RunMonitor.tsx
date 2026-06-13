@@ -249,7 +249,7 @@ export function RunMonitorTrigger() {
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="ghost"
       size="icon"
       className={styles.trigger}
       onClick={() => toggleRunMonitor()}

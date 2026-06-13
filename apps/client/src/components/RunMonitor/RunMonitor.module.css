@@ -1,15 +1,15 @@
 .trigger {
   position: relative;
-  color: var(--accent);
+  /* color: var(--accent);
   border-color: color-mix(in oklab, var(--accent) 35%, var(--border));
-  background: var(--accent-subtle);
+  background: var(--accent-subtle); */
 }
 
 .trigger:hover,
 .trigger[aria-pressed="true"] {
   color: var(--accent-hover);
-  border-color: color-mix(in oklab, var(--accent-hover) 55%, var(--border));
-  background: color-mix(in oklab, var(--accent) 18%, transparent);
+  /* border-color: color-mix(in oklab, var(--accent-hover) 55%, var(--border));
+  background: color-mix(in oklab, var(--accent) 18%, transparent); */
 }
 
 .triggerBadge {

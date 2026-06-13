@@ -18,7 +18,7 @@ interface RoutingEntry {
 
 interface LlmStatusResponse {
   routing: Record<
-    'route' | 'format' | 'extract' | 'code' | 'reason' | 'reason-plus' | 'vision' | 'speech',
+    'route' | 'format' | 'extract' | 'consolidate' | 'code' | 'reason' | 'reason-plus' | 'vision' | 'speech',
     RoutingEntry
   >;
   modelMap: Record<string, string>;

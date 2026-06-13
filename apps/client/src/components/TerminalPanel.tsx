@@ -36,7 +36,9 @@ function parseTerminalCommand(input: string, shellSessionId: string): Command {
   if (kind === 'ai.run') {
     const [task, ...promptParts] = args;
     if (!task || !isAiRunTask(task)) {
-      throw new Error('Usage: ai.run <route|format|extract|code|reason|reason-plus|vision|speech> "prompt"');
+      throw new Error(
+        'Usage: ai.run <route|format|extract|consolidate|code|reason|reason-plus|vision|speech> "prompt"',
+      );
     }
     const prompt = promptParts.join(' ').trim();
     if (!prompt) throw new Error('Usage: ai.run <task> "prompt"');
@@ -96,7 +98,17 @@ function parseTerminalCommand(input: string, shellSessionId: string): Command {
 }
 
 function isAiRunTask(value: string): value is AiRunTask {
-  return ['route', 'format', 'extract', 'code', 'reason', 'reason-plus', 'vision', 'speech'].includes(value);
+  return [
+    'route',
+    'format',
+    'extract',
+    'consolidate',
+    'code',
+    'reason',
+    'reason-plus',
+    'vision',
+    'speech',
+  ].includes(value);
 }
 
 function eventText(event: OutputEvent): string {

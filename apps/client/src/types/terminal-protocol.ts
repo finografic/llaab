@@ -1,7 +1,16 @@
 export type Command =
   | {
       kind: 'ai.run';
-      task: 'route' | 'format' | 'extract' | 'code' | 'reason' | 'reason-plus' | 'vision' | 'speech';
+      task:
+        | 'route'
+        | 'format'
+        | 'extract'
+        | 'consolidate'
+        | 'code'
+        | 'reason'
+        | 'reason-plus'
+        | 'vision'
+        | 'speech';
       prompt: string;
       model?: string;
       system?: string;

@@ -44,7 +44,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@finografic/oxc-config": "^2.8.0",
+    "@finografic/oxc-config": "^2.8.1",
     "@tailwindcss/vite": "^4.3.0",
     "@turbo/gen": "^2.9.15",
     "@types/node": "25.9.2",

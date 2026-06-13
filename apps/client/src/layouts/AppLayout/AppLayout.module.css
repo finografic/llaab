@@ -14,7 +14,8 @@
   min-height: var(--secondary-actions-h);
   justify-content: flex-end;
   border-color: var(--border-subtle);
-  background: var(--bg-secondary);
+  background: var(--surface);
+  background: var(--bg);
   padding: 0 var(--space-6);
 }
 
