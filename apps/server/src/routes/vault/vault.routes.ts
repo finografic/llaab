@@ -139,7 +139,16 @@ function parseJsonFromLlmText(text: string): unknown {
   const start = stripped.indexOf('{');
   const end = stripped.lastIndexOf('}');
   if (start === -1 || end === -1) throw new Error('No JSON object found in LLM response');
-  return JSON.parse(stripped.slice(start, end + 1));
+  const candidate = stripped.slice(start, end + 1);
+  try {
+    return JSON.parse(candidate);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Failed to parse JSON from LLM response (${message}). Response was likely truncated ` +
+        `(${candidate.length} chars); tail: ${candidate.slice(-200)}`,
+    );
+  }
 }
 
 function splitIdeaTags(tags: string[]): { domains: string[]; topics: string[] } {

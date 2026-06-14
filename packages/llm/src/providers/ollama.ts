@@ -39,12 +39,24 @@ function buildMessages(prompt: string, system?: string) {
   return messages;
 }
 
+/**
+ * Ollama defaults `num_ctx` to 4096 regardless of a model's native context window. Smaller
+ * models tend to be more verbose and can fill that window before finishing a JSON response,
+ * producing truncated/unparseable output. Request a larger window so completions have room
+ * to finish.
+ */
+const DEFAULT_NUM_CTX = 16384;
+
 export async function ollamaComplete(prompt: string, opts: LlmCompleteOptions): Promise<LlmProviderResult> {
   const start = performance.now();
   const response = await getClient().chat({
     model: opts.model,
     messages: buildMessages(prompt, opts.system),
     stream: false,
+    options: {
+      num_ctx: DEFAULT_NUM_CTX,
+      ...(opts.maxTokens ? { num_predict: opts.maxTokens } : {}),
+    },
   });
   return {
     text: response.message.content,
@@ -61,6 +73,10 @@ export async function* ollamaStream(prompt: string, opts: LlmCompleteOptions): A
     model: opts.model,
     messages: buildMessages(prompt, opts.system),
     stream: true,
+    options: {
+      num_ctx: DEFAULT_NUM_CTX,
+      ...(opts.maxTokens ? { num_predict: opts.maxTokens } : {}),
+    },
   });
 
   for await (const chunk of stream) {
