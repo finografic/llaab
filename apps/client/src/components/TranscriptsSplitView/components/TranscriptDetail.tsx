@@ -91,7 +91,7 @@ export function TranscriptDetail({
   const canConsolidate = extractionRuns.some((run) => run.ideaIds.length > 0);
   const consolidateStatus = consolidateMutation.isPending
     ? 'Consolidating…'
-    : consolidateMutation.isError
+    : consolidateMutation.isError && canonicalIdeas.length === 0
       ? 'Consolidation failed'
       : '';
 

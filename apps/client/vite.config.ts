@@ -6,6 +6,7 @@ import { defineConfig, loadEnv } from 'vite';
 
 const repoRoot = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const clientRoot = path.resolve(fileURLToPath(new URL('.', import.meta.url)));
+const API_PROXY_TIMEOUT_MS = 10 * 60 * 1000;
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, repoRoot, '');
@@ -52,6 +53,8 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: serverUrl,
           changeOrigin: true,
+          timeout: API_PROXY_TIMEOUT_MS,
+          proxyTimeout: API_PROXY_TIMEOUT_MS,
         },
         '/terminal': {
           target: serverUrl,
@@ -68,6 +71,8 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: serverUrl,
           changeOrigin: true,
+          timeout: API_PROXY_TIMEOUT_MS,
+          proxyTimeout: API_PROXY_TIMEOUT_MS,
         },
         '/terminal': {
           target: serverUrl,

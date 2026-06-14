@@ -27,7 +27,7 @@ export function useConsolidateCanonicalIdeas() {
 
   return useMutation({
     mutationFn: consolidateCanonicalIdeas,
-    onSuccess: (_data, transcriptId) => {
+    onSettled: (_data, _error, transcriptId) => {
       void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.nodes('canonical-idea') });
       void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.node(transcriptId) });
     },

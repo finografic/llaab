@@ -219,12 +219,19 @@ Completed:
 - server typecheck
 - client typecheck
 - markdown lint
+- first real run wrote canonical idea files
+
+Notes:
+
+- First browser test produced canonical idea files after ~105s of local LLM time, but Vite returned a
+  502 before the client received the JSON response.
+- Client Vite proxy timeout was extended and canonical idea queries now refresh even if the mutation
+  settles with an error.
 
 Still needed:
 
 - browser check on `/vault/transcripts/:id`
-- click `Consolidate Canonical Ideas` against a transcript with multiple extraction runs
-- confirm canonical idea files are written under `vault/nodes/canonical-ideas/`
+- retry `Consolidate Canonical Ideas` after proxy timeout fix
 - confirm canonical ideas render above extracted candidate ideas after query invalidation
 - review generated canonical ideas for merge quality and provenance
 
