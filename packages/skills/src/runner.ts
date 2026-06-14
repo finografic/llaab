@@ -160,6 +160,8 @@ function stripRunTrace<T>(value: T): T {
 }
 
 const SUMMARY_STRING_LIMIT = 200;
+const LARGE_RUN_TEXT_LIMIT = 1000;
+const LARGE_TEXT_KEYS = new Set(['body', 'plainText', 'text', 'transcript']);
 
 /**
  * Truncates long string values before stringifying so `summarizeValue` always
@@ -177,8 +179,33 @@ function truncateLongStrings(value: unknown): unknown {
   return value;
 }
 
+function compactLargeRunText(value: string) {
+  return {
+    omitted: true,
+    reason: 'large text stored in referenced node',
+    chars: value.length,
+    preview: value.slice(0, SUMMARY_STRING_LIMIT),
+  };
+}
+
+function compactRunValue(value: unknown): unknown {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map(compactRunValue);
+  if (value === null || typeof value !== 'object') return value;
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, val]) => {
+      if (typeof val === 'string' && val.length > LARGE_RUN_TEXT_LIMIT && LARGE_TEXT_KEYS.has(key)) {
+        return [key, compactLargeRunText(val)];
+      }
+
+      return [key, compactRunValue(val)];
+    }),
+  );
+}
+
 function summarizeValue(value: unknown): string {
-  const json = JSON.stringify(truncateLongStrings(value));
+  const json = JSON.stringify(truncateLongStrings(compactRunValue(value)));
   return json ?? String(value);
 }
 
@@ -196,6 +223,14 @@ function collectProducedNodeIds(value: unknown): string[] {
   return [];
 }
 
+function compactRunStages(stages: NestedRunTrace['stages'] | undefined): NestedRunTrace['stages'] {
+  return stages?.map((stage) => ({
+    ...stage,
+    input: stage.input === undefined ? undefined : compactRunValue(stage.input),
+    output: stage.output === undefined ? undefined : compactRunValue(stage.output),
+  }));
+}
+
 /**
  * Creates the run node immediately, before `execute()` starts, so the run monitor can show it as
  * "running" while the skill is still in progress.
@@ -206,6 +241,8 @@ async function createRunningRunNode(input: {
   startedAt: string;
   rawInput: unknown;
 }): Promise<void> {
+  const stageInput = compactRunValue(input.rawInput);
+
   await createNode({
     type: 'run',
     id: input.runNodeId,
@@ -219,7 +256,7 @@ async function createRunningRunNode(input: {
       input_summary: summarizeValue(input.rawInput),
       produced_node_ids: [],
       started_at: input.startedAt,
-      stages: [{ name: 'execute', status: 'pending', input: input.rawInput }],
+      stages: [{ name: 'execute', status: 'pending', input: stageInput }],
       decisions: [],
       events: [
         {
@@ -244,7 +281,10 @@ async function finalizeRunNode(input: {
   error?: string;
   nestedTrace?: NestedRunTrace;
 }): Promise<void> {
-  const stageOutput = input.rawOutput === undefined ? undefined : stripRunTrace(input.rawOutput);
+  const stageInput = compactRunValue(input.rawInput);
+  const stageOutput =
+    input.rawOutput === undefined ? undefined : compactRunValue(stripRunTrace(input.rawOutput));
+  const nestedStages = compactRunStages(input.nestedTrace?.stages);
   const runPath = getNodeFilePath('run', input.runNodeId);
 
   await updateNode(runPath, (node) => {
@@ -258,11 +298,11 @@ async function finalizeRunNode(input: {
       error: input.error,
       completed_at: input.completedAt,
       stages: [
-        ...(input.nestedTrace?.stages ?? []),
+        ...(nestedStages ?? []),
         {
           name: 'execute',
           status: input.status,
-          input: input.rawInput,
+          input: stageInput,
           output: stageOutput,
           error: input.error,
         },

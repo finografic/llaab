@@ -67,9 +67,51 @@ describe('runSkill', () => {
     expect(result).toEqual({});
   });
 
+  it('compacts large transcript text from persisted run output', async () => {
+    const skills = await import('@llaab/skills');
+    const core = await import('@llaab/core');
+    const plainText = 'Transcript paragraph. '.repeat(120);
+
+    await skills.runSkill(
+      'compact-output-skill',
+      async () => ({
+        id: 'the-language-holding-our-agents-back',
+        path: '/vault/transcripts/transcript.the-language-holding-our-agents-back.md',
+        type: 'transcript',
+        title: 'The language holding our agents back.',
+        producedNodeIds: ['the-language-holding-our-agents-back'],
+        plainText,
+      }),
+      {},
+    );
+
+    const runDir = join(tempDir, 'vault', 'runs');
+    const runFiles = await readdir(runDir);
+    const runPath = join(runDir, runFiles[0]);
+    const runNode = await core.readNode(runPath);
+
+    expect(runNode.type).toBe('run');
+
+    if (runNode.type !== 'run') return;
+
+    expect(runNode.output_summary).not.toContain(plainText);
+    expect(runNode.output_summary).toContain('the-language-holding-our-agents-back');
+    expect(runNode.output_summary).toContain('omitted');
+    expect(runNode.produced_node_ids).toEqual(['the-language-holding-our-agents-back']);
+
+    const executeStage = runNode.stages.find((stage) => stage.name === 'execute');
+    expect(executeStage?.output).toMatchObject({
+      plainText: {
+        omitted: true,
+        chars: plainText.length,
+      },
+    });
+  });
+
   it('promotes nested control decisions and llm trace into the persisted run node', async () => {
     const skills = await import('@llaab/skills');
     const core = await import('@llaab/core');
+    const plainText = 'Nested transcript paragraph. '.repeat(120);
 
     await skills.runSkill(
       'trace-aware-skill',
@@ -80,7 +122,7 @@ describe('runSkill', () => {
             {
               name: 'control:extract-knowledge',
               status: 'completed',
-              output: { summary: 'usable summary' },
+              output: { plainText, summary: 'usable summary' },
             },
           ],
           decisions: [
@@ -112,7 +154,16 @@ describe('runSkill', () => {
 
     if (runNode.type !== 'run') return;
 
-    expect(runNode.stages.some((stage) => stage.name === 'control:extract-knowledge')).toBe(true);
+    const nestedStage = runNode.stages.find((stage) => stage.name === 'control:extract-knowledge');
+
+    expect(nestedStage).toBeDefined();
+    expect(nestedStage?.output).toMatchObject({
+      plainText: {
+        omitted: true,
+        chars: plainText.length,
+      },
+      summary: 'usable summary',
+    });
     expect(runNode.decisions.some((decision) => decision.type === 'retry')).toBe(true);
     expect(runNode.llm?.model).toBe('ollama');
     expect(runNode.llm?.parsed).toBe(true);

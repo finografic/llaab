@@ -25,8 +25,8 @@ artifacts and add quality controls around consolidation coverage.
 
 ## Progress
 
-- [ ] Phase 1 — compact future extraction run output.
-- [ ] Phase 2 — migrate existing run files to compact output.
+- [x] Phase 1 — compact all future run output.
+- [x] Phase 2 — migrate existing run files to compact output.
 - [ ] Phase 3 — add consolidation coverage audit.
 - [ ] Phase 4 — surface coverage/missed-idea review in the transcript UI.
 - [ ] Phase 5 — optionally add manual promote/edit controls.
@@ -35,6 +35,8 @@ artifacts and add quality controls around consolidation coverage.
 ---
 
 ## Phase 1 — Compact All Future Run Output
+
+Status: complete.
 
 Current issue:
 
@@ -51,7 +53,7 @@ Plan:
   - original `ingest-youtube` runs
   - extraction follow-on updates
   - consolidation runs
-  - future terminal/agent/tool runs
+  - future durable processors and control runs
 - Before persisting `output_summary`, remove or replace large duplicated fields:
   - `plainText`
   - `transcript`
@@ -67,6 +69,19 @@ Plan:
   - `title`
   - `author`
 - Apply the same sanitizer to persisted `stages[].output` where stage output includes the full text.
+
+Implemented:
+
+- `packages/skills/src/runner.ts` now sanitizes persisted run summaries at the generic runner
+  boundary.
+- Large `body`, `plainText`, `text`, and `transcript` fields are replaced with compact metadata:
+  omitted flag, reason, char count, and preview.
+- The same sanitizer applies to initial stage input, final `execute` stage output, and nested
+  `runTrace.stages[]` input/output.
+- `produced_node_ids` continues to be collected from compact output so delete semantics keep their
+  stable source of truth.
+- `packages/skills/src/runner.test.ts` covers final output compaction and nested trace stage
+  compaction.
 
 Recommended compact `output_summary` shape:
 
@@ -92,6 +107,8 @@ than embedding full transcript text.
 
 ## Phase 2 — Migrate Existing Run Files
 
+Status: complete.
+
 Add a one-shot script:
 
 ```text
@@ -108,6 +125,13 @@ Behavior:
 - Keep node ids, paths, URLs, model metadata, durations, run status, and events.
 - Rewrite only changed run files.
 - Print before/after byte savings.
+
+Implemented:
+
+- Added `scripts/compact-run-output-summaries.ts`.
+- Script defaults to dry-run and requires `--write` for vault mutation.
+- Existing June 13 ingest run files were compacted from roughly 42 KB each to roughly 5 KB each.
+- A follow-up dry-run reported `0` remaining files to compact.
 
 Verification:
 
