@@ -20,6 +20,7 @@ type TaskType =
   | 'format'
   | 'extract'
   | 'consolidate'
+  | 'consolidate-audit'
   | 'code'
   | 'reason'
   | 'reason-plus'
@@ -45,6 +46,7 @@ const TASK_LABELS: Record<TaskType, string> = {
   'format': 'Format',
   'extract': 'Extract',
   'consolidate': 'Consolidation',
+  'consolidate-audit': 'Consolidation Audit',
   'code': 'Code',
   'reason': 'Reason',
   'reason-plus': 'Reason+',
@@ -64,6 +66,7 @@ const TASK_ORDER: TaskType[] = [
   'format',
   'extract',
   'consolidate',
+  'consolidate-audit',
   'code',
   'reason',
   'reason-plus',
@@ -164,7 +167,7 @@ export function LlmRoutingEditor({ routing, installedModels, remoteModels }: Llm
         return (
           <div
             key={task}
-            className="grid grid-cols-[82px_116px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2"
+            className="grid grid-cols-[280px_116px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2"
           >
             <span className="font-medium text-foreground">{TASK_LABELS[task]}</span>
             <span className="text-[length:var(--text-md)] text-muted-foreground">
