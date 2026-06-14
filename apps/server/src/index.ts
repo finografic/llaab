@@ -8,6 +8,7 @@ const COMMAND_TIMEOUT_MS = 120_000;
 const LONG_RUNNING_PATHS = [
   /^\/api\/ingest\/youtube$/,
   /^\/api\/vault\/transcripts\/[^/]+\/extract$/,
+  /^\/api\/vault\/transcripts\/[^/]+\/consolidate$/,
   /^\/terminal$/,
 ];
 

@@ -8,6 +8,21 @@ export interface ConsolidateCanonicalIdeasResult {
   success: boolean;
   canonicalIdeaIds: string[];
   canonicalIdeas: CanonicalIdeaNode[];
+  coverageAudit?: {
+    coverage: Array<{
+      candidateId: string;
+      canonicalIdeaIndexes: number[];
+      status: 'covered' | 'omitted' | 'missed';
+      reason: string;
+    }>;
+    missed: Array<{
+      candidateId: string;
+      canonicalIdeaIndexes: number[];
+      status: 'missed';
+      reason: string;
+    }>;
+    warning?: string;
+  };
   error?: string;
 }
 
@@ -25,11 +40,20 @@ async function consolidateCanonicalIdeas(transcriptId: string): Promise<Consolid
 export function useConsolidateCanonicalIdeas() {
   const queryClient = useQueryClient();
 
+  function invalidateTranscriptConsolidation(transcriptId: string) {
+    void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.nodes('canonical-idea') });
+    void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.node(transcriptId) });
+  }
+
   return useMutation({
     mutationFn: consolidateCanonicalIdeas,
     onSettled: (_data, _error, transcriptId) => {
-      void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.nodes('canonical-idea') });
-      void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.node(transcriptId) });
+      invalidateTranscriptConsolidation(transcriptId);
+    },
+    onError: (_error, transcriptId) => {
+      for (const delayMs of [30_000, 90_000, 180_000, 300_000]) {
+        window.setTimeout(() => invalidateTranscriptConsolidation(transcriptId), delayMs);
+      }
     },
   });
 }

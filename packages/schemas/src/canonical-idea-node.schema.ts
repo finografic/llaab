@@ -10,6 +10,8 @@ export const CanonicalIdeaNodeSchema = BaseNodeSchema.extend({
   transcript_id: NodeIdSchema,
   source_candidate_idea_ids: z.array(NodeIdSchema).min(1),
   confidence: CanonicalIdeaConfidenceSchema.optional(),
+  key_claims: z.array(z.string()).default([]),
+  coverage_notes: z.string().optional(),
   llm_model: z.string().optional(),
   llm_provider: z.string().optional(),
   llm_duration_ms: z.number().int().nonnegative().optional(),

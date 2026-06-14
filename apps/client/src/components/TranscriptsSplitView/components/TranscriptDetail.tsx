@@ -74,6 +74,25 @@ export function TranscriptDetail({
   );
   const visibleIdeas = selectedRun?.ideas ?? extractedIdeas;
   const visibleIdeaCount = selectedRun?.ideaIds.length ?? transcript.extracted_idea_ids.length;
+  const ideaTitleById = useMemo(() => {
+    const entries = new Map<string, string>();
+    for (const idea of extractedIdeas) entries.set(idea.id, idea.title);
+    for (const run of extractionRuns) {
+      for (const idea of run.ideas) entries.set(idea.id, idea.title);
+    }
+    return entries;
+  }, [extractedIdeas, extractionRuns]);
+  const coveredCandidateIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const idea of canonicalIdeas) {
+      for (const candidateId of idea.source_candidate_idea_ids) ids.add(candidateId);
+    }
+    return ids;
+  }, [canonicalIdeas]);
+  const uncoveredCandidateIds = useMemo(
+    () => [...ideaTitleById.keys()].filter((candidateId) => !coveredCandidateIds.has(candidateId)),
+    [coveredCandidateIds, ideaTitleById],
+  );
   const selectedMeta = selectedRun ?? {
     model: transcript.llm_model,
     provider: transcript.llm_provider,
@@ -94,6 +113,45 @@ export function TranscriptDetail({
     : consolidateMutation.isError && canonicalIdeas.length === 0
       ? 'Consolidation failed'
       : '';
+  const coverageAudit = consolidateMutation.data?.coverageAudit;
+  const persistedCoverage = transcript.canonical_coverage;
+  const persistedMissed = useMemo(
+    () =>
+      persistedCoverage?.missed_candidate_idea_ids.map((item) => ({
+        candidateId: item.id,
+        reason: item.reason ?? '',
+      })) ?? [],
+    [persistedCoverage],
+  );
+  const coverageCounts = useMemo(() => {
+    if (!coverageAudit && canonicalIdeas.length === 0) return null;
+    const covered = coverageAudit
+      ? coverageAudit.coverage.filter((item) => item.status === 'covered').length
+      : (persistedCoverage?.covered_candidate_idea_ids.length ?? coveredCandidateIds.size);
+    const omitted = coverageAudit
+      ? coverageAudit.coverage.filter((item) => item.status === 'omitted').length
+      : (persistedCoverage?.omitted_candidate_idea_ids.length ?? 0);
+    const missed = coverageAudit
+      ? coverageAudit.missed.length
+      : (persistedCoverage?.missed_candidate_idea_ids.length ?? uncoveredCandidateIds.length);
+    const total = coverageAudit
+      ? coverageAudit.coverage.length
+      : (persistedCoverage?.candidate_idea_ids.length ?? ideaTitleById.size);
+    return {
+      covered,
+      omitted,
+      missed,
+      total,
+      source: coverageAudit ? 'audit' : persistedCoverage ? 'saved-audit' : 'saved',
+    };
+  }, [
+    canonicalIdeas.length,
+    coverageAudit,
+    coveredCandidateIds.size,
+    ideaTitleById.size,
+    persistedCoverage,
+    uncoveredCandidateIds.length,
+  ]);
 
   async function handleReExtract() {
     setIsExtracting(true);
@@ -310,6 +368,70 @@ export function TranscriptDetail({
           Canonical ideas
           {canonicalIdeas.length > 0 ? <span className="section__count">{canonicalIdeas.length}</span> : null}
         </h2>
+        {coverageCounts ? (
+          <div className={styles.coverageSummary}>
+            <span>{coverageCounts.covered} covered</span>
+            {coverageCounts.source === 'audit' ? <span>{coverageCounts.omitted} omitted</span> : null}
+            <span>
+              {coverageCounts.missed} {coverageCounts.source === 'audit' ? 'missed' : 'uncovered'}
+            </span>
+            <span>
+              {coverageCounts.total} candidates {coverageCounts.source === 'saved' ? 'linked' : 'audited'}
+            </span>
+          </div>
+        ) : null}
+        {coverageAudit?.warning || persistedCoverage?.warning ? (
+          <p className={styles.coverageWarning}>
+            Coverage audit warning: {coverageAudit?.warning ?? persistedCoverage?.warning}
+          </p>
+        ) : null}
+        {coverageAudit && coverageAudit.missed.length > 0 ? (
+          <details className={styles.missedIdeasPanel}>
+            <summary>Possible missed ideas</summary>
+            <ul className={styles.missedIdeasList}>
+              {coverageAudit.missed.map((item) => (
+                <li key={item.candidateId} className={styles.missedIdeaItem}>
+                  <span className={styles.missedIdeaTitle}>
+                    {ideaTitleById.get(item.candidateId) ?? item.candidateId}
+                  </span>
+                  {item.reason ? <span className={styles.missedIdeaReason}>{item.reason}</span> : null}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
+        {!coverageAudit && persistedMissed.length > 0 ? (
+          <details className={styles.missedIdeasPanel}>
+            <summary>Possible missed ideas</summary>
+            <ul className={styles.missedIdeasList}>
+              {persistedMissed.map((item) => (
+                <li key={item.candidateId} className={styles.missedIdeaItem}>
+                  <span className={styles.missedIdeaTitle}>
+                    {ideaTitleById.get(item.candidateId) ?? item.candidateId}
+                  </span>
+                  {item.reason ? <span className={styles.missedIdeaReason}>{item.reason}</span> : null}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
+        {!coverageAudit && !persistedCoverage && uncoveredCandidateIds.length > 0 ? (
+          <details className={styles.missedIdeasPanel}>
+            <summary>Uncovered candidate ideas</summary>
+            <ul className={styles.missedIdeasList}>
+              {uncoveredCandidateIds.map((candidateId) => (
+                <li key={candidateId} className={styles.missedIdeaItem}>
+                  <span className={styles.missedIdeaTitle}>
+                    {ideaTitleById.get(candidateId) ?? candidateId}
+                  </span>
+                  <span className={styles.missedIdeaReason}>
+                    No saved canonical idea currently references this candidate.
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
         {canonicalIdeas.length === 0 ? (
           <p className={styles.emptyNote}>No canonical ideas consolidated yet.</p>
         ) : (
@@ -329,6 +451,16 @@ export function TranscriptDetail({
                       </span>
                     </span>
                     {idea.body ? <p className={styles.canonicalIdeaBody}>{idea.body}</p> : null}
+                    {idea.key_claims.length > 0 ? (
+                      <ul className={styles.keyClaimsList}>
+                        {idea.key_claims.map((claim) => (
+                          <li key={claim}>{claim}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {idea.coverage_notes ? (
+                      <p className={styles.coverageNotes}>{idea.coverage_notes}</p>
+                    ) : null}
                     <div className="tags">
                       {ideaTags.domain.length > 0 ? (
                         <span className={`${styles.ideaTags} idea-tags--domain`}>

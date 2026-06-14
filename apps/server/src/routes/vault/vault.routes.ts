@@ -24,7 +24,14 @@ import type {
   UpdateSourceProfilesBody,
   VaultLoginBody,
 } from './vault.schema.js';
-import type { CanonicalIdeaNode, IdeaNode, RunNode, SourceNode, TranscriptNode } from '@llaab/schemas';
+import type {
+  CanonicalIdeaNode,
+  IdeaNode,
+  LabNode,
+  RunNode,
+  SourceNode,
+  TranscriptNode,
+} from '@llaab/schemas';
 
 import {
   getVaultPassword,
@@ -45,6 +52,10 @@ const ConsolidatedIdeaDraftSchema = z
     sourceCandidateIdeaIds: z.array(z.string().min(1)).default([]),
     source_candidate_idea_ids: z.array(z.string().min(1)).default([]),
     confidence: z.enum(['low', 'medium', 'high']),
+    keyClaims: z.array(z.string().min(1)).default([]),
+    key_claims: z.array(z.string().min(1)).default([]),
+    coverageNotes: z.string().optional().default(''),
+    coverage_notes: z.string().optional().default(''),
   })
   .transform((idea) => ({
     title: idea.title,
@@ -54,6 +65,8 @@ const ConsolidatedIdeaDraftSchema = z
     sourceCandidateIdeaIds:
       idea.sourceCandidateIdeaIds.length > 0 ? idea.sourceCandidateIdeaIds : idea.source_candidate_idea_ids,
     confidence: idea.confidence,
+    keyClaims: idea.keyClaims.length > 0 ? idea.keyClaims : idea.key_claims,
+    coverageNotes: idea.coverageNotes || idea.coverage_notes,
   }))
   .pipe(
     z.object({
@@ -63,12 +76,49 @@ const ConsolidatedIdeaDraftSchema = z
       domains: z.array(z.string()),
       sourceCandidateIdeaIds: z.array(z.string().min(1)).min(1),
       confidence: z.enum(['low', 'medium', 'high']),
+      keyClaims: z.array(z.string()),
+      coverageNotes: z.string(),
     }),
   );
 
 const ConsolidatedIdeasResponseSchema = z.object({
   ideas: z.array(ConsolidatedIdeaDraftSchema).min(1),
 });
+
+const ConsolidationCoverageStatusSchema = z.enum(['covered', 'omitted', 'missed']);
+
+const ConsolidationCoverageItemSchema = z
+  .object({
+    candidateId: z.string().min(1).optional(),
+    candidate_id: z.string().min(1).optional(),
+    canonicalIdeaIndexes: z.array(z.number().int().nonnegative()).optional().default([]),
+    canonical_idea_indexes: z.array(z.number().int().nonnegative()).optional().default([]),
+    status: ConsolidationCoverageStatusSchema,
+    reason: z.string().optional().default(''),
+  })
+  .transform((item) => ({
+    candidateId: item.candidateId ?? item.candidate_id ?? '',
+    canonicalIdeaIndexes:
+      item.canonicalIdeaIndexes.length > 0 ? item.canonicalIdeaIndexes : item.canonical_idea_indexes,
+    status: item.status,
+    reason: item.reason,
+  }))
+  .pipe(
+    z.object({
+      candidateId: z.string().min(1),
+      canonicalIdeaIndexes: z.array(z.number().int().nonnegative()),
+      status: ConsolidationCoverageStatusSchema,
+      reason: z.string(),
+    }),
+  );
+
+const ConsolidationAuditResponseSchema = z.object({
+  coverage: z.array(ConsolidationCoverageItemSchema).default([]),
+  additions: z.array(ConsolidatedIdeaDraftSchema).default([]),
+});
+
+type ConsolidatedIdeaDraft = z.infer<typeof ConsolidatedIdeaDraftSchema>;
+type ConsolidationCoverageItem = z.infer<typeof ConsolidationCoverageItemSchema>;
 
 interface CandidateIdeaPayload {
   id: string;
@@ -135,6 +185,7 @@ function buildConsolidationPrompt(transcript: TranscriptNode, candidates: Candid
         'Preserve related but distinct ideas as separate canonical ideas.',
         'Do not create ideas unsupported by the candidates.',
         'Every canonical idea must include sourceCandidateIdeaIds referencing one or more candidate ids.',
+        'Add keyClaims for the core claims that make each canonical idea distinct.',
         'Return concise, improved wording.',
       ],
     },
@@ -146,7 +197,7 @@ function buildConsolidationPrompt(transcript: TranscriptNode, candidates: Candid
 const CONSOLIDATION_SYSTEM_PROMPT = `You consolidate extracted transcript ideas into canonical ideas.
 
 Return ONLY valid JSON with this exact shape:
-{"ideas":[{"title":"Concise canonical idea","body":"Optional one or two sentence explanation","tags":["topic-tag"],"domains":["d:llm"],"sourceCandidateIdeaIds":["idea-id"],"confidence":"high"}]}
+{"ideas":[{"title":"Concise canonical idea","body":"Optional one or two sentence explanation","tags":["topic-tag"],"domains":["d:llm"],"sourceCandidateIdeaIds":["idea-id"],"confidence":"high","keyClaims":["Specific supported claim"],"coverageNotes":"Why these candidates are represented here"}]}
 
 Rules:
 - Use only candidate ids from the input.
@@ -154,7 +205,124 @@ Rules:
 - Merge duplicates and near-duplicates.
 - Do not merge ideas that are merely related but distinct.
 - Preserve concrete technical meaning.
+- Include keyClaims for the important distinct claims.
 - Do not include markdown fences, explanations, or comments.`;
+
+function buildConsolidationAuditPrompt(input: {
+  transcript: TranscriptNode;
+  candidates: CandidateIdeaPayload[];
+  drafts: ConsolidatedIdeaDraft[];
+}): string {
+  return JSON.stringify(
+    {
+      task: 'audit-canonical-idea-coverage',
+      transcript: {
+        id: input.transcript.id,
+        title: input.transcript.title,
+        summary: input.transcript.summary,
+        tags: input.transcript.tags,
+      },
+      candidates: input.candidates,
+      canonicalDrafts: input.drafts.map((draft, index) => ({
+        index,
+        ...draft,
+      })),
+      instructions: [
+        'Check whether every candidate idea is covered by at least one canonical draft or intentionally omitted.',
+        'Mark important distinct candidates as missed when their concrete claim is absent or only weakly implied.',
+        'Suggest additions only for distinct, important missed ideas supported by candidate ids.',
+        'Do not suggest duplicates of existing canonical drafts.',
+      ],
+    },
+    null,
+    2,
+  );
+}
+
+const CONSOLIDATION_AUDIT_SYSTEM_PROMPT = `You audit canonical idea coverage.
+
+Return ONLY valid JSON with this exact shape:
+{"coverage":[{"candidateId":"idea-id","canonicalIdeaIndexes":[0],"status":"covered","reason":"Short reason"}],"additions":[{"title":"Distinct missed idea","body":"One or two sentence explanation","tags":["topic-tag"],"domains":["d:llm"],"sourceCandidateIdeaIds":["idea-id"],"confidence":"high","keyClaims":["Specific supported claim"],"coverageNotes":"Why this was missed"}]}
+
+Rules:
+- Use only candidate ids from the input.
+- canonicalIdeaIndexes are zero-based indexes from canonicalDrafts.
+- status must be covered, omitted, or missed.
+- Additions are only for strong, distinct missed ideas.
+- Do not include markdown fences, explanations, or comments.`;
+
+async function auditConsolidationCoverage(input: {
+  transcript: TranscriptNode;
+  candidates: CandidateIdeaPayload[];
+  drafts: ConsolidatedIdeaDraft[];
+}): Promise<{
+  additions: ConsolidatedIdeaDraft[];
+  coverage: ConsolidationCoverageItem[];
+  llmMeta?: {
+    model: string;
+    provider: string;
+    durationMs: number;
+    promptTokens?: number;
+    completionTokens?: number;
+  };
+}> {
+  const result = await routeLlm('consolidate', buildConsolidationAuditPrompt(input), {
+    system: CONSOLIDATION_AUDIT_SYSTEM_PROMPT,
+    bypassCache: true,
+  });
+  const parsed = ConsolidationAuditResponseSchema.parse(parseJsonFromLlmText(result.text));
+
+  return {
+    additions: parsed.additions,
+    coverage: parsed.coverage,
+    llmMeta: {
+      model: result.model,
+      provider: result.provider,
+      durationMs: result.durationMs,
+      promptTokens: result.promptTokens,
+      completionTokens: result.completionTokens,
+    },
+  };
+}
+
+interface ProducedNodeDeleteContext {
+  nodesById: Map<string, LabNode>;
+  remainingRuns: RunNode[];
+  transcripts: TranscriptNode[];
+  canonicalIdeas: CanonicalIdeaNode[];
+}
+
+function buildProducedNodeDeleteContext(allNodes: LabNode[], deletingRunIds: Set<string>) {
+  return {
+    nodesById: new Map(allNodes.map((node) => [node.id, node])),
+    remainingRuns: allNodes.filter(
+      (node): node is RunNode => node.type === 'run' && !deletingRunIds.has(node.id),
+    ),
+    transcripts: allNodes.filter((node): node is TranscriptNode => node.type === 'transcript'),
+    canonicalIdeas: allNodes.filter((node): node is CanonicalIdeaNode => node.type === 'canonical-idea'),
+  } satisfies ProducedNodeDeleteContext;
+}
+
+function canDeleteProducedNode(node: LabNode, context: ProducedNodeDeleteContext): boolean {
+  const isReferencedByRemainingRun = context.remainingRuns.some((run) =>
+    run.produced_node_ids.includes(node.id),
+  );
+  if (isReferencedByRemainingRun) return false;
+
+  if (node.type === 'idea') {
+    return !context.canonicalIdeas.some((idea) => idea.source_candidate_idea_ids.includes(node.id));
+  }
+
+  if (node.type === 'transcript') {
+    return !context.canonicalIdeas.some((idea) => idea.transcript_id === node.id);
+  }
+
+  if (node.type === 'source') {
+    return !context.transcripts.some((transcript) => transcript.source_id === node.id);
+  }
+
+  return true;
+}
 
 export const vaultAuthLogin = {
   path: '/auth/login' as const,
@@ -424,17 +592,63 @@ export const consolidateTranscriptIdeas = {
       });
       const parsed = ConsolidatedIdeasResponseSchema.parse(parseJsonFromLlmText(result.text));
       const candidateIds = new Set(candidates.map((candidate) => candidate.id));
+      let drafts = parsed.ideas;
+      let coverage: ConsolidationCoverageItem[] = [];
+      let auditMeta:
+        | {
+            model: string;
+            provider: string;
+            durationMs: number;
+            promptTokens?: number;
+            completionTokens?: number;
+          }
+        | undefined;
+      let auditWarning: string | undefined;
+
+      try {
+        const audit = await auditConsolidationCoverage({ transcript, candidates, drafts });
+        coverage = audit.coverage.filter((item) => candidateIds.has(item.candidateId));
+        auditMeta = audit.llmMeta;
+        drafts = [
+          ...drafts,
+          ...audit.additions.filter((addition) =>
+            addition.sourceCandidateIdeaIds.some((candidateId) => candidateIds.has(candidateId)),
+          ),
+        ];
+      } catch (err) {
+        auditWarning = err instanceof Error ? err.message : 'Coverage audit failed.';
+      }
+
+      const coverageByCandidateId = new Map(coverage.map((item) => [item.candidateId, item]));
+      const coveredCandidateIdsByDraftIndex = new Map<number, string[]>();
+      for (const item of coverage) {
+        if (item.status !== 'covered') continue;
+        for (const index of item.canonicalIdeaIndexes) {
+          const ids = coveredCandidateIdsByDraftIndex.get(index) ?? [];
+          ids.push(item.candidateId);
+          coveredCandidateIdsByDraftIndex.set(index, ids);
+        }
+      }
       const createdAt = new Date();
       const timestamp = formatInstantForFilenameId(createdAt);
       const canonicalIdeas: CanonicalIdeaNode[] = [];
 
-      for (const [index, draft] of parsed.ideas.entries()) {
-        const sourceCandidateIdeaIds = [...new Set(draft.sourceCandidateIdeaIds)].filter((candidateId) =>
-          candidateIds.has(candidateId),
-        );
+      for (const [index, draft] of drafts.entries()) {
+        const sourceCandidateIdeaIds = [
+          ...new Set([
+            ...draft.sourceCandidateIdeaIds,
+            ...(coveredCandidateIdsByDraftIndex.get(index) ?? []),
+          ]),
+        ].filter((candidateId) => candidateIds.has(candidateId));
         if (sourceCandidateIdeaIds.length === 0) continue;
 
         const tags = dedupeTags([...draft.domains.filter((tag) => tag.startsWith('d:')), ...draft.tags]);
+        const coverageNotes =
+          draft.coverageNotes ||
+          sourceCandidateIdeaIds
+            .map((candidateId) => coverageByCandidateId.get(candidateId)?.reason)
+            .filter((reason): reason is string => Boolean(reason))
+            .join(' ');
         const created = await createNode({
           type: 'canonical-idea',
           id: `canonical-${transcript.id}-${index + 1}-${timestamp}`,
@@ -445,6 +659,8 @@ export const consolidateTranscriptIdeas = {
             transcript_id: transcript.id,
             source_candidate_idea_ids: sourceCandidateIdeaIds,
             confidence: draft.confidence,
+            key_claims: draft.keyClaims,
+            coverage_notes: coverageNotes || undefined,
             llm_model: result.model,
             llm_provider: result.provider,
             llm_duration_ms: result.durationMs,
@@ -459,10 +675,43 @@ export const consolidateTranscriptIdeas = {
         return c.json({ error: 'Consolidation returned no valid canonical ideas.' }, 422);
       }
 
+      const coveredCandidateIdeaIds = [
+        ...new Set(
+          canonicalIdeas.flatMap((idea) =>
+            idea.source_candidate_idea_ids.filter((candidateId) => candidateIds.has(candidateId)),
+          ),
+        ),
+      ];
+      const omittedCandidateIdeaIds = coverage
+        .filter((item) => item.status === 'omitted')
+        .map((item) => ({ id: item.candidateId, reason: item.reason || undefined }));
+      const missedCandidateIdeaIds = coverage
+        .filter((item) => item.status === 'missed')
+        .map((item) => ({ id: item.candidateId, reason: item.reason || undefined }));
+
+      await updateNode(getNodeFilePath('transcript', transcript.id), (current) => ({
+        ...(current as TranscriptNode),
+        canonical_coverage: {
+          canonical_idea_ids: canonicalIdeas.map((idea) => idea.id),
+          candidate_idea_ids: candidates.map((candidate) => candidate.id),
+          covered_candidate_idea_ids: coveredCandidateIdeaIds,
+          omitted_candidate_idea_ids: omittedCandidateIdeaIds,
+          missed_candidate_idea_ids: missedCandidateIdeaIds,
+          warning: auditWarning,
+          updated_at: formatIsoUtcSeconds(new Date()),
+        },
+      }));
+
       return c.json({
         success: true,
         canonicalIdeaIds: canonicalIdeas.map((idea) => idea.id),
         canonicalIdeas,
+        coverageAudit: {
+          coverage,
+          missed: coverage.filter((item) => item.status === 'missed'),
+          warning: auditWarning,
+          llmMeta: auditMeta,
+        },
         llmMeta: {
           model: result.model,
           provider: result.provider,
@@ -571,16 +820,12 @@ export const deleteRun = {
     let deletedProduced = 0;
     if (deleteProduced && run.produced_node_ids.length > 0) {
       const allNodes = await listNodes();
-      const nodesById = new Map(allNodes.map((node) => [node.id, node]));
-      const otherRuns = allNodes.filter((node): node is RunNode => node.type === 'run' && node.id !== run.id);
+      const deleteContext = buildProducedNodeDeleteContext(allNodes, new Set([run.id]));
 
       for (const nodeId of run.produced_node_ids) {
-        const producedNode = nodesById.get(nodeId);
+        const producedNode = deleteContext.nodesById.get(nodeId);
         if (!producedNode) continue;
-        const isReferencedByAnotherRun = otherRuns.some((otherRun) =>
-          otherRun.produced_node_ids.includes(nodeId),
-        );
-        if (isReferencedByAnotherRun) continue;
+        if (!canDeleteProducedNode(producedNode, deleteContext)) continue;
 
         try {
           await deleteNode(producedNode.type, nodeId);

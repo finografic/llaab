@@ -27,10 +27,11 @@ artifacts and add quality controls around consolidation coverage.
 
 - [x] Phase 1 — compact all future run output.
 - [x] Phase 2 — migrate existing run files to compact output.
-- [ ] Phase 3 — add consolidation coverage audit.
-- [ ] Phase 4 — surface coverage/missed-idea review in the transcript UI.
-- [ ] Phase 5 — optionally add manual promote/edit controls.
-- [ ] Phase 6 — preserve run delete semantics after compaction.
+- [x] Phase 3 — add consolidation coverage audit.
+- [x] Phase 4 — add schema support for key claims and coverage notes.
+- [ ] Phase 5 — surface durable coverage/missed-idea review in the transcript UI.
+- [ ] Phase 6 — optionally add manual promote/edit controls.
+- [ ] Phase 7 — preserve run delete semantics after compaction.
 
 ---
 
@@ -149,6 +150,8 @@ Verification:
 
 ## Phase 3 — Consolidation Coverage Audit
 
+Status: complete.
+
 Problem:
 
 The first canonical output was good, but it underrepresented this distinct idea:
@@ -174,9 +177,28 @@ Add a second pass after canonical draft generation:
 
 Keep the audit model-agnostic and route it through `routeLlm("consolidate", ...)`.
 
+Implemented:
+
+- Consolidation now runs a second audit pass after initial canonical drafts.
+- The audit returns a candidate coverage map plus optional distinct missed-idea additions.
+- Valid additions are merged into the canonical draft list before node creation.
+- Candidate ids marked covered by the audit are merged into the persisted canonical node
+  `source_candidate_idea_ids` so saved-file coverage is less noisy.
+- If the audit pass fails or returns invalid JSON, consolidation continues with the initial drafts and
+  reports the audit warning in the API response.
+- Canonical idea nodes can now store `key_claims` and `coverage_notes`.
+- The server treats consolidation as a long-running request so Bun does not close the route early.
+
+Still needed:
+
+- Move consolidation to a durable run-monitor task. The current two-pass local model call can take
+  many minutes and should not depend on a single browser HTTP request.
+
 ---
 
 ## Phase 4 — Schema Improvements
+
+Status: partial.
 
 Extend canonical idea output from:
 
@@ -224,9 +246,22 @@ Also store run-level consolidation metadata:
 This metadata can live either on a future consolidation `RunNode` or as a compact sidecar field on
 the canonical idea generation response. Prefer a `RunNode` once consolidation runs are durable.
 
+Implemented:
+
+- Canonical idea output now accepts `keyClaims` / `key_claims`.
+- Canonical idea output now accepts `coverageNotes` / `coverage_notes`.
+- `CanonicalIdeaNode` now stores `key_claims` and `coverage_notes`.
+
+Still needed:
+
+- Durable run-level consolidation metadata for input runs, input candidates, produced canonical
+  ideas, omitted candidates, and coverage score.
+
 ---
 
 ## Phase 5 — UI Controls
+
+Status: partial.
 
 Add lightweight quality controls before edit/delete polish:
 
@@ -244,9 +279,32 @@ Add lightweight quality controls before edit/delete polish:
 Do not block normal consolidation on perfect coverage. The first goal is visibility, not making the
 workflow heavyweight.
 
+Implemented:
+
+- Transcript detail shows the latest mutation coverage summary after consolidation completes.
+- Transcript detail derives a saved-file coverage summary from `source_candidate_idea_ids` after
+  reload.
+- Transcript detail prefers persisted transcript `canonical_coverage` metadata after reload.
+- Transcript detail shows a collapsible `Possible missed ideas` panel when the audit returns missed
+  candidate ideas.
+- Transcript detail shows persisted missed candidate ideas after reload.
+- Transcript detail shows uncovered candidate ideas after reload when saved canonical nodes do not
+  reference every candidate.
+- Canonical idea cards show persisted key claims and coverage notes.
+- Consolidation mutation schedules delayed query invalidations after errors so late-written
+  canonical files can appear without manual refresh.
+- Consolidation persists compact coverage metadata on the transcript node.
+
+Still needed:
+
+- Add source run/model metadata to missed idea rows.
+- Persist consolidation as a dedicated run node when consolidation moves to background execution.
+
 ---
 
-## Phase 6 — Run Deletion Semantics
+## Phase 7 — Run Deletion Semantics
+
+Status: partial.
 
 The `/ingest` runs table supports deleting:
 
@@ -284,6 +342,20 @@ Run compaction must not break any of those paths.
   - produced nodes to delete
   - produced nodes preserved because they are shared
   - canonical ideas affected or preserved
+
+Implemented:
+
+- Individual run delete still uses `produced_node_ids` as its delete source.
+- Individual `Run and nodes` delete now preserves candidate ideas referenced by canonical ideas.
+- Individual `Run and nodes` delete now preserves transcripts referenced by canonical ideas.
+- Individual `Run and nodes` delete now preserves sources referenced by remaining transcripts.
+- Shared produced-node reference helpers now centralize the checks for remaining runs, canonical
+  ideas, and transcripts.
+
+Still needed:
+
+- Delete preview response before destructive group delete.
+- Canonical idea handling for future consolidation run deletes.
 
 ### Deletion test matrix
 

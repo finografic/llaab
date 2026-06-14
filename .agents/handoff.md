@@ -12,8 +12,9 @@
 
 `llaab` — Learning Loop & Agent Automation Base. Turborepo + pnpm monorepo. Two-process
 architecture: `apps/server` (Hono + Bun, business logic) + `apps/client` (Vite + React Router SPA, UI).
-Core pipeline: ingest YouTube → transcript → ideas → skills → run traces, all stored as markdown
-vault nodes.
+Core pipeline: ingest YouTube → transcript → extracted ideas → canonical ideas → run traces, all
+stored as markdown vault nodes. Executable/generated skills are future work, not current ingest
+output.
 
 ## Architecture
 
@@ -99,7 +100,7 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models (2×2 vi
 | `/llm`                   | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list              |
 | `/icons`                 | Redirect to `/dev/icons` (embedded Lucide picker)                                                         |
 | `/vault`                 | Gated file-tree browser — local recursive tree + raw file viewer                                          |
-| `/vault/transcripts/:id` | Detail: source metadata, summary, extracted ideas (linked), Re-extract button                             |
+| `/vault/transcripts/:id` | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract           |
 | `/vault/nodes`           | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                        |
 | `/vault/nodes/:id`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                              |
 | `/vault/sources/:id`     | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count            |
@@ -130,26 +131,28 @@ font utilities still follow Tailwind names (`text-base`, `text-lg`, etc.); app C
 
 Auth: optional `X-API-Key` vs `LLAAB_API_KEY` env. No key set = dev mode, auth skipped.
 Each route group: `*.schema.ts` (Zod), `*.routes.ts` (`{ path, handler }` exports), `index.ts` (wiring).
-Long-running ingest and extract routes explicitly disable Bun's per-request idle timeout so the
-client does not receive false network failures while the server continues extracting.
+Long-running ingest, extract, and canonical consolidation routes explicitly disable Bun's
+per-request idle timeout so the client does not receive false network failures while the server
+continues processing.
 
-| Route                                     | Description                                                                     |
-| ----------------------------------------- | ------------------------------------------------------------------------------- |
-| `POST /api/ingest/youtube`                | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`               |
-| `GET /api/vault/nodes`                    | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`                |
-| `GET /api/vault/nodes/:id`                | Single node by id                                                               |
-| `PATCH /api/vault/sources/:id/profiles`   | Updates linked source profiles (GitHub first)                                   |
-| `GET /api/vault/transcripts/:id/ideas`    | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`       |
-| `POST /api/vault/transcripts/:id/extract` | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }` |
-| `GET /api/runs`, `/:id`                   | Run list + detail with full stage/decision trace                                |
-| `GET /api/runs/monitor`                   | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries  |
-| `POST /api/llm/complete`                  | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`         |
-| `POST /api/llm/stream`                    | SSE streaming LLM                                                               |
-| `GET /api/llm/models`                     | Lists installed Ollama models                                                   |
-| `GET /api/llm/status`                     | Task routing config + installed models cross-referenced                         |
-| `GET /api/llm/capabilities`               | Provider capability metadata + availability                                     |
-| `POST /api/agent/run`                     | One-shot agent processor; optional `{ nodeId?, force? }`                        |
-| `GET /api/agent/status`                   | Last run metadata                                                               |
+| Route                                         | Description                                                                        |
+| --------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `POST /api/ingest/youtube`                    | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`                  |
+| `GET /api/vault/nodes`                        | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`                   |
+| `GET /api/vault/nodes/:id`                    | Single node by id                                                                  |
+| `PATCH /api/vault/sources/:id/profiles`       | Updates linked source profiles (GitHub first)                                      |
+| `GET /api/vault/transcripts/:id/ideas`        | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`          |
+| `POST /api/vault/transcripts/:id/extract`     | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }`    |
+| `POST /api/vault/transcripts/:id/consolidate` | Two-pass canonical idea generation + coverage audit from extracted candidate ideas |
+| `GET /api/runs`, `/:id`                       | Run list + detail with full stage/decision trace                                   |
+| `GET /api/runs/monitor`                       | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries     |
+| `POST /api/llm/complete`                      | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`            |
+| `POST /api/llm/stream`                        | SSE streaming LLM                                                                  |
+| `GET /api/llm/models`                         | Lists installed Ollama models                                                      |
+| `GET /api/llm/status`                         | Task routing config + installed models cross-referenced                            |
+| `GET /api/llm/capabilities`                   | Provider capability metadata + availability                                        |
+| `POST /api/agent/run`                         | One-shot agent processor; optional `{ nodeId?, force? }`                           |
+| `GET /api/agent/status`                       | Last run metadata                                                                  |
 
 ### `@llaab/icons` — Workspace icon registry package
 
@@ -179,12 +182,20 @@ token-aware runtime harness yet.
 
 Task routing (all env-configurable via `LLAAB_*_MODEL` vars):
 
-| Task    | Tier        | Default model     |
-| ------- | ----------- | ----------------- |
-| format  | local-small | llama3.2:3b       |
-| extract | local-mid   | llama3:latest     |
-| code    | local-mid   | llama3:latest     |
-| reason  | remote      | claude-sonnet-4-6 |
+| Task        | Tier         | Default model         |
+| ----------- | ------------ | --------------------- |
+| format      | local-small  | llama3.2:3b           |
+| extract     | local-mid    | llama3:latest         |
+| consolidate | local-strong | gemma4:26b-a4b-it-qat |
+| code        | local-mid    | llama3:latest         |
+| reason      | remote       | claude-sonnet-4-6     |
+
+Canonical consolidation uses extracted idea nodes only, not the full transcript body. It runs a
+draft pass plus a coverage audit pass through `routeLlm("consolidate", ...)`, persists
+`CanonicalIdeaNode` files with `key_claims` / `coverage_notes`, and writes compact
+`TranscriptNode.canonical_coverage` metadata so the transcript UI can show coverage after reload.
+`gemma4:e4b-it-qat` is not currently reliable for this route because it has produced malformed
+structured JSON; continue using the 26B model until structured-output handling is improved.
 
 `getLlmStatus()` exported from `@llaab/llm` returns the live routing map (respects env overrides).
 Ollama provider uses `chat` API (not `generate`) for proper system/user separation.
@@ -205,13 +216,18 @@ allowlist (`git`, `pnpm`, `node`, `yt-dlp`, `opencode`). The Terminal Panel expo
 
 9 node types in `packages/schemas/src/*.schema.ts`. All extend `BaseNode`. IDs are human-readable slugs.
 
-| Type             | Description                                                                       |
-| ---------------- | --------------------------------------------------------------------------------- |
-| `TranscriptNode` | Ingested content; `source_url`, `source_type`, `summary` (optional), length stats |
-| `IdeaNode`       | Captured thought; `origin` (manual/extracted/generated), optional `source_id`     |
-| `SkillNode`      | Executable knowledge; inputs/outputs/tools, lineage                               |
-| `SourceNode`     | Person/channel/repo origin; `platforms`, linked `profiles`, `follow` flag         |
-| `RunNode`        | Execution trace; `stages`, `decisions`, LLM trace, `produced_node_ids`            |
+| Type             | Description                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `TranscriptNode` | Ingested content; `source_url`, `source_type`, summary/length stats, canonical coverage |
+| `IdeaNode`       | Captured thought; `origin` (manual/extracted/generated), optional `source_id`           |
+| `SkillNode`      | Executable knowledge; inputs/outputs/tools, lineage                                     |
+| `SourceNode`     | Person/channel/repo origin; `platforms`, linked `profiles`, `follow` flag               |
+| `RunNode`        | Execution trace; `stages`, `decisions`, LLM trace, `produced_node_ids`                  |
+
+Run persistence compacts large duplicated text fields (`body`, `plainText`, `text`, `transcript`)
+inside summaries and stage payloads. Existing June 13 ingest run files were migrated. Run deletion
+uses produced-node reference checks so shared transcripts/sources and canonical-referenced ideas are
+preserved unless no remaining graph reference exists.
 
 ## Taxonomy
 
