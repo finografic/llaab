@@ -1,4 +1,5 @@
-import { listNodes } from '@llaab/core';
+import { getNodeFilePath, listNodes, updateNode } from '@llaab/core';
+import { formatIsoUtcSeconds } from '@llaab/schemas';
 import { ingestYouTube } from '@llaab/skills';
 import type { AppCtx } from '../../types/app.types.js';
 import type { LabNode, RunMonitorItem, RunMonitorStep, RunNode } from '@llaab/schemas';
@@ -157,7 +158,9 @@ export const monitor = {
       .filter((node): node is RunNode => node.type === 'run')
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
     const activeRuns = runs.filter(isActiveRun);
-    const recentRuns = runs.filter((run) => !isActiveRun(run)).slice(0, Number.isFinite(limit) ? limit : 10);
+    const recentRuns = runs
+      .filter((run) => !isActiveRun(run) && !run.monitor_dismissed_at)
+      .slice(0, Number.isFinite(limit) ? limit : 10);
 
     return c.json({
       active: activeRuns.map((run) => runToMonitorItem(run, nodesById)),
@@ -174,6 +177,24 @@ export const detail = {
     const run = (all as RunNode[]).find((r) => r.id === id);
     if (!run) return c.json({ error: 'Run not found' }, 404);
     return c.json({ run });
+  },
+};
+
+export const dismiss = {
+  path: '/:id/dismiss' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+
+    const runPath = getNodeFilePath('run', id);
+    try {
+      const updated = await updateNode(runPath, (current) => ({
+        ...current,
+        monitor_dismissed_at: formatIsoUtcSeconds(new Date()),
+      }));
+      return c.json({ success: true, run: updated.node as RunNode });
+    } catch {
+      return c.json({ error: 'Run not found' }, 404);
+    }
   },
 };
 

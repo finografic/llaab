@@ -16,7 +16,7 @@ import {
   XIcon,
 } from 'lucide-react';
 import { useRunMonitorState } from 'providers/RunMonitorProvider';
-import { useRetryRun, useRunMonitor } from 'queries/runs';
+import { useDismissRun, useRetryRun, useRunMonitor } from 'queries/runs';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { RunEvent, RunMonitorItem, RunMonitorStep } from '@llaab/schemas';
@@ -95,6 +95,8 @@ function ActivityFeed({ events }: { events: RunEvent[] }) {
 function MonitorCard({ run }: { run: RunMonitorItem }) {
   const { dismissRun } = useRunMonitorState();
   const retryRun = useRetryRun();
+  const dismissRunMutation = useDismissRun();
+  const { mutate: dismissMutate } = dismissRunMutation;
   const isActive = isActiveRun(run);
   const isFailed = run.status === 'failed';
   const canRetry = isFailed && run.skill_id === 'ingest-youtube';
@@ -179,7 +181,16 @@ function MonitorCard({ run }: { run: RunMonitorItem }) {
               Retry
             </Button>
           ) : null}
-          <Button type="button" variant="ghost" size="sm" onClick={() => dismissRun(run.id)}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={dismissRunMutation.isPending}
+            onClick={() => {
+              dismissRun(run.id);
+              dismissMutate(run.id);
+            }}
+          >
             <XIcon aria-hidden />
             Dismiss
           </Button>

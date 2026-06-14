@@ -57,6 +57,7 @@ export const RunNodeSchema = BaseNodeSchema.extend({
   error: z.string().optional(),
   started_at: TimestampSchema.optional(),
   completed_at: TimestampSchema.optional(),
+  monitor_dismissed_at: TimestampSchema.optional(),
 });
 
 export type RunNode = z.infer<typeof RunNodeSchema>;

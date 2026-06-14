@@ -18,3 +18,4 @@ export type {
   DeleteRunsPreviewResult,
 } from './useDeleteRunsPreview';
 export { useRetryRun } from './useRetryRun';
+export { useDismissRun } from './useDismissRun';
