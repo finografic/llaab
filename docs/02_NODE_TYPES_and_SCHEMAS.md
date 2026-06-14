@@ -222,6 +222,7 @@ RunNode = BaseNode & {
   error?: string
   started_at?: string
   completed_at?: string
+  monitor_dismissed_at?: string // set when dismissed from the Run Monitor "Recent" list (node is not deleted)
 }
 ```
 

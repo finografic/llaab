@@ -227,7 +227,23 @@ allowlist (`git`, `pnpm`, `node`, `yt-dlp`, `opencode`). The Terminal Panel expo
 Run persistence compacts large duplicated text fields (`body`, `plainText`, `text`, `transcript`)
 inside summaries and stage payloads. Existing June 13 ingest run files were migrated. Run deletion
 uses produced-node reference checks so shared transcripts/sources and canonical-referenced ideas are
-preserved unless no remaining graph reference exists.
+preserved unless no remaining graph reference exists. `POST /api/vault/runs/delete-preview` returns
+nodes-to-delete/preserved/canonical-ideas-affected before a destructive single or batch delete; both
+`DeleteRunAction` and `DeleteRunGroupAction` render this preview before confirming.
+
+`RunNode.monitor_dismissed_at` (optional timestamp) marks a run as dismissed from the Run Monitor's
+"Recent" list without deleting the run node/file. `POST /api/runs/:id/dismiss` sets it via
+`updateNode`; `GET /api/runs/monitor` excludes runs with this field from `recent`. `RunMonitor`'s
+Dismiss button calls `useDismissRun` (in addition to local `dismissedRunIds` zustand state) so the
+dismissal persists across reloads.
+
+`CanonicalIdeaNode` consolidation runs a second audit pass producing a coverage map
+(covered/omitted/missed per candidate idea) persisted on `TranscriptNode.canonical_coverage`.
+Transcript detail surfaces this as a coverage summary plus a "Possible missed ideas" /
+"Uncovered candidate ideas" panel, with source run model/provider/timestamp per row and a
+"Promote to canonical" button (`POST /api/vault/transcripts/:id/canonical-ideas/promote`) that
+turns a missed candidate idea into its own `confidence: "medium"` canonical idea and updates the
+transcript's coverage record.
 
 ## Taxonomy
 

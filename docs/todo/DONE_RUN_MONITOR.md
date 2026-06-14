@@ -93,6 +93,11 @@ Current implementation:
 - `GET /api/runs/monitor` derives active and recent run summaries (including `events`) from
   `RunNode` data. `POST /api/runs/:id/retry` re-dispatches a failed `ingest-youtube` run from its
   recorded input.
+- `POST /api/runs/:id/dismiss` sets `RunNode.monitor_dismissed_at` (persisted to the run's
+  frontmatter via `updateNode`) and `/monitor` excludes runs with that field set from `recent`.
+  Dismissing a run only hides it from the monitor — the run node/file is not deleted. The
+  `RunMonitor` "Dismiss" button calls this endpoint (via `useDismissRun`) in addition to the local
+  `dismissedRunIds` zustand state, so the dismissal survives reloads.
 - `RunMonitor` lives once in `AppLayout`, shares the root TanStack Query cache, and renders an
   Activity feed per run plus a Retry action for failed ingest-youtube runs.
 - UI state uses a root `RunMonitorProvider` powered by `@finografic/zustand-context-creator`.
