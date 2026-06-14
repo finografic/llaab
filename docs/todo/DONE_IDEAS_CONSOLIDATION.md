@@ -1,4 +1,7 @@
-# Canonical Ideas Consolidation
+# DONE — Canonical Ideas Consolidation
+
+> **Completed:** 2026-06-14 — canonical ideas can be generated from multiple extraction runs,
+> stored as first-class vault nodes, and rendered on transcript detail pages.
 
 ## Goal
 
@@ -209,9 +212,7 @@ Defer these until canonical idea generation exists:
 - view source candidates dialog
 - rerun consolidation with overwrite/replace choices
 
-### Current Verification
-
-Completed:
+### Final Verification
 
 - schema build
 - core build
@@ -227,13 +228,8 @@ Notes:
   502 before the client received the JSON response.
 - Client Vite proxy timeout was extended and canonical idea queries now refresh even if the mutation
   settles with an error.
-
-Still needed:
-
-- browser check on `/vault/transcripts/:id`
-- retry `Consolidate Canonical Ideas` after proxy timeout fix
-- confirm canonical ideas render above extracted candidate ideas after query invalidation
-- review generated canonical ideas for merge quality and provenance
+- Follow-up work for run-file compaction and coverage/quality controls moved to
+  [`TODO_CANONICAL_IDEA_QUALITY.md`](./TODO_CANONICAL_IDEA_QUALITY.md).
 
 ---
 

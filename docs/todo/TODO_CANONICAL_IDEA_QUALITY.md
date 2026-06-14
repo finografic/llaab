@@ -1,0 +1,310 @@
+# TODO — Canonical Idea Quality And Run Compaction
+
+> **Status:** Planned from the 2026-06-14 canonical ideas V1 review. V1 consolidation is complete;
+> this doc tracks follow-up quality controls and run artifact compaction.
+
+---
+
+## Why
+
+The first real canonical ideas run was successful: it generated a coherent smaller set from multiple
+candidate extraction runs.
+
+Two follow-up issues emerged:
+
+- Consolidation missed or underrepresented one strong infrastructure idea:
+  lightweight virtualized / multi-tenant agent runtimes.
+- Extraction run files duplicate the full transcript body inside run metadata, making each run much
+  larger than it needs to be.
+
+The fix is not to delete older candidate ideas or extraction runs. Candidate ideas remain the
+evidence layer, and runs remain the reproducibility/provenance layer. The fix is to compact run
+artifacts and add quality controls around consolidation coverage.
+
+---
+
+## Progress
+
+- [ ] Phase 1 — compact future extraction run output.
+- [ ] Phase 2 — migrate existing run files to compact output.
+- [ ] Phase 3 — add consolidation coverage audit.
+- [ ] Phase 4 — surface coverage/missed-idea review in the transcript UI.
+- [ ] Phase 5 — optionally add manual promote/edit controls.
+- [ ] Phase 6 — preserve run delete semantics after compaction.
+
+---
+
+## Phase 1 — Compact All Future Run Output
+
+Current issue:
+
+- `RunNode.output_summary` stores the full ingest result JSON.
+- Ingest result JSON includes `plainText`.
+- The final `execute` stage output also includes `plainText`.
+- The transcript file already stores that text, so every extraction run repeats the largest payload.
+
+Plan:
+
+- Add a run-output sanitizer in `packages/skills/src/runner.ts`.
+- Apply it at the generic run persistence boundary, not only for consolidation.
+- Every future `RunNode` should get compact summaries by default, including:
+  - original `ingest-youtube` runs
+  - extraction follow-on updates
+  - consolidation runs
+  - future terminal/agent/tool runs
+- Before persisting `output_summary`, remove or replace large duplicated fields:
+  - `plainText`
+  - `transcript`
+  - `body`
+  - any future full-text transcript aliases
+- Preserve compact references:
+  - `transcript_id`
+  - `transcript_path`
+  - `source_id`
+  - `source_url`
+  - `source_item_id`
+  - `produced_node_ids`
+  - `title`
+  - `author`
+- Apply the same sanitizer to persisted `stages[].output` where stage output includes the full text.
+
+Recommended compact `output_summary` shape:
+
+```json
+{
+  "id": "the-language-holding-our-agents-back",
+  "type": "transcript",
+  "title": "The language holding our agents back.",
+  "transcript_id": "the-language-holding-our-agents-back",
+  "transcript_path": "/Users/justin/LLAAB/vault/transcripts/transcript.the-language-holding-our-agents-back.md",
+  "source_id": "theo-t3-gg",
+  "source_item_id": "TilDSWeiAlw",
+  "source_url": "https://www.youtube.com/watch?v=TilDSWeiAlw",
+  "produced_node_ids": ["the-language-holding-our-agents-back", "theo-t3-gg"]
+}
+```
+
+Do not consolidate many extraction run files into one. Each original run should remain its own
+immutable record, but every run record should reference transcript/candidate/canonical nodes rather
+than embedding full transcript text.
+
+---
+
+## Phase 2 — Migrate Existing Run Files
+
+Add a one-shot script:
+
+```text
+scripts/compact-run-output-summaries.ts
+```
+
+Behavior:
+
+- Scan `vault/runs/*.md`.
+- Compact all existing run node files, including the original ingestion/extraction runs.
+- Parse run frontmatter.
+- Decode repeatedly escaped JSON in `input_summary`, `output_summary`, and `stages`.
+- Remove duplicated full transcript fields from output summary and stage outputs.
+- Keep node ids, paths, URLs, model metadata, durations, run status, and events.
+- Rewrite only changed run files.
+- Print before/after byte savings.
+
+Verification:
+
+- Run detail pages still render.
+- Runs table still groups by source URL.
+- Delete run logic still finds produced node ids.
+- Individual run delete still deletes only the selected run.
+- `Run and nodes` delete still preserves shared transcript/source nodes when other runs reference
+  them.
+- Batch/group delete from `/ingest` still removes every selected original run node and only removes
+  produced nodes that are no longer referenced by remaining runs.
+- Run Monitor still displays summary and node links.
+
+---
+
+## Phase 3 — Consolidation Coverage Audit
+
+Problem:
+
+The first canonical output was good, but it underrepresented this distinct idea:
+
+```text
+Lightweight virtualized runtimes may replace full machines for agent execution.
+```
+
+The model covered typed/sandboxed environments, but not the stronger infrastructure claim around
+V8 isolates, virtual file systems, fake Bash layers, lightweight multi-tenant runtimes, and
+alternatives to full VMs/Docker containers.
+
+Add a second pass after canonical draft generation:
+
+1. Generate canonical ideas from candidates.
+2. Build a coverage map:
+   - each candidate idea id must be either covered by at least one canonical idea or explicitly
+     omitted with a reason.
+3. Ask the consolidation model to audit the map:
+   - identify strong candidates that are uncovered or underrepresented
+   - suggest additional canonical ideas only when the missed idea is distinct and important
+4. Merge approved audit additions into the final canonical set.
+
+Keep the audit model-agnostic and route it through `routeLlm("consolidate", ...)`.
+
+---
+
+## Phase 4 — Schema Improvements
+
+Extend canonical idea output from:
+
+```ts
+{
+  title;
+  body;
+  tags;
+  domains;
+  sourceCandidateIdeaIds;
+  confidence;
+}
+```
+
+to:
+
+```ts
+{
+  title;
+  body;
+  tags;
+  domains;
+  sourceCandidateIdeaIds;
+  confidence;
+  keyClaims: string[];
+  coverageNotes?: string;
+}
+```
+
+Also store run-level consolidation metadata:
+
+```ts
+{
+  input_run_ids: string[];
+  input_candidate_idea_ids: string[];
+  produced_canonical_idea_ids: string[];
+  omitted_candidate_idea_ids: Array<{
+    id: string;
+    reason: string;
+  }>;
+  coverage_score?: number;
+}
+```
+
+This metadata can live either on a future consolidation `RunNode` or as a compact sidecar field on
+the canonical idea generation response. Prefer a `RunNode` once consolidation runs are durable.
+
+---
+
+## Phase 5 — UI Controls
+
+Add lightweight quality controls before edit/delete polish:
+
+- Show a coverage summary near `Canonical ideas`:
+  - `4 canonical ideas`
+  - `27 / 29 candidate ideas covered`
+  - `2 omitted`
+- Add a collapsible `Possible missed ideas` panel when the audit finds uncovered strong candidates.
+- Each missed idea row should show:
+  - candidate title
+  - source run/model
+  - audit reason
+  - optional `Promote to canonical` action later
+
+Do not block normal consolidation on perfect coverage. The first goal is visibility, not making the
+workflow heavyweight.
+
+---
+
+## Phase 6 — Run Deletion Semantics
+
+The `/ingest` runs table supports deleting:
+
+- one child/original run row
+- a grouped batch of runs for the same source URL
+- the run only
+- the run plus produced nodes
+
+Run compaction must not break any of those paths.
+
+### Required invariants
+
+- `RunNode.produced_node_ids` remains the source of truth for delete behavior.
+- Compacting `output_summary` or `stages[].output` must never remove `produced_node_ids`.
+- Deleting one original extraction run must not delete shared transcript/source nodes when other
+  runs still reference them.
+- Batch delete may delete every selected original run node, but must still check node references
+  across all remaining runs before deleting produced nodes.
+- Candidate idea nodes may be deleted only when no remaining run references them and no canonical
+  idea uses them as a source.
+- Canonical idea nodes should not be silently deleted when deleting one candidate extraction run,
+  unless all of their `source_candidate_idea_ids` are removed or the user explicitly chooses to
+  delete canonical outputs too.
+
+### Implementation notes
+
+- Keep delete logic based on graph references, not run-file size or output summary shape.
+- Add a helper such as `getNodeReferenceCounts(allRuns)` so both individual and batch delete share
+  the same reference-count behavior.
+- Extend delete checks to include canonical idea provenance:
+  - `canonicalIdea.source_candidate_idea_ids`
+  - `canonicalIdea.transcript_id`
+- Consider returning a delete preview before destructive group delete:
+  - runs to delete
+  - produced nodes to delete
+  - produced nodes preserved because they are shared
+  - canonical ideas affected or preserved
+
+### Deletion test matrix
+
+- Delete one run from a group of seven runs:
+  - selected run file is removed
+  - shared transcript remains
+  - source remains
+  - candidate ideas from that run are removed only if unreferenced and not used by canonical ideas
+  - canonical ideas remain
+- Delete all runs in a source group with `Run and nodes`:
+  - all selected run files are removed
+  - transcript/source are removed only if no other remaining run references them
+  - canonical ideas for that transcript are either deleted explicitly or reported in the preview
+- Delete run only:
+  - no produced nodes are removed
+  - canonical ideas remain
+- Delete a consolidation run in the future:
+  - canonical ideas are removed only with explicit `Run and nodes`
+  - candidate extraction runs remain untouched
+
+---
+
+## Quality Guardrails
+
+Use these controls to reduce missed strong ideas:
+
+- Require explicit coverage or omission for every candidate idea.
+- Let the model create more than four canonical ideas when an uncovered idea is distinct.
+- Add prompt language for infrastructure primitives:
+  - runtime substrate
+  - virtualization
+  - isolation
+  - multi-tenancy
+  - agent execution environments
+- Preserve high-signal minority ideas even if they appear in only one extraction run.
+- Treat high source count as evidence, not as the only promotion criterion.
+- Prefer a second audit pass over making the initial prompt too complex.
+
+---
+
+## Done Means
+
+- New runs no longer embed full transcript text in run summaries or execute-stage outputs.
+- Existing run files can be compacted with an idempotent one-shot script.
+- Individual and batch run deletion behave the same before and after compaction.
+- Consolidation produces coverage metadata.
+- The missed virtualized-runtime idea class would be flagged or promoted.
+- Transcript detail UI shows canonical ideas plus coverage status.
