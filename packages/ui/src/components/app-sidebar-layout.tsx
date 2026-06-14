@@ -197,7 +197,10 @@ export function AppSidebarLayout({
 
   const inset = (
     <SidebarInset
-      className={cn('flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background', insetClassName)}
+      className={cn(
+        'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background',
+        insetClassName,
+      )}
     >
       {children}
     </SidebarInset>

@@ -68,10 +68,10 @@ export function AppLayout() {
             <main className={cn(styles.pageContent, fullBleed && styles.pageContentBleed)}>
               <Outlet />
             </main>
-            <AppFooter />
           </AppSidebarLayout>
         </TooltipProvider>
       </SecondaryActionBarContext.Provider>
+      <AppFooter />
     </div>
   );
 }
