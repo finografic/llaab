@@ -32,6 +32,18 @@ export const deleteRunQuerySchema = z.object({
 
 export type DeleteRunQuery = z.infer<typeof deleteRunQuerySchema>;
 
+export const deleteRunsPreviewBodySchema = z.object({
+  ids: z.array(z.string().min(1)).min(1),
+});
+
+export type DeleteRunsPreviewBody = z.infer<typeof deleteRunsPreviewBodySchema>;
+
+export const promoteCanonicalIdeaBodySchema = z.object({
+  candidateId: z.string().min(1),
+});
+
+export type PromoteCanonicalIdeaBody = z.infer<typeof promoteCanonicalIdeaBodySchema>;
+
 export const updateSourceProfilesBodySchema = z.object({
   profiles: z.array(SourceProfileSchema),
 });

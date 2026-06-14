@@ -7,7 +7,9 @@ import {
   cleanRecentBodySchema,
   createNodeBodySchema,
   deleteRunQuerySchema,
+  deleteRunsPreviewBodySchema,
   listNodesQuerySchema,
+  promoteCanonicalIdeaBodySchema,
   updateSourceProfilesBodySchema,
   vaultLoginBodySchema,
 } from './vault.schema.js';
@@ -33,5 +35,15 @@ export const vaultRouter = createRouter()
   .get(routes.transcriptIdeas.path, routes.transcriptIdeas.handler)
   .post(routes.extractTranscript.path, routes.extractTranscript.handler)
   .post(routes.consolidateTranscriptIdeas.path, routes.consolidateTranscriptIdeas.handler)
+  .post(
+    routes.promoteCanonicalIdea.path,
+    zValidator('json', promoteCanonicalIdeaBodySchema),
+    routes.promoteCanonicalIdea.handler,
+  )
   .delete(routes.discardTranscript.path, routes.discardTranscript.handler)
-  .delete(routes.deleteRun.path, zValidator('query', deleteRunQuerySchema), routes.deleteRun.handler);
+  .delete(routes.deleteRun.path, zValidator('query', deleteRunQuerySchema), routes.deleteRun.handler)
+  .post(
+    routes.previewDeleteRuns.path,
+    zValidator('json', deleteRunsPreviewBodySchema),
+    routes.previewDeleteRuns.handler,
+  );

@@ -31,3 +31,16 @@ export async function deleteVaultRun(id: string, deleteProduced: boolean) {
     query: { deleteProduced: deleteProduced ? 'true' : 'false' },
   } as { param: { id: string } });
 }
+
+/** POST /api/vault/runs/delete-preview — preview what a run/batch delete would affect. */
+export async function previewDeleteVaultRuns(ids: string[]) {
+  return api.vault.runs['delete-preview'].$post({ json: { ids } });
+}
+
+/** POST /api/vault/transcripts/:id/canonical-ideas/promote — promote a missed candidate idea to canonical. */
+export async function promoteCanonicalIdea(transcriptId: string, candidateId: string) {
+  return api.vault.transcripts[':id']['canonical-ideas'].promote.$post({
+    param: { id: transcriptId },
+    json: { candidateId },
+  });
+}

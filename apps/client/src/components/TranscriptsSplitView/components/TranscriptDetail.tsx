@@ -3,9 +3,10 @@ import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
 import { SparklesIcon } from 'lucide-react';
-import { useConsolidateCanonicalIdeas } from 'queries/transcripts';
+import { useConsolidateCanonicalIdeas, usePromoteCanonicalIdea } from 'queries/transcripts';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import type { CanonicalIdeaNode, IdeaNode, TranscriptNode } from '@llaab/schemas';
 
 import { fmtDetailDate, splitTags } from '../transcript-split.utils';
@@ -66,6 +67,8 @@ export function TranscriptDetail({
   const [isExtracting, setIsExtracting] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState(() => extractionRuns[0]?.id ?? 'transcript');
   const consolidateMutation = useConsolidateCanonicalIdeas();
+  const promoteMutation = usePromoteCanonicalIdea();
+  const { mutate: promoteMutate, isPending: isPromotePending, variables: promoteVariables } = promoteMutation;
 
   const { domain, generated } = splitTags(transcript.tags);
   const selectedRun = useMemo(
@@ -82,6 +85,23 @@ export function TranscriptDetail({
     }
     return entries;
   }, [extractedIdeas, extractionRuns]);
+  const candidateSourceById = useMemo(() => {
+    const entries = new Map<
+      string,
+      { runId: string; model?: string; provider?: string; startedAt?: string }
+    >();
+    for (const run of extractionRuns) {
+      for (const candidateId of run.ideaIds) {
+        entries.set(candidateId, {
+          runId: run.id,
+          model: run.model,
+          provider: run.provider,
+          startedAt: run.startedAt,
+        });
+      }
+    }
+    return entries;
+  }, [extractionRuns]);
   const coveredCandidateIds = useMemo(() => {
     const ids = new Set<string>();
     for (const idea of canonicalIdeas) {
@@ -180,6 +200,48 @@ export function TranscriptDetail({
 
   function handleConsolidate() {
     consolidateMutation.mutate(transcript.id);
+  }
+
+  function handlePromote(candidateId: string) {
+    promoteMutate(
+      { transcriptId: transcript.id, candidateId },
+      {
+        onSuccess: (data) => {
+          toast.success(`Promoted "${data.canonicalIdea.title}" to a canonical idea.`);
+        },
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : 'Failed to promote idea.');
+        },
+      },
+    );
+  }
+
+  function renderPromoteButton(candidateId: string) {
+    const pending = isPromotePending && promoteVariables?.candidateId === candidateId;
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className={styles.promoteButton}
+        disabled={isPromotePending}
+        onClick={() => handlePromote(candidateId)}
+      >
+        {pending ? 'Promoting…' : 'Promote to canonical'}
+      </Button>
+    );
+  }
+
+  function renderCandidateSource(candidateId: string) {
+    const source = candidateSourceById.get(candidateId);
+    if (!source || (!source.model && !source.provider)) return null;
+    const label = [source.provider, source.model].filter(Boolean).join(' · ');
+    return (
+      <span className={styles.missedIdeaSource}>
+        {label}
+        {source.startedAt ? ` · ${fmtRunDate(source.startedAt)}` : ''}
+      </span>
+    );
   }
 
   return (
@@ -394,7 +456,9 @@ export function TranscriptDetail({
                   <span className={styles.missedIdeaTitle}>
                     {ideaTitleById.get(item.candidateId) ?? item.candidateId}
                   </span>
+                  {renderCandidateSource(item.candidateId)}
                   {item.reason ? <span className={styles.missedIdeaReason}>{item.reason}</span> : null}
+                  {renderPromoteButton(item.candidateId)}
                 </li>
               ))}
             </ul>
@@ -409,7 +473,9 @@ export function TranscriptDetail({
                   <span className={styles.missedIdeaTitle}>
                     {ideaTitleById.get(item.candidateId) ?? item.candidateId}
                   </span>
+                  {renderCandidateSource(item.candidateId)}
                   {item.reason ? <span className={styles.missedIdeaReason}>{item.reason}</span> : null}
+                  {renderPromoteButton(item.candidateId)}
                 </li>
               ))}
             </ul>
@@ -424,9 +490,11 @@ export function TranscriptDetail({
                   <span className={styles.missedIdeaTitle}>
                     {ideaTitleById.get(candidateId) ?? candidateId}
                   </span>
+                  {renderCandidateSource(candidateId)}
                   <span className={styles.missedIdeaReason}>
                     No saved canonical idea currently references this candidate.
                   </span>
+                  {renderPromoteButton(candidateId)}
                 </li>
               ))}
             </ul>

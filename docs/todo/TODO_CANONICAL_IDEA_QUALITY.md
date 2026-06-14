@@ -29,9 +29,9 @@ artifacts and add quality controls around consolidation coverage.
 - [x] Phase 2 — migrate existing run files to compact output.
 - [x] Phase 3 — add consolidation coverage audit.
 - [x] Phase 4 — add schema support for key claims and coverage notes.
-- [ ] Phase 5 — surface durable coverage/missed-idea review in the transcript UI.
-- [ ] Phase 6 — optionally add manual promote/edit controls.
-- [ ] Phase 7 — preserve run delete semantics after compaction.
+- [x] Phase 5 — surface durable coverage/missed-idea review in the transcript UI.
+- [x] Phase 6 — add manual promote controls for missed candidate ideas.
+- [x] Phase 7 — preserve run delete semantics after compaction.
 
 ---
 
@@ -261,7 +261,7 @@ Still needed:
 
 ## Phase 5 — UI Controls
 
-Status: partial.
+Status: complete.
 
 Add lightweight quality controls before edit/delete polish:
 
@@ -294,17 +294,44 @@ Implemented:
 - Consolidation mutation schedules delayed query invalidations after errors so late-written
   canonical files can appear without manual refresh.
 - Consolidation persists compact coverage metadata on the transcript node.
+- Missed/uncovered idea rows show source run model and provider metadata (and run timestamp) when
+  the candidate's extraction run is known.
 
 Still needed:
 
-- Add source run/model metadata to missed idea rows.
 - Persist consolidation as a dedicated run node when consolidation moves to background execution.
+
+---
+
+## Phase 6 — Manual Promote Controls
+
+Status: complete.
+
+Add a `Promote to canonical` action to missed/uncovered candidate idea rows so a strong candidate
+that the audit flagged (or that simply isn't referenced by any canonical idea yet) can become its
+own canonical idea without rerunning consolidation.
+
+Implemented:
+
+- New endpoint `POST /api/vault/transcripts/:id/canonical-ideas/promote` with body
+  `{ candidateId: string }`.
+- The endpoint creates a `canonical-idea` node from the candidate idea (title, body, tags, domains),
+  marks it `confidence: "medium"` with a `coverage_notes` note that it was promoted manually, and
+  updates the transcript's `canonical_coverage` to mark the candidate covered and drop it from
+  `missed_candidate_idea_ids`.
+- Returns `404` if the transcript or candidate idea is not found, and `400` if the candidate is
+  already covered by a canonical idea.
+- Transcript detail UI shows a `Promote to canonical` button on every row in the
+  `Possible missed ideas` and `Uncovered candidate ideas` panels (audit results, persisted missed
+  ideas, and persisted-uncovered fallback), with per-row pending state and success/error toasts.
+- Promotion invalidates canonical idea and transcript queries so the new canonical idea and updated
+  coverage appear without a full reload.
 
 ---
 
 ## Phase 7 — Run Deletion Semantics
 
-Status: partial.
+Status: complete.
 
 The `/ingest` runs table supports deleting:
 
@@ -351,11 +378,16 @@ Implemented:
 - Individual `Run and nodes` delete now preserves sources referenced by remaining transcripts.
 - Shared produced-node reference helpers now centralize the checks for remaining runs, canonical
   ideas, and transcripts.
+- New endpoint `POST /api/vault/runs/delete-preview` accepts a batch of run ids and returns the
+  nodes that would be deleted, nodes that would be preserved (with reasons), and any canonical
+  ideas affected by the delete.
+- Both `DeleteRunAction` (single run, "Run and nodes" step) and `DeleteRunGroupAction` (batch
+  delete) fetch and render this preview before the user confirms a destructive delete.
 
 Still needed:
 
-- Delete preview response before destructive group delete.
-- Canonical idea handling for future consolidation run deletes.
+- Canonical idea handling for future consolidation run deletes (no consolidation `RunNode` exists
+  yet — see Phase 3 "Still needed").
 
 ### Deletion test matrix
 
@@ -404,3 +436,39 @@ Use these controls to reduce missed strong ideas:
 - Consolidation produces coverage metadata.
 - The missed virtualized-runtime idea class would be flagged or promoted.
 - Transcript detail UI shows canonical ideas plus coverage status.
+
+---
+
+## Summary — Phases 1-7 Complete (2026-06-14)
+
+All seven phases are implemented and typechecked.
+
+- **Run compaction (Phases 1-2):** the generic skill runner sanitizes `output_summary` and
+  `stages[].output` before persisting run nodes, stripping duplicated transcript text while
+  keeping references (`transcript_id`, `transcript_path`, `source_id`, `produced_node_ids`, etc.).
+  A one-shot `scripts/compact-run-output-summaries.ts` migrated existing run files (roughly 42 KB
+  to roughly 5 KB each) with no change to delete behavior.
+- **Coverage audit (Phase 3):** consolidation runs a second audit pass that maps every candidate
+  idea to `covered` / `omitted` / `missed`, optionally adds distinct missed ideas to the canonical
+  draft set, and merges covered candidate ids back into `source_candidate_idea_ids`. Audit failures
+  degrade gracefully with a warning instead of failing the run.
+- **Schema (Phase 4):** `CanonicalIdeaNode` stores `key_claims` and `coverage_notes`. Durable
+  run-level consolidation metadata (input runs, omitted candidates, coverage score) remains future
+  work pending a dedicated consolidation `RunNode`.
+- **Transcript UI coverage (Phase 5):** transcript detail shows a coverage summary
+  (covered/omitted/missed/total), a collapsible "Possible missed ideas" / "Uncovered candidate
+  ideas" panel sourced from the live audit or persisted `canonical_coverage`, and each missed/
+  uncovered row now shows the source extraction run's model, provider, and timestamp when known.
+- **Manual promote (Phase 6):** added `POST /api/vault/transcripts/:id/canonical-ideas/promote`
+  (`{ candidateId }`) which turns a missed/uncovered candidate idea into its own
+  `confidence: "medium"` canonical idea and updates the transcript's coverage record. Every missed/
+  uncovered row in the transcript UI has a "Promote to canonical" button with per-row pending state
+  and toast feedback.
+- **Delete preview (Phase 7):** added `POST /api/vault/runs/delete-preview` (`{ ids }`), returning
+  nodes to delete, nodes preserved with reasons, and any affected canonical ideas. Both the single
+  run "Run and nodes" dialog and the batch group-delete dialog render this preview before the user
+  confirms a destructive delete.
+
+Remaining future work (not blocking): move consolidation to a durable run-monitor task with its own
+`RunNode`, and once that exists, extend delete-preview/produced-node handling to cover consolidation
+run deletes.

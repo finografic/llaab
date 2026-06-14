@@ -10,4 +10,11 @@ export { useRunMonitor } from './useRunMonitor';
 export { useRuns } from './useRuns';
 export { useDeleteRun } from './useDeleteRun';
 export type { DeleteRunInput, DeleteRunResult } from './useDeleteRun';
+export { useDeleteRunsPreview } from './useDeleteRunsPreview';
+export type {
+  DeleteRunsPreviewCanonicalIdea,
+  DeleteRunsPreviewNode,
+  DeleteRunsPreviewPreservedNode,
+  DeleteRunsPreviewResult,
+} from './useDeleteRunsPreview';
 export { useRetryRun } from './useRetryRun';

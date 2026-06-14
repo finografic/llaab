@@ -20,7 +20,9 @@ import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
 import type {
   CleanRecentBody,
   CreateNodeBody,
+  DeleteRunsPreviewBody,
   ListNodesQuery,
+  PromoteCanonicalIdeaBody,
   UpdateSourceProfilesBody,
   VaultLoginBody,
 } from './vault.schema.js';
@@ -304,24 +306,35 @@ function buildProducedNodeDeleteContext(allNodes: LabNode[], deletingRunIds: Set
 }
 
 function canDeleteProducedNode(node: LabNode, context: ProducedNodeDeleteContext): boolean {
-  const isReferencedByRemainingRun = context.remainingRuns.some((run) =>
-    run.produced_node_ids.includes(node.id),
-  );
-  if (isReferencedByRemainingRun) return false;
+  return getProducedNodeRetentionReason(node, context) === null;
+}
+
+/** Returns a human-readable reason the node would be preserved, or null if it can be deleted. */
+function getProducedNodeRetentionReason(node: LabNode, context: ProducedNodeDeleteContext): string | null {
+  const referencingRun = context.remainingRuns.find((run) => run.produced_node_ids.includes(node.id));
+  if (referencingRun) return `still referenced by run "${referencingRun.title}"`;
 
   if (node.type === 'idea') {
-    return !context.canonicalIdeas.some((idea) => idea.source_candidate_idea_ids.includes(node.id));
+    const referencingIdea = context.canonicalIdeas.find((idea) =>
+      idea.source_candidate_idea_ids.includes(node.id),
+    );
+    if (referencingIdea) return `used as a source for canonical idea "${referencingIdea.title}"`;
+    return null;
   }
 
   if (node.type === 'transcript') {
-    return !context.canonicalIdeas.some((idea) => idea.transcript_id === node.id);
+    const referencingIdea = context.canonicalIdeas.find((idea) => idea.transcript_id === node.id);
+    if (referencingIdea) return `referenced by canonical idea "${referencingIdea.title}"`;
+    return null;
   }
 
   if (node.type === 'source') {
-    return !context.transcripts.some((transcript) => transcript.source_id === node.id);
+    const referencingTranscript = context.transcripts.find((transcript) => transcript.source_id === node.id);
+    if (referencingTranscript) return `referenced by transcript "${referencingTranscript.title}"`;
+    return null;
   }
 
-  return true;
+  return null;
 }
 
 export const vaultAuthLogin = {
@@ -732,6 +745,79 @@ export const consolidateTranscriptIdeas = {
   },
 };
 
+export const promoteCanonicalIdea = {
+  path: '/transcripts/:id/canonical-ideas/promote' as const,
+  handler: async (c: AppCtxJson<PromoteCanonicalIdeaBody>) => {
+    const { id } = c.req.param() as { id: string };
+    const { candidateId } = c.req.valid('json');
+
+    const transcriptPath = getNodeFilePath('transcript', id);
+    let transcript: TranscriptNode;
+    try {
+      transcript = (await readNode(transcriptPath)) as TranscriptNode;
+    } catch {
+      return c.json({ error: 'Transcript not found' }, 404);
+    }
+
+    const allNodes = await listNodes();
+    const candidate = allNodes.find(
+      (node): node is IdeaNode => node.type === 'idea' && node.id === candidateId,
+    );
+    if (!candidate) return c.json({ error: 'Candidate idea not found' }, 404);
+
+    const alreadyCovered = (transcript.canonical_coverage?.covered_candidate_idea_ids ?? []).includes(
+      candidateId,
+    );
+    if (alreadyCovered) {
+      return c.json({ error: 'This candidate idea is already covered by a canonical idea.' }, 400);
+    }
+
+    const { domains, topics } = splitIdeaTags(candidate.tags);
+    const timestamp = formatInstantForFilenameId(new Date());
+    const created = await createNode({
+      type: 'canonical-idea',
+      id: `canonical-${transcript.id}-promoted-${timestamp}`,
+      title: candidate.title,
+      body: candidate.body,
+      tags: dedupeTags([...domains, ...topics]),
+      extra: {
+        transcript_id: transcript.id,
+        source_candidate_idea_ids: [candidateId],
+        confidence: 'medium',
+        key_claims: [],
+        coverage_notes: 'Promoted from a possible missed idea.',
+      },
+    });
+    const canonicalIdea = created.node as CanonicalIdeaNode;
+
+    const updated = await updateNode(transcriptPath, (current) => {
+      const transcriptNode = current as TranscriptNode;
+      const existing = transcriptNode.canonical_coverage;
+      const candidateIdeaIds = new Set(existing?.candidate_idea_ids ?? []);
+      candidateIdeaIds.add(candidateId);
+
+      return {
+        ...transcriptNode,
+        canonical_coverage: {
+          canonical_idea_ids: [...new Set([...(existing?.canonical_idea_ids ?? []), canonicalIdea.id])],
+          candidate_idea_ids: [...candidateIdeaIds],
+          covered_candidate_idea_ids: [
+            ...new Set([...(existing?.covered_candidate_idea_ids ?? []), candidateId]),
+          ],
+          omitted_candidate_idea_ids: existing?.omitted_candidate_idea_ids ?? [],
+          missed_candidate_idea_ids: (existing?.missed_candidate_idea_ids ?? []).filter(
+            (item) => item.id !== candidateId,
+          ),
+          warning: existing?.warning,
+          updated_at: formatIsoUtcSeconds(new Date()),
+        },
+      };
+    });
+
+    return c.json({ success: true, canonicalIdea, transcript: updated.node as TranscriptNode });
+  },
+};
+
 export const discardTranscript = {
   path: '/transcripts/:id' as const,
   handler: async (c: AppCtx) => {
@@ -838,6 +924,58 @@ export const deleteRun = {
 
     await deleteNode('run', id);
     return c.json({ success: true, deletedProduced });
+  },
+};
+
+export const previewDeleteRuns = {
+  path: '/runs/delete-preview' as const,
+  handler: async (c: AppCtxJson<DeleteRunsPreviewBody>) => {
+    const { ids } = c.req.valid('json');
+
+    const allNodes = await listNodes();
+    const runsById = new Map(
+      allNodes.filter((node): node is RunNode => node.type === 'run').map((run) => [run.id, run]),
+    );
+
+    const runs: Array<{ id: string; title: string }> = [];
+    const deletingRunIds = new Set<string>();
+    for (const id of ids) {
+      const run = runsById.get(id);
+      if (!run) continue;
+      runs.push({ id: run.id, title: run.title });
+      deletingRunIds.add(run.id);
+    }
+
+    const deleteContext = buildProducedNodeDeleteContext(allNodes, deletingRunIds);
+    const producedNodeIds = new Set(
+      [...deletingRunIds].flatMap((id) => runsById.get(id)?.produced_node_ids ?? []),
+    );
+
+    const toDelete: Array<{ id: string; type: string; title: string }> = [];
+    const preserved: Array<{ id: string; type: string; title: string; reason: string }> = [];
+
+    for (const nodeId of producedNodeIds) {
+      const node = deleteContext.nodesById.get(nodeId);
+      if (!node) continue;
+      const reason = getProducedNodeRetentionReason(node, deleteContext);
+      if (reason === null) {
+        toDelete.push({ id: node.id, type: node.type, title: node.title });
+      } else {
+        preserved.push({ id: node.id, type: node.type, title: node.title, reason });
+      }
+    }
+
+    // Canonical ideas tied to transcripts/candidates produced by these runs remain untouched
+    // (they are what force those nodes into `preserved`), but are surfaced for visibility.
+    const canonicalIdeasAffected = deleteContext.canonicalIdeas
+      .filter(
+        (idea) =>
+          (idea.transcript_id && producedNodeIds.has(idea.transcript_id)) ||
+          idea.source_candidate_idea_ids.some((sourceId) => producedNodeIds.has(sourceId)),
+      )
+      .map((idea) => ({ id: idea.id, title: idea.title, transcriptId: idea.transcript_id }));
+
+    return c.json({ runs, toDelete, preserved, canonicalIdeasAffected });
   },
 };
 

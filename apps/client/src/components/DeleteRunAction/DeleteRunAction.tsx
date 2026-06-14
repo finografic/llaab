@@ -8,8 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from 'components/ui/dialog';
-import { useDeleteRun } from 'queries/runs';
-import { useState } from 'react';
+import { useDeleteRun, useDeleteRunsPreview } from 'queries/runs';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { RunNode } from '@llaab/schemas';
 
@@ -27,15 +27,23 @@ export function DeleteRunAction({ run, onDeleted, color = 'error' }: DeleteRunAc
   const [step, setStep] = useState<DialogStep>('closed');
   const [error, setError] = useState<string | null>(null);
   const deleteRun = useDeleteRun();
+  const preview = useDeleteRunsPreview();
+  const { mutate: previewMutate, reset: previewReset } = preview;
   const deleting = deleteRun.isPending;
 
   const producedCount = run.produced_node_ids.length;
   const producedLabel = producedCount === 1 ? '1 node' : `${producedCount} nodes`;
 
+  useEffect(() => {
+    if (step !== 'confirm-produced') return;
+    previewMutate([run.id]);
+  }, [step, run.id, previewMutate]);
+
   const closeDialogs = () => {
     if (deleting) return;
     setStep('closed');
     setError(null);
+    previewReset();
   };
 
   const performDelete = async (deleteProduced: boolean) => {
@@ -112,7 +120,7 @@ export function DeleteRunAction({ run, onDeleted, color = 'error' }: DeleteRunAc
             </DialogDescription>
           </DialogHeader>
 
-          {producedCount > 0 && (
+          {producedCount > 0 && !preview.data && (
             <ul className={styles.producedList}>
               {run.produced_node_ids.map((nodeId) => (
                 <li key={nodeId} className={styles.producedItem}>
@@ -121,6 +129,40 @@ export function DeleteRunAction({ run, onDeleted, color = 'error' }: DeleteRunAc
               ))}
             </ul>
           )}
+
+          {preview.isPending ? (
+            <p className={styles.previewLoading}>Checking what would be deleted…</p>
+          ) : null}
+          {preview.data ? (
+            <div className={styles.preview}>
+              <p>
+                {preview.data.toDelete.length} node{preview.data.toDelete.length === 1 ? '' : 's'} would be
+                deleted with "Run and nodes".
+              </p>
+              {preview.data.preserved.length > 0 ? (
+                <>
+                  <p>
+                    {preview.data.preserved.length} node{preview.data.preserved.length === 1 ? '' : 's'} would
+                    be preserved (still referenced elsewhere):
+                  </p>
+                  <ul className={styles.producedList}>
+                    {preview.data.preserved.map((node) => (
+                      <li key={node.id} className={styles.producedItem}>
+                        {node.title} — {node.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+              {preview.data.canonicalIdeasAffected.length > 0 ? (
+                <p>
+                  {preview.data.canonicalIdeasAffected.length} canonical idea
+                  {preview.data.canonicalIdeasAffected.length === 1 ? '' : 's'} reference these nodes and will
+                  remain.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {error && <p className={styles.error}>{error}</p>}
 
