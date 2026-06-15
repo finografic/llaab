@@ -4,7 +4,7 @@ This document is the technical reference for **canonical idea consolidation**: t
 turns the candidate ideas extracted from a transcript's extraction runs into a small set of
 durable, deduplicated `canonical-idea` nodes.
 
-It covers the two-phase Draft + Audit pipeline, the three quality modes, the input/output shapes
+It covers the two-phase Draft + Audit pipeline, the four quality modes, the input/output shapes
 exchanged with the LLM, and the deterministic post-processing applied before nodes are written to
 the vault.
 
@@ -23,7 +23,7 @@ are specific to consolidation:
 | `audit phase`          | The optional second LLM call: reviews and refines the draft set.                          |
 | `possible missed idea` | A candidate (or cluster) the draft/audit model flagged as not yet represented.            |
 | `coverage`             | Per-candidate bookkeeping: covered / omitted / missed, stored on the transcript.          |
-| `mode`                 | `fast`, `balanced`, or `best` — controls which models run the draft and audit phases.     |
+| `mode`                 | `fast`, `single-26b`, `balanced`, or `best` — controls draft/audit models and prompt.     |
 
 ---
 
@@ -124,17 +124,27 @@ The target is framed to the model as **"a strong preference, not a quota"** — 
 
 ## Step 3 — Modes and model routing
 
-Three modes control which `TaskType` is used for each phase. The mode is selected via the
-`?mode=` query parameter on the consolidate request (default: `balanced`). There is currently no
-UI mode selector — see [Future UX](#future-ux).
+Four modes control which `TaskType` is used for each phase, and which draft prompt is used. The
+mode is selected via the `?mode=` query parameter on the consolidate request (default:
+`balanced`). There is currently no UI mode selector — see [Future UX](#future-ux).
 
-| Mode       | Draft task          | Audit task          | Behaviour                                                   |
-| ---------- | ------------------- | ------------------- | ----------------------------------------------------------- |
-| `fast`     | `consolidate`       | _(none)_            | Draft only. Quickest, good-enough output.                   |
-| `balanced` | `consolidate`       | `consolidate-audit` | **Default.** Fast draft, then a higher-quality pass.        |
-| `best`     | `consolidate-audit` | `consolidate-audit` | Highest quality, slowest. Both phases use the strong model. |
+| Mode         | Draft task          | Audit task          | Draft prompt | Behaviour                                                    |
+| ------------ | ------------------- | ------------------- | ------------ | ------------------------------------------------------------ |
+| `fast`       | `consolidate`       | _(none)_            | full         | Draft only. Quickest, good-enough output.                    |
+| `single-26b` | `consolidate-audit` | _(none)_            | compact      | One strong-model pass with a compact prompt. No second pass. |
+| `balanced`   | `consolidate`       | `consolidate-audit` | full         | **Default.** Fast draft, then a higher-quality pass.         |
+| `best`       | `consolidate-audit` | `consolidate-audit` | full         | Highest quality, slowest. Both phases use the strong model.  |
 
-The modes resolve through `getConsolidationTasks(mode)` in `vault.routes.ts`.
+The modes resolve through `getConsolidationTasks(mode)` in `vault.routes.ts`, which returns
+`{ draftTask, auditTask, draftPromptStyle }`. `draftPromptStyle: 'compact'` selects
+`buildCanonicalCompactSystemPrompt(target)` instead of `buildCanonicalDraftSystemPrompt(target)` —
+see [Draft prompt rules](#draft-prompt-rules).
+
+`single-26b` exists because the two-pass `best`/`balanced` audit can roughly double total latency
+(a second full-set generation by the strong model). `single-26b` targets the same strong model
+(`consolidate-audit`, default `gemma4:26b-a4b-it-qat`) in one pass with a shorter prompt, aiming to
+reproduce `best`-level quality closer to `fast`-mode latency. It has no audit phase and therefore
+no `auditNotes` / `auditWarning`.
 
 Each `TaskType` is routed to an actual model via `packages/llm/src/router.ts` /
 `configs/llm-routing.json`, and is editable from the **Models** page (`/llm`,
@@ -255,6 +265,12 @@ accepted and normalized (small models are inconsistent about casing), and `confi
 7. **Single-Source Rule** — single-source clusters usually become supporting detail, not a
    canonical idea, unless the idea is technically specific, central to the transcript, and useful
    for future retrieval/linking — in which case mark `confidence: "medium"`.
+
+`single-26b` mode uses `buildCanonicalCompactSystemPrompt(target)` instead. It keeps the count
+guidance and a condensed version of rules 1–5 above (omitting the Category Separation and
+Single-Source rules' full text), and adds explicit per-field limits — `body` max 45 words, `tags`
+max 4, `domains` max 3, `keyClaims` max 2 — to keep the single strong-model pass short and fast.
+It does not include the JSON-shape's `auditNotes` field (there is no audit phase in this mode).
 
 The prompt also requires:
 
@@ -420,7 +436,7 @@ independent of a full re-consolidation.
     warning?: string,
   },
   llmMeta: { model, provider, durationMs, promptTokens, completionTokens },
-  mode: 'fast' | 'balanced' | 'best',
+  mode: 'fast' | 'single-26b' | 'balanced' | 'best',
 }
 ```
 

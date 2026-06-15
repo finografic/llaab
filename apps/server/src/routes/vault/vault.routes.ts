@@ -170,9 +170,9 @@ interface ConsolidationCoverageItem {
   reason: string;
 }
 
-type ConsolidationMode = 'fast' | 'balanced' | 'best';
+type ConsolidationMode = 'fast' | 'single-26b' | 'balanced' | 'best';
 
-const CONSOLIDATION_MODES = new Set<ConsolidationMode>(['fast', 'balanced', 'best']);
+const CONSOLIDATION_MODES = new Set<ConsolidationMode>(['fast', 'single-26b', 'balanced', 'best']);
 
 function parseConsolidationMode(value: string | undefined): ConsolidationMode {
   return value && CONSOLIDATION_MODES.has(value as ConsolidationMode)
@@ -183,15 +183,18 @@ function parseConsolidationMode(value: string | undefined): ConsolidationMode {
 function getConsolidationTasks(mode: ConsolidationMode): {
   draftTask: TaskType;
   auditTask: TaskType | null;
+  draftPromptStyle: 'full' | 'compact';
 } {
   switch (mode) {
     case 'fast':
-      return { draftTask: 'consolidate', auditTask: null };
+      return { draftTask: 'consolidate', auditTask: null, draftPromptStyle: 'full' };
+    case 'single-26b':
+      return { draftTask: 'consolidate-audit', auditTask: null, draftPromptStyle: 'compact' };
     case 'best':
-      return { draftTask: 'consolidate-audit', auditTask: 'consolidate-audit' };
+      return { draftTask: 'consolidate-audit', auditTask: 'consolidate-audit', draftPromptStyle: 'full' };
     case 'balanced':
     default:
-      return { draftTask: 'consolidate', auditTask: 'consolidate-audit' };
+      return { draftTask: 'consolidate', auditTask: 'consolidate-audit', draftPromptStyle: 'full' };
   }
 }
 
@@ -371,6 +374,42 @@ Rules:
 - possibleMissedIdeas is for distinct, important candidates not represented in canonicalIdeas.
 - Do not include markdown fences, explanations, or comments.
 - Keep coverageNotes and reason fields short (one sentence).
+- Before responding, double-check that the JSON is syntactically valid: every string is quoted and escaped, and every object/array is closed.`;
+}
+
+function buildCanonicalCompactSystemPrompt(target: ConsolidationTarget): string {
+  return `You consolidate extracted candidate ideas into durable canonical ideas.
+
+${buildCountGuidance(target)}
+
+Do not optimize for minimum count. Do not pad to hit the target.
+Merge duplicates. Preserve distinct knowledge nodes.
+
+Important separation rules:
+1. Merge context stuffing and targeted retrieval into one idea if they describe the same problem/solution pair.
+2. Keep LLM non-determinism from large context windows separate from the workflow strategy of targeted retrieval.
+3. Capture Bash as a foundational but limited execution layer if supported.
+4. Keep typed programmable execution layers separate from runtime isolation (e.g. V8 isolates) when both are supported.
+5. Single-source ideas should usually be supporting details, unless technically central and useful for future linking.
+
+Return ONLY valid JSON with this exact shape:
+${CANONICAL_IDEA_DRAFT_JSON_SHAPE}
+
+For each canonical idea:
+- title: concise, max ~100 characters.
+- body: max 45 words.
+- tags: max 4 semantic tags.
+- domains: max 3 "d:" tags.
+- keyClaims: max 2.
+- coverageNotes: one plain-English sentence — never mention drafts, audits, prompts, or the consolidation process itself.
+
+Rules:
+- Use only candidate ids from the input.
+- Every canonical idea must reference at least one source candidate id in sourceCandidateIdeaIds.
+- Every candidate id must appear in exactly one of coverage.coveredCandidateIdeaIds, coverage.omittedCandidateIdeaIds, or coverage.missedCandidateIdeaIds.
+- coverage.coveredCandidateIdeaIds must match the candidate ids referenced by canonicalIdeas.
+- possibleMissedIdeas is for distinct, important candidates not represented in canonicalIdeas.
+- Do not include markdown fences, explanations, or comments.
 - Before responding, double-check that the JSON is syntactically valid: every string is quoted and escaped, and every object/array is closed.`;
 }
 
@@ -852,7 +891,7 @@ export const consolidateTranscriptIdeas = {
     }
 
     const mode = parseConsolidationMode(c.req.query('mode'));
-    const { draftTask, auditTask } = getConsolidationTasks(mode);
+    const { draftTask, auditTask, draftPromptStyle } = getConsolidationTasks(mode);
     const candidateIds = new Set(candidates.map((candidate) => candidate.id));
     const stats = computeConsolidationStats(candidates);
     const target = computeConsolidationTarget(stats.candidateIdeaCount);
@@ -861,7 +900,9 @@ export const consolidateTranscriptIdeas = {
       const { llm: draftLlm, result: draftResult } = await callLlmForJson(
         draftTask,
         buildCanonicalDraftInput(transcript, candidates, stats, target),
-        buildCanonicalDraftSystemPrompt(target),
+        draftPromptStyle === 'compact'
+          ? buildCanonicalCompactSystemPrompt(target)
+          : buildCanonicalDraftSystemPrompt(target),
         CanonicalDraftResultSchema,
       );
       let result: CanonicalDraftResult = draftResult;
