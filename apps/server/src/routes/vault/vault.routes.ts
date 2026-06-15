@@ -185,16 +185,13 @@ function getConsolidationTasks(mode: ConsolidationMode): {
   auditTask: TaskType | null;
   draftPromptStyle: 'full' | 'compact';
 } {
+  // Single-pass consolidation on the `consolidate` task route only. Audit phase code remains
+  // in place but is not invoked until re-enabled here.
   switch (mode) {
-    case 'fast':
-      return { draftTask: 'consolidate', auditTask: null, draftPromptStyle: 'full' };
     case 'single-26b':
-      return { draftTask: 'consolidate-audit', auditTask: null, draftPromptStyle: 'compact' };
-    case 'best':
-      return { draftTask: 'consolidate-audit', auditTask: 'consolidate-audit', draftPromptStyle: 'full' };
-    case 'balanced':
+      return { draftTask: 'consolidate', auditTask: null, draftPromptStyle: 'compact' };
     default:
-      return { draftTask: 'consolidate', auditTask: 'consolidate-audit', draftPromptStyle: 'full' };
+      return { draftTask: 'consolidate', auditTask: null, draftPromptStyle: 'full' };
   }
 }
 

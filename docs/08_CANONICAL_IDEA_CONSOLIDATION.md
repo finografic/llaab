@@ -4,9 +4,9 @@ This document is the technical reference for **canonical idea consolidation**: t
 turns the candidate ideas extracted from a transcript's extraction runs into a small set of
 durable, deduplicated `canonical-idea` nodes.
 
-It covers the two-phase Draft + Audit pipeline, the four quality modes, the input/output shapes
-exchanged with the LLM, and the deterministic post-processing applied before nodes are written to
-the vault.
+It covers the draft pipeline (with audit phase code retained but currently disabled), the four
+quality modes, the input/output shapes exchanged with the LLM, and the deterministic
+post-processing applied before nodes are written to the vault.
 
 ---
 
@@ -15,15 +15,15 @@ the vault.
 LLAAB uses the [glossary](../LLAAB_GLOSSARY.md) as the canonical shared vocabulary. The terms below
 are specific to consolidation:
 
-| Term                   | Meaning in consolidation                                                                  |
-| ---------------------- | ----------------------------------------------------------------------------------------- |
-| `candidate idea`       | An `IdeaNode` produced by an extraction run for a transcript — raw, unreviewed material.  |
-| `canonical idea`       | A `CanonicalIdeaNode` — a deduplicated, durable idea derived from one or more candidates. |
-| `draft phase`          | The first LLM call: turns all candidates into a first canonical idea set.                 |
-| `audit phase`          | The optional second LLM call: reviews and refines the draft set.                          |
-| `possible missed idea` | A candidate (or cluster) the draft/audit model flagged as not yet represented.            |
-| `coverage`             | Per-candidate bookkeeping: covered / omitted / missed, stored on the transcript.          |
-| `mode`                 | `fast`, `single-26b`, `balanced`, or `best` — controls draft/audit models and prompt.     |
+| Term                   | Meaning in consolidation                                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `candidate idea`       | An `IdeaNode` produced by an extraction run for a transcript — raw, unreviewed material.                    |
+| `canonical idea`       | A `CanonicalIdeaNode` — a deduplicated, durable idea derived from one or more candidates.                   |
+| `draft phase`          | The LLM call: turns all candidates into a canonical idea set (currently the only active pass).              |
+| `audit phase`          | Optional second LLM call that reviews and refines the draft — **implemented but not invoked** (see Step 5). |
+| `possible missed idea` | A candidate (or cluster) the draft/audit model flagged as not yet represented.                              |
+| `coverage`             | Per-candidate bookkeeping: covered / omitted / missed, stored on the transcript.                            |
+| `mode`                 | `fast`, `single-26b`, `balanced`, or `best` — controls draft/audit models and prompt.                       |
 
 ---
 
@@ -46,19 +46,15 @@ LLAAB has no scheduler, per the agent-execution policy (`.github/instructions/pr
 
 ## High-level pipeline
 
-The order is **draft first, then audit** — the audit phase reviews and refines the draft, it does
-not run before it.
+**Current behaviour:** single pass on the `consolidate` task route (strong model, e.g.
+`gemma4:26b-a4b-it-qat` via `/llm` → Consolidation). The audit phase is implemented in code but
+disabled in `getConsolidationTasks` until re-enabled.
 
 ```mermaid
 flowchart TD
   A["Gather candidate ideas\n(from extraction runs for this transcript)"] --> B["Compute stats + target\n(candidate count, ideal/hard bounds)"]
-  B --> C["Phase 1: Draft\n(fast model, e.g. gemma4:e4b-it-qat)"]
-  C --> D{"Audit phase\nenabled for this mode?"}
-  D -- "no (fast mode)" --> F
-  D -- "yes (balanced / best)" --> E["Phase 2: Audit\n(strong model, e.g. gemma4:26b-a4b-it-qat)"]
-  E -- "success" --> F["Sanitize + normalize\n(coverageNotes, tags)"]
-  E -- "audit failed" --> F2["Fall back to draft result\n+ warning"]
-  F2 --> F
+  B --> C["Draft pass\n(`consolidate` task route)"]
+  C --> F["Sanitize + normalize\n(coverageNotes, tags)"]
   F --> G["Create CanonicalIdeaNode\nper canonical idea"]
   G --> H["Update Transcript.canonical_coverage"]
   H --> I["Return response to client\n(canonicalIdeas, coverageAudit, llmMeta, mode)"]
@@ -124,57 +120,51 @@ The target is framed to the model as **"a strong preference, not a quota"** — 
 
 ## Step 3 — Modes and model routing
 
-Four modes control which `TaskType` is used for each phase, and which draft prompt is used. The
-mode is selected via the `?mode=` query parameter on the consolidate request (default:
-`balanced`). There is currently no UI mode selector — see [Future UX](#future-ux).
+Four modes control which draft prompt is used. All modes currently run **one pass** on the
+`consolidate` task route; `auditTask` is always `null` in `getConsolidationTasks`. The mode is
+selected via the `?mode=` query parameter on the consolidate request (default: `balanced`). There
+is currently no UI mode selector — see [Future UX](#future-ux).
 
-| Mode         | Draft task          | Audit task          | Draft prompt | Behaviour                                                    |
-| ------------ | ------------------- | ------------------- | ------------ | ------------------------------------------------------------ |
-| `fast`       | `consolidate`       | _(none)_            | full         | Draft only. Quickest, good-enough output.                    |
-| `single-26b` | `consolidate-audit` | _(none)_            | compact      | One strong-model pass with a compact prompt. No second pass. |
-| `balanced`   | `consolidate`       | `consolidate-audit` | full         | **Default.** Fast draft, then a higher-quality pass.         |
-| `best`       | `consolidate-audit` | `consolidate-audit` | full         | Highest quality, slowest. Both phases use the strong model.  |
+| Mode         | Draft task    | Audit task | Draft prompt | Behaviour                                           |
+| ------------ | ------------- | ---------- | ------------ | --------------------------------------------------- |
+| `fast`       | `consolidate` | _(none)_   | full         | Single pass, full draft prompt.                     |
+| `single-26b` | `consolidate` | _(none)_   | compact      | Single pass, compact prompt (shorter field limits). |
+| `balanced`   | `consolidate` | _(none)_   | full         | **Default.** Same as `fast` today (single pass).    |
+| `best`       | `consolidate` | _(none)_   | full         | Same as `balanced` today (single pass).             |
 
 The modes resolve through `getConsolidationTasks(mode)` in `vault.routes.ts`, which returns
 `{ draftTask, auditTask, draftPromptStyle }`. `draftPromptStyle: 'compact'` selects
 `buildCanonicalCompactSystemPrompt(target)` instead of `buildCanonicalDraftSystemPrompt(target)` —
 see [Draft prompt rules](#draft-prompt-rules).
 
-`single-26b` exists because the two-pass `best`/`balanced` audit can roughly double total latency
-(a second full-set generation by the strong model). `single-26b` targets the same strong model
-(`consolidate-audit`, default `gemma4:26b-a4b-it-qat`) in one pass with a shorter prompt, aiming to
-reproduce `best`-level quality closer to `fast`-mode latency. It has no audit phase and therefore
-no `auditNotes` / `auditWarning`.
+`single-26b` uses the compact prompt with tighter per-field limits for a shorter generation.
+`consolidate-audit` remains a routable task on `/llm` for future two-pass use but is not called by
+consolidation while audit is disabled.
 
 Each `TaskType` is routed to an actual model via `packages/llm/src/router.ts` /
 `configs/llm-routing.json`, and is editable from the **Models** page (`/llm`,
-`LlmRoutingEditor.tsx`). Current defaults:
+`LlmRoutingEditor.tsx`). Typical routing:
 
-| Task                | Default model           | Tier           |
+| Task                | Model (example)         | Tier           |
 | ------------------- | ----------------------- | -------------- |
-| `consolidate`       | `gemma4:e4b-it-qat`     | `local-strong` |
+| `consolidate`       | `gemma4:26b-a4b-it-qat` | `local-strong` |
 | `consolidate-audit` | `gemma4:26b-a4b-it-qat` | `local-strong` |
 
 ```mermaid
 sequenceDiagram
   participant Client
   participant Server as Server (vault.routes.ts)
-  participant Draft as Draft model
-  participant Audit as Audit model
+  participant Model as Consolidate model
 
   Client->>Server: POST /transcripts/:id/consolidate?mode=balanced
   Server->>Server: gather candidates, compute stats + target
-  Server->>Draft: routeLlm('consolidate', draftInput)
-  Draft-->>Server: CanonicalDraftResult (JSON)
-  Server->>Audit: routeLlm('consolidate-audit', auditInput)
-  Audit-->>Server: CanonicalAuditResult (JSON)
+  Server->>Model: routeLlm('consolidate', draftInput)
+  Model-->>Server: CanonicalDraftResult (JSON)
   Server->>Server: sanitize notes, normalize tags
   Server->>Server: createNode('canonical-idea', ...) per idea
   Server->>Server: updateNode(transcript.canonical_coverage)
   Server-->>Client: canonicalIdeas, coverageAudit, llmMeta, mode
 ```
-
-In `fast` mode, the Audit steps are skipped entirely and the draft result is used directly.
 
 ---
 
@@ -286,9 +276,12 @@ The prompt also requires:
 
 ---
 
-## Step 5 — Audit phase (optional)
+## Step 5 — Audit phase (dormant)
 
-Skipped entirely in `fast` mode. In `balanced` and `best` modes, `buildCanonicalAuditInput` sends:
+> **Not invoked:** `getConsolidationTasks` currently sets `auditTask: null` for every mode. The
+> handler, prompts, and schemas below remain for a future two-pass re-enable.
+
+When enabled, `buildCanonicalAuditInput` sends:
 
 ```ts
 type CanonicalAuditInput = {
@@ -468,13 +461,14 @@ Context-Specific, and Single-Source rules in action.
 
 ## Tuning models
 
-To change which model handles `consolidate` or `consolidate-audit`:
+To change which model handles consolidation:
 
-- **UI**: `/llm` page → Task routing → pick a model for "Consolidation" or "Consolidation Audit".
-- **Config file**: edit `configs/llm-routing.json` directly (same shape the UI writes).
+- **UI**: `/llm` page → Task routing → **Consolidation** (the active single pass).
+- **Config file**: edit `configs/llm-routing.json` → `tasks.consolidate` (same shape the UI writes).
 
-Both phases must point at models that are installed in Ollama (`ollama list`); the UI shows an
-"Available" / "Not installed" indicator per task.
+`consolidate-audit` is still listed on `/llm` but unused while audit is disabled. The model must
+be installed in Ollama (`ollama list`); the UI shows an "Available" / "Not installed" indicator per
+task.
 
 ---
 
