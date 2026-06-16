@@ -153,6 +153,14 @@ const CanonicalDraftResultSchema = z.object({
   possibleMissedIdeas: z.array(PossibleMissedIdeaSchema).optional().default([]),
 });
 
+const CanonicalAuditResultSchema = CanonicalDraftResultSchema.extend({
+  auditNotes: z
+    .union([z.array(z.string()), z.string()])
+    .optional()
+    .default([])
+    .transform((value) => (Array.isArray(value) ? value : value ? [value] : [])),
+});
+
 type CanonicalDraftResult = z.infer<typeof CanonicalDraftResultSchema>;
 
 interface ConsolidationCoverageItem {
@@ -160,6 +168,34 @@ interface ConsolidationCoverageItem {
   canonicalIdeaIndexes: number[];
   status: z.infer<typeof ConsolidationCoverageStatusSchema>;
   reason: string;
+}
+
+type ConsolidationMode = 'fast' | 'single-26b' | 'balanced' | 'best';
+
+const CONSOLIDATION_MODES = new Set<ConsolidationMode>(['fast', 'single-26b', 'balanced', 'best']);
+
+function parseConsolidationMode(value: string | undefined): ConsolidationMode {
+  return value && CONSOLIDATION_MODES.has(value as ConsolidationMode)
+    ? (value as ConsolidationMode)
+    : 'single-26b';
+}
+
+function getConsolidationTasks(mode: ConsolidationMode): {
+  draftTask: TaskType;
+  auditTask: TaskType | null;
+  draftPromptStyle: 'full' | 'compact';
+} {
+  switch (mode) {
+    case 'fast':
+      return { draftTask: 'consolidate', auditTask: null, draftPromptStyle: 'full' };
+    case 'single-26b':
+      return { draftTask: 'consolidate-audit', auditTask: null, draftPromptStyle: 'compact' };
+    case 'best':
+      return { draftTask: 'consolidate-audit', auditTask: 'consolidate-audit', draftPromptStyle: 'full' };
+    case 'balanced':
+    default:
+      return { draftTask: 'consolidate', auditTask: 'consolidate-audit', draftPromptStyle: 'full' };
+  }
 }
 
 interface ConsolidationStats {
@@ -291,6 +327,27 @@ const CANONICAL_IDEA_DRAFT_JSON_SHAPE =
   '"possibleMissedIdeas":[{"title":"Distinct missed idea","reason":"Why it might be missing",' +
   '"sourceCandidateIdeaIds":["idea-id"],"recommendation":"promote"}]}';
 
+const DRAFT_CONSOLIDATION_RULES = `Category Separation Rule:
+Do not merge ideas that belong to different categories of concern, even if they are related. Keep separate when appropriate: workflow strategy; model behavior; historical role; interface/tooling architecture; runtime/sandboxing architecture; cost/performance implication.
+
+Problem/Solution Merge Rule:
+When one candidate idea describes a problem and another describes the recommended solution to that same problem, merge them into one canonical idea if together they form one coherent concept. Example: "dumping entire codebases into prompts wastes tokens" plus "targeted retrieval/search is more efficient" should merge into "Context stuffing should be replaced by targeted retrieval." Do not merge a problem with an idea about a different underlying concept just because it is topically related.
+
+Context-Specific Rule:
+You may merge context stuffing, massive codebase dumping, targeted retrieval, grep/code-driven search, token cost, and context retrieval efficiency into one canonical idea framed as "Replace context stuffing with targeted retrieval." Do NOT merge this with large context windows causing model non-determinism — that is a model-behavior idea and should remain separate if supported by multiple candidates.
+
+Non-Determinism Separation Rule:
+If context non-determinism (large context windows making LLM behavior less deterministic/reliable) is supported by 2 or more candidate ideas, keep it as its own canonical idea rather than merging it into context retrieval or context stuffing. It is a model-behavior idea, not a workflow-strategy idea.
+
+Bash-Specific Rule:
+For Bash-related ideas, prefer one canonical idea that captures both Bash as the first/foundational execution layer and Bash as limited due to missing permissions, safety controls, and sandboxing. Suggested shape: "Bash is a foundational but limited execution layer for agents." Do not always merge Bash directly into the typed-execution transition if the candidate pool supports Bash as a distinct historical bridge.
+
+Typed/Runtime Split Rule:
+Keep typed execution layers separate from runtime isolation when both are supported. These should usually be separate canonical ideas: (1) typed programmable execution layers / TypeScript SDKs, and (2) lightweight sandboxing / V8 isolates / multi-tenant runtime isolation. Typed SDKs are interface/tooling architecture; V8 isolates are runtime/infrastructure architecture.
+
+Single-Source Rule:
+Single-source candidate clusters should usually become supporting details, not canonical ideas, unless the idea is technically specific, central to the transcript, likely useful for future retrieval/linking, and not already covered by another canonical idea. When promoting a single-source idea, usually mark confidence as "medium".`;
+
 function buildCountGuidance(target: ConsolidationTarget): string {
   return `Count Guidance:
 Target output: ${target.idealMin}-${target.idealMax} canonical ideas.
@@ -300,7 +357,30 @@ Do not invent, pad, over-split, or promote weak ideas just to hit the target.
 Return fewer than the target only if the candidate pool genuinely collapses into fewer durable concepts AND doing so does not merge different categories of concern.`;
 }
 
-function buildCanonicalSystemPrompt(target: ConsolidationTarget): string {
+function buildCanonicalDraftSystemPrompt(target: ConsolidationTarget): string {
+  return `You consolidate extracted transcript ideas into canonical ideas.
+
+${buildCountGuidance(target)}
+
+${DRAFT_CONSOLIDATION_RULES}
+
+Return ONLY valid JSON with this exact shape:
+${CANONICAL_IDEA_DRAFT_JSON_SHAPE}
+
+Rules:
+- Use only candidate ids from the input.
+- Every canonical idea must reference at least one source candidate id in sourceCandidateIdeaIds.
+- Every candidate id must appear in exactly one of coverage.coveredCandidateIdeaIds, coverage.omittedCandidateIdeaIds, or coverage.missedCandidateIdeaIds.
+- coverage.coveredCandidateIdeaIds must match the candidate ids referenced by canonicalIdeas.
+- Include keyClaims for the important distinct claims.
+- coverageNotes must be plain-English and user-facing — never mention drafts, audits, prompts, or the consolidation process itself.
+- possibleMissedIdeas is for distinct, important candidates not represented in canonicalIdeas.
+- Do not include markdown fences, explanations, or comments.
+- Keep coverageNotes and reason fields short (one sentence).
+- Before responding, double-check that the JSON is syntactically valid: every string is quoted and escaped, and every object/array is closed.`;
+}
+
+function buildCanonicalCompactSystemPrompt(target: ConsolidationTarget): string {
   return `You consolidate extracted candidate ideas into durable canonical ideas.
 
 ${buildCountGuidance(target)}
@@ -325,7 +405,7 @@ For each canonical idea:
 - tags: max 4 semantic tags.
 - domains: max 3 "d:" tags.
 - keyClaims: max 2.
-- coverageNotes: one plain-English sentence — never mention prompts or the consolidation process itself.
+- coverageNotes: one plain-English sentence — never mention drafts, audits, prompts, or the consolidation process itself.
 
 Rules:
 - Use only candidate ids from the input.
@@ -337,9 +417,32 @@ Rules:
 - Before responding, double-check that the JSON is syntactically valid: every string is quoted and escaped, and every object/array is closed.`;
 }
 
+function buildCanonicalDraftInput(
+  transcript: TranscriptNode,
+  candidates: CandidateIdeaPayload[],
+  stats: ConsolidationStats,
+  target: ConsolidationTarget,
+): string {
+  return JSON.stringify(
+    {
+      transcript: {
+        id: transcript.id,
+        title: transcript.title,
+        summary: transcript.summary,
+        tags: transcript.tags,
+      },
+      stats,
+      target,
+      candidateIdeas: candidates,
+    },
+    null,
+    2,
+  );
+}
+
 const COMPACT_CANDIDATE_BODY_MAX_CHARS = 240;
 
-function buildCanonicalInput(
+function buildCanonicalCompactDraftInput(
   transcript: TranscriptNode,
   candidates: CandidateIdeaPayload[],
   stats: ConsolidationStats,
@@ -364,7 +467,76 @@ function buildCanonicalInput(
   });
 }
 
-const BANNED_COVERAGE_NOTE_PHRASES = ['prompt', 'internal', 'consolidation process'];
+const AUDIT_RESPONSIBILITIES = `Check the draft canonical ideas for:
+1. Are any canonical ideas duplicates?
+2. Are distinct concepts over-merged?
+3. Are related problem/solution pairs unnecessarily split?
+4. Are important candidate clusters missing?
+5. Are weak/single-source ideas promoted unnecessarily?
+6. Are sourceCandidateIdeaIds accurate?
+7. Is the final count within the target range?
+8. Are tags clean and reusable (max 5 semantic tags, max 3 domain tags)?
+9. Are domain tags appropriate (avoid noisy tags like d:ingest unless the idea is about ingestion)?
+10. Do coverageNotes avoid internal process language (no "draft", "audit", "prompt", "internal", "consolidation process")?`;
+
+function buildCanonicalAuditSystemPrompt(target: ConsolidationTarget): string {
+  return `You audit and refine a draft set of canonical ideas consolidated from transcript candidate ideas.
+
+${buildCountGuidance(target)}
+
+${DRAFT_CONSOLIDATION_RULES}
+
+${AUDIT_RESPONSIBILITIES}
+
+Do not re-run consolidation from scratch unless the draft is fundamentally broken. Make targeted corrections and return the finalized canonical ideas.
+
+Return ONLY valid JSON with this exact shape:
+${CANONICAL_IDEA_DRAFT_JSON_SHAPE.replace(/\}$/, ',"auditNotes":["Short note about a correction made, if any"]}')}
+
+Rules:
+- Use only candidate ids from the input.
+- Every canonical idea must reference at least one source candidate id in sourceCandidateIdeaIds.
+- Every candidate id must appear in exactly one of coverage.coveredCandidateIdeaIds, coverage.omittedCandidateIdeaIds, or coverage.missedCandidateIdeaIds.
+- coverageNotes must be plain-English and user-facing — never mention drafts, audits, prompts, or the consolidation process itself.
+- auditNotes is for your own summary of what changed (or empty if nothing changed) — it is not shown to end users.
+- Do not include markdown fences, explanations, or comments.
+- Keep coverageNotes and reason fields short (one sentence).
+- Before responding, double-check that the JSON is syntactically valid: every string is quoted and escaped, and every object/array is closed.`;
+}
+
+function buildCanonicalAuditInput(
+  transcript: TranscriptNode,
+  candidates: CandidateIdeaPayload[],
+  stats: ConsolidationStats,
+  draft: CanonicalDraftResult,
+): string {
+  return JSON.stringify(
+    {
+      transcript: {
+        id: transcript.id,
+        title: transcript.title,
+        summary: transcript.summary,
+        tags: transcript.tags,
+      },
+      stats,
+      candidateIdeas: candidates,
+      draft,
+    },
+    null,
+    2,
+  );
+}
+
+const BANNED_COVERAGE_NOTE_PHRASES = [
+  'draft 0',
+  'draft 1',
+  'draft 2',
+  'audit',
+  'prompt',
+  'internal',
+  'consolidation process',
+  'overarching narrative formed by combining drafts',
+];
 
 const FALLBACK_COVERAGE_NOTE = 'Covers related candidate ideas about this concept.';
 
@@ -749,17 +921,43 @@ export const consolidateTranscriptIdeas = {
       return c.json({ error: 'No candidate ideas found for this transcript.' }, 400);
     }
 
+    const mode = parseConsolidationMode(c.req.query('mode'));
+    const { draftTask, auditTask, draftPromptStyle } = getConsolidationTasks(mode);
     const candidateIds = new Set(candidates.map((candidate) => candidate.id));
     const stats = computeConsolidationStats(candidates);
     const target = computeConsolidationTarget(stats.candidateIdeaCount);
 
     try {
-      const { llm, result } = await callLlmForJson(
-        'consolidate',
-        buildCanonicalInput(transcript, candidates, stats, target),
-        buildCanonicalSystemPrompt(target),
+      const { llm: draftLlm, result: draftResult } = await callLlmForJson(
+        draftTask,
+        draftPromptStyle === 'compact'
+          ? buildCanonicalCompactDraftInput(transcript, candidates, stats, target)
+          : buildCanonicalDraftInput(transcript, candidates, stats, target),
+        draftPromptStyle === 'compact'
+          ? buildCanonicalCompactSystemPrompt(target)
+          : buildCanonicalDraftSystemPrompt(target),
         CanonicalDraftResultSchema,
       );
+      let result: CanonicalDraftResult = draftResult;
+      let finalLlm = draftLlm;
+      let auditNotes: string[] = [];
+      let auditWarning: string | undefined;
+
+      if (auditTask) {
+        try {
+          const { llm: auditLlm, result: audited } = await callLlmForJson(
+            auditTask,
+            buildCanonicalAuditInput(transcript, candidates, stats, result),
+            buildCanonicalAuditSystemPrompt(target),
+            CanonicalAuditResultSchema,
+          );
+          result = audited;
+          auditNotes = audited.auditNotes;
+          finalLlm = auditLlm;
+        } catch (err) {
+          auditWarning = err instanceof Error ? err.message : 'Canonical idea audit failed.';
+        }
+      }
 
       const createdAt = new Date();
       const timestamp = formatInstantForFilenameId(createdAt);
@@ -784,11 +982,11 @@ export const consolidateTranscriptIdeas = {
             confidence: draft.confidence,
             key_claims: draft.keyClaims,
             coverage_notes: sanitizeCoverageNotes(draft.coverageNotes),
-            llm_model: llm.model,
-            llm_provider: llm.provider,
-            llm_duration_ms: llm.durationMs,
-            llm_prompt_tokens: llm.promptTokens,
-            llm_completion_tokens: llm.completionTokens,
+            llm_model: finalLlm.model,
+            llm_provider: finalLlm.provider,
+            llm_duration_ms: finalLlm.durationMs,
+            llm_prompt_tokens: finalLlm.promptTokens,
+            llm_completion_tokens: finalLlm.completionTokens,
           },
         });
         canonicalIdeas.push(created.node as CanonicalIdeaNode);
@@ -813,6 +1011,8 @@ export const consolidateTranscriptIdeas = {
         .filter((item) => item.status === 'missed')
         .map((item) => ({ id: item.candidateId, reason: item.reason || undefined }));
 
+      const warning = [auditWarning, ...auditNotes].filter(Boolean).join(' ') || undefined;
+
       await updateNode(getNodeFilePath('transcript', transcript.id), (current) => ({
         ...(current as TranscriptNode),
         canonical_coverage: {
@@ -821,6 +1021,7 @@ export const consolidateTranscriptIdeas = {
           covered_candidate_idea_ids: coveredCandidateIdeaIds,
           omitted_candidate_idea_ids: omittedCandidateIdeaIds,
           missed_candidate_idea_ids: missedCandidateIdeaIds,
+          warning,
           updated_at: formatIsoUtcSeconds(new Date()),
         },
       }));
@@ -832,14 +1033,16 @@ export const consolidateTranscriptIdeas = {
         coverageAudit: {
           coverage,
           missed: coverage.filter((item) => item.status === 'missed'),
+          warning,
         },
         llmMeta: {
-          model: llm.model,
-          provider: llm.provider,
-          durationMs: llm.durationMs,
-          promptTokens: llm.promptTokens,
-          completionTokens: llm.completionTokens,
+          model: finalLlm.model,
+          provider: finalLlm.provider,
+          durationMs: finalLlm.durationMs,
+          promptTokens: finalLlm.promptTokens,
+          completionTokens: finalLlm.completionTokens,
         },
+        mode,
       });
     } catch (err) {
       return c.json(

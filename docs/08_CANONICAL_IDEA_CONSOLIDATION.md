@@ -1,13 +1,12 @@
 # LLAAB — Canonical Idea Consolidation
 
 This document is the technical reference for **canonical idea consolidation**: the process that
-turns candidate ideas from a transcript's extraction runs into a small set of durable,
-deduplicated `canonical-idea` nodes.
+turns the candidate ideas extracted from a transcript's extraction runs into a small set of
+durable, deduplicated `canonical-idea` nodes.
 
-The current implementation is intentionally simple: one compact prompt, one strong local model
-call, deterministic cleanup, then vault writes. Earlier delegated and two-pass audit experiments
-were removed after testing showed slower runtime and mixed quality for transcript-level
-consolidation.
+It covers the two-phase Draft + Audit pipeline, the four quality modes, the input/output shapes
+exchanged with the LLM, and the deterministic post-processing applied before nodes are written to
+the vault.
 
 ---
 
@@ -20,8 +19,11 @@ are specific to consolidation:
 | ---------------------- | ----------------------------------------------------------------------------------------- |
 | `candidate idea`       | An `IdeaNode` produced by an extraction run for a transcript — raw, unreviewed material.  |
 | `canonical idea`       | A `CanonicalIdeaNode` — a deduplicated, durable idea derived from one or more candidates. |
-| `possible missed idea` | A candidate (or cluster) the model flagged as not yet represented.                        |
+| `draft phase`          | The first LLM call: turns all candidates into a first canonical idea set.                 |
+| `audit phase`          | The optional second LLM call: reviews and refines the draft set.                          |
+| `possible missed idea` | A candidate (or cluster) the draft/audit model flagged as not yet represented.            |
 | `coverage`             | Per-candidate bookkeeping: covered / omitted / missed, stored on the transcript.          |
+| `mode`                 | `fast`, `single-26b`, `balanced`, or `best` — controls draft/audit models and prompt.     |
 
 ---
 
@@ -31,7 +33,7 @@ are specific to consolidation:
 flowchart LR
   A["Transcript"] --> B["Extraction runs"]
   B --> C["Candidate IdeaNodes"]
-  C --> D["One-pass consolidation"]
+  C --> D["Consolidation\n(this document)"]
   D --> E["CanonicalIdeaNodes"]
   D --> F["Transcript.canonical_coverage"]
 ```
@@ -40,27 +42,30 @@ Consolidation is triggered manually from the transcript detail page (**Consolida
 Ideas** button) via `POST /api/vault/transcripts/:id/consolidate`. It does not run automatically —
 LLAAB has no scheduler, per the agent-execution policy (`.github/instructions/project/agent-execution.instructions.md`).
 
-Implementation entry point: `consolidateTranscriptIdeas` in
-[`apps/server/src/routes/vault/vault.routes.ts`](../apps/server/src/routes/vault/vault.routes.ts).
-
 ---
 
 ## High-level pipeline
 
+The order is **draft first, then audit** — the audit phase reviews and refines the draft, it does
+not run before it.
+
 ```mermaid
 flowchart TD
-  A["Gather candidate ideas\n(from extraction runs for this transcript)"] --> B["Compute stats + target"]
-  B --> C["Build compact prompt input"]
-  C --> D["Call routeLlm('consolidate')"]
-  D --> E["Parse + validate JSON"]
-  E --> F["Sanitize coverage notes\n+ normalize tags"]
+  A["Gather candidate ideas\n(from extraction runs for this transcript)"] --> B["Compute stats + target\n(candidate count, ideal/hard bounds)"]
+  B --> C["Phase 1: Draft\n(fast model, e.g. gemma4:e4b-it-qat)"]
+  C --> D{"Audit phase\nenabled for this mode?"}
+  D -- "no (fast mode)" --> F
+  D -- "yes (balanced / best)" --> E["Phase 2: Audit\n(strong model, e.g. gemma4:26b-a4b-it-qat)"]
+  E -- "success" --> F["Sanitize + normalize\n(coverageNotes, tags)"]
+  E -- "audit failed" --> F2["Fall back to draft result\n+ warning"]
+  F2 --> F
   F --> G["Create CanonicalIdeaNode\nper canonical idea"]
   G --> H["Update Transcript.canonical_coverage"]
-  H --> I["Return canonical ideas\n+ coverage audit"]
+  H --> I["Return response to client\n(canonicalIdeas, coverageAudit, llmMeta, mode)"]
 ```
 
-The model route is `consolidate`, configured in `configs/llm-routing.json` and editable from the
-Models page (`/llm`). The current default is `gemma4:26b-a4b-it-qat`.
+Implementation entry point: `consolidateTranscriptIdeas` in
+[`apps/server/src/routes/vault/vault.routes.ts`](../apps/server/src/routes/vault/vault.routes.ts).
 
 ---
 
@@ -77,7 +82,7 @@ For the target transcript, the handler:
 interface CandidateIdeaPayload {
   id: string;
   runId: string;
-  model?: string;
+  model?: string; // from IdeaNode.llm_model — which model originally extracted this idea
   title: string;
   body?: string;
   domains: string[];
@@ -85,23 +90,23 @@ interface CandidateIdeaPayload {
 }
 ```
 
-`runId` and `model` are retained for stats, but the compact LLM input omits them. If no candidates
-are found, the route returns `400 No candidate ideas found for this transcript.`
+If no candidates are found, the route returns `400 No candidate ideas found for this transcript.`
 
 ---
 
 ## Step 2 — Stats and target
 
-Before calling the model, the handler computes two small objects. These give scale and count
-guidance without forcing an exact number:
+Before calling any model, the handler computes two small objects that are sent to both the draft
+and audit prompts. These give the model a sense of scale and a concrete count to aim for, without
+forcing an exact number.
 
 ```ts
 interface ConsolidationStats {
-  candidateRunCount: number;
-  candidateIdeaCount: number;
-  averageIdeasPerRun: number;
-  uniqueCandidateTagCount: number;
-  sourceModels: string[];
+  candidateRunCount: number; // unique run ids among candidates
+  candidateIdeaCount: number; // total candidates
+  averageIdeasPerRun: number; // candidateIdeaCount / candidateRunCount
+  uniqueCandidateTagCount: number; // distinct tags + domains across candidates
+  sourceModels: string[]; // distinct IdeaNode.llm_model values
 }
 
 interface ConsolidationTarget {
@@ -112,39 +117,93 @@ interface ConsolidationTarget {
 }
 ```
 
-The prompt frames the target as **"a strong preference, not a quota"** so the model can return
-fewer ideas when the candidate pool genuinely collapses into fewer durable concepts.
+The target is framed to the model as **"a strong preference, not a quota"** — see
+[Draft prompt rules](#draft-prompt-rules).
 
 ---
 
-## Step 3 — Compact input
+## Step 3 — Modes and model routing
 
-`buildCanonicalInput` sends compact JSON. It never sends full transcript text, run markdown, or
-`output_summary.plainText`.
+Four modes control which `TaskType` is used for each phase, and which draft prompt is used. The
+mode is selected via the `?mode=` query parameter on the consolidate request (default:
+`single-26b`). There is currently no UI mode selector — see [Future UX](#future-ux).
+
+| Mode         | Draft task          | Audit task          | Draft prompt | Behaviour                                                    |
+| ------------ | ------------------- | ------------------- | ------------ | ------------------------------------------------------------ |
+| `fast`       | `consolidate`       | _(none)_            | full         | Draft only. Quickest, good-enough output.                    |
+| `single-26b` | `consolidate-audit` | _(none)_            | compact      | One strong-model pass with a compact prompt. No second pass. |
+| `balanced`   | `consolidate`       | `consolidate-audit` | full         | **Default.** Fast draft, then a higher-quality pass.         |
+| `best`       | `consolidate-audit` | `consolidate-audit` | full         | Highest quality, slowest. Both phases use the strong model.  |
+
+The modes resolve through `getConsolidationTasks(mode)` in `vault.routes.ts`, which returns
+`{ draftTask, auditTask, draftPromptStyle }`. `draftPromptStyle: 'compact'` selects
+`buildCanonicalCompactSystemPrompt(target)` instead of `buildCanonicalDraftSystemPrompt(target)` —
+see [Draft prompt rules](#draft-prompt-rules).
+
+`single-26b` exists because the two-pass `best`/`balanced` audit can roughly double total latency
+(a second full-set generation by the strong model). `single-26b` targets the same strong model
+(`consolidate-audit`, default `gemma4:26b-a4b-it-qat`) in one pass with a shorter prompt, aiming to
+reproduce `best`-level quality closer to `fast`-mode latency. It has no audit phase and therefore
+no `auditNotes` / `auditWarning`. **`single-26b` is the default mode** — both `parseConsolidationMode`
+and the **Consolidate Canonical Ideas** button use it unless `?mode=` is set explicitly.
+
+Each `TaskType` is routed to an actual model via `packages/llm/src/router.ts` /
+`configs/llm-routing.json`, and is editable from the **Models** page (`/llm`,
+`LlmRoutingEditor.tsx`). Current defaults:
+
+| Task                | Default model           | Tier           |
+| ------------------- | ----------------------- | -------------- |
+| `consolidate`       | `gemma4:e4b-it-qat`     | `local-strong` |
+| `consolidate-audit` | `gemma4:26b-a4b-it-qat` | `local-strong` |
+
+```mermaid
+sequenceDiagram
+  participant Client
+  participant Server as Server (vault.routes.ts)
+  participant Draft as Draft model
+  participant Audit as Audit model
+
+  Client->>Server: POST /transcripts/:id/consolidate?mode=balanced
+  Server->>Server: gather candidates, compute stats + target
+  Server->>Draft: routeLlm('consolidate', draftInput)
+  Draft-->>Server: CanonicalDraftResult (JSON)
+  Server->>Audit: routeLlm('consolidate-audit', auditInput)
+  Audit-->>Server: CanonicalAuditResult (JSON)
+  Server->>Server: sanitize notes, normalize tags
+  Server->>Server: createNode('canonical-idea', ...) per idea
+  Server->>Server: updateNode(transcript.canonical_coverage)
+  Server-->>Client: canonicalIdeas, coverageAudit, llmMeta, mode
+```
+
+In `fast` mode, the Audit steps are skipped entirely and the draft result is used directly.
+
+---
+
+## Step 4 — Draft phase
+
+### Input shape
+
+`buildCanonicalDraftInput` sends the model a compact JSON payload — **never the full transcript
+text, run markdown, or `output_summary.plainText`**:
 
 ```ts
-type CanonicalInput = {
+type CanonicalDraftInput = {
   transcript: { id: string; title: string; summary?: string; tags: string[] };
   stats: ConsolidationStats;
   target: ConsolidationTarget;
-  candidateIdeas: Array<{
-    id: string;
-    title: string;
-    body?: string; // truncated to 240 chars
-    domains: string[];
-    tags: string[];
-  }>;
+  candidateIdeas: CandidateIdeaPayload[];
 };
 ```
 
-The input is serialized without pretty-printing to keep token count down.
+For `draftPromptStyle: 'compact'` (i.e. `single-26b`), `buildCanonicalCompactDraftInput` sends a
+further-trimmed version of the same shape to reduce prompt size and generation time:
 
----
+- JSON is serialized without pretty-printing (no indentation).
+- Each candidate idea omits `runId` and `model`, keeping only `id`, `title`, `body`, `domains`,
+  and `tags`.
+- `body` is truncated to `COMPACT_CANDIDATE_BODY_MAX_CHARS` (240 characters).
 
-## Step 4 — Model output
-
-`callLlmForJson('consolidate', ...)` calls the configured model with `bypassCache: true`, extracts
-the JSON object from the response, and validates it with `CanonicalDraftResultSchema`.
+### Output shape
 
 ```ts
 type CanonicalDraftResult = {
@@ -176,46 +235,139 @@ type PossibleMissedIdea = {
 };
 ```
 
-Both camelCase and snake_case field names are accepted and normalized. `confidence` and
-`recommendation` values are lower-cased and clamped to valid enum values rather than rejected
-outright.
+Validated by `CanonicalDraftResultSchema` / `CanonicalIdeaDraftSchema` /
+`PossibleMissedIdeaSchema` in `vault.routes.ts`. Both camelCase and snake_case field names are
+accepted and normalized (small models are inconsistent about casing), and `confidence` /
+`recommendation` values are lower-cased and clamped to a valid enum rather than rejected outright.
+
+### Draft prompt rules
+
+`buildCanonicalDraftSystemPrompt` assembles the system prompt from:
+
+1. **Count guidance** — the `target` range, framed as a preference:
+
+   > Target output: 4–6 canonical ideas. Hard bounds: `{hardMin}`–`{hardMax}`. The target is a
+   > strong preference, not a quota. Do not invent, pad, over-split, or promote weak ideas just to
+   > hit the target.
+
+2. **Category Separation Rule** — don't merge across categories of concern (workflow strategy,
+   model behavior, historical role, interface/tooling architecture, runtime/sandboxing
+   architecture, cost/performance implication) even if topically related.
+
+3. **Problem/Solution Merge Rule** — merge a problem statement with its recommended solution into
+   one canonical idea when they form one coherent concept (e.g. "context stuffing wastes tokens"
+   - "targeted retrieval is more efficient" → "Context stuffing should be replaced by targeted
+     retrieval").
+
+4. **Context-Specific Rule** — context-stuffing/retrieval/token-cost candidates may merge into one
+   idea, but must stay separate from a "large context windows cause non-determinism" idea (that's
+   model-behavior, not context strategy).
+
+5. **Non-Determinism Separation Rule** — if context non-determinism (large context windows making
+   LLM behavior less deterministic/reliable) is supported by 2 or more candidate ideas, keep it as
+   its own canonical idea rather than merging it into context retrieval or context stuffing.
+
+6. **Bash-Specific Rule** — prefer one canonical idea capturing both "Bash as the first execution
+   layer" and "Bash is limited" (e.g. "Bash is a foundational but limited execution layer for
+   agents"), rather than always folding Bash into the typed-execution transition.
+
+7. **Typed/Runtime Split Rule** — keep typed execution layers (TS SDKs — interface/tooling
+   architecture) separate from runtime isolation (V8 isolates, sandboxing — runtime/infrastructure
+   architecture).
+
+8. **Single-Source Rule** — single-source clusters usually become supporting detail, not a
+   canonical idea, unless the idea is technically specific, central to the transcript, and useful
+   for future retrieval/linking — in which case mark `confidence: "medium"`.
+
+`single-26b` mode uses `buildCanonicalCompactSystemPrompt(target)` instead. It keeps the count
+guidance and a condensed version of rules 1–6 above (omitting the Category Separation and
+Single-Source rules' full text), and adds explicit per-field limits — `body` max 45 words, `tags`
+max 4, `domains` max 3, `keyClaims` max 2 — to keep the single strong-model pass short and fast.
+It does not include the JSON-shape's `auditNotes` field (there is no audit phase in this mode).
+
+The prompt also requires:
+
+- Every canonical idea references at least one `sourceCandidateIdeaIds` entry.
+- Every candidate id appears in exactly one of `coveredCandidateIdeaIds`,
+  `omittedCandidateIdeaIds`, or `missedCandidateIdeaIds`.
+- `coverageNotes` is plain-English and user-facing — never mentions drafts, audits, prompts, or
+  the consolidation process itself (this is enforced again deterministically, see
+  [Sanitizing coverage notes](#sanitizing-coverage-notes)).
+- A closing reminder to double-check JSON validity — added because the fast draft model would
+  occasionally truncate or malform JSON on the more elaborate prompt; this measurably reduced
+  parse failures.
 
 ---
 
-## Prompt Rules
+## Step 5 — Audit phase (optional)
 
-`buildCanonicalSystemPrompt(target)` includes:
+Skipped entirely in `fast` mode. In `balanced` and `best` modes, `buildCanonicalAuditInput` sends:
 
-1. **Count guidance** — target 4–6 canonical ideas, hard bounds derived from candidate count.
-2. **Problem/solution merging** — merge context stuffing and targeted retrieval when they form one
-   coherent problem/solution concept.
-3. **Context non-determinism separation** — keep large-context non-determinism separate from
-   retrieval strategy when supported by multiple candidates.
-4. **Bash execution layer handling** — capture Bash as foundational but limited when supported.
-5. **Typed/runtime split** — keep typed programmable execution layers separate from runtime
-   isolation such as V8 isolates.
-6. **Single-source handling** — single-source ideas usually become supporting details, unless
-   technically central and useful for future linking.
-7. **Output caps** — body max 45 words, tags max 4, domains max 3, key claims max 2.
+```ts
+type CanonicalAuditInput = {
+  transcript: { id: string; title: string; summary?: string; tags: string[] };
+  stats: ConsolidationStats;
+  candidateIdeas: CandidateIdeaPayload[];
+  draft: CanonicalDraftResult; // the full output of Step 4
+};
+```
 
-The prompt requires every candidate id to appear exactly once across covered, omitted, or missed
-coverage lists, and every canonical idea to reference at least one source candidate id.
+The audit model receives the **same rule set** as the draft (count guidance + all seven rules above)
+plus an explicit checklist (`AUDIT_RESPONSIBILITIES`):
+
+1. Are any canonical ideas duplicates?
+2. Are distinct concepts over-merged?
+3. Are related problem/solution pairs unnecessarily split?
+4. Are important candidate clusters missing?
+5. Are weak/single-source ideas promoted unnecessarily?
+6. Are `sourceCandidateIdeaIds` accurate?
+7. Is the final count within the target range?
+8. Are tags clean and reusable (≤5 semantic, ≤3 domain)?
+9. Are domain tags appropriate (no noisy `d:ingest` unless the idea is actually about ingestion)?
+10. Do `coverageNotes` avoid internal process language?
+
+**V1 output shape**: the audit returns the _finalized_ canonical idea set directly (same shape as
+`CanonicalDraftResult`, plus `auditNotes: string[]` — a short, non-user-facing summary of what
+changed). The MD spec also describes an alternative `AuditAction` (`keep` / `merge` / `split` /
+`demote_to_supporting_detail` / `promote_possible_missed_idea` / `rename` / `retag`) action-list
+output — **not implemented**; deferred for a future iteration if "return the full set" proves too
+expensive for large candidate pools.
+
+If the audit call throws (LLM error, schema validation failure, malformed JSON), the handler
+**falls back to the draft result** and records a warning — consolidation never fails purely
+because the audit step failed.
+
+```mermaid
+flowchart TD
+  A["Draft result available"] --> B{"Audit task configured\nfor this mode?"}
+  B -- "fast: no" --> Z["Use draft result as-is"]
+  B -- "balanced/best: yes" --> C["Call audit model"]
+  C --> D{"Parse + validate\nCanonicalAuditResultSchema"}
+  D -- "ok" --> E["Use audit result\n(auditNotes -> warning)"]
+  D -- "error" --> F["Use draft result\n+ error message as warning"]
+  E --> G["Continue to post-processing"]
+  F --> G
+  Z --> G
+```
 
 ---
 
-## Deterministic Post-processing
+## Step 6 — Deterministic post-processing
 
-Two cleanup passes run before any nodes are written.
+Two cleanup passes run on the _final_ result (draft or audit) before any nodes are written —
+these are pure functions, not model calls, so they apply consistently regardless of mode.
 
 ### Sanitizing coverage notes
 
-`sanitizeCoverageNotes(note)` replaces notes that are empty or leak internal process language:
+`sanitizeCoverageNotes(note)` rejects notes that leak internal process language. If the
+(lower-cased) note contains any of:
 
 ```text
-prompt, internal, consolidation process
+draft 0, draft 1, draft 2, audit, prompt, internal, consolidation process,
+overarching narrative formed by combining drafts
 ```
 
-Fallback:
+...or is empty, it is replaced with the fallback:
 
 > "Covers related candidate ideas about this concept."
 
@@ -223,40 +375,37 @@ Fallback:
 
 `normalizeCanonicalTags(tags, domains, title, body)`:
 
-- Aliases known duplicate domain tags, e.g. `d:infrastructure` -> `d:infra`.
+- Aliases known duplicate domain tags, e.g. `d:infrastructure` → `d:infra`.
 - Drops `d:ingest` unless the idea's title/body actually mentions "ingest".
-- Caps semantic tags at **5** and domain tags at **3**.
+- Caps semantic tags at **5** and domain tags at **3** (after deduping via `dedupeTags`).
 
 Final tag list written to the node is `dedupeTags([...domains, ...tags])`.
 
 ---
 
-## Writing canonical idea nodes
+## Step 7 — Writing canonical idea nodes
 
-For each `CanonicalIdeaDraft`:
+For each `CanonicalIdeaDraft` in the final result:
 
-1. Filter `sourceCandidateIdeaIds` to ids that exist in this transcript's candidate set.
-2. Drop the idea if no valid source candidate ids remain.
-3. Normalize tags/domains.
-4. `createNode('canonical-idea', ...)` with id `canonical-{transcriptId}-{index+1}-{timestamp}`.
+1. Filter `sourceCandidateIdeaIds` to only ids that exist in this transcript's candidate set. If
+   none remain, the idea is **dropped** (it referenced ids outside this run's candidate pool).
+2. Normalize tags/domains (Step 6).
+3. `createNode('canonical-idea', ...)` with id `canonical-{transcriptId}-{index+1}-{timestamp}`,
+   storing:
+   - `transcript_id`, `source_candidate_idea_ids`, `confidence`, `key_claims`, `coverage_notes`
+   - `llm_model` / `llm_provider` / `llm_duration_ms` / `llm_prompt_tokens` /
+     `llm_completion_tokens` — taken from whichever phase produced the _final_ result (audit, if
+     it ran and succeeded; otherwise draft).
 
-The node stores:
-
-- `transcript_id`
-- `source_candidate_idea_ids`
-- `confidence`
-- `key_claims`
-- `coverage_notes`
-- `llm_model`, `llm_provider`, `llm_duration_ms`, `llm_prompt_tokens`, `llm_completion_tokens`
-
-If zero canonical ideas survive filtering, the route returns
+If **zero** canonical ideas survive filtering, the route returns
 `422 Consolidation returned no valid canonical ideas.`
 
 ---
 
-## Coverage tracking
+## Step 8 — Coverage tracking
 
-`buildLegacyCoverage(candidates, result)` derives a per-candidate status:
+`buildLegacyCoverage(candidates, result)` derives a per-candidate status for every candidate idea,
+for both the persisted transcript field and the client response:
 
 ```mermaid
 flowchart TD
@@ -271,18 +420,19 @@ This is written to `TranscriptNode.canonical_coverage`:
 
 ```ts
 {
-  canonical_idea_ids: string[];
-  candidate_idea_ids: string[];
+  canonical_idea_ids: string[];          // ids of nodes created this run
+  candidate_idea_ids: string[];          // all candidates considered
   covered_candidate_idea_ids: string[];
   omitted_candidate_idea_ids: Array<{ id: string; reason?: string }>;
   missed_candidate_idea_ids: Array<{ id: string; reason?: string }>;
-  warning?: string;
-  updated_at: string;
+  warning?: string;                      // audit failure message and/or auditNotes, joined
+  updated_at: string;                    // ISO timestamp
 }
 ```
 
-Missed candidates are surfaced in the transcript UI and can be promoted directly into a canonical
-idea via `POST /transcripts/:id/canonical-ideas/promote`, independent of a full re-consolidation.
+`missed` candidates are surfaced in the transcript UI and can be promoted directly into a
+canonical idea via `promoteCanonicalIdea` (`POST /transcripts/:id/canonical-ideas/promote`),
+independent of a full re-consolidation.
 
 ---
 
@@ -299,25 +449,60 @@ idea via `POST /transcripts/:id/canonical-ideas/promote`, independent of a full 
     warning?: string,
   },
   llmMeta: { model, provider, durationMs, promptTokens, completionTokens },
+  mode: 'fast' | 'single-26b' | 'balanced' | 'best',
 }
 ```
 
-This is consumed by `useConsolidateCanonicalIdeas` and rendered in `TranscriptDetail.tsx`. On
-error, the client retries the underlying queries on a backoff schedule
-(30s/90s/180s/300s) in case files were written after a transient request failure.
+This is consumed by `useConsolidateCanonicalIdeas` (`apps/client/src/queries/transcripts/`) and
+rendered in `TranscriptDetail.tsx`. On error, the client retries the underlying queries on a
+backoff schedule (30s/90s/180s/300s) in case the failure was transient.
 
 ---
 
-## Notes on removed delegation
+## Worked example
 
-Delegated and two-pass audit variants were tested and removed for transcript-level consolidation:
+For the transcript _"The language holding our agents back"_ (~20–30 candidate ideas across
+multiple extraction runs), `balanced` mode produced:
 
-- E4B draft plus 26B audit roughly doubled runtime in local tests.
-- The delegated path produced mixed quality and extra code paths.
-- Typical transcript consolidation is expected to handle tens of candidates, not hundreds.
+1. Targeted retrieval should replace context stuffing (token efficiency / search optimization)
+2. Bash is a foundational but limited execution layer for agents
+3. Typed, programmable execution layers provide safer agent interactions
+4. V8 isolates enable lightweight, multi-tenant sandboxing for AI agents
+5. Large context windows can increase LLM non-determinism and degrade performance
 
-If LLAAB later adds theme discovery across many transcripts or sources, that should start from a
-fresh design with explicit batching, durable run tracking, and separate UX expectations.
+— five canonical ideas, each mapping cleanly to one category of concern, matching the target range
+of 4–6. The audit phase's `auditNotes` for this run recorded: it merged Bash's "foundation" and
+"limitations" candidates into one idea, separated the context-window non-determinism candidate
+from the retrieval-strategy idea, and folded a single-source tokenization candidate into the
+context-management idea as supporting detail — concrete examples of the Category Separation,
+Context-Specific, and Single-Source rules in action.
+
+---
+
+## Tuning models
+
+To change which model handles `consolidate` or `consolidate-audit`:
+
+- **UI**: `/llm` page → Task routing → pick a model for "Consolidation" or "Consolidation Audit".
+- **Config file**: edit `configs/llm-routing.json` directly (same shape the UI writes).
+
+Both phases must point at models that are installed in Ollama (`ollama list`); the UI shows an
+"Available" / "Not installed" indicator per task.
+
+---
+
+## Future UX
+
+Per the original design notes:
+
+- Keep the primary button simple: **"Consolidate Canonical Ideas"** (currently always `single-26b`).
+- A future mode selector (Fast / Single 26B / Balanced / Best) can pass `?mode=` through
+  `useConsolidateCanonicalIdeas` without any server changes — the `mode` param is already
+  implemented and validated (`parseConsolidationMode`, defaulting to `single-26b` for any
+  unrecognized value).
+- Consider persisting the consolidation run itself as a `RunNode` (draft model, audit model, mode,
+  token/duration totals, input candidate count, output canonical count) for traceability —
+  not yet implemented.
 
 ---
 
