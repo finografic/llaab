@@ -286,7 +286,10 @@ before nodes are written. A consolidation **warns** when:
 - covered candidates are below 80%
 - any canonical idea lacks a `d:*` domain tag
 - V8/runtime candidates exist but no canonical idea covers sandboxing or V8 isolates
-- two or more non-determinism candidates exist but no canonical idea captures non-determinism
+- two or more non-determinism candidates exist but no **dedicated** canonical idea captures model
+  behavior — a separate idea with `non-determinism` or `model-behavior` tag, non-determinism text in
+  title/body, and non-determinism candidates as `sourceCandidateIdeaIds` (folding into a
+  context-retrieval idea is not sufficient)
 - Bash candidates exist but no canonical idea captures Bash as foundational but limited
 - typed execution candidates exist but no canonical idea captures typed/programmable execution
 

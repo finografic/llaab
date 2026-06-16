@@ -40,10 +40,6 @@ function matchesAny(haystack: string, patterns: RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(haystack));
 }
 
-function countMatchingCandidates(candidates: ConsolidationQualityCandidate[], patterns: RegExp[]): number {
-  return candidates.filter((candidate) => matchesAny(candidateHaystack(candidate), patterns)).length;
-}
-
 function anyCanonicalMatches(canonicalIdeas: ConsolidationQualityCanonical[], patterns: RegExp[]): boolean {
   return canonicalIdeas.some((idea) => matchesAny(canonicalHaystack(idea), patterns));
 }
@@ -56,7 +52,46 @@ const V8_CANDIDATE_PATTERNS = [/\bv8\b/, /isolate/, /sandbox/, /multi-tenant/, /
 const V8_CANONICAL_PATTERNS = [/runtime-isolation/, /sandbox/, /\bv8\b/, /v8-isolate/];
 
 const NON_DETERMINISM_CANDIDATE_PATTERNS = [/non-determinism/, /non-deterministic/, /non determinism/];
-const NON_DETERMINISM_CANONICAL_PATTERNS = [/non-determinism/, /non-deterministic/, /model-behavior/];
+const NON_DETERMINISM_TEXT_PATTERNS = [
+  /non-determinism/,
+  /non-deterministic/,
+  /unpredictability/,
+  /stochasticity/,
+  /model behavior/,
+  /model-behavior/,
+];
+const NON_DETERMINISM_TAG_PATTERNS = [/^non-determinism$/, /^model-behavior$/];
+
+function getNonDeterminismCandidates(
+  candidates: ConsolidationQualityCandidate[],
+): ConsolidationQualityCandidate[] {
+  return candidates.filter((candidate) =>
+    matchesAny(candidateHaystack(candidate), NON_DETERMINISM_CANDIDATE_PATTERNS),
+  );
+}
+
+function isDedicatedNonDeterminismIdea(idea: ConsolidationQualityCanonical): boolean {
+  const titleBody = `${idea.title} ${idea.body}`.toLocaleLowerCase();
+  const hasRequiredText = matchesAny(titleBody, NON_DETERMINISM_TEXT_PATTERNS);
+  const hasRequiredTag = idea.tags.some((tag) =>
+    NON_DETERMINISM_TAG_PATTERNS.some((pattern) => pattern.test(tag)),
+  );
+  return hasRequiredText && hasRequiredTag;
+}
+
+function hasDedicatedNonDeterminismCanonical(
+  canonicalIdeas: ConsolidationQualityCanonical[],
+  nonDeterminismCandidates: ConsolidationQualityCandidate[],
+): boolean {
+  if (nonDeterminismCandidates.length === 0) return true;
+
+  const nonDeterminismCandidateIds = new Set(nonDeterminismCandidates.map((candidate) => candidate.id));
+  return canonicalIdeas.some(
+    (idea) =>
+      isDedicatedNonDeterminismIdea(idea) &&
+      idea.sourceCandidateIdeaIds.some((candidateId) => nonDeterminismCandidateIds.has(candidateId)),
+  );
+}
 
 const BASH_CANDIDATE_PATTERNS = [/\bbash\b/];
 const BASH_CANONICAL_PATTERNS = [
@@ -126,18 +161,15 @@ export function validateConsolidationQuality(
     });
   }
 
-  const nonDeterminismCandidateCount = countMatchingCandidates(
-    candidates,
-    NON_DETERMINISM_CANDIDATE_PATTERNS,
-  );
+  const nonDeterminismCandidates = getNonDeterminismCandidates(candidates);
   if (
-    nonDeterminismCandidateCount >= 2 &&
-    !anyCanonicalMatches(canonicalIdeas, NON_DETERMINISM_CANONICAL_PATTERNS)
+    nonDeterminismCandidates.length >= 2 &&
+    !hasDedicatedNonDeterminismCanonical(canonicalIdeas, nonDeterminismCandidates)
   ) {
     issues.push({
-      code: 'non_determinism',
+      code: 'non_determinism_separate',
       message:
-        'Multiple non-determinism candidates exist but no canonical idea captures model non-determinism.',
+        'Multiple non-determinism candidates exist but no dedicated canonical idea captures model behavior (non-determinism or model-behavior tag, with non-determinism candidates as sources). Folding non-determinism into a context-retrieval idea is not sufficient.',
     });
   }
 
