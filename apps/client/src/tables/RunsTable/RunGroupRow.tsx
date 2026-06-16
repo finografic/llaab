@@ -11,17 +11,25 @@ import { getRunDisplayStatus, getRunElapsedDurationMs, isRunExtracting } from 'u
 import type { RunGroup } from 'utils/run-grouping.utils';
 
 import styles from './RunsTable.module.css';
-import { STATUS_CLASS, fmtDate, fmtDuration } from './RunsTableCells';
+import { STATUS_CLASS, fmtClickDate, fmtDuration } from './RunsTableCells';
 
 export interface RunGroupRowProps {
   group: RunGroup;
 }
 
-const RUN_GROUP_COLUMN_COUNT = 8;
+function RunModelBadge({ model }: { model?: string }) {
+  if (!model) return null;
+
+  return (
+    <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
+      {model}
+    </span>
+  );
+}
 
 /** Grouped row for the Runs table: a parent summary row plus collapsible per-run child rows. */
 export function RunGroupRow({ group }: RunGroupRowProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const hasExtractingRun = useMemo(() => group.runs.some(isRunExtracting), [group.runs]);
   const [now, setNow] = useState(() => Date.now());
 
@@ -32,6 +40,8 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(interval);
   }, [hasExtractingRun]);
+
+  const ingestClickDate = group.runs.at(-1)?.created_at ?? group.latestDate;
 
   return (
     <>
@@ -57,14 +67,19 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
           </button>
         </TableCell>
         <TableCell>
-          <div className={styles.cellTitle}>
-            {group.href ? (
-              <Link to={group.href} className={styles.subjectTitle}>
-                {group.title}
-              </Link>
-            ) : (
-              <span className={styles.subjectTitle}>{group.title}</span>
-            )}
+          <div className={styles.groupTitleCell}>
+            <div className={styles.cellTitle}>
+              {group.href ? (
+                <Link to={group.href} className={styles.subjectTitle}>
+                  {group.title}
+                </Link>
+              ) : (
+                <span className={styles.subjectTitle}>{group.title}</span>
+              )}
+            </div>
+            <time className={styles.groupIngestDate} dateTime={ingestClickDate}>
+              {fmtClickDate(ingestClickDate)}
+            </time>
           </div>
         </TableCell>
         <TableCell>
@@ -103,15 +118,10 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
           )}
         </TableCell>
         <TableCell className="text-center pt-3.5">
-          <span className={styles.mono}>{group.avgNodes.toFixed(1)}</span>
+          <span className={styles.mono}>{group.totalNodes}</span>
         </TableCell>
-        <TableCell className="text-center pt-3.5">
+        <TableCell className="text-right pt-3.5 pr-1">
           <span className={styles.mono}>{fmtDuration(group.avgDurationMs)}</span>
-        </TableCell>
-        <TableCell className="text-center pt-3.5">
-          <time className={styles.mono} dateTime={group.latestDate}>
-            {fmtDate(group.latestDate)}
-          </time>
         </TableCell>
         <TableCell className="text-center pr-0.5">
           {hasExtractingRun ? null : <DeleteRunGroupAction title={group.title} runs={group.runs} />}
@@ -124,30 +134,43 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
         group.runs.map((run) => {
           const displayStatus = getRunDisplayStatus(run);
           const extracting = displayStatus === 'extracting';
+          const model = run.llm?.model ?? run.model_used;
 
           return (
             <TableRow key={run.id} className={styles.childRow}>
               <TableCell>
                 <span className={`${styles.status} ${STATUS_CLASS[displayStatus]}`}>{displayStatus}</span>
               </TableCell>
-              <TableCell colSpan={RUN_GROUP_COLUMN_COUNT - 1}>
-                <div className={styles.childRowContent}>
+              <TableCell>
+                <div className={styles.childRowTitle}>
                   <Link to={`/vault/runs/${run.id}`} className={`${styles.mono} ${styles.childRowId}`}>
                     {run.id}
                   </Link>
-                  <div className={styles.childRowMeta}>
-                    <ExtractionModelCard
-                      variant="compact-bar"
-                      model={run.llm?.model ?? run.model_used}
-                      durationMs={getRunElapsedDurationMs(run, now)}
-                      promptTokens={run.llm?.prompt_tokens}
-                      completionTokens={run.llm?.completion_tokens}
-                    />
-                  </div>
-                  <div className={styles.childRowDeleteSlot} aria-hidden={extracting}>
-                    {extracting ? null : <DeleteRunAction run={run} color="dim" />}
-                  </div>
+                  <RunModelBadge model={model} />
                 </div>
+              </TableCell>
+              <TableCell className="text-center">
+                <span className={styles.muted}>—</span>
+              </TableCell>
+              <TableCell className="text-center">
+                <span className={styles.muted}>—</span>
+              </TableCell>
+              <TableCell className="text-center">
+                <span className={styles.mono}>{run.produced_node_ids.length}</span>
+              </TableCell>
+              <TableCell className="text-right pr-0">
+                <ExtractionModelCard
+                  variant="compact-bar"
+                  showModel={false}
+                  showTotalTokens={false}
+                  durationMs={getRunElapsedDurationMs(run, now)}
+                  promptTokens={run.llm?.prompt_tokens}
+                  completionTokens={run.llm?.completion_tokens}
+                  className={styles.childRowMetrics}
+                />
+              </TableCell>
+              <TableCell className="text-center pr-0.5">
+                {extracting ? null : <DeleteRunAction run={run} color="dim" />}
               </TableCell>
             </TableRow>
           );

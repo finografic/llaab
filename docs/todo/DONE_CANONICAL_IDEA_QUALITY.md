@@ -1,7 +1,7 @@
-# TODO — Canonical Idea Quality And Run Compaction
+# DONE — Canonical Idea Quality And Run Compaction
 
-> **Status:** Planned from the 2026-06-14 canonical ideas V1 review. V1 consolidation is complete;
-> this doc tracks follow-up quality controls and run artifact compaction.
+> **Status:** Complete (graduated 2026-06-16). Quality score and single-pass consolidation shipped;
+> run compaction items below remain reference for future work.
 
 ---
 

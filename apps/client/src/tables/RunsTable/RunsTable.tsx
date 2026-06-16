@@ -44,9 +44,8 @@ export function RunsTable({ sources = [], showHeading = false }: RunsTableProps)
               <TableHead>Source</TableHead>
               <TableHead>Author</TableHead>
               <TableHead className="text-center">Nodes</TableHead>
-              <TableHead className="text-center">Duration</TableHead>
-              <TableHead className="text-center">Date</TableHead>
-              <TableHead className="text-center">Delete</TableHead>
+              <TableHead className="text-right pr-1">Latency</TableHead>
+              <TableHead className="text-center pr-3">Delete</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -54,7 +53,7 @@ export function RunsTable({ sources = [], showHeading = false }: RunsTableProps)
               groups.map((group) => <RunGroupRow key={group.key} group={group} />)
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                   No runs yet. Runs are created when a skill executes.
                 </TableCell>
               </TableRow>

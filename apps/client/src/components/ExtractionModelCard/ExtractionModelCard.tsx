@@ -16,6 +16,10 @@ export interface ExtractionModelCardProps {
   completionTokens?: number;
   /** "compact" — latency badge; "compact-bar" — inline model metadata; "full" — detail card */
   variant?: 'compact' | 'compact-bar' | 'full';
+  /** Compact-bar: hide model/provider chips (metrics only). Default true. */
+  showModel?: boolean;
+  /** Compact-bar: hide combined token total (#). Default true. */
+  showTotalTokens?: boolean;
   className?: string;
 }
 
@@ -50,6 +54,8 @@ export function ExtractionModelCard({
   promptTokens,
   completionTokens,
   variant = 'full',
+  showModel = true,
+  showTotalTokens = true,
   className,
 }: ExtractionModelCardProps) {
   const hasTokens = promptTokens != null || completionTokens != null;
@@ -69,32 +75,48 @@ export function ExtractionModelCard({
 
   if (variant === 'compact-bar') {
     const totalTokens = (promptTokens ?? 0) + (completionTokens ?? 0);
-    const hasCompactBarContent = model || provider || hasTokens || durationMs != null;
+    const hasModelMeta = showModel && Boolean(model || provider);
+    const hasCompactBarContent = hasModelMeta || hasTokens || durationMs != null;
 
     if (!hasCompactBarContent) return null;
 
     return (
-      <div className={cn('flex w-full items-center justify-between gap-3 leading-none', className)}>
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          {model ? (
-            <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
-              {model}
-            </span>
-          ) : null}
-          {provider ? (
-            <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
-              {provider}
-            </span>
-          ) : null}
-        </div>
-        <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1">
+      <div
+        className={cn(
+          'flex w-full items-center gap-3 leading-none',
+          hasModelMeta ? 'justify-between' : 'justify-center',
+          className,
+        )}
+      >
+        {hasModelMeta ? (
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            {model ? (
+              <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                {model}
+              </span>
+            ) : null}
+            {provider ? (
+              <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                {provider}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        <div
+          className={cn(
+            'flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1',
+            !hasModelMeta && 'justify-center',
+          )}
+        >
           {promptTokens != null ? (
             <CompactBarMetric Icon={ArrowUpIcon} value={promptTokens.toLocaleString()} />
           ) : null}
           {completionTokens != null ? (
             <CompactBarMetric Icon={ArrowDownIcon} value={completionTokens.toLocaleString()} />
           ) : null}
-          {hasTokens ? <CompactBarMetric Icon={HashIcon} value={totalTokens.toLocaleString()} /> : null}
+          {showTotalTokens && hasTokens ? (
+            <CompactBarMetric Icon={HashIcon} value={totalTokens.toLocaleString()} />
+          ) : null}
           {durationMs != null ? (
             <CompactBarMetric
               Icon={TimerIcon}

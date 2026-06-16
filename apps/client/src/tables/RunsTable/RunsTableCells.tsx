@@ -27,6 +27,15 @@ export function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+/** Dd-MM-YYYY — first ingest click date in grouped run headers. */
+export function fmtClickDate(iso: string): string {
+  const date = new Date(iso);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
 export const STATUS_CLASS: Record<RunDisplayStatus, string> = {
   pending: styles.statusPending,
   running: styles.statusRunning,

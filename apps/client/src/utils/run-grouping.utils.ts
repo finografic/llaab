@@ -13,7 +13,7 @@ export interface RunGroup {
   href?: string;
   url?: string;
   source?: SourceNode;
-  avgNodes: number;
+  totalNodes: number;
   avgDurationMs?: number;
   latestDate: string;
   runs: RunNode[];
@@ -45,7 +45,7 @@ export function groupRunsBySubject(runs: RunNode[], sourcesById: Map<string, Sou
         href: undefined,
         url,
         source: undefined,
-        avgNodes: 0,
+        totalNodes: 0,
         avgDurationMs: undefined,
         latestDate: run.created_at,
         runs: [],
@@ -64,7 +64,7 @@ export function groupRunsBySubject(runs: RunNode[], sourcesById: Map<string, Sou
   }
 
   for (const group of groups.values()) {
-    group.avgNodes = average(group.runs.map((run) => run.produced_node_ids.length)) ?? 0;
+    group.totalNodes = group.runs.reduce((sum, run) => sum + run.produced_node_ids.length, 0);
     group.avgDurationMs = average(
       group.runs.map((run) => run.duration_ms).filter((value): value is number => value != null),
     );

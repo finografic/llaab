@@ -229,7 +229,7 @@ Notes:
 - Client Vite proxy timeout was extended and canonical idea queries now refresh even if the mutation
   settles with an error.
 - Follow-up work for run-file compaction and coverage/quality controls moved to
-  [`TODO_CANONICAL_IDEA_QUALITY.md`](./TODO_CANONICAL_IDEA_QUALITY.md).
+  [`DONE_CANONICAL_IDEA_QUALITY.md`](./DONE_CANONICAL_IDEA_QUALITY.md).
 
 ---
 

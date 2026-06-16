@@ -1,3 +1,4 @@
+import { TimerIcon } from '@llaab/icons';
 import { scoreConsolidationQuality } from '@llaab/schemas';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Button } from 'components/ui/button';
@@ -14,6 +15,9 @@ import type {
   IdeaNode,
   TranscriptNode,
 } from '@llaab/schemas';
+
+import { heartbeatStore, useElapsedMs } from 'lib/heartbeat';
+import { formatDurationMs } from 'utils/format-date.utils';
 
 import { fmtDetailDate, splitTags } from '../transcript-split.utils';
 import styles from './TranscriptDetail.module.css';
@@ -134,11 +138,15 @@ export function TranscriptDetail({
     selectedMeta.completionTokens != null,
   );
   const canConsolidate = extractionRuns.some((run) => run.ideaIds.length > 0);
-  const consolidateStatus = consolidateMutation.isPending
-    ? 'Consolidating…'
-    : consolidateMutation.isError && canonicalIdeas.length === 0
-      ? 'Consolidation failed'
-      : '';
+  const [consolidateStartedAtMs, setConsolidateStartedAtMs] = useState<number | null>(null);
+  const [consolidateDurationMs, setConsolidateDurationMs] = useState<number | null>(null);
+  const liveConsolidateDurationMs = useElapsedMs(
+    consolidateMutation.isPending ? consolidateStartedAtMs : null,
+  );
+  const displayConsolidateDurationMs = consolidateMutation.isPending
+    ? liveConsolidateDurationMs
+    : consolidateDurationMs;
+  const showConsolidateClock = consolidateMutation.isPending || consolidateDurationMs != null;
   const coverageAudit = consolidateMutation.data?.coverageAudit;
   const qualityValidation = consolidateMutation.data?.qualityValidation;
   const persistedCoverage = transcript.canonical_coverage;
@@ -256,7 +264,21 @@ export function TranscriptDetail({
   }
 
   function handleConsolidate(autoRetry?: boolean) {
-    consolidateMutation.mutate({ transcriptId: transcript.id, autoRetry });
+    const startedAt = heartbeatStore.getState().now;
+    setConsolidateStartedAtMs(startedAt);
+
+    consolidateMutation.mutate(
+      { transcriptId: transcript.id, autoRetry },
+      {
+        onSettled: () => {
+          setConsolidateDurationMs(heartbeatStore.getState().now - startedAt);
+          setConsolidateStartedAtMs(null);
+        },
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : 'Consolidation failed.');
+        },
+      },
+    );
   }
 
   function handlePromote(candidateId: string) {
@@ -469,27 +491,36 @@ export function TranscriptDetail({
             ) : null}
           </span>
           {canConsolidate ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className={styles.consolidateButton}
-              disabled={consolidateMutation.isPending}
-              title="Create canonical ideas from all extraction runs."
-              onClick={() => handleConsolidate()}
-            >
-              <SparklesIcon aria-hidden="true" />
-              {consolidateMutation.isPending ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
-            </Button>
-          ) : null}
-          {consolidateStatus ? (
-            <span
-              className={
-                consolidateMutation.isError ? styles.consolidateStatusError : styles.consolidateStatusPending
-              }
-            >
-              {consolidateStatus}
-            </span>
+            <div className={styles.consolidateActions}>
+              {showConsolidateClock && displayConsolidateDurationMs != null ? (
+                <span
+                  className={styles.consolidateClock}
+                  title={
+                    consolidateMutation.isPending
+                      ? 'Consolidation in progress'
+                      : 'Last consolidation duration'
+                  }
+                  aria-live={consolidateMutation.isPending ? 'polite' : undefined}
+                >
+                  <TimerIcon size={16} aria-hidden />
+                  <span className={styles.consolidateClockTime}>
+                    {formatDurationMs(displayConsolidateDurationMs)}
+                  </span>
+                </span>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={styles.consolidateButton}
+                disabled={consolidateMutation.isPending}
+                title="Create canonical ideas from all extraction runs."
+                onClick={() => handleConsolidate()}
+              >
+                <SparklesIcon aria-hidden="true" />
+                {consolidateMutation.isPending ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
+              </Button>
+            </div>
           ) : null}
         </h2>
         {coverageCounts ? (

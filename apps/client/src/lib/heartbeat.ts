@@ -41,6 +41,28 @@ export function useElapsedSeconds(startedAt: number | null): number {
   return elapsed;
 }
 
+// ── useElapsedMs ──────────────────────────────────────────────────────────────
+// Returns milliseconds elapsed since `startedAt`. Returns 0 when `startedAt` is null.
+
+export function useElapsedMs(startedAt: number | null): number {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!startedAt) {
+      setElapsed(0);
+      return;
+    }
+
+    setElapsed(Date.now() - startedAt);
+
+    return heartbeatStore.subscribe((state) => {
+      setElapsed(state.now - startedAt);
+    });
+  }, [startedAt]);
+
+  return elapsed;
+}
+
 // ── formatElapsed ─────────────────────────────────────────────────────────────
 
 export function formatElapsed(seconds: number): string {
