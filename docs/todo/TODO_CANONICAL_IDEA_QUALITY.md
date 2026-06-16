@@ -150,6 +150,11 @@ Verification:
 
 ## Phase 3 — Consolidation Coverage Audit
 
+> **Superseded (2026-06):** The second LLM audit pass and `consolidate-audit` task route were
+> removed. Consolidation is now single-pass on `consolidate` with deterministic quality validation
+> and scoring (`packages/schemas/src/consolidation-quality.ts`). The notes below describe the
+> original two-pass design for historical context.
+
 Status: complete.
 
 Problem:
