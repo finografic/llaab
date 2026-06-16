@@ -410,5 +410,13 @@
   {
     "exportName": "Sparkles",
     "lucideName": "sparkles"
+  },
+  {
+    "exportName": "Voicemail",
+    "lucideName": "voicemail"
+  },
+  {
+    "exportName": "Speech",
+    "lucideName": "speech"
   }
 ]
