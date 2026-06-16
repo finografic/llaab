@@ -126,7 +126,7 @@ The target is framed to the model as **"a strong preference, not a quota"** — 
 
 Four modes control which `TaskType` is used for each phase, and which draft prompt is used. The
 mode is selected via the `?mode=` query parameter on the consolidate request (default:
-`single-26b`). There is currently no UI mode selector — see [Future UX](#future-ux).
+`balanced`). There is currently no UI mode selector — see [Future UX](#future-ux).
 
 | Mode         | Draft task          | Audit task          | Draft prompt | Behaviour                                                    |
 | ------------ | ------------------- | ------------------- | ------------ | ------------------------------------------------------------ |
@@ -144,8 +144,7 @@ see [Draft prompt rules](#draft-prompt-rules).
 (a second full-set generation by the strong model). `single-26b` targets the same strong model
 (`consolidate-audit`, default `gemma4:26b-a4b-it-qat`) in one pass with a shorter prompt, aiming to
 reproduce `best`-level quality closer to `fast`-mode latency. It has no audit phase and therefore
-no `auditNotes` / `auditWarning`. **`single-26b` is the default mode** — both `parseConsolidationMode`
-and the **Consolidate Canonical Ideas** button use it unless `?mode=` is set explicitly.
+no `auditNotes` / `auditWarning`.
 
 Each `TaskType` is routed to an actual model via `packages/llm/src/router.ts` /
 `configs/llm-routing.json`, and is editable from the **Models** page (`/llm`,
@@ -194,14 +193,6 @@ type CanonicalDraftInput = {
   candidateIdeas: CandidateIdeaPayload[];
 };
 ```
-
-For `draftPromptStyle: 'compact'` (i.e. `single-26b`), `buildCanonicalCompactDraftInput` sends a
-further-trimmed version of the same shape to reduce prompt size and generation time:
-
-- JSON is serialized without pretty-printing (no indentation).
-- Each candidate idea omits `runId` and `model`, keeping only `id`, `title`, `body`, `domains`,
-  and `tags`.
-- `body` is truncated to `COMPACT_CANDIDATE_BODY_MAX_CHARS` (240 characters).
 
 ### Output shape
 
@@ -263,24 +254,20 @@ accepted and normalized (small models are inconsistent about casing), and `confi
    idea, but must stay separate from a "large context windows cause non-determinism" idea (that's
    model-behavior, not context strategy).
 
-5. **Non-Determinism Separation Rule** — if context non-determinism (large context windows making
-   LLM behavior less deterministic/reliable) is supported by 2 or more candidate ideas, keep it as
-   its own canonical idea rather than merging it into context retrieval or context stuffing.
-
-6. **Bash-Specific Rule** — prefer one canonical idea capturing both "Bash as the first execution
+5. **Bash-Specific Rule** — prefer one canonical idea capturing both "Bash as the first execution
    layer" and "Bash is limited" (e.g. "Bash is a foundational but limited execution layer for
    agents"), rather than always folding Bash into the typed-execution transition.
 
-7. **Typed/Runtime Split Rule** — keep typed execution layers (TS SDKs — interface/tooling
+6. **Typed/Runtime Split Rule** — keep typed execution layers (TS SDKs — interface/tooling
    architecture) separate from runtime isolation (V8 isolates, sandboxing — runtime/infrastructure
    architecture).
 
-8. **Single-Source Rule** — single-source clusters usually become supporting detail, not a
+7. **Single-Source Rule** — single-source clusters usually become supporting detail, not a
    canonical idea, unless the idea is technically specific, central to the transcript, and useful
    for future retrieval/linking — in which case mark `confidence: "medium"`.
 
 `single-26b` mode uses `buildCanonicalCompactSystemPrompt(target)` instead. It keeps the count
-guidance and a condensed version of rules 1–6 above (omitting the Category Separation and
+guidance and a condensed version of rules 1–5 above (omitting the Category Separation and
 Single-Source rules' full text), and adds explicit per-field limits — `body` max 45 words, `tags`
 max 4, `domains` max 3, `keyClaims` max 2 — to keep the single strong-model pass short and fast.
 It does not include the JSON-shape's `auditNotes` field (there is no audit phase in this mode).
@@ -312,7 +299,7 @@ type CanonicalAuditInput = {
 };
 ```
 
-The audit model receives the **same rule set** as the draft (count guidance + all seven rules above)
+The audit model receives the **same rule set** as the draft (count guidance + all six rules above)
 plus an explicit checklist (`AUDIT_RESPONSIBILITIES`):
 
 1. Are any canonical ideas duplicates?
@@ -495,10 +482,10 @@ Both phases must point at models that are installed in Ollama (`ollama list`); t
 
 Per the original design notes:
 
-- Keep the primary button simple: **"Consolidate Canonical Ideas"** (currently always `single-26b`).
-- A future mode selector (Fast / Single 26B / Balanced / Best) can pass `?mode=` through
+- Keep the primary button simple: **"Consolidate Canonical Ideas"** (currently always `balanced`).
+- A future mode selector (Fast / Balanced / Best) can pass `?mode=` through
   `useConsolidateCanonicalIdeas` without any server changes — the `mode` param is already
-  implemented and validated (`parseConsolidationMode`, defaulting to `single-26b` for any
+  implemented and validated (`parseConsolidationMode`, defaulting to `balanced` for any
   unrecognized value).
 - Consider persisting the consolidation run itself as a `RunNode` (draft model, audit model, mode,
   token/duration totals, input candidate count, output canonical count) for traceability —

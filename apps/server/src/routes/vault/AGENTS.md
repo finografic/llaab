@@ -16,12 +16,10 @@ Relevant code:
 
 - `apps/server/src/routes/vault/vault.routes.ts` — `consolidateTranscriptIdeas` handler, draft/audit
   schemas (`CanonicalIdeaDraftSchema`, `CanonicalDraftResultSchema`, `CanonicalAuditResultSchema`,
-  `PossibleMissedIdeaSchema`), mode resolution (`getConsolidationTasks`,
-  `parseConsolidationMode`), prompt/input builders (`buildCanonicalDraftSystemPrompt`,
-  `buildCanonicalCompactSystemPrompt`, `buildCanonicalDraftInput`,
-  `buildCanonicalCompactDraftInput`, `buildCanonicalAuditSystemPrompt`), the `callLlmForJson`
-  retry helper, and post-processing (`sanitizeCoverageNotes`, `normalizeCanonicalTags`,
-  `buildLegacyCoverage`).
+  `PossibleMissedIdeaSchema`), mode resolution (`getConsolidationTasks`), prompt builders
+  (`buildCanonicalDraftSystemPrompt`, `buildCanonicalCompactSystemPrompt`,
+  `buildCanonicalAuditSystemPrompt`), the `callLlmForJson` retry helper, and post-processing
+  (`sanitizeCoverageNotes`, `normalizeCanonicalTags`, `buildLegacyCoverage`).
 - `packages/llm/src/types.ts`, `packages/llm/src/router.ts`, `configs/llm-routing.json` —
   `consolidate` / `consolidate-audit` task routing.
 - `packages/schemas/src/canonical-idea-node.schema.ts`,

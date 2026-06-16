@@ -177,7 +177,7 @@ const CONSOLIDATION_MODES = new Set<ConsolidationMode>(['fast', 'single-26b', 'b
 function parseConsolidationMode(value: string | undefined): ConsolidationMode {
   return value && CONSOLIDATION_MODES.has(value as ConsolidationMode)
     ? (value as ConsolidationMode)
-    : 'single-26b';
+    : 'balanced';
 }
 
 function getConsolidationTasks(mode: ConsolidationMode): {
@@ -336,9 +336,6 @@ When one candidate idea describes a problem and another describes the recommende
 Context-Specific Rule:
 You may merge context stuffing, massive codebase dumping, targeted retrieval, grep/code-driven search, token cost, and context retrieval efficiency into one canonical idea framed as "Replace context stuffing with targeted retrieval." Do NOT merge this with large context windows causing model non-determinism — that is a model-behavior idea and should remain separate if supported by multiple candidates.
 
-Non-Determinism Separation Rule:
-If context non-determinism (large context windows making LLM behavior less deterministic/reliable) is supported by 2 or more candidate ideas, keep it as its own canonical idea rather than merging it into context retrieval or context stuffing. It is a model-behavior idea, not a workflow-strategy idea.
-
 Bash-Specific Rule:
 For Bash-related ideas, prefer one canonical idea that captures both Bash as the first/foundational execution layer and Bash as limited due to missing permissions, safety controls, and sandboxing. Suggested shape: "Bash is a foundational but limited execution layer for agents." Do not always merge Bash directly into the typed-execution transition if the candidate pool supports Bash as a distinct historical bridge.
 
@@ -391,10 +388,9 @@ Merge duplicates. Preserve distinct knowledge nodes.
 Important separation rules:
 1. Merge context stuffing and targeted retrieval into one idea if they describe the same problem/solution pair.
 2. Keep LLM non-determinism from large context windows separate from the workflow strategy of targeted retrieval.
-3. If context non-determinism is supported by 2 or more candidate ideas, keep it as its own canonical idea rather than merging it into context retrieval or context stuffing.
-4. Capture Bash as a foundational but limited execution layer if supported.
-5. Keep typed programmable execution layers separate from runtime isolation (e.g. V8 isolates) when both are supported.
-6. Single-source ideas should usually be supporting details, unless technically central and useful for future linking.
+3. Capture Bash as a foundational but limited execution layer if supported.
+4. Keep typed programmable execution layers separate from runtime isolation (e.g. V8 isolates) when both are supported.
+5. Single-source ideas should usually be supporting details, unless technically central and useful for future linking.
 
 Return ONLY valid JSON with this exact shape:
 ${CANONICAL_IDEA_DRAFT_JSON_SHAPE}
@@ -438,33 +434,6 @@ function buildCanonicalDraftInput(
     null,
     2,
   );
-}
-
-const COMPACT_CANDIDATE_BODY_MAX_CHARS = 240;
-
-function buildCanonicalCompactDraftInput(
-  transcript: TranscriptNode,
-  candidates: CandidateIdeaPayload[],
-  stats: ConsolidationStats,
-  target: ConsolidationTarget,
-): string {
-  return JSON.stringify({
-    transcript: {
-      id: transcript.id,
-      title: transcript.title,
-      summary: transcript.summary,
-      tags: transcript.tags,
-    },
-    stats,
-    target,
-    candidateIdeas: candidates.map((candidate) => ({
-      id: candidate.id,
-      title: candidate.title,
-      body: candidate.body ? candidate.body.slice(0, COMPACT_CANDIDATE_BODY_MAX_CHARS) : undefined,
-      domains: candidate.domains,
-      tags: candidate.tags,
-    })),
-  });
 }
 
 const AUDIT_RESPONSIBILITIES = `Check the draft canonical ideas for:
@@ -930,9 +899,7 @@ export const consolidateTranscriptIdeas = {
     try {
       const { llm: draftLlm, result: draftResult } = await callLlmForJson(
         draftTask,
-        draftPromptStyle === 'compact'
-          ? buildCanonicalCompactDraftInput(transcript, candidates, stats, target)
-          : buildCanonicalDraftInput(transcript, candidates, stats, target),
+        buildCanonicalDraftInput(transcript, candidates, stats, target),
         draftPromptStyle === 'compact'
           ? buildCanonicalCompactSystemPrompt(target)
           : buildCanonicalDraftSystemPrompt(target),
