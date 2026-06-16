@@ -23,11 +23,21 @@ export interface ConsolidateCanonicalIdeasResult {
     }>;
     warning?: string;
   };
+  qualityValidation?: {
+    passed: boolean;
+    issues: Array<{ code: string; message: string }>;
+  };
   error?: string;
 }
 
-async function consolidateCanonicalIdeas(transcriptId: string): Promise<ConsolidateCanonicalIdeasResult> {
-  const res = await api.vault.transcripts[':id'].consolidate.$post({ param: { id: transcriptId } });
+async function consolidateCanonicalIdeas(
+  transcriptId: string,
+  options?: { autoRetry?: boolean },
+): Promise<ConsolidateCanonicalIdeasResult> {
+  const res = await api.vault.transcripts[':id'].consolidate.$post({
+    param: { id: transcriptId },
+    ...(options?.autoRetry === false ? { query: { autoRetry: 'false' } } : {}),
+  });
   const json = (await res.json()) as ConsolidateCanonicalIdeasResult;
 
   if (!res.ok || !json.success) {
@@ -46,11 +56,12 @@ export function useConsolidateCanonicalIdeas() {
   }
 
   return useMutation({
-    mutationFn: consolidateCanonicalIdeas,
-    onSettled: (_data, _error, transcriptId) => {
+    mutationFn: ({ transcriptId, autoRetry }: { transcriptId: string; autoRetry?: boolean }) =>
+      consolidateCanonicalIdeas(transcriptId, { autoRetry }),
+    onSettled: (_data, _error, { transcriptId }) => {
       invalidateTranscriptConsolidation(transcriptId);
     },
-    onError: (_error, transcriptId) => {
+    onError: (_error, { transcriptId }) => {
       for (const delayMs of [30_000, 90_000, 180_000, 300_000]) {
         window.setTimeout(() => invalidateTranscriptConsolidation(transcriptId), delayMs);
       }

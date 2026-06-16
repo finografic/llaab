@@ -20,6 +20,8 @@ Relevant code:
   (`buildCanonicalDraftSystemPrompt`, `buildCanonicalCompactSystemPrompt`,
   `buildCanonicalAuditSystemPrompt`), the `callLlmForJson` retry helper, and post-processing
   (`sanitizeCoverageNotes`, `normalizeCanonicalTags`, `buildLegacyCoverage`).
+- `apps/server/src/routes/vault/consolidation-quality.ts` — deterministic quality validation and
+  auto-retry gate after the draft pass.
 - `packages/llm/src/types.ts`, `packages/llm/src/router.ts`, `configs/llm-routing.json` —
   `consolidate` / `consolidate-audit` task routing.
 - `packages/schemas/src/canonical-idea-node.schema.ts`,

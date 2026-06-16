@@ -203,6 +203,32 @@
   color: var(--warning-text);
 }
 
+.qualityWarning {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid color-mix(in oklab, var(--warning-border) 55%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in oklab, var(--warning-bg) 50%, transparent);
+}
+
+.qualityWarningLead {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--warning-text);
+}
+
+.qualityWarningList {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--warning-text);
+}
+
+.qualityRegenerateButton {
+  margin-top: var(--space-2);
+}
+
 .missedIdeasPanel {
   border: 1px solid color-mix(in oklab, var(--warning-border) 55%, var(--border));
   border-radius: var(--radius);

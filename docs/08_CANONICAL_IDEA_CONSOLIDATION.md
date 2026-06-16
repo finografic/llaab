@@ -120,17 +120,17 @@ The target is framed to the model as **"a strong preference, not a quota"** — 
 
 ## Step 3 — Modes and model routing
 
-Four modes control which draft prompt is used. All modes currently run **one pass** on the
+Four modes control which draft prompt and model are used. All modes currently run **one pass** on the
 `consolidate` task route; `auditTask` is always `null` in `getConsolidationTasks`. The mode is
-selected via the `?mode=` query parameter on the consolidate request (default: `balanced`). There
+selected via the `?mode=` query parameter on the consolidate request (default: `single-26b`). There
 is currently no UI mode selector — see [Future UX](#future-ux).
 
-| Mode         | Draft task    | Audit task | Draft prompt | Behaviour                                           |
-| ------------ | ------------- | ---------- | ------------ | --------------------------------------------------- |
-| `fast`       | `consolidate` | _(none)_   | full         | Single pass, full draft prompt.                     |
-| `single-26b` | `consolidate` | _(none)_   | compact      | Single pass, compact prompt (shorter field limits). |
-| `balanced`   | `consolidate` | _(none)_   | full         | **Default.** Same as `fast` today (single pass).    |
-| `best`       | `consolidate` | _(none)_   | full         | Same as `balanced` today (single pass).             |
+| Mode         | Draft task    | Audit task | Draft prompt | Model                     | Behaviour                                           |
+| ------------ | ------------- | ---------- | ------------ | ------------------------- | --------------------------------------------------- |
+| `fast`       | `consolidate` | _(none)_   | full         | E4B (`extract` route)     | Single pass, fast preview.                          |
+| `single-26b` | `consolidate` | _(none)_   | compact      | 26B (`consolidate` route) | **Default.** Single compact pass.                   |
+| `balanced`   | `consolidate` | _(none)_   | compact      | 26B                       | Same as `single-26b` today.                         |
+| `best`       | `consolidate` | _(none)_   | compact      | 26B                       | Same as `single-26b` (future: async two-pass only). |
 
 The modes resolve through `getConsolidationTasks(mode)` in `vault.routes.ts`, which returns
 `{ draftTask, auditTask, draftPromptStyle }`. `draftPromptStyle: 'compact'` selects
@@ -156,14 +156,15 @@ sequenceDiagram
   participant Server as Server (vault.routes.ts)
   participant Model as Consolidate model
 
-  Client->>Server: POST /transcripts/:id/consolidate?mode=balanced
+  Client->>Server: POST /transcripts/:id/consolidate?mode=single-26b
   Server->>Server: gather candidates, compute stats + target
   Server->>Model: routeLlm('consolidate', draftInput)
   Model-->>Server: CanonicalDraftResult (JSON)
+  Server->>Server: validate quality (auto-retry once if needed)
   Server->>Server: sanitize notes, normalize tags
   Server->>Server: createNode('canonical-idea', ...) per idea
   Server->>Server: updateNode(transcript.canonical_coverage)
-  Server-->>Client: canonicalIdeas, coverageAudit, llmMeta, mode
+  Server-->>Client: canonicalIdeas, coverageAudit, qualityValidation, llmMeta, mode
 ```
 
 ---
@@ -273,6 +274,26 @@ The prompt also requires:
 - A closing reminder to double-check JSON validity — added because the fast draft model would
   occasionally truncate or malform JSON on the more elaborate prompt; this measurably reduced
   parse failures.
+
+---
+
+## Step 4b — Quality validation (active)
+
+After the draft pass, `validateConsolidationQuality` in `consolidation-quality.ts` checks the result
+before nodes are written. A consolidation **warns** when:
+
+- canonical idea count is below 4 or above 6
+- covered candidates are below 80%
+- any canonical idea lacks a `d:*` domain tag
+- V8/runtime candidates exist but no canonical idea covers sandboxing or V8 isolates
+- two or more non-determinism candidates exist but no canonical idea captures non-determinism
+- Bash candidates exist but no canonical idea captures Bash as foundational but limited
+- typed execution candidates exist but no canonical idea captures typed/programmable execution
+
+On failure the handler **auto-retries once** (unless `?autoRetry=false`), persists the result
+anyway, returns `qualityValidation` in the response, and stores a quality warning on
+`transcript.canonical_coverage.warning`. The transcript UI shows **This consolidation looks
+incomplete** with a **Regenerate** button.
 
 ---
 
@@ -492,6 +513,7 @@ Per the original design notes:
 | File                                                                              | Responsibility                                            |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | `apps/server/src/routes/vault/vault.routes.ts`                                    | Consolidation handler, schemas, prompts, post-processing. |
+| `apps/server/src/routes/vault/consolidation-quality.ts`                           | Deterministic post-consolidation quality validation.      |
 | `packages/llm/src/router.ts`, `packages/llm/src/types.ts`                         | `TaskType` definitions and default routing.               |
 | `configs/llm-routing.json`                                                        | Per-task model overrides (UI-editable).                   |
 | `apps/client/src/components/LlmRoutingEditor/LlmRoutingEditor.tsx`                | Models UI task routing editor.                            |

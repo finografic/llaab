@@ -11,7 +11,7 @@ import {
   VAULT_ROOT,
 } from '@llaab/core';
 import { enrichSourceMetadata, extractKnowledgeFromTranscript } from '@llaab/ingestion';
-import { routeLlm } from '@llaab/llm';
+import { resolveLlmRoute, routeLlm } from '@llaab/llm';
 import { formatInstantForFilenameId, formatIsoUtcSeconds } from '@llaab/schemas';
 import { appendProducedNodeIds, appendRunEvent, setRunLlmTrace } from '@llaab/skills';
 import { deleteCookie, setCookie } from 'hono/cookie';
@@ -44,6 +44,8 @@ import {
   VAULT_COOKIE_NAME,
 } from '../../lib/vault-auth.js';
 import { readVaultRootTree } from '../../lib/vault-tree.js';
+import { formatConsolidationQualityWarning, validateConsolidationQuality } from './consolidation-quality.js';
+import type { ConsolidationQualityCanonical } from './consolidation-quality.js';
 import { deleteRunQuerySchema } from './vault.schema.js';
 
 const ConsolidationCoverageStatusSchema = z.enum(['covered', 'omitted', 'missed']);
@@ -177,21 +179,30 @@ const CONSOLIDATION_MODES = new Set<ConsolidationMode>(['fast', 'single-26b', 'b
 function parseConsolidationMode(value: string | undefined): ConsolidationMode {
   return value && CONSOLIDATION_MODES.has(value as ConsolidationMode)
     ? (value as ConsolidationMode)
-    : 'balanced';
+    : 'single-26b';
 }
 
 function getConsolidationTasks(mode: ConsolidationMode): {
   draftTask: TaskType;
   auditTask: TaskType | null;
   draftPromptStyle: 'full' | 'compact';
+  modelOverride?: string;
 } {
-  // Single-pass consolidation on the `consolidate` task route only. Audit phase code remains
-  // in place but is not invoked until re-enabled here.
+  // Single-pass consolidation on the `consolidate` task route. Audit phase code remains in place
+  // but is not invoked until re-enabled here. Default: compact 26B pass; fast: E4B via extract route.
   switch (mode) {
+    case 'fast':
+      return {
+        draftTask: 'consolidate',
+        auditTask: null,
+        draftPromptStyle: 'full',
+        modelOverride: resolveLlmRoute('extract').model,
+      };
     case 'single-26b':
-      return { draftTask: 'consolidate', auditTask: null, draftPromptStyle: 'compact' };
+    case 'balanced':
+    case 'best':
     default:
-      return { draftTask: 'consolidate', auditTask: null, draftPromptStyle: 'full' };
+      return { draftTask: 'consolidate', auditTask: null, draftPromptStyle: 'compact' };
   }
 }
 
@@ -273,10 +284,11 @@ async function callLlmForJson<T>(
   system: string,
   schema: { parse: (value: unknown) => T },
   attempts = 2,
+  modelOverride?: string,
 ): Promise<{ llm: Awaited<ReturnType<typeof routeLlm>>; result: T }> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    const llm = await routeLlm(task, input, { system, bypassCache: true });
+    const llm = await routeLlm(task, input, { system, bypassCache: true, model: modelOverride });
     try {
       return { llm, result: schema.parse(parseJsonFromLlmText(llm.text)) };
     } catch (err) {
@@ -573,6 +585,31 @@ function buildLegacyCoverage(
       reason: missedReasonByCandidateId.get(candidate.id) ?? '',
     };
   });
+}
+
+function buildValidationCanonicalIdeas(
+  result: CanonicalDraftResult,
+  candidateIds: Set<string>,
+): ConsolidationQualityCanonical[] {
+  const ideas: ConsolidationQualityCanonical[] = [];
+
+  for (const draft of result.canonicalIdeas) {
+    const sourceCandidateIdeaIds = draft.sourceCandidateIdeaIds.filter((candidateId) =>
+      candidateIds.has(candidateId),
+    );
+    if (sourceCandidateIdeaIds.length === 0) continue;
+
+    const { tags, domains } = normalizeCanonicalTags(draft.tags, draft.domains, draft.title, draft.body);
+    ideas.push({
+      title: draft.title,
+      body: draft.body,
+      tags: dedupeTags([...domains, ...tags]),
+      keyClaims: draft.keyClaims,
+      sourceCandidateIdeaIds,
+    });
+  }
+
+  return ideas;
 }
 
 interface ProducedNodeDeleteContext {
@@ -888,20 +925,50 @@ export const consolidateTranscriptIdeas = {
     }
 
     const mode = parseConsolidationMode(c.req.query('mode'));
-    const { draftTask, auditTask, draftPromptStyle } = getConsolidationTasks(mode);
+    const skipAutoRetry = c.req.query('autoRetry') === 'false';
+    const taskConfig = getConsolidationTasks(mode);
+    const { draftTask, auditTask, draftPromptStyle, modelOverride } = taskConfig;
     const candidateIds = new Set(candidates.map((candidate) => candidate.id));
     const stats = computeConsolidationStats(candidates);
     const target = computeConsolidationTarget(stats.candidateIdeaCount);
+    const draftSystemPrompt =
+      draftPromptStyle === 'compact'
+        ? buildCanonicalCompactSystemPrompt(target)
+        : buildCanonicalDraftSystemPrompt(target);
+    const draftInput = buildCanonicalDraftInput(transcript, candidates, stats, target);
 
     try {
-      const { llm: draftLlm, result: draftResult } = await callLlmForJson(
-        draftTask,
-        buildCanonicalDraftInput(transcript, candidates, stats, target),
-        draftPromptStyle === 'compact'
-          ? buildCanonicalCompactSystemPrompt(target)
-          : buildCanonicalDraftSystemPrompt(target),
-        CanonicalDraftResultSchema,
+      async function runDraftPass() {
+        return callLlmForJson(
+          draftTask,
+          draftInput,
+          draftSystemPrompt,
+          CanonicalDraftResultSchema,
+          2,
+          modelOverride,
+        );
+      }
+
+      let { llm: draftLlm, result: draftResult } = await runDraftPass();
+      let validationIdeas = buildValidationCanonicalIdeas(draftResult, candidateIds);
+      let qualityValidation = validateConsolidationQuality(
+        candidates,
+        validationIdeas,
+        validationIdeas.flatMap((idea) => idea.sourceCandidateIdeaIds),
       );
+
+      if (!qualityValidation.passed && !skipAutoRetry) {
+        const retry = await runDraftPass();
+        draftLlm = retry.llm;
+        draftResult = retry.result;
+        validationIdeas = buildValidationCanonicalIdeas(draftResult, candidateIds);
+        qualityValidation = validateConsolidationQuality(
+          candidates,
+          validationIdeas,
+          validationIdeas.flatMap((idea) => idea.sourceCandidateIdeaIds),
+        );
+      }
+
       let result: CanonicalDraftResult = draftResult;
       let finalLlm = draftLlm;
       let auditNotes: string[] = [];
@@ -975,7 +1042,8 @@ export const consolidateTranscriptIdeas = {
         .filter((item) => item.status === 'missed')
         .map((item) => ({ id: item.candidateId, reason: item.reason || undefined }));
 
-      const warning = [auditWarning, ...auditNotes].filter(Boolean).join(' ') || undefined;
+      const qualityWarning = formatConsolidationQualityWarning(qualityValidation);
+      const warning = [auditWarning, qualityWarning, ...auditNotes].filter(Boolean).join(' ') || undefined;
 
       await updateNode(getNodeFilePath('transcript', transcript.id), (current) => ({
         ...(current as TranscriptNode),
@@ -999,6 +1067,7 @@ export const consolidateTranscriptIdeas = {
           missed: coverage.filter((item) => item.status === 'missed'),
           warning,
         },
+        qualityValidation,
         llmMeta: {
           model: finalLlm.model,
           provider: finalLlm.provider,

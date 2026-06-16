@@ -134,7 +134,27 @@ export function TranscriptDetail({
       ? 'Consolidation failed'
       : '';
   const coverageAudit = consolidateMutation.data?.coverageAudit;
+  const qualityValidation = consolidateMutation.data?.qualityValidation;
   const persistedCoverage = transcript.canonical_coverage;
+  const coverageWarningText = coverageAudit?.warning ?? persistedCoverage?.warning;
+  const nonQualityCoverageWarning = coverageWarningText?.includes('Consolidation quality check:')
+    ? coverageWarningText.split('Consolidation quality check:')[0]?.trim() || undefined
+    : coverageWarningText;
+  const persistedQualityWarning = persistedCoverage?.warning?.includes('Consolidation quality check:')
+    ? persistedCoverage.warning
+    : undefined;
+  const qualityIssues =
+    qualityValidation?.issues ??
+    (persistedQualityWarning
+      ? [
+          {
+            code: 'persisted',
+            message: persistedQualityWarning.replace(/^Consolidation quality check:\s*/, ''),
+          },
+        ]
+      : []);
+  const showQualityWarning =
+    (qualityValidation != null && !qualityValidation.passed) || Boolean(persistedQualityWarning);
   const persistedMissed = useMemo(
     () =>
       persistedCoverage?.missed_candidate_idea_ids.map((item) => ({
@@ -198,8 +218,8 @@ export function TranscriptDetail({
     }
   }
 
-  function handleConsolidate() {
-    consolidateMutation.mutate(transcript.id);
+  function handleConsolidate(autoRetry?: boolean) {
+    consolidateMutation.mutate({ transcriptId: transcript.id, autoRetry });
   }
 
   function handlePromote(candidateId: string) {
@@ -351,7 +371,7 @@ export function TranscriptDetail({
                   ? 'Create canonical ideas from all extraction runs.'
                   : 'No extracted ideas are available to consolidate.'
               }
-              onClick={handleConsolidate}
+              onClick={() => handleConsolidate()}
             >
               <SparklesIcon aria-hidden="true" />
               {consolidateMutation.isPending ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
@@ -442,10 +462,30 @@ export function TranscriptDetail({
             </span>
           </div>
         ) : null}
-        {coverageAudit?.warning || persistedCoverage?.warning ? (
-          <p className={styles.coverageWarning}>
-            Coverage audit warning: {coverageAudit?.warning ?? persistedCoverage?.warning}
-          </p>
+        {nonQualityCoverageWarning ? (
+          <p className={styles.coverageWarning}>Coverage audit warning: {nonQualityCoverageWarning}</p>
+        ) : null}
+        {showQualityWarning ? (
+          <div className={styles.qualityWarning}>
+            <p className={styles.qualityWarningLead}>This consolidation looks incomplete.</p>
+            {qualityIssues.length > 0 ? (
+              <ul className={styles.qualityWarningList}>
+                {qualityIssues.map((issue) => (
+                  <li key={issue.code}>{issue.message}</li>
+                ))}
+              </ul>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={styles.qualityRegenerateButton}
+              disabled={consolidateMutation.isPending}
+              onClick={() => handleConsolidate(false)}
+            >
+              {consolidateMutation.isPending ? 'Regenerating…' : 'Regenerate'}
+            </Button>
+          </div>
         ) : null}
         {coverageAudit && coverageAudit.missed.length > 0 ? (
           <details className={styles.missedIdeasPanel}>
