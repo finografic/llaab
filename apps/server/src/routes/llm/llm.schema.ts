@@ -5,7 +5,6 @@ export const llmTaskSchema = z.enum([
   'format',
   'extract',
   'consolidate',
-  'consolidate-audit',
   'code',
   'reason',
   'reason-plus',

@@ -20,7 +20,6 @@ type TaskType =
   | 'format'
   | 'extract'
   | 'consolidate'
-  | 'consolidate-audit'
   | 'code'
   | 'reason'
   | 'reason-plus'
@@ -46,7 +45,6 @@ const TASK_LABELS: Record<TaskType, string> = {
   'format': 'Format',
   'extract': 'Extract',
   'consolidate': 'Consolidation',
-  'consolidate-audit': 'Consolidation Audit',
   'code': 'Code',
   'reason': 'Reason',
   'reason-plus': 'Reason+',
@@ -66,7 +64,6 @@ const TASK_ORDER: TaskType[] = [
   'format',
   'extract',
   'consolidate',
-  'consolidate-audit',
   'code',
   'reason',
   'reason-plus',

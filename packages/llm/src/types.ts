@@ -3,7 +3,6 @@ export type TaskType =
   | 'format'
   | 'extract'
   | 'consolidate'
-  | 'consolidate-audit'
   | 'code'
   | 'reason'
   | 'reason-plus'
