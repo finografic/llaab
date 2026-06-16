@@ -159,14 +159,6 @@ const CanonicalDraftResultSchema = z.object({
   possibleMissedIdeas: z.array(PossibleMissedIdeaSchema).optional().default([]),
 });
 
-const CanonicalAuditResultSchema = CanonicalDraftResultSchema.extend({
-  auditNotes: z
-    .union([z.array(z.string()), z.string()])
-    .optional()
-    .default([])
-    .transform((value) => (Array.isArray(value) ? value : value ? [value] : [])),
-});
-
 type CanonicalDraftResult = z.infer<typeof CanonicalDraftResultSchema>;
 
 interface ConsolidationCoverageItem {
@@ -176,38 +168,30 @@ interface ConsolidationCoverageItem {
   reason: string;
 }
 
-type ConsolidationMode = 'fast' | 'single-26b' | 'balanced' | 'best';
+type ConsolidationMode = 'fast' | 'single-26b';
 
-const CONSOLIDATION_MODES = new Set<ConsolidationMode>(['fast', 'single-26b', 'balanced', 'best']);
+const LEGACY_CONSOLIDATION_MODES: Record<string, ConsolidationMode> = {
+  balanced: 'single-26b',
+  best: 'single-26b',
+};
 
 function parseConsolidationMode(value: string | undefined): ConsolidationMode {
-  return value && CONSOLIDATION_MODES.has(value as ConsolidationMode)
-    ? (value as ConsolidationMode)
-    : 'single-26b';
+  if (value === 'fast' || value === 'single-26b') return value;
+  if (value && value in LEGACY_CONSOLIDATION_MODES) return LEGACY_CONSOLIDATION_MODES[value]!;
+  return 'single-26b';
 }
 
-function getConsolidationTasks(mode: ConsolidationMode): {
-  draftTask: TaskType;
-  auditTask: TaskType | null;
-  draftPromptStyle: 'full' | 'compact';
+function getConsolidationConfig(mode: ConsolidationMode): {
+  promptStyle: 'full' | 'compact';
   modelOverride?: string;
 } {
-  // Single-pass consolidation on the `consolidate` task route. Audit phase code remains in place
-  // but is not invoked until re-enabled here. Default: compact 26B pass; fast: E4B via extract route.
-  switch (mode) {
-    case 'fast':
-      return {
-        draftTask: 'consolidate',
-        auditTask: null,
-        draftPromptStyle: 'full',
-        modelOverride: resolveLlmRoute('extract').model,
-      };
-    case 'single-26b':
-    case 'balanced':
-    case 'best':
-    default:
-      return { draftTask: 'consolidate', auditTask: null, draftPromptStyle: 'compact' };
+  if (mode === 'fast') {
+    return {
+      promptStyle: 'full',
+      modelOverride: resolveLlmRoute('extract').model,
+    };
   }
+  return { promptStyle: 'compact' };
 }
 
 interface ConsolidationStats {
@@ -446,66 +430,6 @@ function buildCanonicalDraftInput(
       stats,
       target,
       candidateIdeas: candidates,
-    },
-    null,
-    2,
-  );
-}
-
-const AUDIT_RESPONSIBILITIES = `Check the draft canonical ideas for:
-1. Are any canonical ideas duplicates?
-2. Are distinct concepts over-merged?
-3. Are related problem/solution pairs unnecessarily split?
-4. Are important candidate clusters missing?
-5. Are weak/single-source ideas promoted unnecessarily?
-6. Are sourceCandidateIdeaIds accurate?
-7. Is the final count within the target range?
-8. Are tags clean and reusable (max 5 semantic tags, max 3 domain tags)?
-9. Are domain tags appropriate (avoid noisy tags like d:ingest unless the idea is about ingestion)?
-10. Do coverageNotes avoid internal process language (no "draft", "audit", "prompt", "internal", "consolidation process")?`;
-
-function buildCanonicalAuditSystemPrompt(target: ConsolidationTarget): string {
-  return `You audit and refine a draft set of canonical ideas consolidated from transcript candidate ideas.
-
-${buildCountGuidance(target)}
-
-${DRAFT_CONSOLIDATION_RULES}
-
-${AUDIT_RESPONSIBILITIES}
-
-Do not re-run consolidation from scratch unless the draft is fundamentally broken. Make targeted corrections and return the finalized canonical ideas.
-
-Return ONLY valid JSON with this exact shape:
-${CANONICAL_IDEA_DRAFT_JSON_SHAPE.replace(/\}$/, ',"auditNotes":["Short note about a correction made, if any"]}')}
-
-Rules:
-- Use only candidate ids from the input.
-- Every canonical idea must reference at least one source candidate id in sourceCandidateIdeaIds.
-- Every candidate id must appear in exactly one of coverage.coveredCandidateIdeaIds, coverage.omittedCandidateIdeaIds, or coverage.missedCandidateIdeaIds.
-- coverageNotes must be plain-English and user-facing — never mention drafts, audits, prompts, or the consolidation process itself.
-- auditNotes is for your own summary of what changed (or empty if nothing changed) — it is not shown to end users.
-- Do not include markdown fences, explanations, or comments.
-- Keep coverageNotes and reason fields short (one sentence).
-- Before responding, double-check that the JSON is syntactically valid: every string is quoted and escaped, and every object/array is closed.`;
-}
-
-function buildCanonicalAuditInput(
-  transcript: TranscriptNode,
-  candidates: CandidateIdeaPayload[],
-  stats: ConsolidationStats,
-  draft: CanonicalDraftResult,
-): string {
-  return JSON.stringify(
-    {
-      transcript: {
-        id: transcript.id,
-        title: transcript.title,
-        summary: transcript.summary,
-        tags: transcript.tags,
-      },
-      stats,
-      candidateIdeas: candidates,
-      draft,
     },
     null,
     2,
@@ -933,13 +857,12 @@ export const consolidateTranscriptIdeas = {
 
     const mode = parseConsolidationMode(c.req.query('mode'));
     const skipAutoRetry = c.req.query('autoRetry') === 'false';
-    const taskConfig = getConsolidationTasks(mode);
-    const { draftTask, auditTask, draftPromptStyle, modelOverride } = taskConfig;
+    const { promptStyle, modelOverride } = getConsolidationConfig(mode);
     const candidateIds = new Set(candidates.map((candidate) => candidate.id));
     const stats = computeConsolidationStats(candidates);
     const target = computeConsolidationTarget(stats.candidateIdeaCount);
-    const draftSystemPrompt =
-      draftPromptStyle === 'compact'
+    const systemPrompt =
+      promptStyle === 'compact'
         ? buildCanonicalCompactSystemPrompt(target)
         : buildCanonicalDraftSystemPrompt(target);
     const draftInput = buildCanonicalDraftInput(transcript, candidates, stats, target);
@@ -947,16 +870,16 @@ export const consolidateTranscriptIdeas = {
     try {
       async function runDraftPass() {
         return callLlmForJson(
-          draftTask,
+          'consolidate',
           draftInput,
-          draftSystemPrompt,
+          systemPrompt,
           CanonicalDraftResultSchema,
           2,
           modelOverride,
         );
       }
 
-      let { llm: draftLlm, result: draftResult } = await runDraftPass();
+      let { llm, result: draftResult } = await runDraftPass();
       let validationIdeas = buildValidationCanonicalIdeas(draftResult, candidateIds);
       let qualityValidation = validateConsolidationQuality(
         candidates,
@@ -966,7 +889,7 @@ export const consolidateTranscriptIdeas = {
 
       if (!qualityValidation.passed && !skipAutoRetry) {
         const retry = await runDraftPass();
-        draftLlm = retry.llm;
+        llm = retry.llm;
         draftResult = retry.result;
         validationIdeas = buildValidationCanonicalIdeas(draftResult, candidateIds);
         qualityValidation = validateConsolidationQuality(
@@ -976,26 +899,7 @@ export const consolidateTranscriptIdeas = {
         );
       }
 
-      let result: CanonicalDraftResult = draftResult;
-      let finalLlm = draftLlm;
-      let auditNotes: string[] = [];
-      let auditWarning: string | undefined;
-
-      if (auditTask) {
-        try {
-          const { llm: auditLlm, result: audited } = await callLlmForJson(
-            auditTask,
-            buildCanonicalAuditInput(transcript, candidates, stats, result),
-            buildCanonicalAuditSystemPrompt(target),
-            CanonicalAuditResultSchema,
-          );
-          result = audited;
-          auditNotes = audited.auditNotes;
-          finalLlm = auditLlm;
-        } catch (err) {
-          auditWarning = err instanceof Error ? err.message : 'Canonical idea audit failed.';
-        }
-      }
+      const result: CanonicalDraftResult = draftResult;
 
       const createdAt = new Date();
       const timestamp = formatInstantForFilenameId(createdAt);
@@ -1020,11 +924,11 @@ export const consolidateTranscriptIdeas = {
             confidence: draft.confidence,
             key_claims: draft.keyClaims,
             coverage_notes: sanitizeCoverageNotes(draft.coverageNotes),
-            llm_model: finalLlm.model,
-            llm_provider: finalLlm.provider,
-            llm_duration_ms: finalLlm.durationMs,
-            llm_prompt_tokens: finalLlm.promptTokens,
-            llm_completion_tokens: finalLlm.completionTokens,
+            llm_model: llm.model,
+            llm_provider: llm.provider,
+            llm_duration_ms: llm.durationMs,
+            llm_prompt_tokens: llm.promptTokens,
+            llm_completion_tokens: llm.completionTokens,
           },
         });
         canonicalIdeas.push(created.node as CanonicalIdeaNode);
@@ -1050,7 +954,7 @@ export const consolidateTranscriptIdeas = {
         .map((item) => ({ id: item.candidateId, reason: item.reason || undefined }));
 
       const qualityWarning = formatConsolidationQualityWarning(qualityValidation);
-      const warning = [auditWarning, qualityWarning, ...auditNotes].filter(Boolean).join(' ') || undefined;
+      const warning = qualityWarning || undefined;
 
       await updateNode(getNodeFilePath('transcript', transcript.id), (current) => ({
         ...(current as TranscriptNode),
@@ -1077,11 +981,11 @@ export const consolidateTranscriptIdeas = {
         },
         qualityValidation,
         llmMeta: {
-          model: finalLlm.model,
-          provider: finalLlm.provider,
-          durationMs: finalLlm.durationMs,
-          promptTokens: finalLlm.promptTokens,
-          completionTokens: finalLlm.completionTokens,
+          model: llm.model,
+          provider: llm.provider,
+          durationMs: llm.durationMs,
+          promptTokens: llm.promptTokens,
+          completionTokens: llm.completionTokens,
         },
         mode,
       });
