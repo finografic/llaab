@@ -25,6 +25,7 @@ export interface ConsolidateCanonicalIdeasResult {
   };
   qualityValidation?: {
     passed: boolean;
+    score: number;
     issues: Array<{ code: string; message: string }>;
   };
   error?: string;

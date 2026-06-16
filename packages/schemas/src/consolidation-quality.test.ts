@@ -48,7 +48,7 @@ const theoCandidates: Array<{
 ];
 
 describe('validateConsolidationQuality', () => {
-  it('passes a strong five-idea consolidation shape', () => {
+  it('passes a strong five-idea consolidation shape with a high score', () => {
     const canonicalIdeas = [
       {
         title: 'Replace context stuffing with targeted retrieval',
@@ -87,6 +87,7 @@ describe('validateConsolidationQuality', () => {
 
     expect(result.passed).toBe(true);
     expect(result.issues).toHaveLength(0);
+    expect(result.score).toBeGreaterThanOrEqual(85);
   });
 
   it('fails when canonical count is too low and required themes are missing', () => {
@@ -115,6 +116,7 @@ describe('validateConsolidationQuality', () => {
     const result = validateConsolidationQuality(theoCandidates, canonicalIdeas, covered);
 
     expect(result.passed).toBe(false);
+    expect(result.score).toBeLessThan(85);
     expect(result.issues.map((issue) => issue.code)).toEqual(
       expect.arrayContaining([
         'canonical_count',
@@ -163,6 +165,7 @@ describe('validateConsolidationQuality', () => {
     const result = validateConsolidationQuality(theoCandidates, canonicalIdeas, covered);
 
     expect(result.passed).toBe(false);
+    expect(result.score).toBeLessThan(100);
     expect(result.issues.map((issue) => issue.code)).toContain('non_determinism_separate');
   });
 });

@@ -16,6 +16,7 @@ const TranscriptCanonicalCoverageSchema = z.object({
   covered_candidate_idea_ids: z.array(NodeIdSchema).default([]),
   omitted_candidate_idea_ids: z.array(TranscriptCanonicalCoverageItemSchema).default([]),
   missed_candidate_idea_ids: z.array(TranscriptCanonicalCoverageItemSchema).default([]),
+  quality_score: z.number().int().min(0).max(100).optional(),
   warning: z.string().optional(),
   updated_at: z.string().datetime(),
 });

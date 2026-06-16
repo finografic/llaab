@@ -12,12 +12,16 @@ import {
 } from '@llaab/core';
 import { enrichSourceMetadata, extractKnowledgeFromTranscript } from '@llaab/ingestion';
 import { resolveLlmRoute, routeLlm } from '@llaab/llm';
-import { formatInstantForFilenameId, formatIsoUtcSeconds } from '@llaab/schemas';
+import {
+  formatConsolidationQualityWarning,
+  formatInstantForFilenameId,
+  formatIsoUtcSeconds,
+  validateConsolidationQuality,
+} from '@llaab/schemas';
 import { appendProducedNodeIds, appendRunEvent, setRunLlmTrace } from '@llaab/skills';
 import { deleteCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
-import type { ConsolidationQualityCanonical } from './consolidation-quality.js';
 import type {
   CleanRecentBody,
   CreateNodeBody,
@@ -30,6 +34,7 @@ import type {
 import type { TaskType } from '@llaab/llm';
 import type {
   CanonicalIdeaNode,
+  ConsolidationQualityCanonical,
   IdeaNode,
   LabNode,
   RunNode,
@@ -45,7 +50,6 @@ import {
   VAULT_COOKIE_NAME,
 } from '../../lib/vault-auth.js';
 import { readVaultRootTree } from '../../lib/vault-tree.js';
-import { formatConsolidationQualityWarning, validateConsolidationQuality } from './consolidation-quality.js';
 import { deleteRunQuerySchema } from './vault.schema.js';
 
 const ConsolidationCoverageStatusSchema = z.enum(['covered', 'omitted', 'missed']);
@@ -1056,6 +1060,7 @@ export const consolidateTranscriptIdeas = {
           covered_candidate_idea_ids: coveredCandidateIdeaIds,
           omitted_candidate_idea_ids: omittedCandidateIdeaIds,
           missed_candidate_idea_ids: missedCandidateIdeaIds,
+          quality_score: qualityValidation.score,
           warning,
           updated_at: formatIsoUtcSeconds(new Date()),
         },

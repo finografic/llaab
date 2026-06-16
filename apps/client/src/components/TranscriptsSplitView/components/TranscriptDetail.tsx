@@ -1,3 +1,4 @@
+import { scoreConsolidationQuality } from '@llaab/schemas';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
@@ -7,7 +8,12 @@ import { useConsolidateCanonicalIdeas, usePromoteCanonicalIdea } from 'queries/t
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import type { CanonicalIdeaNode, IdeaNode, TranscriptNode } from '@llaab/schemas';
+import type {
+  CanonicalIdeaNode,
+  ConsolidationQualityCanonical,
+  IdeaNode,
+  TranscriptNode,
+} from '@llaab/schemas';
 
 import { fmtDetailDate, splitTags } from '../transcript-split.utils';
 import styles from './TranscriptDetail.module.css';
@@ -155,6 +161,37 @@ export function TranscriptDetail({
       : []);
   const showQualityWarning =
     (qualityValidation != null && !qualityValidation.passed) || Boolean(persistedQualityWarning);
+  const qualityScore = useMemo(() => {
+    if (canonicalIdeas.length === 0) return null;
+    if (qualityValidation?.score != null) return qualityValidation.score;
+    if (persistedCoverage?.quality_score != null) return persistedCoverage.quality_score;
+
+    const candidates = extractedIdeas.map((idea) => {
+      const { domain: ideaDomains, generated: ideaTags } = splitTags(idea.tags);
+      return {
+        id: idea.id,
+        title: idea.title,
+        body: idea.body || undefined,
+        domains: ideaDomains,
+        tags: ideaTags,
+      };
+    });
+    const canonicalForScore: ConsolidationQualityCanonical[] = canonicalIdeas.map((idea) => ({
+      title: idea.title,
+      body: idea.body ?? '',
+      tags: idea.tags,
+      keyClaims: idea.key_claims,
+      sourceCandidateIdeaIds: idea.source_candidate_idea_ids,
+    }));
+
+    return scoreConsolidationQuality(candidates, canonicalForScore, coveredCandidateIds);
+  }, [
+    canonicalIdeas,
+    coveredCandidateIds,
+    extractedIdeas,
+    persistedCoverage?.quality_score,
+    qualityValidation?.score,
+  ]);
   const persistedMissed = useMemo(
     () =>
       persistedCoverage?.missed_candidate_idea_ids.map((item) => ({
@@ -360,33 +397,6 @@ export function TranscriptDetail({
           <h2 className="section__heading">
             Extraction runs
             <span className="section__count">{extractionRuns.length}</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className={styles.consolidateButton}
-              disabled={!canConsolidate || consolidateMutation.isPending}
-              title={
-                canConsolidate
-                  ? 'Create canonical ideas from all extraction runs.'
-                  : 'No extracted ideas are available to consolidate.'
-              }
-              onClick={() => handleConsolidate()}
-            >
-              <SparklesIcon aria-hidden="true" />
-              {consolidateMutation.isPending ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
-            </Button>
-            {consolidateStatus ? (
-              <span
-                className={
-                  consolidateMutation.isError
-                    ? styles.consolidateStatusError
-                    : styles.consolidateStatusPending
-                }
-              >
-                {consolidateStatus}
-              </span>
-            ) : null}
           </h2>
           <RadioGroup
             value={selectedRun?.id ?? selectedRunId}
@@ -446,9 +456,41 @@ export function TranscriptDetail({
       ) : null}
 
       <section className="section">
-        <h2 className="section__heading">
-          Canonical ideas
-          {canonicalIdeas.length > 0 ? <span className="section__count">{canonicalIdeas.length}</span> : null}
+        <h2 className={`section__heading ${styles.canonicalIdeasHeading}`}>
+          <span className={styles.canonicalIdeasHeadingMain}>
+            Canonical ideas
+            {canonicalIdeas.length > 0 ? (
+              <span className="section__count">{canonicalIdeas.length}</span>
+            ) : null}
+            {qualityScore != null ? (
+              <strong className={styles.qualityScore} title="Consolidation quality score">
+                {qualityScore}%
+              </strong>
+            ) : null}
+          </span>
+          {canConsolidate ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={styles.consolidateButton}
+              disabled={consolidateMutation.isPending}
+              title="Create canonical ideas from all extraction runs."
+              onClick={() => handleConsolidate()}
+            >
+              <SparklesIcon aria-hidden="true" />
+              {consolidateMutation.isPending ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
+            </Button>
+          ) : null}
+          {consolidateStatus ? (
+            <span
+              className={
+                consolidateMutation.isError ? styles.consolidateStatusError : styles.consolidateStatusPending
+              }
+            >
+              {consolidateStatus}
+            </span>
+          ) : null}
         </h2>
         {coverageCounts ? (
           <div className={styles.coverageSummary}>

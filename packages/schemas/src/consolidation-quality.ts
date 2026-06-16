@@ -21,6 +21,7 @@ export interface ConsolidationQualityIssue {
 
 export interface ConsolidationQualityResult {
   passed: boolean;
+  score: number;
   issues: ConsolidationQualityIssue[];
 }
 
@@ -47,6 +48,24 @@ function anyCanonicalMatches(canonicalIdeas: ConsolidationQualityCanonical[], pa
 function hasDomainTag(idea: ConsolidationQualityCanonical): boolean {
   return idea.tags.some((tag) => tag.startsWith('d:'));
 }
+
+const CONTEXT_CANDIDATE_PATTERNS = [
+  /context stuffing/,
+  /context-stuffing/,
+  /targeted retrieval/,
+  /code-generated search/,
+  /context-retrieval/,
+  /context-window-bloat/,
+  /dumping.*codebase/,
+];
+const CONTEXT_CANONICAL_PATTERNS = [
+  /context stuffing/,
+  /targeted retrieval/,
+  /retrieval/,
+  /grep/,
+  /code-driven/,
+  /token-efficiency/,
+];
 
 const V8_CANDIDATE_PATTERNS = [/\bv8\b/, /isolate/, /sandbox/, /multi-tenant/, /runtime-isolation/];
 const V8_CANONICAL_PATTERNS = [/runtime-isolation/, /sandbox/, /\bv8\b/, /v8-isolate/];
@@ -93,6 +112,16 @@ function hasDedicatedNonDeterminismCanonical(
   );
 }
 
+function nonDeterminismScoreRatio(
+  canonicalIdeas: ConsolidationQualityCanonical[],
+  nonDeterminismCandidates: ConsolidationQualityCandidate[],
+): number {
+  if (nonDeterminismCandidates.length < 2) return 1;
+  if (hasDedicatedNonDeterminismCanonical(canonicalIdeas, nonDeterminismCandidates)) return 1;
+  if (anyCanonicalMatches(canonicalIdeas, NON_DETERMINISM_TEXT_PATTERNS)) return 0.35;
+  return 0;
+}
+
 const BASH_CANDIDATE_PATTERNS = [/\bbash\b/];
 const BASH_CANONICAL_PATTERNS = [
   /\bbash\b/,
@@ -118,6 +147,109 @@ const TYPED_EXECUTION_CANONICAL_PATTERNS = [
   /execution layer/,
 ];
 
+function canonicalCountScoreRatio(count: number): number {
+  if (count >= MIN_CANONICAL_IDEAS && count <= MAX_CANONICAL_IDEAS) return 1;
+  if (count === MIN_CANONICAL_IDEAS - 1 || count === MAX_CANONICAL_IDEAS + 1) return 0.6;
+  if (count === MIN_CANONICAL_IDEAS - 2 || count === MAX_CANONICAL_IDEAS + 2) return 0.3;
+  return 0;
+}
+
+interface QualityScoreComponent {
+  applicable: boolean;
+  ratio: number;
+  weight: number;
+}
+
+function buildQualityScoreComponents(
+  candidates: ConsolidationQualityCandidate[],
+  canonicalIdeas: ConsolidationQualityCanonical[],
+  coveredCandidateIds: Iterable<string>,
+): QualityScoreComponent[] {
+  const coveredCount = new Set(coveredCandidateIds).size;
+  const totalCandidates = candidates.length;
+  const coverageRatio = totalCandidates > 0 ? coveredCount / totalCandidates : 1;
+  const domainTagRatio =
+    canonicalIdeas.length > 0
+      ? canonicalIdeas.filter((idea) => hasDomainTag(idea)).length / canonicalIdeas.length
+      : 0;
+
+  const hasContextCandidates = candidates.some((candidate) =>
+    matchesAny(candidateHaystack(candidate), CONTEXT_CANDIDATE_PATTERNS),
+  );
+  const hasV8Candidates = candidates.some((candidate) =>
+    matchesAny(candidateHaystack(candidate), V8_CANDIDATE_PATTERNS),
+  );
+  const nonDeterminismCandidates = getNonDeterminismCandidates(candidates);
+  const hasBashCandidates = candidates.some((candidate) =>
+    matchesAny(candidateHaystack(candidate), BASH_CANDIDATE_PATTERNS),
+  );
+  const hasTypedExecutionCandidates = candidates.some((candidate) =>
+    matchesAny(candidateHaystack(candidate), TYPED_EXECUTION_CANDIDATE_PATTERNS),
+  );
+
+  return [
+    {
+      applicable: canonicalIdeas.length > 0,
+      ratio: canonicalCountScoreRatio(canonicalIdeas.length),
+      weight: 15,
+    },
+    {
+      applicable: totalCandidates > 0,
+      ratio: Math.min(1, coverageRatio / MIN_COVERAGE_RATIO),
+      weight: 20,
+    },
+    {
+      applicable: canonicalIdeas.length > 0,
+      ratio: domainTagRatio,
+      weight: 10,
+    },
+    {
+      applicable: hasContextCandidates,
+      ratio: anyCanonicalMatches(canonicalIdeas, CONTEXT_CANONICAL_PATTERNS) ? 1 : 0,
+      weight: 15,
+    },
+    {
+      applicable: hasV8Candidates,
+      ratio: anyCanonicalMatches(canonicalIdeas, V8_CANONICAL_PATTERNS) ? 1 : 0,
+      weight: 15,
+    },
+    {
+      applicable: nonDeterminismCandidates.length >= 2,
+      ratio: nonDeterminismScoreRatio(canonicalIdeas, nonDeterminismCandidates),
+      weight: 15,
+    },
+    {
+      applicable: hasBashCandidates,
+      ratio: anyCanonicalMatches(canonicalIdeas, BASH_CANONICAL_PATTERNS) ? 1 : 0,
+      weight: 10,
+    },
+    {
+      applicable: hasTypedExecutionCandidates,
+      ratio: anyCanonicalMatches(canonicalIdeas, TYPED_EXECUTION_CANONICAL_PATTERNS) ? 1 : 0,
+      weight: 10,
+    },
+  ];
+}
+
+export function scoreConsolidationQuality(
+  candidates: ConsolidationQualityCandidate[],
+  canonicalIdeas: ConsolidationQualityCanonical[],
+  coveredCandidateIds: Iterable<string>,
+): number {
+  const components = buildQualityScoreComponents(candidates, canonicalIdeas, coveredCandidateIds);
+  let totalWeight = 0;
+  let earned = 0;
+
+  for (const component of components) {
+    if (!component.applicable) continue;
+    totalWeight += component.weight;
+    earned += component.weight * component.ratio;
+  }
+
+  if (totalWeight === 0) return 100;
+  return Math.round((earned / totalWeight) * 100);
+}
+
 export function validateConsolidationQuality(
   candidates: ConsolidationQualityCandidate[],
   canonicalIdeas: ConsolidationQualityCanonical[],
@@ -126,6 +258,7 @@ export function validateConsolidationQuality(
   const issues: ConsolidationQualityIssue[] = [];
   const coveredCount = new Set(coveredCandidateIds).size;
   const totalCandidates = candidates.length;
+  const score = scoreConsolidationQuality(candidates, canonicalIdeas, coveredCandidateIds);
 
   if (canonicalIdeas.length < MIN_CANONICAL_IDEAS || canonicalIdeas.length > MAX_CANONICAL_IDEAS) {
     issues.push({
@@ -147,6 +280,17 @@ export function validateConsolidationQuality(
     issues.push({
       code: 'domain_tags',
       message: `${missingDomainTags.length} canonical idea(s) are missing a domain tag (d:*).`,
+    });
+  }
+
+  const hasContextCandidates = candidates.some((candidate) =>
+    matchesAny(candidateHaystack(candidate), CONTEXT_CANDIDATE_PATTERNS),
+  );
+  if (hasContextCandidates && !anyCanonicalMatches(canonicalIdeas, CONTEXT_CANONICAL_PATTERNS)) {
+    issues.push({
+      code: 'context_retrieval',
+      message:
+        'Context retrieval candidates exist but no canonical idea captures targeted retrieval or context optimization.',
     });
   }
 
@@ -198,7 +342,7 @@ export function validateConsolidationQuality(
     });
   }
 
-  return { passed: issues.length === 0, issues };
+  return { passed: issues.length === 0, score, issues };
 }
 
 export function formatConsolidationQualityWarning(result: ConsolidationQualityResult): string | undefined {

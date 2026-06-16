@@ -513,14 +513,14 @@ Per the original design notes:
 
 ## Key files
 
-| File                                                                              | Responsibility                                            |
-| --------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `apps/server/src/routes/vault/vault.routes.ts`                                    | Consolidation handler, schemas, prompts, post-processing. |
-| `apps/server/src/routes/vault/consolidation-quality.ts`                           | Deterministic post-consolidation quality validation.      |
-| `packages/llm/src/router.ts`, `packages/llm/src/types.ts`                         | `TaskType` definitions and default routing.               |
-| `configs/llm-routing.json`                                                        | Per-task model overrides (UI-editable).                   |
-| `apps/client/src/components/LlmRoutingEditor/LlmRoutingEditor.tsx`                | Models UI task routing editor.                            |
-| `apps/client/src/queries/transcripts/useConsolidateCanonicalIdeas.ts`             | Client mutation + retry/backoff.                          |
-| `apps/client/src/components/TranscriptsSplitView/components/TranscriptDetail.tsx` | "Consolidate Canonical Ideas" button + coverage display.  |
-| `packages/schemas/src/canonical-idea-node.schema.ts`                              | `CanonicalIdeaNode` schema.                               |
-| `packages/schemas/src/transcript-node.schema.ts`                                  | `canonical_coverage` schema.                              |
+| File                                                                              | Responsibility                                                   |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `apps/server/src/routes/vault/vault.routes.ts`                                    | Consolidation handler, schemas, prompts, post-processing.        |
+| `packages/schemas/src/consolidation-quality.ts`                                   | Deterministic post-consolidation quality validation and scoring. |
+| `packages/llm/src/router.ts`, `packages/llm/src/types.ts`                         | `TaskType` definitions and default routing.                      |
+| `configs/llm-routing.json`                                                        | Per-task model overrides (UI-editable).                          |
+| `apps/client/src/components/LlmRoutingEditor/LlmRoutingEditor.tsx`                | Models UI task routing editor.                                   |
+| `apps/client/src/queries/transcripts/useConsolidateCanonicalIdeas.ts`             | Client mutation + retry/backoff.                                 |
+| `apps/client/src/components/TranscriptsSplitView/components/TranscriptDetail.tsx` | "Consolidate Canonical Ideas" button + coverage display.         |
+| `packages/schemas/src/canonical-idea-node.schema.ts`                              | `CanonicalIdeaNode` schema.                                      |
+| `packages/schemas/src/transcript-node.schema.ts`                                  | `canonical_coverage` schema.                                     |

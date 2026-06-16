@@ -6,6 +6,15 @@ export {
   type CanonicalIdeaNode,
   CanonicalIdeaNodeSchema,
 } from './canonical-idea-node.schema.js';
+export {
+  type ConsolidationQualityCandidate,
+  type ConsolidationQualityCanonical,
+  type ConsolidationQualityIssue,
+  type ConsolidationQualityResult,
+  formatConsolidationQualityWarning,
+  scoreConsolidationQuality,
+  validateConsolidationQuality,
+} from './consolidation-quality.js';
 export { type DecisionNode, DecisionNodeSchema } from './decision-node.schema.js';
 export { type IdeaNode, IdeaNodeSchema } from './idea-node.schema.js';
 export { type InstructionNode, InstructionNodeSchema } from './instruction-node.schema.js';
