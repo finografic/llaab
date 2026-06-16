@@ -135,24 +135,24 @@ Long-running ingest, extract, and canonical consolidation routes explicitly disa
 per-request idle timeout so the client does not receive false network failures while the server
 continues processing.
 
-| Route                                         | Description                                                                        |
-| --------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `POST /api/ingest/youtube`                    | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`                  |
-| `GET /api/vault/nodes`                        | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`                   |
-| `GET /api/vault/nodes/:id`                    | Single node by id                                                                  |
-| `PATCH /api/vault/sources/:id/profiles`       | Updates linked source profiles (GitHub first)                                      |
-| `GET /api/vault/transcripts/:id/ideas`        | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`          |
-| `POST /api/vault/transcripts/:id/extract`     | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }`    |
-| `POST /api/vault/transcripts/:id/consolidate` | Two-pass canonical idea generation + coverage audit from extracted candidate ideas |
-| `GET /api/runs`, `/:id`                       | Run list + detail with full stage/decision trace                                   |
-| `GET /api/runs/monitor`                       | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries     |
-| `POST /api/llm/complete`                      | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`            |
-| `POST /api/llm/stream`                        | SSE streaming LLM                                                                  |
-| `GET /api/llm/models`                         | Lists installed Ollama models                                                      |
-| `GET /api/llm/status`                         | Task routing config + installed models cross-referenced                            |
-| `GET /api/llm/capabilities`                   | Provider capability metadata + availability                                        |
-| `POST /api/agent/run`                         | One-shot agent processor; optional `{ nodeId?, force? }`                           |
-| `GET /api/agent/status`                       | Last run metadata                                                                  |
+| Route                                         | Description                                                                                  |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `POST /api/ingest/youtube`                    | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`                            |
+| `GET /api/vault/nodes`                        | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`                             |
+| `GET /api/vault/nodes/:id`                    | Single node by id                                                                            |
+| `PATCH /api/vault/sources/:id/profiles`       | Updates linked source profiles (GitHub first)                                                |
+| `GET /api/vault/transcripts/:id/ideas`        | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`                    |
+| `POST /api/vault/transcripts/:id/extract`     | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }`              |
+| `POST /api/vault/transcripts/:id/consolidate` | Single-pass canonical idea generation with quality validation from extracted candidate ideas |
+| `GET /api/runs`, `/:id`                       | Run list + detail with full stage/decision trace                                             |
+| `GET /api/runs/monitor`                       | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries               |
+| `POST /api/llm/complete`                      | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`                      |
+| `POST /api/llm/stream`                        | SSE streaming LLM                                                                            |
+| `GET /api/llm/models`                         | Lists installed Ollama models                                                                |
+| `GET /api/llm/status`                         | Task routing config + installed models cross-referenced                                      |
+| `GET /api/llm/capabilities`                   | Provider capability metadata + availability                                                  |
+| `POST /api/agent/run`                         | One-shot agent processor; optional `{ nodeId?, force? }`                                     |
+| `GET /api/agent/status`                       | Last run metadata                                                                            |
 
 ### `@llaab/icons` — Workspace icon registry package
 
@@ -191,11 +191,11 @@ Task routing (all env-configurable via `LLAAB_*_MODEL` vars):
 | reason      | remote       | claude-sonnet-4-6     |
 
 Canonical consolidation uses extracted idea nodes only, not the full transcript body. It runs a
-draft pass plus a coverage audit pass through `routeLlm("consolidate", ...)`, persists
-`CanonicalIdeaNode` files with `key_claims` / `coverage_notes`, and writes compact
-`TranscriptNode.canonical_coverage` metadata so the transcript UI can show coverage after reload.
-`gemma4:e4b-it-qat` is not currently reliable for this route because it has produced malformed
-structured JSON; continue using the 26B model until structured-output handling is improved.
+single pass through `routeLlm("consolidate", ...)`, validates quality deterministically (with
+optional auto-retry), persists `CanonicalIdeaNode` files with `key_claims` / `coverage_notes`, and
+writes `TranscriptNode.canonical_coverage` metadata (including `quality_score`) so the transcript
+UI can show coverage and score after reload. Default model: `gemma4:26b-a4b-it-qat` on the
+`consolidate` task route.
 
 `getLlmStatus()` exported from `@llaab/llm` returns the live routing map (respects env overrides).
 Ollama provider uses `chat` API (not `generate`) for proper system/user separation.
@@ -237,12 +237,12 @@ nodes-to-delete/preserved/canonical-ideas-affected before a destructive single o
 Dismiss button calls `useDismissRun` (in addition to local `dismissedRunIds` zustand state) so the
 dismissal persists across reloads.
 
-`CanonicalIdeaNode` consolidation runs a second audit pass producing a coverage map
-(covered/omitted/missed per candidate idea) persisted on `TranscriptNode.canonical_coverage`.
-Transcript detail surfaces this as a coverage summary plus a "Possible missed ideas" /
-"Uncovered candidate ideas" panel, with source run model/provider/timestamp per row and a
-"Promote to canonical" button (`POST /api/vault/transcripts/:id/canonical-ideas/promote`) that
-turns a missed candidate idea into its own `confidence: "medium"` canonical idea and updates the
+`CanonicalIdeaNode` consolidation produces a per-candidate coverage map
+(covered/omitted/missed) and a 0–100 quality score, both persisted on
+`TranscriptNode.canonical_coverage`. Transcript detail surfaces this as a coverage summary plus a
+"Possible missed ideas" / "Uncovered candidate ideas" panel, with source run model/provider/timestamp
+per row and a "Promote to canonical" button (`POST /api/vault/transcripts/:id/canonical-ideas/promote`)
+that turns a missed candidate idea into its own `confidence: "medium"` canonical idea and updates the
 transcript's coverage record.
 
 ## Taxonomy
