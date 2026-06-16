@@ -17,6 +17,7 @@ import { appendProducedNodeIds, appendRunEvent, setRunLlmTrace } from '@llaab/sk
 import { deleteCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
+import type { ConsolidationQualityCanonical } from './consolidation-quality.js';
 import type {
   CleanRecentBody,
   CreateNodeBody,
@@ -45,7 +46,6 @@ import {
 } from '../../lib/vault-auth.js';
 import { readVaultRootTree } from '../../lib/vault-tree.js';
 import { formatConsolidationQualityWarning, validateConsolidationQuality } from './consolidation-quality.js';
-import type { ConsolidationQualityCanonical } from './consolidation-quality.js';
 import { deleteRunQuerySchema } from './vault.schema.js';
 
 const ConsolidationCoverageStatusSchema = z.enum(['covered', 'omitted', 'missed']);
@@ -345,6 +345,9 @@ When one candidate idea describes a problem and another describes the recommende
 Context-Specific Rule:
 You may merge context stuffing, massive codebase dumping, targeted retrieval, grep/code-driven search, token cost, and context retrieval efficiency into one canonical idea framed as "Replace context stuffing with targeted retrieval." Do NOT merge this with large context windows causing model non-determinism — that is a model-behavior idea and should remain separate if supported by multiple candidates.
 
+Non-Determinism Separation Rule:
+Do not treat non-determinism as merely a side-effect inside the targeted retrieval idea. If supported by multiple candidates, promote it to its own canonical idea about model behavior. That idea should use a non-determinism or model-behavior tag and source the non-determinism candidate ids directly — not only mention non-determinism inside a broader context-optimization card.
+
 Bash-Specific Rule:
 For Bash-related ideas, prefer one canonical idea that captures both Bash as the first/foundational execution layer and Bash as limited due to missing permissions, safety controls, and sandboxing. Suggested shape: "Bash is a foundational but limited execution layer for agents." Do not always merge Bash directly into the typed-execution transition if the candidate pool supports Bash as a distinct historical bridge.
 
@@ -396,7 +399,7 @@ Merge duplicates. Preserve distinct knowledge nodes.
 
 Important separation rules:
 1. Merge context stuffing and targeted retrieval into one idea if they describe the same problem/solution pair.
-2. Keep LLM non-determinism from large context windows separate from the workflow strategy of targeted retrieval.
+2. Keep LLM non-determinism from large context windows separate from targeted retrieval. Do not treat non-determinism as merely a side-effect inside the retrieval idea — if supported by multiple candidates, it must become its own canonical idea about model behavior with a non-determinism or model-behavior tag.
 3. Capture Bash as a foundational but limited execution layer if supported.
 4. Keep typed programmable execution layers separate from runtime isolation (e.g. V8 isolates) when both are supported.
 5. Single-source ideas should usually be supporting details, unless technically central and useful for future linking.

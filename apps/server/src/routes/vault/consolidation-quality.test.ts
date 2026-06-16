@@ -116,7 +116,53 @@ describe('validateConsolidationQuality', () => {
 
     expect(result.passed).toBe(false);
     expect(result.issues.map((issue) => issue.code)).toEqual(
-      expect.arrayContaining(['canonical_count', 'candidate_coverage', 'v8_runtime', 'non_determinism']),
+      expect.arrayContaining([
+        'canonical_count',
+        'candidate_coverage',
+        'v8_runtime',
+        'non_determinism_separate',
+      ]),
     );
+  });
+
+  it('fails when non-determinism is folded into the context-retrieval idea', () => {
+    const nonDeterminismIds = [theoCandidates[1]!.id, theoCandidates[2]!.id];
+    const canonicalIdeas = [
+      {
+        title: 'Evolution from context stuffing to targeted retrieval',
+        body: 'Shifting to targeted retrieval improves performance and minimizes non-determinism.',
+        tags: ['d:llm', 'context-management', 'retrieval'],
+        keyClaims: ['Massive context stuffing causes performance degradation and non-determinism'],
+        sourceCandidateIdeaIds: [
+          theoCandidates[5]!.id,
+          ...nonDeterminismIds,
+          'early-ai-agents-failed-by-dumping-massive-codebases-into-prompts',
+        ],
+      },
+      {
+        title: 'Bash is a foundational but limited execution layer',
+        body: 'Bash enabled the first agent execution layer but is limited.',
+        tags: ['d:agents', 'bash', 'execution-layer'],
+        sourceCandidateIdeaIds: [theoCandidates[3]!.id],
+      },
+      {
+        title: 'Typed programmable execution layers replace raw terminal commands',
+        body: 'TypeScript SDKs provide safer structured agent tooling.',
+        tags: ['d:agents', 'typescript', 'typed-execution'],
+        sourceCandidateIdeaIds: [theoCandidates[4]!.id],
+      },
+      {
+        title: 'V8 isolates enable lightweight runtime isolation',
+        body: 'Multi-tenant sandboxing without Docker overhead.',
+        tags: ['d:infra', 'v8-isolates', 'sandboxing'],
+        sourceCandidateIdeaIds: [theoCandidates[0]!.id],
+      },
+    ];
+
+    const covered = canonicalIdeas.flatMap((idea) => idea.sourceCandidateIdeaIds);
+    const result = validateConsolidationQuality(theoCandidates, canonicalIdeas, covered);
+
+    expect(result.passed).toBe(false);
+    expect(result.issues.map((issue) => issue.code)).toContain('non_determinism_separate');
   });
 });
