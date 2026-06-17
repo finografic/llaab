@@ -1,8 +1,70 @@
 # AGENTS.md — Vault Routes
 
-This folder contains the vault HTTP routes (`vault.routes.ts`, `vault.schema.ts`, `index.ts`),
-including **canonical idea consolidation** — the single-pass pipeline that turns extracted
-candidate ideas into `canonical-idea` nodes.
+This folder contains the vault HTTP routes, organised by domain into separate
+`vault-*.routes.ts` files. `vault.routes.ts` is a re-export barrel — it exists
+only so `index.ts` can keep a single `import * as routes from './vault.routes.js'`.
+
+## File map
+
+| File                          | Domain           | Exports                                                                                                           |
+| ----------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `vault-auth.routes.ts`        | Auth             | `vaultAuthLogin`, `vaultAuthLogout`, `vaultAuthSession`                                                           |
+| `vault-nodes.routes.ts`       | Node CRUD        | `vaultTree`, `cleanRecent`, `file`, `listVaultNodes`, `createVaultNode`, `nodeDetail`, `nodeRaw`                  |
+| `vault-transcripts.routes.ts` | Transcripts      | `transcriptIdeas`, `extractTranscript`, `consolidateTranscriptIdeas`, `promoteCanonicalIdea`, `discardTranscript` |
+| `vault-runs.routes.ts`        | Runs             | `deleteRun`, `previewDeleteRuns`                                                                                  |
+| `vault-sources.routes.ts`     | Sources          | `enrichSource`, `updateSourceProfiles`                                                                            |
+| `vault.routes.ts`             | Re-export barrel | re-exports all of the above                                                                                       |
+
+`vault.schema.ts` — Zod schemas and inferred types for all request bodies / queries.
+`index.ts` — wires the router; imports schemas and `* as routes from './vault.routes.js'`.
+
+---
+
+## Adding a new route file
+
+Follow this checklist when a domain grows large enough to warrant its own file, or
+when an entirely new domain arrives (e.g. `vault-tags.routes.ts`):
+
+1. **Create `vault-<domain>.routes.ts`** in this folder.
+   - Name the file after the resource / domain in kebab-case.
+   - Export each route as a named `const` with a `path` and `handler` property,
+     identical to the existing pattern:
+
+     ```ts
+     export const myRoute = {
+       path: '/resource/:id/action' as const,
+       handler: async (c: AppCtx) => { … },
+     };
+     ```
+
+   - Keep private helpers (types, utilities, prompt builders) in the same file
+     unless they are shared across multiple route files — in that case extract to
+     a `vault-<domain>.helpers.ts` or `vault-<domain>.lib.ts` sibling.
+
+2. **Add schemas to `vault.schema.ts`** if the route validates a request body or
+   query string. Export both the Zod schema (`*Schema`) and the inferred type.
+
+3. **Re-export from `vault.routes.ts`**:
+
+   ```ts
+   export * from './vault-<domain>.routes.js';
+   ```
+
+   This is the only change needed in `vault.routes.ts`.
+
+4. **Wire the route in `index.ts`** using the same `routes.*` pattern:
+
+   ```ts
+   .get(routes.myRoute.path, routes.myRoute.handler)
+   // or with a validator:
+   .post(routes.myRoute.path, zValidator('json', myRouteBodySchema), routes.myRoute.handler)
+   ```
+
+   Import any new schema from `./vault.schema.js` at the top of `index.ts`.
+
+5. **Update this AGENTS.md** — add a row to the file map table.
+
+---
 
 ## Canonical idea consolidation
 
@@ -14,7 +76,7 @@ post-processing, and the coverage model — lives in `docs/08_CANONICAL_IDEA_CON
 
 Relevant code:
 
-- `apps/server/src/routes/vault/vault.routes.ts` — `consolidateTranscriptIdeas` handler,
+- `vault-transcripts.routes.ts` — `consolidateTranscriptIdeas` handler,
   schemas (`CanonicalIdeaDraftSchema`, `CanonicalDraftResultSchema`, `PossibleMissedIdeaSchema`),
   mode resolution (`getConsolidationConfig`), prompt builders
   (`buildCanonicalDraftSystemPrompt`, `buildCanonicalCompactSystemPrompt`),
