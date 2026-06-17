@@ -69,10 +69,13 @@ Vault pages fetch via TanStack Query hooks + Hono RPC (`/api/vault/*`); optional
 
 Layout hierarchy: `index.html` + `main.tsx` mount a single React tree. `AppLayout` wraps horizontal
 header + main + footer (sidebar removed 2026-06-07). `AppHeader` hosts `NavMenu` (brand link +
-shadcn megamenus + mobile sheet) plus the app-wide Run Monitor trigger. `RunMonitor` is mounted
-once in `AppLayout`, uses a root `RunMonitorProvider` powered by
-`@finografic/zustand-context-creator`, and reads durable run data through TanStack Query. Inner
-pages use `PageLayout` (hero / optional aside / main zones) and `PageHero`. `src/router.tsx`
+shadcn megamenus + mobile sheet), header shortcuts (ingest + transcripts), and the app-wide Run
+Monitor trigger. `RunMonitor` is mounted once in `AppLayout`, uses a root `RunMonitorProvider`
+powered by `@finografic/zustand-context-creator`, and reads durable run data through TanStack Query.
+Both the ingest form (`IngestPipeline`) and Run Monitor render the same `RunPipelineCard`
+(`apps/client/src/components/RunPipelineCard/`) — grey collapsible RUN shell, chain-of-thought
+transcript/extraction steps (blue active / green complete / orange warning), with monitor-only
+activity log and `ExtractionModelCard` metrics in the card body. Inner pages use `PageLayout` (hero / optional aside / main zones) and `PageHero`. `src/router.tsx`
 lazy-loads route components so the initial SPA chunk stays smaller; route handles set
 title/full-bleed page chrome. Navigation structure: `lib/nav-menu.config.ts`; design spec:
 `docs/NAV_MENU_DESIGN.md`. Home dashboard uses `utils/balanced-grid.utils.ts` to avoid orphan cards
@@ -93,18 +96,18 @@ Installed shadcn components in `packages/ui/src/components/` include `navigation
 Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models (2×2 via `BalancedGrid`).
 `/icons` redirects to `/dev/icons` (Lucide picker / registry).
 
-| Route                    | Description                                                                                               |
-| ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `/`                      | Home dashboard — four callout cards (Ingest, Vault, Runs, Models)                                         |
-| `/ingest`                | URL form with card-wide drag/drop; two-phase: ingest fires first → Transcript Saved card, then extraction |
-| `/llm`                   | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list              |
-| `/icons`                 | Redirect to `/dev/icons` (embedded Lucide picker)                                                         |
-| `/vault`                 | Gated file-tree browser — local recursive tree + raw file viewer                                          |
-| `/vault/transcripts/:id` | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract           |
-| `/vault/nodes`           | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                        |
-| `/vault/nodes/:id`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                              |
-| `/vault/sources/:id`     | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count            |
-| `/vault/runs/:id`        | Detail: summary grid, stages table, decisions list, error block                                           |
+| Route                    | Description                                                                                                                                           |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                      | Home dashboard — four callout cards (Ingest, Vault, Runs, Models)                                                                                     |
+| `/ingest`                | URL form with card-wide drag/drop; two-phase ingest; `RunPipelineCard` progress + grouped `RunsTable` (collapsed by subject, sortable published date) |
+| `/llm`                   | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list                                                          |
+| `/icons`                 | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
+| `/vault`                 | Gated file-tree browser — local recursive tree + raw file viewer                                                                                      |
+| `/vault/transcripts/:id` | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                       |
+| `/vault/nodes`           | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                                                                    |
+| `/vault/nodes/:id`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                                                                          |
+| `/vault/sources/:id`     | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                        |
+| `/vault/runs/:id`        | Detail: summary grid, stages table, decisions list, error block                                                                                       |
 
 `AppSidebarLayout` (`packages/ui/src/components/app-sidebar-layout.tsx`) supports both
 percentage and absolute-unit (`px`/`rem`) sidebar sizing — `isPercentOrBare()` only computes
@@ -113,10 +116,13 @@ numbers; absolute-unit sidebars give the main panel `minSize="1%"` and `undefine
 it doesn't collapse. `SidebarSplitLayout` (`apps/client/src/components/SidebarSplitLayout/`) wraps
 `AppSidebarLayout` with a `PanelLeftIcon` collapse/expand toggle (`usePanelRef`) alongside the
 manual resize handle; `TranscriptsSplitView` uses it with a 600px-minimum sidebar containing the
-transcript list. Each sidebar list item can show `ExtractionModelCard`
+`TranscriptsSplitView` uses it with a 600px-minimum sidebar containing the transcript list.
+`/vault/transcripts` index auto-navigates to the latest transcript by `created_at`. Each sidebar
+list item can show `ExtractionModelCard`
 (`apps/client/src/components/ExtractionModelCard/`) variants: `compact` for a latency-only badge,
-`compact-bar` for inline model/provider pills plus right-aligned token/latency metrics, and `full`
-for the transcript detail card. `ExtractionModelCard` wraps `ai-latency-meter`/`ai-token-viewer`
+`compact-bar` for inline model/provider pills plus right-aligned token/latency metrics (`showModel` /
+`showTotalTokens` toggles), and `full` for the transcript detail card. Consolidate on transcript
+detail shows a heartbeat elapsed timer while pending. `ExtractionModelCard` wraps `ai-latency-meter`/`ai-token-viewer`
 (`packages/ui/src/components/`, ported from tryelements.dev) — cost display is omitted because
 local models have no pricing data.
 
@@ -131,6 +137,8 @@ font utilities still follow Tailwind names (`text-base`, `text-lg`, etc.); app C
 
 Auth: optional `X-API-Key` vs `LLAAB_API_KEY` env. No key set = dev mode, auth skipped.
 Each route group: `*.schema.ts` (Zod), `*.routes.ts` (`{ path, handler }` exports), `index.ts` (wiring).
+Vault HTTP routes are split by domain under `apps/server/src/routes/vault/` (nodes, transcripts,
+sources, runs, etc.) with `vault/index.ts` chaining only.
 Long-running ingest, extract, and canonical consolidation routes explicitly disable Bun's
 per-request idle timeout so the client does not receive false network failures while the server
 continues processing.
@@ -275,7 +283,8 @@ auth live on `apps/server`. **Ports:** client **3000**, server **8888** (icons 5
 (unset = open vault). Client uses same-origin `/api/*` and proxied `/terminal` WebSocket — no
 API keys in the browser bundle. `@llaab/core` / `@llaab/ingestion` removed from client deps.
 Persistent launchd client uses staged `vite build` + `vite preview` (`.persistent/builds/`).
-Post-migration fixes: ingest `RunsTable` stale-cache (`useRuns` without SSR `initialData`);
+Post-migration fixes: ingest `RunsTable` groups runs by subject with sortable YouTube publish date
+(`extractRunPublishedAt` from `fetch:youtube` stage), collapsed child rows, and aligned metrics;
 YAML `profiles` object-array parsing so all source nodes load for runs author links.
 
 ## Roadmap & Planning
