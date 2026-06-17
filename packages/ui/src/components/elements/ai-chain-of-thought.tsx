@@ -81,7 +81,7 @@ function AiChainOfThought({
 }
 
 interface AiChainOfThoughtHeaderProps {
-  title?: string;
+  title?: React.ReactNode;
   stepCount?: number;
   completedCount?: number;
   /** When false, omits the leading icon tile. Default true. */

@@ -306,3 +306,24 @@
 .activityMessageSuccess {
   color: var(--success-text);
 }
+
+.monitorFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.pipelineCard {
+  margin: 0;
+}
+
+.cardCompact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+}

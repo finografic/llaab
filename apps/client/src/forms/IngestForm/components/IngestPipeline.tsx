@@ -1,13 +1,9 @@
 import { CheckIcon } from '@llaab/icons';
-import {
-  AiChainOfThought,
-  AiChainOfThoughtContent,
-  AiChainOfThoughtHeader,
-  AiChainOfThoughtStep,
-} from 'components/ui/elements/ai-chain-of-thought';
+import { PipelineNodeCountMeta, RunPipelineCard } from 'components/RunPipelineCard/RunPipelineCard';
+import type { RunPipelineStepData } from 'components/RunPipelineCard/RunPipelineCard';
+import styles from 'components/RunPipelineCard/RunPipelineCard.module.css';
 import { RotateCcwIcon, Trash2Icon } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 import type { ExtractionPhase, TranscriptData, TranscriptPhase } from '../ingest-form.types';
 import type { StepStatus } from 'components/ui/elements/ai-chain-of-thought';
 
@@ -15,7 +11,6 @@ import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
 
 import { extractionStepTitle, stepLabel, transcriptStepTitle } from '../ingest-form.utils';
 import { IdeaList } from './IdeaList';
-import { NodeCountMeta } from './NodeCountMeta';
 import { RetryButton } from './RetryButton';
 
 function transcriptChainStepStatus(phase: TranscriptPhase): StepStatus {
@@ -31,31 +26,6 @@ function extractionChainStepStatus(phase: ExtractionPhase): StepStatus {
   if (phase === 'success' || phase === 'existing') return 'complete';
   if (phase === 'extractable' || phase === 'failed') return 'warning';
   return 'pending';
-}
-
-function StepElapsedMeta({
-  startedAt,
-  finalElapsedSecs,
-  active,
-  nodeCount,
-}: {
-  startedAt?: number | null;
-  finalElapsedSecs?: number | null;
-  active: boolean;
-  nodeCount?: number | null;
-}) {
-  const liveElapsed = useElapsedSeconds(active ? (startedAt ?? null) : null);
-  const displayElapsed = active ? liveElapsed : (finalElapsedSecs ?? null);
-  const hasElapsed = startedAt != null && displayElapsed != null;
-
-  if (!hasElapsed && (nodeCount == null || nodeCount <= 0)) return null;
-
-  return (
-    <span className="flex items-center gap-2">
-      <NodeCountMeta nodeCount={nodeCount} hasElapsed={hasElapsed} />
-      {hasElapsed ? <span>{formatElapsed(displayElapsed)}</span> : null}
-    </span>
-  );
 }
 
 export function IngestPipeline({
@@ -115,77 +85,51 @@ export function IngestPipeline({
 
   const totalNodeCount = (transcriptData ? 1 : 0) + extractionIdeas.length;
 
-  return (
-    <AiChainOfThought className="pipeline-chain" defaultOpen>
-      <AiChainOfThoughtHeader title="RUN" showIcon={false} className="pipeline-chain__header">
-        <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
-          {stepLabel(transcriptPhase, extractionPhase)}
-        </span>
-        {hasRunElapsed || totalNodeCount > 0 ? (
-          <span className="flex shrink-0 items-center gap-2 font-mono text-xs text-muted-foreground">
-            <NodeCountMeta nodeCount={totalNodeCount} hasElapsed={hasRunElapsed} />
-            {hasRunElapsed ? <span>{formatElapsed(displayRunElapsed)}</span> : null}
-          </span>
-        ) : null}
-      </AiChainOfThoughtHeader>
+  const steps = useMemo((): RunPipelineStepData[] => {
+    const transcriptStep: RunPipelineStepData = {
+      id: 'transcript',
+      status: transcriptChainStepStatus(transcriptPhase),
+      title: transcriptStepTitle(transcriptPhase),
+      startedAt: transcriptStartedAt,
+      elapsedSecs: transcriptElapsedSecs,
+      active: transcriptPhase === 'processing',
+      nodeCount: transcriptData ? 1 : undefined,
+      items: transcriptData
+        ? [{ label: transcriptData.filename, href: `/vault/transcripts/${transcriptData.id}` }]
+        : undefined,
+      children:
+        transcriptPhase === 'failed' && transcriptError ? (
+          <div className={styles.stepFailure}>
+            <span className={styles.stepDetail}>{transcriptError}</span>
+            <RetryButton onClick={onRetryIngest} disabled={busy} />
+          </div>
+        ) : undefined,
+    };
 
-      <AiChainOfThoughtContent className="pipeline-chain__content">
-        <AiChainOfThoughtStep
-          status={transcriptChainStepStatus(transcriptPhase)}
-          title={transcriptStepTitle(transcriptPhase)}
-          meta={
-            <StepElapsedMeta
-              startedAt={transcriptStartedAt}
-              finalElapsedSecs={transcriptElapsedSecs}
-              active={transcriptPhase === 'processing'}
-              nodeCount={transcriptData ? 1 : null}
-            />
-          }
-        >
-          {transcriptData ? (
-            <ul className="pipeline-card__item-list">
-              <li>
-                <Link to={`/vault/transcripts/${transcriptData.id}`} className="pipeline-card__link">
-                  {transcriptData.filename}
-                </Link>
-              </li>
-            </ul>
-          ) : null}
-          {transcriptPhase === 'failed' && transcriptError ? (
-            <div className="pipeline-card__failure">
-              <span className="pipeline-card__text">{transcriptError}</span>
-              <RetryButton onClick={onRetryIngest} disabled={busy} />
-            </div>
-          ) : null}
-        </AiChainOfThoughtStep>
-
-        <AiChainOfThoughtStep
-          status={extractionChainStepStatus(extractionPhase)}
-          title={extractionStepTitle(extractionPhase)}
-          isLast
-          meta={
-            <StepElapsedMeta
-              startedAt={extractionStartedAt}
-              finalElapsedSecs={extractionElapsedSecs}
-              active={extractionPhase === 'pending'}
-              nodeCount={extractionIdeas.length}
-            />
-          }
-        >
+    const extractionStep: RunPipelineStepData = {
+      id: 'extraction',
+      status: extractionChainStepStatus(extractionPhase),
+      title: extractionStepTitle(extractionPhase),
+      startedAt: extractionStartedAt,
+      elapsedSecs: extractionElapsedSecs,
+      active: extractionPhase === 'pending',
+      nodeCount: extractionIdeas.length > 0 ? extractionIdeas.length : undefined,
+      children: (
+        <>
           {(extractionPhase === 'success' || extractionPhase === 'existing') && extractionIdeas.length > 0 ? (
             <IdeaList ideas={extractionIdeas} />
           ) : null}
           {extractionPhase === 'extractable' ? (
-            <div className="pipeline-card__failure">
+            <div className={styles.stepFailure}>
               <RetryButton onClick={onRetryExtract} disabled={busy} />
             </div>
           ) : null}
           {extractionPhase === 'failed' ? (
-            <div className="pipeline-card__failure">
-              {extractionError ? <span className="pipeline-card__text">{extractionError}</span> : null}
+            <div className={styles.stepFailure}>
+              {extractionError ? <span className={styles.stepDetail}>{extractionError}</span> : null}
               <button
                 type="button"
-                className="pipeline-action-btn pipeline-action-btn--retry"
+                className={`${styles.actionBtn} ${styles.actionRetry}`}
                 onClick={onRetryExtract}
                 disabled={busy}
                 aria-label="Retry — re-run extraction against the saved transcript"
@@ -195,42 +139,75 @@ export function IngestPipeline({
               </button>
             </div>
           ) : null}
-        </AiChainOfThoughtStep>
+        </>
+      ),
+    };
 
-        {isComplete ? (
-          <div className="pipeline-summary__actions pipeline-chain__actions">
-            <button
-              type="button"
-              className="pipeline-action-btn pipeline-action-btn--keep"
-              onClick={onKeep}
-              aria-label="Keep — confirm ingestion and clear the form"
-            >
-              <CheckIcon size={14} aria-hidden />
-              <span>Keep</span>
-            </button>
-            <button
-              type="button"
-              className="pipeline-action-btn pipeline-action-btn--discard"
-              onClick={handleDiscard}
-              disabled={discarding}
-              aria-label="Discard — delete ingested nodes and clear the form"
-            >
-              <Trash2Icon size={14} aria-hidden />
-              <span>Discard</span>
-            </button>
-            <button
-              type="button"
-              className="pipeline-action-btn pipeline-action-btn--retry"
-              onClick={onRetry}
-              disabled={discarding}
-              aria-label="Retry — delete ingested nodes and re-run this ingest"
-            >
-              <RotateCcwIcon size={14} aria-hidden />
-              <span>Retry</span>
-            </button>
-          </div>
-        ) : null}
-      </AiChainOfThoughtContent>
-    </AiChainOfThought>
+    return [transcriptStep, extractionStep];
+  }, [
+    busy,
+    extractionElapsedSecs,
+    extractionError,
+    extractionIdeas,
+    extractionPhase,
+    extractionStartedAt,
+    onRetryExtract,
+    onRetryIngest,
+    transcriptData,
+    transcriptElapsedSecs,
+    transcriptError,
+    transcriptPhase,
+    transcriptStartedAt,
+  ]);
+
+  const footer = isComplete ? (
+    <div className={styles.actions}>
+      <button
+        type="button"
+        className={`${styles.actionBtn} ${styles.actionKeep}`}
+        onClick={onKeep}
+        aria-label="Keep — confirm ingestion and clear the form"
+      >
+        <CheckIcon size={14} aria-hidden />
+        <span>Keep</span>
+      </button>
+      <button
+        type="button"
+        className={`${styles.actionBtn} ${styles.actionDiscard}`}
+        onClick={handleDiscard}
+        disabled={discarding}
+        aria-label="Discard — delete ingested nodes and clear the form"
+      >
+        <Trash2Icon size={14} aria-hidden />
+        <span>Discard</span>
+      </button>
+      <button
+        type="button"
+        className={`${styles.actionBtn} ${styles.actionRetry}`}
+        onClick={onRetry}
+        disabled={discarding}
+        aria-label="Retry — delete ingested nodes and re-run this ingest"
+      >
+        <RotateCcwIcon size={14} aria-hidden />
+        <span>Retry</span>
+      </button>
+    </div>
+  ) : null;
+
+  return (
+    <RunPipelineCard
+      headerTitle="RUN"
+      headerSubtitle={stepLabel(transcriptPhase, extractionPhase)}
+      headerMeta={
+        hasRunElapsed || totalNodeCount > 0 ? (
+          <span className="flex shrink-0 items-center gap-2 font-mono text-xs text-muted-foreground">
+            <PipelineNodeCountMeta nodeCount={totalNodeCount} hasElapsed={hasRunElapsed} />
+            {hasRunElapsed ? <span>{formatElapsed(displayRunElapsed)}</span> : null}
+          </span>
+        ) : null
+      }
+      steps={steps}
+      footer={footer}
+    />
   );
 }
