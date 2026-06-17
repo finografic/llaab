@@ -123,7 +123,7 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
           <span className={styles.mono}>{group.totalNodes}</span>
         </TableCell>
         <TableCell className="text-right pt-3.5 pr-1">
-          <span className={styles.mono}>{fmtDuration(group.avgDurationMs)}</span>
+          <span className={styles.mono}>~ {fmtDuration(group.avgDurationMs)}</span>
         </TableCell>
         <TableCell className="text-center pr-0.5">
           {hasExtractingRun ? null : <DeleteRunGroupAction title={group.title} runs={group.runs} />}
