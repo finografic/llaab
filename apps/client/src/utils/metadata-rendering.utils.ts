@@ -155,6 +155,40 @@ export function extractRunSubjectHref(run: {
   return undefined;
 }
 
+function parseMetadataDateToIso(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  if (trimmed.length === 8 && /^\d{8}$/.test(trimmed)) {
+    const iso = `${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}T00:00:00.000Z`;
+    const parsed = new Date(iso);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+  }
+
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+}
+
+/** Source publish date captured during ingestion (e.g. YouTube `uploadDate` on `fetch:youtube`). */
+export function extractRunPublishedAt(run: {
+  stages?: Array<{ name?: string; status?: string; output?: unknown }>;
+}): string | undefined {
+  for (const stage of run.stages ?? []) {
+    if (stage.status !== 'completed') continue;
+
+    const rawDate =
+      stage.name === 'fetch:youtube'
+        ? readMetadataStringField(stage.output, 'uploadDate')
+        : readMetadataStringFields(stage.output, ['uploadDate', 'publishedAt', 'published_at']);
+    if (!rawDate) continue;
+
+    const iso = parseMetadataDateToIso(rawDate);
+    if (iso) return iso;
+  }
+
+  return undefined;
+}
+
 /** Channel or author name captured during ingestion (e.g. YouTube `fetch:youtube` stage). */
 export function extractRunAuthor(run: {
   stages?: Array<{ name?: string; status?: string; output?: unknown }>;

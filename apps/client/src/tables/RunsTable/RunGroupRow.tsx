@@ -41,8 +41,6 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
     return () => window.clearInterval(interval);
   }, [hasExtractingRun]);
 
-  const ingestClickDate = group.runs.at(-1)?.created_at ?? group.latestDate;
-
   return (
     <>
       {/* Group Row -------------------------------------------------------- */}
@@ -67,20 +65,24 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
           </button>
         </TableCell>
         <TableCell>
-          <div className={styles.groupTitleCell}>
-            <div className={styles.cellTitle}>
-              {group.href ? (
-                <Link to={group.href} className={styles.subjectTitle}>
-                  {group.title}
-                </Link>
-              ) : (
-                <span className={styles.subjectTitle}>{group.title}</span>
-              )}
-            </div>
-            <time className={styles.groupIngestDate} dateTime={ingestClickDate}>
-              {fmtClickDate(ingestClickDate)}
-            </time>
+          <div className={styles.cellTitle}>
+            {group.href ? (
+              <Link to={group.href} className={styles.subjectTitle}>
+                {group.title}
+              </Link>
+            ) : (
+              <span className={styles.subjectTitle}>{group.title}</span>
+            )}
           </div>
+        </TableCell>
+        <TableCell>
+          {group.publishedAt ? (
+            <time className={styles.mono} dateTime={group.publishedAt}>
+              {fmtClickDate(group.publishedAt)}
+            </time>
+          ) : (
+            <span className={styles.muted}>—</span>
+          )}
         </TableCell>
         <TableCell>
           {group.url ? (
@@ -146,14 +148,10 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
                   <Link to={`/vault/runs/${run.id}`} className={`${styles.mono} ${styles.childRowId}`}>
                     {run.id}
                   </Link>
-                  <RunModelBadge model={model} />
                 </div>
               </TableCell>
-              <TableCell className="text-center">
-                <span className={styles.muted}>—</span>
-              </TableCell>
-              <TableCell className="text-center">
-                <span className={styles.muted}>—</span>
+              <TableCell className="pl-1.5" colSpan={3}>
+                <RunModelBadge model={model} />
               </TableCell>
               <TableCell className="text-center">
                 <span className={styles.mono}>{run.produced_node_ids.length}</span>

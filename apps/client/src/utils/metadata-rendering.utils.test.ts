@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extractMetadataUrl,
   extractRunAuthor,
+  extractRunPublishedAt,
   extractRunSourceId,
   extractRunSubjectHref,
   extractRunSubjectTitle,
@@ -93,6 +94,36 @@ describe('extractRunSubjectHref', () => {
         ],
       }),
     ).toBe('/vault/transcripts/jira-and-linear-are-legacy-software');
+  });
+});
+
+describe('extractRunPublishedAt', () => {
+  it('reads YouTube uploadDate from fetch:youtube stage output', () => {
+    expect(
+      extractRunPublishedAt({
+        stages: [
+          {
+            name: 'fetch:youtube',
+            status: 'completed',
+            output: { uploadDate: '20260327' },
+          },
+        ],
+      }),
+    ).toBe('2026-03-27T00:00:00.000Z');
+  });
+
+  it('reads publishedAt from non-YouTube completed stages', () => {
+    expect(
+      extractRunPublishedAt({
+        stages: [
+          {
+            name: 'fetch:article',
+            status: 'completed',
+            output: { publishedAt: '2026-01-24T12:00:00.000Z' },
+          },
+        ],
+      }),
+    ).toBe('2026-01-24T12:00:00.000Z');
   });
 });
 

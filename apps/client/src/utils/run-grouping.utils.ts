@@ -2,6 +2,7 @@ import type { RunNode, SourceNode } from '@llaab/schemas';
 
 import {
   extractMetadataUrl,
+  extractRunPublishedAt,
   extractRunSourceId,
   extractRunSubjectHref,
   extractRunSubjectTitle,
@@ -16,6 +17,7 @@ export interface RunGroup {
   totalNodes: number;
   avgDurationMs?: number;
   latestDate: string;
+  publishedAt?: string;
   runs: RunNode[];
 }
 
@@ -61,6 +63,11 @@ export function groupRunsBySubject(runs: RunNode[], sourcesById: Map<string, Sou
       const sourceId = extractRunSourceId(run);
       if (sourceId) group.source = sourcesById.get(sourceId);
     }
+
+    if (!group.publishedAt) {
+      const publishedAt = extractRunPublishedAt(run);
+      if (publishedAt) group.publishedAt = publishedAt;
+    }
   }
 
   for (const group of groups.values()) {
@@ -71,5 +78,5 @@ export function groupRunsBySubject(runs: RunNode[], sourcesById: Map<string, Sou
     group.runs.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   }
 
-  return Array.from(groups.values()).toSorted((a, b) => (a.latestDate < b.latestDate ? 1 : -1));
+  return Array.from(groups.values());
 }

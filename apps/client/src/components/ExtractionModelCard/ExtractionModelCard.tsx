@@ -40,8 +40,8 @@ function CompactBarMetric({
   iconClassName?: string;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 font-mono text-xs font-medium text-muted-foreground">
-      <Icon className={cn(iconSize, 'text-muted-foreground', iconClassName)} />
+    <span className="inline-flex min-w-[75px] items-center justify-end gap-1 text-right font-mono text-xs font-medium text-muted-foreground">
+      <Icon className={cn(iconSize, 'shrink-0 text-muted-foreground', iconClassName)} />
       {value}
     </span>
   );
@@ -104,7 +104,7 @@ export function ExtractionModelCard({
         ) : null}
         <div
           className={cn(
-            'flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1',
+            'flex shrink-0 flex-wrap items-center justify-end gap-x-0 gap-y-1',
             !hasModelMeta && 'justify-center',
           )}
         >

@@ -4,28 +4,6 @@
   min-width: 0;
 }
 
-.groupTitleCell {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.groupTitleCell .cellTitle {
-  flex: 1;
-  min-width: 0;
-}
-
-.groupIngestDate {
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--text-faint);
-  white-space: nowrap;
-}
-
 .subjectTitle {
   color: var(--accent);
   color: var(--text);

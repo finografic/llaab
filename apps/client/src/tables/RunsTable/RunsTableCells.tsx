@@ -27,7 +27,7 @@ export function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-/** Dd-MM-YYYY — first ingest click date in grouped run headers. */
+/** Dd-MM-YYYY — source publish date in grouped run headers. */
 export function fmtClickDate(iso: string): string {
   const date = new Date(iso);
   const day = String(date.getDate()).padStart(2, '0');
