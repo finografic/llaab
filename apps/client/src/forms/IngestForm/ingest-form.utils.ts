@@ -67,3 +67,20 @@ export function runPhase(
   if (transcriptPhase === 'failed' || extractionPhase === 'failed') return 'warning';
   return 'success';
 }
+
+export function transcriptStepTitle(phase: TranscriptPhase): string {
+  if (phase === 'saved') return 'Transcript saved';
+  if (phase === 'reused') return 'Transcript already saved';
+  if (phase === 'failed') return 'Transcript failed';
+  if (phase === 'processing') return 'Transcript processing';
+  return 'Transcript pending';
+}
+
+export function extractionStepTitle(phase: ExtractionPhase): string {
+  if (phase === 'pending') return 'Extraction processing';
+  if (phase === 'success' || phase === 'existing') return 'Ideas extracted';
+  if (phase === 'extractable') return 'No ideas extracted yet';
+  if (phase === 'failed') return 'Extraction failed';
+  if (phase === 'waiting') return 'Extraction pending';
+  return 'Extraction pending';
+}

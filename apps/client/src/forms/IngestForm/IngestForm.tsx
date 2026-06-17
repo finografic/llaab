@@ -1,17 +1,13 @@
-import { CheckIcon, CountdownTimerIcon, XIcon } from '@llaab/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
-import { Spinner } from 'components/ui/spinner';
-import { RotateCcwIcon } from 'lucide-react';
 import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
 import { QUERY_KEYS } from 'queries/runs';
 import { useDiscardTranscript, useExtractTranscript, useIngestYoutube } from 'queries/transcripts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
 import type { ExtractionPhase, FormValues, TranscriptData, TranscriptPhase } from './ingest-form.types';
 import type { ExtractTranscriptResult } from 'queries/transcripts';
 
@@ -20,10 +16,7 @@ import { INGEST_FORM_RESET_EVENT } from 'lib/ingest-form-events';
 import { KNOWN_TAGS, normalizeTag } from 'constants/taxonomy.constants';
 
 import { TagInputField } from '../TagInputField';
-import { IdeaList } from './components/IdeaList';
-import { PipelineCard } from './components/PipelineCard';
-import { RetryButton } from './components/RetryButton';
-import { RunSummaryCard } from './components/RunSummaryCard';
+import { IngestPipeline } from './components/IngestPipeline';
 import { classifyUrl, extractDroppedUrl, isHttpUrl } from './ingest-form.utils';
 
 export interface IngestFormProps {
@@ -353,66 +346,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const pipelineVisible = transcriptPhase !== 'idle';
 
-  const transcriptCardPhase =
-    transcriptPhase === 'saved'
-      ? 'success'
-      : transcriptPhase === 'failed' || transcriptPhase === 'reused'
-        ? 'warning'
-        : transcriptPhase === 'processing'
-          ? 'active'
-          : 'neutral';
-
-  const transcriptCardLabel =
-    transcriptPhase === 'saved'
-      ? 'Transcript saved'
-      : transcriptPhase === 'reused'
-        ? 'Transcript already saved'
-        : transcriptPhase === 'failed'
-          ? 'Transcript failed'
-          : 'Transcript processing';
-
-  const transcriptStatusSlot =
-    transcriptPhase === 'processing' ? (
-      <Spinner className="size-4" aria-hidden />
-    ) : transcriptPhase === 'failed' ? (
-      <RetryButton onClick={onRetryIngest} disabled={busy} />
-    ) : (
-      <CheckIcon className="pipeline-icon" aria-hidden />
-    );
-
-  const extractionCardPhase =
-    extractionPhase === 'success' || extractionPhase === 'existing'
-      ? 'success'
-      : extractionPhase === 'failed'
-        ? 'warning'
-        : extractionPhase === 'pending'
-          ? 'active'
-          : 'neutral';
-
-  const extractionCardLabel =
-    extractionPhase === 'pending'
-      ? 'Extraction processing'
-      : extractionPhase === 'success' || extractionPhase === 'existing'
-        ? 'Ideas extracted'
-        : extractionPhase === 'extractable'
-          ? 'No ideas extracted yet'
-          : extractionPhase === 'failed'
-            ? 'Extraction failed'
-            : 'Extraction pending';
-
-  const extractionStatusSlot =
-    extractionPhase === 'pending' ? (
-      <Spinner className="size-4" aria-hidden />
-    ) : extractionPhase === 'success' || extractionPhase === 'existing' ? (
-      <CheckIcon className="pipeline-icon" aria-hidden />
-    ) : extractionPhase === 'failed' ? (
-      <XIcon className="pipeline-icon" aria-hidden />
-    ) : extractionPhase === 'extractable' ? (
-      <RetryButton onClick={onRetryExtract} disabled={busy} />
-    ) : (
-      <CountdownTimerIcon className="pipeline-icon pipeline-icon--waiting" aria-hidden />
-    );
-
   return (
     <div
       className={`ingest-form${isDropActive ? ' ingest-form--drop-active' : ''}`}
@@ -503,70 +436,26 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       ) : null}
 
       {pipelineVisible ? (
-        <div className="pipeline">
-          <RunSummaryCard
-            transcriptPhase={transcriptPhase}
-            extractionPhase={extractionPhase}
-            busy={busy}
-            runStartedAt={runStartedAt}
-            totalElapsedSecs={totalElapsedSecs}
-            nodeCount={(transcriptData ? 1 : 0) + extractionIdeas.length}
-            onKeep={onKeep}
-            onDiscard={onDiscard}
-            onRetry={onRetry}
-          />
-
-          <PipelineCard
-            phase={transcriptCardPhase}
-            label={transcriptCardLabel}
-            statusSlot={transcriptStatusSlot}
-            startedAt={transcriptStartedAt}
-            finalElapsedSecs={transcriptElapsedSecs}
-            nodeCount={transcriptData ? 1 : null}
-          >
-            {transcriptData ? (
-              <ul className="pipeline-card__item-list">
-                <li>
-                  <Link to={`/vault/transcripts/${transcriptData.id}`} className="pipeline-card__link">
-                    {transcriptData.filename}
-                  </Link>
-                </li>
-              </ul>
-            ) : null}
-            {transcriptPhase === 'failed' && transcriptError ? (
-              <span className="pipeline-card__text">{transcriptError}</span>
-            ) : null}
-          </PipelineCard>
-
-          <PipelineCard
-            phase={extractionCardPhase}
-            label={extractionCardLabel}
-            statusSlot={extractionStatusSlot}
-            startedAt={extractionStartedAt}
-            finalElapsedSecs={extractionElapsedSecs}
-            nodeCount={extractionIdeas.length}
-          >
-            {(extractionPhase === 'success' || extractionPhase === 'existing') &&
-            extractionIdeas.length > 0 ? (
-              <IdeaList ideas={extractionIdeas} />
-            ) : null}
-            {extractionPhase === 'failed' ? (
-              <div className="pipeline-card__failure">
-                {extractionError ? <span className="pipeline-card__text">{extractionError}</span> : null}
-                <button
-                  type="button"
-                  className="pipeline-action-btn pipeline-action-btn--retry"
-                  onClick={onRetryExtract}
-                  disabled={busy}
-                  aria-label="Retry — re-run extraction against the saved transcript"
-                >
-                  <RotateCcwIcon size={14} aria-hidden />
-                  <span>Retry</span>
-                </button>
-              </div>
-            ) : null}
-          </PipelineCard>
-        </div>
+        <IngestPipeline
+          transcriptPhase={transcriptPhase}
+          transcriptData={transcriptData}
+          transcriptError={transcriptError}
+          transcriptStartedAt={transcriptStartedAt}
+          transcriptElapsedSecs={transcriptElapsedSecs}
+          extractionPhase={extractionPhase}
+          extractionIdeas={extractionIdeas}
+          extractionError={extractionError}
+          extractionStartedAt={extractionStartedAt}
+          extractionElapsedSecs={extractionElapsedSecs}
+          busy={busy}
+          runStartedAt={runStartedAt}
+          totalElapsedSecs={totalElapsedSecs}
+          onKeep={onKeep}
+          onDiscard={onDiscard}
+          onRetry={onRetry}
+          onRetryIngest={onRetryIngest}
+          onRetryExtract={onRetryExtract}
+        />
       ) : null}
     </div>
   );

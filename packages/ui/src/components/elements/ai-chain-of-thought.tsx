@@ -3,6 +3,7 @@
 import { cn } from '@llaab/ui/lib/utils';
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 import {
+  AlertCircle,
   CheckCircle2,
   ChevronDown,
   Circle,
@@ -14,7 +15,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
-type StepStatus = 'pending' | 'active' | 'complete';
+type StepStatus = 'pending' | 'active' | 'complete' | 'warning';
 
 interface AiChainOfThoughtContextValue {
   isOpen: boolean;
@@ -83,6 +84,8 @@ interface AiChainOfThoughtHeaderProps {
   title?: string;
   stepCount?: number;
   completedCount?: number;
+  /** When false, omits the leading icon tile. Default true. */
+  showIcon?: boolean;
   children?: React.ReactNode;
   className?: string;
 }
@@ -91,6 +94,7 @@ function AiChainOfThoughtHeader({
   title = 'Chain of Thought',
   stepCount,
   completedCount,
+  showIcon = true,
   children,
   className,
 }: AiChainOfThoughtHeaderProps) {
@@ -104,9 +108,11 @@ function AiChainOfThoughtHeader({
         className,
       )}
     >
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-amber-100 dark:bg-amber-950">
-        <Lightbulb className="size-4 text-amber-600 dark:text-amber-400" />
-      </div>
+      {showIcon ? (
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-amber-100 dark:bg-amber-950">
+          <Lightbulb className="size-4 text-amber-600 dark:text-amber-400" />
+        </div>
+      ) : null}
       <div className="flex flex-1 items-center gap-2 text-left">
         <span className="font-medium">{title}</span>
         {stepCount !== undefined && (
@@ -149,6 +155,8 @@ interface AiChainOfThoughtStepProps {
   status: StepStatus;
   title: string;
   description?: string;
+  meta?: React.ReactNode;
+  isLast?: boolean;
   children?: React.ReactNode;
   className?: string;
 }
@@ -157,6 +165,8 @@ function AiChainOfThoughtStep({
   status,
   title,
   description,
+  meta,
+  isLast = false,
   children,
   className,
 }: AiChainOfThoughtStepProps) {
@@ -177,6 +187,11 @@ function AiChainOfThoughtStep({
         className: 'text-green-600 dark:text-green-400',
         lineClassName: 'bg-green-200 dark:bg-green-900',
       },
+      warning: {
+        icon: <AlertCircle className="size-4" />,
+        className: 'text-amber-600 dark:text-amber-400',
+        lineClassName: 'bg-amber-200 dark:bg-amber-900',
+      },
     };
     return configs[status];
   }, [status]);
@@ -189,14 +204,27 @@ function AiChainOfThoughtStep({
     >
       <div className="flex flex-col items-center">
         <div className={cn('shrink-0', statusConfig.className)}>{statusConfig.icon}</div>
-        <div className={cn('mt-2 w-0.5 flex-1 rounded-full', statusConfig.lineClassName)} />
+        {!isLast ? (
+          <div className={cn('mt-2 w-0.5 flex-1 rounded-full', statusConfig.lineClassName)} />
+        ) : null}
       </div>
-      <div className="flex-1 pb-6 min-w-0">
-        <h4 className={cn('font-medium text-sm', status === 'pending' && 'text-muted-foreground')}>
-          {title}
-        </h4>
-        {description && <p className="mt-1 text-xs text-muted-foreground">{description}</p>}
-        {children && <div className="mt-3">{children}</div>}
+      <div className={cn('flex-1 min-w-0', isLast ? 'pb-0' : 'pb-6')}>
+        <div className="flex items-start justify-between gap-3">
+          <h4
+            className={cn(
+              'font-medium text-sm',
+              status === 'pending' && 'text-muted-foreground',
+              status === 'active' && 'text-blue-600 dark:text-blue-400',
+              status === 'complete' && 'text-green-600 dark:text-green-400',
+              status === 'warning' && 'text-amber-600 dark:text-amber-400',
+            )}
+          >
+            {title}
+          </h4>
+          {meta ? <div className="shrink-0 text-xs font-mono text-muted-foreground">{meta}</div> : null}
+        </div>
+        {description ? <p className="mt-1 text-xs text-muted-foreground">{description}</p> : null}
+        {children ? <div className="mt-3">{children}</div> : null}
       </div>
     </div>
   );
