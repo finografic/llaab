@@ -90,7 +90,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/ui
       '@pierre/trees':
-        specifier: 1.0.0-beta.4
+        specifier: ^1.0.0-beta.4
         version: 1.0.0-beta.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/query-sync-storage-persister':
         specifier: ^5.101.0
