@@ -136,9 +136,9 @@ function MonitorSection({ title, runs, empty }: { title: string; runs: RunMonito
   );
 }
 
-export function RunMonitor() {
-  const { isOpen, closeRunMonitor, dismissedRunIds } = useRunMonitorState();
-  const { data, error, isLoading } = useRunMonitor({ refetchInterval: isOpen ? 3000 : false });
+export function RunMonitor({ onClose }: { onClose: () => void }) {
+  const { dismissedRunIds } = useRunMonitorState();
+  const { data, error, isLoading } = useRunMonitor({ refetchInterval: 3000 });
   const dismissedSet = useMemo(() => new Set(dismissedRunIds), [dismissedRunIds]);
   const active = useMemo(() => data?.active ?? EMPTY_RUNS, [data?.active]);
   const recent = useMemo(
@@ -153,13 +153,7 @@ export function RunMonitor() {
           <h2 className={styles.panelTitle}>Run Monitor</h2>
           <p className={styles.panelDescription}>Durable run progress and recent outputs.</p>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Close run monitor"
-          onClick={closeRunMonitor}
-        >
+        <Button type="button" variant="ghost" size="icon-sm" aria-label="Close run monitor" onClick={onClose}>
           <XIcon aria-hidden />
         </Button>
       </header>
@@ -175,8 +169,7 @@ export function RunMonitor() {
   );
 }
 
-export function RunMonitorTrigger() {
-  const { isOpen, toggleRunMonitor } = useRunMonitorState();
+export function RunMonitorTrigger({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
   const { data } = useRunMonitor();
   const activeCount = data?.active.length ?? 0;
 
@@ -186,7 +179,7 @@ export function RunMonitorTrigger() {
       variant="ghost"
       size="icon"
       className={styles.trigger}
-      onClick={() => toggleRunMonitor()}
+      onClick={onToggle}
       aria-pressed={isOpen}
       aria-label={activeCount > 0 ? `Toggle run monitor, ${activeCount} active` : 'Toggle run monitor'}
     >

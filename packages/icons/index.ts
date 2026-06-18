@@ -60,6 +60,8 @@ export const {
   FolderSyncIcon,
   FolderTreeIcon,
   FullscreenIcon,
+  GitCommitVerticalIcon,
+  GitPullRequestCreateArrowIcon,
   GridIcon,
   HomeIcon,
   InfoCircledIcon,

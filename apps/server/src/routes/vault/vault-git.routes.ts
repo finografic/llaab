@@ -1,0 +1,141 @@
+import { spawn } from 'node:child_process';
+import { MONOREPO_ROOT } from '@llaab/core';
+import { NodeTypeSchema } from '@llaab/schemas';
+import type { AppCtx } from '../../types/app.types.js';
+import type {
+  NodeType,
+  VaultGitFileStatus,
+  VaultGitStatusEntry,
+  VaultGitStatusResponse,
+} from '@llaab/schemas';
+
+function runGit(args: string[]): Promise<{ exitCode: number; stderr: string; stdout: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn('git', args, { cwd: MONOREPO_ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.on('error', reject);
+    child.on('close', (code) => resolve({ exitCode: code ?? 1, stderr, stdout }));
+  });
+}
+
+function mapPorcelainCode(code: string): VaultGitFileStatus {
+  if (code.includes('?')) return 'untracked';
+  if (code.includes('A')) return 'added';
+  if (code.includes('D')) return 'deleted';
+  if (code.includes('R')) return 'renamed';
+  return 'modified';
+}
+
+function parsePorcelainEntries(stdout: string): Array<{ code: string; path: string }> {
+  return stdout
+    .split('\n')
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      const code = line.slice(0, 2);
+      const rest = line.slice(3);
+      const renameParts = rest.split(' -> ');
+      return { code, path: renameParts[renameParts.length - 1]! };
+    });
+}
+
+function categorizeVaultPath(relativePath: string): NodeType | undefined {
+  const basename = relativePath.split('/').pop() ?? '';
+  const prefix = basename.split('.')[0] ?? '';
+  const parsed = NodeTypeSchema.safeParse(prefix);
+  return parsed.success ? parsed.data : undefined;
+}
+
+function pluralize(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+function buildVaultCommitMessage(countsByType: Record<string, number>, total: number): string {
+  const header = `chore(vault): commit ${pluralize(total, 'file')}`;
+  const lines = Object.entries(countsByType)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([type, count]) => `- ${pluralize(count, `${type} file`)}`);
+
+  return lines.length > 0 ? `${header}\n\n${lines.join('\n')}` : header;
+}
+
+async function getVaultGitStatus(): Promise<VaultGitStatusResponse> {
+  const status = await runGit(['status', '--porcelain=v1', '--', 'vault']);
+  if (status.exitCode !== 0) {
+    throw new Error(status.stderr || 'git status failed.');
+  }
+
+  const entries: VaultGitStatusEntry[] = parsePorcelainEntries(status.stdout).map(({ code, path }) => {
+    const relativeToVault = path.startsWith('vault/') ? path.slice('vault/'.length) : path;
+    return {
+      path: relativeToVault,
+      status: mapPorcelainCode(code),
+      nodeType: categorizeVaultPath(relativeToVault),
+    };
+  });
+
+  const countsByType: Record<string, number> = {};
+  for (const entry of entries) {
+    const key = entry.nodeType ?? 'other';
+    countsByType[key] = (countsByType[key] ?? 0) + 1;
+  }
+
+  return {
+    entries,
+    totalCount: entries.length,
+    countsByType,
+    commitMessage: buildVaultCommitMessage(countsByType, entries.length),
+  };
+}
+
+export const vaultGitStatus = {
+  path: '/git/status' as const,
+  handler: async (c: AppCtx) => {
+    try {
+      return c.json(await getVaultGitStatus());
+    } catch (err) {
+      return c.json({ error: err instanceof Error ? err.message : 'Failed to load vault git status.' }, 500);
+    }
+  },
+};
+
+export const vaultGitCommit = {
+  path: '/git/commit' as const,
+  handler: async (c: AppCtx) => {
+    try {
+      const status = await getVaultGitStatus();
+      if (status.totalCount === 0) {
+        return c.json({ error: 'No vault changes to commit.' }, 400);
+      }
+
+      const add = await runGit(['add', '--', 'vault']);
+      if (add.exitCode !== 0) {
+        throw new Error(add.stderr || 'git add failed.');
+      }
+
+      const commit = await runGit(['commit', '-m', status.commitMessage, '--', 'vault']);
+      if (commit.exitCode !== 0) {
+        throw new Error(commit.stderr || 'git commit failed.');
+      }
+
+      const rev = await runGit(['rev-parse', 'HEAD']);
+
+      return c.json({
+        committedCount: status.totalCount,
+        commitMessage: status.commitMessage,
+        sha: rev.exitCode === 0 ? rev.stdout.trim() : undefined,
+      });
+    } catch (err) {
+      return c.json({ error: err instanceof Error ? err.message : 'Failed to commit vault changes.' }, 500);
+    }
+  },
+};

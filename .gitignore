@@ -55,8 +55,9 @@ pids
 .cache/
 .llm-cache/
 
-# Coverage
+# Testing + Coverage
 coverage/
+.playwright-mcp/
 
 # Vault scratch
 vault/.tmp/

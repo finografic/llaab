@@ -9,6 +9,7 @@ only so `index.ts` can keep a single `import * as routes from './vault.routes.js
 | File                          | Domain           | Exports                                                                                                           |
 | ----------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `vault-auth.routes.ts`        | Auth             | `vaultAuthLogin`, `vaultAuthLogout`, `vaultAuthSession`                                                           |
+| `vault-git.routes.ts`         | Git status       | `vaultGitStatus`, `vaultGitCommit`                                                                                |
 | `vault-nodes.routes.ts`       | Node CRUD        | `vaultTree`, `cleanRecent`, `file`, `listVaultNodes`, `createVaultNode`, `nodeDetail`, `nodeRaw`                  |
 | `vault-transcripts.routes.ts` | Transcripts      | `transcriptIdeas`, `extractTranscript`, `consolidateTranscriptIdeas`, `promoteCanonicalIdea`, `discardTranscript` |
 | `vault-runs.routes.ts`        | Runs             | `deleteRun`, `previewDeleteRuns`                                                                                  |

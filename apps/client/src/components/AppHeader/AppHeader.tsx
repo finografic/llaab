@@ -9,18 +9,15 @@ import styles from './AppHeader.module.css';
 const iconButtonClass = buttonVariants({ variant: 'outline', size: 'icon' });
 
 interface AppHeaderProps {
-  title?: string;
   actions?: ReactNode;
 }
 
-export function AppHeader({ title, actions }: AppHeaderProps) {
+export function AppHeader({ actions }: AppHeaderProps) {
   const { pathname } = useLocation();
 
   return (
     <header className={styles.appHeader}>
       <NavMenu pathname={pathname} />
-
-      {title ? <h1 className={styles.title}>{title}</h1> : null}
 
       <div className={styles.actions}>
         {actions}

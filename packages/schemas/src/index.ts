@@ -89,3 +89,13 @@ export {
   type TranscriptSourceType,
   TranscriptSourceTypeSchema,
 } from './transcript-node.schema.js';
+export {
+  type VaultGitCommitResponse,
+  VaultGitCommitResponseSchema,
+  type VaultGitFileStatus,
+  VaultGitFileStatusSchema,
+  type VaultGitStatusEntry,
+  VaultGitStatusEntrySchema,
+  type VaultGitStatusResponse,
+  VaultGitStatusResponseSchema,
+} from './vault-git-status.schema.js';

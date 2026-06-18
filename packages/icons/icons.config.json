@@ -426,5 +426,13 @@
   {
     "exportName": "SavePlus",
     "lucideName": "save-plus"
+  },
+  {
+    "exportName": "GitPullRequestCreateArrow",
+    "lucideName": "git-pull-request-create-arrow"
+  },
+  {
+    "exportName": "GitCommitVertical",
+    "lucideName": "git-commit-vertical"
   }
 ]

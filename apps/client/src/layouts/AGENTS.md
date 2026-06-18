@@ -19,12 +19,12 @@ Two tiers, kept visually distinct so users can tell "navigation" from "contextua
 1. **Primary nav** (`AppHeader.tsx` — Ingest, Transcripts, LLM, Icons): `buttonVariants({ variant:
 'outline', size: 'icon' })`, always-on accent-green icon, no hover-color shift. These are
    destinations (`<Link>`), not actions.
-2. **Contextual / secondary actions** (`SecondaryActionBar.tsx` — Clean Vault, Activity/RunMonitor
-   toggle): shadcn `<Button variant="ghost" size="icon">`, default (white/`--text`) icon, no
-   border, `color: var(--accent-hover)` on `:hover`/`:focus-visible` (and `[aria-pressed="true"]`
-   for toggles). No background fill, no per-button accent color — one shared look for every icon in
-   this row. `RunMonitorTrigger`'s `.trigger` class in `RunMonitor.module.css` is the reference
-   implementation; copy its hover rule rather than inventing a new variant.
+2. **Contextual / secondary actions** (`SecondaryActionBar.tsx` — Clean Vault, Vault Changes,
+   Activity/RunMonitor toggle): shadcn `<Button variant="ghost" size="icon">`, default
+   (white/`--text`) icon, no border, `color: var(--accent-hover)` on `:hover`/`:focus-visible` (and
+   `[aria-pressed="true"]` for toggles). No background fill, no per-button accent color — one shared
+   look for every icon in this row. `RunMonitorTrigger`'s `.trigger` class in `RunMonitor.module.css`
+   is the reference implementation; copy its hover rule rather than inventing a new variant.
 
 When adding a new icon button, decide which tier it belongs to first — don't mix outline/ghost
 styling within the same row.
@@ -36,15 +36,17 @@ styling within the same row.
 - `secondaryLeading` — per-route content, set via `useSecondaryActionBar().setLeadingAction(node)`
   (`SecondaryActionBarContext`). Routes opt in; default is empty. Don't reach into
   `SecondaryActionBar` directly from a route — go through the context.
-- `secondaryTrailing` — global, always-mounted controls that apply everywhere (Clean Vault,
-  RunMonitor toggle). Order is left-to-right by how "destructive/infrequent" → "informational" the
-  action is (Clean Vault, a rare maintenance action, sits left of the frequently-toggled Activity
-  monitor). New global icon actions go here, not in `AppHeader`, unless they're a navigation
-  destination.
+- `secondaryTrailing` — global, always-mounted controls that apply everywhere (Clean Vault, Vault
+  Changes, RunMonitor toggle). Order is left-to-right by how "destructive/infrequent" →
+  "informational" the action is (Clean Vault, a rare maintenance action, sits left of Vault Changes,
+  which sits left of the frequently-toggled Activity monitor). New global icon actions go here, not
+  in `AppHeader`, unless they're a navigation destination.
 
-Self-contained trigger components (own `open`/`isOpen` state, e.g. `CleanVaultDialog`,
-`RunMonitorTrigger`) can be dropped straight into `secondaryTrailing` with no extra wiring — see
-Dialogs & Sidebars below for why that pattern is preferred.
+Dialog triggers (e.g. `CleanVaultDialog`) are fully self-contained and drop straight into
+`secondaryTrailing` with zero wiring. Sidebar-panel triggers (`VaultGitTrigger`, `RunMonitorTrigger`)
+are _not_ self-contained — there is only one sidebar slot for multiple panels, so `AppLayout` owns
+which panel is active and passes each trigger its `isOpen`/`isActive` + `onToggle` as props. See
+Dialogs & sidebar toggles below.
 
 ## Badges (live counts on icon buttons)
 
@@ -70,10 +72,17 @@ right: -5px`, pill shape (`border-radius: 999px`), `border: 1px solid var(--back
   unless something _outside_ the component genuinely needs to open it imperatively; the
   self-contained shape is what lets a dialog be moved between routes/layout slots (as Clean Vault
   was) with zero call-site wiring.
-- **Sidebars** (right-hand resizable panels, e.g. RunMonitor): state lives in a dedicated provider
-  (`providers/RunMonitorProvider`) exposing `isOpen` + a toggle, consumed by both the trigger button
-  and `AppLayout`. `AppLayout` syncs provider state to the `AppSidebarLayout` panel imperatively via
-  `usePanelRef()` + `panel.resize()/collapse()` in a `useEffect`, and feeds it back via
-  `onCollapse`/`onExpand`. Follow this provider-as-source-of-truth + imperative-panel-sync split for
-  any new sidebar — don't store sidebar open-state only in the panel ref or only in local component
-  state, since both the trigger and `AppLayout` need to read/drive it.
+- **Sidebars** (right-hand resizable panels — RunMonitor, VaultGitPanel): `AppSidebarLayout` exposes
+  exactly one sidebar slot, so it can only ever show one panel at a time. `AppLayout` owns a single
+  `activePanel: 'runs' | 'vaultGit' | null` state (the `SecondaryPanel` type it exports) as the one
+  source of truth for "which panel, if any, is open" — not a per-feature provider. It picks the
+  sidebar's content (`activePanel === 'vaultGit' ? <VaultGitPanel/> : activePanel === 'runs' ?
+<RunMonitor/> : null`), syncs `isOpen = activePanel !== null` to the `AppSidebarLayout` panel
+  imperatively via `usePanelRef()` + `panel.resize()/collapse()` in a `useEffect`, and feeds manual
+  drag-resize back via `onCollapse` (→ `null`) / `onExpand` (→ falls back to `'runs'` if nothing was
+  active). Each panel component takes `onClose` as a prop and calls it instead of owning its own
+  open state. A feature-specific provider (e.g. `RunMonitorProvider`) may still exist for that
+  feature's _other_ state (selected run, dismissed runs) — just don't let it also own "is my panel
+  open", since only `AppLayout` can answer that with two panels sharing one slot.
+  Adding a third panel means adding a third arm to `activePanel`'s union and the slot-picking
+  ternary — not a new sidebar instance.

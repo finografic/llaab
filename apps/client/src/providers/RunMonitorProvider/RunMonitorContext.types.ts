@@ -3,7 +3,6 @@ import type { RunMonitorKeys, SETTER_PREFIX } from './RunMonitorContext';
 import type { ReactNode } from 'react';
 
 export interface RunMonitorValues {
-  [RunMonitorKeys.isOpen]: boolean;
   [RunMonitorKeys.selectedRunId]: string | undefined;
   [RunMonitorKeys.dismissedRunIds]: string[];
 }
@@ -11,9 +10,6 @@ export interface RunMonitorValues {
 type RunMonitorSetters = CreateSettersType<RunMonitorValues, typeof SETTER_PREFIX>;
 
 interface RunMonitorActions extends RunMonitorSetters {
-  openRunMonitor: (runId?: string) => void;
-  closeRunMonitor: () => void;
-  toggleRunMonitor: () => void;
   selectRun: (runId: string | undefined) => void;
   dismissRun: (runId: string) => void;
   resetDismissedRuns: () => void;

@@ -32,6 +32,8 @@ export const vaultRouter = createRouter()
     routes.updateSourceProfiles.handler,
   )
   .get(routes.nodeRaw.path, routes.nodeRaw.handler)
+  .get(routes.vaultGitStatus.path, routes.vaultGitStatus.handler)
+  .post(routes.vaultGitCommit.path, routes.vaultGitCommit.handler)
   .get(routes.transcriptIdeas.path, routes.transcriptIdeas.handler)
   .post(routes.extractTranscript.path, routes.extractTranscript.handler)
   .post(routes.consolidateTranscriptIdeas.path, routes.consolidateTranscriptIdeas.handler)

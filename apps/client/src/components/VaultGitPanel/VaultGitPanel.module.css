@@ -1,0 +1,117 @@
+.trigger {
+  position: relative;
+}
+
+.trigger:hover,
+.trigger[aria-pressed='true'] {
+  color: var(--accent-hover);
+}
+
+.triggerBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border: 1px solid var(--background);
+  border-radius: 999px;
+  background: var(--info-text);
+  color: var(--background);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.panel {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+.panelHeader {
+  display: flex;
+  min-height: var(--space-16);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--space-4);
+}
+
+.panelTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-ui);
+  font-weight: 600;
+}
+
+.panelDescription {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  padding: var(--space-4);
+}
+
+.commitMessage {
+  flex-shrink: 0;
+  margin: 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  padding: var(--space-3);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+}
+
+.treeWrap {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.empty {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  color: var(--text-muted);
+}
+
+.error {
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-3) var(--space-4);
+}

@@ -46,7 +46,7 @@ Dependency chain (one-directional):
 - Tests: Vitest 4.x
 - Icons: `@finografic/icons` + `@finografic/lucide-manager` via `@llaab/icons`
 - Server: Hono 4.x, http-status-codes, @hono/zod-validator
-- Client: Vite 8, React 19, React Router v7, React Hook Form 7.x
+- Client: Vite 8, React 19, React Router v7, React Hook Form 7.x, `@pierre/trees` (git-status file tree)
 - CSS: Tailwind CSS 4, shadcn/ui, app-local semantic CSS variables
 - Linting: oxlint + oxfmt (`@finografic/oxc-config`); Prettier for markdown and legacy formats where needed
 - Hooks: husky + lint-staged (pre-commit: lint + format + typecheck)
@@ -67,15 +67,28 @@ The old PandaCSS + linked design-system stack has been removed from the client.
 Vault pages fetch via TanStack Query hooks + Hono RPC (`/api/vault/*`); optional vault login when
 `VAULT_PASSWORD` is set (unset = open local access).
 
-Layout hierarchy: `index.html` + `main.tsx` mount a single React tree. `AppLayout` wraps horizontal
-header + main + footer (sidebar removed 2026-06-07). `AppHeader` hosts `NavMenu` (brand link +
-shadcn megamenus + mobile sheet), header shortcuts (ingest + transcripts), and the app-wide Run
-Monitor trigger. `RunMonitor` is mounted once in `AppLayout`, uses a root `RunMonitorProvider`
-powered by `@finografic/zustand-context-creator`, and reads durable run data through TanStack Query.
+Layout hierarchy: `index.html` + `main.tsx` mount a single React tree. `AppLayout` wraps a sticky
+header + `SecondaryActionBar` (header of one resizable right-hand `AppSidebarLayout` slot) + main +
+footer. `AppHeader` hosts `NavMenu` (brand link + shadcn megamenus + mobile sheet) plus navigation
+shortcuts (ingest, transcripts, LLM, icons). `SecondaryActionBar` holds global contextual
+actions — Clean Vault (dialog), Vault Changes, Run Monitor — that share the single sidebar slot:
+`AppLayout` owns `activePanel: 'runs' | 'vaultGit' | null` as the one source of truth for which
+panel renders (mutually exclusive), syncing it to the resizable panel imperatively via
+`usePanelRef()`. `RunMonitor` keeps its own `RunMonitorProvider` (zustand) for selected/dismissed
+run state only — not panel open/closed, which `AppLayout` now owns. Full pattern, icon-button
+tiers, and badge conventions: `apps/client/src/layouts/AGENTS.md`.
 Both the ingest form (`IngestPipeline`) and Run Monitor render the same `RunPipelineCard`
 (`apps/client/src/components/RunPipelineCard/`) — grey collapsible RUN shell, chain-of-thought
-transcript/extraction steps (blue active / green complete / orange warning), with monitor-only
-activity log and `ExtractionModelCard` metrics in the card body. Inner pages use `PageLayout` (hero / optional aside / main zones) and `PageHero`. `src/router.tsx`
+transcript/extraction steps (blue active / green complete / orange warning). A deduped/reused
+transcript ("Transcript already saved") is not a failure and maps to green/complete, not orange —
+only a genuine fetch/extraction failure maps to warning. Monitor-only activity log and
+`ExtractionModelCard` metrics render in the card body.
+`VaultGitPanel` (`apps/client/src/components/VaultGitPanel/`) shows `git status` scoped to `vault/`
+via `@pierre/trees`'s `FileTree` (themed to the app's dark palette via its CSS custom-property
+overrides), grouped by node type, with an auto-generated commit message
+(`chore(vault): commit N files` + per-type bullet breakdown) and a Commit button. Server-side
+git operations (`apps/server/src/routes/vault/vault-git.routes.ts`) shell out to `git` scoped with
+a `-- vault` pathspec for both status and commit. Inner pages use `PageLayout` (hero / optional aside / main zones) and `PageHero`. `src/router.tsx`
 lazy-loads route components so the initial SPA chunk stays smaller; route handles set
 title/full-bleed page chrome. Navigation structure: `lib/nav-menu.config.ts`; design spec:
 `docs/NAV_MENU_DESIGN.md`. Home dashboard uses `utils/balanced-grid.utils.ts` to avoid orphan cards
@@ -154,6 +167,8 @@ continues processing.
 | `POST /api/vault/transcripts/:id/consolidate` | Single-pass canonical idea generation with quality validation from extracted candidate ideas |
 | `GET /api/runs`, `/:id`                       | Run list + detail with full stage/decision trace                                             |
 | `GET /api/runs/monitor`                       | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries               |
+| `GET /api/vault/git/status`                   | `git status` scoped to `vault/`, categorized by node type, with a generated commit message   |
+| `POST /api/vault/git/commit`                  | `git add`/`git commit -- vault` using the generated commit message                           |
 | `POST /api/llm/complete`                      | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`                      |
 | `POST /api/llm/stream`                        | SSE streaming LLM                                                                            |
 | `GET /api/llm/models`                         | Lists installed Ollama models                                                                |

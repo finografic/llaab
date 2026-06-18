@@ -1,34 +1,33 @@
 import { RunMonitorTrigger } from 'components/RunMonitor';
-import { usePanelRef } from 'components/ui/resizable';
+import { VaultGitTrigger } from 'components/VaultGitPanel';
 import { CleanVaultDialog } from 'dialogs/CleanVaultDialog/CleanVaultDialog';
-import { useRunMonitorState } from 'providers/RunMonitorProvider';
-import { useEffect } from 'react';
+import type { SecondaryPanel } from './AppLayout';
 import type { ReactNode } from 'react';
 
 import styles from './AppLayout.module.css';
 
-export function SecondaryActionBar({ leadingAction }: { leadingAction: ReactNode }) {
-  const runMonitorPanelRef = usePanelRef();
-  const { isOpen } = useRunMonitorState();
+interface SecondaryActionBarProps {
+  leadingAction: ReactNode;
+  activePanel: SecondaryPanel;
+  onActivePanelChange: (panel: SecondaryPanel) => void;
+}
 
-  useEffect(() => {
-    const panel = runMonitorPanelRef.current;
-    if (!panel) return;
-
-    if (isOpen) {
-      panel.resize('430px');
-      return;
-    }
-
-    panel.collapse();
-  }, [isOpen, runMonitorPanelRef]);
+export function SecondaryActionBar({
+  leadingAction,
+  activePanel,
+  onActivePanelChange,
+}: SecondaryActionBarProps) {
+  const toggle = (panel: Exclude<SecondaryPanel, null>) => {
+    onActivePanelChange(activePanel === panel ? null : panel);
+  };
 
   return (
     <div className={styles.secondaryActions}>
       <div className={styles.secondaryLeading}>{leadingAction}</div>
       <div className={styles.secondaryTrailing}>
         <CleanVaultDialog resetIngestFormOnSuccess />
-        <RunMonitorTrigger />
+        <VaultGitTrigger isActive={activePanel === 'vaultGit'} onToggle={() => toggle('vaultGit')} />
+        <RunMonitorTrigger isOpen={activePanel === 'runs'} onToggle={() => toggle('runs')} />
       </div>
     </div>
   );

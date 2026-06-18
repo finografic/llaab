@@ -5,7 +5,7 @@ import { RunMonitor } from 'components/RunMonitor';
 import { AppSidebarLayout } from 'components/ui/app-sidebar-layout';
 import { usePanelRef } from 'components/ui/resizable';
 import { TooltipProvider } from 'components/ui/tooltip';
-import { useRunMonitorState } from 'providers/RunMonitorProvider';
+import { VaultGitPanel } from 'components/VaultGitPanel';
 import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useMatches } from 'react-router-dom';
 import type { ReactNode } from 'react';
@@ -19,17 +19,21 @@ export interface RouteHandle {
   fullBleed?: boolean;
 }
 
+/** Which panel currently occupies the single right-hand sidebar slot, if any. */
+export type SecondaryPanel = 'runs' | 'vaultGit' | null;
+
 export function AppLayout() {
   const matches = useMatches();
   const handle = [...matches].toReversed().find((match) => match.handle)?.handle as RouteHandle | undefined;
-  const { title, fullBleed = false } = handle ?? {};
-  const runMonitorPanelRef = usePanelRef();
-  const { isOpen, setRunMonitorIsOpen } = useRunMonitorState();
+  const { fullBleed = false } = handle ?? {};
+  const sidebarPanelRef = usePanelRef();
+  const [activePanel, setActivePanel] = useState<SecondaryPanel>(null);
   const [leadingAction, setLeadingAction] = useState<ReactNode>(null);
   const secondaryActionBarValue = useMemo(() => ({ setLeadingAction }), []);
+  const isOpen = activePanel !== null;
 
   useEffect(() => {
-    const panel = runMonitorPanelRef.current;
+    const panel = sidebarPanelRef.current;
     if (!panel) return;
 
     if (isOpen) {
@@ -38,11 +42,11 @@ export function AppLayout() {
     }
 
     panel.collapse();
-  }, [isOpen, runMonitorPanelRef]);
+  }, [isOpen, sidebarPanelRef]);
 
   return (
     <div className={styles.appShell}>
-      <AppHeader title={title} />
+      <AppHeader />
       <SecondaryActionBarContext.Provider value={secondaryActionBarValue}>
         <TooltipProvider>
           <AppSidebarLayout
@@ -54,16 +58,28 @@ export function AppLayout() {
             minWidth="360px"
             maxWidth="560px"
             defaultWidth={isOpen ? '430px' : '0%'}
-            sidebarPanelId="run-monitor-sidebar"
+            sidebarPanelId="secondary-sidebar"
             mainPanelId="app-main"
-            sidebarPanelRef={runMonitorPanelRef}
-            onCollapse={() => setRunMonitorIsOpen(false)}
-            onExpand={() => setRunMonitorIsOpen(true)}
+            sidebarPanelRef={sidebarPanelRef}
+            onCollapse={() => setActivePanel(null)}
+            onExpand={() => setActivePanel((prev) => prev ?? 'runs')}
             headerClassName={styles.secondaryBar}
             sidebarClassName={styles.runMonitorSidebar}
             insetClassName={styles.appInset}
-            header={<SecondaryActionBar leadingAction={leadingAction} />}
-            sidebar={<RunMonitor />}
+            header={
+              <SecondaryActionBar
+                leadingAction={leadingAction}
+                activePanel={activePanel}
+                onActivePanelChange={setActivePanel}
+              />
+            }
+            sidebar={
+              activePanel === 'vaultGit' ? (
+                <VaultGitPanel onClose={() => setActivePanel(null)} />
+              ) : activePanel === 'runs' ? (
+                <RunMonitor onClose={() => setActivePanel(null)} />
+              ) : null
+            }
           >
             <main className={cn(styles.pageContent, fullBleed && styles.pageContentBleed)}>
               <Outlet />

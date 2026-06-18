@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 // process.cwd(). Works whether executed from source (src/utils/) or compiled
 // output (dist/utils/) — both sit 4 levels below the monorepo root.
 const _dir = dirname(fileURLToPath(import.meta.url));
-const MONOREPO_ROOT = resolve(_dir, '../../../..');
+
+/** Absolute path to the monorepo root (parent of `apps/` and `packages/`). */
+export const MONOREPO_ROOT: string = resolve(_dir, '../../../..');
 
 /**
  * Absolute path to the vault directory.

@@ -9,13 +9,11 @@ export const DISPLAY_NAME = 'RunMonitor';
 export const SETTER_PREFIX = 'RunMonitor';
 
 export enum RunMonitorKeys {
-  isOpen = 'isOpen',
   selectedRunId = 'selectedRunId',
   dismissedRunIds = 'dismissedRunIds',
 }
 
 export const defaultValue: RunMonitorValues = {
-  isOpen: false,
   selectedRunId: undefined,
   dismissedRunIds: [],
 };
@@ -28,9 +26,6 @@ export const RunMonitorContext = createZustandContext(({ initialValue }) => {
         ...initialValue,
         actions: {
           ...createSetters({ set, defaultValue, prefix: SETTER_PREFIX }),
-          openRunMonitor: (runId) => set({ isOpen: true, selectedRunId: runId }),
-          closeRunMonitor: () => set({ isOpen: false }),
-          toggleRunMonitor: () => set((state) => ({ isOpen: !state.isOpen })),
           selectRun: (runId) => set({ selectedRunId: runId }),
           dismissRun: (runId) =>
             set((state) => ({
