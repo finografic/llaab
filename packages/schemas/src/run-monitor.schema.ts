@@ -26,6 +26,7 @@ export const RunMonitorItemSchema = z.object({
   completed_at: TimestampSchema.optional(),
   duration_ms: z.number().int().nonnegative().optional(),
   input_summary: z.string().optional(),
+  raw_input_summary: z.string().optional(),
   output_summary: z.string().optional(),
   error: z.string().optional(),
   produced_node_count: z.number().int().nonnegative(),

@@ -12,6 +12,8 @@ export interface IngestYoutubeInput {
 export interface IngestYoutubeResult {
   success: boolean;
   result?: { id: string; path: string; reused?: boolean };
+  extraction?: { ideaCount: number; summary: string } | null;
+  extractionError?: string | null;
   error?: string;
 }
 
@@ -28,6 +30,7 @@ export function useIngestYoutube() {
     mutationFn: ingestYoutube,
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.list() });
+      void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.monitor() });
     },
   });
 }

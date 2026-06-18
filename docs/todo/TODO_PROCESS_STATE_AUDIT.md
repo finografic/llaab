@@ -29,7 +29,7 @@ This doc tracks where else in the client the same fragility exists, found via a 
 
 ## Confirmed bug-class risk
 
-- [ ] **Ingest form pipeline** (`apps/client/src/forms/IngestForm/IngestForm.tsx`,
+- [x] **Ingest form pipeline** (`apps/client/src/forms/IngestForm/IngestForm.tsx`,
       `ingest-form.types.ts`, `ingest-form.utils.ts`, `components/IngestPipeline.tsx`) —
       `transcriptPhase`, `extractionPhase`, `busy`, and every elapsed timer are pure
       `useState`, with no `useRunMonitor()`/`useRuns()` cross-check anywhere in the form. The
@@ -37,6 +37,9 @@ This doc tracks where else in the client the same fragility exists, found via a 
       is fixable today with the same pattern used for consolidation. Navigating away from
       `/ingest` mid-run and back currently loses all pipeline status even though the run is still
       active.
+      Fixed by deriving active ingest state from the Activity Monitor query and using the
+      run-backed initial ingest path for extraction; retry extraction remains covered by the
+      separate prerequisite below.
 
 ## Blocked on a prerequisite
 

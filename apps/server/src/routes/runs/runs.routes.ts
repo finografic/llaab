@@ -125,6 +125,7 @@ function runToMonitorItem(run: RunNode, nodesById: Map<string, LabNode>): RunMon
     completed_at: run.completed_at,
     duration_ms: run.duration_ms,
     input_summary: formatRunSummary(run.input_summary),
+    raw_input_summary: run.input_summary,
     output_summary: formatRunSummary(run.output_summary),
     error: run.error,
     produced_node_count: run.produced_node_ids.length,

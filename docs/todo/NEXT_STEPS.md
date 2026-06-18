@@ -35,15 +35,20 @@ Things to verify end-to-end after recent orchestration and UI changes:
 
 ## Up Next
 
-- [ ] **Verify per-idea tag fix and confirm distinct tag sets** — extracted ideas were all
+- [x] **Verify per-idea tag fix and confirm distinct tag sets** — extracted ideas were all
       showing the transcript's full, identical tag set; the fix now asks the LLM for tags
       per idea directly. Needs a rebuild + fresh extraction to confirm it actually works.
+      Verified against generated vault artifacts: 21/18/27 extracted ideas across three
+      transcript groups each had distinct per-idea tag sets, with zero matching the full
+      transcript tag set.
       Detail: [`TODO_IDEA_TAG_RELEVANCE.md`](./TODO_IDEA_TAG_RELEVANCE.md).
-- [ ] **Migrate the ingest form pipeline to durable process state** — see
+- [x] **Migrate the ingest form pipeline to durable process state** — see
       [`TODO_PROCESS_STATE_AUDIT.md`](./TODO_PROCESS_STATE_AUDIT.md). `IngestForm.tsx`'s
       transcript/extraction status and elapsed timers are local-state-only despite
       `ingest-youtube` being `runSkill`-backed — same bug class fixed for consolidation
       (status disappears if the page remounts/is navigated away from mid-run).
+      Done: `/ingest` now derives active ingest status from `useRunMonitor()` and lets the
+      run-backed `ingest-youtube` request own extraction during initial ingest.
 
 - [ ] **Build nav-unlocked observability pages** — start with `/llm/providers`,
       `/llm/capabilities`, `/system/doctor`, and `/system/harness`.

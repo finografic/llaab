@@ -4,11 +4,17 @@ import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
-import { QUERY_KEYS } from 'queries/runs';
-import { useDiscardTranscript, useExtractTranscript, useIngestYoutube } from 'queries/transcripts';
+import { QUERY_KEYS, useRunMonitor } from 'queries/runs';
+import {
+  fetchExistingIdeas,
+  useDiscardTranscript,
+  useExtractTranscript,
+  useIngestYoutube,
+} from 'queries/transcripts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { ExtractionPhase, FormValues, TranscriptData, TranscriptPhase } from './ingest-form.types';
+import type { RunMonitorItem } from '@llaab/schemas';
 import type { ExtractTranscriptResult } from 'queries/transcripts';
 
 import { INGEST_FORM_RESET_EVENT } from 'lib/ingest-form-events';
@@ -21,6 +27,26 @@ import { classifyUrl, extractDroppedUrl, isHttpUrl } from './ingest-form.utils';
 
 export interface IngestFormProps {
   submitOnDrop?: boolean;
+}
+
+const INGEST_YOUTUBE_SKILL_ID = 'ingest-youtube';
+
+function parseRunInputSummary(value?: string): { url?: string } | null {
+  if (!value) return null;
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (typeof parsed === 'string') return parseRunInputSummary(parsed);
+    if (parsed && typeof parsed === 'object') return parsed as { url?: string };
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function getRunInputUrl(run: RunMonitorItem): string | null {
+  return parseRunInputSummary(run.raw_input_summary)?.url ?? null;
 }
 
 export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
@@ -59,11 +85,25 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const extractTranscript = useExtractTranscript();
   const discardTranscript = useDiscardTranscript();
   const { data: vaultTagsByUsage = [] } = useVaultTagsByUsage();
+  const { data: monitorData } = useRunMonitor();
 
   const urlValue = watch('url');
   const sourceKind = useMemo(() => classifyUrl(urlValue.trim()), [urlValue]);
-  const canSubmit = sourceKind === 'youtube' && !busy;
-  const buttonLabel = busy ? 'Processing…' : sourceKind === 'youtube' ? 'Ingest YouTube' : 'Ingest';
+  const activeIngestRun = useMemo(() => {
+    const activeRuns = monitorData?.active.filter((run) => run.skill_id === INGEST_YOUTUBE_SKILL_ID) ?? [];
+    if (activeRuns.length === 0) return null;
+
+    const currentUrl = urlValue.trim();
+    if (currentUrl) {
+      const urlMatchedRun = activeRuns.find((run) => getRunInputUrl(run) === currentUrl);
+      if (urlMatchedRun) return urlMatchedRun;
+    }
+
+    return activeRuns[0] ?? null;
+  }, [monitorData?.active, urlValue]);
+  const durableBusy = busy || activeIngestRun != null;
+  const canSubmit = sourceKind === 'youtube' && !durableBusy;
+  const buttonLabel = durableBusy ? 'Processing…' : sourceKind === 'youtube' ? 'Ingest YouTube' : 'Ingest';
 
   const dropzoneDesc = useMemo(() => {
     if (sourceKind === 'youtube') {
@@ -192,35 +232,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
     }, 1000);
 
-    let transcriptId: string;
+    let json: Awaited<ReturnType<typeof ingestYoutube.mutateAsync>>;
 
     try {
-      const json = await ingestYoutube.mutateAsync({ url: trimmedUrl, tags: allTags, skipExtraction: true });
-
-      if (!json.success || !json.result) {
-        setTranscriptPhase('failed');
-        setTranscriptError(json.error ?? 'Ingestion failed.');
-        setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
-        setExtractionPhase('waiting');
-        setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
-        setBusy(false);
-        return;
-      }
-
-      transcriptId = json.result.id;
-      const filename = json.result.path.split('/').pop() ?? json.result.path;
-      const reused = json.result.reused ?? false;
-
-      setTranscriptData({ id: transcriptId, filename });
-      setTranscriptPhase(reused ? 'reused' : 'saved');
-      setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
-      setTags([]);
-      setTagInput('');
-
-      if (reused) {
-        const nodeTags = await fetchNodeTags(transcriptId);
-        setLockedTags(nodeTags);
-      }
+      json = await ingestYoutube.mutateAsync({ url: trimmedUrl, tags: allTags });
     } catch (error) {
       setTranscriptPhase('failed');
       setTranscriptError(error instanceof Error ? error.message : 'Ingestion failed.');
@@ -231,10 +246,59 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       return;
     }
 
+    if (!json.success || !json.result) {
+      setTranscriptPhase('failed');
+      setTranscriptError(json.error ?? 'Ingestion failed.');
+      setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
+      setExtractionPhase('waiting');
+      setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
+      setBusy(false);
+      return;
+    }
+
+    const transcriptId = json.result.id;
+    const filename = json.result.path.split('/').pop() ?? json.result.path;
+    const reused = json.result.reused ?? false;
+
+    setTranscriptData({ id: transcriptId, filename });
+    setTranscriptPhase(reused ? 'reused' : 'saved');
+    setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
+    setTags([]);
+    setTagInput('');
+
     const extractionStart = Date.now();
-    setExtractionPhase('pending');
     setExtractionStartedAt(extractionStart);
-    await applyExtractResult(await extractTranscript.mutateAsync(transcriptId), transcriptId);
+
+    try {
+      if (json.extraction) {
+        const ideas = await fetchExistingIdeas(transcriptId);
+        setExtractionPhase(ideas.length > 0 ? 'success' : 'extractable');
+        setExtractionIdeas(ideas);
+        const nodeTags = await fetchNodeTags(transcriptId);
+        setLockedTags(nodeTags);
+      } else if (json.extractionError) {
+        if (json.extractionError.includes('already exists')) {
+          const ideas = await fetchExistingIdeas(transcriptId);
+          setExtractionPhase(ideas.length > 0 ? 'existing' : 'extractable');
+          setExtractionIdeas(ideas);
+        } else {
+          setExtractionPhase('failed');
+          setExtractionError(json.extractionError);
+        }
+        const nodeTags = await fetchNodeTags(transcriptId);
+        setLockedTags(nodeTags);
+      } else {
+        setExtractionPhase('extractable');
+        if (reused) {
+          const nodeTags = await fetchNodeTags(transcriptId);
+          setLockedTags(nodeTags);
+        }
+      }
+    } catch (error) {
+      setExtractionPhase('failed');
+      setExtractionError(error instanceof Error ? error.message : 'Could not load extraction results.');
+    }
+
     setExtractionElapsedSecs(Math.floor((Date.now() - extractionStart) / 1000));
     setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
     setBusy(false);
@@ -344,7 +408,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setDropMessage('Dropped content did not resolve to a supported URL.');
   };
 
-  const pipelineVisible = transcriptPhase !== 'idle';
+  const pipelineVisible = transcriptPhase !== 'idle' || activeIngestRun != null;
 
   return (
     <div
@@ -371,7 +435,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
                 autoComplete="off"
                 spellCheck={false}
                 placeholder="https://www.youtube.com/watch?v=…"
-                disabled={busy}
+                disabled={durableBusy}
                 {...register('url', {
                   required: 'URL is required.',
                   validate: { validUrl: (value) => isHttpUrl(value) || 'Must be a valid URL.' },
@@ -409,7 +473,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
             lockedTags={lockedTags}
             inputValue={tagInput}
             suggestions={suggestions}
-            disabled={busy}
+            disabled={durableBusy}
             onChange={setTags}
             onInputValueChange={setTagInput}
             normalizeTag={normalizeTag}
@@ -450,6 +514,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
           busy={busy}
           runStartedAt={runStartedAt}
           totalElapsedSecs={totalElapsedSecs}
+          activeRun={activeIngestRun}
           onKeep={onKeep}
           onDiscard={onDiscard}
           onRetry={onRetry}

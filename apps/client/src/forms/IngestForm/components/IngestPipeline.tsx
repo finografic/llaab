@@ -1,9 +1,14 @@
 import { CheckIcon } from '@llaab/icons';
-import { PipelineNodeCountMeta, RunPipelineCard } from 'components/RunPipelineCard/RunPipelineCard';
+import {
+  buildMonitorPipelineSteps,
+  PipelineNodeCountMeta,
+  RunPipelineCard,
+} from 'components/RunPipelineCard/RunPipelineCard';
 import styles from 'components/RunPipelineCard/RunPipelineCard.module.css';
 import { RotateCcwIcon, Trash2Icon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ExtractionPhase, TranscriptData, TranscriptPhase } from '../ingest-form.types';
+import type { RunMonitorItem } from '@llaab/schemas';
 import type { RunPipelineStepData } from 'components/RunPipelineCard/RunPipelineCard';
 import type { StepStatus } from 'components/ui/elements/ai-chain-of-thought';
 
@@ -42,6 +47,7 @@ export function IngestPipeline({
   busy,
   runStartedAt,
   totalElapsedSecs,
+  activeRun,
   onKeep,
   onDiscard,
   onRetry,
@@ -61,19 +67,22 @@ export function IngestPipeline({
   busy: boolean;
   runStartedAt: number | null;
   totalElapsedSecs: number | null;
+  activeRun?: RunMonitorItem | null;
   onKeep: () => void;
   onDiscard: () => Promise<void>;
   onRetry: () => void;
   onRetryIngest: () => void;
   onRetryExtract: () => void;
 }) {
-  const liveRunElapsed = useElapsedSeconds(busy ? runStartedAt : null);
-  const displayRunElapsed = totalElapsedSecs ?? liveRunElapsed;
-  const hasRunElapsed = runStartedAt != null && displayRunElapsed != null;
+  const activeRunStartedAt = activeRun?.started_at ? Date.parse(activeRun.started_at) : null;
+  const liveRunElapsed = useElapsedSeconds(activeRun ? activeRunStartedAt : busy ? runStartedAt : null);
+  const displayRunElapsed = activeRun ? liveRunElapsed : (totalElapsedSecs ?? liveRunElapsed);
+  const hasRunElapsed = (activeRunStartedAt ?? runStartedAt) != null && displayRunElapsed != null;
+  const isBusy = busy || activeRun != null;
 
   const transcriptDone = ['saved', 'reused', 'failed'].includes(transcriptPhase);
   const extractionDone = ['success', 'existing', 'extractable', 'failed'].includes(extractionPhase);
-  const isComplete = transcriptDone && extractionDone && !busy;
+  const isComplete = transcriptDone && extractionDone && !isBusy;
 
   const [discarding, setDiscarding] = useState(false);
 
@@ -83,9 +92,11 @@ export function IngestPipeline({
     setDiscarding(false);
   };
 
-  const totalNodeCount = (transcriptData ? 1 : 0) + extractionIdeas.length;
+  const totalNodeCount = activeRun?.produced_node_count ?? (transcriptData ? 1 : 0) + extractionIdeas.length;
 
   const steps = useMemo((): RunPipelineStepData[] => {
+    if (activeRun) return buildMonitorPipelineSteps(activeRun);
+
     const transcriptStep: RunPipelineStepData = {
       id: 'transcript',
       status: transcriptChainStepStatus(transcriptPhase),
@@ -101,7 +112,7 @@ export function IngestPipeline({
         transcriptPhase === 'failed' && transcriptError ? (
           <div className={styles.stepFailure}>
             <span className={styles.stepDetail}>{transcriptError}</span>
-            <RetryButton onClick={onRetryIngest} disabled={busy} />
+            <RetryButton onClick={onRetryIngest} disabled={isBusy} />
           </div>
         ) : undefined,
     };
@@ -121,7 +132,7 @@ export function IngestPipeline({
           ) : null}
           {extractionPhase === 'extractable' ? (
             <div className={styles.stepFailure}>
-              <RetryButton onClick={onRetryExtract} disabled={busy} />
+              <RetryButton onClick={onRetryExtract} disabled={isBusy} />
             </div>
           ) : null}
           {extractionPhase === 'failed' ? (
@@ -131,7 +142,7 @@ export function IngestPipeline({
                 type="button"
                 className={`${styles.actionBtn} ${styles.actionRetry}`}
                 onClick={onRetryExtract}
-                disabled={busy}
+                disabled={isBusy}
                 aria-label="Retry — re-run extraction against the saved transcript"
               >
                 <RotateCcwIcon size={14} aria-hidden />
@@ -145,7 +156,8 @@ export function IngestPipeline({
 
     return [transcriptStep, extractionStep];
   }, [
-    busy,
+    activeRun,
+    isBusy,
     extractionElapsedSecs,
     extractionError,
     extractionIdeas,
@@ -197,7 +209,7 @@ export function IngestPipeline({
   return (
     <RunPipelineCard
       headerTitle="RUN"
-      headerSubtitle={stepLabel(transcriptPhase, extractionPhase)}
+      headerSubtitle={activeRun ? 'Processing…' : stepLabel(transcriptPhase, extractionPhase)}
       headerMeta={
         hasRunElapsed || totalNodeCount > 0 ? (
           <span className="flex shrink-0 items-center gap-2 font-mono text-xs text-muted-foreground">
