@@ -25,6 +25,15 @@ const TREE_THEME_STYLE = {
   '--trees-input-bg-override': 'var(--bg-secondary)',
 } as CSSProperties;
 
+// The tree's hover state sets a `--truncate-marker-background-overlay-color` block behind
+// truncated filenames; it renders as an opaque dark slab over the row in the dark theme.
+const TREE_UNSAFE_CSS = `
+  button[data-type='item']:hover,
+  button[data-type='item'][data-item-context-hover='true'] {
+    --truncate-marker-background-overlay-color: transparent;
+  }
+`;
+
 function pluralizeFiles(count: number): string {
   return `${count} file${count === 1 ? '' : 's'}`;
 }
@@ -38,7 +47,12 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
     () => data?.entries.map((entry) => ({ path: entry.path, status: entry.status })) ?? [],
     [data],
   );
-  const { model } = useFileTree({ paths, gitStatus, initialExpansion: 'open' });
+  const { model } = useFileTree({
+    paths,
+    gitStatus,
+    initialExpansion: 'open',
+    unsafeCSS: TREE_UNSAFE_CSS,
+  });
 
   const handleCommit = async () => {
     try {
