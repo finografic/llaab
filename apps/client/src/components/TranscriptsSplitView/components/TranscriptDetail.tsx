@@ -1,13 +1,27 @@
-import { TimerIcon } from '@llaab/icons';
+import { BrushCleaningIcon, TimerIcon } from '@llaab/icons';
 import { scoreConsolidationQuality } from '@llaab/schemas';
 import { useQueryClient } from '@tanstack/react-query';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from 'components/ui/alert-dialog';
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
 import { SparklesIcon } from 'lucide-react';
 import { QUERY_KEYS as RUN_KEYS } from 'queries/runs';
-import { useConsolidateCanonicalIdeas, usePromoteCanonicalIdea } from 'queries/transcripts';
+import {
+  useCleanCanonicalIdeaArtifacts,
+  useConsolidateCanonicalIdeas,
+  usePromoteCanonicalIdea,
+} from 'queries/transcripts';
 import { QUERY_KEYS as VAULT_KEYS } from 'queries/vault';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -81,6 +95,8 @@ export function TranscriptDetail({
   const [selectedRunId, setSelectedRunId] = useState(() => extractionRuns[0]?.id ?? 'transcript');
   const queryClient = useQueryClient();
   const consolidateMutation = useConsolidateCanonicalIdeas();
+  const cleanArtifactsMutation = useCleanCanonicalIdeaArtifacts();
+  const [showCleanConfirm, setShowCleanConfirm] = useState(false);
   const promoteMutation = usePromoteCanonicalIdea();
   const { mutate: promoteMutate, isPending: isPromotePending, variables: promoteVariables } = promoteMutation;
 
@@ -295,6 +311,22 @@ export function TranscriptDetail({
     );
   }
 
+  function handleCleanArtifacts() {
+    cleanArtifactsMutation.mutate(transcript.id, {
+      onSuccess: (data) => {
+        toast.success(
+          `Cleaned ${data.deletedCanonicalIdeaCount} canonical idea file${
+            data.deletedCanonicalIdeaCount === 1 ? '' : 's'
+          } and ${data.deletedRunCount} run${data.deletedRunCount === 1 ? '' : 's'}.`,
+        );
+        setShowCleanConfirm(false);
+      },
+      onError: (err) => {
+        toast.error(err instanceof Error ? err.message : 'Failed to clean canonical idea artifacts.');
+      },
+    });
+  }
+
   function handlePromote(candidateId: string) {
     promoteMutate(
       { transcriptId: transcript.id, candidateId },
@@ -498,44 +530,57 @@ export function TranscriptDetail({
             {canonicalIdeas.length > 0 ? (
               <span className="section__count">{canonicalIdeas.length}</span>
             ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={styles.cleanCanonicalIdeasButton}
+              disabled={cleanArtifactsMutation.isPending}
+              title="Delete all canonical idea files and consolidation runs for this transcript."
+              onClick={() => setShowCleanConfirm(true)}
+            >
+              <BrushCleaningIcon aria-hidden="true" />
+            </Button>
             {qualityScore != null ? (
               <strong className={styles.qualityScore} title="Consolidation quality score">
                 {qualityScore}% quality
               </strong>
             ) : null}
           </span>
-          {canConsolidate ? (
-            <div className={styles.consolidateActions}>
-              {showConsolidateClock && displayConsolidateDurationMs != null ? (
-                <span
-                  className={styles.consolidateClock}
-                  title={
-                    consolidateMutation.isPending
-                      ? 'Consolidation in progress'
-                      : 'Last consolidation duration'
-                  }
-                  aria-live={consolidateMutation.isPending ? 'polite' : undefined}
-                >
-                  <TimerIcon size={16} aria-hidden />
-                  <span className={styles.consolidateClockTime}>
-                    {formatDurationMs(displayConsolidateDurationMs)}
+          <div className={styles.consolidateActions}>
+            {canConsolidate ? (
+              <>
+                {showConsolidateClock && displayConsolidateDurationMs != null ? (
+                  <span
+                    className={styles.consolidateClock}
+                    title={
+                      consolidateMutation.isPending
+                        ? 'Consolidation in progress'
+                        : 'Last consolidation duration'
+                    }
+                    aria-live={consolidateMutation.isPending ? 'polite' : undefined}
+                  >
+                    <TimerIcon size={16} aria-hidden />
+                    <span className={styles.consolidateClockTime}>
+                      {formatDurationMs(displayConsolidateDurationMs)}
+                    </span>
                   </span>
-                </span>
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={styles.consolidateButton}
-                disabled={consolidateMutation.isPending}
-                title="Create canonical ideas from all extraction runs."
-                onClick={() => handleConsolidate()}
-              >
-                <SparklesIcon aria-hidden="true" />
-                {consolidateMutation.isPending ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
-              </Button>
-            </div>
-          ) : null}
+                ) : null}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={styles.consolidateButton}
+                  disabled={consolidateMutation.isPending}
+                  title="Create canonical ideas from all extraction runs."
+                  onClick={() => handleConsolidate()}
+                >
+                  <SparklesIcon aria-hidden="true" />
+                  {consolidateMutation.isPending ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
+                </Button>
+              </>
+            ) : null}
+          </div>
         </h2>
         {coverageCounts ? (
           <div className={styles.coverageSummary}>
@@ -751,6 +796,30 @@ export function TranscriptDetail({
           <pre className={`body-pre ${styles.bodyPre}`}>{transcript.body}</pre>
         </section>
       ) : null}
+
+      <AlertDialog open={showCleanConfirm} onOpenChange={setShowCleanConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clean canonical idea artifacts?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deletes every canonical idea file and consolidation run for "{transcript.title}" — including any
+              not currently shown above — and clears its consolidation status. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cleanArtifactsMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={cleanArtifactsMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                handleCleanArtifacts();
+              }}
+            >
+              {cleanArtifactsMutation.isPending ? 'Cleaning…' : 'Clean'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

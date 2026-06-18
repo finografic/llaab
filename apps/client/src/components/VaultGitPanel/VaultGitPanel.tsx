@@ -1,8 +1,19 @@
 import { GitCommitVerticalIcon, LoaderIcon, XIcon } from '@llaab/icons';
 import { FileTree, useFileTree } from '@pierre/trees/react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from 'components/ui/alert-dialog';
 import { Button } from 'components/ui/button';
-import { useVaultGitCommit, useVaultGitStatus } from 'queries/vault';
-import { useMemo } from 'react';
+import { RotateCcw } from 'lucide-react';
+import { useVaultGitCommit, useVaultGitReset, useVaultGitStatus } from 'queries/vault';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { GitStatusEntry } from '@pierre/trees';
 import type { CSSProperties } from 'react';
@@ -41,6 +52,8 @@ function pluralizeFiles(count: number): string {
 export function VaultGitPanel({ onClose }: { onClose: () => void }) {
   const { data, error, isLoading } = useVaultGitStatus();
   const commitMutation = useVaultGitCommit();
+  const resetMutation = useVaultGitReset();
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const paths = useMemo(() => data?.entries.map((entry) => entry.path) ?? [], [data]);
   const gitStatus = useMemo<GitStatusEntry[]>(
@@ -63,7 +76,20 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const handleReset = async () => {
+    try {
+      const result = await resetMutation.mutateAsync();
+      toast.success(`Reset ${pluralizeFiles(result.resetCount)}.`);
+      setShowResetConfirm(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Vault reset failed.');
+    }
+  };
+
   const hasChanges = (data?.totalCount ?? 0) > 0;
+  // Display-only: the real commitMessage (used for the actual `git commit -m`) keeps the blank
+  // line between subject and body since commitlint's body-leading-blank rule requires it.
+  const displayCommitMessage = data?.commitMessage.replace('\n\n', '\n');
 
   return (
     <aside className={styles.panel} aria-label="Vault changes">
@@ -90,7 +116,7 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
 
         {hasChanges ? (
           <>
-            <pre className={styles.commitMessage}>{data?.commitMessage}</pre>
+            <pre className={styles.commitMessage}>{displayCommitMessage}</pre>
             <div className={styles.treeWrap}>
               <FileTree model={model} style={TREE_THEME_STYLE} />
             </div>
@@ -100,6 +126,16 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
 
       {hasChanges ? (
         <footer className={styles.footer}>
+          <Button
+            type="button"
+            variant="outline"
+            className={styles.resetButton}
+            disabled={resetMutation.isPending}
+            onClick={() => setShowResetConfirm(true)}
+          >
+            <RotateCcw aria-hidden />
+            Reset
+          </Button>
           <Button type="button" disabled={commitMutation.isPending} onClick={handleCommit}>
             {commitMutation.isPending ? (
               <LoaderIcon className="animate-spin" aria-hidden />
@@ -110,6 +146,30 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
           </Button>
         </footer>
       ) : null}
+
+      <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset vault changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Permanently discards all uncommitted changes under vault/ — both modified tracked files and new
+              untracked files — on disk and in this panel. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={resetMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleReset();
+              }}
+            >
+              {resetMutation.isPending ? 'Resetting…' : 'Reset'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }

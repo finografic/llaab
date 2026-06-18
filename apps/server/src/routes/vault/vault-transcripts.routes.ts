@@ -908,6 +908,59 @@ export const resolveCanonicalIdeaConflict = {
   },
 };
 
+function parseConsolidateRunTranscriptId(inputSummary: string | undefined): string | undefined {
+  if (!inputSummary) return undefined;
+
+  try {
+    const parsed = JSON.parse(inputSummary) as { transcriptId?: unknown };
+    return typeof parsed.transcriptId === 'string' ? parsed.transcriptId : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export const cleanCanonicalIdeaArtifacts = {
+  path: '/transcripts/:id/canonical-ideas/clean' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+
+    const transcriptPath = getNodeFilePath('transcript', id);
+    try {
+      await readNode(transcriptPath);
+    } catch {
+      return c.json({ error: 'Transcript not found' }, 404);
+    }
+
+    // Delete every canonical-idea node linked to this transcript, including ones orphaned by a
+    // never-resolved conflict or by files deleted outside the app — not just the ids currently
+    // referenced in canonical_coverage.
+    let deletedCanonicalIdeaCount = 0;
+    const canonicalIdeaNodes = await listNodes({ type: 'canonical-idea' });
+    for (const node of canonicalIdeaNodes) {
+      if (node.type !== 'canonical-idea' || node.transcript_id !== id) continue;
+      await deleteNode('canonical-idea', node.id).catch(() => undefined);
+      deletedCanonicalIdeaCount++;
+    }
+
+    // Delete every consolidate-canonical-ideas run for this transcript.
+    let deletedRunCount = 0;
+    const runNodes = await listNodes({ type: 'run' });
+    for (const node of runNodes) {
+      if (node.type !== 'run' || (node as RunNode).skill_id !== 'consolidate-canonical-ideas') continue;
+      if (parseConsolidateRunTranscriptId((node as RunNode).input_summary) !== id) continue;
+      await deleteNode('run', node.id).catch(() => undefined);
+      deletedRunCount++;
+    }
+
+    await updateNode(transcriptPath, (current) => ({
+      ...(current as TranscriptNode),
+      canonical_coverage: undefined,
+    }));
+
+    return c.json({ success: true, deletedCanonicalIdeaCount, deletedRunCount });
+  },
+};
+
 export const promoteCanonicalIdea = {
   path: '/transcripts/:id/canonical-ideas/promote' as const,
   handler: async (c: AppCtxJson<PromoteCanonicalIdeaBody>) => {

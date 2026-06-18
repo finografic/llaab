@@ -35,6 +35,7 @@ export const vaultRouter = createRouter()
   .get(routes.nodeRaw.path, routes.nodeRaw.handler)
   .get(routes.vaultGitStatus.path, routes.vaultGitStatus.handler)
   .post(routes.vaultGitCommit.path, routes.vaultGitCommit.handler)
+  .post(routes.vaultGitReset.path, routes.vaultGitReset.handler)
   .get(routes.transcriptIdeas.path, routes.transcriptIdeas.handler)
   .post(routes.extractTranscript.path, routes.extractTranscript.handler)
   .post(routes.consolidateTranscriptIdeas.path, routes.consolidateTranscriptIdeas.handler)
@@ -43,6 +44,7 @@ export const vaultRouter = createRouter()
     zValidator('json', resolveCanonicalIdeaConflictBodySchema),
     routes.resolveCanonicalIdeaConflict.handler,
   )
+  .post(routes.cleanCanonicalIdeaArtifacts.path, routes.cleanCanonicalIdeaArtifacts.handler)
   .post(
     routes.promoteCanonicalIdea.path,
     zValidator('json', promoteCanonicalIdeaBodySchema),

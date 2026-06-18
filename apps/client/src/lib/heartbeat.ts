@@ -31,7 +31,11 @@ export function useElapsedSeconds(startedAt: number | null): number {
       return;
     }
 
-    setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    // Read from the heartbeat store, not Date.now(), for the initial value too — startedAt is
+    // usually itself a heartbeatStore.now() snapshot (which only updates once per second and can
+    // lag real time by up to ~999ms), so mixing time sources here produced a glitchy first tick
+    // and made separate clock instances drift out of sync with each other.
+    setElapsed(Math.floor((heartbeatStore.getState().now - startedAt) / 1000));
 
     return heartbeatStore.subscribe((state) => {
       setElapsed(Math.floor((state.now - startedAt) / 1000));
@@ -53,7 +57,10 @@ export function useElapsedMs(startedAt: number | null): number {
       return;
     }
 
-    setElapsed(Date.now() - startedAt);
+    // See useElapsedSeconds above — must read the same time source (heartbeatStore.now(), not
+    // Date.now()) for the initial value, or the first render can read as ~0 or ~999ms depending
+    // on where in the current second the heartbeat last ticked.
+    setElapsed(heartbeatStore.getState().now - startedAt);
 
     return heartbeatStore.subscribe((state) => {
       setElapsed(state.now - startedAt);

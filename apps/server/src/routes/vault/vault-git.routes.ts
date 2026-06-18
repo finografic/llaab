@@ -139,3 +139,31 @@ export const vaultGitCommit = {
     }
   },
 };
+
+export const vaultGitReset = {
+  path: '/git/reset' as const,
+  handler: async (c: AppCtx) => {
+    try {
+      const status = await getVaultGitStatus();
+      if (status.totalCount === 0) {
+        return c.json({ error: 'No vault changes to reset.' }, 400);
+      }
+
+      // Discard tracked modifications/deletions under vault/ back to the last commit...
+      const checkout = await runGit(['checkout', 'HEAD', '--', 'vault']);
+      if (checkout.exitCode !== 0) {
+        throw new Error(checkout.stderr || 'git checkout failed.');
+      }
+
+      // ...then remove untracked vault/ files and dirs (new, never-committed nodes).
+      const clean = await runGit(['clean', '-fd', '--', 'vault']);
+      if (clean.exitCode !== 0) {
+        throw new Error(clean.stderr || 'git clean failed.');
+      }
+
+      return c.json({ resetCount: status.totalCount });
+    } catch (err) {
+      return c.json({ error: err instanceof Error ? err.message : 'Failed to reset vault changes.' }, 500);
+    }
+  },
+};

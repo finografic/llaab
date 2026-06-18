@@ -383,10 +383,12 @@ before running. The new canonical-idea nodes are always created on disk, but:
   the existing set, and the response carries `conflict: true` plus `existingCanonicalIdeaIds`,
   `existingQualityScore`, and `pendingCoverage` (the would-be new coverage record) instead.
 
-The client (`TranscriptDetail.tsx`) shows a confirm dialog comparing `existingQualityScore` vs.
-the incoming `qualityValidation.score`, then calls
-`POST /transcripts/:id/canonical-ideas/resolve-conflict` with `{ keep: 'existing' | 'incoming',
-incomingCanonicalIdeaIds, existingCanonicalIdeaIds, pendingCoverage }`:
+The client's `CanonicalIdeaConflictWatcher` (mounted once in `AppLayout`, not the transcript page —
+consolidation survives navigation, so the prompt must too) detects this purely from already-fetched
+runs + transcripts (no extra endpoint needed to _detect_ a conflict — see its module doc comment),
+shows a confirm dialog comparing `existingQualityScore` vs. the incoming `qualityValidation.score`,
+then calls `POST /transcripts/:id/canonical-ideas/resolve-conflict` with `{ keep: 'existing' |
+'incoming', incomingCanonicalIdeaIds, existingCanonicalIdeaIds, pendingCoverage }`:
 
 - `keep: 'incoming'` — deletes the existing set's `CanonicalIdeaNode` files, writes `pendingCoverage`
   as the transcript's `canonical_coverage`.
@@ -395,8 +397,15 @@ incomingCanonicalIdeaIds, existingCanonicalIdeaIds, pendingCoverage }`:
 
 Either outcome leaves exactly one canonical-idea set referenced by the transcript. The new
 canonical-idea nodes exist as standalone files (tagged with `transcript_id`) during the pending
-window between consolidate completing and the conflict being resolved — if the user never resolves
-it, they're orphaned (not currently swept up by any cleanup job).
+window between consolidate completing and the conflict being resolved.
+
+If a conflict is left unresolved, or `canonical_coverage` and the on-disk `CanonicalIdeaNode` files
+ever drift apart for any other reason (e.g. files deleted outside the app), `POST
+/transcripts/:id/canonical-ideas/clean` (`cleanCanonicalIdeaArtifacts`) resets that transcript to a
+clean slate: deletes every `CanonicalIdeaNode` with a matching `transcript_id` (not just the ids
+currently referenced in coverage), deletes every `consolidate-canonical-ideas` `RunNode` for that
+transcript, and clears `canonical_coverage` entirely. This is the always-visible "Clean" action on
+the transcript page, separate from consolidating again.
 
 ---
 

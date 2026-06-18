@@ -114,6 +114,25 @@
   opacity: 0.78;
 }
 
+.cleanCanonicalIdeasButton {
+  flex-shrink: 0;
+  border-color: var(--consolidation-border);
+  background: transparent;
+  color: var(--consolidation-text);
+}
+
+.cleanCanonicalIdeasButton:hover:not(:disabled),
+.cleanCanonicalIdeasButton:focus-visible:not(:disabled) {
+  border-color: var(--consolidation-text);
+  background: var(--consolidation-bg);
+  color: var(--consolidation-text);
+}
+
+.cleanCanonicalIdeasButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.78;
+}
+
 .canonicalIdeasHeading {
   flex-wrap: wrap;
 }

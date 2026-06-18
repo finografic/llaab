@@ -96,6 +96,8 @@ export {
   VaultGitCommitResponseSchema,
   type VaultGitFileStatus,
   VaultGitFileStatusSchema,
+  type VaultGitResetResponse,
+  VaultGitResetResponseSchema,
   type VaultGitStatusEntry,
   VaultGitStatusEntrySchema,
   type VaultGitStatusResponse,

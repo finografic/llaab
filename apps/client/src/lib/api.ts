@@ -66,3 +66,14 @@ export async function resolveCanonicalIdeaConflict(
     json: body,
   });
 }
+
+/**
+ * POST /api/vault/transcripts/:id/canonical-ideas/clean — deletes every CanonicalIdeaNode and
+ * consolidate-canonical-ideas RunNode tied to this transcript and clears canonical_coverage, even
+ * for artifacts not currently referenced (orphaned by an unresolved conflict or manual file deletes).
+ */
+export async function cleanCanonicalIdeaArtifacts(transcriptId: string) {
+  return api.vault.transcripts[':id']['canonical-ideas'].clean.$post({
+    param: { id: transcriptId },
+  });
+}

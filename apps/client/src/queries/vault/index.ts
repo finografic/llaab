@@ -16,4 +16,5 @@ export { useVaultNodes, useVaultNode } from './useVaultNodes';
 export { useVaultTree } from './useVaultTree';
 export { useVaultGitStatus } from './useVaultGitStatus';
 export { useVaultGitCommit } from './useVaultGitCommit';
+export { useVaultGitReset } from './useVaultGitReset';
 export type { VaultCleanResult } from './useVaultClean';

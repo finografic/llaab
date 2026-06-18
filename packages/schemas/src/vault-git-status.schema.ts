@@ -30,7 +30,12 @@ export const VaultGitCommitResponseSchema = z.object({
   sha: z.string().optional(),
 });
 
+export const VaultGitResetResponseSchema = z.object({
+  resetCount: z.number().int().nonnegative(),
+});
+
 export type VaultGitFileStatus = z.infer<typeof VaultGitFileStatusSchema>;
 export type VaultGitStatusEntry = z.infer<typeof VaultGitStatusEntrySchema>;
 export type VaultGitStatusResponse = z.infer<typeof VaultGitStatusResponseSchema>;
 export type VaultGitCommitResponse = z.infer<typeof VaultGitCommitResponseSchema>;
+export type VaultGitResetResponse = z.infer<typeof VaultGitResetResponseSchema>;
