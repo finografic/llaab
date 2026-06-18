@@ -71,24 +71,46 @@ Layout hierarchy: `index.html` + `main.tsx` mount a single React tree. `AppLayou
 header + `SecondaryActionBar` (header of one resizable right-hand `AppSidebarLayout` slot) + main +
 footer. `AppHeader` hosts `NavMenu` (brand link + shadcn megamenus + mobile sheet) plus navigation
 shortcuts (ingest, transcripts, LLM, icons). `SecondaryActionBar` holds global contextual
-actions — Clean Vault (dialog), Vault Changes, Run Monitor — that share the single sidebar slot:
-`AppLayout` owns `activePanel: 'runs' | 'vaultGit' | null` as the one source of truth for which
-panel renders (mutually exclusive), syncing it to the resizable panel imperatively via
-`usePanelRef()`. `RunMonitor` keeps its own `RunMonitorProvider` (zustand) for selected/dismissed
-run state only — not panel open/closed, which `AppLayout` now owns. Full pattern, icon-button
-tiers, and badge conventions: `apps/client/src/layouts/AGENTS.md`.
+actions — Clean Vault (dialog), Vault Changes, Activity Monitor (renamed from "Run Monitor" —
+it's not ingest-specific anymore) — that share the single sidebar slot: `AppLayout` owns
+`activePanel: 'runs' | 'vaultGit' | null` as the one source of truth for which panel renders
+(mutually exclusive), syncing it to the resizable panel imperatively via `usePanelRef()`.
+`RunMonitor` keeps its own `RunMonitorProvider` (zustand) for selected/dismissed run state only —
+not panel open/closed, which `AppLayout` now owns. Full pattern, icon-button tiers, and badge
+conventions: `apps/client/src/layouts/AGENTS.md`. New rule for any process with a live-status UI:
+`.github/instructions/project/process-state-architecture.instructions.md` — status must be derived
+from durable, shared query state (`useRunMonitor`), never a mutation's own `isPending`/local
+component state, since the component can remount (e.g. switching transcripts) and lose it. Audit
+of remaining non-compliant spots: `docs/todo/TODO_PROCESS_STATE_AUDIT.md`.
 Both the ingest form (`IngestPipeline`) and Run Monitor render the same `RunPipelineCard`
 (`apps/client/src/components/RunPipelineCard/`) — grey collapsible RUN shell, chain-of-thought
 transcript/extraction steps (blue active / green complete / orange warning). A deduped/reused
 transcript ("Transcript already saved") is not a failure and maps to green/complete, not orange —
 only a genuine fetch/extraction failure maps to warning. Monitor-only activity log and
 `ExtractionModelCard` metrics render in the card body.
+Canonical-idea consolidation now runs through `runSkill('consolidate-canonical-ideas', ...)` so it
+persists a `RunNode` like any other skill — visible in Activity Monitor, survives navigation away
+from the transcript page. Re-consolidating a transcript that already has a committed canonical-idea
+set is a **conflict** (never an additive merge): the new set is created on disk but
+`canonical_coverage` is left pointing at the existing set until resolved. `CanonicalIdeaConflictWatcher`
+(mounted once in `AppLayout`) detects unresolved conflicts purely from durable run + transcript +
+canonical-idea data (no dedicated detection endpoint) and shows a global replace/keep-existing
+dialog regardless of route. The always-visible "Clean" button on the transcript page
+(`POST /transcripts/:id/canonical-ideas/clean`) is the manual-correction tool for artifacts the
+automatic flow can't reach (orphaned files from manual deletes, or a conflict from before this
+flow existed) — deletes every canonical-idea file + consolidate run tied to that transcript and
+clears its coverage.
 `VaultGitPanel` (`apps/client/src/components/VaultGitPanel/`) shows `git status` scoped to `vault/`
 via `@pierre/trees`'s `FileTree` (themed to the app's dark palette via its CSS custom-property
 overrides), grouped by node type, with an auto-generated commit message
-(`chore(vault): commit N files` + per-type bullet breakdown) and a Commit button. Server-side
-git operations (`apps/server/src/routes/vault/vault-git.routes.ts`) shell out to `git` scoped with
-a `-- vault` pathspec for both status and commit. Inner pages use `PageLayout` (hero / optional aside / main zones) and `PageHero`. `src/router.tsx`
+(`chore(vault): commit N files` + per-type bullet breakdown), a Commit button, and a Reset button
+(discards all uncommitted `vault/` changes — `git checkout HEAD` + `git clean -fd`, both scoped to
+`vault/` — behind a confirm dialog). Server-side git operations
+(`apps/server/src/routes/vault/vault-git.routes.ts`) shell out to `git` scoped with a `-- vault`
+pathspec for status/commit/reset. The git-status query refetches after _any_ mutation in the app
+succeeds (subscribes to the TanStack `MutationCache`), not just a few manually-wired ones — nearly
+every mutation here can touch `vault/` files, so this stays correct without per-mutation wiring.
+Inner pages use `PageLayout` (hero / optional aside / main zones) and `PageHero`. `src/router.tsx`
 lazy-loads route components so the initial SPA chunk stays smaller; route handles set
 title/full-bleed page chrome. Navigation structure: `lib/nav-menu.config.ts`; design spec:
 `docs/NAV_MENU_DESIGN.md`. Home dashboard uses `utils/balanced-grid.utils.ts` to avoid orphan cards
@@ -156,26 +178,29 @@ Long-running ingest, extract, and canonical consolidation routes explicitly disa
 per-request idle timeout so the client does not receive false network failures while the server
 continues processing.
 
-| Route                                         | Description                                                                                  |
-| --------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `POST /api/ingest/youtube`                    | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`                            |
-| `GET /api/vault/nodes`                        | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`                             |
-| `GET /api/vault/nodes/:id`                    | Single node by id                                                                            |
-| `PATCH /api/vault/sources/:id/profiles`       | Updates linked source profiles (GitHub first)                                                |
-| `GET /api/vault/transcripts/:id/ideas`        | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`                    |
-| `POST /api/vault/transcripts/:id/extract`     | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }`              |
-| `POST /api/vault/transcripts/:id/consolidate` | Single-pass canonical idea generation with quality validation from extracted candidate ideas |
-| `GET /api/runs`, `/:id`                       | Run list + detail with full stage/decision trace                                             |
-| `GET /api/runs/monitor`                       | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries               |
-| `GET /api/vault/git/status`                   | `git status` scoped to `vault/`, categorized by node type, with a generated commit message   |
-| `POST /api/vault/git/commit`                  | `git add`/`git commit -- vault` using the generated commit message                           |
-| `POST /api/llm/complete`                      | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`                      |
-| `POST /api/llm/stream`                        | SSE streaming LLM                                                                            |
-| `GET /api/llm/models`                         | Lists installed Ollama models                                                                |
-| `GET /api/llm/status`                         | Task routing config + installed models cross-referenced                                      |
-| `GET /api/llm/capabilities`                   | Provider capability metadata + availability                                                  |
-| `POST /api/agent/run`                         | One-shot agent processor; optional `{ nodeId?, force? }`                                     |
-| `GET /api/agent/status`                       | Last run metadata                                                                            |
+| Route                                                              | Description                                                                                                                                                                                                   |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/ingest/youtube`                                         | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`                                                                                                                                             |
+| `GET /api/vault/nodes`                                             | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`                                                                                                                                              |
+| `GET /api/vault/nodes/:id`                                         | Single node by id                                                                                                                                                                                             |
+| `PATCH /api/vault/sources/:id/profiles`                            | Updates linked source profiles (GitHub first)                                                                                                                                                                 |
+| `GET /api/vault/transcripts/:id/ideas`                             | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`                                                                                                                                     |
+| `POST /api/vault/transcripts/:id/extract`                          | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }`                                                                                                                               |
+| `POST /api/vault/transcripts/:id/consolidate`                      | Single-pass canonical idea generation with quality validation from extracted candidate ideas; `RunNode`-backed (`runSkill`); returns `conflict: true` instead of overwriting coverage if a set already exists |
+| `POST /api/vault/transcripts/:id/canonical-ideas/resolve-conflict` | `{ keep: 'existing' \| 'incoming' }` — deletes the losing set's files, writes coverage if incoming wins                                                                                                       |
+| `POST /api/vault/transcripts/:id/canonical-ideas/clean`            | Deletes every canonical-idea file + consolidate run for that transcript (incl. orphans) and clears coverage                                                                                                   |
+| `GET /api/runs`, `/:id`                                            | Run list + detail with full stage/decision trace                                                                                                                                                              |
+| `GET /api/runs/monitor`                                            | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries                                                                                                                                |
+| `GET /api/vault/git/status`                                        | `git status` scoped to `vault/`, categorized by node type, with a generated commit message                                                                                                                    |
+| `POST /api/vault/git/commit`                                       | `git add`/`git commit -- vault` using the generated commit message                                                                                                                                            |
+| `POST /api/vault/git/reset`                                        | `git checkout HEAD` + `git clean -fd`, both scoped to `vault/` — discards all uncommitted vault changes                                                                                                       |
+| `POST /api/llm/complete`                                           | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`                                                                                                                                       |
+| `POST /api/llm/stream`                                             | SSE streaming LLM                                                                                                                                                                                             |
+| `GET /api/llm/models`                                              | Lists installed Ollama models                                                                                                                                                                                 |
+| `GET /api/llm/status`                                              | Task routing config + installed models cross-referenced                                                                                                                                                       |
+| `GET /api/llm/capabilities`                                        | Provider capability metadata + availability                                                                                                                                                                   |
+| `POST /api/agent/run`                                              | One-shot agent processor; optional `{ nodeId?, force? }`                                                                                                                                                      |
+| `GET /api/agent/status`                                            | Last run metadata                                                                                                                                                                                             |
 
 ### `@llaab/icons` — Workspace icon registry package
 
@@ -238,6 +263,12 @@ allowlist (`git`, `pnpm`, `node`, `yt-dlp`, `opencode`). The Terminal Panel expo
 ## Schema / Types
 
 9 node types in `packages/schemas/src/*.schema.ts`. All extend `BaseNode`. IDs are human-readable slugs.
+`parseFrontmatter` (`packages/core/src/utils/parse-frontmatter.utils.ts`) now `JSON.parse`s
+quoted scalar frontmatter values (not just strips outer quote chars) — without this, any node
+updated via `updateNode` more than once in its lifetime (any skill that calls it 3+ times, e.g.
+event logging + LLM trace + finish) compounded escaping on every read-modify-write cycle until a
+string field like `input_summary` became unparseable garbage. Regression tests in
+`parse-frontmatter.utils.test.ts`.
 
 | Type             | Description                                                                             |
 | ---------------- | --------------------------------------------------------------------------------------- |
