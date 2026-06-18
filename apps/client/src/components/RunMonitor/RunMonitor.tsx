@@ -1,5 +1,10 @@
+import { SparklesIcon } from '@llaab/icons';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
-import { buildMonitorPipelineSteps, RunPipelineCard } from 'components/RunPipelineCard/RunPipelineCard';
+import {
+  buildMonitorPipelineSteps,
+  CONSOLIDATION_SKILL_ID,
+  RunPipelineCard,
+} from 'components/RunPipelineCard/RunPipelineCard';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
 import { ScrollArea } from 'components/ui/scroll-area';
@@ -9,6 +14,8 @@ import { useDismissRun, useRetryRun, useRunMonitor } from 'queries/runs';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { RunMonitorItem } from '@llaab/schemas';
+
+import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
 
 import styles from './RunMonitor.module.css';
 
@@ -25,6 +32,19 @@ function getStatusVariant(status: RunMonitorItem['status']) {
   return 'secondary';
 }
 
+function StatusBadge({ run }: { run: RunMonitorItem }) {
+  if (run.skill_id === CONSOLIDATION_SKILL_ID && isActiveRun(run)) {
+    return (
+      <Badge variant="outline" className={styles.consolidationBadge}>
+        <SparklesIcon aria-hidden />
+        Consolidating…
+      </Badge>
+    );
+  }
+
+  return <Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>;
+}
+
 function MonitorRunCard({ run }: { run: RunMonitorItem }) {
   const { dismissRun } = useRunMonitorState();
   const retryRun = useRetryRun();
@@ -38,10 +58,18 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
   const hasDetails =
     steps.length > 0 || run.events.length > 0 || run.model !== undefined || run.provider !== undefined;
 
-  const headerMeta =
-    run.duration_ms != null ? (
-      <span className="font-mono text-xs text-muted-foreground">{(run.duration_ms / 1000).toFixed(1)}s</span>
-    ) : null;
+  const startedAtMs = useMemo(() => (run.started_at ? Date.parse(run.started_at) : null), [run.started_at]);
+  const liveElapsedSecs = useElapsedSeconds(isActive ? startedAtMs : null);
+
+  const headerMeta = isActive
+    ? startedAtMs != null && (
+        <span className="font-mono text-xs text-muted-foreground">{formatElapsed(liveElapsedSecs)}</span>
+      )
+    : run.duration_ms != null && (
+        <span className="font-mono text-xs text-muted-foreground">
+          {(run.duration_ms / 1000).toFixed(1)}s
+        </span>
+      );
 
   const footer = !isActive ? (
     <div className={styles.monitorFooter}>
@@ -82,7 +110,7 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
               {run.title}
             </Link>
           </div>
-          <Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>
+          <StatusBadge run={run} />
         </div>
         {footer}
       </article>
@@ -94,7 +122,7 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
       className={styles.pipelineCard}
       headerTitle={run.title}
       headerHref={run.run_link.href}
-      headerBadge={<Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>}
+      headerBadge={<StatusBadge run={run} />}
       headerMeta={headerMeta}
       summary={run.output_summary ?? run.input_summary}
       metaLinks={metaLinks}
@@ -147,13 +175,21 @@ export function RunMonitor({ onClose }: { onClose: () => void }) {
   );
 
   return (
-    <aside className={styles.panel} aria-label="Run Monitor">
+    <aside className={styles.panel} aria-label="Activity Monitor">
       <header className={styles.panelHeader}>
         <div>
-          <h2 className={styles.panelTitle}>Run Monitor</h2>
-          <p className={styles.panelDescription}>Durable run progress and recent outputs.</p>
+          <h2 className={styles.panelTitle}>Activity Monitor</h2>
+          <p className={styles.panelDescription}>
+            Durable run and background-process progress and recent outputs.
+          </p>
         </div>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label="Close run monitor" onClick={onClose}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Close activity monitor"
+          onClick={onClose}
+        >
           <XIcon aria-hidden />
         </Button>
       </header>
@@ -181,7 +217,9 @@ export function RunMonitorTrigger({ isOpen, onToggle }: { isOpen: boolean; onTog
       className={styles.trigger}
       onClick={onToggle}
       aria-pressed={isOpen}
-      aria-label={activeCount > 0 ? `Toggle run monitor, ${activeCount} active` : 'Toggle run monitor'}
+      aria-label={
+        activeCount > 0 ? `Toggle activity monitor, ${activeCount} active` : 'Toggle activity monitor'
+      }
     >
       <ActivityIcon aria-hidden />
       {activeCount > 0 ? <span className={styles.triggerBadge}>{activeCount}</span> : null}

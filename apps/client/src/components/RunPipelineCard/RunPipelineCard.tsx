@@ -166,6 +166,7 @@ export type { RunPipelineLink, RunPipelineStepData } from './run-pipeline-card.u
 export {
   buildIngestYoutubeMonitorSteps,
   buildMonitorPipelineSteps,
+  CONSOLIDATION_SKILL_ID,
   formatMonitorDateTime,
   mapMonitorStepStatus,
 } from './run-pipeline-card.utils';

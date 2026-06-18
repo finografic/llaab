@@ -1,3 +1,9 @@
+.consolidationBadge {
+  border-color: var(--consolidation-border);
+  background: var(--consolidation-bg);
+  color: var(--consolidation-text);
+}
+
 .trigger {
   position: relative;
   /* color: var(--accent);

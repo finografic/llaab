@@ -1,4 +1,4 @@
-import { NodeTypeSchema, SourceProfileSchema } from '@llaab/schemas';
+import { NodeTypeSchema, SourceProfileSchema, TranscriptCanonicalCoverageSchema } from '@llaab/schemas';
 import { z } from 'zod';
 
 export const listNodesQuerySchema = z.object({
@@ -61,3 +61,12 @@ export const cleanRecentBodySchema = z.object({
 });
 
 export type CleanRecentBody = z.infer<typeof cleanRecentBodySchema>;
+
+export const resolveCanonicalIdeaConflictBodySchema = z.object({
+  keep: z.enum(['existing', 'incoming']),
+  incomingCanonicalIdeaIds: z.array(z.string().min(1)),
+  existingCanonicalIdeaIds: z.array(z.string().min(1)),
+  pendingCoverage: TranscriptCanonicalCoverageSchema.optional(),
+});
+
+export type ResolveCanonicalIdeaConflictBody = z.infer<typeof resolveCanonicalIdeaConflictBodySchema>;

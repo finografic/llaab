@@ -7,10 +7,10 @@ import {
   formatIsoUtcSeconds,
   validateConsolidationQuality,
 } from '@llaab/schemas';
-import { appendProducedNodeIds, appendRunEvent, setRunLlmTrace } from '@llaab/skills';
+import { appendProducedNodeIds, appendRunEvent, runSkill, setRunLlmTrace } from '@llaab/skills';
 import { z } from 'zod';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
-import type { PromoteCanonicalIdeaBody } from './vault.schema.js';
+import type { PromoteCanonicalIdeaBody, ResolveCanonicalIdeaConflictBody } from './vault.schema.js';
 import type { TaskType } from '@llaab/llm';
 import type {
   CanonicalIdeaNode,
@@ -648,6 +648,8 @@ export const consolidateTranscriptIdeas = {
       | undefined;
     if (!transcript) return c.json({ error: 'Transcript not found' }, 404);
 
+    const previousCoverage = transcript.canonical_coverage;
+
     const runs = allNodes.filter(
       (node): node is RunNode => node.type === 'run' && node.produced_node_ids.includes(transcript.id),
     );
@@ -690,98 +692,107 @@ export const consolidateTranscriptIdeas = {
         : buildCanonicalDraftSystemPrompt(target);
     const draftInput = buildCanonicalDraftInput(transcript, candidates, stats, target);
 
-    try {
-      async function runDraftPass() {
-        return callLlmForJson(
-          'consolidate',
-          draftInput,
-          systemPrompt,
-          CanonicalDraftResultSchema,
-          2,
-          modelOverride,
-        );
-      }
+    const { record, result: skillResult } = await runSkill(
+      'consolidate-canonical-ideas',
+      async (_input, runNodeId) => {
+        async function runDraftPass() {
+          return callLlmForJson(
+            'consolidate',
+            draftInput,
+            systemPrompt,
+            CanonicalDraftResultSchema,
+            2,
+            modelOverride,
+          );
+        }
 
-      let { llm, result: draftResult } = await runDraftPass();
-      let validationIdeas = buildValidationCanonicalIdeas(draftResult, candidateIds);
-      let qualityValidation = validateConsolidationQuality(
-        candidates,
-        validationIdeas,
-        validationIdeas.flatMap((idea) => idea.sourceCandidateIdeaIds),
-      );
-
-      if (!qualityValidation.passed && !skipAutoRetry) {
-        const retry = await runDraftPass();
-        llm = retry.llm;
-        draftResult = retry.result;
-        validationIdeas = buildValidationCanonicalIdeas(draftResult, candidateIds);
-        qualityValidation = validateConsolidationQuality(
+        let { llm, result: draftResult } = await runDraftPass();
+        let validationIdeas = buildValidationCanonicalIdeas(draftResult, candidateIds);
+        let qualityValidation = validateConsolidationQuality(
           candidates,
           validationIdeas,
           validationIdeas.flatMap((idea) => idea.sourceCandidateIdeaIds),
         );
-      }
 
-      const result: CanonicalDraftResult = draftResult;
+        if (!qualityValidation.passed && !skipAutoRetry) {
+          await appendRunEvent(runNodeId, {
+            level: 'info',
+            message: 'Quality check failed — retrying consolidation pass',
+          });
+          const retry = await runDraftPass();
+          llm = retry.llm;
+          draftResult = retry.result;
+          validationIdeas = buildValidationCanonicalIdeas(draftResult, candidateIds);
+          qualityValidation = validateConsolidationQuality(
+            candidates,
+            validationIdeas,
+            validationIdeas.flatMap((idea) => idea.sourceCandidateIdeaIds),
+          );
+        }
 
-      const createdAt = new Date();
-      const timestamp = formatInstantForFilenameId(createdAt);
-      const canonicalIdeas: CanonicalIdeaNode[] = [];
+        const result: CanonicalDraftResult = draftResult;
 
-      for (const [index, draft] of result.canonicalIdeas.entries()) {
-        const sourceCandidateIdeaIds = draft.sourceCandidateIdeaIds.filter((candidateId) =>
-          candidateIds.has(candidateId),
-        );
-        if (sourceCandidateIdeaIds.length === 0) continue;
+        const createdAt = new Date();
+        const timestamp = formatInstantForFilenameId(createdAt);
+        const canonicalIdeas: CanonicalIdeaNode[] = [];
 
-        const { tags, domains } = normalizeCanonicalTags(draft.tags, draft.domains, draft.title, draft.body);
-        const created = await createNode({
-          type: 'canonical-idea',
-          id: `canonical-${transcript.id}-${index + 1}-${timestamp}`,
-          title: draft.title,
-          body: draft.body,
-          tags: dedupeTags([...domains, ...tags]),
-          extra: {
-            transcript_id: transcript.id,
-            source_candidate_idea_ids: sourceCandidateIdeaIds,
-            confidence: draft.confidence,
-            key_claims: draft.keyClaims,
-            coverage_notes: sanitizeCoverageNotes(draft.coverageNotes),
-            llm_model: llm.model,
-            llm_provider: llm.provider,
-            llm_duration_ms: llm.durationMs,
-            llm_prompt_tokens: llm.promptTokens,
-            llm_completion_tokens: llm.completionTokens,
-          },
-        });
-        canonicalIdeas.push(created.node as CanonicalIdeaNode);
-      }
+        for (const [index, draft] of result.canonicalIdeas.entries()) {
+          const sourceCandidateIdeaIds = draft.sourceCandidateIdeaIds.filter((candidateId) =>
+            candidateIds.has(candidateId),
+          );
+          if (sourceCandidateIdeaIds.length === 0) continue;
 
-      if (canonicalIdeas.length === 0) {
-        return c.json({ error: 'Consolidation returned no valid canonical ideas.' }, 422);
-      }
+          const { tags, domains } = normalizeCanonicalTags(
+            draft.tags,
+            draft.domains,
+            draft.title,
+            draft.body,
+          );
+          const created = await createNode({
+            type: 'canonical-idea',
+            id: `canonical-${transcript.id}-${index + 1}-${timestamp}`,
+            title: draft.title,
+            body: draft.body,
+            tags: dedupeTags([...domains, ...tags]),
+            extra: {
+              transcript_id: transcript.id,
+              source_candidate_idea_ids: sourceCandidateIdeaIds,
+              confidence: draft.confidence,
+              key_claims: draft.keyClaims,
+              coverage_notes: sanitizeCoverageNotes(draft.coverageNotes),
+              llm_model: llm.model,
+              llm_provider: llm.provider,
+              llm_duration_ms: llm.durationMs,
+              llm_prompt_tokens: llm.promptTokens,
+              llm_completion_tokens: llm.completionTokens,
+            },
+          });
+          canonicalIdeas.push(created.node as CanonicalIdeaNode);
+        }
 
-      const coverage = buildLegacyCoverage(candidates, result);
-      const coveredCandidateIdeaIds = [
-        ...new Set(
-          canonicalIdeas.flatMap((idea) =>
-            idea.source_candidate_idea_ids.filter((candidateId) => candidateIds.has(candidateId)),
+        if (canonicalIdeas.length === 0) {
+          throw new Error('Consolidation returned no valid canonical ideas.');
+        }
+
+        const coverage = buildLegacyCoverage(candidates, result);
+        const coveredCandidateIdeaIds = [
+          ...new Set(
+            canonicalIdeas.flatMap((idea) =>
+              idea.source_candidate_idea_ids.filter((candidateId) => candidateIds.has(candidateId)),
+            ),
           ),
-        ),
-      ];
-      const omittedCandidateIdeaIds = coverage
-        .filter((item) => item.status === 'omitted')
-        .map((item) => ({ id: item.candidateId, reason: item.reason || undefined }));
-      const missedCandidateIdeaIds = coverage
-        .filter((item) => item.status === 'missed')
-        .map((item) => ({ id: item.candidateId, reason: item.reason || undefined }));
+        ];
+        const omittedCandidateIdeaIds = coverage
+          .filter((item) => item.status === 'omitted')
+          .map((item) => ({ id: item.candidateId, reason: item.reason || undefined }));
+        const missedCandidateIdeaIds = coverage
+          .filter((item) => item.status === 'missed')
+          .map((item) => ({ id: item.candidateId, reason: item.reason || undefined }));
 
-      const qualityWarning = formatConsolidationQualityWarning(qualityValidation);
-      const warning = qualityWarning || undefined;
+        const qualityWarning = formatConsolidationQualityWarning(qualityValidation);
+        const warning = qualityWarning || undefined;
 
-      await updateNode(getNodeFilePath('transcript', transcript.id), (current) => ({
-        ...(current as TranscriptNode),
-        canonical_coverage: {
+        const newCoverage: TranscriptNode['canonical_coverage'] = {
           canonical_idea_ids: canonicalIdeas.map((idea) => idea.id),
           candidate_idea_ids: candidates.map((candidate) => candidate.id),
           covered_candidate_idea_ids: coveredCandidateIdeaIds,
@@ -790,37 +801,110 @@ export const consolidateTranscriptIdeas = {
           quality_score: qualityValidation.score,
           warning,
           updated_at: formatIsoUtcSeconds(new Date()),
-        },
+        };
+
+        // An existing canonical-idea set means this run produced a *second*, conflicting set —
+        // leave the transcript's coverage pointed at the existing set until the client confirms
+        // which one to keep, rather than silently piling sets up (the previous behavior).
+        const hasExistingSet = Boolean(previousCoverage?.canonical_idea_ids.length);
+        if (!hasExistingSet) {
+          await updateNode(getNodeFilePath('transcript', transcript.id), (current) => ({
+            ...(current as TranscriptNode),
+            canonical_coverage: newCoverage,
+          }));
+        }
+
+        await setRunLlmTrace(runNodeId, {
+          model: llm.model,
+          provider: llm.provider,
+          duration_ms: llm.durationMs,
+          prompt_tokens: llm.promptTokens,
+          completion_tokens: llm.completionTokens,
+        });
+
+        await appendRunEvent(runNodeId, {
+          level: 'success',
+          message: `Created ${canonicalIdeas.length} canonical idea${canonicalIdeas.length === 1 ? '' : 's'}`,
+          node_ids: canonicalIdeas.map((idea) => idea.id),
+        });
+
+        return {
+          producedNodeIds: canonicalIdeas.map((idea) => idea.id),
+          canonicalIdeaIds: canonicalIdeas.map((idea) => idea.id),
+          canonicalIdeas,
+          coverageAudit: {
+            coverage,
+            missed: coverage.filter((item) => item.status === 'missed'),
+            warning,
+          },
+          qualityValidation,
+          llmMeta: {
+            model: llm.model,
+            provider: llm.provider,
+            durationMs: llm.durationMs,
+            promptTokens: llm.promptTokens,
+            completionTokens: llm.completionTokens,
+          },
+          mode,
+          conflict: hasExistingSet,
+          existingCanonicalIdeaIds: hasExistingSet ? previousCoverage!.canonical_idea_ids : undefined,
+          existingQualityScore: hasExistingSet ? previousCoverage!.quality_score : undefined,
+          pendingCoverage: hasExistingSet ? newCoverage : undefined,
+        };
+      },
+      { transcriptId: transcript.id, mode, candidateCount: candidates.length },
+    );
+
+    if (record.status === 'failed') {
+      return c.json({ success: false, error: record.error ?? 'Consolidation failed' }, 500);
+    }
+
+    return c.json({ success: true, ...skillResult });
+  },
+};
+
+export const resolveCanonicalIdeaConflict = {
+  path: '/transcripts/:id/canonical-ideas/resolve-conflict' as const,
+  handler: async (c: AppCtxJson<ResolveCanonicalIdeaConflictBody>) => {
+    const { id } = c.req.param() as { id: string };
+    const { keep, incomingCanonicalIdeaIds, existingCanonicalIdeaIds, pendingCoverage } = c.req.valid('json');
+
+    const transcriptPath = getNodeFilePath('transcript', id);
+    try {
+      await readNode(transcriptPath);
+    } catch {
+      return c.json({ error: 'Transcript not found' }, 404);
+    }
+
+    if (keep === 'incoming') {
+      if (!pendingCoverage) {
+        return c.json({ error: 'pendingCoverage is required when keeping the incoming set.' }, 400);
+      }
+
+      for (const ideaId of existingCanonicalIdeaIds) {
+        await deleteNode('canonical-idea', ideaId).catch(() => undefined);
+      }
+      await updateNode(transcriptPath, (current) => ({
+        ...(current as TranscriptNode),
+        canonical_coverage: pendingCoverage,
       }));
 
       return c.json({
         success: true,
-        canonicalIdeaIds: canonicalIdeas.map((idea) => idea.id),
-        canonicalIdeas,
-        coverageAudit: {
-          coverage,
-          missed: coverage.filter((item) => item.status === 'missed'),
-          warning,
-        },
-        qualityValidation,
-        llmMeta: {
-          model: llm.model,
-          provider: llm.provider,
-          durationMs: llm.durationMs,
-          promptTokens: llm.promptTokens,
-          completionTokens: llm.completionTokens,
-        },
-        mode,
+        kept: 'incoming' as const,
+        deletedCount: existingCanonicalIdeaIds.length,
       });
-    } catch (err) {
-      return c.json(
-        {
-          success: false,
-          error: err instanceof Error ? err.message : 'Consolidation failed',
-        },
-        500,
-      );
     }
+
+    for (const ideaId of incomingCanonicalIdeaIds) {
+      await deleteNode('canonical-idea', ideaId).catch(() => undefined);
+    }
+
+    return c.json({
+      success: true,
+      kept: 'existing' as const,
+      deletedCount: incomingCanonicalIdeaIds.length,
+    });
   },
 };
 

@@ -84,6 +84,8 @@ export {
   SourceProfileSchema,
 } from './source-node.schema.js';
 export {
+  type TranscriptCanonicalCoverage,
+  TranscriptCanonicalCoverageSchema,
   type TranscriptNode,
   TranscriptNodeSchema,
   type TranscriptSourceType,

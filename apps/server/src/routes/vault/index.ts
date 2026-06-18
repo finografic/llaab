@@ -10,6 +10,7 @@ import {
   deleteRunsPreviewBodySchema,
   listNodesQuerySchema,
   promoteCanonicalIdeaBodySchema,
+  resolveCanonicalIdeaConflictBodySchema,
   updateSourceProfilesBodySchema,
   vaultLoginBodySchema,
 } from './vault.schema.js';
@@ -37,6 +38,11 @@ export const vaultRouter = createRouter()
   .get(routes.transcriptIdeas.path, routes.transcriptIdeas.handler)
   .post(routes.extractTranscript.path, routes.extractTranscript.handler)
   .post(routes.consolidateTranscriptIdeas.path, routes.consolidateTranscriptIdeas.handler)
+  .post(
+    routes.resolveCanonicalIdeaConflict.path,
+    zValidator('json', resolveCanonicalIdeaConflictBodySchema),
+    routes.resolveCanonicalIdeaConflict.handler,
+  )
   .post(
     routes.promoteCanonicalIdea.path,
     zValidator('json', promoteCanonicalIdeaBodySchema),

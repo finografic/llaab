@@ -370,6 +370,34 @@ This is written to `TranscriptNode.canonical_coverage`:
 canonical idea via `promoteCanonicalIdea` (`POST /transcripts/:id/canonical-ideas/promote`),
 independent of a full re-consolidation.
 
+### Re-consolidation conflict (only one set survives)
+
+Running consolidation again on a transcript that already has a canonical-idea set is a **conflict**,
+not an additive merge — re-consolidating must never leave two overlapping sets attached to the same
+transcript. `consolidateTranscriptIdeas` captures `previousCoverage = transcript.canonical_coverage`
+before running. The new canonical-idea nodes are always created on disk, but:
+
+- If there was **no** previous set, `TranscriptNode.canonical_coverage` is overwritten immediately —
+  same as before.
+- If there **was** a previous set, the write is deferred: `canonical_coverage` is left pointing at
+  the existing set, and the response carries `conflict: true` plus `existingCanonicalIdeaIds`,
+  `existingQualityScore`, and `pendingCoverage` (the would-be new coverage record) instead.
+
+The client (`TranscriptDetail.tsx`) shows a confirm dialog comparing `existingQualityScore` vs.
+the incoming `qualityValidation.score`, then calls
+`POST /transcripts/:id/canonical-ideas/resolve-conflict` with `{ keep: 'existing' | 'incoming',
+incomingCanonicalIdeaIds, existingCanonicalIdeaIds, pendingCoverage }`:
+
+- `keep: 'incoming'` — deletes the existing set's `CanonicalIdeaNode` files, writes `pendingCoverage`
+  as the transcript's `canonical_coverage`.
+- `keep: 'existing'` — deletes the just-created incoming set's `CanonicalIdeaNode` files;
+  `canonical_coverage` is untouched (it was never rewritten).
+
+Either outcome leaves exactly one canonical-idea set referenced by the transcript. The new
+canonical-idea nodes exist as standalone files (tagged with `transcript_id`) during the pending
+window between consolidate completing and the conflict being resolved — if the user never resolves
+it, they're orphaned (not currently swept up by any cleanup job).
+
 ---
 
 ## Response shape
@@ -387,6 +415,10 @@ independent of a full re-consolidation.
   qualityValidation: { passed: boolean, score: number, issues: Array<{ code, message }> },
   llmMeta: { model, provider, durationMs, promptTokens, completionTokens },
   mode: 'fast' | 'single-26b',
+  conflict: boolean,
+  existingCanonicalIdeaIds?: string[],   // present when conflict is true
+  existingQualityScore?: number,         // present when conflict is true
+  pendingCoverage?: TranscriptCanonicalCoverage, // present when conflict is true
 }
 ```
 

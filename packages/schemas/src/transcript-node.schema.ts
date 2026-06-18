@@ -10,7 +10,7 @@ const TranscriptCanonicalCoverageItemSchema = z.object({
   reason: z.string().optional(),
 });
 
-const TranscriptCanonicalCoverageSchema = z.object({
+export const TranscriptCanonicalCoverageSchema = z.object({
   canonical_idea_ids: z.array(NodeIdSchema).default([]),
   candidate_idea_ids: z.array(NodeIdSchema).default([]),
   covered_candidate_idea_ids: z.array(NodeIdSchema).default([]),
@@ -20,6 +20,8 @@ const TranscriptCanonicalCoverageSchema = z.object({
   warning: z.string().optional(),
   updated_at: z.string().datetime(),
 });
+
+export type TranscriptCanonicalCoverage = z.infer<typeof TranscriptCanonicalCoverageSchema>;
 
 export const TranscriptNodeSchema = BaseNodeSchema.extend({
   type: z.literal('transcript'),

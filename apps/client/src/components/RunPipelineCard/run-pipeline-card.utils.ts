@@ -141,17 +141,38 @@ export function buildIngestYoutubeMonitorSteps(run: RunMonitorItem): RunPipeline
   ];
 }
 
+export const CONSOLIDATION_SKILL_ID = 'consolidate-canonical-ideas';
+
+const STEP_TITLE_BY_STATUS: Record<string, Record<StepStatus, string>> = {
+  [CONSOLIDATION_SKILL_ID]: {
+    pending: 'Consolidation pending',
+    active: 'Consolidating canonical ideas',
+    complete: 'Canonical ideas consolidated',
+    warning: 'Consolidation failed',
+  },
+};
+
 export function buildMonitorPipelineSteps(run: RunMonitorItem): RunPipelineStepData[] {
   if (run.skill_id === 'ingest-youtube') {
     return buildIngestYoutubeMonitorSteps(run);
   }
 
-  return run.steps.map((step) => ({
-    id: step.id,
-    status: mapMonitorStepStatus(step.status),
-    title: step.title,
-    detail: step.detail,
-  }));
+  const titleByStatus = run.skill_id ? STEP_TITLE_BY_STATUS[run.skill_id] : undefined;
+
+  // A skill's sole "execute" stage stays 'pending' on the persisted run node until it finishes —
+  // there's no mid-run stage update — so while the run itself is still running, show it as active
+  // rather than a frozen pending dot.
+  return run.steps.map((step) => {
+    const status: StepStatus =
+      step.status === 'pending' && run.status === 'running' ? 'active' : mapMonitorStepStatus(step.status);
+
+    return {
+      id: step.id,
+      status,
+      title: titleByStatus?.[status] ?? step.title,
+      detail: step.detail,
+    };
+  });
 }
 
 export function formatMonitorDateTime(iso?: string) {

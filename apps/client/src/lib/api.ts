@@ -9,6 +9,7 @@
 
 import { hc } from 'hono/client';
 import type { AppType } from '../../../server/src/app.js';
+import type { TranscriptCanonicalCoverage } from '@llaab/schemas';
 
 const baseUrl = globalThis.window?.location.origin ?? 'http://localhost:3000';
 
@@ -42,5 +43,26 @@ export async function promoteCanonicalIdea(transcriptId: string, candidateId: st
   return api.vault.transcripts[':id']['canonical-ideas'].promote.$post({
     param: { id: transcriptId },
     json: { candidateId },
+  });
+}
+
+export interface ResolveCanonicalIdeaConflictPayload {
+  keep: 'existing' | 'incoming';
+  incomingCanonicalIdeaIds: string[];
+  existingCanonicalIdeaIds: string[];
+  pendingCoverage?: TranscriptCanonicalCoverage;
+}
+
+/**
+ * POST /api/vault/transcripts/:id/canonical-ideas/resolve-conflict — keep exactly one
+ * canonical-idea set when a re-consolidation produced a second, conflicting one.
+ */
+export async function resolveCanonicalIdeaConflict(
+  transcriptId: string,
+  body: ResolveCanonicalIdeaConflictPayload,
+) {
+  return api.vault.transcripts[':id']['canonical-ideas']['resolve-conflict'].$post({
+    param: { id: transcriptId },
+    json: body,
   });
 }
