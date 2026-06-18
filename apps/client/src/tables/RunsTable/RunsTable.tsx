@@ -7,7 +7,7 @@ import { RunGroupRow } from 'tables/RunsTable/RunGroupRow';
 import { buildSourcesById } from 'tables/RunsTable/RunsTableCells';
 import type { SourceNode } from '@llaab/schemas';
 
-import { isRunExtracting } from 'utils/run-display.utils';
+import { isIngestRun, isRunExtracting } from 'utils/run-display.utils';
 import { groupRunsBySubject } from 'utils/run-grouping.utils';
 import type { RunGroup } from 'utils/run-grouping.utils';
 
@@ -31,12 +31,13 @@ export interface RunsTableProps {
 
 export function RunsTable({ sources = [], showHeading = false }: RunsTableProps) {
   const [publishedSort, setPublishedSort] = useState<PublishedSortDirection>('desc');
-  const { data: runs = [] } = useRuns({
+  const { data: allRuns = [] } = useRuns({
     refetchInterval: (query) => {
       const data = query.state.data ?? [];
       return data.some(isRunExtracting) ? 1000 : false;
     },
   });
+  const runs = useMemo(() => allRuns.filter(isIngestRun), [allRuns]);
   const sourcesById = useMemo(() => buildSourcesById(sources), [sources]);
   const groups = useMemo(() => groupRunsBySubject(runs, sourcesById), [runs, sourcesById]);
   const sortedGroups = useMemo(

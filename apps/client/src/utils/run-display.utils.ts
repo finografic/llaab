@@ -7,6 +7,15 @@ function hasExtractionFailure(run: RunNode): boolean {
 }
 
 /**
+ * `RunsTable` is shaped around the ingest pipeline (Source/Author columns, video-subject
+ * grouping) — other skill types (e.g. `consolidate-canonical-ideas`) have their own run shape
+ * and belong in the Activity Monitor, not this table.
+ */
+export function isIngestRun(run: RunNode): boolean {
+  return run.skill_id === 'ingest-youtube';
+}
+
+/**
  * Ingest runs are persisted as completed once the transcript exists. The client then kicks off
  * follow-on extraction, which appends idea ids and LLM trace data onto the same run.
  */
