@@ -1,5 +1,6 @@
 import { RunMonitorTrigger } from 'components/RunMonitor';
 import { usePanelRef } from 'components/ui/resizable';
+import { CleanVaultDialog } from 'dialogs/CleanVaultDialog/CleanVaultDialog';
 import { useRunMonitorState } from 'providers/RunMonitorProvider';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
@@ -26,6 +27,7 @@ export function SecondaryActionBar({ leadingAction }: { leadingAction: ReactNode
     <div className={styles.secondaryActions}>
       <div className={styles.secondaryLeading}>{leadingAction}</div>
       <div className={styles.secondaryTrailing}>
+        <CleanVaultDialog resetIngestFormOnSuccess />
         <RunMonitorTrigger />
       </div>
     </div>

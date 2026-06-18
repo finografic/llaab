@@ -113,13 +113,13 @@ export function CleanVaultDialog({ resetIngestFormOnSuccess = false }: CleanVaul
     <>
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="icon"
         className={styles.trigger}
         aria-label="Clean recent vault activity"
         onClick={() => setOpen(true)}
       >
-        <BrushCleaningIcon className={styles.triggerIcon} aria-hidden />
+        <BrushCleaningIcon aria-hidden />
       </Button>
 
       <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && closeDialog()}>

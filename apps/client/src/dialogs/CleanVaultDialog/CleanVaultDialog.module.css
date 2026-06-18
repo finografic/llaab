@@ -1,18 +1,6 @@
-.trigger {
-  border-color: var(--warning-border-dim);
-  color: var(--warning-dim);
-  background: transparent;
-}
-
 .trigger:hover,
 .trigger:focus-visible {
-  border-color: var(--warning-border);
-  color: var(--warning-text);
-  background: var(--warning-bg);
-}
-
-.triggerIcon {
-  stroke: currentColor;
+  color: var(--accent-hover);
 }
 
 .fieldRow {

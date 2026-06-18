@@ -87,6 +87,8 @@ const ICONS = {
   RadioIcon:                Lucide.Radio,
   RefreshIcon:              Lucide.RefreshCcw,
   ReloadIcon:               Lucide.RotateCw,
+  SaveCheckIcon:            Lucide.SaveCheck,
+  SavePlusIcon:             Lucide.SavePlus,
   SettingsIcon:             Lucide.Cog,
   ShieldCheckIcon:          Lucide.ShieldCheck,
   ShuffleIcon:              Lucide.Shuffle,

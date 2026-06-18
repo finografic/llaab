@@ -86,6 +86,8 @@ export const {
   RadioIcon,
   RefreshIcon,
   ReloadIcon,
+  SaveCheckIcon,
+  SavePlusIcon,
   SettingsIcon,
   ShieldCheckIcon,
   ShuffleIcon,

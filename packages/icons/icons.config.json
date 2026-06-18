@@ -418,5 +418,13 @@
   {
     "exportName": "Speech",
     "lucideName": "speech"
+  },
+  {
+    "exportName": "SaveCheck",
+    "lucideName": "save-check"
+  },
+  {
+    "exportName": "SavePlus",
+    "lucideName": "save-plus"
   }
 ]

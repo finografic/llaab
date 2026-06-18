@@ -1,5 +1,4 @@
 import { PageHero } from 'components/PageHero/PageHero';
-import { CleanVaultDialog } from 'dialogs/CleanVaultDialog/CleanVaultDialog';
 import { IngestForm } from 'forms/IngestForm/IngestForm';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { useVaultNodes } from 'queries/vault';
@@ -23,7 +22,6 @@ export function IngestPage() {
           eyebrow="Pipeline"
           title="Ingest Source URL"
           description="Paste or drop a browser URL. The form will classify the source asset and adapt the ingest action when the URL is supported."
-          right={<CleanVaultDialog resetIngestFormOnSuccess />}
         />
       }
     >
