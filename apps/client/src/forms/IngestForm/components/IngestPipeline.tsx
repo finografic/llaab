@@ -1,10 +1,10 @@
 import { CheckIcon } from '@llaab/icons';
 import { PipelineNodeCountMeta, RunPipelineCard } from 'components/RunPipelineCard/RunPipelineCard';
-import type { RunPipelineStepData } from 'components/RunPipelineCard/RunPipelineCard';
 import styles from 'components/RunPipelineCard/RunPipelineCard.module.css';
 import { RotateCcwIcon, Trash2Icon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ExtractionPhase, TranscriptData, TranscriptPhase } from '../ingest-form.types';
+import type { RunPipelineStepData } from 'components/RunPipelineCard/RunPipelineCard';
 import type { StepStatus } from 'components/ui/elements/ai-chain-of-thought';
 
 import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
@@ -15,8 +15,8 @@ import { RetryButton } from './RetryButton';
 
 function transcriptChainStepStatus(phase: TranscriptPhase): StepStatus {
   if (phase === 'processing') return 'active';
-  if (phase === 'saved') return 'complete';
-  if (phase === 'reused' || phase === 'failed') return 'warning';
+  if (phase === 'saved' || phase === 'reused') return 'complete';
+  if (phase === 'failed') return 'warning';
   return 'pending';
 }
 

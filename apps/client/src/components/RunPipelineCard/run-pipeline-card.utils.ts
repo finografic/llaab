@@ -70,7 +70,7 @@ export function buildIngestYoutubeMonitorSteps(run: RunMonitorItem): RunPipeline
   const transcriptStatus = transcriptFailed
     ? 'warning'
     : reused
-      ? 'warning'
+      ? 'complete'
       : stepStatusFromEvents(run, /fetching transcript|saved transcript/i, /saved transcript/i, false);
 
   const extractedEvent = findEvent(run, /extracted \d+ ideas?/i);
