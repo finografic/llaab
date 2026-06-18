@@ -31,7 +31,13 @@ function isConsolidateStageOutput(value: unknown): value is ConsolidateStageOutp
   );
 }
 
-function parseTranscriptId(inputSummary: string | undefined): string | undefined {
+/**
+ * Recovers the transcript id a consolidate-canonical-ideas RunNode belongs to from its
+ * `input_summary` (the JSON-stringified `{ transcriptId, mode, candidateCount }` runSkill input).
+ * Exported for reuse anywhere that needs to match a durable run back to "its" transcript —
+ * e.g. rendering an active-consolidation indicator on the transcript page itself.
+ */
+export function parseConsolidateRunTranscriptId(inputSummary: string | undefined): string | undefined {
   if (!inputSummary) return undefined;
 
   try {
@@ -74,7 +80,7 @@ export function findPendingCanonicalIdeaConflicts(
     const output = run.stages.find((stage) => stage.name === 'execute')?.output;
     if (!isConsolidateStageOutput(output) || !output.conflict || !output.pendingCoverage) continue;
 
-    const transcriptId = parseTranscriptId(run.input_summary);
+    const transcriptId = parseConsolidateRunTranscriptId(run.input_summary);
     if (!transcriptId || conflictsByTranscript.has(transcriptId)) continue;
 
     const transcript = transcriptsById.get(transcriptId);

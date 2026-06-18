@@ -3,7 +3,7 @@
 > Maintained working list. Larger initiatives live in [`ROADMAP.md`](./ROADMAP.md) — this doc
 > covers concrete near-term tasks, manual testing, and small fixes not large enough for ROADMAP.
 >
-> Last updated: 2026-06-07 (post-orchestration roadmap cleanup)
+> Last updated: 2026-06-19 (process state architecture audit)
 
 ---
 
@@ -39,6 +39,11 @@ Things to verify end-to-end after recent orchestration and UI changes:
       showing the transcript's full, identical tag set; the fix now asks the LLM for tags
       per idea directly. Needs a rebuild + fresh extraction to confirm it actually works.
       Detail: [`TODO_IDEA_TAG_RELEVANCE.md`](./TODO_IDEA_TAG_RELEVANCE.md).
+- [ ] **Migrate the ingest form pipeline to durable process state** — see
+      [`TODO_PROCESS_STATE_AUDIT.md`](./TODO_PROCESS_STATE_AUDIT.md). `IngestForm.tsx`'s
+      transcript/extraction status and elapsed timers are local-state-only despite
+      `ingest-youtube` being `runSkill`-backed — same bug class fixed for consolidation
+      (status disappears if the page remounts/is navigated away from mid-run).
 
 - [ ] **Build nav-unlocked observability pages** — start with `/llm/providers`,
       `/llm/capabilities`, `/system/doctor`, and `/system/harness`.

@@ -2,6 +2,7 @@ import { BrushCleaningIcon, TimerIcon } from '@llaab/icons';
 import { scoreConsolidationQuality } from '@llaab/schemas';
 import { useQueryClient } from '@tanstack/react-query';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
+import { CONSOLIDATION_SKILL_ID } from 'components/RunPipelineCard/RunPipelineCard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +17,7 @@ import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
 import { SparklesIcon } from 'lucide-react';
-import { QUERY_KEYS as RUN_KEYS } from 'queries/runs';
+import { QUERY_KEYS as RUN_KEYS, useRunMonitor } from 'queries/runs';
 import {
   useCleanCanonicalIdeaArtifacts,
   useConsolidateCanonicalIdeas,
@@ -34,6 +35,7 @@ import type {
 } from '@llaab/schemas';
 
 import { heartbeatStore, useElapsedMs } from 'lib/heartbeat';
+import { parseConsolidateRunTranscriptId } from 'utils/canonical-idea-conflict.utils';
 import { formatDurationMs } from 'utils/format-date.utils';
 
 import { fmtDetailDate, splitTags } from '../transcript-split.utils';
@@ -160,13 +162,32 @@ export function TranscriptDetail({
   const canConsolidate = extractionRuns.some((run) => run.ideaIds.length > 0);
   const [consolidateStartedAtMs, setConsolidateStartedAtMs] = useState<number | null>(null);
   const [consolidateDurationMs, setConsolidateDurationMs] = useState<number | null>(null);
-  const liveConsolidateDurationMs = useElapsedMs(
-    consolidateMutation.isPending ? consolidateStartedAtMs : null,
+
+  // The mutation's own isPending is local component state, lost when this component remounts
+  // (e.g. navigating to another transcript and back — see TranscriptsSplitView's `key`). Cross-
+  // check the durable Activity Monitor data too, so an in-flight consolidation for *this*
+  // transcript still shows its clock/disabled state after a remount, using the run's own
+  // started_at instead of a local timestamp.
+  const { data: monitorData } = useRunMonitor();
+  const activeConsolidateRun = useMemo(
+    () =>
+      monitorData?.active.find(
+        (run) =>
+          run.skill_id === CONSOLIDATION_SKILL_ID &&
+          parseConsolidateRunTranscriptId(run.input_summary) === transcript.id,
+      ),
+    [monitorData, transcript.id],
   );
-  const displayConsolidateDurationMs = consolidateMutation.isPending
-    ? liveConsolidateDurationMs
-    : consolidateDurationMs;
-  const showConsolidateClock = consolidateMutation.isPending || consolidateDurationMs != null;
+  const isConsolidating = consolidateMutation.isPending || activeConsolidateRun != null;
+  const remoteConsolidateStartedAtMs = activeConsolidateRun?.started_at
+    ? Date.parse(activeConsolidateRun.started_at)
+    : null;
+  const consolidateClockStartedAt = consolidateMutation.isPending
+    ? consolidateStartedAtMs
+    : remoteConsolidateStartedAtMs;
+  const liveConsolidateDurationMs = useElapsedMs(isConsolidating ? consolidateClockStartedAt : null);
+  const displayConsolidateDurationMs = isConsolidating ? liveConsolidateDurationMs : consolidateDurationMs;
+  const showConsolidateClock = isConsolidating || consolidateDurationMs != null;
   const coverageAudit = consolidateMutation.data?.coverageAudit;
   const qualityValidation = consolidateMutation.data?.qualityValidation;
   const persistedCoverage = transcript.canonical_coverage;
@@ -553,12 +574,8 @@ export function TranscriptDetail({
                 {showConsolidateClock && displayConsolidateDurationMs != null ? (
                   <span
                     className={styles.consolidateClock}
-                    title={
-                      consolidateMutation.isPending
-                        ? 'Consolidation in progress'
-                        : 'Last consolidation duration'
-                    }
-                    aria-live={consolidateMutation.isPending ? 'polite' : undefined}
+                    title={isConsolidating ? 'Consolidation in progress' : 'Last consolidation duration'}
+                    aria-live={isConsolidating ? 'polite' : undefined}
                   >
                     <TimerIcon size={16} aria-hidden />
                     <span className={styles.consolidateClockTime}>
@@ -571,12 +588,12 @@ export function TranscriptDetail({
                   variant="outline"
                   size="sm"
                   className={styles.consolidateButton}
-                  disabled={consolidateMutation.isPending}
+                  disabled={isConsolidating}
                   title="Create canonical ideas from all extraction runs."
                   onClick={() => handleConsolidate()}
                 >
                   <SparklesIcon aria-hidden="true" />
-                  {consolidateMutation.isPending ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
+                  {isConsolidating ? 'Consolidating…' : 'Consolidate Canonical Ideas'}
                 </Button>
               </>
             ) : null}
@@ -612,10 +629,10 @@ export function TranscriptDetail({
               variant="outline"
               size="sm"
               className={styles.qualityRegenerateButton}
-              disabled={consolidateMutation.isPending}
+              disabled={isConsolidating}
               onClick={() => handleConsolidate(false)}
             >
-              {consolidateMutation.isPending ? 'Regenerating…' : 'Regenerate'}
+              {isConsolidating ? 'Regenerating…' : 'Regenerate'}
             </Button>
           </div>
         ) : null}

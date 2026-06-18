@@ -36,6 +36,10 @@ Project-specific rules live in `.github/instructions/project/**/*.instructions.m
   — No always-on background processes, file watchers, or polling loops. All automation
   uses the one-shot processor pattern (explicit trigger → run → exit). LLAAB does not
   own a scheduler. This rule is non-negotiable.
+- **Process State Architecture:** `.github/instructions/project/process-state-architecture.instructions.md`
+  — Any process worth showing live status for must be durable (a `RunNode` from the moment it
+  starts) and globally observable (status derived from shared query state, never page-local
+  mutation state). Complements, does not relax, Agent Execution above.
 - **Components:** `.github/instructions/project/components-shadcn.instructions.md`
   — shadcn/ui first; canonical component location; install procedure; token usage.
 - **Component file organization:** `.github/instructions/project/component-file-organization.instructions.md`
