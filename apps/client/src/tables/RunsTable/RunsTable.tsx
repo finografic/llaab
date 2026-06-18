@@ -1,36 +1,96 @@
 import { Button } from 'components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'components/ui/table';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useRuns } from 'queries/runs';
 import { useMemo, useState } from 'react';
 import { RunGroupRow } from 'tables/RunsTable/RunGroupRow';
 import { buildSourcesById } from 'tables/RunsTable/RunsTableCells';
-import type { SourceNode } from '@llaab/schemas';
+import type { SourceNode, TranscriptNode } from '@llaab/schemas';
+import type { ReactNode } from 'react';
 
 import { isIngestRun, isRunExtracting } from 'utils/run-display.utils';
-import { groupRunsBySubject } from 'utils/run-grouping.utils';
 import type { RunGroup } from 'utils/run-grouping.utils';
+import { groupRunsBySubject } from 'utils/run-grouping.utils';
 
 import styles from './RunsTable.module.css';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-type PublishedSortDirection = 'asc' | 'desc';
+type SortDirection = 'asc' | 'desc';
+type SortColumn = 'title' | 'date' | 'author' | 'nodes' | 'latency';
 
-function compareGroupsByPublishedAt(a: RunGroup, b: RunGroup, direction: PublishedSortDirection): number {
-  const aKey = a.publishedAt ?? '';
-  const bKey = b.publishedAt ?? '';
-  const cmp = aKey.localeCompare(bKey);
+interface SortState {
+  column: SortColumn;
+  direction: SortDirection;
+}
+
+function compareStrings(a: string, b: string, direction: SortDirection): number {
+  const cmp = a.localeCompare(b);
   return direction === 'asc' ? cmp : -cmp;
+}
+
+function compareNumbers(a: number, b: number, direction: SortDirection): number {
+  const cmp = a - b;
+  return direction === 'asc' ? cmp : -cmp;
+}
+
+function compareGroups(a: RunGroup, b: RunGroup, sort: SortState): number {
+  switch (sort.column) {
+    case 'title':
+      return compareStrings(a.title, b.title, sort.direction);
+    case 'date':
+      return compareStrings(a.publishedAt ?? '', b.publishedAt ?? '', sort.direction);
+    case 'author':
+      return compareStrings(a.source?.title ?? '', b.source?.title ?? '', sort.direction);
+    case 'nodes':
+      return compareNumbers(a.totalNodes, b.totalNodes, sort.direction);
+    case 'latency':
+      return compareNumbers(a.avgDurationMs ?? -1, b.avgDurationMs ?? -1, sort.direction);
+    default: {
+      const exhaustive: never = sort.column;
+      return exhaustive;
+    }
+  }
 }
 
 export interface RunsTableProps {
   sources?: SourceNode[];
+  transcripts?: TranscriptNode[];
   showHeading?: boolean;
 }
 
-export function RunsTable({ sources = [], showHeading = false }: RunsTableProps) {
-  const [publishedSort, setPublishedSort] = useState<PublishedSortDirection>('desc');
+function SortableHeader({
+  column,
+  sort,
+  onSort,
+  className,
+  children,
+}: {
+  column: SortColumn;
+  sort: SortState;
+  onSort: (column: SortColumn) => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  const isActive = sort.column === column;
+  const Icon = isActive ? (sort.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+
+  return (
+    <TableHead className={className}>
+      <Button
+        variant="ghost"
+        className={isActive ? 'text-foreground' : 'text-muted-foreground opacity-70'}
+        onClick={() => onSort(column)}
+      >
+        {children}
+        <Icon />
+      </Button>
+    </TableHead>
+  );
+}
+
+export function RunsTable({ sources = [], transcripts = [], showHeading = false }: RunsTableProps) {
+  const [sort, setSort] = useState<SortState>({ column: 'date', direction: 'desc' });
   const { data: allRuns = [] } = useRuns({
     refetchInterval: (query) => {
       const data = query.state.data ?? [];
@@ -39,11 +99,25 @@ export function RunsTable({ sources = [], showHeading = false }: RunsTableProps)
   });
   const runs = useMemo(() => allRuns.filter(isIngestRun), [allRuns]);
   const sourcesById = useMemo(() => buildSourcesById(sources), [sources]);
-  const groups = useMemo(() => groupRunsBySubject(runs, sourcesById), [runs, sourcesById]);
-  const sortedGroups = useMemo(
-    () => [...groups].toSorted((a, b) => compareGroupsByPublishedAt(a, b, publishedSort)),
-    [groups, publishedSort],
+  const transcriptsById = useMemo(
+    () => new Map(transcripts.map((transcript) => [transcript.id, transcript])),
+    [transcripts],
   );
+  const groups = useMemo(
+    () => groupRunsBySubject(runs, sourcesById, transcriptsById),
+    [runs, sourcesById, transcriptsById],
+  );
+  const sortedGroups = useMemo(
+    () => [...groups].toSorted((a, b) => compareGroups(a, b, sort)),
+    [groups, sort],
+  );
+
+  function handleSort(column: SortColumn) {
+    setSort((current) => ({
+      column,
+      direction: current.column === column && current.direction === 'desc' ? 'asc' : 'desc',
+    }));
+  }
 
   return (
     <div className={showHeading ? styles.withHeading : undefined}>
@@ -58,21 +132,27 @@ export function RunsTable({ sources = [], showHeading = false }: RunsTableProps)
           <TableHeader>
             <TableRow>
               <TableHead className="w-0" />
-              <TableHead>Title</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground opacity-70"
-                  onClick={() => setPublishedSort((direction) => (direction === 'asc' ? 'desc' : 'asc'))}
-                >
-                  Date
-                  <ArrowUpDown />
-                </Button>
-              </TableHead>
+              <SortableHeader column="title" sort={sort} onSort={handleSort}>
+                Title
+              </SortableHeader>
+              <SortableHeader column="date" sort={sort} onSort={handleSort}>
+                Date
+              </SortableHeader>
               <TableHead>Source</TableHead>
-              <TableHead>Author</TableHead>
-              <TableHead className="text-center">Nodes</TableHead>
-              <TableHead className="text-right pr-1">Latency</TableHead>
+              <SortableHeader column="author" sort={sort} onSort={handleSort}>
+                Author
+              </SortableHeader>
+              <SortableHeader
+                column="nodes"
+                sort={sort}
+                onSort={handleSort}
+                className="text-center max-w-[58px]"
+              >
+                Nodes
+              </SortableHeader>
+              <SortableHeader column="latency" sort={sort} onSort={handleSort} className="text-right pr-1">
+                Latency
+              </SortableHeader>
               <TableHead className="text-center pr-3">Delete</TableHead>
             </TableRow>
           </TableHeader>

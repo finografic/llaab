@@ -1,4 +1,11 @@
-import { ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon, UserCheckIcon, UserXIcon } from '@llaab/icons';
+import {
+  BadgeCheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ExternalLinkIcon,
+  UserCheckIcon,
+  UserXIcon,
+} from '@llaab/icons';
 import { DeleteRunAction } from 'components/DeleteRunAction/DeleteRunAction';
 import { DeleteRunGroupAction } from 'components/DeleteRunGroupAction/DeleteRunGroupAction';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
@@ -102,15 +109,15 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
         <TableCell>
           {group.source ? (
             <div className={styles.authorCell}>
-              {group.source.youtube_subscribed === true ? (
-                <span className={`${styles.badge} ${styles.follow}`}>
+              {group.source.youtube_subscribed ? (
+                <span className={styles.follow}>
                   <UserCheckIcon size={18} />
                 </span>
-              ) : group.source.youtube_subscribed === false ? (
+              ) : (
                 <span className={styles.muted}>
                   <UserXIcon size={18} />
                 </span>
-              ) : null}
+              )}
               <Link to={`/vault/sources/${group.source.id}`} className={styles.authorLink}>
                 {group.source.title}
               </Link>
@@ -120,7 +127,18 @@ export function RunGroupRow({ group }: RunGroupRowProps) {
           )}
         </TableCell>
         <TableCell className="text-center pt-3.5">
-          <span className={styles.mono}>{group.totalNodes}</span>
+          <span className={styles.nodesCell}>
+            {group.isConsolidated ? (
+              <BadgeCheckIcon
+                size={14}
+                className={styles.consolidatedIcon}
+                aria-label="Canonical ideas consolidated"
+              />
+            ) : (
+              <span aria-hidden className={styles.consolidatedIconPlaceholder} />
+            )}
+            <span className={styles.mono}>{group.totalNodes}</span>
+          </span>
         </TableCell>
         <TableCell className="text-right pt-3.5 pr-1">
           <span className={styles.mono}>~ {fmtDuration(group.avgDurationMs)}</span>

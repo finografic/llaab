@@ -4,7 +4,7 @@ import { PageList } from 'layouts/PageList/PageList';
 import { useRuns } from 'queries/runs';
 import { useVaultNodes } from 'queries/vault';
 import { RunsTable } from 'tables/RunsTable/RunsTable';
-import type { SourceNode } from '@llaab/schemas';
+import type { SourceNode, TranscriptNode } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
 
@@ -13,7 +13,9 @@ export function RunsPage() {
 
   const { data: runs = [], isLoading: runsLoading } = useRuns();
   const { data: sourceNodes = [], isLoading: sourcesLoading } = useVaultNodes({ type: 'source' });
+  const { data: transcriptNodes = [] } = useVaultNodes({ type: 'transcript' });
   const sources = sourceNodes as SourceNode[];
+  const transcripts = transcriptNodes as TranscriptNode[];
 
   return (
     <PageLayout
@@ -33,7 +35,7 @@ export function RunsPage() {
         {runsLoading || sourcesLoading ? (
           <p className="text-muted-foreground text-sm">Loading runs…</p>
         ) : (
-          <RunsTable sources={sources} />
+          <RunsTable sources={sources} transcripts={transcripts} />
         )}
       </PageList>
     </PageLayout>

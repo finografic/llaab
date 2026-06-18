@@ -3,7 +3,7 @@ import { IngestForm } from 'forms/IngestForm/IngestForm';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { useVaultNodes } from 'queries/vault';
 import { RunsTable } from 'tables/RunsTable/RunsTable';
-import type { SourceNode } from '@llaab/schemas';
+import type { SourceNode, TranscriptNode } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
 
@@ -13,7 +13,9 @@ export function IngestPage() {
   usePageTitle('Ingest');
 
   const { data: sourceNodes = [] } = useVaultNodes({ type: 'source' });
+  const { data: transcriptNodes = [] } = useVaultNodes({ type: 'transcript' });
   const sources = sourceNodes as SourceNode[];
+  const transcripts = transcriptNodes as TranscriptNode[];
 
   return (
     <PageLayout
@@ -30,7 +32,7 @@ export function IngestPage() {
           <IngestForm />
         </div>
 
-        <RunsTable sources={sources} showHeading />
+        <RunsTable sources={sources} transcripts={transcripts} showHeading />
       </div>
     </PageLayout>
   );

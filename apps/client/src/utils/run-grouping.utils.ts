@@ -1,4 +1,4 @@
-import type { RunNode, SourceNode } from '@llaab/schemas';
+import type { RunNode, SourceNode, TranscriptNode } from '@llaab/schemas';
 
 import {
   extractMetadataUrl,
@@ -7,6 +7,8 @@ import {
   extractRunSubjectHref,
   extractRunSubjectTitle,
 } from './metadata-rendering.utils';
+
+const TRANSCRIPT_HREF_PREFIX = '/vault/transcripts/';
 
 export interface RunGroup {
   key: string;
@@ -18,7 +20,13 @@ export interface RunGroup {
   avgDurationMs?: number;
   latestDate: string;
   publishedAt?: string;
+  /** True once the group's transcript has a non-empty canonical-idea set. */
+  isConsolidated: boolean;
   runs: RunNode[];
+}
+
+function extractTranscriptId(href: string | undefined): string | undefined {
+  return href?.startsWith(TRANSCRIPT_HREF_PREFIX) ? href.slice(TRANSCRIPT_HREF_PREFIX.length) : undefined;
 }
 
 function getRunUrl(run: RunNode): string | undefined {
@@ -31,7 +39,11 @@ function average(values: number[]): number | undefined {
 }
 
 /** Groups runs by the subject they relate to (input URL, falling back to run title). */
-export function groupRunsBySubject(runs: RunNode[], sourcesById: Map<string, SourceNode>): RunGroup[] {
+export function groupRunsBySubject(
+  runs: RunNode[],
+  sourcesById: Map<string, SourceNode>,
+  transcriptsById: Map<string, TranscriptNode> = new Map(),
+): RunGroup[] {
   const groups = new Map<string, RunGroup>();
 
   for (const run of runs) {
@@ -50,6 +62,7 @@ export function groupRunsBySubject(runs: RunNode[], sourcesById: Map<string, Sou
         totalNodes: 0,
         avgDurationMs: undefined,
         latestDate: run.created_at,
+        isConsolidated: false,
         runs: [],
       };
       groups.set(key, group);
@@ -76,6 +89,10 @@ export function groupRunsBySubject(runs: RunNode[], sourcesById: Map<string, Sou
       group.runs.map((run) => run.duration_ms).filter((value): value is number => value != null),
     );
     group.runs.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+
+    const transcriptId = extractTranscriptId(group.href);
+    const transcript = transcriptId ? transcriptsById.get(transcriptId) : undefined;
+    group.isConsolidated = Boolean(transcript?.canonical_coverage?.canonical_idea_ids.length);
   }
 
   return Array.from(groups.values());

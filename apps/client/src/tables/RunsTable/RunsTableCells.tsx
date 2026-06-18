@@ -95,23 +95,25 @@ export function renderRunAuthorCell(run: RunNode, sourcesById: Map<string, Sourc
   const sourceId = extractRunSourceId(run);
   const source = sourceId ? sourcesById.get(sourceId) : undefined;
   const author = extractRunAuthor(run) ?? source?.title;
-  const following = source?.youtube_subscribed;
+  // Force undefined (no source record, or no youtube_subscribed field yet) to false so every
+  // authored row gets an explicit following indicator rather than silently showing nothing.
+  const following = Boolean(source?.youtube_subscribed);
 
-  if (!author && following == null) {
+  if (!author) {
     return <span className={styles.muted}>—</span>;
   }
 
   return (
     <div className={styles.authorCell}>
-      {following === true ? (
-        <span className={`${styles.badge} ${styles.follow}`}>
+      {following ? (
+        <span className={styles.follow}>
           <UserCheckIcon size={18} />
         </span>
-      ) : following === false ? (
+      ) : (
         <span className={styles.muted}>
           <UserXIcon size={18} />
         </span>
-      ) : null}
+      )}
       {author &&
         (sourceId ? (
           <Link to={`/vault/sources/${sourceId}`} className={styles.authorLink}>
