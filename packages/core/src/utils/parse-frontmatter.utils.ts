@@ -19,8 +19,12 @@ function parseScalar(rawValue: string): unknown {
 
   if (
     (trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) ||
-    (trimmedValue.startsWith('[') && trimmedValue.endsWith(']'))
+    (trimmedValue.startsWith('[') && trimmedValue.endsWith(']')) ||
+    (trimmedValue.startsWith('"') && trimmedValue.endsWith('"'))
   ) {
+    // `serializeFrontmatterValue` writes plain strings via `JSON.stringify`, so a
+    // quoted scalar must be JSON.parse'd (not just quote-stripped) or a read-modify-write
+    // cycle re-escapes the already-escaped value, compounding backslashes on every save.
     try {
       return JSON.parse(trimmedValue);
     } catch {

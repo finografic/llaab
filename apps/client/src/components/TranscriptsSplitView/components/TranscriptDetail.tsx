@@ -1,25 +1,14 @@
 import { TimerIcon } from '@llaab/icons';
 import { scoreConsolidationQuality } from '@llaab/schemas';
+import { useQueryClient } from '@tanstack/react-query';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from 'components/ui/alert-dialog';
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
 import { SparklesIcon } from 'lucide-react';
-import {
-  useConsolidateCanonicalIdeas,
-  usePromoteCanonicalIdea,
-  useResolveCanonicalIdeaConflict,
-} from 'queries/transcripts';
+import { QUERY_KEYS as RUN_KEYS } from 'queries/runs';
+import { useConsolidateCanonicalIdeas, usePromoteCanonicalIdea } from 'queries/transcripts';
+import { QUERY_KEYS as VAULT_KEYS } from 'queries/vault';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -27,7 +16,6 @@ import type {
   CanonicalIdeaNode,
   ConsolidationQualityCanonical,
   IdeaNode,
-  TranscriptCanonicalCoverage,
   TranscriptNode,
 } from '@llaab/schemas';
 
@@ -61,14 +49,6 @@ export interface TranscriptExtractionRun {
 const EMPTY_EXTRACTION_RUNS: TranscriptExtractionRun[] = [];
 const EMPTY_CANONICAL_IDEAS: CanonicalIdeaNode[] = [];
 
-interface CanonicalIdeaConflict {
-  existingQualityScore?: number;
-  incomingQualityScore: number;
-  existingCanonicalIdeaIds: string[];
-  incomingCanonicalIdeaIds: string[];
-  pendingCoverage: TranscriptCanonicalCoverage;
-}
-
 function fmtRunDate(value?: string) {
   if (!value) return 'Run';
   return new Date(value).toLocaleString(undefined, {
@@ -99,9 +79,8 @@ export function TranscriptDetail({
   const [extractStatusClass, setExtractStatusClass] = useState('text-[11px]');
   const [isExtracting, setIsExtracting] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState(() => extractionRuns[0]?.id ?? 'transcript');
+  const queryClient = useQueryClient();
   const consolidateMutation = useConsolidateCanonicalIdeas();
-  const resolveConflictMutation = useResolveCanonicalIdeaConflict();
-  const [conflict, setConflict] = useState<CanonicalIdeaConflict | null>(null);
   const promoteMutation = usePromoteCanonicalIdea();
   const { mutate: promoteMutate, isPending: isPromotePending, variables: promoteVariables } = promoteMutation;
 
@@ -296,14 +275,13 @@ export function TranscriptDetail({
       { transcriptId: transcript.id, autoRetry },
       {
         onSuccess: (data) => {
-          if (data.conflict && data.pendingCoverage) {
-            setConflict({
-              existingQualityScore: data.existingQualityScore,
-              incomingQualityScore: data.qualityValidation?.score ?? 0,
-              existingCanonicalIdeaIds: data.existingCanonicalIdeaIds ?? [],
-              incomingCanonicalIdeaIds: data.canonicalIdeaIds,
-              pendingCoverage: data.pendingCoverage,
-            });
+          // The global CanonicalIdeaConflictWatcher (mounted in AppLayout) owns the
+          // replace/keep-existing prompt so it works regardless of which page triggered
+          // consolidation or whether the user has since navigated away. Invalidating here just
+          // lets it react immediately instead of waiting for its next poll-driven refresh.
+          if (data.conflict) {
+            void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.list() });
+            void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.nodes('transcript') });
           }
         },
         onSettled: () => {
@@ -312,35 +290,6 @@ export function TranscriptDetail({
         },
         onError: (err) => {
           toast.error(err instanceof Error ? err.message : 'Consolidation failed.');
-        },
-      },
-    );
-  }
-
-  function handleResolveConflict(keep: 'existing' | 'incoming') {
-    if (!conflict) return;
-
-    resolveConflictMutation.mutate(
-      {
-        transcriptId: transcript.id,
-        payload: {
-          keep,
-          incomingCanonicalIdeaIds: conflict.incomingCanonicalIdeaIds,
-          existingCanonicalIdeaIds: conflict.existingCanonicalIdeaIds,
-          pendingCoverage: conflict.pendingCoverage,
-        },
-      },
-      {
-        onSuccess: () => {
-          toast.success(
-            keep === 'incoming'
-              ? 'Replaced canonical ideas with the new set.'
-              : 'Kept existing canonical ideas.',
-          );
-          setConflict(null);
-        },
-        onError: (err) => {
-          toast.error(err instanceof Error ? err.message : 'Failed to resolve canonical idea conflict.');
         },
       },
     );
@@ -802,59 +751,6 @@ export function TranscriptDetail({
           <pre className={`body-pre ${styles.bodyPre}`}>{transcript.body}</pre>
         </section>
       ) : null}
-
-      <AlertDialog open={conflict != null}>
-        <AlertDialogContent onEscapeKeyDown={(event) => event.preventDefault()}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Replace existing set of canonical ideas with incoming set?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <span className={styles.conflictScores}>
-                <span className={styles.conflictRow}>
-                  <span className={styles.conflictLabel}>Existing:</span>{' '}
-                  <span className={styles.conflictQuality}>
-                    Quality {conflict?.existingQualityScore ?? '—'}
-                    {conflict?.existingQualityScore != null ? '%' : ''}
-                  </span>
-                </span>
-                <span className={styles.conflictRow}>
-                  <span className={`${styles.conflictLabel} ${styles.conflictLabelStrong}`}>Incoming:</span>{' '}
-                  <span
-                    className={`${styles.conflictQuality} ${styles.conflictQualityStrong} ${
-                      conflict != null &&
-                      conflict.existingQualityScore != null &&
-                      conflict.incomingQualityScore < conflict.existingQualityScore
-                        ? styles.conflictQualityWarning
-                        : ''
-                    }`}
-                  >
-                    Quality {conflict?.incomingQualityScore}%
-                  </span>
-                </span>
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              disabled={resolveConflictMutation.isPending}
-              onClick={(event) => {
-                event.preventDefault();
-                handleResolveConflict('existing');
-              }}
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              disabled={resolveConflictMutation.isPending}
-              onClick={(event) => {
-                event.preventDefault();
-                handleResolveConflict('incoming');
-              }}
-            >
-              Replace
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

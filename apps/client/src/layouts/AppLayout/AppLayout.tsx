@@ -1,6 +1,7 @@
 import { cn } from '@llaab/ui/lib/utils';
 import { AppFooter } from 'components/AppFooter/AppFooter';
 import { AppHeader } from 'components/AppHeader/AppHeader';
+import { CanonicalIdeaConflictWatcher } from 'components/CanonicalIdeaConflictWatcher';
 import { RunMonitor } from 'components/RunMonitor';
 import { AppSidebarLayout } from 'components/ui/app-sidebar-layout';
 import { usePanelRef } from 'components/ui/resizable';
@@ -88,6 +89,7 @@ export function AppLayout() {
         </TooltipProvider>
       </SecondaryActionBarContext.Provider>
       <AppFooter />
+      <CanonicalIdeaConflictWatcher />
     </div>
   );
 }

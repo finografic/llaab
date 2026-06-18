@@ -92,37 +92,6 @@
   text-transform: none;
 }
 
-.conflictScores {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  text-align: left;
-}
-
-.conflictRow {
-  display: block;
-}
-
-.conflictLabel {
-  color: var(--text-muted);
-}
-
-.conflictLabelStrong {
-  font-weight: 700;
-}
-
-.conflictQuality {
-  color: var(--consolidation-text);
-}
-
-.conflictQualityStrong {
-  font-weight: 700;
-}
-
-.conflictQualityWarning {
-  color: var(--warning-text);
-}
-
 .consolidateButton {
   flex-shrink: 0;
   border-color: var(--consolidation-border);

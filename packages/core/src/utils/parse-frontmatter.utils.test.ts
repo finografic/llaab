@@ -46,4 +46,25 @@ profiles: [{"platform":"github","url":"https://github.com/t3dotgg","handle":"t3d
       },
     ]);
   });
+
+  it('un-escapes a JSON-stringified scalar instead of just stripping outer quotes', () => {
+    // Mirrors how `serializeFrontmatterValue` writes a plain string field: JSON.stringify(value).
+    const original = '{"transcriptId":"recursive-self-improvement","mode":"single-26b"}';
+    const written = `input_summary: ${JSON.stringify(original)}`;
+    const { frontmatter } = parseFrontmatter(`---\n${written}\n---\n`);
+
+    expect(frontmatter.input_summary).toBe(original);
+  });
+
+  it('stays stable across repeated read-modify-write cycles (no compounding escapes)', () => {
+    let value = '{"transcriptId":"x","mode":"single-26b"}';
+
+    for (let cycle = 0; cycle < 5; cycle++) {
+      const written = `input_summary: ${JSON.stringify(value)}`;
+      const { frontmatter } = parseFrontmatter(`---\n${written}\n---\n`);
+      value = frontmatter.input_summary as string;
+    }
+
+    expect(value).toBe('{"transcriptId":"x","mode":"single-26b"}');
+  });
 });

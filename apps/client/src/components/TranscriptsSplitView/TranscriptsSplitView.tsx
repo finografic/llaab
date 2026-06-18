@@ -31,6 +31,10 @@ function renderDetail(
 
   return (
     <TranscriptDetail
+      // Force a remount per transcript so consolidate-mutation state (isPending, conflict dialog,
+      // elapsed timer) doesn't leak from a previously-viewed transcript onto this one — React
+      // Router doesn't remount this component just because the route param changed.
+      key={transcript.id}
       transcript={transcript}
       extractedIdeas={ideas}
       canonicalIdeas={canonicalIdeas}
