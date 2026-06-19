@@ -37,11 +37,12 @@ Full design background: `docs/todo/DONE_CRONS_PAGE.md`.
 
 ### Files
 
-| File              | Role                                                                                                                     |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `cron-recipes.ts` | `CronRecipe` registry (`CRON_RECIPES`), the shared consolidation-scan handler, and `runCronRecipe(id)` — the entry point |
-| `crons.routes.ts` | `list` (`GET /`) and `run` (`POST /:id/run`) route exports                                                               |
-| `index.ts`        | Wires the two routes onto `createRouter()` — no validators, no business logic                                            |
+| File              | Role                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cron-recipes.ts` | `CronRecipe` registry (`CRON_RECIPES`), enabled/disabled state, the shared consolidation-scan handler, and `runCronRecipe(id)` — the entry point |
+| `crons.routes.ts` | `list` (`GET /`), `run` (`POST /:id/run`), and `update` (`PATCH /:id`) route exports                                                             |
+| `crons.schema.ts` | `updateCronRecipeBodySchema` — `{ enabled: boolean }`                                                                                            |
+| `index.ts`        | Wires the three routes onto `createRouter()`, validating `update`'s body — no business logic                                                     |
 
 ### Recipe registry
 
@@ -59,9 +60,26 @@ interface CronRecipe {
 }
 ```
 
-`GET /api/crons` returns this array verbatim as `{ recipes }`. There is no per-recipe route —
-`POST /api/crons/:id/run` is generic: it looks up the recipe by id and calls `runCronRecipe(id)`.
-Adding a recipe to the array is enough to make it runnable over HTTP; no router change needed.
+`GET /api/crons` returns `listCronRecipesWithState()` — the registry merged with each recipe's
+`enabled` flag (see Enable/disable below) — as `{ recipes }`. There is no per-recipe route for
+`run` or `update` — both are generic: they look up the recipe by id and call `runCronRecipe(id)` /
+`setCronRecipeEnabled(id, enabled)`. Adding a recipe to the array is enough to make it runnable
+and toggleable over HTTP; no router change needed.
+
+### Enable/disable
+
+LLAAB has no visibility into whether an external scheduler (cron/launchd/GitHub Actions) is
+actually configured to hit a recipe, so there's no "currently scheduled" indicator — see the
+design note at the top of this section. What it _can_ offer is a kill-switch: each recipe has a
+persisted `enabled` boolean (default `true`), stored in `configs/cron-recipes.json`
+(`{ recipes: { [id]: { enabled } } }`, written lazily on first toggle — same pattern as
+`configs/llm-routing.json` in `packages/llm/src/router.ts`). `PATCH /api/crons/:id` with
+`{ enabled }` flips it; `runCronRecipe(id)` checks `isCronRecipeEnabled(id)` first and throws
+before doing any work (no `RunNode` is created) if disabled. Disabling a recipe in `/crons`
+therefore actually blocks it — Run Now, `cron.run <id>`, and any external `curl` hitting
+`POST /api/crons/:id/run` all go through the same gate. The `/crons` UI shows this as a toggle
+button (active/disabled, next to Run Now) rather than a read-only badge, since it's a real
+control, not just a status light.
 
 ### Execution path
 

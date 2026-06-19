@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { listNodes } from '@llaab/core';
 import { appendRunEvent, runSkill } from '@llaab/skills';
 import type { IdeaNode, RunNode, TranscriptNode } from '@llaab/schemas';
@@ -14,6 +16,15 @@ export interface CronRecipe {
     label: string;
     value: string;
   }>;
+}
+
+export interface CronRecipeDto extends CronRecipe {
+  /**
+   * Whether the recipe will execute when triggered (manually, via `/terminal`, or by an
+   * external scheduler hitting `POST /api/crons/:id/run`). LLAAB owns no scheduler itself —
+   * this is a kill-switch on the one-shot endpoint, not a "currently scheduled" indicator.
+   */
+  enabled: boolean;
 }
 
 export interface CronRecipeRunResult {
@@ -77,6 +88,43 @@ function findRecipe(id: string): CronRecipe | undefined {
   return CRON_RECIPES.find((recipe) => recipe.id === id);
 }
 
+const CRON_STATE_PATH = resolve(process.cwd(), 'configs/cron-recipes.json');
+
+interface CronRecipeStateFile {
+  recipes?: Record<string, { enabled?: boolean }>;
+}
+
+function readCronState(): CronRecipeStateFile {
+  if (!existsSync(CRON_STATE_PATH)) return {};
+
+  try {
+    return JSON.parse(readFileSync(CRON_STATE_PATH, 'utf8')) as CronRecipeStateFile;
+  } catch {
+    return {};
+  }
+}
+
+function writeCronState(state: CronRecipeStateFile): void {
+  mkdirSync(dirname(CRON_STATE_PATH), { recursive: true });
+  writeFileSync(CRON_STATE_PATH, `${JSON.stringify(state, null, 2)}\n`);
+}
+
+export function isCronRecipeEnabled(id: string): boolean {
+  return readCronState().recipes?.[id]?.enabled ?? true;
+}
+
+export function setCronRecipeEnabled(id: string, enabled: boolean): boolean {
+  if (!findRecipe(id)) throw new Error(`Unknown cron recipe: ${id}`);
+
+  const state = readCronState();
+  writeCronState({ ...state, recipes: { ...state.recipes, [id]: { enabled } } });
+  return enabled;
+}
+
+export function listCronRecipesWithState(): CronRecipeDto[] {
+  return CRON_RECIPES.map((recipe) => ({ ...recipe, enabled: isCronRecipeEnabled(recipe.id) }));
+}
+
 function transcriptHasCanonicalSet(transcript: TranscriptNode): boolean {
   return (transcript.canonical_coverage?.canonical_idea_ids.length ?? 0) > 0;
 }
@@ -101,6 +149,7 @@ function selectScanTranscripts(recipeId: string, transcripts: TranscriptNode[]):
 export async function runCronRecipe(id: string): Promise<{ runNodeId: string; result: CronRecipeRunResult }> {
   const recipe = findRecipe(id);
   if (!recipe) throw new Error(`Unknown cron recipe: ${id}`);
+  if (!isCronRecipeEnabled(id)) throw new Error(`Cron recipe "${recipe.title}" is disabled.`);
 
   const { record, result } = await runSkill(
     `cron-${recipe.id}`,

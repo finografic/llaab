@@ -1,0 +1,7 @@
+{
+  "recipes": {
+    "check-transcripts-consolidation": {
+      "enabled": true
+    }
+  }
+}

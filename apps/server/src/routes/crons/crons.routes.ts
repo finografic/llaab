@@ -1,10 +1,11 @@
-import type { AppCtx } from '../../types/app.types.js';
+import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
+import type { UpdateCronRecipeBody } from './crons.schema.js';
 
-import { CRON_RECIPES, runCronRecipe } from './cron-recipes.js';
+import { listCronRecipesWithState, runCronRecipe, setCronRecipeEnabled } from './cron-recipes.js';
 
 export const list = {
   path: '/' as const,
-  handler: async (c: AppCtx) => c.json({ recipes: CRON_RECIPES }),
+  handler: async (c: AppCtx) => c.json({ recipes: listCronRecipesWithState() }),
 };
 
 export const run = {
@@ -18,6 +19,24 @@ export const run = {
       return c.json(
         { success: false, error: err instanceof Error ? err.message : 'Cron recipe failed' },
         500,
+      );
+    }
+  },
+};
+
+export const update = {
+  path: '/:id' as const,
+  handler: async (c: AppCtxJson<UpdateCronRecipeBody>) => {
+    const id = c.req.param('id');
+    if (!id) return c.json({ success: false, error: 'Recipe id is required.' }, 400);
+    const body = c.req.valid('json');
+    try {
+      const enabled = setCronRecipeEnabled(id, body.enabled);
+      return c.json({ success: true, id, enabled });
+    } catch (err) {
+      return c.json(
+        { success: false, error: err instanceof Error ? err.message : 'Failed to update cron recipe' },
+        404,
       );
     }
   },

@@ -1,8 +1,8 @@
 import { cn } from '@llaab/ui/lib/utils';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
-import { PlayIcon } from 'lucide-react';
-import { useRunCronRecipe } from 'queries/crons';
+import { PauseIcon, PlayIcon } from 'lucide-react';
+import { useRunCronRecipe, useSetCronRecipeEnabled } from 'queries/crons';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { CronRecipe, CronRecipeRunResponse } from 'queries/crons';
@@ -17,6 +17,32 @@ const RISK_BADGE_CLASS: Record<CronRecipe['risk'], string> = {
   medium: 'border-[var(--info-border)] bg-[var(--info-bg)] text-[var(--info-text)]',
   high: 'border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-text)]',
 };
+
+/** Toggle button showing whether the recipe will execute when triggered (manual or external). */
+function CronEnabledToggle({ recipe }: { recipe: CronRecipe }) {
+  const setEnabled = useSetCronRecipeEnabled();
+  const { enabled } = recipe;
+
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className={cn(
+        'shrink-0',
+        enabled
+          ? 'border-[var(--success-border)] text-[var(--success-text)] hover:bg-[var(--success-bg)]'
+          : 'text-muted-foreground',
+      )}
+      disabled={setEnabled.isPending}
+      title={enabled ? 'Pause this recipe' : 'Enable this recipe'}
+      onClick={() => setEnabled.mutate({ recipeId: recipe.id, enabled: !enabled })}
+    >
+      {enabled ? <PauseIcon aria-hidden /> : <PlayIcon aria-hidden />}
+      {enabled ? 'active' : 'disabled'}
+    </Button>
+  );
+}
 
 /**
  * Command + Run Now control for a single cron recipe. Lives outside `/crons` so other
@@ -40,12 +66,14 @@ export function CronCommandReference({ recipe, onRun }: CronCommandReferenceProp
         <code className="min-w-0 flex-1 truncate rounded bg-muted px-3 py-1.25 font-mono text-base">
           {recipe.command}
         </code>
+        <CronEnabledToggle recipe={recipe} />
         <Button
           type="button"
           size="sm"
           variant="outline"
           className="shrink-0"
-          disabled={running}
+          disabled={running || !recipe.enabled}
+          title={recipe.enabled ? undefined : 'Enable this recipe to run it'}
           onClick={() => {
             runRecipe.mutate(recipe.id, {
               onSuccess: (data) => {
