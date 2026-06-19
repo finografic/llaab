@@ -44,6 +44,7 @@ export async function extractTranscriptIdeas(input: ExtractTranscriptIdeasInput)
           extra: {
             origin: 'extracted',
             source_id: input.transcript.id,
+            related: [input.transcript.id],
             llm_model: llmMeta.model,
             llm_provider: llmMeta.provider,
             llm_duration_ms: llmMeta.durationMs,

@@ -72,9 +72,11 @@ Things to verify end-to-end after recent orchestration and UI changes:
 - [x] **LLM model status indicator** — `/llm` page calls `GET /api/llm/status` and surfaces model
       routing/availability.
 
-- [ ] **`related` field on idea nodes** — currently always `[]`. Consider auto-linking extracted ideas
+- [x] **`related` field on idea nodes** — currently always `[]`. Consider auto-linking extracted ideas
       to their transcript via `related` (in addition to `source_id`). Low priority — `source_id` is
       the primary provenance link.
+      Done: both extraction paths set `related: [transcriptId]`; verified all 70 current idea
+      files include their `source_id` in `related`.
 
 - [x] **Expand LLM auto-tag triggers** — model-family terms such as `gemma`, `llama`,
       `mistral`, `qwen`, `phi`, and `gemini` now contribute to `d:llm` tagging through the

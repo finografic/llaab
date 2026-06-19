@@ -105,6 +105,10 @@ describe('extractTranscriptIdeas', () => {
       expect.objectContaining({
         type: 'idea',
         tags: ['d:ingest', 'd:llm', 'gemma-4'],
+        extra: expect.objectContaining({
+          source_id: transcript.id,
+          related: [transcript.id],
+        }),
       }),
     );
     expect(createNode).toHaveBeenNthCalledWith(
@@ -112,6 +116,10 @@ describe('extractTranscriptIdeas', () => {
       expect.objectContaining({
         type: 'idea',
         tags: ['d:ingest', 'd:llm', 'edge-inference'],
+        extra: expect.objectContaining({
+          source_id: transcript.id,
+          related: [transcript.id],
+        }),
       }),
     );
     await expect(vi.mocked(updateNode).mock.results[0]?.value).resolves.toMatchObject({
