@@ -4,6 +4,7 @@ import type { CommandContext, CommandHandler } from './handler.js';
 import type { Command, CommandEnvelope, OutputEnvelope, OutputEvent } from '@llaab/core';
 
 import { agentCommandHandler } from './agent-command.handler.js';
+import { cronCommandHandler } from './cron-command.handler.js';
 import { fsListCommandHandler, fsReadCommandHandler } from './fs-command.handler.js';
 import { llmCommandHandler } from './llm-command.handler.js';
 import { shellCommandHandler } from './shell-command.handler.js';
@@ -11,6 +12,7 @@ import { shellCommandHandler } from './shell-command.handler.js';
 export const defaultCommandHandlers: CommandHandler[] = [
   llmCommandHandler,
   agentCommandHandler,
+  cronCommandHandler,
   fsReadCommandHandler,
   fsListCommandHandler,
   shellCommandHandler,

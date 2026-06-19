@@ -100,6 +100,16 @@ dialog regardless of route. The always-visible "Clean" button on the transcript 
 automatic flow can't reach (orphaned files from manual deletes, or a conflict from before this
 flow existed) — deletes every canonical-idea file + consolidate run tied to that transcript and
 clears its coverage.
+Terminal (`/terminal`) is a typed command-bus UI, not raw shell passthrough. It supports `ai.run`,
+`agent.run`, `cron.run`, `fs.read`, `fs.list`, and session-gated `shell.exec`; command references
+and the left action rail paste commands into the input and focus it, but never auto-run. Command
+execution persists durable command `RunNode`s, and live process status belongs in the global
+Activity Monitor sidebar, not terminal-local state.
+Crons (`/crons`) are one-shot recipes plus external trigger snippets, not an internal scheduler.
+The first recipe, `check-transcripts-consolidation`, scans transcripts with extracted ideas and no
+canonical set, runs missing consolidation via the shared consolidation helper, and creates durable
+cron/consolidation runs. External `cron`, `launchd`, GitHub Actions, Vercel Cron, or another
+user-owned scheduler owns timing.
 `VaultGitPanel` (`apps/client/src/components/VaultGitPanel/`) shows `git status` scoped to `vault/`
 via `@pierre/trees`'s `FileTree` (themed to the app's dark palette via its CSS custom-property
 overrides), grouped by node type, with an auto-generated commit message
@@ -135,6 +145,8 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models (2×2 vi
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/`                      | Home dashboard — four callout cards (Ingest, Vault, Runs, Models)                                                                                     |
 | `/ingest`                | URL form with card-wide drag/drop; two-phase ingest; `RunPipelineCard` progress + grouped `RunsTable` (collapsed by subject, sortable published date) |
+| `/terminal`              | Typed command bus UI — actions rail, command injection, structured/raw/JSON output, durable command runs                                              |
+| `/crons`                 | One-shot cron recipe dashboard — Run Now, external trigger snippets, recent cron runs                                                                 |
 | `/llm`                   | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list                                                          |
 | `/icons`                 | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
 | `/vault`                 | Gated file-tree browser — local recursive tree + raw file viewer                                                                                      |
@@ -181,6 +193,8 @@ continues processing.
 | Route                                                              | Description                                                                                                                                                                                                   |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `POST /api/ingest/youtube`                                         | `ingestYouTube` skill — `{ url, title?, tags?, skipExtraction? }`                                                                                                                                             |
+| `GET /api/crons`                                                   | Lists one-shot cron recipe metadata and external trigger examples                                                                                                                                             |
+| `POST /api/crons/:id/run`                                          | Runs a cron recipe once, creates a durable cron `RunNode`, and never schedules future work internally                                                                                                         |
 | `GET /api/vault/nodes`                                             | `listNodes()` — `?type`, `?status`, `?tags`, `?search`, `?limit`                                                                                                                                              |
 | `GET /api/vault/nodes/:id`                                         | Single node by id                                                                                                                                                                                             |
 | `PATCH /api/vault/sources/:id/profiles`                            | Updates linked source profiles (GitHub first)                                                                                                                                                                 |

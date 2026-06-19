@@ -7,6 +7,7 @@ const port = Number(process.env['PORT'] ?? 8888);
 const COMMAND_TIMEOUT_MS = 120_000;
 const LONG_RUNNING_PATHS = [
   /^\/api\/ingest\/youtube$/,
+  /^\/api\/crons\/[^/]+\/run$/,
   /^\/api\/vault\/transcripts\/[^/]+\/extract$/,
   /^\/api\/vault\/transcripts\/[^/]+\/consolidate$/,
   /^\/terminal$/,

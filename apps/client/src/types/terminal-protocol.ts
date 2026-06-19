@@ -25,6 +25,10 @@ export type Command =
       force?: boolean;
     }
   | {
+      kind: 'cron.run';
+      recipeId: string;
+    }
+  | {
       kind: 'fs.read';
       path: string;
     }

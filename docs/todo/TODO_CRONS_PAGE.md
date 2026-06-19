@@ -1,6 +1,6 @@
 # TODO — Crons Page and External Automation Recipes
 
-> **Status:** Planned. LLAAB should expose one-shot jobs and cron recipes, but scheduling remains
+> **Status:** Started. LLAAB exposes one-shot jobs and cron recipes, but scheduling remains
 > external. Do not add an internal scheduler, timer loop, watcher, or polling worker.
 
 ## Goal
@@ -36,7 +36,7 @@ Purpose:
 Candidate triggers:
 
 ```bash
-lab cron run check-transcripts-consolidation
+cron.run check-transcripts-consolidation
 ```
 
 ```bash
@@ -48,41 +48,58 @@ and `failed` counts.
 
 ## Phase 1 — One-Shot Job Contract
 
-- [ ] Define a typed cron recipe registry.
-- [ ] Add recipe id, title, description, command examples, and risk level.
-- [ ] Add a one-shot handler signature that returns structured summary data.
-- [ ] Ensure each invocation creates a durable `RunNode`.
-- [ ] Keep scheduling external.
+- [x] Define a typed cron recipe registry.
+- [x] Add recipe id, title, description, command examples, and risk level.
+- [x] Add a one-shot handler signature that returns structured summary data.
+- [x] Ensure each invocation creates a durable `RunNode`.
+- [x] Keep scheduling external.
 
 ## Phase 2 — Transcript Consolidation Check
 
-- [ ] Implement `check-transcripts-consolidation`.
-- [ ] Reuse existing transcript, idea, and canonical idea APIs where possible.
-- [ ] Detect only missing consolidation work; avoid duplicate canonical idea generation.
-- [ ] Return clear no-op output when nothing is pending.
-- [ ] Add a terminal command or CLI command for manual execution.
+- [x] Implement `check-transcripts-consolidation`.
+- [x] Reuse existing transcript, idea, and canonical idea APIs where possible.
+- [x] Detect only missing consolidation work; avoid duplicate canonical idea generation.
+- [x] Return clear no-op output when nothing is pending.
+- [x] Add a terminal command for manual execution.
 
 ## Phase 3 — API Surface
 
-- [ ] Add `GET /api/crons` for recipe metadata.
-- [ ] Add `POST /api/crons/:id/run` for manual one-shot execution.
-- [ ] Add `GET /api/crons/:id/history` or reuse run filters once available.
-- [ ] Require explicit user action; no server-side schedule loop.
+- [x] Add `GET /api/crons` for recipe metadata.
+- [x] Add `POST /api/crons/:id/run` for manual one-shot execution.
+- [x] Reuse run filters/client-side filtering for recent history.
+- [x] Require explicit user action; no server-side schedule loop.
 
 ## Phase 4 — `/crons` Page
 
-- [ ] Add a Crons nav entry.
-- [ ] List available recipes and last run status.
-- [ ] Add a `Run Now` action per recipe.
-- [ ] Show external install snippets for cron, launchd, and HTTP schedulers.
-- [ ] Show recent run links.
+- [x] Add a Crons nav entry.
+- [x] List available recipes.
+- [x] Add a `Run Now` action per recipe.
+- [x] Show external install snippets for cron and launchd-style HTTP triggers.
+- [x] Show recent run links.
+- [ ] Add a small `Cron syntax` toggle near the top of `/crons`.
+- [ ] Show the cron syntax legend in a monospace block, collapsed by default.
+- [ ] Add a lightweight `Adding a Cron Recipe` section.
 
 ## Phase 5 — Terminal Integration
 
-- [ ] Add terminal presets for cron recipes.
-- [ ] Support `cron.run <recipe-id>` as a typed command if useful.
-- [ ] Link completed cron invocations to `/vault/runs/:id`.
+- [x] Add terminal presets for cron recipes.
+- [x] Support `cron.run <recipe-id>` as a typed command.
+- [x] Link completed cron invocations to `/vault/runs/:id`.
 - [ ] Allow future node/transcript pages to inject relevant cron commands.
+
+## Adding a Cron Recipe
+
+Current mechanism is code-first:
+
+1. Add recipe metadata to `apps/server/src/routes/crons/cron-recipes.ts`.
+2. Add a one-shot implementation in that file or a helper beside it.
+3. Wrap execution in `runSkill(...)` so every invocation creates a durable `RunNode`.
+4. Keep the recipe id stable; it becomes the URL and terminal command id.
+5. Expose manual execution through `POST /api/crons/:id/run`.
+6. Add a terminal action when the recipe should be discoverable from `/terminal`.
+
+Do not add timers, watchers, polling loops, or server-owned schedulers. External `cron`,
+`launchd`, GitHub Actions, Vercel Cron, or another user-controlled scheduler owns timing.
 
 ## Non-Goals
 

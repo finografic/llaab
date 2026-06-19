@@ -30,6 +30,11 @@ export const AgentRunCommandSchema = z.object({
   force: z.boolean().optional(),
 });
 
+export const CronRunCommandSchema = z.object({
+  kind: z.literal('cron.run'),
+  recipeId: z.string().min(1),
+});
+
 export const FsReadCommandSchema = z.object({
   kind: z.literal('fs.read'),
   path: z.string().min(1),
@@ -54,6 +59,7 @@ export const ShellExecCommandSchema = z.object({
 export const CommandSchema = z.discriminatedUnion('kind', [
   AiRunCommandSchema,
   AgentRunCommandSchema,
+  CronRunCommandSchema,
   FsReadCommandSchema,
   FsListCommandSchema,
   ShellExecCommandSchema,
@@ -116,6 +122,7 @@ export type CommandSource = z.infer<typeof CommandSourceSchema>;
 export type Command = z.infer<typeof CommandSchema>;
 export type AiRunCommand = z.infer<typeof AiRunCommandSchema>;
 export type AgentRunCommand = z.infer<typeof AgentRunCommandSchema>;
+export type CronRunCommand = z.infer<typeof CronRunCommandSchema>;
 export type FsReadCommand = z.infer<typeof FsReadCommandSchema>;
 export type FsListCommand = z.infer<typeof FsListCommandSchema>;
 export type ShellExecCommand = z.infer<typeof ShellExecCommandSchema>;

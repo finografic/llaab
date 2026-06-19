@@ -19,7 +19,7 @@ layer rather than starting from scratch:
 | ------------------------ | -------------------------------------------------------- | ----------------------------------------------------------------- |
 | `packages/llm`           | Task → tier → provider routing; two concrete providers   | No formal provider interface; tier determines provider by import  |
 | `@finografic/ai-harness` | Pipeline primitives installed; extraction spike in place | Not validated in real flow; no token budget; character truncation |
-| Terminal Panel           | Architecture specced in `TODO_TERMINAL_PANEL.md`         | Not started; command bus IS the first adapter surface             |
+| Terminal Panel           | Architecture specced in `DONE_TERMINAL_PANEL.md`         | Not started; command bus IS the first adapter surface             |
 
 These three are the same concern seen from different angles — **how does LLAAB prepare, route,
 dispatch, and observe work across different execution backends?** Building them in isolation would
@@ -762,7 +762,7 @@ outside the vault produced a structured `COMMAND_EXECUTION_FAILED` error plus a 
 ## Phase 4 — Terminal / Command Panel Vertical Slice — DONE
 
 > **This is the first visible orchestration adapter surface.** Full spec:
-> `TODO_TERMINAL_PANEL.md`. This phase delivers the minimal viable slice that proves the
+> `DONE_TERMINAL_PANEL.md`. This phase delivers the minimal viable slice that proves the
 > command bus from Phase 3 is usable by a human.
 
 The key architectural insight: the Terminal Panel's `LlmAdapter` and `AgentAdapter` are the

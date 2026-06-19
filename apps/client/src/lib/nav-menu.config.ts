@@ -101,6 +101,12 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         live: true,
       },
       {
+        label: 'Crons',
+        description: 'Manual recipe runs and external schedule snippets',
+        href: '/crons',
+        live: true,
+      },
+      {
         label: 'Skills',
         description: 'Browse registered skills and their capabilities',
         href: '/execute/skills',

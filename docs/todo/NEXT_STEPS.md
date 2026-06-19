@@ -66,6 +66,12 @@ Things to verify end-to-end after recent orchestration and UI changes:
 
 ## Code — Small Fixes & Polish
 
+- [ ] **Terminal follow-up UX** — vertical slice is complete and graduated to
+      [`DONE_TERMINAL_PANEL.md`](./DONE_TERMINAL_PANEL.md). Remaining polish:
+      add UI command injection from node/transcript pages (for example,
+      "Read in Terminal" → `fs.read ...`), promote autocomplete from static suggestions to live
+      vault path search, and hot-link URLs in terminal output once command streams show URLs.
+
 - [x] **Extraction retry button** — `POST /api/vault/transcripts/:id/extract` route exists and
       transcript detail page includes "Re-extract" action.
 

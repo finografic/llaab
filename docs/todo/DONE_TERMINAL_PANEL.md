@@ -1,6 +1,6 @@
-# TODO — Terminal / Command Panel
+# DONE — Terminal / Command Panel
 
-> **Status:** Vertical slice completed by the orchestration work in
+> **Status:** Completed. Vertical slice completed by the orchestration work in
 > [DONE_ORCHESTRATION.md](DONE_ORCHESTRATION.md): `/terminal` WebSocket, typed command bus,
 > `ai.run`, `agent.run`, `fs.read`, `fs.list`, and session-gated `shell.exec` are implemented.
 > The stable architecture reference is now
@@ -164,13 +164,6 @@ automatically applies to terminal `ai.run` commands too — one source of truth.
 - [x] Left action sidebar injects available commands into the run input.
 - [x] Executable command references in output are green, clickable command injectors.
 - [x] Terminal execution relies on durable global runs surfaced by Activity Monitor.
-
-## Next UX slice
-
-- [ ] Add UI command injection from node and transcript pages (for example,
-      "Read in Terminal" → `fs.read ...`).
-- [ ] Promote autocomplete from static suggestions to live vault path search.
-- [ ] Hot-link URLs in terminal output once URLs appear in command output streams.
 
 ## Historical implementation phases
 

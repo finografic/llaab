@@ -523,5 +523,5 @@ When adding orchestration behavior:
 | [05 — Control layer and execution model](05_CONTROL_LAYER_AND_EXECUTION_MODEL.md) | Control-layer principles.                     |
 | [06 — YouTube transcript ingestion](06_YOUTUBE_TRANSCRIPT_INGESTION.md)           | Detailed ingest/extract pipeline.             |
 | [Taxonomy guide](taxonomy/TAXONOMY_GUIDE.md)                                      | Domain tag vocabulary and auto-tagging rules. |
-| [Terminal Panel plan](todo/TODO_TERMINAL_PANEL.md)                                | Historical terminal design plan.              |
+| [Terminal Panel plan](todo/DONE_TERMINAL_PANEL.md)                                | Completed terminal design plan.               |
 | [Orchestration implementation plan](todo/DONE_ORCHESTRATION.md)                   | Completed implementation checklist.           |

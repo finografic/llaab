@@ -11,6 +11,7 @@ const IngestPage = lazy(() => import('routes/ingest').then((module) => ({ defaul
 const TerminalPage = lazy(() =>
   import('routes/terminal').then((module) => ({ default: module.TerminalPage })),
 );
+const CronsPage = lazy(() => import('routes/crons').then((module) => ({ default: module.CronsPage })));
 const LlmPage = lazy(() => import('routes/llm').then((module) => ({ default: module.LlmPage })));
 const DevIconsPage = lazy(() =>
   import('routes/dev-icons').then((module) => ({ default: module.DevIconsPage })),
@@ -68,6 +69,11 @@ export const router = createBrowserRouter([
         path: 'terminal',
         element: lazyElement(TerminalPage),
         handle: { title: 'Terminal' } satisfies RouteHandle,
+      },
+      {
+        path: 'crons',
+        element: lazyElement(CronsPage),
+        handle: { title: 'Crons' } satisfies RouteHandle,
       },
       {
         path: 'llm',

@@ -10,6 +10,7 @@ import {
   SendIcon,
   SparklesIcon,
   TerminalIcon,
+  TimerIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -51,6 +52,7 @@ const COMMAND_SUGGESTIONS = [
   'ai.run reason "Think through this decision."',
   'agent.run --executor llaab --force',
   'agent.run --executor hermes --task inbox-triage',
+  'cron.run check-transcripts-consolidation',
   'fs.list .',
   'fs.list transcripts',
   'fs.list nodes/ideas',
@@ -67,6 +69,7 @@ const EXECUTABLE_COMMAND_REFERENCES = [
   'shell.exec --disable-session',
   'shell.exec --confirm',
   'agent.run',
+  'cron.run',
   'ai.run',
   'fs.read',
   'fs.list',
@@ -99,6 +102,13 @@ const COMMAND_ACTION_GROUPS: TerminalActionGroup[] = [
     actions: [
       { label: 'Run LLAAB agent', command: 'agent.run --executor llaab --force' },
       { label: 'Prepare Hermes task', command: 'agent.run --executor hermes --task inbox-triage' },
+    ],
+  },
+  {
+    label: 'Crons',
+    icon: TimerIcon,
+    actions: [
+      { label: 'Check transcript consolidation', command: 'cron.run check-transcripts-consolidation' },
     ],
   },
   {
@@ -160,6 +170,12 @@ function parseTerminalCommand(input: string, shellSessionId: string): Command {
       return true;
     });
     return { kind: 'agent.run', executor, nodeId, task, taskId, force };
+  }
+
+  if (kind === 'cron.run') {
+    const [recipeId] = args;
+    if (!recipeId) throw new Error('Usage: cron.run <recipe-id>');
+    return { kind: 'cron.run', recipeId };
   }
 
   if (kind === 'fs.read') {
@@ -275,6 +291,7 @@ function readFsListEntries(event: Extract<OutputEvent, { type: 'meta' }>): FsLis
 function commandForReference(reference: string): string {
   if (reference === 'ai.run') return 'ai.run ';
   if (reference === 'agent.run') return 'agent.run ';
+  if (reference === 'cron.run') return 'cron.run ';
   if (reference === 'fs.read') return 'fs.read ';
   if (reference === 'fs.list') return 'fs.list ';
   if (reference === 'shell.exec') return 'shell.exec --confirm ';
@@ -436,7 +453,7 @@ export function TerminalPanel() {
       if (match.index > cursor) {
         parts.push(text.slice(cursor, match.index));
       }
-      const {reference} = match;
+      const { reference } = match;
       parts.push(
         <button
           key={`${match.index}-${reference}`}

@@ -5,6 +5,7 @@ import { createApp } from './lib/create-app.js';
 import { auth } from './middlewares/auth.middleware.js';
 import { logger } from './middlewares/logger.middleware.js';
 import { agentRouter } from './routes/agent/index.js';
+import { cronsRouter } from './routes/crons/index.js';
 import { indexRouter } from './routes/index.route.js';
 import { ingestRouter } from './routes/ingest/index.js';
 import { llmRouter } from './routes/llm/index.js';
@@ -38,6 +39,7 @@ _base.onError((err, c) => {
 export const app = _base
   .route('/', indexRouter)
   .route('/api/agent', agentRouter)
+  .route('/api/crons', cronsRouter)
   .route('/api/ingest', ingestRouter)
   .route('/api/llm', llmRouter)
   .route('/api/vault', vaultRouter)
