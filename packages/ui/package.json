@@ -44,14 +44,14 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@finografic/oxc-config": "^2.8.1",
+    "@finografic/oxc-config": "^2.8.2",
     "@tailwindcss/vite": "^4.3.0",
     "@turbo/gen": "^2.9.15",
     "@types/node": "25.9.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "oxfmt": "^0.54.0",
-    "oxlint": "^1.69.0",
+    "oxfmt": "^0.55.0",
+    "oxlint": "^1.70.0",
     "oxlint-tsgolint": "^0.23.0",
     "tailwindcss": "^4.3.0",
     "typescript": "6.0.3"

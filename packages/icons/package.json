@@ -20,7 +20,7 @@
     "update:lucide-manager": "pnpm update @finografic/lucide-manager --latest"
   },
   "dependencies": {
-    "@finografic/icons": "^1.19.1",
+    "@finografic/icons": "^1.19.2",
     "lucide-react": "^1.17.0"
   },
   "devDependencies": {

@@ -273,7 +273,7 @@ Work top-to-bottom. Each route: create `src/routes/...tsx`, port markup from `.a
 
 ## Phase 7 — Tooling & ops
 
-- [x] Update `scripts/macos/com.llaab.client.plist` (or equivalent) — `pnpm dev` runs `vite` not `astro dev` (no plist in repo; `start-dev-client.sh` uses `pnpm run dev` → Vite)
+- [x] Update `scripts/macos/com.llaab.client.plist` (or equivalent)
 - [x] Update `scripts/macos/llaab-service.sh` URLs — client **3000**, server **8888**
 - [x] Update root `package.json` / `turbo.json` if needed (lint-staged: drop Prettier Astro)
 - [x] Update `.vscode/settings.json` — drop `.astro` exclusions if desired; cssvar paths unchanged

@@ -3,14 +3,15 @@
 `apps/server/src/routes/` holds every HTTP route group, each mounted in `apps/server/src/app.ts`
 under its own `/api/<group>` prefix:
 
-| Prefix        | Router         | Folder    |
-| ------------- | -------------- | --------- |
-| `/api/agent`  | `agentRouter`  | `agent/`  |
-| `/api/crons`  | `cronsRouter`  | `crons/`  |
-| `/api/ingest` | `ingestRouter` | `ingest/` |
-| `/api/llm`    | `llmRouter`    | `llm/`    |
-| `/api/vault`  | `vaultRouter`  | `vault/`  |
-| `/api/runs`   | `runsRouter`   | `runs/`   |
+| Prefix          | Router          | Folder      |
+| --------------- | --------------- | ----------- |
+| `/api/agent`    | `agentRouter`   | `agent/`    |
+| `/api/crons`    | `cronsRouter`   | `crons/`    |
+| `/api/ingest`   | `ingestRouter`  | `ingest/`   |
+| `/api/llm`      | `llmRouter`     | `llm/`      |
+| `/api/vault`    | `vaultRouter`   | `vault/`    |
+| `/api/runs`     | `runsRouter`    | `runs/`     |
+| `/api/ui-state` | `uiStateRouter` | `ui-state/` |
 
 Each group folder follows the same shape: `*.schema.ts` (Zod request/query schemas),
 `*.routes.ts` (`{ path, handler }` exports with semantic names), and `index.ts` (router wiring
@@ -164,3 +165,10 @@ Run list/detail/monitor (`GET /`, `/:id`, `/monitor`), retry (`POST /:id/retry`)
 ## Vault (`vault/`)
 
 Already documented — see `vault/AGENTS.md` for the full file map, the "adding a new route file" checklist, and the canonical idea consolidation reference.
+
+## UI State (`ui-state/`)
+
+Already documented — see `ui-state/AGENTS.md`. Generic `GET /:key` / `PUT /:key` persistence for
+UI-only settings (filter selections, panel state, etc.) backed by `configs/ui-state.json` — a
+project-local config store, not vault content. Adding a new persisted setting never needs a new
+route; see that doc's "Adding a new persisted setting" section.

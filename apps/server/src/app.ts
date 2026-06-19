@@ -10,6 +10,7 @@ import { indexRouter } from './routes/index.route.js';
 import { ingestRouter } from './routes/ingest/index.js';
 import { llmRouter } from './routes/llm/index.js';
 import { runsRouter } from './routes/runs/index.js';
+import { uiStateRouter } from './routes/ui-state/index.js';
 import { vaultRouter } from './routes/vault/index.js';
 
 // ── Base app with global middleware ───────────────────────────────────────────
@@ -43,7 +44,8 @@ export const app = _base
   .route('/api/ingest', ingestRouter)
   .route('/api/llm', llmRouter)
   .route('/api/vault', vaultRouter)
-  .route('/api/runs', runsRouter);
+  .route('/api/runs', runsRouter)
+  .route('/api/ui-state', uiStateRouter);
 
 /** Exported for Hono RPC — import as `import type { AppType } from '@llaab/server'` */
 export type AppType = typeof app;

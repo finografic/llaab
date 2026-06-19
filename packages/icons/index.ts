@@ -1,5 +1,5 @@
 /**
- * Index.ts
+ * index.ts
  *
  * !! GENERATED FILE — synchronized from icons.generated.ts.
  * !! To update: run pnpm --filter @llaab/icons sync:exports

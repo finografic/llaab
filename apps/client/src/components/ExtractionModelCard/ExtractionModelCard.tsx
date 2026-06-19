@@ -80,16 +80,24 @@ export function ExtractionModelCard({
 
     if (!hasCompactBarContent) return null;
 
+    const hasStats = promptTokens || completionTokens || (showTotalTokens && hasTokens) || durationMs;
+
     return (
       <div
         className={cn(
           'flex w-full items-center gap-3 leading-none',
-          hasModelMeta ? 'justify-between' : 'justify-center',
+          hasModelMeta ? 'justify-between' : 'justify-end',
           className,
         )}
       >
         {hasModelMeta ? (
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <div
+            className={cn(
+              'flex w-full flex-wrap items-center gap-1.5',
+              hasModelMeta ? 'justify-between' : 'justify-end',
+              className,
+            )}
+          >
             {model ? (
               <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
                 {model}
@@ -102,30 +110,33 @@ export function ExtractionModelCard({
             ) : null}
           </div>
         ) : null}
-        <div
-          className={cn(
-            'flex shrink-0 flex-wrap items-center justify-end gap-x-0 gap-y-1',
-            !hasModelMeta && 'justify-center',
-          )}
-        >
-          {promptTokens != null ? (
-            <CompactBarMetric Icon={ArrowUpIcon} value={promptTokens.toLocaleString()} />
-          ) : null}
-          {completionTokens != null ? (
-            <CompactBarMetric Icon={ArrowDownIcon} value={completionTokens.toLocaleString()} />
-          ) : null}
-          {showTotalTokens && hasTokens ? (
-            <CompactBarMetric Icon={HashIcon} value={totalTokens.toLocaleString()} />
-          ) : null}
-          {durationMs != null ? (
-            <CompactBarMetric
-              Icon={TimerIcon}
-              value={formatDuration(durationMs)}
-              iconSize="size-2.5"
-              iconClassName="leading-none"
-            />
-          ) : null}
-        </div>
+
+        {hasStats ? (
+          <div
+            className={cn(
+              'flex shrink-0 flex-wrap items-center justify-end gap-x-0 gap-y-1',
+              !hasModelMeta && 'justify-center',
+            )}
+          >
+            {promptTokens != null ? (
+              <CompactBarMetric Icon={ArrowUpIcon} value={promptTokens.toLocaleString()} />
+            ) : null}
+            {completionTokens != null ? (
+              <CompactBarMetric Icon={ArrowDownIcon} value={completionTokens.toLocaleString()} />
+            ) : null}
+            {showTotalTokens && hasTokens ? (
+              <CompactBarMetric Icon={HashIcon} value={totalTokens.toLocaleString()} />
+            ) : null}
+            {durationMs != null ? (
+              <CompactBarMetric
+                Icon={TimerIcon}
+                value={formatDuration(durationMs)}
+                iconSize="size-2.5"
+                iconClassName="leading-none"
+              />
+            ) : null}
+          </div>
+        ) : null}
       </div>
     );
   }

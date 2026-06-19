@@ -50,3 +50,17 @@ export async function apiPatch<T = unknown>(path: string, body: unknown): Promis
   }
   return res.json() as Promise<T>;
 }
+
+export async function apiPut<T = unknown>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(path, {
+    method: 'PUT',
+    credentials: 'include',
+    headers: buildApiHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error((json as { error?: string }).error ?? `PUT ${path} failed (${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}

@@ -169,8 +169,23 @@ it doesn't collapse. `SidebarSplitLayout` (`apps/client/src/components/SidebarSp
 `AppSidebarLayout` with a `PanelLeftIcon` collapse/expand toggle (`usePanelRef`) alongside the
 manual resize handle; `TranscriptsSplitView` uses it with a 600px-minimum sidebar containing the
 `TranscriptsSplitView` uses it with a 600px-minimum sidebar containing the transcript list.
-`/vault/transcripts` index auto-navigates to the latest transcript by `created_at`. Each sidebar
-list item can show `ExtractionModelCard`
+`/vault/transcripts` index auto-navigates to the latest transcript by `created_at`. Sidebar list
+items (`TranscriptsSidebar.tsx`) use the 12-col grid (`Col`/`Row`, `flex-wrap` always on) so two
+column pairs sit on one visual line each: title (left) + author (right, `space-between`) on row
+one, then numeric date (`fmtListDateNumeric`, `DD-MM-YYYY`, left) + `ExtractionModelCard` (right)
+on row two — the model card's own model/provider chips and token/latency stats still wrap onto a
+further line at narrow widths, unchanged. A `Combobox`-based (`components/ui/combobox.tsx`, Base
+UI primitive) multi-select `AuthorFilter` sits below the search input and OR-filters the list by
+author; its selection persists via `usePersistedUiState` (see below) under the
+`'transcripts.authorFilter'` key.
+
+**Persisted UI state:** `apps/server/src/routes/ui-state/` is a generic key/value store for
+UI-only settings that should survive reload/restart but aren't vault content — a project-local,
+XDG-config-style JSON file (`configs/ui-state.json`), not a database. `GET/PUT /api/ui-state/:key`
+covers every consumer; adding a new persisted setting never needs a new route. Client side:
+`usePersistedUiState<T>(key, defaultValue)` (`apps/client/src/queries/ui-state/`) wraps it in a
+TanStack Query hook. Full pattern + "how to add a new setting": `apps/server/src/routes/ui-state/AGENTS.md`.
+Each sidebar list item can show `ExtractionModelCard`
 (`apps/client/src/components/ExtractionModelCard/`) variants: `compact` for a latency-only badge,
 `compact-bar` for inline model/provider pills plus right-aligned token/latency metrics (`showModel` /
 `showTotalTokens` toggles), and `full` for the transcript detail card. Consolidate on transcript
