@@ -64,6 +64,14 @@ Things to verify end-to-end after recent orchestration and UI changes:
 
 ---
 
+## Documentation
+
+- [ ] **Populate `apps/server/src/routes/AGENTS.md` stub sections** — Crons is fully written; Agent,
+      Ingest, LLM, and Runs each currently have a one-line `> TODO — populate` placeholder plus a
+      bare route list. Fill each in with the same depth as the Crons section (what the group owns,
+      how its routes are wired/validated, any non-obvious behavior) following the file-map pattern
+      already used in `apps/server/src/routes/vault/AGENTS.md`.
+
 ## Code — Small Fixes & Polish
 
 - [ ] **Terminal follow-up UX** — vertical slice is complete and graduated to

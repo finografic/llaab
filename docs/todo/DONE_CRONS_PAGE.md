@@ -1,7 +1,8 @@
-# TODO — Crons Page and External Automation Recipes
+# DONE — Crons Page and External Automation Recipes
 
-> **Status:** Started. LLAAB exposes one-shot jobs and cron recipes, but scheduling remains
-> external. Do not add an internal scheduler, timer loop, watcher, or polling worker.
+> **Completed:** 2026-06-19 — `/crons` ships the recipe registry, `check-transcripts-consolidation`,
+> the API surface, the page (with collapsed cron-syntax legend and "Adding a Cron Recipe" section),
+> and terminal integration. Scheduling stays external; LLAAB owns no scheduler.
 
 ## Goal
 
@@ -76,16 +77,16 @@ and `failed` counts.
 - [x] Add a `Run Now` action per recipe.
 - [x] Show external install snippets for cron and launchd-style HTTP triggers.
 - [x] Show recent run links.
-- [ ] Add a small `Cron syntax` toggle near the top of `/crons`.
-- [ ] Show the cron syntax legend in a monospace block, collapsed by default.
-- [ ] Add a lightweight `Adding a Cron Recipe` section.
+- [x] Add a small `Cron syntax` toggle near the top of `/crons`.
+- [x] Show the cron syntax legend in a monospace block, collapsed by default.
+- [x] Add a lightweight `Adding a Cron Recipe` section.
 
 ## Phase 5 — Terminal Integration
 
 - [x] Add terminal presets for cron recipes.
 - [x] Support `cron.run <recipe-id>` as a typed command.
 - [x] Link completed cron invocations to `/vault/runs/:id`.
-- [ ] Allow future node/transcript pages to inject relevant cron commands.
+- [x] Allow future node/transcript pages to inject relevant cron commands.
 
 ## Adding a Cron Recipe
 

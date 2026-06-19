@@ -109,7 +109,12 @@ Crons (`/crons`) are one-shot recipes plus external trigger snippets, not an int
 The first recipe, `check-transcripts-consolidation`, scans transcripts with extracted ideas and no
 canonical set, runs missing consolidation via the shared consolidation helper, and creates durable
 cron/consolidation runs. External `cron`, `launchd`, GitHub Actions, Vercel Cron, or another
-user-owned scheduler owns timing.
+user-owned scheduler owns timing. The page leads with a collapsed `Cron syntax` legend
+(`Collapsible`, closed by default) and a collapsed `Adding a Cron Recipe` walkthrough; each recipe
+card's command + Run Now control is `CronCommandReference`
+(`apps/client/src/components/CronCommandReference/`) so other vault pages can surface a specific
+recipe's command/run button without duplicating the mutation wiring. `docs/todo/DONE_CRONS_PAGE.md`
+tracks this as complete.
 `VaultGitPanel` (`apps/client/src/components/VaultGitPanel/`) shows `git status` scoped to `vault/`
 via `@pierre/trees`'s `FileTree` (themed to the app's dark palette via its CSS custom-property
 overrides), grouped by node type, with an auto-generated commit message

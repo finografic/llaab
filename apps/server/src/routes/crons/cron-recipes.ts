@@ -33,6 +33,8 @@ export interface CronRecipeRunResult {
   }>;
 }
 
+const RECENT_TRANSCRIPTS_WINDOW_DAYS = 7;
+
 export const CRON_RECIPES: CronRecipe[] = [
   {
     id: 'check-transcripts-consolidation',
@@ -48,6 +50,24 @@ export const CRON_RECIPES: CronRecipe[] = [
       {
         label: 'cron',
         value: '0 */6 * * * curl -X POST http://localhost:8888/api/crons/check-transcripts-consolidation/run',
+      },
+    ],
+  },
+  {
+    id: 'check-recent-transcripts-consolidation',
+    title: 'Check recent transcript consolidation (7d)',
+    description: `Scan transcripts created in the last ${RECENT_TRANSCRIPTS_WINDOW_DAYS} days and consolidate any with extracted ideas but no canonical set.`,
+    command: 'cron.run check-recent-transcripts-consolidation',
+    risk: 'medium',
+    scheduleExamples: [
+      {
+        label: 'macOS launchd',
+        value: 'curl -X POST http://localhost:8888/api/crons/check-recent-transcripts-consolidation/run',
+      },
+      {
+        label: 'cron (every 6 hours)',
+        value:
+          '0 */6 * * * curl -X POST http://localhost:8888/api/crons/check-recent-transcripts-consolidation/run',
       },
     ],
   },
@@ -71,6 +91,13 @@ function transcriptHasCandidateIdeas(
     .some((run) => run.produced_node_ids.some((nodeId) => ideasById.has(nodeId)));
 }
 
+function selectScanTranscripts(recipeId: string, transcripts: TranscriptNode[]): TranscriptNode[] {
+  if (recipeId !== 'check-recent-transcripts-consolidation') return transcripts;
+
+  const cutoffMs = Date.now() - RECENT_TRANSCRIPTS_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  return transcripts.filter((transcript) => Date.parse(transcript.created_at) >= cutoffMs);
+}
+
 export async function runCronRecipe(id: string): Promise<{ runNodeId: string; result: CronRecipeRunResult }> {
   const recipe = findRecipe(id);
   if (!recipe) throw new Error(`Unknown cron recipe: ${id}`);
@@ -79,7 +106,8 @@ export async function runCronRecipe(id: string): Promise<{ runNodeId: string; re
     `cron-${recipe.id}`,
     async (_input, runNodeId): Promise<CronRecipeRunResult> => {
       const allNodes = await listNodes();
-      const transcripts = allNodes.filter((node): node is TranscriptNode => node.type === 'transcript');
+      const allTranscripts = allNodes.filter((node): node is TranscriptNode => node.type === 'transcript');
+      const transcripts = selectScanTranscripts(recipe.id, allTranscripts);
       const runs = allNodes.filter((node): node is RunNode => node.type === 'run');
       const ideasById = new Map(
         allNodes.filter((node): node is IdeaNode => node.type === 'idea').map((idea) => [idea.id, idea]),

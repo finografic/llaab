@@ -109,6 +109,10 @@ const COMMAND_ACTION_GROUPS: TerminalActionGroup[] = [
     icon: TimerIcon,
     actions: [
       { label: 'Check transcript consolidation', command: 'cron.run check-transcripts-consolidation' },
+      {
+        label: 'Check recent transcript consolidation (7d)',
+        command: 'cron.run check-recent-transcripts-consolidation',
+      },
     ],
   },
   {
