@@ -18,7 +18,10 @@ export type Command =
     }
   | {
       kind: 'agent.run';
+      executor?: 'llaab' | 'hermes';
       nodeId?: string;
+      task?: string;
+      taskId?: string;
       force?: boolean;
     }
   | {

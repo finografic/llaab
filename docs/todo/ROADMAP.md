@@ -105,6 +105,21 @@ Scope TBD pending research into Karpathy Pattern's data format requirements.
 new content appears. Agent loop registry already has the slot reserved (commented out).
 Trigger: `lab agent run` or `POST /api/agent/run` on a user-controlled schedule.
 
+### Terminal Agent and Hermes Integrations
+
+Extend the Terminal Panel as the shared command surface for local LLAAB agents, future Hermes
+tasks, and explicit automation. Commands remain typed, one-shot, and persisted as run history.
+
+Detail: [`docs/todo/TODO_TERMINAL_AGENT_INTEGRATIONS.md`](./TODO_TERMINAL_AGENT_INTEGRATIONS.md)
+
+### Crons Page and External Automation Recipes
+
+Add a `/crons` page for one-shot automation recipes, manual runs, recent run history, and external
+schedule snippets. LLAAB exposes jobs; `cron`, `launchd`, GitHub Actions, Vercel Cron, or another
+external scheduler owns timing.
+
+Detail: [`docs/todo/TODO_CRONS_PAGE.md`](./TODO_CRONS_PAGE.md)
+
 ### Article and Document Ingestion
 
 Add `/ingest/article` and `/ingest/document` only after the nav-unlocked observability pages and

@@ -145,36 +145,63 @@ automatically applies to terminal `ai.run` commands too — one source of truth.
 
 ---
 
-## Implementation phases
+## Current status
+
+- [x] `/terminal` WebSocket endpoint.
+- [x] Typed command envelopes and command bus dispatch.
+- [x] `ai.run` streams model output through the shared LLM router.
+- [x] `fs.read` and `fs.list` are vault-root sandboxed.
+- [x] `agent.run` dispatches the one-shot agent processor.
+- [x] `shell.exec` is session-gated, confirmed, and allowlisted.
+- [x] Browser Terminal Panel route exists.
+- [x] Command history works with up/down arrows and persists locally.
+- [x] Preset command buttons inject useful commands.
+- [x] `fs.list` renders structured clickable entries; click inserts the next command,
+      double-click runs it.
+- [x] Command autocomplete covers command kinds and common vault paths.
+- [x] Raw / structured / JSON debug output toggles.
+- [x] Command completion emits a clickable run link.
+- [x] Left action sidebar injects available commands into the run input.
+- [x] Executable command references in output are green, clickable command injectors.
+- [x] Terminal execution relies on durable global runs surfaced by Activity Monitor.
+
+## Next UX slice
+
+- [ ] Add UI command injection from node and transcript pages (for example,
+      "Read in Terminal" → `fs.read ...`).
+- [ ] Promote autocomplete from static suggestions to live vault path search.
+- [ ] Hot-link URLs in terminal output once URLs appear in command output streams.
+
+## Historical implementation phases
 
 ### Phase 1 — Vertical slice
 
-- [ ] xterm.js React component in `apps/client`
-- [ ] WS endpoint in `apps/server` (`/terminal`)
-- [ ] `ai.run` command → Ollama streaming → token events → terminal
+- [x] Terminal React component in `apps/client`
+- [x] WS endpoint in `apps/server` (`/terminal`)
+- [x] `ai.run` command → Ollama streaming → token events → terminal
 
 ### Phase 2 — FS + structured output
 
-- [ ] `fs.read` + `fs.list` commands
-- [ ] Clickable path rendering in terminal
-- [ ] UI → terminal injection (`insertCommand` API)
+- [x] `fs.read` + `fs.list` commands
+- [x] Clickable path rendering in terminal
+- [x] UI → terminal injection (`insertCommand` API)
 
 ### Phase 3 — Agent integration
 
-- [ ] `agent.run` command → `runSkill` → streaming stage events
-- [ ] Terminal as agent console / run log
+- [x] `agent.run` command → agent processor → event stream
+- [x] Terminal as agent console / run log
 
 ### Phase 4 — Security hardening
 
-- [ ] Capability-based session permissions
-- [ ] FS sandbox enforcement
-- [ ] Audit log via RunNode
+- [x] Capability-based command mapping
+- [x] FS sandbox enforcement
+- [x] Audit log via RunNode
 
 ### Phase 5 — Shell (optional, power mode)
 
-- [ ] `shell.exec` behind `capabilities.shell` flag
-- [ ] `node-pty` adapter with command allowlist
-- [ ] Explicit enable per dev session (never default-on)
+- [x] `shell.exec` behind explicit session enable + per-command confirm
+- [x] Shell command allowlist
+- [x] Explicit enable per dev session (never default-on)
 
 ---
 

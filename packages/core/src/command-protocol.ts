@@ -23,7 +23,10 @@ export const AiRunCommandSchema = z.object({
 
 export const AgentRunCommandSchema = z.object({
   kind: z.literal('agent.run'),
+  executor: z.enum(['llaab', 'hermes']).optional(),
   nodeId: z.string().min(1).optional(),
+  task: z.string().min(1).optional(),
+  taskId: z.string().min(1).optional(),
   force: z.boolean().optional(),
 });
 

@@ -45,7 +45,7 @@ async function persistCommandRun(input: {
   events: OutputEvent[];
   exitCode: number;
   error?: Error;
-}): Promise<void> {
+}): Promise<string> {
   const runInput = {
     capabilities: getCommandCapabilities(input.envelope.command),
     commandId: input.envelope.id,
@@ -54,17 +54,17 @@ async function persistCommandRun(input: {
   };
 
   if (input.error) {
-    await runSkill(
+    const { record } = await runSkill(
       commandRunName(input.envelope),
       async () => {
         throw input.error;
       },
       runInput,
     );
-    return;
+    return record.runNodeId;
   }
 
-  await runSkill(
+  const { record } = await runSkill(
     commandRunName(input.envelope),
     async () => ({
       commandId: input.envelope.id,
@@ -76,6 +76,7 @@ async function persistCommandRun(input: {
     }),
     runInput,
   );
+  return record.runNodeId;
 }
 
 function findHandler(command: Command, handlers: CommandHandler[]): CommandHandler | undefined {
@@ -134,6 +135,14 @@ export async function* dispatchCommandEnvelope(
     }
   }
 
-  await persistCommandRun({ envelope, events, exitCode, error });
+  const runNodeId = await persistCommandRun({ envelope, events, exitCode, error });
+  yield outputEnvelope(envelope.id, {
+    type: 'meta',
+    data: {
+      kind: 'command.run',
+      runId: runNodeId,
+      href: `/vault/runs/${runNodeId}`,
+    },
+  });
   yield outputEnvelope(envelope.id, { type: 'done', code: exitCode });
 }

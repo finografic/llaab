@@ -19,6 +19,13 @@ export const fsReadCommandHandler: CommandHandler<FsReadCommand> = {
   async *handle(command: FsReadCommand, _context: CommandContext): AsyncGenerator<OutputEvent> {
     const resolvedPath = resolveVaultPath(command.path);
     yield {
+      type: 'meta',
+      data: {
+        kind: 'fs.read',
+        path: command.path,
+      },
+    };
+    yield {
       type: 'stdout',
       data: await readFile(resolvedPath, 'utf-8'),
     };
@@ -30,16 +37,19 @@ export const fsListCommandHandler: CommandHandler<FsListCommand> = {
   async *handle(command: FsListCommand, _context: CommandContext): AsyncGenerator<OutputEvent> {
     const resolvedPath = resolveVaultPath(command.path);
     const entries = await readdir(resolvedPath, { withFileTypes: true });
+    const outputEntries = entries.map((entry) => ({
+      name: entry.name,
+      type: entry.isDirectory() ? 'directory' : 'file',
+      path: command.path === '.' ? entry.name : `${command.path.replace(/\/$/, '')}/${entry.name}`,
+    }));
+
     yield {
-      type: 'stdout',
-      data: JSON.stringify(
-        entries.map((entry) => ({
-          name: entry.name,
-          type: entry.isDirectory() ? 'directory' : 'file',
-        })),
-        null,
-        2,
-      ),
+      type: 'meta',
+      data: {
+        kind: 'fs.list',
+        path: command.path,
+        entries: outputEntries,
+      },
     };
   },
 };
