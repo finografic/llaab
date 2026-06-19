@@ -1,13 +1,14 @@
 import { CronCommandReference } from 'components/CronCommandReference/CronCommandReference';
+import { IconHeading } from 'components/IconHeading/IconHeading';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from 'components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
-import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronRightIcon, TimerIcon } from 'lucide-react';
 import { useCronRecipes } from 'queries/crons';
 import { useRuns } from 'queries/runs';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { usePageTitle } from 'lib/use-page-title';
@@ -84,7 +85,9 @@ export function CronsPage() {
           {recipes.map((recipe) => (
             <Card key={recipe.id}>
               <CardHeader>
-                <CardTitle>{recipe.title}</CardTitle>
+                <CardTitle className="text-lg">
+                  <IconHeading icon={TimerIcon}>{recipe.title}</IconHeading>
+                </CardTitle>
                 <CardDescription>{recipe.description}</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-3">
@@ -94,14 +97,16 @@ export function CronsPage() {
                   <h3 className="text-xs font-medium uppercase tracking-normal text-muted-foreground">
                     External triggers
                   </h3>
-                  {recipe.scheduleExamples.map((example) => (
-                    <div key={example.label} className="grid gap-1 rounded-md border p-3">
-                      <span className="text-sm font-medium">{example.label}</span>
-                      <code className="whitespace-pre-wrap break-all font-mono text-xs text-muted-foreground">
+                  <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md border bg-muted p-3 font-mono text-xs">
+                    {recipe.scheduleExamples.map((example, index) => (
+                      <Fragment key={example.label}>
+                        {index > 0 ? '\n\n' : ''}
+                        <span className="text-muted-foreground/60"># {example.label}</span>
+                        {'\n'}
                         {example.value}
-                      </code>
-                    </div>
-                  ))}
+                      </Fragment>
+                    ))}
+                  </pre>
                 </div>
               </CardContent>
             </Card>
