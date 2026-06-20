@@ -114,7 +114,16 @@ user-owned scheduler owns timing. The page leads with a collapsed `Cron syntax` 
 card's command + Run Now control is `CronCommandReference`
 (`apps/client/src/components/CronCommandReference/`) so other vault pages can surface a specific
 recipe's command/run button without duplicating the mutation wiring. `docs/todo/DONE_CRONS_PAGE.md`
-tracks this as complete.
+tracks this as complete. Recipe cards use the icon-prefixed-title pattern (`IconHeading`,
+`apps/client/src/components/IconHeading/`) — a generic `inline-flex` wrapper sizing its icon in
+`em` so the same component works in card titles, sidebar sections, or page titles regardless of
+font size; color/weight always come from the surrounding element, not the wrapper. Risk badges
+are color-coded via the existing `--success`/`--info`/`--warning` semantic tokens (low/medium/high).
+Each recipe also has a persisted `enabled` boolean — a kill-switch, not a "currently scheduled"
+indicator (LLAAB still can't see external scheduler state) — stored in `configs/cron-recipes.json`
+and toggled via `PATCH /api/crons/:id`; `runCronRecipe` checks it before doing any work, so Run Now,
+`cron.run`, and external triggers are all blocked the same way while disabled. `/crons` shows this
+as an active/disabled toggle (green pause / grey play) left of Run Now, not a read-only badge.
 `VaultGitPanel` (`apps/client/src/components/VaultGitPanel/`) shows `git status` scoped to `vault/`
 via `@pierre/trees`'s `FileTree` (themed to the app's dark palette via its CSS custom-property
 overrides), grouped by node type, with an auto-generated commit message
@@ -417,6 +426,14 @@ The persistent Vite client builds into `apps/client/.persistent/builds/<timestam
 only successful builds to the `apps/client/.persistent/current` symlink, and runs `vite preview`
 from that directory on failure fallback to the last known-good build. `.claude/settings.json` holds a project-level allowlist for
 `pnpm typecheck` and `launchctl list` to reduce permission prompts.
+`com.llaab.client`'s plist now points exclusively at `scripts/macos/start-persistent-client.sh`
+(the staged-build-then-preview script above) — `start-dev-client.sh` (a thin `pnpm run dev`
+wrapper) was removed since nothing referenced it once the plist stopped pointing there. Don't
+re-add a live `vite dev` launchd target; it defeats the last-known-good-build guarantee this
+section exists for. A stale Vite dependency-optimization cache (browser holds old `?v=` hashes
+after `@llaab/schemas` or another workspace package rebuilds underneath the running server) shows
+up as "Failed to fetch dynamically imported module" / "Outdated Optimize Dep" 504s — fix is
+`repair-persistent-client.sh` (bootout + bootstrap), not editing source.
 
 All workspace packages share one version (no independent publishing). `pnpm version:patch/minor/major`
 runs `scripts/bump-version.ts`, which bumps every `packages/*` and `apps/*` `package.json` to the
