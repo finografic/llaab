@@ -1,4 +1,5 @@
-import { SidebarSplitLayout } from 'components/SidebarSplitLayout/SidebarSplitLayout';
+import { useAppLeftSidebar } from 'layouts/AppLayout/AppLeftSidebarContext';
+import { useMemo } from 'react';
 import type { TranscriptExtractionRun } from './components/TranscriptDetail';
 import type { CanonicalIdeaNode, IdeaNode, TranscriptNode } from '@llaab/schemas';
 
@@ -16,8 +17,10 @@ export interface TranscriptsSplitViewProps {
 }
 
 const EMPTY_IDEAS: IdeaNode[] = [];
+const EMPTY_CANONICAL_IDEAS: CanonicalIdeaNode[] = [];
 const EMPTY_EXTRACTION_RUNS: TranscriptExtractionRun[] = [];
-const SIDEBAR_PANEL_ID = 'transcripts-sidebar';
+const TRANSCRIPTS_SIDEBAR_ID = 'vault-transcripts';
+const TRANSCRIPTS_SIDEBAR_WIDTH = '500px';
 
 function renderDetail(
   transcript: TranscriptNode | undefined,
@@ -52,21 +55,25 @@ export function TranscriptsSplitView({
   selectedId,
   transcript,
   extractedIdeas,
-  canonicalIdeas = [],
+  canonicalIdeas = EMPTY_CANONICAL_IDEAS,
   extractionRuns = EMPTY_EXTRACTION_RUNS,
 }: TranscriptsSplitViewProps) {
   const ideas = extractedIdeas ?? EMPTY_IDEAS;
+  const sidebarContent = useMemo(() => renderSidebar(transcripts, selectedId), [selectedId, transcripts]);
 
-  return (
-    <SidebarSplitLayout
-      sidebarPanelId={SIDEBAR_PANEL_ID}
-      toggleLabel="Toggle transcripts panel"
-      minSidebarWidth="500px"
-      maxSidebarWidth="500px"
-      defaultSidebarWidth="500px"
-      sidebar={renderSidebar(transcripts, selectedId)}
-    >
-      {renderDetail(transcript, ideas, canonicalIdeas, extractionRuns)}
-    </SidebarSplitLayout>
+  const leftSidebar = useMemo(
+    () => ({
+      id: TRANSCRIPTS_SIDEBAR_ID,
+      content: sidebarContent,
+      defaultOpen: true,
+      minWidth: TRANSCRIPTS_SIDEBAR_WIDTH,
+      maxWidth: TRANSCRIPTS_SIDEBAR_WIDTH,
+      defaultWidth: TRANSCRIPTS_SIDEBAR_WIDTH,
+    }),
+    [sidebarContent],
   );
+
+  useAppLeftSidebar(leftSidebar);
+
+  return renderDetail(transcript, ideas, canonicalIdeas, extractionRuns);
 }

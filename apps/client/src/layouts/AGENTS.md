@@ -42,9 +42,13 @@ styling within the same row.
   which sits left of the frequently-toggled Activity monitor). New global icon actions go here, not
   in `AppHeader`, unless they're a navigation destination.
 
+The left-sidebar toggle is owned by `SecondaryActionBar`, but only renders when the current route
+registers left-sidebar content through `useAppLeftSidebar()` (`AppLeftSidebarContext`). Routes own
+the content; `AppLayout` owns the physical panel, width, collapse state, and toggle.
+
 Dialog triggers (e.g. `CleanVaultDialog`) are fully self-contained and drop straight into
 `secondaryTrailing` with zero wiring. Sidebar-panel triggers (`VaultGitTrigger`, `RunMonitorTrigger`)
-are _not_ self-contained — there is only one sidebar slot for multiple panels, so `AppLayout` owns
+are _not_ self-contained — there is one right sidebar slot for multiple panels, so `AppLayout` owns
 which panel is active and passes each trigger its `isOpen`/`isActive` + `onToggle` as props. See
 Dialogs & sidebar toggles below.
 
@@ -72,8 +76,24 @@ right: -5px`, pill shape (`border-radius: 999px`), `border: 1px solid var(--back
   unless something _outside_ the component genuinely needs to open it imperatively; the
   self-contained shape is what lets a dialog be moved between routes/layout slots (as Clean Vault
   was) with zero call-site wiring.
-- **Sidebars** (right-hand resizable panels — RunMonitor, VaultGitPanel): `AppSidebarLayout` exposes
-  exactly one sidebar slot, so it can only ever show one panel at a time. `AppLayout` owns a single
+- **Left route sidebar** (page-owned navigation/context): route components register content with
+  `useAppLeftSidebar({ id, content, defaultOpen, minWidth, maxWidth, defaultWidth })`. Do not build a
+  nested local split layout inside a route for app-level sidebars; inject the content into
+  `AppLayout` so the global toggle and resizing behavior stay consistent.
+  - Keep `id` stable for the route feature (`vault-transcripts`, `source-browser`, etc.).
+  - Memoize `content` and the config object so registration does not churn on every render.
+  - Set `defaultOpen` only for first registration / feature changes. After mount, user toggle state
+    belongs to `AppLayout`, not the route.
+  - Width fields are CSS-unit strings (`500px`, `40%`, `32rem`). Use fixed min/max when the sidebar
+    is a fixed navigation rail, as transcripts does.
+  - The hook clears its own content on unmount. Do not manually close/collapse the panel from route
+    components.
+  - `AppLayout` intentionally updates sidebar config and open state together via a reducer, then
+    defers imperative `panel.resize()` / `panel.collapse()` with `requestAnimationFrame`. Do not
+    split route-sidebar config and open state into separate effects; `react-resizable-panels` can
+    throw "Panel constraints not found" if a dynamic panel is collapsed before its constraints are
+    registered.
+- **Right global sidebar** (RunMonitor, VaultGitPanel): `AppLayout` owns a single
   `activePanel: 'runs' | 'vaultGit' | null` state (the `SecondaryPanel` type it exports) as the one
   source of truth for "which panel, if any, is open" — not a per-feature provider. It picks the
   sidebar's content (`activePanel === 'vaultGit' ? <VaultGitPanel/> : activePanel === 'runs' ?
@@ -83,6 +103,6 @@ right: -5px`, pill shape (`border-radius: 999px`), `border: 1px solid var(--back
   active). Each panel component takes `onClose` as a prop and calls it instead of owning its own
   open state. A feature-specific provider (e.g. `RunMonitorProvider`) may still exist for that
   feature's _other_ state (selected run, dismissed runs) — just don't let it also own "is my panel
-  open", since only `AppLayout` can answer that with two panels sharing one slot.
+  open", since only `AppLayout` can answer that with multiple panels sharing one slot.
   Adding a third panel means adding a third arm to `activePanel`'s union and the slot-picking
   ternary — not a new sidebar instance.

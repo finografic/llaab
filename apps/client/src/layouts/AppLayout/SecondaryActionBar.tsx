@@ -12,6 +12,7 @@ import styles from './AppLayout.module.css';
 
 interface SecondaryActionBarProps {
   leadingAction: ReactNode;
+  hasLeftSidebar: boolean;
   isLeftSidebarOpen: boolean;
   onLeftSidebarOpenChange: (open: boolean) => void;
   activePanel: SecondaryPanel;
@@ -20,6 +21,7 @@ interface SecondaryActionBarProps {
 
 export function SecondaryActionBar({
   leadingAction,
+  hasLeftSidebar,
   isLeftSidebarOpen,
   onLeftSidebarOpenChange,
   activePanel,
@@ -32,22 +34,24 @@ export function SecondaryActionBar({
   return (
     <div className={styles.secondaryActions}>
       <div className={styles.secondaryLeading}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className={cn(styles.secondaryPanelTrigger, isLeftSidebarOpen && styles.isActive)}
-              onClick={() => onLeftSidebarOpenChange(!isLeftSidebarOpen)}
-              aria-pressed={isLeftSidebarOpen}
-              aria-label="Toggle left sidebar"
-            >
-              <PanelLeftIcon aria-hidden />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Toggle left sidebar</TooltipContent>
-        </Tooltip>
+        {hasLeftSidebar ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn(styles.secondaryPanelTrigger, isLeftSidebarOpen && styles.isActive)}
+                onClick={() => onLeftSidebarOpenChange(!isLeftSidebarOpen)}
+                aria-pressed={isLeftSidebarOpen}
+                aria-label="Toggle left sidebar"
+              >
+                <PanelLeftIcon aria-hidden />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Toggle left sidebar</TooltipContent>
+          </Tooltip>
+        ) : null}
         {leadingAction}
       </div>
       <div className={styles.secondaryTrailing}>

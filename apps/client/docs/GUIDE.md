@@ -35,6 +35,40 @@ apps/client/
 2. Register in `src/router.tsx` with optional `handle: { title: '…' }` for the app header.
 3. For vault routes, nest under the `VaultLayout` branch (session loader redirects to login).
 
+## Route left sidebars
+
+`AppLayout` owns the physical app sidebars. Routes that need a left sidebar should inject their
+sidebar content into the global shell with `useAppLeftSidebar`, instead of creating a nested local
+split layout.
+
+```tsx
+import { useAppLeftSidebar } from 'layouts/AppLayout/AppLeftSidebarContext';
+import { useMemo } from 'react';
+
+export function MyRoute() {
+  const sidebar = useMemo(
+    () => ({
+      id: 'my-route',
+      content: <MyRouteSidebar />,
+      defaultOpen: true,
+      minWidth: '420px',
+      maxWidth: '560px',
+      defaultWidth: '480px',
+    }),
+    [],
+  );
+
+  useAppLeftSidebar(sidebar);
+
+  return <MyRouteDetail />;
+}
+```
+
+The left-sidebar toggle in the secondary action bar only appears while the current route has
+registered sidebar content. `AppLayout` handles resize, collapse, default-open behavior, and cleanup
+when the route unmounts. `/vault/transcripts` is the reference implementation: its transcript list is
+registered as route-owned left-sidebar content while the transcript detail remains the route body.
+
 ## Data fetching
 
 Use query hooks under `queries/*` — never import `@llaab/core` or `@llaab/ingestion` in the

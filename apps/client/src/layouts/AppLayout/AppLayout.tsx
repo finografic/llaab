@@ -4,16 +4,16 @@ import { AppHeader } from 'components/AppHeader/AppHeader';
 import { CanonicalIdeaConflictWatcher } from 'components/CanonicalIdeaConflictWatcher';
 import { RunMonitor } from 'components/RunMonitor';
 import { AppSidebarLayout } from 'components/ui/app-sidebar-dual-layout';
-import { Button } from 'components/ui/button';
 import { usePanelRef } from 'components/ui/resizable';
 import { TooltipProvider } from 'components/ui/tooltip';
 import { VaultGitPanel } from 'components/VaultGitPanel';
-import { XIcon } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { Outlet, useMatches } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import type { AppLeftSidebarConfig } from './AppLeftSidebarContext';
+import type { ReactNode, SetStateAction } from 'react';
 
 import styles from './AppLayout.module.css';
+import { AppLeftSidebarContext } from './AppLeftSidebarContext';
 import { SecondaryActionBar } from './SecondaryActionBar';
 import { SecondaryActionBarContext } from './SecondaryActionBarContext';
 
@@ -25,20 +25,27 @@ export interface RouteHandle {
 /** Which panel currently occupies the single right-hand sidebar slot, if any. */
 export type SecondaryPanel = 'runs' | 'vaultGit' | null;
 
-function LeftSidebarPanel({ onClose }: { onClose: () => void }) {
-  return (
-    <aside className={styles.leftPanel}>
-      <header className={styles.leftPanelHeader}>
-        <div>
-          <h2 className={styles.leftPanelTitle}>Left Sidebar</h2>
-          <p className={styles.leftPanelDescription}>Ready for the next navigation or context panel.</p>
-        </div>
-        <Button type="button" variant="ghost" size="icon" aria-label="Close left sidebar" onClick={onClose}>
-          <XIcon aria-hidden />
-        </Button>
-      </header>
-    </aside>
-  );
+interface LeftSidebarState {
+  config: AppLeftSidebarConfig | null;
+  isOpen: boolean;
+}
+
+type LeftSidebarAction =
+  | { type: 'setConfig'; value: SetStateAction<AppLeftSidebarConfig | null> }
+  | { type: 'setOpen'; open: boolean };
+
+function leftSidebarReducer(state: LeftSidebarState, action: LeftSidebarAction): LeftSidebarState {
+  if (action.type === 'setOpen') {
+    return { ...state, isOpen: action.open };
+  }
+
+  const nextConfig = typeof action.value === 'function' ? action.value(state.config) : action.value;
+  const isNewSidebar = nextConfig?.id !== state.config?.id;
+
+  return {
+    config: nextConfig,
+    isOpen: isNewSidebar ? (nextConfig?.defaultOpen ?? false) : nextConfig !== null && state.isOpen,
+  };
 }
 
 export function AppLayout() {
@@ -47,23 +54,41 @@ export function AppLayout() {
   const { fullBleed = false } = handle ?? {};
   const leftSidebarPanelRef = usePanelRef();
   const rightSidebarPanelRef = usePanelRef();
-  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+  const [leftSidebarState, dispatchLeftSidebar] = useReducer(leftSidebarReducer, {
+    config: null,
+    isOpen: false,
+  });
   const [activePanel, setActivePanel] = useState<SecondaryPanel>(null);
   const [leadingAction, setLeadingAction] = useState<ReactNode>(null);
+  const leftSidebar = leftSidebarState.config;
+  const isLeftSidebarOpen = leftSidebarState.isOpen;
+  const setLeftSidebar = useCallback((value: SetStateAction<AppLeftSidebarConfig | null>) => {
+    dispatchLeftSidebar({ type: 'setConfig', value });
+  }, []);
+  const setIsLeftSidebarOpen = useCallback((open: boolean) => {
+    dispatchLeftSidebar({ type: 'setOpen', open });
+  }, []);
+  const leftSidebarValue = useMemo(() => ({ setLeftSidebar }), [setLeftSidebar]);
   const secondaryActionBarValue = useMemo(() => ({ setLeadingAction }), []);
   const isRightSidebarOpen = activePanel !== null;
 
   useEffect(() => {
-    const panel = leftSidebarPanelRef.current;
-    if (!panel) return;
+    if (!leftSidebar) return;
 
-    if (isLeftSidebarOpen) {
-      panel.resize('430px');
-      return;
-    }
+    const animationFrame = window.requestAnimationFrame(() => {
+      const panel = leftSidebarPanelRef.current;
+      if (!panel) return;
 
-    panel.collapse();
-  }, [isLeftSidebarOpen, leftSidebarPanelRef]);
+      if (isLeftSidebarOpen) {
+        panel.resize(leftSidebar.defaultWidth ?? '430px');
+        return;
+      }
+
+      panel.collapse();
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [isLeftSidebarOpen, leftSidebar, leftSidebarPanelRef]);
 
   useEffect(() => {
     const panel = rightSidebarPanelRef.current;
@@ -90,9 +115,9 @@ export function AppLayout() {
             collapsedSize="0%"
             leftCollapsible
             leftCollapsedSize="0%"
-            leftMinWidth="360px"
-            leftMaxWidth="560px"
-            leftDefaultWidth={isLeftSidebarOpen ? '430px' : '0%'}
+            leftMinWidth={leftSidebar?.minWidth ?? '360px'}
+            leftMaxWidth={leftSidebar?.maxWidth ?? '560px'}
+            leftDefaultWidth={isLeftSidebarOpen ? (leftSidebar?.defaultWidth ?? '430px') : '0%'}
             minWidth="360px"
             maxWidth="560px"
             defaultWidth={isRightSidebarOpen ? '430px' : '0%'}
@@ -112,13 +137,14 @@ export function AppLayout() {
             header={
               <SecondaryActionBar
                 leadingAction={leadingAction}
+                hasLeftSidebar={leftSidebar !== null}
                 isLeftSidebarOpen={isLeftSidebarOpen}
                 onLeftSidebarOpenChange={setIsLeftSidebarOpen}
                 activePanel={activePanel}
                 onActivePanelChange={setActivePanel}
               />
             }
-            leftSidebar={<LeftSidebarPanel onClose={() => setIsLeftSidebarOpen(false)} />}
+            leftSidebar={leftSidebar?.content}
             sidebar={
               activePanel === 'vaultGit' ? (
                 <VaultGitPanel onClose={() => setActivePanel(null)} />
@@ -128,7 +154,9 @@ export function AppLayout() {
             }
           >
             <main className={cn(styles.pageContent, fullBleed && styles.pageContentBleed)}>
-              <Outlet />
+              <AppLeftSidebarContext.Provider value={leftSidebarValue}>
+                <Outlet />
+              </AppLeftSidebarContext.Provider>
             </main>
           </AppSidebarLayout>
         </TooltipProvider>
