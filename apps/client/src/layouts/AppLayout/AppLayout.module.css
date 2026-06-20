@@ -39,12 +39,58 @@
   margin-left: auto;
 }
 
+.secondaryPanelTrigger {
+  position: relative;
+}
+
+.secondaryPanelTrigger:hover,
+.secondaryPanelTrigger:focus-visible,
+.secondaryPanelTrigger[aria-pressed='true'],
+.secondaryPanelTrigger.isActive {
+  color: var(--accent-hover);
+}
+
 .appInset {
   background: var(--bg);
 }
 
+.leftSidebar,
 .runMonitorSidebar {
   background: var(--bg-secondary);
+}
+
+.leftPanel {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+.leftPanelHeader {
+  display: flex;
+  min-height: var(--space-16);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--space-4);
+}
+
+.leftPanelTitle {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-ui);
+  font-weight: 600;
+}
+
+.leftPanelDescription {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.4;
 }
 
 .pageContent {
