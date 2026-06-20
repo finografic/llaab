@@ -39,11 +39,20 @@ export interface IngestFormProps {
 const INGEST_YOUTUBE_SKILL_ID = 'ingest-youtube';
 
 /**
- * Shared throttle between queued ingest items — applied both before an automatic extraction
- * retry and between finishing one queued item and starting the next, so the pipeline doesn't
- * hammer the extraction LLM/server back-to-back.
+ * Shared throttle between queued ingest items — applied before an automatic retry and between
+ * finishing one queued item and starting the next, so the pipeline doesn't hammer the
+ * extraction LLM/YouTube fetch back-to-back.
  */
 const QUEUE_GLOBAL_TIMEOUT_MS = 2000;
+
+/** Extraction already has a saved transcript to retry against — one auto-retry is enough. */
+const EXTRACTION_MAX_RETRIES = 1;
+
+/**
+ * Transcript fetch hits YouTube directly, which is more prone to transient failures (rate
+ * limiting, network blips) than a local extraction retry — a separate, larger retry budget.
+ */
+const TRANSCRIPT_FETCH_MAX_RETRIES = 3;
 
 const EXTRACTION_SUCCEEDED_ENOUGH = new Set<ExtractionPhase>(['success', 'existing', 'extractable']);
 
@@ -90,7 +99,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const [queue, setQueue] = useState<QueuedIngestItem[]>([]);
   const queueModeActiveRef = useRef(false);
-  const extractionAutoRetriedRef = useRef(false);
+  const extractionRetryCountRef = useRef(0);
+  const transcriptFetchRetryCountRef = useRef(0);
+  /**
+   * The `{ url, tags }` of whatever item is currently processing — retries resubmit this, not
+   * the live form fields, since those may already hold a draft for a *later* item.
+   */
+  const currentItemRef = useRef<{ url: string; tags: string[] } | null>(null);
 
   const {
     register,
@@ -235,6 +250,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const runIngest = useCallback(
     async (trimmedUrl: string, allTags: string[]) => {
+      currentItemRef.current = { url: trimmedUrl, tags: allTags };
       const now = Date.now();
       setTranscriptPhase('processing');
       setTranscriptData(null);
@@ -252,7 +268,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setRunStartedAt(now);
       setTotalElapsedSecs(null);
       setBusy(true);
-      extractionAutoRetriedRef.current = false;
 
       // The skill persists the run node once the request lands server-side, so the monitor can show
       // it as "running" almost immediately — but an invalidate fired in the same tick as the request
@@ -346,6 +361,17 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setQueue((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
+  // Retry counters belong to one item's lifetime, not to runIngest's call count — only a
+  // genuinely new item (first submit, or the next one dequeued) resets them.
+  const startNewItem = useCallback(
+    (url: string, itemTags: string[]) => {
+      extractionRetryCountRef.current = 0;
+      transcriptFetchRetryCountRef.current = 0;
+      void runIngest(url, itemTags);
+    },
+    [runIngest],
+  );
+
   const onSubmit = ({ url }: FormValues) => {
     const trimmedUrl = url.trim();
     const detectedSourceKind = classifyUrl(trimmedUrl);
@@ -373,11 +399,12 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
     setTags([]);
     setTagInput('');
-    void runIngest(trimmedUrl, allTags);
+    startNewItem(trimmedUrl, allTags);
   };
 
   const onRetryIngest = () => {
-    handleSubmit(onSubmit)();
+    const { current } = currentItemRef;
+    if (current) void runIngest(current.url, current.tags);
   };
 
   const onRetryExtract = useCallback(async () => {
@@ -396,32 +423,63 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setBusy(false);
   }, [extractTranscript, runStartedAt, transcriptData]);
 
-  // Auto-retry a failed extraction once (after the global queue throttle) when the queue has
-  // ever been engaged this session — outside queue mode, extraction failures still wait for a
-  // manual Retry click.
+  // Auto-retry a failed extraction (after the global queue throttle), up to EXTRACTION_MAX_RETRIES,
+  // when the queue has ever been engaged this session — outside queue mode, extraction failures
+  // still wait for a manual Retry click.
   useEffect(() => {
     if (durableBusy) return;
     if (extractionPhase !== 'failed') return;
     if (!queueModeActiveRef.current) return;
-    if (extractionAutoRetriedRef.current) return;
+    if (extractionRetryCountRef.current >= EXTRACTION_MAX_RETRIES) return;
 
-    extractionAutoRetriedRef.current = true;
+    // Increment when the retry actually fires, not when it's scheduled — the skip-to-next effect
+    // below reads this same counter in the same render, so incrementing early would make it see
+    // the retry as already used up one attempt before it really ran.
     const timer = setTimeout(() => {
+      extractionRetryCountRef.current += 1;
       void onRetryExtract();
     }, QUEUE_GLOBAL_TIMEOUT_MS);
 
     return () => clearTimeout(timer);
   }, [durableBusy, extractionPhase, onRetryExtract]);
 
-  // Skip the manual Keep click when extraction succeeded (or came back extractable/existing —
-  // not a failure) and another item is already queued; the next effect advances the queue.
+  // Auto-retry a failed transcript fetch (after the global queue throttle), up to
+  // TRANSCRIPT_FETCH_MAX_RETRIES, when the queue has ever been engaged this session.
+  useEffect(() => {
+    if (durableBusy) return;
+    if (transcriptPhase !== 'failed') return;
+    if (!queueModeActiveRef.current) return;
+    if (transcriptFetchRetryCountRef.current >= TRANSCRIPT_FETCH_MAX_RETRIES) return;
+
+    const timer = setTimeout(() => {
+      transcriptFetchRetryCountRef.current += 1;
+      const { current } = currentItemRef;
+      if (current) void runIngest(current.url, current.tags);
+    }, QUEUE_GLOBAL_TIMEOUT_MS);
+
+    return () => clearTimeout(timer);
+  }, [durableBusy, transcriptPhase, runIngest]);
+
+  // Move on without waiting for the user when there's a next item queued and this one is done —
+  // either because it succeeded (or came back extractable/existing — not a failure), or because
+  // its retry budget is exhausted and it's still failing. The transcript/extraction RunNode for
+  // every attempt (including failed ones) already shows up in Activity Monitor / the runs table
+  // regardless of how this resolves.
   useEffect(() => {
     if (durableBusy) return;
     if (queue.length === 0) return;
 
+    const transcriptFetchExhausted =
+      transcriptPhase === 'failed' && transcriptFetchRetryCountRef.current >= TRANSCRIPT_FETCH_MAX_RETRIES;
+
     const transcriptDone = transcriptPhase === 'saved' || transcriptPhase === 'reused';
-    if (!transcriptDone) return;
-    if (!EXTRACTION_SUCCEEDED_ENOUGH.has(extractionPhase)) return;
+    const extractionSucceededEnough = transcriptDone && EXTRACTION_SUCCEEDED_ENOUGH.has(extractionPhase);
+    const extractionFailedExhausted =
+      transcriptDone &&
+      extractionPhase === 'failed' &&
+      extractionRetryCountRef.current >= EXTRACTION_MAX_RETRIES;
+
+    if (!transcriptFetchExhausted && !extractionSucceededEnough && !extractionFailedExhausted) return;
 
     resetCurrentItem({ preserveDraft: true });
   }, [durableBusy, queue.length, transcriptPhase, extractionPhase, resetCurrentItem]);
@@ -437,13 +495,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setQueue((prev) => {
         if (prev.length === 0) return prev;
         const [head, ...rest] = prev;
-        void runIngest(head.url, head.tags);
+        startNewItem(head.url, head.tags);
         return rest;
       });
     }, QUEUE_GLOBAL_TIMEOUT_MS);
 
     return () => clearTimeout(timer);
-  }, [durableBusy, transcriptPhase, queue.length, runIngest]);
+  }, [durableBusy, transcriptPhase, queue.length, startNewItem]);
 
   const onKeep = () => resetForm();
 
@@ -462,10 +520,9 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   };
 
   const onRetry = () => {
-    const currentUrl = urlValue;
+    const { current } = currentItemRef;
     onDiscard().then(() => {
-      setValue('url', currentUrl, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-      handleSubmit(onSubmit)();
+      if (current) startNewItem(current.url, current.tags);
     });
   };
 

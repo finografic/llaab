@@ -263,18 +263,30 @@ token-aware runtime harness yet.
 `IngestForm` still processes one item at a time (one `transcriptPhase`/`extractionPhase` state
 machine), but submitting/dropping a YouTube URL while another is `durableBusy` no longer blocks —
 it pushes a `QueuedIngestItem` onto a local `queue` array instead (URL field button relabels to
-"Add to Queue"; `IngestQueueList` shows what's waiting with a per-item Remove). Three effects
-drive the chain once queue mode is active: (1) a failed extraction auto-retries exactly once after
-a shared `QUEUE_GLOBAL_TIMEOUT_MS` (2000ms) throttle — only if the queue has ever been engaged
-this session, otherwise extraction failures still wait for the manual Retry button; (2) once
-extraction reaches a non-failure terminal phase (`success`/`existing`/`extractable`) and there's
-already a next item queued, the form resets itself without showing Keep/Discard (the click is
-literally skipped, not simulated); (3) a separate effect then dequeues and starts the next item
-after the same throttle, so items never fire back-to-back. The _last_ item in a batch is left
-showing the normal manual Keep/Discard/Retry footer — auto-advance only fires when something is
-already waiting. `resetCurrentItem({ preserveDraft: true })` is the variant the auto-advance path
-uses — it does **not** clear the URL/tag fields, since by the time it fires the user may already
-be typing/dropping a later item into them.
+"Add to Queue"; `IngestQueueList` shows what's waiting with a per-item Remove). Four effects drive
+the chain once queue mode is active (the queue has been engaged at least once this session — set
+by `queueModeActiveRef`, checked via `durableBusy`/`transcriptPhase`/`extractionPhase`): (1) a
+failed extraction auto-retries up to `EXTRACTION_MAX_RETRIES` (1) and (2) a failed transcript
+fetch auto-retries up to the separate, larger `TRANSCRIPT_FETCH_MAX_RETRIES` (3) — fetching from
+YouTube directly is more prone to transient failures than a local extraction retry — each retry
+delayed by the shared `QUEUE_GLOBAL_TIMEOUT_MS` (2000ms) throttle; outside queue mode, both
+failure types still wait for their manual Retry button. The retry counter increments _inside_ the
+`setTimeout` callback, not when scheduling it — incrementing eagerly would let effect (3) below
+read the post-increment count in the same render and detect "exhausted" one retry early. (3) Once
+either retry budget is exhausted and still failing, or extraction reaches a non-failure terminal
+phase (`success`/`existing`/`extractable`), and there's already a next item queued, the form
+resets itself without showing Keep/Discard (the click is literally skipped, not simulated) — every
+attempt, including failed ones, still persists its own `RunNode` via `runSkill`, so full retry
+history is visible in Activity Monitor / the runs table regardless of how an item resolves. (4) A
+separate effect then dequeues and starts the next item after the same throttle, so items never
+fire back-to-back. The _last_ item in a batch is left showing the normal manual
+Keep/Discard/Retry footer (or, for an exhausted transcript-fetch failure, just the inline retry —
+there's no Discard for a failure with nothing to discard) — auto-advance only fires when something
+is already waiting. `resetCurrentItem({ preserveDraft: true })` is the variant the auto-advance
+path uses — it does **not** clear the URL/tag fields, since by the time it fires the user may
+already be typing/dropping a later item into them. Retries always resubmit `currentItemRef`'s
+tracked `{ url, tags }`, not the live form fields — those may already hold a draft for a
+_different_, not-yet-started item.
 
 ## LLM Layer
 
