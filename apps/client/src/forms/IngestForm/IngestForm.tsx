@@ -11,9 +11,15 @@ import {
   useExtractTranscript,
   useIngestYoutube,
 } from 'queries/transcripts';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import type { ExtractionPhase, FormValues, TranscriptData, TranscriptPhase } from './ingest-form.types';
+import type {
+  ExtractionPhase,
+  FormValues,
+  QueuedIngestItem,
+  TranscriptData,
+  TranscriptPhase,
+} from './ingest-form.types';
 import type { RunMonitorItem } from '@llaab/schemas';
 import type { ExtractTranscriptResult } from 'queries/transcripts';
 
@@ -23,6 +29,7 @@ import { KNOWN_TAGS, normalizeTag } from 'constants/taxonomy.constants';
 
 import { TagInputField } from '../TagInputField';
 import { IngestPipeline } from './components/IngestPipeline';
+import { IngestQueueList } from './components/IngestQueueList';
 import { classifyUrl, extractDroppedUrl, isHttpUrl } from './ingest-form.utils';
 
 export interface IngestFormProps {
@@ -30,6 +37,15 @@ export interface IngestFormProps {
 }
 
 const INGEST_YOUTUBE_SKILL_ID = 'ingest-youtube';
+
+/**
+ * Shared throttle between queued ingest items — applied both before an automatic extraction
+ * retry and between finishing one queued item and starting the next, so the pipeline doesn't
+ * hammer the extraction LLM/server back-to-back.
+ */
+const QUEUE_GLOBAL_TIMEOUT_MS = 2000;
+
+const EXTRACTION_SUCCEEDED_ENOUGH = new Set<ExtractionPhase>(['success', 'existing', 'extractable']);
 
 function parseRunInputSummary(value?: string): { url?: string } | null {
   if (!value) return null;
@@ -72,6 +88,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [totalElapsedSecs, setTotalElapsedSecs] = useState<number | null>(null);
 
+  const [queue, setQueue] = useState<QueuedIngestItem[]>([]);
+  const queueModeActiveRef = useRef(false);
+  const extractionAutoRetriedRef = useRef(false);
+
   const {
     register,
     handleSubmit,
@@ -102,18 +122,27 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     return activeRuns[0] ?? null;
   }, [monitorData?.active, urlValue]);
   const durableBusy = busy || activeIngestRun != null;
-  const canSubmit = sourceKind === 'youtube' && !durableBusy;
-  const buttonLabel = durableBusy ? 'Processing…' : sourceKind === 'youtube' ? 'Ingest YouTube' : 'Ingest';
+  // A youtube URL is always submittable — while busy, submitting queues it instead of running it.
+  const canSubmit = sourceKind === 'youtube';
+  const buttonLabel = durableBusy
+    ? sourceKind === 'youtube'
+      ? 'Add to Queue'
+      : 'Processing…'
+    : sourceKind === 'youtube'
+      ? 'Ingest YouTube'
+      : 'Ingest';
 
   const dropzoneDesc = useMemo(() => {
     if (sourceKind === 'youtube') {
-      return 'YouTube video URL detected.\nClick Ingest YouTube to fetch the transcript.';
+      return durableBusy
+        ? 'YouTube video URL detected.\nA video is already processing — this will be added to the queue.'
+        : 'YouTube video URL detected.\nClick Ingest YouTube to fetch the transcript.';
     }
     if (sourceKind === 'webpage') {
       return 'Website or online reference detected. Drop recognition works; this source type is not yet wired for ingestion.';
     }
     return 'The form classifies the source asset and adapts the ingest action.';
-  }, [sourceKind]);
+  }, [sourceKind, durableBusy]);
 
   useEffect(() => {
     const preventWindowDropNavigation = (event: DragEvent) => {
@@ -130,30 +159,46 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     };
   }, []);
 
-  const resetForm = useCallback(() => {
-    setValue('url', '');
-    setTags([]);
-    setLockedTags([]);
-    setTagInput('');
-    setBusy(false);
-    setTranscriptPhase('idle');
-    setTranscriptData(null);
-    setTranscriptError(null);
-    setTranscriptStartedAt(null);
-    setTranscriptElapsedSecs(null);
-    setExtractionPhase('idle');
-    setExtractionIdeas([]);
-    setExtractionError(null);
-    setExtractionStartedAt(null);
-    setExtractionElapsedSecs(null);
-    setRunStartedAt(null);
-    setTotalElapsedSecs(null);
-    setApiError(null);
-    setDropMessage(null);
-  }, [setValue]);
+  /**
+   * `preserveDraft` skips clearing the URL field and tag draft — used when the form resets
+   * itself automatically between queued items, since the live fields may already hold what the
+   * user is typing/dropping for a *later* item, not the one that just finished.
+   */
+  const resetCurrentItem = useCallback(
+    (options?: { preserveDraft?: boolean }) => {
+      if (!options?.preserveDraft) {
+        setValue('url', '');
+        setTags([]);
+        setTagInput('');
+      }
+      setLockedTags([]);
+      setBusy(false);
+      setTranscriptPhase('idle');
+      setTranscriptData(null);
+      setTranscriptError(null);
+      setTranscriptStartedAt(null);
+      setTranscriptElapsedSecs(null);
+      setExtractionPhase('idle');
+      setExtractionIdeas([]);
+      setExtractionError(null);
+      setExtractionStartedAt(null);
+      setExtractionElapsedSecs(null);
+      setRunStartedAt(null);
+      setTotalElapsedSecs(null);
+      setApiError(null);
+      setDropMessage(null);
+    },
+    [setValue],
+  );
+
+  const resetForm = useCallback(() => resetCurrentItem(), [resetCurrentItem]);
 
   useEffect(() => {
-    const handleReset = () => resetForm();
+    // Vault Clean wiped the underlying nodes — any queued items are no longer valid either.
+    const handleReset = () => {
+      resetForm();
+      setQueue([]);
+    };
     window.addEventListener(INGEST_FORM_RESET_EVENT, handleReset);
     return () => window.removeEventListener(INGEST_FORM_RESET_EVENT, handleReset);
   }, [resetForm]);
@@ -188,7 +233,120 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setExtractionError(result.error ?? 'Unknown error.');
   };
 
-  const onSubmit = async ({ url }: FormValues) => {
+  const runIngest = useCallback(
+    async (trimmedUrl: string, allTags: string[]) => {
+      const now = Date.now();
+      setTranscriptPhase('processing');
+      setTranscriptData(null);
+      setTranscriptError(null);
+      setTranscriptStartedAt(now);
+      setTranscriptElapsedSecs(null);
+      setExtractionPhase('waiting');
+      setExtractionIdeas([]);
+      setExtractionError(null);
+      setExtractionStartedAt(null);
+      setExtractionElapsedSecs(null);
+      setApiError(null);
+      setDropMessage(null);
+      setLockedTags([]);
+      setRunStartedAt(now);
+      setTotalElapsedSecs(null);
+      setBusy(true);
+      extractionAutoRetriedRef.current = false;
+
+      // The skill persists the run node once the request lands server-side, so the monitor can show
+      // it as "running" almost immediately — but an invalidate fired in the same tick as the request
+      // can race ahead of that write and refetch an empty "active" list, which then backs the
+      // monitor's poll interval off to idle for the rest of the run. Refresh now and again shortly
+      // after to make sure we catch the run once it's persisted.
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
+      }, 1000);
+
+      let json: Awaited<ReturnType<typeof ingestYoutube.mutateAsync>>;
+
+      try {
+        json = await ingestYoutube.mutateAsync({ url: trimmedUrl, tags: allTags });
+      } catch (error) {
+        setTranscriptPhase('failed');
+        setTranscriptError(error instanceof Error ? error.message : 'Ingestion failed.');
+        setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
+        setExtractionPhase('waiting');
+        setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
+        setBusy(false);
+        return;
+      }
+
+      if (!json.success || !json.result) {
+        setTranscriptPhase('failed');
+        setTranscriptError(json.error ?? 'Ingestion failed.');
+        setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
+        setExtractionPhase('waiting');
+        setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
+        setBusy(false);
+        return;
+      }
+
+      const transcriptId = json.result.id;
+      const filename = json.result.path.split('/').pop() ?? json.result.path;
+      const reused = json.result.reused ?? false;
+
+      setTranscriptData({ id: transcriptId, filename });
+      setTranscriptPhase(reused ? 'reused' : 'saved');
+      setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
+
+      const extractionStart = Date.now();
+      setExtractionStartedAt(extractionStart);
+
+      try {
+        if (json.extraction) {
+          const ideas = await fetchExistingIdeas(transcriptId);
+          setExtractionPhase(ideas.length > 0 ? 'success' : 'extractable');
+          setExtractionIdeas(ideas);
+          const nodeTags = await fetchNodeTags(transcriptId);
+          setLockedTags(nodeTags);
+        } else if (json.extractionError) {
+          if (json.extractionError.includes('already exists')) {
+            const ideas = await fetchExistingIdeas(transcriptId);
+            setExtractionPhase(ideas.length > 0 ? 'existing' : 'extractable');
+            setExtractionIdeas(ideas);
+          } else {
+            setExtractionPhase('failed');
+            setExtractionError(json.extractionError);
+          }
+          const nodeTags = await fetchNodeTags(transcriptId);
+          setLockedTags(nodeTags);
+        } else {
+          setExtractionPhase('extractable');
+          if (reused) {
+            const nodeTags = await fetchNodeTags(transcriptId);
+            setLockedTags(nodeTags);
+          }
+        }
+      } catch (error) {
+        setExtractionPhase('failed');
+        setExtractionError(error instanceof Error ? error.message : 'Could not load extraction results.');
+      }
+
+      setExtractionElapsedSecs(Math.floor((Date.now() - extractionStart) / 1000));
+      setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
+      setBusy(false);
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
+    },
+    [ingestYoutube, queryClient],
+  );
+
+  const enqueueUrl = useCallback((url: string, itemTags: string[]) => {
+    queueModeActiveRef.current = true;
+    setQueue((prev) => [...prev, { id: crypto.randomUUID(), url, tags: itemTags }]);
+  }, []);
+
+  const removeFromQueue = useCallback((id: string) => {
+    setQueue((prev) => prev.filter((item) => item.id !== id));
+  }, []);
+
+  const onSubmit = ({ url }: FormValues) => {
     const trimmedUrl = url.trim();
     const detectedSourceKind = classifyUrl(trimmedUrl);
 
@@ -201,115 +359,28 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       return;
     }
 
-    const now = Date.now();
-    setTranscriptPhase('processing');
-    setTranscriptData(null);
-    setTranscriptError(null);
-    setTranscriptStartedAt(now);
-    setTranscriptElapsedSecs(null);
-    setExtractionPhase('waiting');
-    setExtractionIdeas([]);
-    setExtractionError(null);
-    setExtractionStartedAt(null);
-    setExtractionElapsedSecs(null);
-    setApiError(null);
-    setDropMessage(null);
-    setLockedTags([]);
-    setRunStartedAt(now);
-    setTotalElapsedSecs(null);
-    setBusy(true);
-
     const pendingTag = tagInput.trim() ? normalizeTag(tagInput) : null;
     const allTags = pendingTag ? [...new Set([...tags, pendingTag])] : tags;
 
-    // The skill persists the run node once the request lands server-side, so the monitor can show
-    // it as "running" almost immediately — but an invalidate fired in the same tick as the request
-    // can race ahead of that write and refetch an empty "active" list, which then backs the
-    // monitor's poll interval off to idle for the rest of the run. Refresh now and again shortly
-    // after to make sure we catch the run once it's persisted.
-    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
-    setTimeout(() => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
-    }, 1000);
-
-    let json: Awaited<ReturnType<typeof ingestYoutube.mutateAsync>>;
-
-    try {
-      json = await ingestYoutube.mutateAsync({ url: trimmedUrl, tags: allTags });
-    } catch (error) {
-      setTranscriptPhase('failed');
-      setTranscriptError(error instanceof Error ? error.message : 'Ingestion failed.');
-      setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
-      setExtractionPhase('waiting');
-      setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
-      setBusy(false);
+    if (durableBusy) {
+      enqueueUrl(trimmedUrl, allTags);
+      setValue('url', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+      setTags([]);
+      setTagInput('');
+      setApiError(null);
       return;
     }
 
-    if (!json.success || !json.result) {
-      setTranscriptPhase('failed');
-      setTranscriptError(json.error ?? 'Ingestion failed.');
-      setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
-      setExtractionPhase('waiting');
-      setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
-      setBusy(false);
-      return;
-    }
-
-    const transcriptId = json.result.id;
-    const filename = json.result.path.split('/').pop() ?? json.result.path;
-    const reused = json.result.reused ?? false;
-
-    setTranscriptData({ id: transcriptId, filename });
-    setTranscriptPhase(reused ? 'reused' : 'saved');
-    setTranscriptElapsedSecs(Math.floor((Date.now() - now) / 1000));
     setTags([]);
     setTagInput('');
-
-    const extractionStart = Date.now();
-    setExtractionStartedAt(extractionStart);
-
-    try {
-      if (json.extraction) {
-        const ideas = await fetchExistingIdeas(transcriptId);
-        setExtractionPhase(ideas.length > 0 ? 'success' : 'extractable');
-        setExtractionIdeas(ideas);
-        const nodeTags = await fetchNodeTags(transcriptId);
-        setLockedTags(nodeTags);
-      } else if (json.extractionError) {
-        if (json.extractionError.includes('already exists')) {
-          const ideas = await fetchExistingIdeas(transcriptId);
-          setExtractionPhase(ideas.length > 0 ? 'existing' : 'extractable');
-          setExtractionIdeas(ideas);
-        } else {
-          setExtractionPhase('failed');
-          setExtractionError(json.extractionError);
-        }
-        const nodeTags = await fetchNodeTags(transcriptId);
-        setLockedTags(nodeTags);
-      } else {
-        setExtractionPhase('extractable');
-        if (reused) {
-          const nodeTags = await fetchNodeTags(transcriptId);
-          setLockedTags(nodeTags);
-        }
-      }
-    } catch (error) {
-      setExtractionPhase('failed');
-      setExtractionError(error instanceof Error ? error.message : 'Could not load extraction results.');
-    }
-
-    setExtractionElapsedSecs(Math.floor((Date.now() - extractionStart) / 1000));
-    setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
-    setBusy(false);
-    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
+    void runIngest(trimmedUrl, allTags);
   };
 
   const onRetryIngest = () => {
     handleSubmit(onSubmit)();
   };
 
-  const onRetryExtract = async () => {
+  const onRetryExtract = useCallback(async () => {
     if (!transcriptData) return;
     setBusy(true);
     setExtractionPhase('pending');
@@ -323,7 +394,56 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     setExtractionElapsedSecs(Math.floor((Date.now() - extractionStart) / 1000));
     setTotalElapsedSecs(Math.floor((Date.now() - started) / 1000));
     setBusy(false);
-  };
+  }, [extractTranscript, runStartedAt, transcriptData]);
+
+  // Auto-retry a failed extraction once (after the global queue throttle) when the queue has
+  // ever been engaged this session — outside queue mode, extraction failures still wait for a
+  // manual Retry click.
+  useEffect(() => {
+    if (durableBusy) return;
+    if (extractionPhase !== 'failed') return;
+    if (!queueModeActiveRef.current) return;
+    if (extractionAutoRetriedRef.current) return;
+
+    extractionAutoRetriedRef.current = true;
+    const timer = setTimeout(() => {
+      void onRetryExtract();
+    }, QUEUE_GLOBAL_TIMEOUT_MS);
+
+    return () => clearTimeout(timer);
+  }, [durableBusy, extractionPhase, onRetryExtract]);
+
+  // Skip the manual Keep click when extraction succeeded (or came back extractable/existing —
+  // not a failure) and another item is already queued; the next effect advances the queue.
+  useEffect(() => {
+    if (durableBusy) return;
+    if (queue.length === 0) return;
+
+    const transcriptDone = transcriptPhase === 'saved' || transcriptPhase === 'reused';
+    if (!transcriptDone) return;
+    if (!EXTRACTION_SUCCEEDED_ENOUGH.has(extractionPhase)) return;
+
+    resetCurrentItem({ preserveDraft: true });
+  }, [durableBusy, queue.length, transcriptPhase, extractionPhase, resetCurrentItem]);
+
+  // Start the next queued item once the form is genuinely idle, throttled by the same global
+  // timeout so queued items don't fire back-to-back.
+  useEffect(() => {
+    if (durableBusy) return;
+    if (transcriptPhase !== 'idle') return;
+    if (queue.length === 0) return;
+
+    const timer = setTimeout(() => {
+      setQueue((prev) => {
+        if (prev.length === 0) return prev;
+        const [head, ...rest] = prev;
+        void runIngest(head.url, head.tags);
+        return rest;
+      });
+    }, QUEUE_GLOBAL_TIMEOUT_MS);
+
+    return () => clearTimeout(timer);
+  }, [durableBusy, transcriptPhase, queue.length, runIngest]);
 
   const onKeep = () => resetForm();
 
@@ -435,7 +555,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
                 autoComplete="off"
                 spellCheck={false}
                 placeholder="https://www.youtube.com/watch?v=…"
-                disabled={durableBusy}
                 {...register('url', {
                   required: 'URL is required.',
                   validate: { validUrl: (value) => isHttpUrl(value) || 'Must be a valid URL.' },
@@ -473,7 +592,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
             lockedTags={lockedTags}
             inputValue={tagInput}
             suggestions={suggestions}
-            disabled={durableBusy}
             onChange={setTags}
             onInputValueChange={setTagInput}
             normalizeTag={normalizeTag}
@@ -522,6 +640,8 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
           onRetryExtract={onRetryExtract}
         />
       ) : null}
+
+      <IngestQueueList items={queue} onRemove={removeFromQueue} />
     </div>
   );
 }

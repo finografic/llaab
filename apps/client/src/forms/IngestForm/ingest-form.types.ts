@@ -17,3 +17,9 @@ export interface TranscriptData {
   id: string;
   filename: string;
 }
+
+export interface QueuedIngestItem {
+  id: string;
+  url: string;
+  tags: string[];
+}

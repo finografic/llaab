@@ -260,6 +260,22 @@ The extraction boundary now includes a tiny local harness-prep stage using `@fin
 before `control.execute(...)`. Current use is intentionally narrow: deterministic prep only, no
 token-aware runtime harness yet.
 
+`IngestForm` still processes one item at a time (one `transcriptPhase`/`extractionPhase` state
+machine), but submitting/dropping a YouTube URL while another is `durableBusy` no longer blocks —
+it pushes a `QueuedIngestItem` onto a local `queue` array instead (URL field button relabels to
+"Add to Queue"; `IngestQueueList` shows what's waiting with a per-item Remove). Three effects
+drive the chain once queue mode is active: (1) a failed extraction auto-retries exactly once after
+a shared `QUEUE_GLOBAL_TIMEOUT_MS` (2000ms) throttle — only if the queue has ever been engaged
+this session, otherwise extraction failures still wait for the manual Retry button; (2) once
+extraction reaches a non-failure terminal phase (`success`/`existing`/`extractable`) and there's
+already a next item queued, the form resets itself without showing Keep/Discard (the click is
+literally skipped, not simulated); (3) a separate effect then dequeues and starts the next item
+after the same throttle, so items never fire back-to-back. The _last_ item in a batch is left
+showing the normal manual Keep/Discard/Retry footer — auto-advance only fires when something is
+already waiting. `resetCurrentItem({ preserveDraft: true })` is the variant the auto-advance path
+uses — it does **not** clear the URL/tag fields, since by the time it fires the user may already
+be typing/dropping a later item into them.
+
 ## LLM Layer
 
 Task routing (all env-configurable via `LLAAB_*_MODEL` vars):
