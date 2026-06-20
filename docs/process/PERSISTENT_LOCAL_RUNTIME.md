@@ -39,9 +39,13 @@ It is:
 
 ## Client runtime strategy
 
-The persistent client now uses a **last-known-good build** model.
+The persistent client defaults to **Vite dev** so normal source edits get HMR at
+`http://llaab.localhost:3000`.
 
-`scripts/macos/start-persistent-client.sh` does this:
+For preview/runtime-hardening checks, set `LLAAB_CLIENT_RUNTIME=preview`. Preview mode uses a
+**last-known-good build** model.
+
+In preview mode, `scripts/macos/start-persistent-client.sh` does this:
 
 1. builds the Vite app into a fresh staged output directory under `apps/client/.persistent/builds/`
 2. verifies `index.html` exists in the staged output
@@ -54,7 +58,8 @@ If a new build fails:
 - the existing `current` build remains untouched
 - the client falls back to the last known-good build instead of taking the app down
 
-This is intentionally different from building directly into `apps/client/dist` and serving from there.
+This is intentionally different from building directly into `apps/client/dist` and serving from
+there.
 
 ## Why this is more robust
 
@@ -73,7 +78,7 @@ With staged promotion:
 ## Operational notes
 
 - `apps/client/dist` remains the normal ad hoc build output for non-persistent workflows
-- `apps/client/.persistent/` is reserved for the launchd-managed runtime
+- `apps/client/.persistent/` is reserved for launchd-managed preview builds
 - old persistent builds are pruned automatically; only a small recent set is retained
 
 ## Future improvements
@@ -94,5 +99,4 @@ scripts/macos/llaab-service.sh repair-client
 
 This is also exposed in SwiftBar as `Repair Client`.
 
-The repair flow does not rebuild in place itself. Instead it restarts the `launchd` client agent and
-waits for the staged persistent build flow to finish and become healthy again.
+The repair flow restarts the `launchd` client agent and waits for it to become healthy again.

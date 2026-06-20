@@ -65,9 +65,13 @@ a.subjectTitle:hover {
 .nodesCell {
   display: flex;
   padding-left: 0;
-  max-width: 58px;
+  max-width: 32px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  margin-left: 1.75rem;
+  .mono {
+    min-width: 32px;
+  }
 }
 
 .consolidatedIcon {

@@ -80,7 +80,8 @@ The LLAAB plugin can then expose quick actions such as:
 
 - `llaab.localhost` is the low-friction friendly local hostname. No reverse proxy is required.
 - This persistent setup intentionally runs outside LLAAB itself. The app does not own an always-on scheduler or watcher.
-- The persistent client uses a staged "last-known-good" runtime build, not a live in-place rebuild of the served output.
+- The persistent client defaults to Vite dev/HMR. Set `LLAAB_CLIENT_RUNTIME=preview` to use the
+  staged "last-known-good" runtime build.
   See [`docs/process/PERSISTENT_LOCAL_RUNTIME.md`](./docs/process/PERSISTENT_LOCAL_RUNTIME.md).
 
 ## Installation

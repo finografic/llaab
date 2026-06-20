@@ -25,5 +25,6 @@ Same tsconfig aliases as before (`components/*`, `forms/*`, `lib/*`, …). Vite 
 
 ## Persistent client (launchd)
 
-`scripts/macos/start-persistent-client.sh` builds with `LLAAB_CLIENT_OUT_DIR`, then runs
-`vite preview` against the staged `dist/` output.
+`scripts/macos/start-persistent-client.sh` defaults to Vite dev/HMR. Set
+`LLAAB_CLIENT_RUNTIME=preview` to build with `LLAAB_CLIENT_OUT_DIR`, then run `vite preview`
+against the staged `dist/` output.

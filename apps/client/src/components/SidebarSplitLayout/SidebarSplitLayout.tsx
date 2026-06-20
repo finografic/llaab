@@ -1,4 +1,4 @@
-import { AppSidebarLayout } from 'components/ui/app-sidebar-layout';
+import { AppSidebarLayout } from 'components/ui/app-sidebar-right-layout';
 import { Button } from 'components/ui/button';
 import { usePanelRef } from 'components/ui/resizable';
 import { useSecondaryActionBar } from 'layouts/AppLayout/SecondaryActionBarContext';

@@ -112,7 +112,7 @@ These import shadcn primitives from `components/ui/*`.
 
 **Do not** use shadcn's default fixed sidebar (`position: fixed; inset-y: 0`) under the app header — it spans the full viewport and overlaps the nav.
 
-For split views (list + detail), use `AppSidebarLayout` from `components/ui/app-sidebar-layout`:
+For split views (list + detail), use `AppSidebarLayout` from `components/ui/app-sidebar-right-layout`:
 
 - `position="inline"` (default) — sidebar in flex flow; top edge starts below the layout header row (sidebar-16 pattern)
 - `position="fixed"` — only when there is no global sticky header above

@@ -3,7 +3,7 @@ import { AppFooter } from 'components/AppFooter/AppFooter';
 import { AppHeader } from 'components/AppHeader/AppHeader';
 import { CanonicalIdeaConflictWatcher } from 'components/CanonicalIdeaConflictWatcher';
 import { RunMonitor } from 'components/RunMonitor';
-import { AppSidebarLayout } from 'components/ui/app-sidebar-layout';
+import { AppSidebarLayout } from 'components/ui/app-sidebar-right-layout';
 import { usePanelRef } from 'components/ui/resizable';
 import { TooltipProvider } from 'components/ui/tooltip';
 import { VaultGitPanel } from 'components/VaultGitPanel';

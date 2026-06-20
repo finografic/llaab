@@ -3,8 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'c
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useRuns } from 'queries/runs';
 import { useMemo, useState } from 'react';
-import { RunGroupRow } from 'tables/RunsTable/RunGroupRow';
-import { buildSourcesById } from 'tables/RunsTable/RunsTableCells';
+import { RunsGroupHeader } from 'tables/RunsTable/RunsGroupHeader';
+import { buildSourcesById } from 'tables/RunsTable/RunsTable.utils';
 import type { SourceNode, TranscriptNode } from '@llaab/schemas';
 import type { ReactNode } from 'react';
 
@@ -158,7 +158,7 @@ export function RunsTable({ sources = [], transcripts = [], showHeading = false 
           </TableHeader>
           <TableBody>
             {sortedGroups.length ? (
-              sortedGroups.map((group) => <RunGroupRow key={group.key} group={group} />)
+              sortedGroups.map((group) => <RunsGroupHeader key={group.key} group={group} />)
             ) : (
               <TableRow>
                 <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">

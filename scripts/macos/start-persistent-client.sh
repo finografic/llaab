@@ -14,12 +14,27 @@ export LLAAB_VAULT="${LLAAB_VAULT:-$PWD/vault}"
 readonly persistent_root="/Users/justin/LLAAB/apps/client/.persistent"
 readonly builds_dir="$persistent_root/builds"
 readonly current_link="$persistent_root/current"
+readonly runtime_mode="${LLAAB_CLIENT_RUNTIME:-dev}"
 
 mkdir -p "$builds_dir"
 
+readonly keep_builds=3
+
+run_dev_server() {
+  exec /opt/homebrew/bin/pnpm --filter @llaab/client exec vite
+}
+
+if [[ "$runtime_mode" == "dev" ]]; then
+  run_dev_server
+fi
+
+if [[ "$runtime_mode" != "preview" ]]; then
+  echo "[persistent-client] Unknown LLAAB_CLIENT_RUNTIME=$runtime_mode; expected dev or preview." >&2
+  exit 1
+fi
+
 build_id="$(date +%Y%m%d-%H%M%S)"
 staging_dir="$builds_dir/$build_id"
-readonly keep_builds=3
 
 promote_build() {
   ln -sfn "$staging_dir" "$current_link"

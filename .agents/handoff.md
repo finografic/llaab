@@ -170,7 +170,7 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models (2×2 vi
 | `/vault/sources/:id`     | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                        |
 | `/vault/runs/:id`        | Detail: summary grid, stages table, decisions list, error block                                                                                       |
 
-`AppSidebarLayout` (`packages/ui/src/components/app-sidebar-layout.tsx`) supports both
+`AppSidebarLayout` (`packages/ui/src/components/app-sidebar-right-layout.tsx`) supports both
 percentage and absolute-unit (`px`/`rem`) sidebar sizing — `isPercentOrBare()` only computes
 main-panel percentage complements when `minWidth`/`maxWidth`/`defaultWidth` are all percent/bare
 numbers; absolute-unit sidebars give the main panel `minSize="1%"` and `undefined` default/max so
@@ -399,7 +399,8 @@ auth live on `apps/server`. **Ports:** client **3000**, server **8888** (icons 5
 **Env:** `LLAAB_API_URL` (Vite proxy only), `LLAAB_API_KEY` (server), optional `VAULT_PASSWORD`
 (unset = open vault). Client uses same-origin `/api/*` and proxied `/terminal` WebSocket — no
 API keys in the browser bundle. `@llaab/core` / `@llaab/ingestion` removed from client deps.
-Persistent launchd client uses staged `vite build` + `vite preview` (`.persistent/builds/`).
+Persistent launchd client defaults to Vite dev/HMR. Set `LLAAB_CLIENT_RUNTIME=preview` for staged
+`vite build` + `vite preview` (`.persistent/builds/`).
 Post-migration fixes: ingest `RunsTable` groups runs by subject with sortable YouTube publish date
 (`extractRunPublishedAt` from `fetch:youtube` stage), collapsed child rows, and aligned metrics;
 YAML `profiles` object-array parsing so all source nodes load for runs author links.
@@ -422,18 +423,16 @@ macOS persistence via `launchd` user agents (`com.llaab.server`, `com.llaab.clie
 `start-*` commands wait for HTTP health before exiting so SwiftBar `refresh=true` fires only once
 the service is genuinely up. Repair Client lives in the LLAAB Client submenu.
 
-The persistent Vite client builds into `apps/client/.persistent/builds/<timestamp>`, promotes
-only successful builds to the `apps/client/.persistent/current` symlink, and runs `vite preview`
-from that directory on failure fallback to the last known-good build. `.claude/settings.json` holds a project-level allowlist for
+The persistent Vite client defaults to dev/HMR. Preview mode builds into
+`apps/client/.persistent/builds/<timestamp>`, promotes only successful builds to the
+`apps/client/.persistent/current` symlink, and runs `vite preview` from that directory on failure
+fallback to the last known-good build. `.claude/settings.json` holds a project-level allowlist for
 `pnpm typecheck` and `launchctl list` to reduce permission prompts.
-`com.llaab.client`'s plist now points exclusively at `scripts/macos/start-persistent-client.sh`
-(the staged-build-then-preview script above) — `start-dev-client.sh` (a thin `pnpm run dev`
-wrapper) was removed since nothing referenced it once the plist stopped pointing there. Don't
-re-add a live `vite dev` launchd target; it defeats the last-known-good-build guarantee this
-section exists for. A stale Vite dependency-optimization cache (browser holds old `?v=` hashes
-after `@llaab/schemas` or another workspace package rebuilds underneath the running server) shows
-up as "Failed to fetch dynamically imported module" / "Outdated Optimize Dep" 504s — fix is
-`repair-persistent-client.sh` (bootout + bootstrap), not editing source.
+`com.llaab.client`'s plist points at `scripts/macos/start-persistent-client.sh`. A stale Vite
+dependency-optimization cache (browser holds old `?v=` hashes after `@llaab/schemas` or another
+workspace package rebuilds underneath the running server) shows up as "Failed to fetch dynamically
+imported module" / "Outdated Optimize Dep" 504s — fix is `repair-persistent-client.sh` (bootout +
+bootstrap), not editing source.
 
 All workspace packages share one version (no independent publishing). `pnpm version:patch/minor/major`
 runs `scripts/bump-version.ts`, which bumps every `packages/*` and `apps/*` `package.json` to the
