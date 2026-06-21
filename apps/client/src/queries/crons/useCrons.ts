@@ -11,10 +11,9 @@ export interface CronRecipe {
   description: string;
   command: string;
   risk: 'low' | 'medium' | 'high';
+  cronExpression: string;
   /**
-   * Whether the recipe will execute when triggered. This is a kill-switch on the one-shot
-   * run endpoint, not a "currently scheduled" indicator — LLAAB owns no scheduler, so it
-   * has no visibility into whether an external cron/launchd job is actually configured.
+   * Whether LLAAB has installed this recipe's managed line in the user crontab.
    */
   enabled: boolean;
   scheduleExamples: Array<{

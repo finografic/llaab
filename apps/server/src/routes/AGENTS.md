@@ -26,24 +26,25 @@ itself — go to the source for request/response shapes.
 
 ## Crons (`crons/`)
 
-LLAAB does not own a scheduler — see
+LLAAB does not own an in-process scheduler — see
 `.github/instructions/project/agent-execution.instructions.md` (no always-on background
 processes, file watchers, or polling loops; one-shot trigger → run → exit only). The `crons`
 route group is the explicit, one-shot execution surface for recipes that _would_ otherwise be
 cron jobs: each recipe is a typed function that scans vault state, does bounded work, and exits.
-Timing is owned entirely by something outside LLAAB — OS `cron`, macOS `launchd`, a GitHub Actions
-schedule, Vercel Cron, or a manual click on `/crons` or `cron.run <id>` in `/terminal`.
+Timing is owned by OS `cron`: the `/crons` toggle installs or removes LLAAB-managed crontab lines
+that call `POST /api/crons/:id/run`. This keeps scheduling outside the server process while still
+making enable/disable a real app control.
 
 Full design background: `docs/todo/DONE_CRONS_PAGE.md`.
 
 ### Files
 
-| File              | Role                                                                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cron-recipes.ts` | `CronRecipe` registry (`CRON_RECIPES`), enabled/disabled state, the shared consolidation-scan handler, and `runCronRecipe(id)` — the entry point |
-| `crons.routes.ts` | `list` (`GET /`), `run` (`POST /:id/run`), and `update` (`PATCH /:id`) route exports                                                             |
-| `crons.schema.ts` | `updateCronRecipeBodySchema` — `{ enabled: boolean }`                                                                                            |
-| `index.ts`        | Wires the three routes onto `createRouter()`, validating `update`'s body — no business logic                                                     |
+| File              | Role                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| `cron-recipes.ts` | Recipe registry, crontab state, consolidation scan handler, and `runCronRecipe(id)` entrypoint |
+| `crons.routes.ts` | `list` (`GET /`), `run` (`POST /:id/run`), and `update` (`PATCH /:id`) route exports           |
+| `crons.schema.ts` | `updateCronRecipeBodySchema` — `{ enabled: boolean }`                                          |
+| `index.ts`        | Wires the three routes onto `createRouter()`, validating `update`'s body                       |
 
 ### Recipe registry
 
@@ -57,6 +58,7 @@ interface CronRecipe {
   description: string;
   command: string;            // e.g. 'cron.run check-transcripts-consolidation'
   risk: 'low' | 'medium' | 'high';
+  cronExpression: string;     // e.g. '0 */6 * * *'
   scheduleExamples: Array<{ label: string; value: string }>;  // launchd/cron snippets shown in the UI
 }
 ```
@@ -69,18 +71,15 @@ and toggleable over HTTP; no router change needed.
 
 ### Enable/disable
 
-LLAAB has no visibility into whether an external scheduler (cron/launchd/GitHub Actions) is
-actually configured to hit a recipe, so there's no "currently scheduled" indicator — see the
-design note at the top of this section. What it _can_ offer is a kill-switch: each recipe has a
-persisted `enabled` boolean (default `true`), stored in `configs/cron-recipes.json`
-(`{ recipes: { [id]: { enabled } } }`, written lazily on first toggle — same pattern as
-`configs/llm-routing.json` in `packages/llm/src/router.ts`). `PATCH /api/crons/:id` with
-`{ enabled }` flips it; `runCronRecipe(id)` checks `isCronRecipeEnabled(id)` first and throws
-before doing any work (no `RunNode` is created) if disabled. Disabling a recipe in `/crons`
-therefore actually blocks it — Run Now, `cron.run <id>`, and any external `curl` hitting
-`POST /api/crons/:id/run` all go through the same gate. The `/crons` UI shows this as a toggle
-button (active/disabled, next to Run Now) rather than a read-only badge, since it's a real
-control, not just a status light.
+`enabled` means the recipe has a LLAAB-managed line in the user's crontab. `GET /api/crons` awaits
+`crontab -l` and returns `enabled: true` only when that recipe's marker is present.
+`PATCH /api/crons/:id` with `{ enabled: true }` adds the managed line; `{ enabled: false }` removes
+that one line. Preserve unrelated crontab content. Managed lines end with a marker shaped like
+`# llaab:cron:<recipe-id>` so updates can be idempotent.
+
+`runCronRecipe(id)` also checks that marker before doing work. Disabled recipes therefore do not
+run from Run Now, `/terminal`, or a direct `POST /api/crons/:id/run`. This is intentional until the
+UI grows a separate "Run once even if unscheduled" control.
 
 ### Execution path
 
@@ -129,8 +128,8 @@ second shape shows up.
    unless the recipe needs bespoke UI beyond the standard command/risk/schedule-examples card.
 
 Do not add `setInterval`, file watchers, or a background worker to make a recipe "scheduled"
-inside `apps/server`. Scheduling is always external — see the `scheduleExamples` on each recipe
-for the `cron`/`launchd` snippet to hand to the user's own scheduler.
+inside `apps/server`. Scheduling is always OS crontab-backed through the managed line created by
+`PATCH /api/crons/:id`.
 
 ---
 

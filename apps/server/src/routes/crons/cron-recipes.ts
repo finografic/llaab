@@ -1,5 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { spawn } from 'node:child_process';
 import { listNodes } from '@llaab/core';
 import { appendRunEvent, runSkill } from '@llaab/skills';
 import type { IdeaNode, RunNode, TranscriptNode } from '@llaab/schemas';
@@ -12,6 +11,7 @@ export interface CronRecipe {
   description: string;
   command: string;
   risk: 'low' | 'medium' | 'high';
+  cronExpression: string;
   scheduleExamples: Array<{
     label: string;
     value: string;
@@ -20,9 +20,8 @@ export interface CronRecipe {
 
 export interface CronRecipeDto extends CronRecipe {
   /**
-   * Whether the recipe will execute when triggered (manually, via `/terminal`, or by an
-   * external scheduler hitting `POST /api/crons/:id/run`). LLAAB owns no scheduler itself —
-   * this is a kill-switch on the one-shot endpoint, not a "currently scheduled" indicator.
+   * Whether this recipe is installed in the user's crontab. LLAAB still owns no long-running
+   * scheduler; it only manages one-shot endpoint lines in the host crontab.
    */
   enabled: boolean;
 }
@@ -45,6 +44,32 @@ export interface CronRecipeRunResult {
 }
 
 const RECENT_TRANSCRIPTS_WINDOW_DAYS = 7;
+const MANAGED_CRONTAB_MARKER_PREFIX = '# llaab:cron:';
+const LOCAL_API_ORIGIN = 'http://127.0.0.1:8888';
+const CURL_BIN = '/usr/bin/curl';
+let crontabWriteQueue = Promise.resolve();
+
+function cronRunUrl(recipeId: string): string {
+  return `${LOCAL_API_ORIGIN}/api/crons/${recipeId}/run`;
+}
+
+function cronLogPath(recipeId: string): string {
+  return `/tmp/llaab-cron-${recipeId}.log`;
+}
+
+function cronCommand(recipe: CronRecipe): string {
+  return [
+    recipe.cronExpression,
+    CURL_BIN,
+    '-fsS',
+    '-X',
+    'POST',
+    cronRunUrl(recipe.id),
+    `>${cronLogPath(recipe.id)}`,
+    '2>&1',
+    `${MANAGED_CRONTAB_MARKER_PREFIX}${recipe.id}`,
+  ].join(' ');
+}
 
 export const CRON_RECIPES: CronRecipe[] = [
   {
@@ -53,14 +78,23 @@ export const CRON_RECIPES: CronRecipe[] = [
     description: 'Scan transcripts and consolidate any transcript with extracted ideas but no canonical set.',
     command: 'cron.run check-transcripts-consolidation',
     risk: 'medium',
+    cronExpression: '10 */6 * * *',
     scheduleExamples: [
       {
         label: 'macOS launchd',
-        value: 'curl -X POST http://localhost:8888/api/crons/check-transcripts-consolidation/run',
+        value: `${CURL_BIN} -fsS -X POST ${cronRunUrl('check-transcripts-consolidation')}`,
       },
       {
         label: 'cron',
-        value: '0 */6 * * * curl -X POST http://localhost:8888/api/crons/check-transcripts-consolidation/run',
+        value: cronCommand({
+          id: 'check-transcripts-consolidation',
+          title: '',
+          description: '',
+          command: '',
+          risk: 'medium',
+          cronExpression: '10 */6 * * *',
+          scheduleExamples: [],
+        }),
       },
     ],
   },
@@ -70,15 +104,23 @@ export const CRON_RECIPES: CronRecipe[] = [
     description: `Scan transcripts created in the last ${RECENT_TRANSCRIPTS_WINDOW_DAYS} days and consolidate any with extracted ideas but no canonical set.`,
     command: 'cron.run check-recent-transcripts-consolidation',
     risk: 'medium',
+    cronExpression: '0 */6 * * *',
     scheduleExamples: [
       {
         label: 'macOS launchd',
-        value: 'curl -X POST http://localhost:8888/api/crons/check-recent-transcripts-consolidation/run',
+        value: `${CURL_BIN} -fsS -X POST ${cronRunUrl('check-recent-transcripts-consolidation')}`,
       },
       {
         label: 'cron (every 6 hours)',
-        value:
-          '0 */6 * * * curl -X POST http://localhost:8888/api/crons/check-recent-transcripts-consolidation/run',
+        value: cronCommand({
+          id: 'check-recent-transcripts-consolidation',
+          title: '',
+          description: '',
+          command: '',
+          risk: 'medium',
+          cronExpression: '0 */6 * * *',
+          scheduleExamples: [],
+        }),
       },
     ],
   },
@@ -88,41 +130,96 @@ function findRecipe(id: string): CronRecipe | undefined {
   return CRON_RECIPES.find((recipe) => recipe.id === id);
 }
 
-const CRON_STATE_PATH = resolve(process.cwd(), 'configs/cron-recipes.json');
+function runCrontab(args: string[], input?: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn('crontab', args, { stdio: ['pipe', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
 
-interface CronRecipeStateFile {
-  recipes?: Record<string, { enabled?: boolean }>;
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk: string) => {
+      stdout += chunk;
+    });
+    child.stderr.on('data', (chunk: string) => {
+      stderr += chunk;
+    });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve(stdout);
+        return;
+      }
+
+      const message = stderr.trim() || `crontab exited with status ${code}`;
+      reject(new Error(message));
+    });
+
+    if (input !== undefined) child.stdin.end(input);
+    else child.stdin.end();
+  });
 }
 
-function readCronState(): CronRecipeStateFile {
-  if (!existsSync(CRON_STATE_PATH)) return {};
-
+async function readCrontab(): Promise<string> {
   try {
-    return JSON.parse(readFileSync(CRON_STATE_PATH, 'utf8')) as CronRecipeStateFile;
-  } catch {
-    return {};
+    return await runCrontab(['-l']);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    if (message.includes('no crontab for')) return '';
+    throw err;
   }
 }
 
-function writeCronState(state: CronRecipeStateFile): void {
-  mkdirSync(dirname(CRON_STATE_PATH), { recursive: true });
-  writeFileSync(CRON_STATE_PATH, `${JSON.stringify(state, null, 2)}\n`);
+async function writeCrontab(contents: string): Promise<void> {
+  await runCrontab(['-'], contents);
 }
 
-export function isCronRecipeEnabled(id: string): boolean {
-  return readCronState().recipes?.[id]?.enabled ?? true;
+async function updateCrontab(mutator: (current: string) => string): Promise<void> {
+  crontabWriteQueue = crontabWriteQueue
+    .catch(() => undefined)
+    .then(async () => {
+      const current = await readCrontab();
+      await writeCrontab(mutator(current));
+    });
+
+  await crontabWriteQueue;
 }
 
-export function setCronRecipeEnabled(id: string, enabled: boolean): boolean {
-  if (!findRecipe(id)) throw new Error(`Unknown cron recipe: ${id}`);
+function removeManagedRecipeLine(crontab: string, recipeId: string): string {
+  const marker = `${MANAGED_CRONTAB_MARKER_PREFIX}${recipeId}`;
+  return crontab
+    .split('\n')
+    .filter((line) => !line.includes(marker))
+    .join('\n')
+    .trimEnd();
+}
 
-  const state = readCronState();
-  writeCronState({ ...state, recipes: { ...state.recipes, [id]: { enabled } } });
+async function isCronRecipeEnabled(id: string): Promise<boolean> {
+  const crontab = await readCrontab();
+  return crontab.split('\n').some((line) => line.includes(`${MANAGED_CRONTAB_MARKER_PREFIX}${id}`));
+}
+
+export async function setCronRecipeEnabled(id: string, enabled: boolean): Promise<boolean> {
+  const recipe = findRecipe(id);
+  if (!recipe) throw new Error(`Unknown cron recipe: ${id}`);
+
+  await updateCrontab((existing) => {
+    const withoutRecipe = removeManagedRecipeLine(existing, id);
+    if (!enabled) return withoutRecipe ? `${withoutRecipe}\n` : '';
+
+    return `${withoutRecipe}${withoutRecipe ? '\n' : ''}${cronCommand(recipe)}\n`;
+  });
   return enabled;
 }
 
-export function listCronRecipesWithState(): CronRecipeDto[] {
-  return CRON_RECIPES.map((recipe) => ({ ...recipe, enabled: isCronRecipeEnabled(recipe.id) }));
+export async function listCronRecipesWithState(): Promise<CronRecipeDto[]> {
+  const crontab = await readCrontab();
+  return CRON_RECIPES.map((recipe) => ({
+    ...recipe,
+    enabled: crontab
+      .split('\n')
+      .some((line) => line.includes(`${MANAGED_CRONTAB_MARKER_PREFIX}${recipe.id}`)),
+  }));
 }
 
 function transcriptHasCanonicalSet(transcript: TranscriptNode): boolean {
@@ -149,7 +246,7 @@ function selectScanTranscripts(recipeId: string, transcripts: TranscriptNode[]):
 export async function runCronRecipe(id: string): Promise<{ runNodeId: string; result: CronRecipeRunResult }> {
   const recipe = findRecipe(id);
   if (!recipe) throw new Error(`Unknown cron recipe: ${id}`);
-  if (!isCronRecipeEnabled(id)) throw new Error(`Cron recipe "${recipe.title}" is disabled.`);
+  if (!(await isCronRecipeEnabled(id))) throw new Error(`Cron recipe "${recipe.title}" is disabled.`);
 
   const { record, result } = await runSkill(
     `cron-${recipe.id}`,

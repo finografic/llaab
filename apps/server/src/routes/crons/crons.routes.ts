@@ -5,7 +5,7 @@ import { listCronRecipesWithState, runCronRecipe, setCronRecipeEnabled } from '.
 
 export const list = {
   path: '/' as const,
-  handler: async (c: AppCtx) => c.json({ recipes: listCronRecipesWithState() }),
+  handler: async (c: AppCtx) => c.json({ recipes: await listCronRecipesWithState() }),
 };
 
 export const run = {
@@ -31,7 +31,7 @@ export const update = {
     if (!id) return c.json({ success: false, error: 'Recipe id is required.' }, 400);
     const body = c.req.valid('json');
     try {
-      const enabled = setCronRecipeEnabled(id, body.enabled);
+      const enabled = await setCronRecipeEnabled(id, body.enabled);
       return c.json({ success: true, id, enabled });
     } catch (err) {
       return c.json(

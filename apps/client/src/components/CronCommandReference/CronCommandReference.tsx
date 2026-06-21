@@ -35,11 +35,11 @@ function CronEnabledToggle({ recipe }: { recipe: CronRecipe }) {
           : 'text-muted-foreground',
       )}
       disabled={setEnabled.isPending}
-      title={enabled ? 'Pause this recipe' : 'Enable this recipe'}
+      title={enabled ? 'Disable this recipe endpoint' : 'Enable this recipe endpoint'}
       onClick={() => setEnabled.mutate({ recipeId: recipe.id, enabled: !enabled })}
     >
       {enabled ? <PauseIcon aria-hidden /> : <PlayIcon aria-hidden />}
-      {enabled ? 'active' : 'disabled'}
+      {enabled ? 'enabled' : 'disabled'}
     </Button>
   );
 }

@@ -65,6 +65,11 @@ export function CronsPage() {
       <PageList width="wide">
         {isLoading ? <p className="text-sm text-muted-foreground">Loading cron recipes…</p> : null}
 
+        <p className="max-w-3xl text-sm text-muted-foreground">
+          Enabled recipes are installed in the user crontab. Disabling a recipe removes LLAAB's managed
+          crontab line without touching unrelated entries.
+        </p>
+
         <Collapsible open={syntaxOpen} onOpenChange={setSyntaxOpen}>
           <CollapsibleTrigger className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
             {syntaxOpen ? (
