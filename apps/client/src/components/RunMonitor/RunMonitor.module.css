@@ -4,6 +4,12 @@
   color: var(--consolidation-text);
 }
 
+.runningBadge {
+  border-color: var(--info-border);
+  background: var(--info-bg);
+  color: var(--info-text);
+}
+
 .trigger {
   position: relative;
   /* color: var(--accent);

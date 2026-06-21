@@ -15,6 +15,7 @@ import { RotateCcw } from 'lucide-react';
 import { useVaultGitCommit, useVaultGitReset, useVaultGitStatus } from 'queries/vault';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import type { VaultGitStatusEntry } from '@llaab/schemas';
 import type { GitStatusEntry } from '@pierre/trees';
 import type { CSSProperties } from 'react';
 
@@ -45,8 +46,26 @@ const TREE_UNSAFE_CSS = `
   }
 `;
 
+const EMPTY_GIT_ENTRIES: VaultGitStatusEntry[] = [];
+
 function pluralizeFiles(count: number): string {
   return `${count} file${count === 1 ? '' : 's'}`;
+}
+
+function VaultGitFileTree({ entries }: { entries: VaultGitStatusEntry[] }) {
+  const paths = useMemo(() => entries.map((entry) => entry.path), [entries]);
+  const gitStatus = useMemo<GitStatusEntry[]>(
+    () => entries.map((entry) => ({ path: entry.path, status: entry.status })),
+    [entries],
+  );
+  const { model } = useFileTree({
+    paths,
+    gitStatus,
+    initialExpansion: 'open',
+    unsafeCSS: TREE_UNSAFE_CSS,
+  });
+
+  return <FileTree model={model} style={TREE_THEME_STYLE} />;
 }
 
 export function VaultGitPanel({ onClose }: { onClose: () => void }) {
@@ -55,17 +74,10 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
   const resetMutation = useVaultGitReset();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const paths = useMemo(() => data?.entries.map((entry) => entry.path) ?? [], [data]);
-  const gitStatus = useMemo<GitStatusEntry[]>(
-    () => data?.entries.map((entry) => ({ path: entry.path, status: entry.status })) ?? [],
+  const treeSignature = useMemo(
+    () => data?.entries.map((entry) => `${entry.status}:${entry.path}`).join('\n') ?? '',
     [data],
   );
-  const { model } = useFileTree({
-    paths,
-    gitStatus,
-    initialExpansion: 'open',
-    unsafeCSS: TREE_UNSAFE_CSS,
-  });
 
   const handleCommit = async () => {
     try {
@@ -118,7 +130,7 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
           <>
             <pre className={styles.commitMessage}>{displayCommitMessage}</pre>
             <div className={styles.treeWrap}>
-              <FileTree model={model} style={TREE_THEME_STYLE} />
+              <VaultGitFileTree key={treeSignature} entries={data?.entries ?? EMPTY_GIT_ENTRIES} />
             </div>
           </>
         ) : null}

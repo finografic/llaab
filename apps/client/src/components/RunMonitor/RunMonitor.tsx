@@ -42,7 +42,14 @@ function StatusBadge({ run }: { run: RunMonitorItem }) {
     );
   }
 
-  return <Badge variant={getStatusVariant(run.status)}>{run.status}</Badge>;
+  return (
+    <Badge
+      variant={getStatusVariant(run.status)}
+      className={isActiveRun(run) ? styles.runningBadge : undefined}
+    >
+      {run.status}
+    </Badge>
+  );
 }
 
 function MonitorRunCard({ run }: { run: RunMonitorItem }) {
