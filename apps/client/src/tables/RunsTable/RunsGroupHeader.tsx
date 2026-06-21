@@ -33,7 +33,7 @@ export function RunsGroupHeader({ group }: RunGroupRowProps) {
       {/* Group Row -------------------------------------------------------- */}
 
       <TableRow className={styles.groupRow}>
-        <TableCell>
+        <TableCell className="pr-0">
           <button
             type="button"
             className={styles.groupToggle}

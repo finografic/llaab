@@ -179,7 +179,7 @@ export function extractRunPublishedAt(run: {
     const rawDate =
       stage.name === 'fetch:youtube'
         ? readMetadataStringField(stage.output, 'uploadDate')
-        : readMetadataStringFields(stage.output, ['uploadDate', 'publishedAt', 'published_at']);
+        : readMetadataStringFields(stage.output, ['uploadDate', 'publishedAt', 'source_published_at']);
     if (!rawDate) continue;
 
     const iso = parseMetadataDateToIso(rawDate);

@@ -43,7 +43,7 @@ const INGEST_YOUTUBE_SKILL_ID = 'ingest-youtube';
  * finishing one queued item and starting the next, so the pipeline doesn't hammer the
  * extraction LLM/YouTube fetch back-to-back.
  */
-const QUEUE_GLOBAL_TIMEOUT_MS = 2000;
+const QUEUE_GLOBAL_TIMEOUT_MS = 1000;
 
 /** Extraction already has a saved transcript to retry against — one auto-retry is enough. */
 const EXTRACTION_MAX_RETRIES = 1;
@@ -98,6 +98,8 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const [totalElapsedSecs, setTotalElapsedSecs] = useState<number | null>(null);
 
   const [queue, setQueue] = useState<QueuedIngestItem[]>([]);
+  const [queueStatus, setQueueStatus] = useState<string | null>(null);
+  const [currentQueueUrl, setCurrentQueueUrl] = useState<string | null>(null);
   const queueModeActiveRef = useRef(false);
   const extractionRetryCountRef = useRef(0);
   const transcriptFetchRetryCountRef = useRef(0);
@@ -202,6 +204,8 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setTotalElapsedSecs(null);
       setApiError(null);
       setDropMessage(null);
+      setQueueStatus(null);
+      setCurrentQueueUrl(null);
     },
     [setValue],
   );
@@ -251,6 +255,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const runIngest = useCallback(
     async (trimmedUrl: string, allTags: string[]) => {
       currentItemRef.current = { url: trimmedUrl, tags: allTags };
+      setCurrentQueueUrl(trimmedUrl);
       const now = Date.now();
       setTranscriptPhase('processing');
       setTranscriptData(null);
@@ -355,6 +360,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const enqueueUrl = useCallback((url: string, itemTags: string[]) => {
     queueModeActiveRef.current = true;
     setQueue((prev) => [...prev, { id: crypto.randomUUID(), url, tags: itemTags }]);
+    setQueueStatus('Added to queue.');
   }, []);
 
   const removeFromQueue = useCallback((id: string) => {
@@ -437,9 +443,11 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     // the retry as already used up one attempt before it really ran.
     const timer = setTimeout(() => {
       extractionRetryCountRef.current += 1;
+      setQueueStatus(`Retrying extraction (${extractionRetryCountRef.current}/${EXTRACTION_MAX_RETRIES}).`);
       void onRetryExtract();
     }, QUEUE_GLOBAL_TIMEOUT_MS);
 
+    setQueueStatus(`Retrying extraction in ${QUEUE_GLOBAL_TIMEOUT_MS / 1000}s.`);
     return () => clearTimeout(timer);
   }, [durableBusy, extractionPhase, onRetryExtract]);
 
@@ -454,9 +462,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     const timer = setTimeout(() => {
       transcriptFetchRetryCountRef.current += 1;
       const { current } = currentItemRef;
+      setQueueStatus(
+        `Retrying transcript fetch (${transcriptFetchRetryCountRef.current}/${TRANSCRIPT_FETCH_MAX_RETRIES}).`,
+      );
       if (current) void runIngest(current.url, current.tags);
     }, QUEUE_GLOBAL_TIMEOUT_MS);
 
+    setQueueStatus(`Retrying transcript fetch in ${QUEUE_GLOBAL_TIMEOUT_MS / 1000}s.`);
     return () => clearTimeout(timer);
   }, [durableBusy, transcriptPhase, runIngest]);
 
@@ -481,6 +493,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
     if (!transcriptFetchExhausted && !extractionSucceededEnough && !extractionFailedExhausted) return;
 
+    setQueueStatus('Advancing to next queued item.');
     resetCurrentItem({ preserveDraft: true });
   }, [durableBusy, queue.length, transcriptPhase, extractionPhase, resetCurrentItem]);
 
@@ -491,10 +504,14 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     if (transcriptPhase !== 'idle') return;
     if (queue.length === 0) return;
 
+    setQueueStatus(`Starting next queued item in ${QUEUE_GLOBAL_TIMEOUT_MS / 1000}s.`);
     const timer = setTimeout(() => {
       setQueue((prev) => {
         if (prev.length === 0) return prev;
         const [head, ...rest] = prev;
+        setQueueStatus(
+          rest.length > 0 ? `${rest.length} item${rest.length === 1 ? '' : 's'} waiting.` : null,
+        );
         startNewItem(head.url, head.tags);
         return rest;
       });
@@ -521,19 +538,27 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const onRetry = () => {
     const { current } = currentItemRef;
-    onDiscard().then(() => {
+    void onDiscard().then(() => {
       if (current) startNewItem(current.url, current.tags);
+      return undefined;
     });
   };
 
-  const suggestionPool = [...KNOWN_TAGS, ...vaultTagsByUsage.filter((tag) => !KNOWN_TAGS.includes(tag))];
+  const suggestionPool = useMemo(
+    () => [...KNOWN_TAGS, ...vaultTagsByUsage.filter((tag) => !KNOWN_TAGS.includes(tag))],
+    [vaultTagsByUsage],
+  );
 
-  const suggestions = suggestionPool.filter((tag) => {
-    if (tags.includes(tag) || lockedTags.includes(tag)) return false;
-    if (!tagInput) return KNOWN_TAGS.includes(tag);
-    const normalized = normalizeTag(tagInput);
-    return tag.includes(normalized) || tag.includes(tagInput.toLowerCase());
-  });
+  const suggestions = useMemo(
+    () =>
+      suggestionPool.filter((tag) => {
+        if (tags.includes(tag) || lockedTags.includes(tag)) return false;
+        if (!tagInput) return KNOWN_TAGS.includes(tag);
+        const normalized = normalizeTag(tagInput);
+        return tag.includes(normalized) || tag.includes(tagInput.toLowerCase());
+      }),
+    [lockedTags, suggestionPool, tagInput, tags],
+  );
 
   const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -698,7 +723,12 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         />
       ) : null}
 
-      <IngestQueueList items={queue} onRemove={removeFromQueue} />
+      <IngestQueueList
+        items={queue}
+        currentUrl={currentQueueUrl}
+        status={queueStatus}
+        onRemove={removeFromQueue}
+      />
     </div>
   );
 }

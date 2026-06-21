@@ -50,7 +50,7 @@ export function RunsGroupRow({ group }: RunsGroupRowProps) {
 
         return (
           <TableRow key={run.id} className={styles.childRow}>
-            <TableCell>
+            <TableCell className="pr-0">
               <span className={`${styles.status} ${STATUS_CLASS[displayStatus]}`}>{displayStatus}</span>
             </TableCell>
             <TableCell>

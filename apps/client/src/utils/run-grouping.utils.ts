@@ -92,6 +92,7 @@ export function groupRunsBySubject(
 
     const transcriptId = extractTranscriptId(group.href);
     const transcript = transcriptId ? transcriptsById.get(transcriptId) : undefined;
+    group.publishedAt ??= transcript?.source_published_at;
     group.isConsolidated = Boolean(transcript?.canonical_coverage?.canonical_idea_ids.length);
   }
 

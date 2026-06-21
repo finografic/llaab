@@ -174,7 +174,7 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models (2×2 vi
 percentage and absolute-unit (`px`/`rem`) sidebar sizing — `isPercentOrBare()` only computes
 main-panel percentage complements when `minWidth`/`maxWidth`/`defaultWidth` are all percent/bare
 numbers; absolute-unit sidebars give the main panel `minSize="1%"` and `undefined` default/max so
-it doesn't collapse. `SidebarSplitLayout` (`apps/client/src/components/SidebarSplitLayout/`) wraps
+it doesn't collapse. `app-sidebar-dual-layout.tsx` (`packages/ui/src/components/app-sidebar-dual-layout.tsx`) wraps
 `AppSidebarLayout` with a `PanelLeftIcon` collapse/expand toggle (`usePanelRef`) alongside the
 manual resize handle; `TranscriptsSplitView` uses it with a 600px-minimum sidebar containing the
 `TranscriptsSplitView` uses it with a 600px-minimum sidebar containing the transcript list.
@@ -278,15 +278,14 @@ by `queueModeActiveRef`, checked via `durableBusy`/`transcriptPhase`/`extraction
 failed extraction auto-retries up to `EXTRACTION_MAX_RETRIES` (1) and (2) a failed transcript
 fetch auto-retries up to the separate, larger `TRANSCRIPT_FETCH_MAX_RETRIES` (3) — fetching from
 YouTube directly is more prone to transient failures than a local extraction retry — each retry
-delayed by the shared `QUEUE_GLOBAL_TIMEOUT_MS` (2000ms) throttle; outside queue mode, both
+delayed by the shared `QUEUE_GLOBAL_TIMEOUT_MS` (1000ms) throttle; outside queue mode, both
 failure types still wait for their manual Retry button. The retry counter increments _inside_ the
 `setTimeout` callback, not when scheduling it — incrementing eagerly would let effect (3) below
 read the post-increment count in the same render and detect "exhausted" one retry early. (3) Once
 either retry budget is exhausted and still failing, or extraction reaches a non-failure terminal
 phase (`success`/`existing`/`extractable`), and there's already a next item queued, the form
-resets itself without showing Keep/Discard (the click is literally skipped, not simulated) — every
-attempt, including failed ones, still persists its own `RunNode` via `runSkill`, so full retry
-history is visible in Activity Monitor / the runs table regardless of how an item resolves. (4) A
+resets itself without showing Keep/Discard (the click is literally skipped, not simulated). Failed
+`ingest-youtube` runs delete their transient `RunNode` instead of persisting failed MD files. (4) A
 separate effect then dequeues and starts the next item after the same throttle, so items never
 fire back-to-back. The _last_ item in a batch is left showing the normal manual
 Keep/Discard/Retry footer (or, for an exhausted transcript-fetch failure, just the inline retry —

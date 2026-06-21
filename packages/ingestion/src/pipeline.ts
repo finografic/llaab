@@ -61,6 +61,18 @@ function youtubeTranscriptVisibleHeader(
   return `${linkLine}\n${authorLine}\n**uploaded:** ${uploaded}\n**ingested:** ${ingested}\n\n## Transcript`;
 }
 
+function youtubePublishedAtIso(uploadDate: string, uploadedDisplay?: string): string | undefined {
+  if (uploadedDisplay && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(uploadedDisplay)) {
+    return `${uploadedDisplay.replace(' ', 'T')}Z`;
+  }
+
+  if (uploadDate.length === 8 && /^\d{8}$/.test(uploadDate)) {
+    return `${uploadDate.slice(0, 4)}-${uploadDate.slice(4, 6)}-${uploadDate.slice(6, 8)}T00:00:00Z`;
+  }
+
+  return undefined;
+}
+
 export interface IngestionResult {
   id: string;
   path: string;
@@ -251,6 +263,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
 
   const sourceId = toNodeId(fetched.channel);
   const producedNodeIds = new Set<string>();
+  const publishedAt = youtubePublishedAtIso(fetched.uploadDate, fetched.uploadedDisplay);
 
   const updatedAtIso = now();
   const transcriptBody = `${markdownH1Line(transcriptTitle)}\n\n${youtubeTranscriptVisibleHeader(
@@ -274,6 +287,7 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
       source_item_id: captured.videoId,
       source_url: input.url,
       source_type: input.sourceType as TranscriptSourceType,
+      ...(publishedAt ? { source_published_at: publishedAt } : {}),
       author: fetched.channel,
       raw_length: rawLength,
       clean_length: cleanLength,

@@ -40,6 +40,7 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYo
       return pipelineResult;
     },
     input,
+    { persistFailedRun: false },
   );
 
   if (record.status === 'failed') {
@@ -47,7 +48,7 @@ export async function ingestYouTube(input: IngestYouTubeInput): Promise<IngestYo
     console.error(
       'Tip: ingestion uses yt-dlp for metadata and subtitles. Install it and ensure it is on PATH (e.g. brew install yt-dlp).',
     );
-    console.error('Full details are in the persisted run node under vault/runs/.');
+    console.error('No failed run node was persisted because the transcript was not saved.');
     return { record, result };
   }
 

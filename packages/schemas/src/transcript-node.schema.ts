@@ -29,6 +29,8 @@ export const TranscriptNodeSchema = BaseNodeSchema.extend({
   source_item_id: z.string().min(1).optional(),
   source_url: z.string().url(),
   source_type: TranscriptSourceTypeSchema,
+  /** Source publication time, e.g. YouTube upload timestamp, when known. */
+  source_published_at: z.string().datetime().optional(),
   author: z.string().optional(),
   summary: z.string().optional(),
   raw_length: z.number().int().nonnegative().optional(),

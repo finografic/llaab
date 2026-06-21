@@ -91,15 +91,16 @@ export function AppLayout() {
   }, [isLeftSidebarOpen, leftSidebar, leftSidebarPanelRef]);
 
   useEffect(() => {
-    const panel = rightSidebarPanelRef.current;
-    if (!panel) return;
+    if (!isRightSidebarOpen) return;
 
-    if (isRightSidebarOpen) {
+    const animationFrame = window.requestAnimationFrame(() => {
+      const panel = rightSidebarPanelRef.current;
+      if (!panel) return;
+
       panel.resize('430px');
-      return;
-    }
+    });
 
-    panel.collapse();
+    return () => window.cancelAnimationFrame(animationFrame);
   }, [isRightSidebarOpen, rightSidebarPanelRef]);
 
   return (

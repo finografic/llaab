@@ -1,4 +1,4 @@
-import { createNode, getNodeFilePath, updateNode } from '@llaab/core';
+import { createNode, deleteNode, getNodeFilePath, updateNode } from '@llaab/core';
 import {
   buildRunNodeId,
   formatIsoUtcForTranscriptBody,
@@ -338,7 +338,9 @@ export async function runSkill<TInput, TOutput>(
   name: string,
   execute: (input: TInput, runNodeId: string) => Promise<TOutput>,
   input: TInput,
+  options: { persistFailedRun?: boolean } = {},
 ): Promise<{ record: SkillRunRecord; result: TOutput }> {
+  const persistFailedRun = options.persistFailedRun ?? true;
   const startTime = new Date();
   const startedAt = formatIsoUtcSeconds(startTime);
   const runNodeId = buildRunNodeId(name, startTime);
@@ -377,17 +379,22 @@ export async function runSkill<TInput, TOutput>(
   } catch (error) {
     const completedAt = formatIsoUtcSeconds(new Date());
     const nestedTrace = extractNestedRunTraceFromError(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
 
-    await finalizeRunNode({
-      name,
-      runNodeId,
-      startedAt,
-      completedAt,
-      status: 'failed',
-      rawInput: input,
-      error: error instanceof Error ? error.message : String(error),
-      nestedTrace,
-    });
+    if (persistFailedRun) {
+      await finalizeRunNode({
+        name,
+        runNodeId,
+        startedAt,
+        completedAt,
+        status: 'failed',
+        rawInput: input,
+        error: errorMessage,
+        nestedTrace,
+      });
+    } else {
+      await deleteNode('run', runNodeId).catch(() => undefined);
+    }
 
     return {
       record: {
@@ -397,7 +404,7 @@ export async function runSkill<TInput, TOutput>(
         completedAt,
         status: 'failed',
         input: input as Record<string, unknown>,
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
       },
       result: {} as TOutput,
     };

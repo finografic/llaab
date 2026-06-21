@@ -176,6 +176,7 @@ describe('runIngestionPipeline', () => {
           /^# Example video\n\n\[\*\*https:\/\/www\.youtube\.com\/watch\?v=abcdefghijk\*\*]\(https:\/\/www\.youtube\.com\/watch\?v=abcdefghijk\)\n\*\*author:\*\* \[\*\*example-channel\*\*]\(https:\/\/www\.youtube\.com\/@ExampleChannel\)\n\*\*uploaded:\*\* 2026-04-08 00:00:00\n\*\*ingested:\*\* \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\n\n## Transcript\n\nstructured transcript$/,
         ),
         extra: expect.objectContaining({
+          source_published_at: '2026-04-08T00:00:00Z',
           source_item_id: 'abcdefghijk',
           source_url: 'https://www.youtube.com/watch?v=abcdefghijk',
         }),
@@ -268,6 +269,9 @@ describe('runIngestionPipeline', () => {
         type: 'transcript',
         id: expect.stringMatching(/^untitled_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}$/),
         title: 'Untitled transcript',
+        extra: expect.objectContaining({
+          source_published_at: '2026-04-08T00:00:00Z',
+        }),
         body: expect.stringMatching(
           /^# Untitled transcript\n\n\[\*\*https:\/\/www\.youtube\.com\/watch\?v=uniqueUntitled01\*\*]\(https:\/\/www\.youtube\.com\/watch\?v=uniqueUntitled01\)\n\*\*author:\*\* \[\*\*example-channel\*\*]\(https:\/\/www\.youtube\.com\/@ExampleChannel\)\n\*\*uploaded:\*\* 2026-04-08 00:00:00\n\*\*ingested:\*\* \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\n\n## Transcript\n\nstructured transcript$/,
         ),
