@@ -60,10 +60,23 @@ interface OpenAiChatResponse {
 }
 
 const DEFAULT_BASE_URL = 'http://localhost:1234/v1';
+const DEFAULT_CLI_PATH = `${process.env['HOME'] ?? ''}/.lmstudio/bin/lms`;
 const DEFAULT_TEMPERATURE = 0.3;
+const LOAD_TIMEOUT_MS = 5 * 60 * 1000;
+
+const MODEL_LOAD_OVERRIDES: Record<string, { contextLength?: number; parallel?: number }> = {
+  'google/gemma-4-26b-a4b-qat': {
+    contextLength: 32768,
+    parallel: 2,
+  },
+};
 
 function getBaseUrl() {
   return (process.env['LLAAB_LMSTUDIO_BASE_URL'] ?? DEFAULT_BASE_URL).replace(/\/$/, '');
+}
+
+function getCliPath() {
+  return process.env['LLAAB_LMSTUDIO_CLI_PATH'] ?? DEFAULT_CLI_PATH;
 }
 
 function getHeaders(): Record<string, string> {
@@ -90,12 +103,69 @@ async function lmStudioFetch<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: getHeaders(),
   });
-  if (!response.ok) throw new Error(`LM Studio request failed: ${response.status}`);
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(
+      body
+        ? `LM Studio request failed: ${response.status} ${body}`
+        : `LM Studio request failed: ${response.status}`,
+    );
+  }
   return (await response.json()) as T;
+}
+
+function readLoadedModelIds(model: unknown): string[] {
+  if (!model || typeof model !== 'object') return [];
+  const record = model as Record<string, unknown>;
+  return [
+    record['identifier'],
+    record['modelKey'],
+    record['model_key'],
+    record['indexedModelIdentifier'],
+    record['path'],
+  ].filter((value): value is string => typeof value === 'string' && value.length > 0);
+}
+
+function loadedModelMatches(model: unknown, requestedModel: string) {
+  return readLoadedModelIds(model).some(
+    (id) => id === requestedModel || id.endsWith(`/${requestedModel}`) || requestedModel.endsWith(`/${id}`),
+  );
+}
+
+async function listLoadedModels(): Promise<unknown[]> {
+  const { stdout } = await execFileAsync(getCliPath(), ['ps', '--json'], {
+    maxBuffer: 1024 * 1024,
+    timeout: 5000,
+  });
+  const parsed = JSON.parse(stdout) as unknown;
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+async function ensureRequestedModelLoaded(model: string) {
+  const loadedModels = await listLoadedModels();
+  if (loadedModels.some((loadedModel) => loadedModelMatches(loadedModel, model))) return;
+
+  if (loadedModels.length > 0) {
+    await execFileAsync(getCliPath(), ['unload', '--all'], {
+      maxBuffer: 1024 * 1024,
+      timeout: 30000,
+    });
+  }
+
+  const override = MODEL_LOAD_OVERRIDES[model];
+  const loadArgs = ['load', model, '--yes'];
+  if (override?.contextLength) loadArgs.push('--context-length', String(override.contextLength));
+  if (override?.parallel) loadArgs.push('--parallel', String(override.parallel));
+
+  await execFileAsync(getCliPath(), loadArgs, {
+    maxBuffer: 1024 * 1024,
+    timeout: LOAD_TIMEOUT_MS,
+  });
 }
 
 export async function lmStudioComplete(prompt: string, opts: LlmCompleteOptions): Promise<LlmProviderResult> {
   const start = performance.now();
+  await ensureRequestedModelLoaded(opts.model);
   const response = await lmStudioFetch<OpenAiChatResponse>('/chat/completions', {
     method: 'POST',
     body: JSON.stringify({
@@ -166,7 +236,7 @@ function mapCliModel(model: LmStudioCliModel): Partial<LmStudioModelInfo> {
 
 async function lmStudioListCliModelDetails(): Promise<Map<string, Partial<LmStudioModelInfo>>> {
   try {
-    const { stdout } = await execFileAsync('lms', ['ls', '--json'], {
+    const { stdout } = await execFileAsync(getCliPath(), ['ls', '--json'], {
       maxBuffer: 1024 * 1024,
       timeout: 3000,
     });

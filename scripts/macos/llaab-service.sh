@@ -5,15 +5,22 @@ set -euo pipefail
 readonly server_label="com.llaab.server"
 readonly client_label="com.llaab.client"
 readonly icons_label="com.llaab.icons"
+readonly lmstudio_label="com.lmstudio.server"
 readonly launch_agents_dir="$HOME/Library/LaunchAgents"
 readonly script_dir="/Users/justin/LLAAB/scripts/macos"
 readonly logs_dir="$HOME/Library/Logs/llaab"
+readonly sentinel_file="/tmp/llaab-dev-refreshing"
 readonly server_plist="$launch_agents_dir/$server_label.plist"
 readonly client_plist="$launch_agents_dir/$client_label.plist"
 readonly icons_plist="$launch_agents_dir/$icons_label.plist"
+readonly lmstudio_plist="$launch_agents_dir/$lmstudio_label.plist"
+readonly lmstudio_bin="/Users/justin/.lmstudio/bin/lms"
 readonly client_log="$logs_dir/client.stdout.log"
+readonly repair_log="$logs_dir/repair-all.log"
 readonly server_url="http://127.0.0.1:8888"
+readonly server_health_url="$server_url/"
 readonly client_url="http://llaab.localhost:3000"
+readonly lmstudio_url="http://127.0.0.1:1234/v1/models"
 readonly icons_url="$(
   /Users/justin/.nvm/versions/node/v24.16.0/bin/node --input-type=module <<'NODE'
 import { readFileSync } from 'node:fs';
@@ -39,6 +46,8 @@ bootstrap_label() {
   local label="$1"
   local plist="$2"
 
+  mkdir -p "$logs_dir"
+
   if label_exists "$label"; then
     launchctl bootout "gui/$UID/$label" >/dev/null 2>&1 || true
     # bootout is async — wait until the label is fully gone before bootstrapping
@@ -52,7 +61,37 @@ bootstrap_label() {
   launchctl bootstrap "gui/$UID" "$plist"
 }
 
+ensure_lmstudio_plist() {
+  mkdir -p "$launch_agents_dir" "$logs_dir"
+
+  cat > "$lmstudio_plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$lmstudio_label</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$lmstudio_bin</string>
+    <string>server</string>
+    <string>start</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>$logs_dir/lmstudio.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>$logs_dir/lmstudio.stderr.log</string>
+</dict>
+</plist>
+PLIST
+}
+
 start_services() {
+  start_lmstudio
   bootstrap_label "$server_label" "$server_plist"
   bootstrap_label "$client_label" "$client_plist"
   bootstrap_label "$icons_label" "$icons_plist"
@@ -62,6 +101,7 @@ stop_services() {
   launchctl bootout "gui/$UID/$icons_label" >/dev/null 2>&1 || true
   launchctl bootout "gui/$UID/$client_label" >/dev/null 2>&1 || true
   launchctl bootout "gui/$UID/$server_label" >/dev/null 2>&1 || true
+  stop_lmstudio
 }
 
 restart_services() {
@@ -95,7 +135,7 @@ wait_for_url() {
 
 start_server() {
   bootstrap_label "$server_label" "$server_plist"
-  wait_for_url "$server_url/api/llm/status" "--fail" 30
+  wait_for_url "$server_health_url" "--fail" 30
 }
 
 stop_server()  { launchctl bootout "gui/$UID/$server_label" >/dev/null 2>&1 || true; }
@@ -113,6 +153,17 @@ start_icons()  {
 }
 
 stop_icons()   { launchctl bootout "gui/$UID/$icons_label" >/dev/null 2>&1 || true; }
+
+start_lmstudio() {
+  ensure_lmstudio_plist
+  bootstrap_label "$lmstudio_label" "$lmstudio_plist"
+  wait_for_url "$lmstudio_url" "--fail" 30
+}
+
+stop_lmstudio() {
+  launchctl bootout "gui/$UID/$lmstudio_label" >/dev/null 2>&1 || true
+  "$lmstudio_bin" server stop >/dev/null 2>&1 || true
+}
 
 open_client_log() {
   /usr/bin/open -a Console "$client_log"
@@ -138,13 +189,34 @@ service_state() {
   fi
 }
 
+service_state_url_first() {
+  local label="$1"
+  local url="$2"
+  local curl_flag="$3"
+
+  if curl --silent $curl_flag --output /dev/null --max-time 1 "$url" 2>/dev/null; then
+    echo "running"
+    return
+  fi
+
+  local pid
+  pid="$(launchctl list 2>/dev/null | awk -v lbl="$label" '$3 == lbl {print $1}')"
+
+  if [[ -z "$pid" || "$pid" == "-" ]]; then
+    echo "stopped"
+  else
+    echo "launching"
+  fi
+}
+
 print_status() {
-  local server_state client_state icons_state
-  server_state="$(service_state "$server_label" "$server_url/api/llm/status" "--fail")"
+  local server_state client_state icons_state lmstudio_state
+  lmstudio_state="$(service_state_url_first "$lmstudio_label" "$lmstudio_url" "--fail")"
+  server_state="$(service_state "$server_label" "$server_health_url" "--fail")"
   client_state="$(service_state "$client_label" "$client_url" "")"
   icons_state="$(service_state  "$icons_label"  "$icons_url" "")"
 
-  printf 'server=%s\nclient=%s\nicons=%s\n' "$server_state" "$client_state" "$icons_state"
+  printf 'lmstudio=%s\nserver=%s\nclient=%s\nicons=%s\n' "$lmstudio_state" "$server_state" "$client_state" "$icons_state"
 }
 
 open_ui() {
@@ -161,6 +233,15 @@ open_icons() {
 
 repair_client() {
   "$script_dir/repair-persistent-client.sh"
+}
+
+repair_all() {
+  mkdir -p "$logs_dir"
+  touch "$repair_log"
+  touch "$sentinel_file"
+  /usr/bin/open -a Console "$repair_log"
+  "$script_dir/repair-all-services.sh" >/dev/null 2>&1 &!
+  /usr/bin/open "swiftbar://refreshPlugin?name=llaab.15s.sh" >/dev/null 2>&1 || true
 }
 
 restart_services_with_client_log() {
@@ -184,13 +265,16 @@ case "${1:-}" in
   stop-client)    stop_client ;;
   start-icons)    start_icons ;;
   stop-icons)     stop_icons ;;
+  start-lmstudio) start_lmstudio ;;
+  stop-lmstudio)  stop_lmstudio ;;
   status)         print_status ;;
   open)           open_ui ;;
   open-ingest)    open_ingest ;;
   open-icons)     open_icons ;;
   repair-client)  repair_client_with_log ;;
+  repair-all)     repair_all ;;
   *)
-    echo "usage: $0 {start|stop|restart|restart-icons|start-server|stop-server|start-client|stop-client|start-icons|stop-icons|status|open|open-ingest|open-icons|repair-client}" >&2
+    echo "usage: $0 {start|stop|restart|restart-icons|start-server|stop-server|start-client|stop-client|start-icons|stop-icons|start-lmstudio|stop-lmstudio|status|open|open-ingest|open-icons|repair-client|repair-all}" >&2
     exit 1
     ;;
 esac

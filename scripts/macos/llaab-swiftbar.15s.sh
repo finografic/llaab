@@ -16,6 +16,7 @@ readonly dev_refresh_script="/Users/justin/LLAAB/scripts/macos/dev-refresh.sh"
 readonly logs_dir="/Users/justin/Library/Logs/llaab"
 readonly client_log="$logs_dir/client.stdout.log"
 readonly icons_log="$logs_dir/icons.stdout.log"
+readonly repair_log="$logs_dir/repair-all.log"
 readonly server_log="$logs_dir/server.stdout.log"
 readonly app_url="http://llaab.localhost:3000"
 readonly ingest_url="http://llaab.localhost:3000/ingest"
@@ -38,6 +39,7 @@ NODE
 readonly github_url="https://github.com/finografic"
 
 status_output="$("$control_script" status)"
+lmstudio_state="$(printf '%s\n' "$status_output" | awk -F= '/^lmstudio=/{print $2}')"
 server_state="$(printf '%s\n' "$status_output" | awk -F= '/^server=/{print $2}')"
 client_state="$(printf '%s\n' "$status_output" | awk -F= '/^client=/{print $2}')"
 icons_state="$(printf '%s\n' "$status_output"  | awk -F= '/^icons=/{print $2}')"
@@ -46,6 +48,7 @@ icons_state="$(printf '%s\n' "$status_output"  | awk -F= '/^icons=/{print $2}')"
 # regardless of current launchctl state — file is written by dev-refresh.sh and
 # removed on exit; stale sentinels older than 15 min are ignored.
 if [[ -n "$(find /tmp/llaab-dev-refreshing -maxdepth 0 -mmin -15 -type f 2>/dev/null)" ]]; then
+  lmstudio_state="launching"
   server_state="launching"
   client_state="launching"
 fi
@@ -59,9 +62,9 @@ traffic_light() {
 }
 
 # Menubar icon: green when all running, amber when any launching, dim otherwise
-if [[ "$server_state" == "running" && "$client_state" == "running" && "$icons_state" == "running" ]]; then
+if [[ "$lmstudio_state" == "running" && "$server_state" == "running" && "$client_state" == "running" && "$icons_state" == "running" ]]; then
   echo "🌱 LLAAB | color=#52c41a tooltip=$app_url"
-elif [[ "$server_state" == "launching" || "$client_state" == "launching" || "$icons_state" == "launching" ]]; then
+elif [[ "$lmstudio_state" == "launching" || "$server_state" == "launching" || "$client_state" == "launching" || "$icons_state" == "launching" ]]; then
   echo "🌱 LLAAB | color=#faad14 tooltip=$app_url"
 else
   echo "🌱 LLAAB | color=#8c8c8c tooltip=$app_url"
@@ -73,6 +76,16 @@ echo "Open Ingest | href=$ingest_url shortcut=CMD+SHIFT+I"
 echo "Open Icons | href=$icons_url"
 
 echo "---"
+
+# ── LM Studio ─────────────────────────────────────────────────
+echo "$(traffic_light "$lmstudio_state") LM Studio API: $lmstudio_state"
+if [[ "$lmstudio_state" == "stopped" ]]; then
+  echo "-- Start Service | bash=$control_script param1=start-lmstudio terminal=false refresh=true"
+  echo "-- Stop Service | color=#6b7280"
+else
+  echo "-- Start Service | color=#6b7280"
+  echo "-- Stop Service | bash=$control_script param1=stop-lmstudio terminal=false refresh=true"
+fi
 
 # ── LLAAB Server ──────────────────────────────────────────────
 echo "$(traffic_light "$server_state") LLAAB Server: $server_state"
@@ -112,6 +125,8 @@ echo "Start All Services | bash=$control_script param1=start terminal=false refr
 echo "Stop All Services | bash=$control_script param1=stop terminal=false refresh=true"
 echo "---"
 echo "Restart All Services | bash=$control_script param1=restart terminal=false refresh=true"
+echo "Repair All Services | bash=$control_script param1=repair-all terminal=false refresh=true"
+echo "Tail Repair Log | bash=/usr/bin/open param1=-a param2=Console param3=$repair_log terminal=false"
 echo "Dev Refresh | bash=$dev_refresh_script terminal=false refresh=true"
 echo "---"
 echo "Local URL: $app_url | href=$app_url"
