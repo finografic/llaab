@@ -1,5 +1,5 @@
 import { GitCommitVerticalIcon, LoaderIcon, XIcon } from '@llaab/icons';
-import { FileTree, useFileTree } from '@pierre/trees/react';
+import { FileTree, useFileTree, useFileTreeSelection } from '@pierre/trees/react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +13,8 @@ import {
 import { Button } from 'components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import { useVaultGitCommit, useVaultGitReset, useVaultGitStatus } from 'queries/vault';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { VaultGitStatusEntry } from '@llaab/schemas';
 import type { GitStatusEntry } from '@pierre/trees';
@@ -28,7 +29,13 @@ function pluralizeFiles(count: number): string {
   return `${count} file${count === 1 ? '' : 's'}`;
 }
 
-function VaultGitFileTree({ entries }: { entries: VaultGitStatusEntry[] }) {
+function VaultGitFileTree({
+  entries,
+  onSelect,
+}: {
+  entries: VaultGitStatusEntry[];
+  onSelect: (path: string) => void;
+}) {
   const paths = useMemo(() => entries.map((entry) => entry.path), [entries]);
   const gitStatus = useMemo<GitStatusEntry[]>(
     () => entries.map((entry) => ({ path: entry.path, status: entry.status })),
@@ -41,6 +48,13 @@ function VaultGitFileTree({ entries }: { entries: VaultGitStatusEntry[] }) {
     unsafeCSS: PIERRE_TREE_UNSAFE_CSS,
   });
 
+  const selection = useFileTreeSelection(model);
+
+  useEffect(() => {
+    const next = selection[0];
+    if (next) onSelect(next);
+  }, [selection, onSelect]);
+
   return <FileTree model={model} style={PIERRE_TREE_THEME_STYLE} />;
 }
 
@@ -49,6 +63,11 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
   const commitMutation = useVaultGitCommit();
   const resetMutation = useVaultGitReset();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSelectChangedFile = (path: string) => {
+    navigate(`/vault?path=${encodeURIComponent(path)}`);
+  };
 
   const treeSignature = useMemo(
     () => data?.entries.map((entry) => `${entry.status}:${entry.path}`).join('\n') ?? '',
@@ -106,7 +125,11 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
           <>
             <pre className={styles.commitMessage}>{displayCommitMessage}</pre>
             <div className={styles.treeWrap}>
-              <VaultGitFileTree key={treeSignature} entries={data?.entries ?? EMPTY_GIT_ENTRIES} />
+              <VaultGitFileTree
+                key={treeSignature}
+                entries={data?.entries ?? EMPTY_GIT_ENTRIES}
+                onSelect={handleSelectChangedFile}
+              />
             </div>
           </>
         ) : null}

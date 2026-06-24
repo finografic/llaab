@@ -1,5 +1,6 @@
 import { useAppLeftSidebar } from 'layouts/AppLayout/AppLeftSidebarContext';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { VaultNode } from './vault-browser.types';
 
 import { VaultFileViewer } from './components/VaultFileViewer';
@@ -11,17 +12,36 @@ const VAULT_SIDEBAR_ID = 'vault-browser';
 const VAULT_SIDEBAR_MIN_WIDTH = '280px';
 const VAULT_SIDEBAR_MAX_WIDTH = '720px';
 const VAULT_SIDEBAR_DEFAULT_WIDTH = '480px';
+const PATH_SEARCH_PARAM = 'path';
 
 export interface VaultBrowserProps {
   tree: VaultNode[];
 }
 
 export function VaultBrowser({ tree }: VaultBrowserProps) {
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Search params are the single source of truth, so external navigation (e.g. clicking a
+  // file in the Vault Changes sidebar while already on this route) is picked up immediately —
+  // a separate `useState` mirror would only capture the value at mount.
+  const selectedPath = searchParams.get(PATH_SEARCH_PARAM);
+
+  const setSelectedPath = useCallback(
+    (path: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set(PATH_SEARCH_PARAM, path);
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   const sidebarContent = useMemo(
     () => <VaultSidebar tree={tree} selectedPath={selectedPath} onSelect={setSelectedPath} />,
-    [tree, selectedPath],
+    [tree, selectedPath, setSelectedPath],
   );
 
   const leftSidebar = useMemo(

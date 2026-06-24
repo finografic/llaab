@@ -1,44 +1,23 @@
+/* No fixed height/overflow here on purpose: the file renders at its natural height so the
+   ancestor route container (`AppLayout`'s `.pageContent`, which already scrolls) provides the
+   single scrollbar, rather than nesting a second scroll region inside the panel. */
 .viewer {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-6);
   min-width: 0;
-  height: 100%;
+}
+
+.viewerFile {
+  display: block;
 }
 
 .viewerEmpty,
 .viewerLoading {
+  padding: var(--space-6);
   color: var(--text-faint);
   font-size: var(--text-base);
 }
 
 .viewerError {
+  padding: var(--space-6);
   color: var(--error-text, #ef4444);
   font-size: var(--text-base);
-}
-
-.viewerContent {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.viewerPath {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--text-faint);
-  letter-spacing: 0.04em;
-}
-
-.viewerPre {
-  font-family: var(--font-mono);
-  font-size: var(--text-md);
-  line-height: 1.7;
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-word;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: var(--space-5);
 }

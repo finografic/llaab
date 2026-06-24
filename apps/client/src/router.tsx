@@ -92,6 +92,11 @@ export const router = createBrowserRouter([
       {
         path: 'vault',
         loader: vaultSessionLoader,
+        // The session check has no dependency on path/search params — without this, React
+        // Router re-runs it (a network fetch) on every click inside the Vault Explorer or Vault
+        // Changes panel, since both drive navigation via `?path=` search params. A single flaky
+        // fetch then crashes the whole route. Only re-check when the pathname itself changes.
+        shouldRevalidate: ({ currentUrl, nextUrl }) => currentUrl.pathname !== nextUrl.pathname,
         element: <VaultLayout />,
         children: [
           {
