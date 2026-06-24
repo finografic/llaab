@@ -27,6 +27,7 @@ interface LlmStatusResponse {
     created?: number;
     digest?: string;
     details?: {
+      domain?: string;
       families?: string[];
       family?: string;
       format?: string;
@@ -34,6 +35,8 @@ interface LlmStatusResponse {
       parent_model?: string;
       quantization_level?: string;
     };
+    capabilities?: string[];
+    contextLength?: number;
     modified_at?: Date | string;
     name: string;
     owned_by?: string;

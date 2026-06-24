@@ -79,6 +79,11 @@ const PROVIDER_CONFIG: Record<string, { logo: string; color: string; bgClass: st
     color: 'text-lime-600 dark:text-lime-400',
     bgClass: 'bg-lime-100 dark:bg-lime-950',
   },
+  lmstudio: {
+    logo: 'lmstudio',
+    color: 'text-cyan-700 dark:text-cyan-300',
+    bgClass: 'bg-cyan-100 dark:bg-cyan-950',
+  },
 };
 
 const CAPABILITY_CONFIG: Record<

@@ -9,6 +9,7 @@ import {
 import type { ModelCapability } from 'components/ui/elements/ai-model-info';
 
 export interface OllamaModelDetails {
+  domain?: string;
   families?: string[];
   family?: string;
   format?: string;
@@ -73,6 +74,7 @@ function inferContextWindow(model: OllamaModelInfo) {
 
 /** Maps Ollama's native `show` capability flags onto our display capabilities. */
 const OLLAMA_CAPABILITY_MAP: Record<string, ModelCapability> = {
+  reasoning: 'reasoning',
   vision: 'vision',
   tools: 'tools',
   thinking: 'reasoning',
@@ -90,9 +92,12 @@ function inferCapabilities(model: OllamaModelInfo): ModelCapability[] {
   const normalized = model.name.toLowerCase();
   const capabilities: ModelCapability[] = ['streaming', 'json', ...mapOllamaCapabilities(model.capabilities)];
 
-  if (normalized.includes('gemma4')) {
+  if (normalized.includes('gemma4') || normalized.includes('gemma-4')) {
     capabilities.push('vision', 'tools', 'reasoning');
-    if (normalized.includes('e2b') || normalized.includes('e4b') || normalized.includes('12b')) {
+    if (
+      model.provider !== 'lmstudio' &&
+      (normalized.includes('e2b') || normalized.includes('e4b') || normalized.includes('12b'))
+    ) {
       capabilities.push('audio');
     }
   }
@@ -135,6 +140,7 @@ function LlmModelFacts({ model }: { model: OllamaModelInfo }) {
       <div className="flex flex-wrap gap-1.5">
         <DetailPill label="params" value={details?.parameter_size} />
         <DetailPill label="arch" value={details?.family} />
+        <DetailPill label="domain" value={details?.domain} />
         <DetailPill label="format" value={details?.format} />
         <DetailPill label="quant" value={details?.quantization_level} />
         <DetailPill label="size" value={formatBytes(model.size)} />
