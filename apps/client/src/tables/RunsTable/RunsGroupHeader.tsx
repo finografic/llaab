@@ -89,14 +89,20 @@ export function RunsGroupHeader({ group }: RunGroupRowProps) {
         <TableCell>
           {group.source ? (
             <div className={styles.authorCell}>
-              {group.source.youtube_subscribed ? (
+              {group.source.youtube_subscribed === true ? (
                 <span className={styles.follow}>
                   <UserCheckIcon size={18} />
                 </span>
-              ) : (
+              ) : group.source.youtube_subscribed === false ? (
                 <span className={styles.muted}>
                   <UserXIcon size={18} />
                 </span>
+              ) : (
+                <span
+                  className={styles.followUnknown}
+                  title="YouTube subscription status unknown"
+                  aria-label="YouTube subscription status unknown"
+                />
               )}
               <Link to={`/vault/sources/${group.source.id}`} className={styles.authorLink}>
                 {group.source.title}
