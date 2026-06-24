@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { VaultNode } from 'components/VaultBrowser';
+import type { VaultNode } from 'components/VaultBrowser/vault-browser.types';
 
 import { api } from 'lib/api';
 

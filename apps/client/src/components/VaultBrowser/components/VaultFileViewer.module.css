@@ -1,0 +1,44 @@
+.viewer {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  min-width: 0;
+  height: 100%;
+}
+
+.viewerEmpty,
+.viewerLoading {
+  color: var(--text-faint);
+  font-size: var(--text-base);
+}
+
+.viewerError {
+  color: var(--error-text, #ef4444);
+  font-size: var(--text-base);
+}
+
+.viewerContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.viewerPath {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+
+.viewerPre {
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+}
