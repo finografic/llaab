@@ -150,11 +150,28 @@ inside `apps/server`. Scheduling is always OS crontab-backed through the managed
 
 ## LLM (`llm/`)
 
-> TODO — populate. See `docs/todo/NEXT_STEPS.md`.
+The LLM route group exposes the task router in `@llaab/llm`.
 
-Routed completion/streaming (`POST /complete`, `POST /stream`), model/status/capability
-introspection (`GET /models`, `/status`, `/capabilities`), and routing overrides
-(`PATCH /route`).
+Providers currently supported by the router:
+
+| Provider id | Runtime              | Default endpoint / source                 |
+| ----------- | -------------------- | ----------------------------------------- |
+| `ollama`    | Ollama local server  | `OLLAMA_HOST` or `http://localhost:11434` |
+| `lmstudio`  | LM Studio local API  | `LLAAB_LMSTUDIO_BASE_URL` or `:1234/v1`   |
+| `anthropic` | Anthropic remote API | `ANTHROPIC_API_KEY` + configured model    |
+
+`GET /api/llm/status` returns the persisted task routing map plus provider-qualified local model
+options. `GET /api/llm/models` returns the same local model options in a smaller shape. The client
+uses these options so two providers can expose similarly named models without ambiguity.
+
+`PATCH /api/llm/routing` persists `{ task, tier, provider, model }` into
+`configs/llm-routing.json`. `POST /api/llm/complete` and `/stream` then call `routeLlm(...)` /
+`streamLlm(...)`, which dispatch by the saved provider id. A bare `model` override still uses the
+task's saved provider.
+
+Current LM Studio integration is intentionally a thin OpenAI-compatible inference adapter. Do not
+install `@lmstudio/sdk` until a concrete adapter/agent feature needs model lifecycle management,
+embeddings, or LM Studio tool-use flows.
 
 ## Runs (`runs/`)
 

@@ -1,5 +1,7 @@
 import {
   getLlmStatus,
+  lmStudioListModelDetails,
+  lmStudioListModels,
   ollamaListModelDetails,
   ollamaListModels,
   routeLlm,
@@ -54,12 +56,23 @@ export const stream = {
 export const models = {
   path: '/models' as const,
   handler: async (c: AppCtx) => {
+    const models: Array<{ model: string; provider: 'ollama' | 'lmstudio' }> = [];
+    const errors: Partial<Record<'ollama' | 'lmstudio', string>> = {};
+
     try {
-      const modelList = await ollamaListModels();
-      return c.json({ models: modelList });
+      models.push(...(await ollamaListModels()).map((model) => ({ model, provider: 'ollama' as const })));
     } catch {
-      return c.json({ models: [] as string[], error: 'Ollama unavailable' }, 503);
+      errors.ollama = 'Ollama unavailable';
     }
+
+    try {
+      models.push(...(await lmStudioListModels()).map((model) => ({ model, provider: 'lmstudio' as const })));
+    } catch {
+      errors.lmstudio = 'LM Studio unavailable';
+    }
+
+    const statusCode = models.length > 0 ? 200 : 503;
+    return c.json({ models: models.map((entry) => entry.model), modelOptions: models, errors }, statusCode);
   },
 };
 
@@ -69,20 +82,40 @@ export const status = {
     const config = await getLlmStatus();
     let installedModels: string[] = [];
     let installedModelDetails: Awaited<ReturnType<typeof ollamaListModelDetails>> = [];
+    let lmStudioModelDetails: Awaited<ReturnType<typeof lmStudioListModelDetails>> = [];
     let ollamaError: string | undefined;
+    let lmStudioError: string | undefined;
     try {
       installedModelDetails = await ollamaListModelDetails();
       installedModels = installedModelDetails.map((model) => model.name);
     } catch {
       ollamaError = 'Ollama unavailable';
     }
+
+    try {
+      lmStudioModelDetails = await lmStudioListModelDetails();
+      installedModels = [...installedModels, ...lmStudioModelDetails.map((model) => model.name)];
+    } catch {
+      lmStudioError = 'LM Studio unavailable';
+    }
+
+    const installedModelOptions = [
+      ...installedModelDetails.map((model) => ({ model: model.name, provider: 'ollama' as const })),
+      ...lmStudioModelDetails.map((model) => ({ model: model.name, provider: 'lmstudio' as const })),
+    ];
+
     return c.json({
       availableProviders: config.availableProviders,
       modelMap: config.modelMap,
       routing: config.routing,
       installedModels,
-      installedModelDetails,
+      installedModelOptions,
+      installedModelDetails: [
+        ...installedModelDetails.map((model) => ({ ...model, provider: 'ollama' as const })),
+        ...lmStudioModelDetails,
+      ],
       ollamaError,
+      lmStudioError,
     });
   },
 };

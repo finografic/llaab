@@ -3,6 +3,8 @@ export {
   findProvidersByCapability,
   getLlmStatus,
   invalidateLlmCache,
+  lmStudioListModelDetails,
+  lmStudioListModels,
   ollamaGetModelContextLength,
   ollamaListModelDetails,
   ollamaListModels,

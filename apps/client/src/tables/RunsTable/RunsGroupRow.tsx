@@ -14,12 +14,13 @@ export interface RunsGroupRowProps {
   group: RunGroup;
 }
 
-function RunModelBadge({ model }: { model?: string }) {
-  if (!model) return null;
+function RunModelBadges({ model, provider }: { model?: string; provider?: string }) {
+  if (!model && !provider) return null;
 
   return (
-    <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
-      {model}
+    <span className={styles.modelBadges}>
+      {provider ? <span className={styles.modelBadge}>{provider}</span> : null}
+      {model ? <span className={styles.modelBadge}>{model}</span> : null}
     </span>
   );
 }
@@ -47,6 +48,7 @@ export function RunsGroupRow({ group }: RunsGroupRowProps) {
         const displayStatus = getRunDisplayStatus(run);
         const extracting = displayStatus === 'extracting';
         const model = run.llm?.model ?? run.model_used;
+        const provider = run.llm?.provider;
 
         return (
           <TableRow key={run.id} className={styles.childRow}>
@@ -61,7 +63,7 @@ export function RunsGroupRow({ group }: RunsGroupRowProps) {
               </div>
             </TableCell>
             <TableCell className="pl-1.5" colSpan={3}>
-              <RunModelBadge model={model} />
+              <RunModelBadges model={model} provider={provider} />
             </TableCell>
             <TableCell className="text-center">
               <span className={styles.nodesCell}>

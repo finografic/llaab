@@ -161,7 +161,7 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models (2×2 vi
 | `/ingest`                | URL form with card-wide drag/drop; two-phase ingest; `RunPipelineCard` progress + grouped `RunsTable` (collapsed by subject, sortable published date) |
 | `/terminal`              | Typed command bus UI — actions rail, command injection, structured/raw/JSON output, durable command runs                                              |
 | `/crons`                 | One-shot cron recipe dashboard — Run Now, external trigger snippets, recent cron runs                                                                 |
-| `/llm`                   | LLM status dashboard: task→tier→model routing with installed/missing dots, Ollama model list                                                          |
+| `/llm`                   | LLM routing dashboard: provider/model selects, installed dots, Ollama + LM Studio models                                                              |
 | `/icons`                 | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
 | `/vault`                 | Gated file-tree browser — local recursive tree + raw file viewer                                                                                      |
 | `/vault/transcripts/:id` | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                       |
@@ -316,7 +316,11 @@ UI can show coverage and score after reload. Default model: `gemma4:26b-a4b-it-q
 `consolidate` task route.
 
 `getLlmStatus()` exported from `@llaab/llm` returns the live routing map (respects env overrides).
-Ollama provider uses `chat` API (not `generate`) for proper system/user separation.
+Ollama provider uses `chat` API (not `generate`) for proper system/user separation. LM Studio is
+also available as `provider: "lmstudio"` via its OpenAI-compatible local server
+(`LLAAB_LMSTUDIO_BASE_URL` or `http://localhost:1234/v1`); `/llm` shows provider-qualified model
+options like `(Ollama) gemma...` and `(LM Studio) google/gemma-4-e4b`, and routing persists both
+provider and model in `configs/llm-routing.json`.
 Extraction prep is token-aware: long transcripts are chunked with overlap instead of blindly
 truncated, and chunk outputs are reduced/deduped.
 

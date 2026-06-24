@@ -1,10 +1,10 @@
-import type { LlmCompleteOptions } from './types.js';
+import type { LlmCompleteOptions, LlmProviderId } from './types.js';
 import type { Capability } from '@llaab/core';
 
 export interface LlmProviderResult {
   text: string;
   durationMs: number;
-  providerId: 'ollama' | 'anthropic';
+  providerId: LlmProviderId;
   model: string;
   promptTokens?: number;
   completionTokens?: number;

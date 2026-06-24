@@ -18,10 +18,13 @@ export interface OllamaModelDetails {
 }
 
 export interface OllamaModelInfo {
+  created?: number;
   digest?: string;
   details?: OllamaModelDetails;
   modified_at?: Date | string;
   name: string;
+  owned_by?: string;
+  provider?: 'ollama' | 'lmstudio';
   size?: number;
   capabilities?: string[];
   contextLength?: number;
@@ -105,7 +108,7 @@ function toModelInfo(model: OllamaModelInfo): ModelInfoData {
   return {
     id: model.name,
     name: model.name,
-    provider: 'ollama',
+    provider: model.provider ?? 'ollama',
     contextWindow: inferContextWindow(model),
     capabilities: inferCapabilities(model),
   };
@@ -135,6 +138,7 @@ function LlmModelFacts({ model }: { model: OllamaModelInfo }) {
         <DetailPill label="format" value={details?.format} />
         <DetailPill label="quant" value={details?.quantization_level} />
         <DetailPill label="size" value={formatBytes(model.size)} />
+        <DetailPill label="owner" value={model.owned_by} />
       </div>
       {(shortDigest || modified) && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">

@@ -206,10 +206,37 @@ a.subjectTitle:hover {
   border: 1px solid var(--border-subtle);
 }
 
+.modelBadges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.modelBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 30%, transparent);
+  padding: 2px 8px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.2;
+}
+
 .follow {
   display: inline-flex;
   align-items: center;
   color: var(--accent-dim);
+}
+
+.followUnknown {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
 }
 
 .groupRow {

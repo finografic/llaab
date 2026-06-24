@@ -4,6 +4,7 @@ import { LlmRoutingEditor } from 'components/LlmRoutingEditor/LlmRoutingEditor';
 import { PageHero } from 'components/PageHero/PageHero';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { QUERY_KEYS } from 'queries/llm';
+import { useMemo } from 'react';
 
 import { apiGet } from 'lib/api-client';
 import { usePageTitle } from 'lib/use-page-title';
@@ -13,7 +14,7 @@ import styles from './llm.module.css';
 interface RoutingEntry {
   tier: 'local-small' | 'local-mid' | 'local-strong' | 'remote';
   model: string;
-  provider: 'ollama' | 'anthropic';
+  provider: 'ollama' | 'anthropic' | 'lmstudio';
 }
 
 interface LlmStatusResponse {
@@ -23,6 +24,7 @@ interface LlmStatusResponse {
   >;
   modelMap: Record<string, string>;
   installedModelDetails: Array<{
+    created?: number;
     digest?: string;
     details?: {
       families?: string[];
@@ -34,9 +36,13 @@ interface LlmStatusResponse {
     };
     modified_at?: Date | string;
     name: string;
+    owned_by?: string;
+    provider?: 'ollama' | 'lmstudio';
     size?: number;
   }>;
+  installedModelOptions: Array<{ model: string; provider: 'ollama' | 'anthropic' | 'lmstudio' }>;
   installedModels: string[];
+  lmStudioError?: string;
   ollamaError?: string;
 }
 
@@ -51,6 +57,10 @@ export function LlmPage() {
   });
 
   const fetchError = error instanceof Error ? error.message : error ? 'Failed to reach server' : null;
+  const remoteModels = useMemo(
+    () => [status?.modelMap.remote].filter((model): model is string => Boolean(model)),
+    [status?.modelMap.remote],
+  );
 
   return (
     <PageLayout
@@ -58,7 +68,7 @@ export function LlmPage() {
         <PageHero
           eyebrow="Models"
           title="Status"
-          description="Active model routing and installed Ollama models."
+          description="Active model routing and installed local models."
         />
       }
     >
@@ -76,15 +86,15 @@ export function LlmPage() {
               <h2 className={styles.llmSectionHeading}>Task routing</h2>
               <LlmRoutingEditor
                 routing={status.routing}
-                installedModels={status.installedModels}
-                remoteModels={[status.modelMap.remote].filter(Boolean)}
+                installedModelOptions={status.installedModelOptions}
+                remoteModels={remoteModels}
               />
             </section>
 
             <section className={styles.llmSection}>
               <h2 className={styles.llmSectionHeading}>
-                Installed Ollama models
-                {status.ollamaError ? (
+                Installed local models
+                {status.ollamaError && status.lmStudioError ? (
                   <span className={`${styles.llmSectionBadge} ${styles.llmSectionBadgeErr}`}>offline</span>
                 ) : (
                   <span className={`${styles.llmSectionBadge} ${styles.llmSectionBadgeOk}`}>
@@ -94,9 +104,10 @@ export function LlmPage() {
               </h2>
 
               {status.ollamaError ? <p className={styles.llmEmpty}>{status.ollamaError}</p> : null}
+              {status.lmStudioError ? <p className={styles.llmEmpty}>{status.lmStudioError}</p> : null}
 
-              {!status.ollamaError && status.installedModels.length === 0 ? (
-                <p className={styles.llmEmpty}>No models found — is Ollama running?</p>
+              {!(status.ollamaError && status.lmStudioError) && status.installedModels.length === 0 ? (
+                <p className={styles.llmEmpty}>No models found — are Ollama or LM Studio running?</p>
               ) : null}
 
               {status.installedModelDetails.length > 0 ? (

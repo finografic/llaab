@@ -14,7 +14,7 @@ export const llmTaskSchema = z.enum([
 
 export const llmTierSchema = z.enum(['local-small', 'local-mid', 'local-strong', 'remote']);
 
-export const llmProviderSchema = z.enum(['ollama', 'anthropic']);
+export const llmProviderSchema = z.enum(['ollama', 'anthropic', 'lmstudio']);
 
 export const completeLlmBodySchema = z.object({
   task: llmTaskSchema,

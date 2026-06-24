@@ -124,8 +124,8 @@ WebSocket at `/terminal`.
 | `/api/ingest/youtube`                | POST   | Ingest a YouTube URL and optionally run extraction. |
 | `/api/llm/complete`                  | POST   | Non-streaming model call through `routeLlm(...)`.   |
 | `/api/llm/stream`                    | POST   | SSE model stream through `streamLlm(...)`.          |
-| `/api/llm/models`                    | GET    | Installed Ollama model list.                        |
-| `/api/llm/status`                    | GET    | Provider availability and routing map.              |
+| `/api/llm/models`                    | GET    | Installed Ollama and LM Studio model options.       |
+| `/api/llm/status`                    | GET    | Provider availability, routing map, and models.     |
 | `/api/llm/capabilities`              | GET    | Provider capabilities.                              |
 | `/api/vault/file?path=...`           | GET    | Read a vault-root-safe file path.                   |
 | `/api/vault/nodes`                   | GET    | List validated nodes.                               |
@@ -250,7 +250,7 @@ flowchart LR
   B --> D["code_edit"]
   B --> E["shell_exec"]
   B --> F["memory_read"]
-  C --> G["LLM providers: Ollama / Anthropic"]
+  C --> G["LLM providers: Ollama / Anthropic / LM Studio"]
   D --> H["Executor provider: OpenCode"]
   E --> I["Command handler: shell.exec"]
   F --> J["Command handlers: fs.read / fs.list"]

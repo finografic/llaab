@@ -6,6 +6,7 @@ import type { Capability } from '@llaab/core';
 
 import { cacheDelete, cacheGet, cacheSet } from './cache.js';
 import { anthropicProvider } from './providers/anthropic.js';
+import { lmStudioListModelDetails, lmStudioListModels, lmStudioProvider } from './providers/lmstudio.js';
 import {
   ollamaGetModelContextLength,
   ollamaListModelDetails,
@@ -42,17 +43,13 @@ const DEFAULT_ROUTING: Record<TaskType, TaskRoute> = {
   'speech': { tier: 'local-mid', model: MODEL_MAP['local-mid'], provider: 'ollama' },
 };
 
-const PROVIDERS: Record<ModelTier, LlmProvider> = {
-  'local-small': ollamaProvider,
-  'local-mid': ollamaProvider,
-  'local-strong': ollamaProvider,
-  'remote': anthropicProvider,
-};
-
 const PROVIDERS_BY_ID: Record<LlmProviderId, LlmProvider> = {
   ollama: ollamaProvider,
   anthropic: anthropicProvider,
+  lmstudio: lmStudioProvider,
 };
+
+const UNIQUE_PROVIDERS = [ollamaProvider, anthropicProvider, lmStudioProvider];
 
 const ROUTING_CONFIG_PATH = resolve(process.cwd(), 'configs/llm-routing.json');
 
@@ -71,8 +68,8 @@ const CACHEABLE = new Set<TaskType>(['route', 'format', 'extract']);
  */
 export function invalidateLlmCache(task: TaskType, prompt: string, override?: string): void {
   if (!CACHEABLE.has(task)) return;
-  const { model } = resolveModel(task, override);
-  cacheDelete(prompt, model);
+  const { model, provider } = resolveModel(task, override);
+  cacheDelete(prompt, `${provider.id}:${model}`);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -148,10 +145,7 @@ export function resolveLlmRoute(
 }
 
 export function findProvidersByCapability(capability: Capability): LlmProvider[] {
-  return Object.values(PROVIDERS).filter((provider, index, providers) => {
-    const firstIndex = providers.findIndex((candidate) => candidate.id === provider.id);
-    return firstIndex === index && provider.capabilities.includes(capability);
-  });
+  return UNIQUE_PROVIDERS.filter((provider) => provider.capabilities.includes(capability));
 }
 
 export async function routeLlm(
@@ -168,13 +162,13 @@ export async function routeLlm(
   };
 
   if (CACHEABLE.has(task) && !completeOpts.bypassCache) {
-    const hit = cacheGet(prompt, model);
+    const hit = cacheGet(prompt, `${provider.id}:${model}`);
     if (hit) return { text: hit, model, cached: true, provider: provider.id, durationMs: 0 };
   }
 
   const result = await provider.complete(prompt, completeOpts);
 
-  if (CACHEABLE.has(task)) cacheSet(prompt, model, result.text);
+  if (CACHEABLE.has(task)) cacheSet(prompt, `${provider.id}:${model}`, result.text);
 
   return {
     text: result.text,
@@ -209,12 +203,9 @@ export async function getLlmStatus(): Promise<{
   modelMap: Record<ModelTier, string>;
   routing: Record<TaskType, { tier: ModelTier; model: string; provider: LlmProviderId }>;
 }> {
-  const uniqueProviders = [
-    ...new Map(Object.values(PROVIDERS).map((provider) => [provider.id, provider])).values(),
-  ];
   const availableProviders = (
     await Promise.all(
-      uniqueProviders.map(async (provider) => ({
+      UNIQUE_PROVIDERS.map(async (provider) => ({
         id: provider.id,
         available: await provider.isAvailable(),
       })),
@@ -226,7 +217,7 @@ export async function getLlmStatus(): Promise<{
   return {
     availableProviders,
     capabilities: await Promise.all(
-      uniqueProviders.map(async (provider) => ({
+      UNIQUE_PROVIDERS.map(async (provider) => ({
         available: availableProviders.includes(provider.id),
         capabilities: provider.capabilities,
         displayName: provider.displayName,
@@ -259,5 +250,11 @@ export function updateLlmTaskRoute(task: TaskType, route: Partial<TaskRoute>): R
   return getRouting();
 }
 
-export { ollamaGetModelContextLength, ollamaListModelDetails, ollamaListModels };
+export {
+  lmStudioListModelDetails,
+  lmStudioListModels,
+  ollamaGetModelContextLength,
+  ollamaListModelDetails,
+  ollamaListModels,
+};
 export type { LlmCompleteResult, LlmProviderId, ModelTier, TaskType };

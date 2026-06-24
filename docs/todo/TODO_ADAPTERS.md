@@ -263,6 +263,39 @@ Gemma can be implemented either as:
 
 Prefer the second if it keeps the system cleaner.
 
+### 2b. LM Studio Provider and SDK Follow-Up
+
+**Current state: implemented as an LLM provider.**
+
+LLAAB can route tasks to LM Studio through the OpenAI-compatible local server:
+
+- provider id: `lmstudio`
+- default base URL: `LLAAB_LMSTUDIO_BASE_URL` or `http://localhost:1234/v1`
+- model discovery: `GET /v1/models`
+- completions: `POST /v1/chat/completions`
+- browser selection: `/llm` shows provider-qualified options such as `(LM Studio) google/gemma-4-e4b`
+
+This is intentionally a thin inference adapter. It does not yet manage model load/unload,
+runtime settings, embeddings, or LM Studio tool/agent flows.
+
+**TODO — adopt `@lmstudio/sdk` when agents/adapters need lifecycle or tool-use control.**
+
+The SDK belongs near the next adapter/agent slice, not the current inference-only slice. Install it
+when at least one of these becomes real work:
+
+- load or unload LM Studio models from LLAAB
+- list local vs loaded models with richer metadata
+- configure runtime/inference settings from `/llm`
+- use LM Studio embeddings
+- use LM Studio local tool-use or agentic flows
+- bridge future Hermes / agent tasks into LM Studio-managed local models
+
+Likely package:
+
+```sh
+pnpm add @lmstudio/sdk --filter @llaab/llm
+```
+
 ### 3. OpenCode Adapter
 
 Purpose:

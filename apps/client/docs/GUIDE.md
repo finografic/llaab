@@ -75,6 +75,19 @@ Use query hooks under `queries/*` — never import `@llaab/core` or `@llaab/inge
 client bundle. Vault lists use `useVaultNodes({ type: 'source' })`; mutations call `api.vault.*`
 with `credentials: 'include'` (configured in `lib/api.ts` and `lib/api-client.ts`).
 
+## LLM provider routing
+
+`/llm` edits persisted task routing from `configs/llm-routing.json`. The route displays
+provider-qualified model options so similarly named models stay distinct:
+
+- `(Ollama) <model>` from Ollama on `:11434`
+- `(LM Studio) <model>` from LM Studio's OpenAI-compatible server on `:1234`
+- `(Anthropic) <model>` for remote routes
+
+The provider prefix is muted in the select label. Saving a task route persists both `provider` and
+`model`; server-side `routeLlm(...)` dispatches to the selected provider. LM Studio uses
+`LLAAB_LMSTUDIO_BASE_URL` when set, otherwise `http://localhost:1234/v1`.
+
 ## Vault auth
 
 - Login: `POST /api/vault/auth/login` → httpOnly `vault_key` cookie (server only).

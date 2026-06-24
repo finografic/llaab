@@ -26,7 +26,7 @@ type TaskType =
   | 'vision'
   | 'speech';
 type ModelTier = 'local-small' | 'local-mid' | 'local-strong' | 'remote';
-type LlmProvider = 'ollama' | 'anthropic';
+type LlmProvider = 'ollama' | 'anthropic' | 'lmstudio';
 
 interface RoutingEntry {
   tier: ModelTier;
@@ -36,7 +36,7 @@ interface RoutingEntry {
 
 export interface LlmRoutingEditorProps {
   routing: Record<TaskType, RoutingEntry>;
-  installedModels: string[];
+  installedModelOptions: Array<{ model: string; provider: LlmProvider }>;
   remoteModels: string[];
 }
 
@@ -79,11 +79,33 @@ function inferLocalTier(currentTier: ModelTier) {
   return currentTier === 'remote' ? 'local-strong' : currentTier;
 }
 
-function isInstalled(model: string, installedModels: string[]) {
-  return installedModels.some((installed) => installed === model || installed.startsWith(`${model}:`));
+function isInstalled(
+  entry: { model: string; provider: LlmProvider },
+  installedModelOptions: Array<{ model: string; provider: LlmProvider }>,
+) {
+  return installedModelOptions.some(
+    (installed) =>
+      installed.provider === entry.provider &&
+      (installed.model === entry.model || installed.model.startsWith(`${entry.model}:`)),
+  );
 }
 
-export function LlmRoutingEditor({ routing, installedModels, remoteModels }: LlmRoutingEditorProps) {
+function providerLabel(provider: LlmProvider) {
+  if (provider === 'lmstudio') return 'LM Studio';
+  if (provider === 'anthropic') return 'Anthropic';
+  return 'Ollama';
+}
+
+function ModelOptionLabel({ model, provider }: { model: string; provider: LlmProvider }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1 font-mono">
+      <span className="shrink-0 text-muted-foreground">({providerLabel(provider)})</span>
+      <span className="truncate">{model}</span>
+    </span>
+  );
+}
+
+export function LlmRoutingEditor({ routing, installedModelOptions, remoteModels }: LlmRoutingEditorProps) {
   const queryClient = useQueryClient();
   const [currentRouting, setCurrentRouting] = useState(routing);
   const [savingTask, setSavingTask] = useState<TaskType | null>(null);
@@ -92,23 +114,28 @@ export function LlmRoutingEditor({ routing, installedModels, remoteModels }: Llm
   useEffect(() => {
     setCurrentRouting(routing);
   }, [routing]);
-  const localModels = useMemo(
+  const localModelOptions = useMemo(
     () =>
-      unique([
-        ...installedModels,
+      [
+        ...installedModelOptions.filter((entry) => entry.provider !== 'anthropic'),
         ...Object.values(currentRouting)
-          .filter((entry) => entry.provider === 'ollama')
-          .map((entry) => entry.model),
-      ]),
-    [currentRouting, installedModels],
+          .filter((entry) => entry.provider !== 'anthropic')
+          .map((entry) => ({ model: entry.model, provider: entry.provider })),
+      ].filter(
+        (entry, index, entries) =>
+          entries.findIndex(
+            (candidate) => candidate.model === entry.model && candidate.provider === entry.provider,
+          ) === index,
+      ),
+    [currentRouting, installedModelOptions],
   );
-  const selectableRemoteModels = useMemo(
+  const remoteModelOptions = useMemo(
     () =>
       unique([
-        ...remoteModels,
         ...Object.values(currentRouting)
           .filter((entry) => entry.provider === 'anthropic')
           .map((entry) => entry.model),
+        ...remoteModels,
       ]),
     [currentRouting, remoteModels],
   );
@@ -117,7 +144,8 @@ export function LlmRoutingEditor({ routing, installedModels, remoteModels }: Llm
     const [provider, ...modelParts] = value.split(':');
     const model = modelParts.join(':');
     const previous = currentRouting[task];
-    const nextProvider = provider === 'anthropic' ? 'anthropic' : 'ollama';
+    const nextProvider: LlmProvider =
+      provider === 'anthropic' || provider === 'lmstudio' ? provider : 'ollama';
     const nextEntry: RoutingEntry = {
       model,
       provider: nextProvider,
@@ -158,7 +186,7 @@ export function LlmRoutingEditor({ routing, installedModels, remoteModels }: Llm
     <div className="flex flex-col gap-2">
       {TASK_ORDER.map((task) => {
         const entry = currentRouting[task];
-        const installed = entry.provider === 'anthropic' || isInstalled(entry.model, installedModels);
+        const installed = entry.provider === 'anthropic' || isInstalled(entry, installedModelOptions);
         const value = `${entry.provider}:${entry.model}`;
 
         return (
@@ -180,21 +208,21 @@ export function LlmRoutingEditor({ routing, installedModels, remoteModels }: Llm
               </SelectTrigger>
               <SelectContent position="popper" align="start">
                 <SelectGroup>
-                  <SelectLabel>Installed Ollama</SelectLabel>
-                  {localModels.map((model) => (
-                    <SelectItem key={`ollama:${model}`} value={`ollama:${model}`}>
-                      {model}
+                  <SelectLabel>Installed local models</SelectLabel>
+                  {localModelOptions.map(({ model, provider }) => (
+                    <SelectItem key={`${provider}:${model}`} value={`${provider}:${model}`}>
+                      <ModelOptionLabel model={model} provider={provider} />
                     </SelectItem>
                   ))}
                 </SelectGroup>
-                {selectableRemoteModels.length > 0 ? (
+                {remoteModelOptions.length > 0 ? (
                   <>
                     <SelectSeparator />
                     <SelectGroup>
                       <SelectLabel>Remote</SelectLabel>
-                      {selectableRemoteModels.map((model) => (
+                      {remoteModelOptions.map((model) => (
                         <SelectItem key={`anthropic:${model}`} value={`anthropic:${model}`}>
-                          {model}
+                          <ModelOptionLabel model={model} provider="anthropic" />
                         </SelectItem>
                       ))}
                     </SelectGroup>

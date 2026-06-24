@@ -57,8 +57,10 @@ Reference: [`NEXT_STEPS.md`](./NEXT_STEPS.md#open-questions-carry-forward-from-a
 ### Adapter Expansion Beyond the Foundation
 
 The adapter foundation is done: providers, capabilities, command handlers, OpenCode registration,
-and shell gating exist. Future work is adding more external execution adapters only when there is
-a concrete workflow driver.
+shell gating, and Ollama/LM Studio LLM routing exist. Future work is adding more external
+execution adapters only when there is a concrete workflow driver. Near-term: evaluate
+`@lmstudio/sdk` when agents/adapters need LM Studio model lifecycle control, tool-use, or local
+agentic flows beyond the current OpenAI-compatible inference endpoint.
 
 Detail: [`docs/todo/TODO_ADAPTERS.md`](./TODO_ADAPTERS.md)
 

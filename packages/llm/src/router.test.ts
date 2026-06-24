@@ -7,6 +7,7 @@ describe('findProvidersByCapability', () => {
     expect(findProvidersByCapability('extract').map((provider) => provider.id)).toEqual([
       'ollama',
       'anthropic',
+      'lmstudio',
     ]);
   });
 
