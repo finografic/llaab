@@ -12,6 +12,7 @@
 
 .trigger {
   position: relative;
+  z-index: 1;
   /* color: var(--accent);
   border-color: color-mix(in oklab, var(--accent) 35%, var(--border));
   background: var(--accent-subtle); */
@@ -26,8 +27,9 @@
 
 .triggerBadge {
   position: absolute;
-  top: -5px;
+  top: -2px;
   right: -5px;
+  z-index: 10;
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -1,5 +1,6 @@
 .trigger {
   position: relative;
+  z-index: 1;
 }
 
 .trigger:hover,
@@ -9,8 +10,9 @@
 
 .triggerBadge {
   position: absolute;
-  top: -5px;
+  top: -2px;
   right: -5px;
+  z-index: 10;
   display: inline-flex;
   align-items: center;
   justify-content: center;
