@@ -474,6 +474,9 @@ const CANONICAL_IDEA_DRAFT_JSON_SHAPE =
 const DRAFT_CONSOLIDATION_RULES = `Category Separation Rule:
 Do not merge ideas that belong to different categories of concern, even if they are related. Keep separate when appropriate: workflow strategy; model behavior; historical role; interface/tooling architecture; runtime/sandboxing architecture; cost/performance implication.
 
+Granularity Split Rule:
+If two candidates answer different durable questions, keep them separate even when they share the same topic. Split when one idea is primarily about mechanism or technique, another is about operational trade-offs, and another is about human/stakeholder role. Merge only when the combined canonical idea would still have one clear thesis rather than a bundle of related implications.
+
 Problem/Solution Merge Rule:
 When one candidate idea describes a problem and another describes the recommended solution to that same problem, merge them into one canonical idea if together they form one coherent concept. Example: "dumping entire codebases into prompts wastes tokens" plus "targeted retrieval/search is more efficient" should merge into "Context stuffing should be replaced by targeted retrieval." Do not merge a problem with an idea about a different underlying concept just because it is topically related.
 
@@ -534,10 +537,11 @@ Merge duplicates. Preserve distinct knowledge nodes.
 
 Important separation rules:
 1. Merge context stuffing and targeted retrieval into one idea if they describe the same problem/solution pair.
-2. Keep LLM non-determinism from large context windows separate from targeted retrieval. Do not treat non-determinism as merely a side-effect inside the retrieval idea — if supported by multiple candidates, it must become its own canonical idea about model behavior with a non-determinism or model-behavior tag.
-3. Capture Bash as a foundational but limited execution layer if supported.
-4. Keep typed programmable execution layers separate from runtime isolation (e.g. V8 isolates) when both are supported.
-5. Single-source ideas should usually be supporting details, unless technically central and useful for future linking.
+2. Keep candidates separate when they answer different durable questions: mechanism/technique, operational trade-offs, and human/stakeholder role are usually different canonical ideas when supported.
+3. Keep LLM non-determinism from large context windows separate from targeted retrieval. Do not treat non-determinism as merely a side-effect inside the retrieval idea — if supported by multiple candidates, it must become its own canonical idea about model behavior with a non-determinism or model-behavior tag.
+4. Capture Bash as a foundational but limited execution layer if supported.
+5. Keep typed programmable execution layers separate from runtime isolation (e.g. V8 isolates) when both are supported.
+6. Single-source ideas should usually be supporting details, unless technically central and useful for future linking.
 
 Return ONLY valid JSON with this exact shape:
 ${CANONICAL_IDEA_DRAFT_JSON_SHAPE}
