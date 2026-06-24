@@ -33,6 +33,7 @@ worktrees/
 
 # graphify — commit graph artifacts; ignore local rebuild cache
 graphify-out/cache/
+graphify-out/
 
 # IDE — ignore local Cursor state; keep project rules (e.g. graphify.mdc)
 **/.cursor/**
@@ -89,3 +90,4 @@ Desktop.ini
 *~ehthumbs.db
 Desktop.ini
 *~
+
