@@ -16,7 +16,7 @@ import {
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
-import { SparklesIcon } from 'lucide-react';
+import { HashIcon, SparklesIcon } from 'lucide-react';
 import { QUERY_KEYS as RUN_KEYS, useRunMonitor } from 'queries/runs';
 import {
   useCleanCanonicalIdeaArtifacts,
@@ -83,6 +83,10 @@ function hasExtractionMeta(run: TranscriptExtractionRun) {
     run.promptTokens != null ||
     run.completionTokens != null,
   );
+}
+
+function formatTokenCount(value: number) {
+  return value.toLocaleString();
 }
 
 export function TranscriptDetail({
@@ -188,6 +192,20 @@ export function TranscriptDetail({
   const liveConsolidateDurationMs = useElapsedMs(isConsolidating ? consolidateClockStartedAt : null);
   const displayConsolidateDurationMs = isConsolidating ? liveConsolidateDurationMs : consolidateDurationMs;
   const showConsolidateClock = isConsolidating || consolidateDurationMs != null;
+  const mutationTokenCount =
+    consolidateMutation.data?.llmMeta?.promptTokens != null ||
+    consolidateMutation.data?.llmMeta?.completionTokens != null
+      ? (consolidateMutation.data.llmMeta.promptTokens ?? 0) +
+        (consolidateMutation.data.llmMeta.completionTokens ?? 0)
+      : undefined;
+  const persistedConsolidateTokenCount =
+    canonicalIdeas[0]?.llm_prompt_tokens != null || canonicalIdeas[0]?.llm_completion_tokens != null
+      ? (canonicalIdeas[0]?.llm_prompt_tokens ?? 0) + (canonicalIdeas[0]?.llm_completion_tokens ?? 0)
+      : undefined;
+  const displayConsolidateTokenCount = isConsolidating
+    ? activeConsolidateRun?.progress_tokens
+    : (mutationTokenCount ?? persistedConsolidateTokenCount);
+  const showApproximateTokenCount = isConsolidating && displayConsolidateTokenCount != null;
   const coverageAudit = consolidateMutation.data?.coverageAudit;
   const qualityValidation = consolidateMutation.data?.qualityValidation;
   const persistedCoverage = transcript.canonical_coverage;
@@ -573,13 +591,33 @@ export function TranscriptDetail({
               <>
                 {showConsolidateClock && displayConsolidateDurationMs != null ? (
                   <span
-                    className={styles.consolidateClock}
-                    title={isConsolidating ? 'Consolidation in progress' : 'Last consolidation duration'}
+                    className={styles.consolidateStats}
                     aria-live={isConsolidating ? 'polite' : undefined}
                   >
-                    <TimerIcon size={16} aria-hidden />
-                    <span className={styles.consolidateClockTime}>
-                      {formatDurationMs(displayConsolidateDurationMs)}
+                    {displayConsolidateTokenCount != null ? (
+                      <span
+                        className={styles.consolidateTokenCount}
+                        title={
+                          showApproximateTokenCount
+                            ? 'Approximate generated tokens'
+                            : 'Last consolidation total tokens'
+                        }
+                      >
+                        <HashIcon size={16} aria-hidden />
+                        <span className={styles.consolidateTokenValue}>
+                          {showApproximateTokenCount ? '~ ' : ''}
+                          {formatTokenCount(displayConsolidateTokenCount)}
+                        </span>
+                      </span>
+                    ) : null}
+                    <span
+                      className={styles.consolidateClock}
+                      title={isConsolidating ? 'Consolidation in progress' : 'Last consolidation duration'}
+                    >
+                      <TimerIcon size={16} aria-hidden />
+                      <span className={styles.consolidateClockTime}>
+                        {formatDurationMs(displayConsolidateDurationMs)}
+                      </span>
                     </span>
                   </span>
                 ) : null}

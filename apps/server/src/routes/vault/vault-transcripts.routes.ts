@@ -11,7 +11,7 @@ import { appendProducedNodeIds, appendRunEvent, runSkill, setRunLlmTrace } from 
 import { z } from 'zod';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { PromoteCanonicalIdeaBody, ResolveCanonicalIdeaConflictBody } from './vault.schema.js';
-import type { TaskType } from '@llaab/llm';
+import type { LlmProgress, TaskType } from '@llaab/llm';
 import type {
   CanonicalIdeaNode,
   ConsolidationQualityCanonical,
@@ -291,10 +291,16 @@ async function callLlmForJson<T>(
   schema: { parse: (value: unknown) => T },
   attempts = 2,
   modelOverride?: string,
+  onProgress?: (progress: LlmProgress) => void | Promise<void>,
 ): Promise<{ llm: Awaited<ReturnType<typeof routeLlm>>; result: T }> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    const llm = await routeLlm(task, input, { system, bypassCache: true, model: modelOverride });
+    const llm = await routeLlm(task, input, {
+      system,
+      bypassCache: true,
+      model: modelOverride,
+      onProgress,
+    });
     try {
       return { llm, result: schema.parse(parseJsonFromLlmText(llm.text)) };
     } catch (err) {
@@ -725,6 +731,16 @@ export async function consolidateTranscriptIdeasForTranscript(
   const { record, result: skillResult } = await runSkill(
     'consolidate-canonical-ideas',
     async (_input, runNodeId) => {
+      const consolidationRoute = resolveLlmRoute('consolidate', modelOverride);
+      const updateLlmProgress = async (progress: LlmProgress) => {
+        await setRunLlmTrace(runNodeId, {
+          model: consolidationRoute.model,
+          provider: consolidationRoute.provider,
+          progress_status: progress.status,
+          progress_tokens: progress.completionTokens,
+        });
+      };
+
       async function runDraftPass() {
         return callLlmForJson(
           'consolidate',
@@ -733,6 +749,7 @@ export async function consolidateTranscriptIdeasForTranscript(
           CanonicalDraftResultSchema,
           2,
           modelOverride,
+          updateLlmProgress,
         );
       }
 
@@ -842,6 +859,8 @@ export async function consolidateTranscriptIdeasForTranscript(
       await setRunLlmTrace(runNodeId, {
         model: llm.model,
         provider: llm.provider,
+        progress_status: 'completed',
+        progress_tokens: llm.completionTokens,
         duration_ms: llm.durationMs,
         prompt_tokens: llm.promptTokens,
         completion_tokens: llm.completionTokens,

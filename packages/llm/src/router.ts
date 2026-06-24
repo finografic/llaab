@@ -1,7 +1,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { LlmProvider } from './provider.js';
-import type { LlmCompleteOptions, LlmCompleteResult, LlmProviderId, ModelTier, TaskType } from './types.js';
+import type {
+  LlmCompleteOptions,
+  LlmCompleteResult,
+  LlmProgress,
+  LlmProviderId,
+  ModelTier,
+  TaskType,
+} from './types.js';
 import type { Capability } from '@llaab/core';
 
 import { cacheDelete, cacheGet, cacheSet } from './cache.js';
@@ -151,7 +158,13 @@ export function findProvidersByCapability(capability: Capability): LlmProvider[]
 export async function routeLlm(
   task: TaskType,
   prompt: string,
-  opts?: { model?: string; system?: string; maxTokens?: number; bypassCache?: boolean },
+  opts?: {
+    model?: string;
+    system?: string;
+    maxTokens?: number;
+    bypassCache?: boolean;
+    onProgress?: LlmCompleteOptions['onProgress'];
+  },
 ): Promise<LlmCompleteResult> {
   const { model, provider } = resolveModel(task, opts?.model);
   const completeOpts: LlmCompleteOptions = {
@@ -159,6 +172,7 @@ export async function routeLlm(
     system: opts?.system,
     maxTokens: opts?.maxTokens,
     bypassCache: opts?.bypassCache,
+    onProgress: opts?.onProgress,
   };
 
   if (CACHEABLE.has(task) && !completeOpts.bypassCache) {
@@ -257,4 +271,4 @@ export {
   ollamaListModelDetails,
   ollamaListModels,
 };
-export type { LlmCompleteResult, LlmProviderId, ModelTier, TaskType };
+export type { LlmCompleteResult, LlmProgress, LlmProviderId, ModelTier, TaskType };

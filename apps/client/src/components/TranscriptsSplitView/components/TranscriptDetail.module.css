@@ -75,6 +75,30 @@
   flex-shrink: 0;
 }
 
+.consolidateStats {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.consolidateTokenCount {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--consolidation-text);
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.consolidateTokenValue {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .consolidateClock {
   display: inline-flex;
   align-items: center;

@@ -36,6 +36,8 @@ export const RunMonitorItemSchema = z.object({
   events: z.array(RunEventSchema),
   model: z.string().optional(),
   provider: z.string().optional(),
+  progress_status: z.string().optional(),
+  progress_tokens: z.number().int().nonnegative().optional(),
   prompt_tokens: z.number().int().nonnegative().optional(),
   completion_tokens: z.number().int().nonnegative().optional(),
 });

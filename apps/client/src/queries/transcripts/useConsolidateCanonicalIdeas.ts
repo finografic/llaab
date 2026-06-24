@@ -38,6 +38,13 @@ export interface ConsolidateCanonicalIdeasResult {
   existingQualityScore?: number;
   /** The coverage record this run would have written, deferred until the conflict is resolved. */
   pendingCoverage?: TranscriptCanonicalCoverage;
+  llmMeta?: {
+    model?: string;
+    provider?: string;
+    durationMs?: number;
+    promptTokens?: number;
+    completionTokens?: number;
+  };
 }
 
 async function consolidateCanonicalIdeas(

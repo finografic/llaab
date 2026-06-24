@@ -24,7 +24,7 @@ interface UseRunMonitorOptions {
  * Polls faster while any run is active so the monitor trigger badge and sheet stay current even
  * when the sheet is closed; backs off once nothing is running.
  */
-const ACTIVE_POLL_INTERVAL_MS = 4000;
+const ACTIVE_POLL_INTERVAL_MS = 2500;
 const IDLE_POLL_INTERVAL_MS = 20000;
 
 export function useRunMonitor({ refetchInterval }: UseRunMonitorOptions = {}) {
@@ -34,7 +34,7 @@ export function useRunMonitor({ refetchInterval }: UseRunMonitorOptions = {}) {
     refetchInterval:
       refetchInterval ??
       ((query) => {
-        const {data} = query.state;
+        const { data } = query.state;
         return data && data.active.length > 0 ? ACTIVE_POLL_INTERVAL_MS : IDLE_POLL_INTERVAL_MS;
       }),
   });

@@ -16,6 +16,12 @@ export interface LlmCompleteOptions {
   system?: string;
   maxTokens?: number;
   bypassCache?: boolean;
+  onProgress?: (progress: LlmProgress) => void | Promise<void>;
+}
+
+export interface LlmProgress {
+  status?: string;
+  completionTokens?: number;
 }
 
 export interface LlmCompleteResult {

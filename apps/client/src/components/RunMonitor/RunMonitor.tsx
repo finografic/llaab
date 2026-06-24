@@ -138,14 +138,14 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
       steps={steps}
       events={run.events}
       modelBar={
-        run.model || run.provider || run.duration_ms != null ? (
+        run.model || run.provider || run.duration_ms != null || run.progress_tokens != null ? (
           <ExtractionModelCard
             variant="compact-bar"
             model={run.model}
             provider={run.provider}
             durationMs={run.duration_ms}
             promptTokens={run.prompt_tokens}
-            completionTokens={run.completion_tokens}
+            completionTokens={run.completion_tokens ?? run.progress_tokens}
           />
         ) : null
       }

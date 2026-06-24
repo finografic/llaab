@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { LlmProvider, LlmProviderResult } from '../provider.js';
-import type { LlmCompleteOptions } from '../types.js';
+import type { LlmCompleteOptions, LlmProgress } from '../types.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -63,6 +63,7 @@ const DEFAULT_BASE_URL = 'http://localhost:1234/v1';
 const DEFAULT_CLI_PATH = `${process.env['HOME'] ?? ''}/.lmstudio/bin/lms`;
 const DEFAULT_TEMPERATURE = 0.3;
 const LOAD_TIMEOUT_MS = 5 * 60 * 1000;
+const PROGRESS_POLL_INTERVAL_MS = 2500;
 
 const MODEL_LOAD_OVERRIDES: Record<string, { contextLength?: number; parallel?: number }> = {
   'google/gemma-4-26b-a4b-qat': {
@@ -141,6 +142,72 @@ async function listLoadedModels(): Promise<unknown[]> {
   return Array.isArray(parsed) ? parsed : [];
 }
 
+function normalizeLmStudioStatus(value: string) {
+  const normalized = value.toLowerCase();
+  if (normalized.includes('loading')) return 'loading';
+  if (normalized.includes('processing')) return 'processing prompt';
+  if (normalized.includes('gen')) return 'generating';
+  if (normalized.includes('idle')) return 'idle';
+  return normalized || undefined;
+}
+
+function parseLmStudioProgressLine(line: string, model: string): LlmProgress | undefined {
+  if (!line.includes(model)) return undefined;
+
+  const statusMatch = line.match(
+    /\b(LOADING\s+\d+(?:\.\d+)?%|PROCESSING\s+PROMPT\s+\d+(?:\.\d+)?%|GEN\s+[\d,]+\s+tok|IDLE)\b/i,
+  );
+  if (!statusMatch) return undefined;
+
+  const rawStatus = statusMatch[1] ?? '';
+  const tokenMatch = rawStatus.match(/GEN\s+([\d,]+)\s+tok/i);
+  return {
+    status: normalizeLmStudioStatus(rawStatus),
+    completionTokens: tokenMatch?.[1] ? Number.parseInt(tokenMatch[1].replaceAll(',', ''), 10) : undefined,
+  };
+}
+
+async function pollLmStudioProgress(model: string): Promise<LlmProgress | undefined> {
+  const { stdout } = await execFileAsync(getCliPath(), ['ps'], {
+    maxBuffer: 1024 * 1024,
+    timeout: 5000,
+  });
+  return stdout
+    .split('\n')
+    .map((line) => parseLmStudioProgressLine(line, model))
+    .find((progress) => progress != null);
+}
+
+function startProgressPolling(model: string, onProgress?: LlmCompleteOptions['onProgress']) {
+  if (!onProgress) return () => {};
+
+  const reportProgress = onProgress;
+  let stopped = false;
+  let lastSignature = '';
+
+  async function tick() {
+    if (stopped) return;
+    try {
+      const progress = await pollLmStudioProgress(model);
+      if (!progress) return;
+      const signature = `${progress.status ?? ''}:${progress.completionTokens ?? ''}`;
+      if (signature === lastSignature) return;
+      lastSignature = signature;
+      await reportProgress(progress);
+    } catch {
+      // Progress is best-effort; the completion request is the source of truth.
+    }
+  }
+
+  const interval = setInterval(() => void tick(), PROGRESS_POLL_INTERVAL_MS);
+  void tick();
+
+  return () => {
+    stopped = true;
+    clearInterval(interval);
+  };
+}
+
 async function ensureRequestedModelLoaded(model: string) {
   const loadedModels = await listLoadedModels();
   if (loadedModels.some((loadedModel) => loadedModelMatches(loadedModel, model))) return;
@@ -165,7 +232,10 @@ async function ensureRequestedModelLoaded(model: string) {
 
 export async function lmStudioComplete(prompt: string, opts: LlmCompleteOptions): Promise<LlmProviderResult> {
   const start = performance.now();
+  await opts.onProgress?.({ status: 'loading' });
   await ensureRequestedModelLoaded(opts.model);
+  await opts.onProgress?.({ status: 'processing prompt' });
+  const stopProgressPolling = startProgressPolling(opts.model, opts.onProgress);
   const response = await lmStudioFetch<OpenAiChatResponse>('/chat/completions', {
     method: 'POST',
     body: JSON.stringify({
@@ -174,9 +244,13 @@ export async function lmStudioComplete(prompt: string, opts: LlmCompleteOptions)
       temperature: getTemperature(),
       ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}),
     }),
-  });
+  }).finally(stopProgressPolling);
   const text = response.choices?.[0]?.message?.content;
   if (!text) throw new Error('Unexpected response from LM Studio');
+  await opts.onProgress?.({
+    status: 'completed',
+    completionTokens: response.usage?.completion_tokens,
+  });
 
   return {
     text,

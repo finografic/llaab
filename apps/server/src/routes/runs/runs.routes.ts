@@ -135,6 +135,8 @@ function runToMonitorItem(run: RunNode, nodesById: Map<string, LabNode>): RunMon
     events: run.events,
     model: run.llm?.model ?? run.model_used,
     provider: run.llm?.provider,
+    progress_status: run.llm?.progress_status,
+    progress_tokens: run.llm?.progress_tokens,
     prompt_tokens: run.llm?.prompt_tokens,
     completion_tokens: run.llm?.completion_tokens,
   };
