@@ -151,3 +151,17 @@ Hand-rolling what shadcn provides is not permitted.
 - **Env / client / ports:** Monorepo `.env` at repo root; Vite `envDir` points there. `LLAAB_API_URL` proxies `/api` and `/terminal` only (not in the browser bundle). `LLAAB_API_KEY`, `VAULT_PASSWORD`, OAuth/LLM keys are server-only—client uses same-origin paths. `VITE_*` exposes client bundle vars; unset `VAULT_PASSWORD` disables vault login. Local: client **3000** (`llaab.localhost:3000`), server **8888**, icons **5001**/**5199**. macOS launchd `com.llaab.client` runs `vite dev` (HMR), not `vite preview`.
 - **Canonical consolidation:** single-pass on `consolidate` LLM task (default `?mode=single-26b`); `consolidate-audit` removed. Quality validation/scoring in `packages/schemas/src/consolidation-quality.ts`; API returns `qualityValidation` (percentage score); transcript UI shows score on the Canonical Ideas bar.
 - **SPA routing:** `apps/client` is a Vite + React Router SPA. Routes live in `src/routes/` and are wired in `src/router.tsx`; imports use tsconfig path aliases (`components/*`, `lib/*`, `utils/*`, …)—not `@/*`. Vault routes use `vaultSessionLoader` + nested `VaultLayout`; set `handle: { title, fullBleed? }` for `AppLayout` chrome. Data fetching uses TanStack Query hooks in `src/queries/` with a single root `QueryClientProvider` in `main.tsx`; do not pass `initialData: []` (legacy Astro SSR carryover—it marks queries fresh and can skip `/api/*` fetches).
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
+
+Rules:
+
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

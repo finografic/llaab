@@ -22,17 +22,22 @@ build/
 .agents/*
 !.agents/
 !.agents/handoff.md
-.codex/
-.claude/
+.claude/**
 !.claude/settings.json
-!.claude/commands
+!.claude/commands/
+!.claude/commands/**
+.codex/**
+!.codex/hooks.json
 .worktrees/
 worktrees/
 
-# IDE
+# graphify — commit graph artifacts; ignore local rebuild cache
+graphify-out/cache/
+
+# IDE — ignore local Cursor state; keep project rules (e.g. graphify.mdc)
 **/.cursor/**
-!**/.cursor/.gitkeep
-!.cursor/rules/
+!**/.cursor/rules/
+!**/.cursor/rules/**
 !.vscode/settings.json
 .idea/
 *.swp
