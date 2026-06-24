@@ -83,12 +83,14 @@ UI grows a separate "Run once even if unscheduled" control.
 
 ### Execution path
 
-`runCronRecipe(id)` wraps the recipe's work in `runSkill('cron-<id>', handler, { recipeId })`
-(from `@llaab/skills`), so **every invocation persists a durable `RunNode`** — visible in the
-Activity Monitor, linkable from `/vault/runs/:id`, surfaced in the `/crons` "Recent Cron Runs"
-list (filtered by `skill_id?.startsWith('cron-')`). The handler receives the live `runNodeId` and
-calls `appendRunEvent(...)` as it works, so progress shows up in the run's event log while it's
-still in flight.
+`runCronRecipe(id)` records wrapper-level cron history in `configs/cron-history.json`, capped to
+the latest two entries per recipe. That file is ignored by git because it is operational cache, not
+vault knowledge. Do not wrap cron recipes themselves in `runSkill('cron-<id>', ...)`; that creates
+noisy `vault/runs` markdown files every time external schedulers fire.
+
+Recipe work may still call helpers that create real durable runs. For example, transcript
+consolidation uses `consolidateTranscriptIdeasForTranscript`, so the actual consolidation process
+remains visible in Activity Monitor and `/vault/runs` while the cron wrapper log stays in local JSON.
 
 Currently both registered recipes share one handler shape (scan transcripts → filter pending →
 consolidate each via `consolidateTranscriptIdeasForTranscript` from

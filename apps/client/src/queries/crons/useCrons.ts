@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS as RUN_KEYS } from 'queries/runs';
 
 import { apiGet, apiPatch, apiPost } from 'lib/api-client';
 
@@ -12,6 +11,7 @@ export interface CronRecipe {
   command: string;
   risk: 'low' | 'medium' | 'high';
   cronExpression: string;
+  scriptId: string;
   /**
    * Whether LLAAB has installed this recipe's managed line in the user crontab.
    */
@@ -20,6 +20,21 @@ export interface CronRecipe {
     label: string;
     value: string;
   }>;
+}
+
+export interface CronScript {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+}
+
+export interface CronRecipeWriteInput {
+  title: string;
+  description: string;
+  risk: CronRecipe['risk'];
+  cronExpression: string;
+  scriptId: string;
 }
 
 export interface CronRecipeRunResult {
@@ -39,19 +54,47 @@ export interface CronRecipeRunResult {
   }>;
 }
 
+export interface CronHistoryEntry {
+  id: string;
+  recipeId: string;
+  title: string;
+  status: 'completed' | 'failed';
+  startedAt: string;
+  completedAt: string;
+  durationMs: number;
+  result?: CronRecipeRunResult;
+  error?: string;
+}
+
 export interface CronRecipeRunResponse {
   success: boolean;
-  runNodeId: string;
+  historyEntry: CronHistoryEntry;
   result: CronRecipeRunResult;
 }
 
-async function fetchCronRecipes(): Promise<CronRecipe[]> {
-  const body = await apiGet<{ recipes?: CronRecipe[] }>('/api/crons');
-  return body.recipes ?? [];
+export interface CronRecipesResponse {
+  recipes: CronRecipe[];
+  scripts: CronScript[];
+  history: CronHistoryEntry[];
+}
+
+async function fetchCronRecipes(): Promise<CronRecipesResponse> {
+  const body = await apiGet<{
+    recipes?: CronRecipe[];
+    scripts?: CronScript[];
+    history?: CronHistoryEntry[];
+  }>('/api/crons');
+  return { recipes: body.recipes ?? [], scripts: body.scripts ?? [], history: body.history ?? [] };
 }
 
 async function runCronRecipe(recipeId: string): Promise<CronRecipeRunResponse> {
   return apiPost<CronRecipeRunResponse>(`/api/crons/${recipeId}/run`, {});
+}
+
+async function createCronRecipe(
+  input: CronRecipeWriteInput,
+): Promise<{ success: boolean; recipe: CronRecipe }> {
+  return apiPost('/api/crons', input);
 }
 
 interface SetCronRecipeEnabledInput {
@@ -59,11 +102,16 @@ interface SetCronRecipeEnabledInput {
   enabled: boolean;
 }
 
-async function setCronRecipeEnabled({
+interface UpdateCronRecipeInput extends Partial<CronRecipeWriteInput> {
+  recipeId: string;
+  enabled?: boolean;
+}
+
+async function updateCronRecipe({
   recipeId,
-  enabled,
-}: SetCronRecipeEnabledInput): Promise<{ success: boolean; id: string; enabled: boolean }> {
-  return apiPatch(`/api/crons/${recipeId}`, { enabled });
+  ...body
+}: UpdateCronRecipeInput): Promise<{ success: boolean; recipe: CronRecipe }> {
+  return apiPatch(`/api/crons/${recipeId}`, body);
 }
 
 export function useCronRecipes() {
@@ -79,15 +127,32 @@ export function useRunCronRecipe() {
   return useMutation({
     mutationFn: runCronRecipe,
     onMutate: () => {
-      void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.monitor() });
-      window.setTimeout(
-        () => void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.monitor() }),
-        1000,
-      );
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crons.list() });
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.all });
-      void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.monitor() });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crons.list() });
+    },
+  });
+}
+
+export function useCreateCronRecipe() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createCronRecipe,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crons.list() });
+    },
+  });
+}
+
+export function useUpdateCronRecipe() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateCronRecipe,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crons.list() });
     },
   });
 }
@@ -96,7 +161,7 @@ export function useSetCronRecipeEnabled() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: setCronRecipeEnabled,
+    mutationFn: (input: SetCronRecipeEnabledInput) => updateCronRecipe(input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crons.list() });
     },

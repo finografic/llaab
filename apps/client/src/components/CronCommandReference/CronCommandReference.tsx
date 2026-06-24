@@ -4,7 +4,6 @@ import { Button } from 'components/ui/button';
 import { PauseIcon, PlayIcon } from 'lucide-react';
 import { useRunCronRecipe, useSetCronRecipeEnabled } from 'queries/crons';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import type { CronRecipe, CronRecipeRunResponse } from 'queries/crons';
 
 interface CronCommandReferenceProps {
@@ -89,13 +88,10 @@ export function CronCommandReference({ recipe, onRun }: CronCommandReferenceProp
       </div>
 
       {lastRun ? (
-        <Link
-          to={`/vault/runs/${lastRun.runNodeId}`}
-          className="text-xs text-muted-foreground hover:underline"
-        >
-          View run — checked {lastRun.result.checked}, consolidated {lastRun.result.consolidated}, failed{' '}
+        <p className="text-xs text-muted-foreground">
+          Last run checked {lastRun.result.checked}, consolidated {lastRun.result.consolidated}, failed{' '}
           {lastRun.result.failed}
-        </Link>
+        </p>
       ) : null}
 
       {runRecipe.error ? (

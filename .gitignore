@@ -54,6 +54,7 @@ pids
 .tmp/
 .cache/
 .llm-cache/
+configs/cron-history.json
 
 # Testing + Coverage
 coverage/

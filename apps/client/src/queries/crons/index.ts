@@ -5,5 +5,19 @@ export const QUERY_KEYS = {
   },
 };
 
-export { useCronRecipes, useRunCronRecipe, useSetCronRecipeEnabled } from './useCrons';
-export type { CronRecipe, CronRecipeRunResponse, CronRecipeRunResult } from './useCrons';
+export {
+  useCreateCronRecipe,
+  useCronRecipes,
+  useRunCronRecipe,
+  useSetCronRecipeEnabled,
+  useUpdateCronRecipe,
+} from './useCrons';
+export type {
+  CronHistoryEntry,
+  CronRecipe,
+  CronRecipeWriteInput,
+  CronRecipeRunResponse,
+  CronRecipeRunResult,
+  CronRecipesResponse,
+  CronScript,
+} from './useCrons';

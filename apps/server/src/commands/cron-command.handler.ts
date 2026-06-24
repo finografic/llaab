@@ -14,14 +14,13 @@ export const cronCommandHandler: CommandHandler<CronRunCommand> = {
       },
     };
 
-    const { runNodeId, result } = await runCronRecipe(command.recipeId);
+    const { historyEntry, result } = await runCronRecipe(command.recipeId);
 
     yield {
       type: 'meta',
       data: {
         kind: 'cron.run.result',
-        runId: runNodeId,
-        href: `/vault/runs/${runNodeId}`,
+        historyEntryId: historyEntry.id,
       },
     };
     yield {
