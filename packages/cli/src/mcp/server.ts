@@ -5,11 +5,14 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { z } from 'zod';
 import type { NodeType } from '@llaab/schemas';
 
+const DEFAULT_API_URL = 'http://localhost:8888';
+const MAX_DERIVED_TITLE_LENGTH = 80;
+
 /**
  * Creates the LLAAB vault MCP server.
  *
  * Resources: llaab://vault/nodes/{id} — individual nodes as raw markdown Tools: vault_list — search/filter,
- * vault_read — full content by id
+ * vault_read — full content by id, vault_capture_idea — create raw idea nodes
  */
 export function createMcpServer(): McpServer {
   const server = new McpServer(
@@ -43,6 +46,49 @@ export function createMcpServer(): McpServer {
       } catch {
         return { contents: [] };
       }
+    },
+  );
+
+  // ── Tool: capture a raw idea node ─────────────────────────────────────────
+
+  const vaultCaptureIdeaSchema = z.object({
+    title: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe('Optional concise idea title. If omitted, one is derived from the body.'),
+    body: z.string().trim().min(1).describe('Raw idea text to store in the vault.'),
+    tags: z.array(z.string().trim().min(1)).optional().describe('Optional tags, e.g. ["d:llm", "hermes"].'),
+  });
+
+  server.registerTool(
+    'vault_capture_idea',
+    {
+      description:
+        'Capture a raw thought as a new LLAAB idea node. ' +
+        'Use this for observations, suggestions, or user-provided notes that should be saved before later consolidation.',
+      inputSchema: vaultCaptureIdeaSchema,
+    },
+    async (args: z.infer<typeof vaultCaptureIdeaSchema>) => {
+      const title = args.title ?? deriveIdeaTitle(args.body);
+      const result = await createIdeaNodeViaApi({ title, body: args.body, tags: args.tags });
+
+      if (!result.ok) {
+        return {
+          content: [{ type: 'text' as const, text: result.error }],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: `Captured idea node ${result.id} at ${result.path}`,
+          },
+        ],
+      };
     },
   );
 
@@ -121,4 +167,81 @@ export function createMcpServer(): McpServer {
   );
 
   return server;
+}
+
+interface CreateIdeaNodeRequest {
+  title: string;
+  body: string;
+  tags?: string[];
+}
+
+type CreateIdeaNodeResult = { ok: true; id: string; path: string } | { ok: false; error: string };
+
+async function createIdeaNodeViaApi(input: CreateIdeaNodeRequest): Promise<CreateIdeaNodeResult> {
+  const apiKey = process.env['LLAAB_API_KEY']?.trim();
+  if (!apiKey) {
+    return { ok: false, error: 'LLAAB_API_KEY is required to capture ideas via MCP.' };
+  }
+
+  const apiUrl = (process.env['LLAAB_API_URL']?.trim() || DEFAULT_API_URL).replace(/\/+$/, '');
+
+  try {
+    const response = await fetch(`${apiUrl}/api/vault/nodes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+      },
+      body: JSON.stringify({
+        type: 'idea',
+        title: input.title,
+        body: input.body,
+        tags: input.tags,
+      }),
+    });
+
+    const responseText = await response.text();
+    const parsed = parseJsonObject(responseText);
+
+    if (!response.ok) {
+      const error = typeof parsed?.['error'] === 'string' ? parsed['error'] : responseText;
+      return { ok: false, error: `Failed to capture idea (${response.status}): ${error}` };
+    }
+
+    const id = parsed?.['id'];
+    const path = parsed?.['path'];
+    if (typeof id !== 'string' || typeof path !== 'string') {
+      return { ok: false, error: 'Failed to capture idea: unexpected API response.' };
+    }
+
+    return { ok: true, id, path };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return { ok: false, error: `Failed to capture idea: ${message}` };
+  }
+}
+
+function deriveIdeaTitle(body: string): string {
+  const firstLine = body
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean);
+  const fallback = firstLine ?? body.trim();
+  const sentence = fallback.match(/^(.+?[.!?])(?:\s|$)/u)?.[1] ?? fallback;
+  const compact = sentence.replace(/\s+/g, ' ').trim();
+
+  if (compact.length <= MAX_DERIVED_TITLE_LENGTH) return compact;
+  return `${compact.slice(0, MAX_DERIVED_TITLE_LENGTH - 3).trimEnd()}...`;
+}
+
+function parseJsonObject(text: string): Record<string, unknown> | null {
+  try {
+    const value: unknown = JSON.parse(text);
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      return value as Record<string, unknown>;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
