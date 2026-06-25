@@ -1,10 +1,12 @@
 import { AppLayout } from 'layouts/AppLayout/AppLayout';
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { VaultLoginPage, vaultLoginLoader } from 'routes/login';
+import { appLoginLoader, AppLoginPage, VaultLoginPage, vaultLoginLoader } from 'routes/login';
 import { VaultLayout, vaultSessionLoader } from 'routes/vault-layout';
 import type { RouteHandle } from 'layouts/AppLayout/AppLayout';
 import type { ComponentType, ReactElement } from 'react';
+
+import { appSessionLoader } from 'lib/auth-session';
 
 const HomePage = lazy(() => import('routes/root').then((module) => ({ default: module.HomePage })));
 const IngestPage = lazy(() => import('routes/ingest').then((module) => ({ default: module.IngestPage })));
@@ -48,11 +50,17 @@ function lazyElement(Component: ComponentType): ReactElement {
 
 export const router = createBrowserRouter([
   {
+    path: '/login',
+    loader: appLoginLoader,
+    element: <AppLoginPage />,
+  },
+  {
     path: '/vault/login',
     loader: vaultLoginLoader,
     element: <VaultLoginPage />,
   },
   {
+    loader: appSessionLoader,
     element: <AppLayout />,
     children: [
       {

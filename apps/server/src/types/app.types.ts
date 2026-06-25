@@ -1,8 +1,15 @@
 import type { Context } from 'hono';
 
+export interface SessionPayload {
+  authenticated: boolean;
+  createdAt: number;
+}
+
 /** Hono context type used across all route handlers. */
 export interface AppEnv {
-  Variables: Record<string, never>;
+  Variables: {
+    session?: SessionPayload;
+  };
 }
 
 /** Alias for a Hono app instance with the shared env. */

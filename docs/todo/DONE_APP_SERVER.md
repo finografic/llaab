@@ -48,18 +48,18 @@ This is a local dev tool — there is no public deployment. Two options:
 
 ### Option A — Shared API Key (recommended for now)
 
-The server reads a key from env (`SERVER_API_KEY`). The client sends it as a header on every
+The server reads a key from env (`LLAAB_API_KEY`). The client sends it as a header on every
 request. Simple, zero deps, zero sessions.
 
 ```
 # .env (both apps read this)
-SERVER_API_KEY=llaab-dev
+LLAAB_API_KEY=llaab-dev
 ```
 
 ```ts
 // Client request
 fetch('http://localhost:3000/api/ingest', {
-  headers: { 'X-API-Key': import.meta.env.SERVER_API_KEY },
+  headers: { 'X-API-Key': import.meta.env.LLAAB_API_KEY },
   ...
 });
 ```
@@ -68,7 +68,7 @@ fetch('http://localhost:3000/api/ingest', {
 // Server middleware
 app.use('/api/*', async (c, next) => {
   const key = c.req.header('X-API-Key');
-  if (key !== process.env['SERVER_API_KEY']) return c.json({ error: 'Unauthorized' }, 401);
+  if (key !== process.env['LLAAB_API_KEY']) return c.json({ error: 'Unauthorized' }, 401);
   await next();
 });
 ```
@@ -221,7 +221,7 @@ Hono supports streaming responses natively via `c.streamText()` — no extra ada
 
 ## Client Migration Checklist
 
-- [x] Add `SERVER_URL` + `SERVER_API_KEY` to root `.env` / `.env.example`
+- [x] Add `SERVER_URL` + `LLAAB_API_KEY` to root `.env` / `.env.example`
 - [x] Create `src/lib/api-client.ts` — `apiGet` / `apiPost` wrappers with `X-API-Key` header
 - [x] Update `IngestForm.tsx` — calls `POST /api/ingest/youtube` via `apiPost`
 - [x] Update `VaultBrowser.tsx` — calls `GET /api/vault/file?path=` via `apiGet`

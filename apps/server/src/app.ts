@@ -2,9 +2,10 @@ import { cors } from 'hono/cors';
 
 import { createApp } from './lib/create-app.js';
 
-import { auth } from './middlewares/auth.middleware.js';
+import { requireAuth, sessionMiddleware } from './middlewares/auth.middleware.js';
 import { logger } from './middlewares/logger.middleware.js';
 import { agentRouter } from './routes/agent/index.js';
+import { authRouter } from './routes/auth/index.js';
 import { cronsRouter } from './routes/crons/index.js';
 import { indexRouter } from './routes/index.route.js';
 import { ingestRouter } from './routes/ingest/index.js';
@@ -27,7 +28,8 @@ _base.use(
 );
 
 _base.use(logger);
-_base.use('/api/*', auth);
+_base.use('/api/*', sessionMiddleware);
+_base.use('/api/*', requireAuth);
 
 _base.notFound((c) => c.json({ error: 'Not found' }, 404));
 _base.onError((err, c) => {
@@ -40,6 +42,7 @@ _base.onError((err, c) => {
 export const app = _base
   .route('/', indexRouter)
   .route('/api/agent', agentRouter)
+  .route('/api/auth', authRouter)
   .route('/api/crons', cronsRouter)
   .route('/api/ingest', ingestRouter)
   .route('/api/llm', llmRouter)
