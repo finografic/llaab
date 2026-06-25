@@ -205,7 +205,7 @@ platform_toolsets:
 - [x] Standalone `pnpm dev:cli -- mcp` starts and blocks on stdio as expected (2026-06-25)
 - [x] MCP server starts from Hermes without stderr errors (2026-06-26)
 - [x] Hermes MCP test discovers `vault_list` and `vault_read` (2026-06-26)
-- [ ] Hermes CLI: “Read idea &lt;id&gt;” → calls `vault_read`
+- [x] Discord channel: “Read idea &lt;id&gt;” → calls `vault_read` (2026-06-26)
 - [x] Discord channel: same read queries work through gateway (2026-06-26)
 
 **Exit criteria:** Hermes can list and read vault nodes from phone or CLI.

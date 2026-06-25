@@ -154,7 +154,7 @@ Read one of those idea nodes.
 
 - [x] Hermes starts the LLAAB MCP child process (2026-06-26).
 - [x] Hermes can list vault nodes using `vault_list` (2026-06-26).
-- [ ] Hermes can read a selected node using `vault_read`.
+- [x] Hermes can read a selected node using `vault_read` from Discord (2026-06-26).
 - [x] Discord can perform the same read-only query (2026-06-26).
 - [x] Keep write tools excluded.
 
