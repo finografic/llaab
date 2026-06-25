@@ -146,6 +146,23 @@ Reload shell after first install: `source ~/.zshrc`
 `hermes doctor` is usable and mostly healthy. The current result has no blocking install issues for
 basic CLI testing.
 
+Phase 1 CLI one-shot also works:
+
+```bash
+hermes --oneshot "Answer in two short bullet points: 1. What model/provider are you using? 2. Name five available tools you can use."
+```
+
+Observed response:
+
+```text
+• Model: glm-5.2 via opencode-go
+• Tools: terminal, read_file, write_file, patch, web_search
+```
+
+Ollama fallback is available locally. `ollama list` reports multiple installed models, including
+`gemma4:12b-mlx`, `qwen3.6:35b-a3b-q4_K_M`, `qwen3.6:27b-mlx`,
+`gemma4:26b-a4b-it-qat`, `gemma4:e4b-it-qat`, `llama3.2:3b`, and `gpt-oss:20b`.
+
 ### Green checks
 
 - Security advisories: none active.
@@ -161,6 +178,9 @@ basic CLI testing.
 - Core tools available: browser, clarify, code execution, computer use, terminal, delegation,
   Discord, Discord admin, file, memory, session search, skills, todo, TTS, and web.
 - Memory provider: built-in memory active.
+- `hermes config check` shows `OPENCODE_GO_API_KEY`, `DISCORD_BOT_TOKEN`, and
+  `DISCORD_ALLOWED_USERS` configured; `GATEWAY_ALLOW_ALL_USERS` and `DISCORD_ALLOW_ALL_USERS` are
+  unset.
 
 ### Warnings / optional gaps
 
@@ -172,15 +192,15 @@ basic CLI testing.
   (`image_gen`, `moa`, video, X search, Spotify, Skills Hub GitHub token, and similar extras).
 - Doctor reports one issue: run `hermes setup` to configure missing API keys for full tool access.
 
-Interpretation: proceed with Phase 1 CLI smoke testing. Do not chase optional provider keys until
-OpenCode Go CLI, Discord gateway, and read-only LLAAB MCP are confirmed.
+Interpretation: proceed to Discord gateway testing. Do not chase optional provider keys until
+Discord gateway and read-only LLAAB MCP are confirmed.
 
 ---
 
 ## Security posture
 
 - Discord allowlist: single user ID only
-- `approvals.mode`: smart (verify in `config.yaml`)
+- `approvals.mode`: manual (stricter than smart)
 - Do not set `GATEWAY_ALLOW_ALL_USERS`
 - Bot on private server only
 - Terminal backend **local** — treat Discord shell access carefully until Docker backend

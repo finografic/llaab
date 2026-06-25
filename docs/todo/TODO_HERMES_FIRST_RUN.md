@@ -1,7 +1,7 @@
 # TODO — Hermes First Run and LLAAB Connection
 
-> **Status:** Phase 1 started (2026-06-25). `hermes doctor` is mostly healthy; CLI prompt,
-> Discord gateway, and read-only MCP validation remain.
+> **Status:** Phase 1 complete (2026-06-25). Hermes CLI works with OpenCode Go; Discord gateway
+> and read-only MCP validation remain.
 
 ## Goal
 
@@ -41,12 +41,12 @@ Discord → Hermes gateway → LLAAB read-only vault query
 
 Purpose: make sure the first Hermes choices are safe and understandable.
 
-- [ ] Open `~/.hermes/config.yaml` and confirm the setup wizard used **Full setup**.
-- [ ] At “How would you like to set up Hermes?”, choose **Full setup** if prompted again.
-- [ ] Do **not** choose Quick Setup / Nous Portal for this integration.
-- [ ] Keep `approvals.mode: smart` or stricter; do not use `off`.
-- [ ] Keep `terminal.backend: local` for now, but do not rely on Discord shell access yet.
-- [ ] Confirm no `GATEWAY_ALLOW_ALL_USERS=true` exists in `~/.hermes/.env`.
+- [x] Open `~/.hermes/config.yaml` and confirm the setup wizard used **Full setup**.
+- [x] At “How would you like to set up Hermes?”, choose **Full setup** if prompted again.
+- [x] Do **not** choose Quick Setup / Nous Portal for this integration.
+- [x] Keep `approvals.mode: smart` or stricter; do not use `off`.
+- [x] Keep `terminal.backend: local` for now, but do not rely on Discord shell access yet.
+- [x] Confirm no `GATEWAY_ALLOW_ALL_USERS=true` exists in `~/.hermes/.env`.
 - [ ] Confirm Discord bot **Public Bot** is off after invitation to **LLAAB Private**.
 
 Beginner note: if the wizard asks twice about tools, that can be normal. Hermes can configure tool
@@ -69,10 +69,10 @@ List your available tools.
 ```
 
 - [x] `hermes doctor` runs without blocking setup errors (2026-06-25).
-- [ ] CLI answers a basic prompt.
-- [ ] CLI reports expected model routing: OpenCode Go primary, Ollama fallback if configured.
-- [ ] CLI tool list appears without config errors.
-- [ ] Note any missing macOS permissions from `hermes doctor` in `docs/integrations/hermes.md`.
+- [x] CLI answers a basic prompt (2026-06-25).
+- [x] CLI reports expected model routing: OpenCode Go primary, Ollama fallback if configured.
+- [x] CLI tool list appears without config errors.
+- [x] Note any missing macOS permissions from `hermes doctor` in `docs/integrations/hermes.md`.
 
 Exit criteria: Hermes can answer locally from Terminal.
 

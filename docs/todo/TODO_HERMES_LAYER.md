@@ -145,11 +145,11 @@ hermes
 ```
 
 - [x] Full setup completed (not Nous Portal Quick Setup) (2026-06-25)
-- [ ] `hermes doctor` passes
+- [x] `hermes doctor` passes with only optional provider-key warnings (2026-06-25)
 - [x] `OPENCODE_GO_API_KEY` set in `~/.hermes/.env` (Hermes var name; same key as LLAAB `OPENCODE_API_KEY`)
-- [ ] Ollama running with at least one model (`ollama list`) — fallback not verified
-- [ ] CLI session answers using OpenCode Go (or falls back to Ollama if cloud unavailable)
-- [ ] `approvals.mode: smart` confirmed in config
+- [x] Ollama running with at least one model (`ollama list`) (2026-06-25)
+- [x] CLI session answers using OpenCode Go (2026-06-25)
+- [x] `approvals.mode: manual` confirmed in config (stricter than `smart`) (2026-06-25)
 
 **Exit criteria:** Hermes CLI works locally with OpenCode Go + Ollama before any Discord and MCP work.
 
