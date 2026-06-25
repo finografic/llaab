@@ -22,8 +22,9 @@ iPhone (Discord DM) → Hermes gateway (Mac Studio) → OpenCode Go / Ollama
 | Doc                                                                            | Role                                                                        |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | [`TOOL_LANDSCAPE_COMPARISON.md`](./TOOL_LANDSCAPE_COMPARISON.md)               | Why Hermes fits LLAAB (MCP consumer, skill bridge)                          |
+| [`TODO_HERMES_FIRST_RUN.md`](./TODO_HERMES_FIRST_RUN.md)                       | Beginner-safe first-run checklist from installed Hermes to read-only MCP    |
 | [`TODO_TERMINAL_AGENT_INTEGRATIONS.md`](./TODO_TERMINAL_AGENT_INTEGRATIONS.md) | Later: `agent.run --executor hermes` one-shot adapter                       |
-| [`TODO_ADAPTERS.md`](./TODO_ADAPTERS.md)                                       | Adapter boundary — LLAAB owns vault; Hermes owns execution                  |
+| [`TODO_ADAPTERS.md`](./TODO_ADAPTERS.md)                                       | Adapter boundary: LLAAB owns vault; Hermes owns execution                   |
 | [`DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md)                             | Command bus, RunNodes, capability routing (Hermes adapter is Phase 3 there) |
 | [`docs/integrations/hermes.md`](../integrations/hermes.md)                     | **Live Mac Studio config** (model, Discord, tools, paths)                   |
 | `~/Downloads/hermes-llaab-setup-guide.md`                                      | Source brief (security, MCP tool sketches, Discord wiring)                  |
@@ -34,7 +35,9 @@ iPhone (Discord DM) → Hermes gateway (Mac Studio) → OpenCode Go / Ollama
   the Bun server. Hermes gateway is a **separate process** (like Ollama or the Vite dev server).
 - **Secrets in env files only** — never commit `~/.hermes/.env` or paste keys into `config.yaml`.
 - **Start read-only** on MCP tools; add write tools only after CLI + Discord smoke tests pass.
-- **Use LLAAB env naming:** `LLAAB_API_URL`, `LLAAB_API_KEY`, `OPENCODE_API_KEY` (not `SERVER_*`).
+- **Use LLAAB env naming:** `LLAAB_API_URL`, `LLAAB_API_KEY`, `OPENCODE_API_KEY`. The server
+  accepts `SERVER_API_KEY` as a compatibility fallback, but docs and Hermes MCP env should use
+  `LLAAB_API_KEY`.
 - **Primary cloud model:** OpenCode Go via `OPENCODE_API_KEY` (already in repo root `.env`). Do
   not default to Anthropic unless explicitly added later for a reason-tier task.
 
@@ -55,6 +58,9 @@ iPhone (Discord DM) → Hermes gateway (Mac Studio) → OpenCode Go / Ollama
 ## Phase 1 — Hermes install and CLI smoke test
 
 **You are here.** First-time Hermes setup on Mac Studio.
+
+For the guided first-use checklist, start with
+[`TODO_HERMES_FIRST_RUN.md`](./TODO_HERMES_FIRST_RUN.md).
 
 ### 1.1 Wizard choice (do this now)
 

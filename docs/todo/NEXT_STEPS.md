@@ -3,7 +3,7 @@
 > Maintained working list. Larger initiatives live in [`ROADMAP.md`](./ROADMAP.md) — this doc
 > covers concrete near-term tasks, manual testing, and small fixes not large enough for ROADMAP.
 >
-> Last updated: 2026-06-24 (Hermes layer plan)
+> Last updated: 2026-06-25 (Hermes first-run plan)
 
 ---
 
@@ -35,9 +35,10 @@ Things to verify end-to-end after recent orchestration and UI changes:
 
 ## Up Next
 
-- [ ] **Hermes Phase 1 — install + CLI smoke test** — choose **Full setup** (not Nous Portal);
-      configure `OPENCODE_API_KEY` + Ollama in `~/.hermes/.env`; verify CLI before Discord or MCP.
-      Detail: [`TODO_HERMES_LAYER.md`](./TODO_HERMES_LAYER.md).
+- [ ] **Hermes first run — CLI, Discord, then read-only LLAAB MCP** — Hermes is installed; verify
+      `hermes doctor`, foreground `hermes gateway`, standalone `pnpm dev:cli -- mcp`, then register
+      only `vault_list` / `vault_read`.
+      Detail: [`TODO_HERMES_FIRST_RUN.md`](./TODO_HERMES_FIRST_RUN.md).
 - [x] **Verify per-idea tag fix and confirm distinct tag sets** — extracted ideas were all
       showing the transcript's full, identical tag set; the fix now asks the LLM for tags
       per idea directly. Needs a rebuild + fresh extraction to confirm it actually works.
