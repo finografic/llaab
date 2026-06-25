@@ -1,7 +1,7 @@
 # TODO — Hermes First Run and LLAAB Connection
 
-> **Status:** Not started. Hermes is installed; first guided CLI, Discord, and read-only MCP
-> validation remain.
+> **Status:** Phase 1 started (2026-06-25). `hermes doctor` is mostly healthy; CLI prompt,
+> Discord gateway, and read-only MCP validation remain.
 
 ## Goal
 
@@ -68,7 +68,7 @@ What model are you using?
 List your available tools.
 ```
 
-- [ ] `hermes doctor` runs without blocking setup errors.
+- [x] `hermes doctor` runs without blocking setup errors (2026-06-25).
 - [ ] CLI answers a basic prompt.
 - [ ] CLI reports expected model routing: OpenCode Go primary, Ollama fallback if configured.
 - [ ] CLI tool list appears without config errors.

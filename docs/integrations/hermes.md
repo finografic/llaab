@@ -141,6 +141,42 @@ Reload shell after first install: `source ~/.zshrc`
 
 ---
 
+## Doctor Snapshot — 2026-06-25
+
+`hermes doctor` is usable and mostly healthy. The current result has no blocking install issues for
+basic CLI testing.
+
+### Green checks
+
+- Security advisories: none active.
+- MCP server security: no suspicious MCP stdio commands.
+- Python environment: Python 3.11.15, virtual environment active, version files consistent.
+- SSL / CA certificates: valid.
+- Required core packages: installed.
+- Config files: `~/.hermes/.env` and `~/.hermes/config.yaml` exist; config is up to date.
+- Command installation: venv entry point and `~/.local/bin/hermes` exist.
+- External tools: `git`, `rg`, Docker, Node.js, agent-browser, Playwright Chromium, browser-tools,
+  and UI-TARS workspace deps are available.
+- API connectivity: OpenCode Go key is configured.
+- Core tools available: browser, clarify, code execution, computer use, terminal, delegation,
+  Discord, Discord admin, file, memory, session search, skills, todo, TTS, and web.
+- Memory provider: built-in memory active.
+
+### Warnings / optional gaps
+
+- `python-telegram-bot` and `discord.py` are optional and not installed.
+- Nous Portal, OpenAI Codex, MiniMax, and xAI OAuth are not logged in; this is okay for OpenCode Go
+  first-run testing.
+- OpenRouter API is not configured.
+- Several optional tools are unavailable because provider keys or system dependencies are missing
+  (`image_gen`, `moa`, video, X search, Spotify, Skills Hub GitHub token, and similar extras).
+- Doctor reports one issue: run `hermes setup` to configure missing API keys for full tool access.
+
+Interpretation: proceed with Phase 1 CLI smoke testing. Do not chase optional provider keys until
+OpenCode Go CLI, Discord gateway, and read-only LLAAB MCP are confirmed.
+
+---
+
 ## Security posture
 
 - Discord allowlist: single user ID only
