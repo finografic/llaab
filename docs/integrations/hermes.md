@@ -207,6 +207,33 @@ Discord gateway and read-only LLAAB MCP are confirmed.
 
 ---
 
+## Gateway Test — 2026-06-25
+
+Foreground gateway command:
+
+```bash
+hermes gateway run
+```
+
+Result: Hermes starts the gateway process, but Discord connection fails before any message test.
+
+```text
+discord.errors.LoginFailure: Improper token has been passed.
+```
+
+Token shape check without printing the secret:
+
+- `DISCORD_BOT_TOKEN` exists in `~/.hermes/.env`.
+- It is not quoted.
+- It does not start with the `Bot` prefix.
+- It contains no whitespace.
+- It is not an obvious placeholder.
+
+Interpretation: reset or re-copy the bot token from Discord Developer Portal → Application
+**LLAAB Agent** → Bot → Reset Token, update `~/.hermes/.env`, then rerun `hermes gateway run`.
+
+---
+
 ## LLAAB integration (next)
 
 See [`TODO_HERMES_LAYER.md`](../todo/TODO_HERMES_LAYER.md) Phase 3+:

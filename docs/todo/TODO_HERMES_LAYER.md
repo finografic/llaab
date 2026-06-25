@@ -163,7 +163,8 @@ Private server only. Follow security checklist from the setup guide.
 - [x] Turn off **Public Bot** after invite; **LLAAB Private** server only
 - [x] Set `DISCORD_BOT_TOKEN` and allowlist user ID in `~/.hermes/.env`
 - [x] Discord enabled in Hermes setup wizard
-- [ ] `hermes gateway` — test from phone or **LLAAB Private** channel
+- [ ] `hermes gateway` — test from phone or **LLAAB Private** channel (blocked: current
+      `DISCORD_BOT_TOKEN` is rejected by Discord as invalid)
 - [ ] Confirm strangers cannot message the bot (no `GATEWAY_ALLOW_ALL_USERS`)
 
 **Exit criteria:** Text message from iPhone → Hermes reply on Mac Studio.
@@ -198,6 +199,7 @@ mcp_servers:
         - vault_read
 ```
 
+- [x] Standalone `pnpm dev:cli -- mcp` starts and blocks on stdio as expected (2026-06-25)
 - [ ] MCP server starts from Hermes without stderr errors
 - [ ] Hermes CLI: “List my LLAAB ideas” → calls `vault_list`
 - [ ] Hermes CLI: “Read idea &lt;id&gt;” → calls `vault_read`

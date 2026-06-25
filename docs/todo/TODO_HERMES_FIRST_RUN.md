@@ -1,7 +1,7 @@
 # TODO — Hermes First Run and LLAAB Connection
 
-> **Status:** Phase 1 complete (2026-06-25). Hermes CLI works with OpenCode Go; Discord gateway
-> and read-only MCP validation remain.
+> **Status:** Phase 3 standalone MCP boot complete (2026-06-25). Discord gateway is blocked by an
+> invalid Discord bot token; Hermes CLI and standalone LLAAB MCP both start.
 
 ## Goal
 
@@ -91,11 +91,13 @@ hello
 what model are you using?
 ```
 
-- [ ] Gateway starts in the foreground.
+- [x] Gateway starts in the foreground (2026-06-25).
 - [ ] Bot replies from Discord.
 - [ ] Message Content Intent is enabled if the bot appears online but ignores messages.
 - [ ] Only the allowlisted Discord user can interact.
 - [ ] Record the working channel / DM behavior in `docs/integrations/hermes.md`.
+- [ ] Reset or re-copy `DISCORD_BOT_TOKEN`; current token is present but rejected by Discord as
+      invalid.
 
 Exit criteria: iPhone message → Hermes reply on Mac Studio.
 
@@ -110,9 +112,9 @@ pnpm dev:cli -- mcp
 
 Expected behavior: the command blocks on stdio. Stop it with `Ctrl+C`.
 
-- [ ] MCP server starts without module or environment errors.
-- [ ] Existing tools are still `vault_list` and `vault_read`.
-- [ ] No new write tools are added in this phase.
+- [x] MCP server starts without module or environment errors (2026-06-25).
+- [x] Existing tools are still `vault_list` and `vault_read`.
+- [x] No new write tools are added in this phase.
 
 Exit criteria: `pnpm dev:cli -- mcp` can start cleanly.
 
