@@ -179,6 +179,8 @@ Do not begin until Phase 4 passes.
 - [ ] Add `vault_search` as a read-only MCP tool.
 - [ ] Add `vault_status` as a mostly read-only health summary.
 - [ ] Add `vault_plan_next` over roadmap / handoff / next steps.
+- [ ] Add transcript/source-candidate navigation so Hermes can follow origin transcript and candidate
+      idea IDs from a canonical idea without guessing filenames.
 - [ ] Add `vault_capture_idea` using `POST /api/vault/nodes` with `LLAAB_API_KEY`.
 - [ ] Add `vault_ingest_youtube` using `POST /api/ingest/youtube` with `LLAAB_API_KEY`.
 - [ ] Expand Hermes `tools.include` one tool at a time.
