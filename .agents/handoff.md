@@ -125,7 +125,7 @@ and toggled via `PATCH /api/crons/:id`; `runCronRecipe` checks it before doing a
 `cron.run`, and external triggers are all blocked the same way while disabled. `/crons` shows this
 as an active/disabled toggle (green pause / grey play) left of Run Now, not a read-only badge.
 `VaultGitPanel` (`apps/client/src/components/VaultGitPanel/`) shows `git status` scoped to `vault/`
-via `@pierre/trees`'s `FileTree` (themed to the app's dark palette via its CSS custom-property
+via `@pierre/trees`'s `FileTree` (themed via `constants/pierre-trees-theme.ts` CSS custom-property
 overrides), grouped by node type, with an auto-generated commit message
 (`chore(vault): commit N files` + per-type bullet breakdown), a Commit button, and a Reset button
 (discards all uncommitted `vault/` changes — `git checkout HEAD` + `git clean -fd`, both scoped to
@@ -163,7 +163,7 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models (2×2 vi
 | `/crons`                 | One-shot cron recipe dashboard — Run Now, external trigger snippets, recent cron runs                                                                 |
 | `/llm`                   | LLM routing dashboard: provider/model selects, installed dots, Ollama + LM Studio models                                                              |
 | `/icons`                 | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
-| `/vault`                 | Gated file-tree browser — local recursive tree + raw file viewer                                                                                      |
+| `/vault`                 | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
 | `/vault/transcripts/:id` | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                       |
 | `/vault/nodes`           | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                                                                    |
 | `/vault/nodes/:id`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                                                                          |
@@ -234,7 +234,9 @@ continues processing.
 | `POST /api/vault/transcripts/:id/canonical-ideas/clean`            | Deletes every canonical-idea file + consolidate run for that transcript (incl. orphans) and clears coverage                                                                                                   |
 | `GET /api/runs`, `/:id`                                            | Run list + detail with full stage/decision trace                                                                                                                                                              |
 | `GET /api/runs/monitor`                                            | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries                                                                                                                                |
+| `POST /api/runs/dismiss-all`                                       | Sets `monitor_dismissed_at` on all inactive, non-dismissed runs                                                                                                                                               |
 | `GET /api/vault/git/status`                                        | `git status` scoped to `vault/`, categorized by node type, with a generated commit message                                                                                                                    |
+| `GET /api/vault/git/diff`                                          | `git diff -- vault/<path>` patch text for `@pierre/diffs` viewer (`?path=`)                                                                                                                                   |
 | `POST /api/vault/git/commit`                                       | `git add`/`git commit -- vault` using the generated commit message                                                                                                                                            |
 | `POST /api/vault/git/reset`                                        | `git checkout HEAD` + `git clean -fd`, both scoped to `vault/` — discards all uncommitted vault changes                                                                                                       |
 | `POST /api/llm/complete`                                           | Routed LLM completion — `{ task, prompt, system?, model?, maxTokens? }`                                                                                                                                       |
@@ -361,9 +363,9 @@ nodes-to-delete/preserved/canonical-ideas-affected before a destructive single o
 
 `RunNode.monitor_dismissed_at` (optional timestamp) marks a run as dismissed from the Run Monitor's
 "Recent" list without deleting the run node/file. `POST /api/runs/:id/dismiss` sets it via
-`updateNode`; `GET /api/runs/monitor` excludes runs with this field from `recent`. `RunMonitor`'s
-Dismiss button calls `useDismissRun` (in addition to local `dismissedRunIds` zustand state) so the
-dismissal persists across reloads.
+`updateNode`; `POST /api/runs/dismiss-all` dismisses every inactive non-dismissed run in one call.
+`GET /api/runs/monitor` excludes runs with this field from `recent`. Per-run Dismiss and Recent-section
+Dismiss all both update local `dismissedRunIds` zustand state and persist via the API.
 
 `CanonicalIdeaNode` consolidation produces a per-candidate coverage map
 (covered/omitted/missed) and a 0–100 quality score, both persisted on
@@ -416,6 +418,16 @@ UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 
 Orchestration phases 0–10 are complete. The Phase 6b addendum content is consolidated into
 `DONE_ORCHESTRATION.md`; there is no separate addendum tracking file.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.
+
+## Agent tooling (graphify)
+
+`graphify-out/` holds a committed knowledge graph (`graph.json`, `GRAPH_REPORT.md`, manifest) built
+from the repo. Agents should run `graphify query` / `path` / `explain` before broad grep when the
+graph exists; `graphify update .` after code changes (AST-only). Husky `post-commit` / `post-checkout`
+hooks auto-rebuild the graph when non-`graphify-out/` files change. Integrations: `AGENTS.md` +
+`CLAUDE.md` sections, `.cursor/rules/graphify.mdc` (`alwaysApply`), `.claude/settings.json` and
+`.codex/hooks.json` PreToolUse nudges. Expect `graphify-out/` to show as modified after commits that
+mix code + graph files — hook rebuild is normal; commit again or discard if undesired.
 
 ## Local Dev Ops
 
