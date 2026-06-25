@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import type { VaultGitStatusEntry } from '@llaab/schemas';
 import type { GitStatusEntry } from '@pierre/trees';
 
-import { PIERRE_TREE_THEME_STYLE, PIERRE_TREE_UNSAFE_CSS } from 'lib/pierre-trees-theme';
+import { PIERRE_TREE_THEME_STYLE, PIERRE_TREE_UNSAFE_CSS } from 'constants/pierre-trees-theme';
 
 import styles from './VaultGitPanel.module.css';
 

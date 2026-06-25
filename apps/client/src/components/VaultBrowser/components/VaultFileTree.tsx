@@ -2,7 +2,7 @@ import { FileTree, useFileTree, useFileTreeSelection } from '@pierre/trees/react
 import { useEffect, useMemo, useRef } from 'react';
 import type { VaultNode } from '../vault-browser.types';
 
-import { PIERRE_TREE_THEME_STYLE, PIERRE_TREE_UNSAFE_CSS } from 'lib/pierre-trees-theme';
+import { PIERRE_TREE_THEME_STYLE, PIERRE_TREE_UNSAFE_CSS } from 'constants/pierre-trees-theme';
 
 import { collectVaultFilePaths } from '../vault-browser.utils';
 

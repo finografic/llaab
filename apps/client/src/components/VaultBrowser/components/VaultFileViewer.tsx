@@ -2,7 +2,7 @@ import { File, PatchDiff } from '@pierre/diffs/react';
 import { useVaultFile, useVaultFileDiff } from 'queries/vault';
 import { useMemo } from 'react';
 
-import { PIERRE_DIFFS_THEME_STYLE } from 'lib/pierre-diffs-theme';
+import { PIERRE_DIFFS_THEME_STYLE } from 'constants/pierre-diffs-theme';
 
 import styles from './VaultFileViewer.module.css';
 

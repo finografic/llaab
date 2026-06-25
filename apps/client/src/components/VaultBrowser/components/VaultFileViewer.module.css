@@ -7,21 +7,7 @@
 
 .viewerFile {
   display: block;
-}
-
-.viewerFile :global(:where([data-background]) [data-line]),
-.viewerFile :global(:where([data-background]) [data-no-newline]) {
-  --mix-dark: 56%;
-  --mix-light: 68%;
-}
-
-.viewerFile :global(:where([data-background]) [data-column-number]) {
-  --mix-dark: 62%;
-  --mix-light: 74%;
-}
-
-.viewerFile :global([data-line] span) {
-  filter: saturate(0.88) brightness(0.92);
+  opacity: 0.7;
 }
 
 .viewerEmpty,
