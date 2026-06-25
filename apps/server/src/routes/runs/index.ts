@@ -6,4 +6,5 @@ export const runsRouter = createRouter()
   .get(routes.monitor.path, routes.monitor.handler)
   .get(routes.detail.path, routes.detail.handler)
   .post(routes.retry.path, routes.retry.handler)
+  .post(routes.dismissAll.path, routes.dismissAll.handler)
   .post(routes.dismiss.path, routes.dismiss.handler);

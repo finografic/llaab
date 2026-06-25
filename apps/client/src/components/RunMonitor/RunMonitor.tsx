@@ -10,10 +10,11 @@ import { Button } from 'components/ui/button';
 import { ScrollArea } from 'components/ui/scroll-area';
 import { ActivityIcon, RotateCcwIcon, XIcon } from 'lucide-react';
 import { useRunMonitorState } from 'providers/RunMonitorProvider';
-import { useDismissRun, useRetryRun, useRunMonitor } from 'queries/runs';
+import { useDismissAllRuns, useDismissRun, useRetryRun, useRunMonitor } from 'queries/runs';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { RunMonitorItem } from '@llaab/schemas';
+import type { ReactNode } from 'react';
 
 import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
 
@@ -155,12 +156,25 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
   );
 }
 
-function MonitorSection({ title, runs, empty }: { title: string; runs: RunMonitorItem[]; empty: string }) {
+function MonitorSection({
+  title,
+  runs,
+  empty,
+  action,
+}: {
+  title: string;
+  runs: RunMonitorItem[];
+  empty: string;
+  action?: ReactNode;
+}) {
   return (
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
         <h3 className={styles.sectionTitle}>{title}</h3>
-        <span className={styles.count}>{runs.length}</span>
+        <div className={styles.sectionHeaderMeta}>
+          {action}
+          <span className={styles.count}>{runs.length}</span>
+        </div>
       </div>
       {runs.length > 0 ? (
         runs.map((run) => <MonitorRunCard key={run.id} run={run} />)
@@ -172,8 +186,9 @@ function MonitorSection({ title, runs, empty }: { title: string; runs: RunMonito
 }
 
 export function RunMonitor({ onClose }: { onClose: () => void }) {
-  const { dismissedRunIds } = useRunMonitorState();
+  const { dismissRuns, dismissedRunIds } = useRunMonitorState();
   const { data, error, isLoading } = useRunMonitor({ refetchInterval: 3000 });
+  const dismissAllRuns = useDismissAllRuns();
   const dismissedSet = useMemo(() => new Set(dismissedRunIds), [dismissedRunIds]);
   const active = useMemo(() => data?.active ?? EMPTY_RUNS, [data?.active]);
   const recent = useMemo(
@@ -205,7 +220,28 @@ export function RunMonitor({ onClose }: { onClose: () => void }) {
           {error instanceof Error ? <p className={styles.error}>{error.message}</p> : null}
           {isLoading ? <p className={styles.empty}>Loading runs...</p> : null}
           <MonitorSection title="Active" runs={active} empty="No active runs." />
-          <MonitorSection title="Recent" runs={recent} empty="No recent runs." />
+          <MonitorSection
+            title="Recent"
+            runs={recent}
+            empty="No recent runs."
+            action={
+              recent.length > 0 ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={dismissAllRuns.isPending}
+                  onClick={() => {
+                    dismissRuns(recent.map((run) => run.id));
+                    dismissAllRuns.mutate();
+                  }}
+                >
+                  <XIcon aria-hidden />
+                  Dismiss all
+                </Button>
+              ) : null
+            }
+          />
         </div>
       </ScrollArea>
     </aside>

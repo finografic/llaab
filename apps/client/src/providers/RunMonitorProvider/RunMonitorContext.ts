@@ -33,6 +33,10 @@ export const RunMonitorContext = createZustandContext(({ initialValue }) => {
                 ? state.dismissedRunIds
                 : [...state.dismissedRunIds, runId],
             })),
+          dismissRuns: (runIds) =>
+            set((state) => ({
+              dismissedRunIds: [...new Set([...state.dismissedRunIds, ...runIds])],
+            })),
           resetDismissedRuns: () => set({ dismissedRunIds: [] }),
         },
       }),

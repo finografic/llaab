@@ -19,3 +19,4 @@ export type {
 } from './useDeleteRunsPreview';
 export { useRetryRun } from './useRetryRun';
 export { useDismissRun } from './useDismissRun';
+export { useDismissAllRuns } from './useDismissAllRuns';

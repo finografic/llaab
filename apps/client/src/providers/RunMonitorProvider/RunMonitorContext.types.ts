@@ -12,6 +12,7 @@ type RunMonitorSetters = CreateSettersType<RunMonitorValues, typeof SETTER_PREFI
 interface RunMonitorActions extends RunMonitorSetters {
   selectRun: (runId: string | undefined) => void;
   dismissRun: (runId: string) => void;
+  dismissRuns: (runIds: string[]) => void;
   resetDismissedRuns: () => void;
 }
 

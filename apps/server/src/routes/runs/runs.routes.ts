@@ -201,6 +201,27 @@ export const dismiss = {
   },
 };
 
+export const dismissAll = {
+  path: '/dismiss-all' as const,
+  handler: async (c: AppCtx) => {
+    const all = await listNodes({ type: 'run' });
+    const timestamp = formatIsoUtcSeconds(new Date());
+    const runs = (all as RunNode[]).filter((run) => !isActiveRun(run) && !run.monitor_dismissed_at);
+    const dismissedRunIds: string[] = [];
+
+    for (const run of runs) {
+      const runPath = getNodeFilePath('run', run.id);
+      await updateNode(runPath, (current) => ({
+        ...current,
+        monitor_dismissed_at: timestamp,
+      }));
+      dismissedRunIds.push(run.id);
+    }
+
+    return c.json({ success: true, dismissedRunIds });
+  },
+};
+
 export const retry = {
   path: '/:id/retry' as const,
   handler: async (c: AppCtx) => {
