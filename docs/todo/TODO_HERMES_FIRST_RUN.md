@@ -1,7 +1,7 @@
 # TODO — Hermes First Run and LLAAB Connection
 
-> **Status:** Phase 3 standalone MCP boot complete (2026-06-25). Discord gateway is blocked by an
-> invalid Discord bot token; Hermes CLI and standalone LLAAB MCP both start.
+> **Status:** Phase 4 read-only Discord MCP complete (2026-06-26). Hermes can answer LLAAB
+> vault read queries from **LLAAB Private** using `vault_list` / `vault_read`.
 
 ## Goal
 
@@ -121,35 +121,42 @@ Exit criteria: `pnpm dev:cli -- mcp` can start cleanly.
 
 Purpose: let Hermes read the vault through MCP with the smallest useful tool surface.
 
-Add a read-only MCP server entry to `~/.hermes/config.yaml`. Exact key names may vary by Hermes
-version; adapt to what `hermes doctor` expects.
+Add a read-only MCP server entry to `~/.hermes/config.yaml`.
 
 ```yaml
 mcp_servers:
   llaab:
-    command: "pnpm"
-    args: ["dev:cli", "--", "mcp"]
-    cwd: "/Users/justin/LLAAB"
+    command: /Users/justin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node
+    args:
+      - /Users/justin/LLAAB/packages/cli/dist/index.js
+      - mcp
     env:
-      LLAAB_VAULT: "/Users/justin/LLAAB/vault"
+      LLAAB_VAULT: /Users/justin/LLAAB/vault
     tools:
       include:
         - vault_list
         - vault_read
+
+platform_toolsets:
+  discord:
+    - llaab
 ```
 
-Then test in Hermes CLI first:
+Use Node + built CLI for Hermes MCP. The Bun source command starts standalone, but Hermes' Python
+MCP client hangs during `initialize` when it launches Bun.
+
+Then test:
 
 ```text
 List five LLAAB idea nodes.
 Read one of those idea nodes.
 ```
 
-- [ ] Hermes starts the LLAAB MCP child process.
-- [ ] Hermes can list vault nodes using `vault_list`.
+- [x] Hermes starts the LLAAB MCP child process (2026-06-26).
+- [x] Hermes can list vault nodes using `vault_list` (2026-06-26).
 - [ ] Hermes can read a selected node using `vault_read`.
-- [ ] Discord can perform the same read-only query.
-- [ ] Keep write tools excluded.
+- [x] Discord can perform the same read-only query (2026-06-26).
+- [x] Keep write tools excluded.
 
 Exit criteria: Hermes can answer read-only vault questions from CLI and Discord.
 
@@ -158,10 +165,10 @@ Exit criteria: Hermes can answer read-only vault questions from CLI and Discord.
 Purpose: preserve what was learned so the next restart is less mysterious.
 
 - [ ] Update `docs/integrations/hermes.md` with exact working provider IDs from `hermes doctor`.
-- [ ] Update `docs/integrations/hermes.md` with the confirmed MCP config shape.
+- [x] Update `docs/integrations/hermes.md` with the confirmed MCP config shape.
 - [ ] Add a short “Common first-run failures” section:
       message intent missing, wrong Discord user ID, MCP cwd wrong, pnpm not on PATH.
-- [ ] Update `TODO_HERMES_LAYER.md` checkboxes for completed first-run phases.
+- [x] Update `TODO_HERMES_LAYER.md` checkboxes for completed first-run phases.
 
 Exit criteria: another agent can reproduce the setup from committed docs without guessing.
 

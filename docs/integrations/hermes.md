@@ -1,8 +1,7 @@
 # Hermes — Mac Studio operator gateway
 
-> **Status:** Installed 2026-06-25 on Mac Studio. Phase 1–2 of
-> [`TODO_HERMES_LAYER.md`](../todo/TODO_HERMES_LAYER.md) complete (setup wizard + Discord bot).
-> LLAAB MCP not wired yet.
+> **Status:** Installed 2026-06-25 on Mac Studio. Discord gateway and read-only LLAAB MCP
+> are working from **LLAAB Private**.
 
 Hermes is a **separate long-running process** on the Mac Studio — not part of `apps/server`.
 It provides a phone-operable Discord gateway to glm-5.2 (OpenCode Go) with local tools.
@@ -99,15 +98,15 @@ twice — expected, not a loop).
 
 ### Skipped / not configured
 
-| Tool                | Notes                                             |
-| ------------------- | ------------------------------------------------- |
-| Image Generation    | Skipped — no FAL/OpenAI image key                 |
-| TTS provider wizard | Skipped — falls back to Edge                      |
-| Mixture of Agents   | Needs `OPENROUTER_API_KEY`                        |
-| Premium web extract | Firecrawl/Exa/Tavily etc. — ddgs is search-only   |
-| Skills Hub (GitHub) | Needs `GITHUB_TOKEN`                              |
-| Context Engine      | Off                                               |
-| MCP servers         | **Not yet** — Phase 3: wire `pnpm dev:cli -- mcp` |
+| Tool                | Notes                                           |
+| ------------------- | ----------------------------------------------- |
+| Image Generation    | Skipped — no FAL/OpenAI image key               |
+| TTS provider wizard | Skipped — falls back to Edge                    |
+| Mixture of Agents   | Needs `OPENROUTER_API_KEY`                      |
+| Premium web extract | Firecrawl/Exa/Tavily etc. — ddgs is search-only |
+| Skills Hub (GitHub) | Needs `GITHUB_TOKEN`                            |
+| Context Engine      | Off                                             |
+| MCP servers         | `llaab` read-only (`vault_list`, `vault_read`)  |
 
 ---
 
@@ -246,13 +245,38 @@ Hermes replies in a thread. Plain unmentioned channel messages are ignored becau
 
 ---
 
-## LLAAB integration (next)
+## LLAAB MCP Integration
 
-See [`TODO_HERMES_LAYER.md`](../todo/TODO_HERMES_LAYER.md) Phase 3+:
+Working read-only config in `~/.hermes/config.yaml`:
 
-1. Register LLAAB MCP in `~/.hermes/config.yaml` (`pnpm dev:cli -- mcp`, cwd `/Users/justin/LLAAB`)
-2. MCP env: `LLAAB_VAULT`, `LLAAB_API_URL=http://localhost:8888`, `LLAAB_API_KEY`
-3. Start read-only: `vault_list`, `vault_read`
-4. Extend write tools (ingest, capture idea) after smoke tests
+```yaml
+mcp_servers:
+  llaab:
+    command: /Users/justin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node
+    args:
+      - /Users/justin/LLAAB/packages/cli/dist/index.js
+      - mcp
+    env:
+      LLAAB_VAULT: /Users/justin/LLAAB/vault
+    tools:
+      include:
+        - vault_list
+        - vault_read
+
+platform_toolsets:
+  discord:
+    - llaab
+```
+
+Use the built Node CLI for Hermes MCP. `bun packages/cli/src/index.ts mcp` starts standalone, but
+Hermes' Python MCP client hangs during `initialize` when it launches the Bun process.
+
+Validated:
+
+- `hermes mcp test llaab` connects and discovers 2 tools.
+- Discord query `list 3 LLAAB vault nodes` returns vault nodes through the gateway.
+- Discord tool surface is restricted to `llaab`; broad terminal/file/browser/search tools are not enabled.
+
+Next: extend write tools (ingest, capture idea) only after the read-only path stays stable.
 
 Hermes remains a **consumer** of LLAAB vault via MCP — canonical memory stays in LLAAB.

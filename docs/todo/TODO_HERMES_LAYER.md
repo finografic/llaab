@@ -1,7 +1,7 @@
 # TODO — Hermes Layer (Discord → MCP → LLAAB)
 
-> **Status:** Phase 1–2 complete (2026-06-25). Hermes installed, OpenCode Go glm-5.2, Discord bot
-> on **LLAAB Private**. Gateway not launchd yet; MCP not wired. Live config:
+> **Status:** Phase 1–3 complete. Hermes installed, OpenCode Go glm-5.2, Discord bot
+> on **LLAAB Private**, and read-only LLAAB MCP works from Discord. Gateway not launchd yet. Live config:
 > [`docs/integrations/hermes.md`](../integrations/hermes.md).
 
 ## Goal
@@ -172,35 +172,41 @@ Private server only. Follow security checklist from the setup guide.
 
 No new MCP code yet — wire what exists today (`vault_list`, `vault_read`).
 
-**Prerequisites:** LLAAB repo at `/Users/justin/LLAAB`; `pnpm dev:cli -- mcp` works standalone.
+**Prerequisites:** LLAAB repo at `/Users/justin/LLAAB`; built CLI at
+`packages/cli/dist/index.js`.
 
 ```bash
 cd /Users/justin/LLAAB
 pnpm dev:cli -- mcp   # should block on stdio; Ctrl+C to exit
 ```
 
-Hermes MCP registration (adjust keys to match `hermes doctor` / docs):
+Hermes MCP registration:
 
 ```yaml
 # ~/.hermes/config.yaml
 mcp_servers:
   llaab:
-    command: "pnpm"
-    args: ["dev:cli", "--", "mcp"]
-    cwd: "/Users/justin/LLAAB"
+    command: /Users/justin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node
+    args:
+      - /Users/justin/LLAAB/packages/cli/dist/index.js
+      - mcp
     env:
-      LLAAB_VAULT: "/Users/justin/LLAAB/vault"
+      LLAAB_VAULT: /Users/justin/LLAAB/vault
     tools:
       include:
         - vault_list
         - vault_read
+
+platform_toolsets:
+  discord:
+    - llaab
 ```
 
 - [x] Standalone `pnpm dev:cli -- mcp` starts and blocks on stdio as expected (2026-06-25)
-- [ ] MCP server starts from Hermes without stderr errors
-- [ ] Hermes CLI: “List my LLAAB ideas” → calls `vault_list`
+- [x] MCP server starts from Hermes without stderr errors (2026-06-26)
+- [x] Hermes MCP test discovers `vault_list` and `vault_read` (2026-06-26)
 - [ ] Hermes CLI: “Read idea &lt;id&gt;” → calls `vault_read`
-- [ ] Discord DM: same read queries work through gateway
+- [x] Discord channel: same read queries work through gateway (2026-06-26)
 
 **Exit criteria:** Hermes can list and read vault nodes from phone or CLI.
 
