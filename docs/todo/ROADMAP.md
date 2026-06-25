@@ -107,6 +107,14 @@ Scope TBD pending research into Karpathy Pattern's data format requirements.
 new content appears. Agent loop registry already has the slot reserved (commented out).
 Trigger: `lab agent run` or `POST /api/agent/run` on a user-controlled schedule.
 
+### Hermes Layer (Discord → MCP → LLAAB)
+
+Phone-operable Hermes gateway on Mac Studio: OpenCode Go + Ollama routing, Discord operator
+console, LLAAB MCP tools for vault read/write. Separate long-running process — not inside
+`apps/server`.
+
+Detail: [`docs/todo/TODO_HERMES_LAYER.md`](./TODO_HERMES_LAYER.md)
+
 ### Terminal Agent and Hermes Integrations
 
 Extend the Terminal Panel as the shared command surface for local LLAAB agents, future Hermes
