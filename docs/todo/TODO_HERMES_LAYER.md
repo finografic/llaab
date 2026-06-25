@@ -1,7 +1,8 @@
 # TODO — Hermes Layer (Discord → MCP → LLAAB)
 
-> **Status:** Not started (2026-06-24). Phase 1 is install + CLI smoke test — in progress on Mac
-> Studio.
+> **Status:** Phase 1–2 complete (2026-06-25). Hermes installed, OpenCode Go glm-5.2, Discord bot
+> on **LLAAB Private**. Gateway not launchd yet; MCP not wired. Live config:
+> [`docs/integrations/hermes.md`](../integrations/hermes.md).
 
 ## Goal
 
@@ -24,6 +25,7 @@ iPhone (Discord DM) → Hermes gateway (Mac Studio) → OpenCode Go / Ollama
 | [`TODO_TERMINAL_AGENT_INTEGRATIONS.md`](./TODO_TERMINAL_AGENT_INTEGRATIONS.md) | Later: `agent.run --executor hermes` one-shot adapter                       |
 | [`TODO_ADAPTERS.md`](./TODO_ADAPTERS.md)                                       | Adapter boundary — LLAAB owns vault; Hermes owns execution                  |
 | [`DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md)                             | Command bus, RunNodes, capability routing (Hermes adapter is Phase 3 there) |
+| [`docs/integrations/hermes.md`](../integrations/hermes.md)                     | **Live Mac Studio config** (model, Discord, tools, paths)                   |
 | `~/Downloads/hermes-llaab-setup-guide.md`                                      | Source brief (security, MCP tool sketches, Discord wiring)                  |
 
 ## Constraints
@@ -136,14 +138,14 @@ hermes
 # > "List your available tools."
 ```
 
-- [ ] Full setup completed (not Nous Portal Quick Setup)
+- [x] Full setup completed (not Nous Portal Quick Setup) (2026-06-25)
 - [ ] `hermes doctor` passes
-- [ ] `OPENCODE_API_KEY` set in `~/.hermes/.env`
-- [ ] Ollama running with at least one model (`ollama list`)
+- [x] `OPENCODE_GO_API_KEY` set in `~/.hermes/.env` (Hermes var name; same key as LLAAB `OPENCODE_API_KEY`)
+- [ ] Ollama running with at least one model (`ollama list`) — fallback not verified
 - [ ] CLI session answers using OpenCode Go (or falls back to Ollama if cloud unavailable)
 - [ ] `approvals.mode: smart` confirmed in config
 
-**Exit criteria:** Hermes CLI works locally with OpenCode Go + Ollama before any Discord or MCP work.
+**Exit criteria:** Hermes CLI works locally with OpenCode Go + Ollama before any Discord and MCP work.
 
 ---
 
@@ -151,14 +153,14 @@ hermes
 
 Private server only. Follow security checklist from the setup guide.
 
-- [ ] Create Discord application + bot; enable **Message Content Intent** (silent failure if off)
-- [ ] Turn off **Public Bot**; invite to private server only
-- [ ] Set `DISCORD_BOT_TOKEN` and `DISCORD_ALLOWED_USERS` in `~/.hermes/.env`
-- [ ] Enable Discord in `~/.hermes/config.yaml` with `allowed_users` allowlist
-- [ ] `hermes gateway` — test from phone DM: “Hello, what model are you?”
+- [x] Create Discord application + bot; enable **Message Content Intent** (2026-06-25)
+- [x] Turn off **Public Bot** after invite; **LLAAB Private** server only
+- [x] Set `DISCORD_BOT_TOKEN` and allowlist user ID in `~/.hermes/.env`
+- [x] Discord enabled in Hermes setup wizard
+- [ ] `hermes gateway` — test from phone or **LLAAB Private** channel
 - [ ] Confirm strangers cannot message the bot (no `GATEWAY_ALLOW_ALL_USERS`)
 
-**Exit criteria:** Text DM from iPhone → Hermes reply on Mac Studio.
+**Exit criteria:** Text message from iPhone → Hermes reply on Mac Studio.
 
 ---
 

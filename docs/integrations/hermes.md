@@ -1,0 +1,163 @@
+# Hermes — Mac Studio operator gateway
+
+> **Status:** Installed 2026-06-25 on Mac Studio. Phase 1–2 of
+> [`TODO_HERMES_LAYER.md`](../todo/TODO_HERMES_LAYER.md) complete (setup wizard + Discord bot).
+> LLAAB MCP not wired yet.
+
+Hermes is a **separate long-running process** on the Mac Studio — not part of `apps/server`.
+It provides a phone-operable Discord gateway to glm-5.2 (OpenCode Go) with local tools.
+
+**Secrets live only in `~/.hermes/.env`** — never commit tokens or paste them into this doc.
+
+---
+
+## Paths
+
+| Path                                    | Purpose                                             |
+| --------------------------------------- | --------------------------------------------------- |
+| `~/.hermes/config.yaml`                 | Behavior, providers, tools, Discord, agent defaults |
+| `~/.hermes/.env`                        | API keys and Discord token                          |
+| `~/.hermes/cron/`, `sessions/`, `logs/` | Runtime data                                        |
+| `~/.hermes/hermes-agent`                | Hermes install / code checkout                      |
+
+Config backup from setup: `~/.hermes/config.yaml.bak.20260625_205626`
+
+---
+
+## Model and provider
+
+| Setting              | Value                                     |
+| -------------------- | ----------------------------------------- |
+| Provider             | **OpenCode Go**                           |
+| Default model        | **glm-5.2**                               |
+| Base URL             | `https://opencode.ai/zen/go/v1`           |
+| API key env (Hermes) | `OPENCODE_GO_API_KEY` in `~/.hermes/.env` |
+
+LLAAB repo root `.env` uses `OPENCODE_API_KEY` for other tooling — Hermes expects
+`OPENCODE_GO_API_KEY` in its own `.env` (same key value, different var name).
+
+Setup mode: **Full setup** (not Nous Portal Quick Setup).
+
+---
+
+## Agent defaults
+
+Applied during `hermes setup` (customize later with `hermes setup agent`):
+
+| Setting               | Value                                  |
+| --------------------- | -------------------------------------- |
+| Max iterations        | 150                                    |
+| Tool progress         | all                                    |
+| Compression threshold | 0.50                                   |
+| Session reset         | never (manual `/reset` or compression) |
+
+---
+
+## Terminal backend
+
+| Setting      | Value                                                               |
+| ------------ | ------------------------------------------------------------------- |
+| Backend      | **local** (shell on Mac Studio host)                                |
+| Change later | `hermes setup terminal` or Docker when Discord shell use is trusted |
+
+---
+
+## Discord
+
+| Setting         | Value                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| Application     | **LLAAB Agent** (Discord Developer Portal)                                                  |
+| Server          | **LLAAB Private** (private guild)                                                           |
+| Bot token       | `DISCORD_BOT_TOKEN` in `~/.hermes/.env`                                                     |
+| Allowlist       | Single user ID `1089260734909223721` (real Mac Discord account — not `llaab_62288`)         |
+| Home channel    | **Not set** — use `/set-home` in a channel or `hermes config set DISCORD_HOME_CHANNEL <id>` |
+| Public Bot      | OFF after invite (private app; owner invited via temporary Public Bot ON)                   |
+| Gateway service | **Not** launchd yet — run `hermes gateway` in foreground for testing                        |
+
+Intents required: **Message Content Intent** enabled on Bot tab.
+
+---
+
+## Tools enabled
+
+Wizard configures **CLI** and **Discord** toolsets separately (browser/search prompts appear
+twice — expected, not a loop).
+
+### Enabled and configured
+
+| Tool                 | Provider / notes                                                          |
+| -------------------- | ------------------------------------------------------------------------- |
+| Browser Automation   | **Local Browser** — headless Chromium                                     |
+| Computer Use         | **cua-driver** 0.6.8 (background) — `/Users/justin/.local/bin/cua-driver` |
+| Web Search           | **ddgs** (DuckDuckGo, no API key)                                         |
+| Text-to-Speech       | **Edge TTS** (default; provider step skipped in wizard)                   |
+| Vision               | Available via main multimodal provider                                    |
+| Terminal / Commands  | On                                                                        |
+| Task Planning (todo) | On                                                                        |
+| Skills               | On                                                                        |
+
+### Skipped / not configured
+
+| Tool                | Notes                                             |
+| ------------------- | ------------------------------------------------- |
+| Image Generation    | Skipped — no FAL/OpenAI image key                 |
+| TTS provider wizard | Skipped — falls back to Edge                      |
+| Mixture of Agents   | Needs `OPENROUTER_API_KEY`                        |
+| Premium web extract | Firecrawl/Exa/Tavily etc. — ddgs is search-only   |
+| Skills Hub (GitHub) | Needs `GITHUB_TOKEN`                              |
+| Context Engine      | Off                                               |
+| MCP servers         | **Not yet** — Phase 3: wire `pnpm dev:cli -- mcp` |
+
+---
+
+## Computer Use (cua-driver)
+
+Installed during setup. macOS permissions may still be required:
+
+```bash
+cua-driver permissions status
+cua-driver permissions grant   # launches CuaDriver for TCC dialogs
+```
+
+System Settings → Privacy & Security → **Accessibility** and **Screen Recording** for CuaDriver /
+Hermes as needed.
+
+---
+
+## Operational commands
+
+```bash
+hermes doctor              # diagnose
+hermes                     # CLI chat (smoke test)
+hermes gateway             # Discord gateway (foreground)
+hermes gateway install     # launchd background service (after smoke test)
+hermes setup model         # change model/provider
+hermes setup gateway       # reconfigure Discord
+hermes setup tools         # tool providers
+hermes config              # view settings
+```
+
+Reload shell after first install: `source ~/.zshrc`
+
+---
+
+## Security posture
+
+- Discord allowlist: single user ID only
+- `approvals.mode`: smart (verify in `config.yaml`)
+- Do not set `GATEWAY_ALLOW_ALL_USERS`
+- Bot on private server only
+- Terminal backend **local** — treat Discord shell access carefully until Docker backend
+
+---
+
+## LLAAB integration (next)
+
+See [`TODO_HERMES_LAYER.md`](../todo/TODO_HERMES_LAYER.md) Phase 3+:
+
+1. Register LLAAB MCP in `~/.hermes/config.yaml` (`pnpm dev:cli -- mcp`, cwd `/Users/justin/LLAAB`)
+2. MCP env: `LLAAB_VAULT`, `LLAAB_API_URL=http://localhost:8888`, `LLAAB_API_KEY`
+3. Start read-only: `vault_list`, `vault_read`
+4. Extend write tools (ingest, capture idea) after smoke tests
+
+Hermes remains a **consumer** of LLAAB vault via MCP — canonical memory stays in LLAAB.
