@@ -34,8 +34,7 @@ Discord → Hermes gateway → LLAAB read-only vault query
 - Existing LLAAB MCP command: `pnpm dev:cli -- mcp`.
 - Existing MCP tools today: `vault_list`, `vault_read`.
 - Hermes secrets belong in `~/.hermes/.env`, never repo `.env` or committed config.
-- For LLAAB write tools, prefer repo convention `LLAAB_API_KEY`; `SERVER_API_KEY` is only a
-  compatibility fallback in the API guard.
+- For LLAAB write tools, use repo convention `LLAAB_API_KEY`.
 
 ## Phase 0 — Orientation and Safety
 
@@ -92,12 +91,12 @@ what model are you using?
 ```
 
 - [x] Gateway starts in the foreground (2026-06-25).
-- [ ] Bot replies from Discord.
-- [ ] Message Content Intent is enabled if the bot appears online but ignores messages.
+- [x] Bot replies from Discord when mentioned (2026-06-26).
+- [x] Message Content Intent is enabled (2026-06-26).
 - [ ] Only the allowlisted Discord user can interact.
-- [ ] Record the working channel / DM behavior in `docs/integrations/hermes.md`.
-- [ ] Reset or re-copy `DISCORD_BOT_TOKEN`; current token is present but rejected by Discord as
-      invalid.
+- [x] Record the working channel / DM behavior in `docs/integrations/hermes.md`.
+- [x] Reset or re-copy `DISCORD_BOT_TOKEN`; previous token was present but rejected by Discord as
+      invalid (2026-06-26).
 
 Exit criteria: iPhone message → Hermes reply on Mac Studio.
 

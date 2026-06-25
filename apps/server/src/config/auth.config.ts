@@ -2,7 +2,7 @@ export const APP_SESSION_COOKIE_NAME = 'llaab_session';
 export const APP_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
 export function getApiKey(): string | null {
-  return process.env['LLAAB_API_KEY'] ?? process.env['LLAAB_API_KEY'] ?? null;
+  return process.env['LLAAB_API_KEY'] ?? null;
 }
 
 export function getAppPassword(): string | null {

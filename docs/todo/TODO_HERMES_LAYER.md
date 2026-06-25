@@ -35,9 +35,7 @@ iPhone (Discord DM) → Hermes gateway (Mac Studio) → OpenCode Go / Ollama
   the Bun server. Hermes gateway is a **separate process** (like Ollama or the Vite dev server).
 - **Secrets in env files only** — never commit `~/.hermes/.env` or paste keys into `config.yaml`.
 - **Start read-only** on MCP tools; add write tools only after CLI + Discord smoke tests pass.
-- **Use LLAAB env naming:** `LLAAB_API_URL`, `LLAAB_API_KEY`, `OPENCODE_API_KEY`. The server
-  accepts `SERVER_API_KEY` as a compatibility fallback, but docs and Hermes MCP env should use
-  `LLAAB_API_KEY`.
+- **Use LLAAB env naming:** `LLAAB_API_URL`, `LLAAB_API_KEY`, `OPENCODE_API_KEY`.
 - **Primary cloud model:** OpenCode Go via `OPENCODE_API_KEY` (already in repo root `.env`). Do
   not default to Anthropic unless explicitly added later for a reason-tier task.
 
@@ -163,8 +161,7 @@ Private server only. Follow security checklist from the setup guide.
 - [x] Turn off **Public Bot** after invite; **LLAAB Private** server only
 - [x] Set `DISCORD_BOT_TOKEN` and allowlist user ID in `~/.hermes/.env`
 - [x] Discord enabled in Hermes setup wizard
-- [ ] `hermes gateway` — test from phone or **LLAAB Private** channel (blocked: current
-      `DISCORD_BOT_TOKEN` is rejected by Discord as invalid)
+- [x] `hermes gateway` — test from phone or **LLAAB Private** channel (2026-06-26)
 - [ ] Confirm strangers cannot message the bot (no `GATEWAY_ALLOW_ALL_USERS`)
 
 **Exit criteria:** Text message from iPhone → Hermes reply on Mac Studio.

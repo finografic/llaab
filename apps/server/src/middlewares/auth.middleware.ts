@@ -24,8 +24,8 @@ export const sessionMiddleware: MiddlewareHandler = async (c, next) => {
 /**
  * Require an API key or browser session for mutating API requests.
  *
- * Reads `LLAAB_API_KEY`, with `LLAAB_API_KEY` as a legacy fallback. If neither an API key nor
- * `LLAAB_PASSWORD` is configured, writes are allowed for local development.
+ * Reads `LLAAB_API_KEY`. If neither an API key nor `LLAAB_PASSWORD` is configured, writes are
+ * allowed for local development.
  */
 export const requireAuth: MiddlewareHandler = async (c, next) => {
   if (c.req.path.startsWith('/api/auth/')) {

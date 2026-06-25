@@ -68,6 +68,7 @@ Applied during `hermes setup` (customize later with `hermes setup agent`):
 | --------------- | ------------------------------------------------------------------------------------------- |
 | Application     | **LLAAB Agent** (Discord Developer Portal)                                                  |
 | Server          | **LLAAB Private** (private guild)                                                           |
+| Server nickname | **lab** (`@lab` mentions in `#general`)                                                     |
 | Bot token       | `DISCORD_BOT_TOKEN` in `~/.hermes/.env`                                                     |
 | Allowlist       | Single user ID `1089260734909223721` (real Mac Discord account — not `llaab_62288`)         |
 | Home channel    | **Not set** — use `/set-home` in a channel or `hermes config set DISCORD_HOME_CHANNEL <id>` |
@@ -215,7 +216,8 @@ Foreground gateway command:
 hermes gateway run
 ```
 
-Result: Hermes starts the gateway process, but Discord connection fails before any message test.
+Initial result: Hermes starts the gateway process, but Discord connection failed before any message
+test.
 
 ```text
 discord.errors.LoginFailure: Improper token has been passed.
@@ -229,8 +231,18 @@ Token shape check without printing the secret:
 - It contains no whitespace.
 - It is not an obvious placeholder.
 
-Interpretation: reset or re-copy the bot token from Discord Developer Portal → Application
+Resolution: reset / re-copy the bot token from Discord Developer Portal → Application
 **LLAAB Agent** → Bot → Reset Token, update `~/.hermes/.env`, then rerun `hermes gateway run`.
+
+Follow-up result: after reauthorizing the bot and enabling **Message Content Intent**, Discord
+mentions work in `#general`:
+
+```text
+@lab hello
+```
+
+Hermes replies in a thread. Plain unmentioned channel messages are ignored because
+`discord.require_mention` is enabled.
 
 ---
 
