@@ -13,6 +13,8 @@ const VAULT_SIDEBAR_MIN_WIDTH = '280px';
 const VAULT_SIDEBAR_MAX_WIDTH = '720px';
 const VAULT_SIDEBAR_DEFAULT_WIDTH = '480px';
 const PATH_SEARCH_PARAM = 'path';
+const VIEW_SEARCH_PARAM = 'view';
+const DIFF_VIEW = 'diff';
 
 export interface VaultBrowserProps {
   tree: VaultNode[];
@@ -24,6 +26,8 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
   // file in the Vault Changes sidebar while already on this route) is picked up immediately —
   // a separate `useState` mirror would only capture the value at mount.
   const selectedPath = searchParams.get(PATH_SEARCH_PARAM);
+  const view = searchParams.get(VIEW_SEARCH_PARAM);
+  const showDiff = view === DIFF_VIEW;
 
   const setSelectedPath = useCallback(
     (path: string) => {
@@ -31,6 +35,7 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
         (prev) => {
           const next = new URLSearchParams(prev);
           next.set(PATH_SEARCH_PARAM, path);
+          next.delete(VIEW_SEARCH_PARAM);
           return next;
         },
         { replace: true },
@@ -58,5 +63,5 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
 
   useAppLeftSidebar(leftSidebar);
 
-  return <VaultFileViewer path={selectedPath} />;
+  return <VaultFileViewer path={selectedPath} showDiff={showDiff} />;
 }

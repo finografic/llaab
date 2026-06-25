@@ -13,8 +13,8 @@ import {
 import { Button } from 'components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import { useVaultGitCommit, useVaultGitReset, useVaultGitStatus } from 'queries/vault';
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { VaultGitStatusEntry } from '@llaab/schemas';
 import type { GitStatusEntry } from '@pierre/trees';
@@ -32,11 +32,16 @@ function pluralizeFiles(count: number): string {
 function VaultGitFileTree({
   entries,
   onSelect,
+  selectedPath,
 }: {
   entries: VaultGitStatusEntry[];
-  onSelect: (path: string) => void;
+  onSelect: (entry: VaultGitStatusEntry) => void;
+  selectedPath: string | null;
 }) {
   const paths = useMemo(() => entries.map((entry) => entry.path), [entries]);
+  const entriesByPath = useMemo(() => new Map(entries.map((entry) => [entry.path, entry])), [entries]);
+  const selectedChangedPath = selectedPath && entriesByPath.has(selectedPath) ? selectedPath : null;
+  const ignoreSelectionRef = useRef<string | null>(null);
   const gitStatus = useMemo<GitStatusEntry[]>(
     () => entries.map((entry) => ({ path: entry.path, status: entry.status })),
     [entries],
@@ -45,15 +50,42 @@ function VaultGitFileTree({
     paths,
     gitStatus,
     initialExpansion: 'open',
+    initialSelectedPaths: selectedChangedPath ? [selectedChangedPath] : undefined,
     unsafeCSS: PIERRE_TREE_UNSAFE_CSS,
   });
 
   const selection = useFileTreeSelection(model);
 
   useEffect(() => {
-    const next = selection[0];
-    if (next) onSelect(next);
-  }, [selection, onSelect]);
+    const currentSelection = model.getSelectedPaths();
+    const currentSelectedPath = currentSelection[0] ?? null;
+
+    if (!selectedChangedPath) {
+      if (currentSelection.length > 0) {
+        ignoreSelectionRef.current = currentSelectedPath;
+        currentSelection.forEach((path) => model.getItem(path)?.deselect());
+      }
+      return;
+    }
+
+    if (currentSelection.length === 1 && currentSelectedPath === selectedChangedPath) return;
+
+    ignoreSelectionRef.current = currentSelectedPath;
+    currentSelection.forEach((path) => model.getItem(path)?.deselect());
+    model.getItem(selectedChangedPath)?.select();
+    model.scrollToPath(selectedChangedPath, { focus: true });
+  }, [selectedChangedPath, model]);
+
+  useEffect(() => {
+    const next = selection[0] ?? null;
+    if (!next || next === selectedChangedPath) return;
+    if (next === ignoreSelectionRef.current) {
+      ignoreSelectionRef.current = null;
+      return;
+    }
+    const entry = next ? entriesByPath.get(next) : undefined;
+    if (entry) onSelect(entry);
+  }, [entriesByPath, selection, selectedChangedPath, onSelect]);
 
   return <FileTree model={model} style={PIERRE_TREE_THEME_STYLE} />;
 }
@@ -64,9 +96,15 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
   const resetMutation = useVaultGitReset();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedPath = searchParams.get('path');
 
-  const handleSelectChangedFile = (path: string) => {
-    navigate(`/vault?path=${encodeURIComponent(path)}`);
+  const handleSelectChangedFile = (entry: VaultGitStatusEntry) => {
+    const searchParams = new URLSearchParams({ path: entry.path });
+    if (entry.status !== 'untracked') {
+      searchParams.set('view', 'diff');
+    }
+    navigate(`/vault?${searchParams.toString()}`);
   };
 
   const treeSignature = useMemo(
@@ -129,6 +167,7 @@ export function VaultGitPanel({ onClose }: { onClose: () => void }) {
                 key={treeSignature}
                 entries={data?.entries ?? EMPTY_GIT_ENTRIES}
                 onSelect={handleSelectChangedFile}
+                selectedPath={selectedPath}
               />
             </div>
           </>

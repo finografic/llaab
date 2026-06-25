@@ -12,10 +12,10 @@ async function fetchVaultFile(path: string): Promise<string> {
 }
 
 /** Raw contents of a vault file by relative path. Disabled until a path is selected. */
-export function useVaultFile(path: string | null) {
+export function useVaultFile(path: string | null, enabled = true) {
   return useQuery({
     queryKey: QUERY_KEYS.vault.file(path ?? ''),
     queryFn: () => fetchVaultFile(path as string),
-    enabled: path != null,
+    enabled: enabled && path != null,
   });
 }

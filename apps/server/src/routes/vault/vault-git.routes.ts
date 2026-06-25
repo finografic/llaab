@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { sep } from 'node:path';
 import { MONOREPO_ROOT } from '@llaab/core';
 import { NodeTypeSchema } from '@llaab/schemas';
 import type { AppCtx } from '../../types/app.types.js';
@@ -68,6 +69,21 @@ function buildVaultCommitMessage(countsByType: Record<string, number>, total: nu
   return lines.length > 0 ? `${header}\n\n${lines.join('\n')}` : header;
 }
 
+function toVaultGitPath(path: string): string {
+  const normalizedPath = path.replaceAll('\\', '/');
+  const segments = normalizedPath.split('/');
+  if (
+    normalizedPath.startsWith('/') ||
+    normalizedPath.includes('\0') ||
+    segments.includes('..') ||
+    segments.includes('')
+  ) {
+    throw new Error('Invalid path.');
+  }
+
+  return ['vault', ...segments].join(sep);
+}
+
 async function getVaultGitStatus(): Promise<VaultGitStatusResponse> {
   const status = await runGit(['status', '--porcelain=v1', '--', 'vault']);
   if (status.exitCode !== 0) {
@@ -104,6 +120,32 @@ export const vaultGitStatus = {
       return c.json(await getVaultGitStatus());
     } catch (err) {
       return c.json({ error: err instanceof Error ? err.message : 'Failed to load vault git status.' }, 500);
+    }
+  },
+};
+
+export const vaultGitDiff = {
+  path: '/git/diff' as const,
+  handler: async (c: AppCtx) => {
+    const filePath = c.req.query('path');
+    if (!filePath) return c.json({ error: '`path` query parameter is required.' }, 400);
+
+    let gitPath: string;
+    try {
+      gitPath = toVaultGitPath(filePath);
+    } catch (err) {
+      return c.json({ error: err instanceof Error ? err.message : 'Invalid path.' }, 403);
+    }
+
+    try {
+      const diff = await runGit(['diff', '--no-ext-diff', '--unified=80', 'HEAD', '--', gitPath]);
+      if (diff.exitCode !== 0) {
+        throw new Error(diff.stderr || 'git diff failed.');
+      }
+
+      return c.json({ patch: diff.stdout });
+    } catch (err) {
+      return c.json({ error: err instanceof Error ? err.message : 'Failed to load vault diff.' }, 500);
     }
   },
 };
