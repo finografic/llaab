@@ -6,6 +6,7 @@ readonly server_label="com.llaab.server"
 readonly client_label="com.llaab.client"
 readonly icons_label="com.llaab.icons"
 readonly lmstudio_label="com.lmstudio.server"
+readonly hermes_gateway_label="com.llaab.hermes.gateway"
 readonly launch_agents_dir="$HOME/Library/LaunchAgents"
 readonly script_dir="/Users/justin/LLAAB/scripts/macos"
 readonly logs_dir="$HOME/Library/Logs/llaab"
@@ -14,8 +15,11 @@ readonly server_plist="$launch_agents_dir/$server_label.plist"
 readonly client_plist="$launch_agents_dir/$client_label.plist"
 readonly icons_plist="$launch_agents_dir/$icons_label.plist"
 readonly lmstudio_plist="$launch_agents_dir/$lmstudio_label.plist"
+readonly hermes_gateway_plist="$launch_agents_dir/$hermes_gateway_label.plist"
 readonly lmstudio_bin="/Users/justin/.lmstudio/bin/lms"
+readonly hermes_bin="/Users/justin/.local/bin/hermes"
 readonly client_log="$logs_dir/client.stdout.log"
+readonly hermes_gateway_log="$logs_dir/hermes-gateway.stdout.log"
 readonly repair_log="$logs_dir/repair-all.log"
 readonly server_url="http://127.0.0.1:8888"
 readonly server_health_url="$server_url/"
@@ -91,13 +95,15 @@ PLIST
 }
 
 start_services() {
+  start_server
+  start_client
   start_lmstudio
-  bootstrap_label "$server_label" "$server_plist"
-  bootstrap_label "$client_label" "$client_plist"
-  bootstrap_label "$icons_label" "$icons_plist"
+  start_hermes_gateway
+  start_icons
 }
 
 stop_services() {
+  stop_hermes_gateway
   launchctl bootout "gui/$UID/$icons_label" >/dev/null 2>&1 || true
   launchctl bootout "gui/$UID/$client_label" >/dev/null 2>&1 || true
   launchctl bootout "gui/$UID/$server_label" >/dev/null 2>&1 || true
@@ -165,6 +171,65 @@ stop_lmstudio() {
   "$lmstudio_bin" server stop >/dev/null 2>&1 || true
 }
 
+ensure_hermes_gateway_plist() {
+  mkdir -p "$launch_agents_dir" "$logs_dir"
+
+  cat > "$hermes_gateway_plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$hermes_gateway_label</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$hermes_bin</string>
+    <string>gateway</string>
+    <string>--accept-hooks</string>
+    <string>run</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/justin/LLAAB</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/Users/justin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:/Users/justin/.local/bin:/Users/justin/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key>
+    <string>/Users/justin</string>
+    <key>HERMES_ACCEPT_HOOKS</key>
+    <string>1</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>$logs_dir/hermes-gateway.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>$logs_dir/hermes-gateway.stderr.log</string>
+</dict>
+</plist>
+PLIST
+}
+
+start_hermes_gateway() {
+  ensure_hermes_gateway_plist
+  if "$hermes_bin" gateway status 2>/dev/null | grep -q 'Gateway is running'; then
+    return
+  fi
+  bootstrap_label "$hermes_gateway_label" "$hermes_gateway_plist"
+}
+
+stop_hermes_gateway() {
+  launchctl bootout "gui/$UID/$hermes_gateway_label" >/dev/null 2>&1 || true
+  "$hermes_bin" gateway stop >/dev/null 2>&1 || true
+}
+
+restart_hermes_gateway() {
+  stop_hermes_gateway
+  start_hermes_gateway
+}
+
 open_client_log() {
   /usr/bin/open -a Console "$client_log"
 }
@@ -210,13 +275,35 @@ service_state_url_first() {
 }
 
 print_status() {
-  local server_state client_state icons_state lmstudio_state
+  local server_state client_state icons_state lmstudio_state hermes_gateway_state
   lmstudio_state="$(service_state_url_first "$lmstudio_label" "$lmstudio_url" "--fail")"
   server_state="$(service_state "$server_label" "$server_health_url" "--fail")"
   client_state="$(service_state "$client_label" "$client_url" "")"
   icons_state="$(service_state  "$icons_label"  "$icons_url" "")"
+  hermes_gateway_state="$(hermes_gateway_state)"
 
-  printf 'lmstudio=%s\nserver=%s\nclient=%s\nicons=%s\n' "$lmstudio_state" "$server_state" "$client_state" "$icons_state"
+  printf 'lmstudio=%s\nserver=%s\nclient=%s\nhermes_gateway=%s\nicons=%s\n' "$lmstudio_state" "$server_state" "$client_state" "$hermes_gateway_state" "$icons_state"
+}
+
+hermes_gateway_state() {
+  local pid
+  pid="$(launchctl list 2>/dev/null | awk -v lbl="$hermes_gateway_label" '$3 == lbl {print $1}')"
+
+  if [[ -n "$pid" && "$pid" != "-" ]]; then
+    echo "running"
+    return
+  fi
+
+  if "$hermes_bin" gateway status 2>/dev/null | grep -q 'Gateway is running'; then
+    echo "running"
+    return
+  fi
+
+  if [[ "$pid" == "-" ]]; then
+    echo "launching"
+  else
+    echo "stopped"
+  fi
 }
 
 open_ui() {
@@ -259,6 +346,7 @@ case "${1:-}" in
   stop)           stop_services ;;
   restart)        restart_services_with_client_log ;;
   restart-icons)  restart_icons ;;
+  restart-hermes) restart_hermes_gateway ;;
   start-server)   start_server ;;
   stop-server)    stop_server ;;
   start-client)   start_client ;;
@@ -267,6 +355,8 @@ case "${1:-}" in
   stop-icons)     stop_icons ;;
   start-lmstudio) start_lmstudio ;;
   stop-lmstudio)  stop_lmstudio ;;
+  start-hermes)   start_hermes_gateway ;;
+  stop-hermes)    stop_hermes_gateway ;;
   status)         print_status ;;
   open)           open_ui ;;
   open-ingest)    open_ingest ;;
@@ -274,7 +364,7 @@ case "${1:-}" in
   repair-client)  repair_client_with_log ;;
   repair-all)     repair_all ;;
   *)
-    echo "usage: $0 {start|stop|restart|restart-icons|start-server|stop-server|start-client|stop-client|start-icons|stop-icons|start-lmstudio|stop-lmstudio|status|open|open-ingest|open-icons|repair-client|repair-all}" >&2
+    echo "usage: $0 {start|stop|restart|restart-icons|restart-hermes|start-server|stop-server|start-client|stop-client|start-icons|stop-icons|start-lmstudio|stop-lmstudio|start-hermes|stop-hermes|status|open|open-ingest|open-icons|repair-client|repair-all}" >&2
     exit 1
     ;;
 esac

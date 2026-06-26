@@ -101,6 +101,12 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         live: true,
       },
       {
+        label: 'Hermes / MCP',
+        description: 'Discord gateway, MCP tools, and operator automation',
+        href: '/hermes',
+        live: true,
+      },
+      {
         label: 'Crons',
         description: 'Manual recipe runs and external schedule snippets',
         href: '/crons',

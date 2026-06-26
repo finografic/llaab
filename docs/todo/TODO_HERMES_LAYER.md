@@ -1,7 +1,8 @@
 # TODO — Hermes Layer (Discord → MCP → LLAAB)
 
-> **Status:** Phase 1–3 complete. Hermes installed, OpenCode Go glm-5.2, Discord bot
-> on **LLAAB Private**, and read-only LLAAB MCP works from Discord. Gateway not launchd yet. Live config:
+> **Status:** Phase 1–5 baseline complete. Hermes installed, OpenCode Go glm-5.2, Discord bot
+> on **LLAAB Private**, LLAAB MCP read/capture works from Discord, and SwiftBar manages the
+> gateway. Live config:
 > [`docs/integrations/hermes.md`](../integrations/hermes.md).
 
 ## Goal
@@ -233,11 +234,11 @@ env:
   LLAAB_API_KEY: "..."   # from root .env — child process only, not committed
 ```
 
-- [ ] Add `packages/cli/src/mcp/tools/` modules + register in `server.ts`
+- [x] Add `vault_capture_idea` and register in `server.ts` (2026-06-26)
 - [ ] Unit/smoke test each tool handler
-- [ ] Expand Hermes `tools.include` incrementally (search → status → plan → capture → ingest)
+- [x] Expand Hermes `tools.include` to `vault_capture_idea` after read-only smoke tests (2026-06-26)
 - [ ] Manual: ingest a YouTube URL from Discord DM
-- [ ] Manual: capture an idea from Discord DM
+- [x] Manual: capture an idea from Discord (2026-06-26)
 
 **Exit criteria:** Phone can ingest, capture ideas, and ask “what’s next on the roadmap?”
 
@@ -245,16 +246,58 @@ env:
 
 ## Phase 5 — macOS persistence
 
-- [ ] `~/Library/LaunchAgents/com.hermes.gateway.plist` (see setup guide template)
-- [ ] `launchctl load` + reboot test
-- [ ] Log paths: `/tmp/hermes-gateway.log`, `/tmp/hermes-gateway.err`
-- [ ] Optional: fourth service in `scripts/macos/llaab-service.sh` alongside server/client/icons
+- [x] `scripts/macos/llaab-service.sh` manages `com.llaab.hermes.gateway` (2026-06-26)
+- [ ] Reboot test
+- [x] SwiftBar tails `~/.hermes/logs/gateway.log`; launchd stdout/stderr also exist under
+      `~/Library/Logs/llaab/` (2026-06-26)
+- [x] SwiftBar shows Hermes Gateway alongside server/client/LM Studio/icons (2026-06-26)
 
 **Exit criteria:** Gateway survives logout/reboot; LLAAB server still separate (`com.llaab.server`).
 
 ---
 
-## Phase 6 — Terminal integration (deferred)
+## Phase 6 — Model routing and cost controls
+
+OpenCode Go `glm-5.2` is capable but expensive for gateway chatter. Early Discord smoke tests cost
+about `$0.53`, which is too high for routine checks like “hello”, simple vault reads, and MCP tool
+selection.
+
+### Routing goals
+
+- Greetings / acknowledgements: use a tiny local or cheapest cloud model; no file/tool reasoning
+  unless explicitly requested.
+- Simple MCP reads (`vault_read`): use a small local or cheapest cloud model; tool results can
+  carry most of the answer.
+- List/search/status tools: use a small local or cheapest cloud model; deterministic tool call plus
+  concise formatting.
+- Capture tools (`vault_capture_*`): use a small reasoning model; needs light extraction/tagging,
+  but not the premium default.
+- Planning / synthesis / debugging: use `glm-5.2` or stronger when combining multiple sources,
+  code context, or nuanced tradeoffs.
+- Risky mutation / shell operations: use a strong model plus approval gates; escalate deliberately
+  and preserve manual approval where possible.
+
+### Implementation options
+
+- [ ] Define Hermes task tiers: `cheap`, `standard`, `reasoning`, `mutation`.
+- [ ] Map common Discord intents to task tiers before agent invocation where Hermes supports it.
+- [ ] Assign default model/provider per MCP tool class, especially read-only versus write tools.
+- [ ] Prefer deterministic routing rules over fully agent-decided routing for predictable cost.
+- [ ] Allow agent escalation only when the task crosses clear thresholds: multi-step planning,
+      ambiguity, failed cheap attempt, mutation risk, or explicit user request.
+- [ ] Track cost per gateway session and document target spend for smoke tests.
+
+**Agent model choice:** allow the agent to choose only within a bounded policy. Good cases include
+“this cheap model failed to parse the request”, “the user asks for strategy/planning”, or “the tool
+result is ambiguous”. Bad cases include every greeting or simple read silently escalating to the
+premium model.
+
+**Exit criteria:** Simple Discord/MCP tests route to a cheap model by default, with visible or logged
+escalation when a stronger model is used.
+
+---
+
+## Phase 7 — Terminal integration (deferred)
 
 Cross-link only — implement when Phases 1–4 are stable.
 

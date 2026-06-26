@@ -1,4 +1,12 @@
-import { ActivityIcon, ArrowRightIcon, DownloadIcon, FolderKanbanIcon, PlayIcon } from '@llaab/icons';
+import {
+  ActivityIcon,
+  ArrowRightIcon,
+  FolderKanbanIcon,
+  LandPlotIcon,
+  PipetteIcon,
+  PlayIcon,
+  RadioIcon,
+} from '@llaab/icons';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Card, CardContent } from 'components/ui/card';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
@@ -26,7 +34,7 @@ export function HomePage() {
         <div className={styles.grid}>
           <HomeCard
             to="/ingest"
-            icon={<DownloadIcon size={18} aria-hidden="true" />}
+            icon={<PipetteIcon size={18} aria-hidden="true" />}
             title="Ingest"
             description="Fetch a YouTube transcript and store it as a vault node."
           />
@@ -47,6 +55,18 @@ export function HomePage() {
             icon={<ActivityIcon size={18} aria-hidden="true" />}
             title="Models"
             description="Task routing, provider status, and installed model indicators."
+          />
+          <HomeCard
+            to="/hermes"
+            icon={<RadioIcon size={18} aria-hidden="true" />}
+            title="Hermes / MCP"
+            description="Discord gateway, scoped vault tools, and operator automation."
+          />
+          <HomeCard
+            to="/dev/icons"
+            icon={<LandPlotIcon size={18} aria-hidden="true" />}
+            title="Icons"
+            description="Open the Lucide picker and manage the local icon registry."
           />
         </div>
       </div>

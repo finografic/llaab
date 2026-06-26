@@ -1,7 +1,7 @@
 # Hermes — Mac Studio operator gateway
 
-> **Status:** Installed 2026-06-25 on Mac Studio. Discord gateway and read-only LLAAB MCP
-> are working from **LLAAB Private**.
+> **Status:** Installed 2026-06-25 on Mac Studio. Discord gateway and LLAAB MCP
+> read/capture tools are working from **LLAAB Private**.
 
 Hermes is a **separate long-running process** on the Mac Studio — not part of `apps/server`.
 It provides a phone-operable Discord gateway to glm-5.2 (OpenCode Go) with local tools.
@@ -72,7 +72,7 @@ Applied during `hermes setup` (customize later with `hermes setup agent`):
 | Allowlist       | Single user ID `1089260734909223721` (real Mac Discord account — not `llaab_62288`)         |
 | Home channel    | **Not set** — use `/set-home` in a channel or `hermes config set DISCORD_HOME_CHANNEL <id>` |
 | Public Bot      | OFF after invite (private app; owner invited via temporary Public Bot ON)                   |
-| Gateway service | **Not** launchd yet — run `hermes gateway` in foreground for testing                        |
+| Gateway service | SwiftBar-managed launchd service `com.llaab.hermes.gateway`                                 |
 
 Intents required: **Message Content Intent** enabled on Bot tab.
 
@@ -98,15 +98,15 @@ twice — expected, not a loop).
 
 ### Skipped / not configured
 
-| Tool                | Notes                                           |
-| ------------------- | ----------------------------------------------- |
-| Image Generation    | Skipped — no FAL/OpenAI image key               |
-| TTS provider wizard | Skipped — falls back to Edge                    |
-| Mixture of Agents   | Needs `OPENROUTER_API_KEY`                      |
-| Premium web extract | Firecrawl/Exa/Tavily etc. — ddgs is search-only |
-| Skills Hub (GitHub) | Needs `GITHUB_TOKEN`                            |
-| Context Engine      | Off                                             |
-| MCP servers         | `llaab` read-only (`vault_list`, `vault_read`)  |
+| Tool                | Notes                                                                   |
+| ------------------- | ----------------------------------------------------------------------- |
+| Image Generation    | Skipped — no FAL/OpenAI image key                                       |
+| TTS provider wizard | Skipped — falls back to Edge                                            |
+| Mixture of Agents   | Needs `OPENROUTER_API_KEY`                                              |
+| Premium web extract | Firecrawl/Exa/Tavily etc. — ddgs is search-only                         |
+| Skills Hub (GitHub) | Needs `GITHUB_TOKEN`                                                    |
+| Context Engine      | Off                                                                     |
+| MCP servers         | `llaab` scoped tools (`vault_list`, `vault_read`, `vault_capture_idea`) |
 
 ---
 
@@ -138,6 +138,17 @@ hermes config              # view settings
 ```
 
 Reload shell after first install: `source ~/.zshrc`
+
+LLAAB SwiftBar also manages the gateway through `scripts/macos/llaab-service.sh`:
+
+```bash
+scripts/macos/llaab-service.sh start-hermes
+scripts/macos/llaab-service.sh stop-hermes
+scripts/macos/llaab-service.sh restart-hermes
+```
+
+SwiftBar starts the launchd wrapper with stdout/stderr under `~/Library/Logs/llaab/`, but the
+useful runtime log is Hermes' own `~/.hermes/logs/gateway.log`.
 
 ---
 
@@ -273,8 +284,9 @@ Hermes' Python MCP client hangs during `initialize` when it launches the Bun pro
 
 Validated:
 
-- `hermes mcp test llaab` connects and discovers 2 tools.
+- `hermes mcp test llaab` connects and discovers 3 tools.
 - Discord query `list 3 LLAAB vault nodes` returns vault nodes through the gateway.
+- Discord `capture idea: ...` creates raw LLAAB `idea` nodes through `vault_capture_idea`.
 - Discord tool surface is restricted to `llaab`; broad terminal/file/browser/search tools are not enabled.
 
 Next: extend write tools (ingest, capture idea) only after the read-only path stays stable.
