@@ -152,16 +152,18 @@ whole UI), and overrides the shadcn tokens with LLAAB's warm amber dark palette 
 Dark mode is always active via `class="dark"` on `<html>` (hardcoded — LLAAB is dark-only).
 Installed shadcn components in `packages/ui/src/components/` include `navigation-menu`, `sheet`,
 `accordion`, `button`, `badge`, `breadcrumb`, `scroll-area`, `table`, `tooltip`.
-Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models (2×2 via `BalancedGrid`).
+Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes / MCP, Icons
+(`BalancedGrid`). Ingest and Icons cards reuse the same Lucide icons as the app-header shortcuts.
 `/icons` redirects to `/dev/icons` (Lucide picker / registry).
 
 | Route                    | Description                                                                                                                                           |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                      | Home dashboard — four callout cards (Ingest, Vault, Runs, Models)                                                                                     |
+| `/`                      | Home dashboard — callout cards for core operator surfaces                                                                                             |
 | `/ingest`                | URL form with card-wide drag/drop; two-phase ingest; `RunPipelineCard` progress + grouped `RunsTable` (collapsed by subject, sortable published date) |
 | `/terminal`              | Typed command bus UI — actions rail, command injection, structured/raw/JSON output, durable command runs                                              |
 | `/crons`                 | One-shot cron recipe dashboard — Run Now, external trigger snippets, recent cron runs                                                                 |
 | `/llm`                   | LLM routing dashboard: provider/model selects, installed dots, Ollama + LM Studio models                                                              |
+| `/hermes`                | Hermes / MCP dashboard: Discord gateway notes, scoped vault tools, guardrails, cost-routing follow-up                                                 |
 | `/icons`                 | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
 | `/vault`                 | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
 | `/vault/transcripts/:id` | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                       |
@@ -414,6 +416,8 @@ YAML `profiles` object-array parsing so all source nodes load for runs author li
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
+Hermes setup and follow-ups: `docs/todo/TODO_HERMES_LAYER.md`.
+Playwright learning playground: `docs/todo/TODO_PLAYWRIGHT_PRACTICE.md`.
 UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07. P0 is empty.
 Orchestration phases 0–10 are complete. The Phase 6b addendum content is consolidated into
 `DONE_ORCHESTRATION.md`; there is no separate addendum tracking file.
@@ -429,14 +433,32 @@ hooks auto-rebuild the graph when non-`graphify-out/` files change. Integrations
 `.codex/hooks.json` PreToolUse nudges. Expect `graphify-out/` to show as modified after commits that
 mix code + graph files — hook rebuild is normal; commit again or discard if undesired.
 
+## Hermes / MCP
+
+Hermes is installed and connected to Discord as `lab`. The active provider/model seen in
+OpenCode usage is `glm-5.2` via OpenCode Go. The Discord gateway is managed by launchd through
+`scripts/macos/llaab-service.sh` as `com.llaab.hermes.gateway`; SwiftBar includes Hermes Gateway
+start/stop/restart, Hermes Client, Hermes Agent, and Tail Gateway Log actions. A foreground
+terminal running `hermes gateway run` is no longer required.
+
+Hermes MCP access is intentionally scoped to the LLAAB repo/vault. The `llaab` MCP server runs the
+built CLI with Node and exposes `vault_list`, `vault_read`, and `vault_capture_idea`; Hermes also
+shows MCP resource helpers (`list_resources`, `read_resource`). `vault_capture_idea` is the only
+write tool so far and creates raw `idea` nodes for later consolidation. Verified from Discord:
+listing Hermes-tagged nodes, reading nodes, and capturing ideas all work.
+
+Early Hermes smoke tests cost about `$0.53`, so `TODO_HERMES_LAYER.md` tracks model routing and
+cost controls. Preferred direction: deterministic cheap routing for greetings/simple reads/status
+first, with agent-chosen escalation only inside explicit guardrails.
+
 ## Local Dev Ops
 
 macOS persistence via `launchd` user agents (`com.llaab.server`, `com.llaab.client`,
-`com.llaab.icons`) managed by `scripts/macos/llaab-service.sh`. SwiftBar plugin
+`com.llaab.hermes.gateway`, `com.llaab.icons`) managed by `scripts/macos/llaab-service.sh`. SwiftBar plugin
 (`llaab-swiftbar.15s.sh`) polls status every 15 s and shows three-state traffic-light indicators
 (⚫ stopped · 🟡 launching · 🟢 running) with per-service submenus for start/stop. Individual
 `start-*` commands wait for HTTP health before exiting so SwiftBar `refresh=true` fires only once
-the service is genuinely up. Repair Client lives in the LLAAB Client submenu.
+the service is genuinely up. Restart All includes Hermes. Repair Client lives in the LLAAB Client submenu.
 
 The persistent Vite client defaults to dev/HMR. Preview mode builds into
 `apps/client/.persistent/builds/<timestamp>`, promotes only successful builds to the
