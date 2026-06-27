@@ -92,6 +92,18 @@ export {
   TranscriptSourceTypeSchema,
 } from './transcript-node.schema.js';
 export {
+  type NpmDownloadCount,
+  type NpmPerson,
+  type NpmSearchPackage,
+  type NpmSearchPublisher,
+  type NpmSearchResponse,
+  type NpmSearchResult,
+  type NpmSearchTrustedPublisher,
+  type PackageDetailResponse,
+  type PackageMetaResponse,
+  type PinnedLibrary,
+} from './npm-registry.js';
+export {
   type VaultGitCommitResponse,
   VaultGitCommitResponseSchema,
   type VaultGitFileStatus,

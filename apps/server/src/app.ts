@@ -10,6 +10,7 @@ import { cronsRouter } from './routes/crons/index.js';
 import { indexRouter } from './routes/index.route.js';
 import { ingestRouter } from './routes/ingest/index.js';
 import { llmRouter } from './routes/llm/index.js';
+import { registryRouter } from './routes/registry/index.js';
 import { runsRouter } from './routes/runs/index.js';
 import { uiStateRouter } from './routes/ui-state/index.js';
 import { vaultRouter } from './routes/vault/index.js';
@@ -47,6 +48,7 @@ export const app = _base
   .route('/api/ingest', ingestRouter)
   .route('/api/llm', llmRouter)
   .route('/api/vault', vaultRouter)
+  .route('/api/registry', registryRouter)
   .route('/api/runs', runsRouter)
   .route('/api/ui-state', uiStateRouter);
 
