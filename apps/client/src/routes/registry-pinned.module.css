@@ -1,0 +1,6 @@
+.empty {
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  padding: 40px 0;
+  text-align: center;
+}

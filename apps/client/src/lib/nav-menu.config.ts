@@ -49,6 +49,24 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
     ],
   },
   {
+    id: 'registry',
+    label: 'Registry',
+    items: [
+      {
+        label: 'Libraries',
+        description: 'Search and browse npm packages',
+        href: '/registry',
+        live: true,
+      },
+      {
+        label: 'Pinned',
+        description: 'Your saved library collection',
+        href: '/registry/pinned',
+        live: true,
+      },
+    ],
+  },
+  {
     id: 'pipeline',
     label: 'Pipeline',
     items: [

@@ -1,0 +1,30 @@
+.searchRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.searchInput {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.resultCount {
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  margin-bottom: 12px;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty {
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  padding: 40px 0;
+  text-align: center;
+}

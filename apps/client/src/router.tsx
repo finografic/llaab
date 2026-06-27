@@ -40,6 +40,15 @@ const TranscriptsPage = lazy(() =>
 const TranscriptDetailPage = lazy(() =>
   import('routes/transcript-detail').then((module) => ({ default: module.TranscriptDetailPage })),
 );
+const RegistrySearchPage = lazy(() =>
+  import('routes/registry-search').then((module) => ({ default: module.RegistrySearchPage })),
+);
+const RegistryPackagePage = lazy(() =>
+  import('routes/registry-package').then((module) => ({ default: module.RegistryPackagePage })),
+);
+const RegistryPinnedPage = lazy(() =>
+  import('routes/registry-pinned').then((module) => ({ default: module.RegistryPinnedPage })),
+);
 
 function lazyElement(Component: ComponentType): ReactElement {
   return (
@@ -68,6 +77,21 @@ export const router = createBrowserRouter([
         index: true,
         element: lazyElement(HomePage),
         handle: { title: 'Home' } satisfies RouteHandle,
+      },
+      {
+        path: 'registry',
+        element: lazyElement(RegistrySearchPage),
+        handle: { title: 'Library Registry' } satisfies RouteHandle,
+      },
+      {
+        path: 'registry/pinned',
+        element: lazyElement(RegistryPinnedPage),
+        handle: { title: 'Pinned Libraries' } satisfies RouteHandle,
+      },
+      {
+        path: 'registry/package/:name',
+        element: lazyElement(RegistryPackagePage),
+        handle: { title: 'Package' } satisfies RouteHandle,
       },
       {
         path: 'ingest',
