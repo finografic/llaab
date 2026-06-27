@@ -40,6 +40,8 @@ export function RegistryPackagePage() {
   }
 
   const pinPending = pinLibrary.isPending || unpinLibrary.isPending;
+  const depCount = data ? Object.keys(data.dependencies).length : 0;
+  const peerDepCount = data ? Object.keys(data.peerDependencies).length : 0;
 
   return (
     <PageLayout
@@ -76,17 +78,28 @@ export function RegistryPackagePage() {
 
         {!isLoading && data && (
           <div className={styles.layout}>
-            <div className={styles.readme}>
-              <div className={styles.installBox}>$ npm install {name}</div>
-              <div className={styles.readmeContent}>
-                {data.readme ? (
-                  <div dangerouslySetInnerHTML={{ __html: renderReadme(data.readme) }} />
-                ) : (
-                  <p className={styles.readmeEmpty}>No readme available.</p>
-                )}
+            {/* ── Left: install + readme ── */}
+            <div className={styles.readmeColumn}>
+              <div className={styles.installBox}>
+                <span className={styles.installPrompt}>$</span>
+                <span> npm install {name}</span>
               </div>
+
+              {(data.hasTypes || data.isEsm) && (
+                <div className={styles.badges}>
+                  {data.hasTypes && <span className={styles.badge}>✓ Types</span>}
+                  {data.isEsm && <span className={styles.badge}>✓ ESM</span>}
+                </div>
+              )}
+
+              {data.readmeHtml ? (
+                <div className={styles.readmeContent} dangerouslySetInnerHTML={{ __html: data.readmeHtml }} />
+              ) : (
+                <p className={styles.readmeEmpty}>No readme available.</p>
+              )}
             </div>
 
+            {/* ── Right: metadata sidebar ── */}
             <aside className={styles.sidebar}>
               <div className={styles.sidebarSection}>
                 <span className={styles.sidebarLabel}>Version</span>
@@ -111,6 +124,38 @@ export function RegistryPackagePage() {
                 <div className={styles.sidebarSection}>
                   <span className={styles.sidebarLabel}>Published</span>
                   <span className={styles.sidebarValue}>{formatDetailDate(data.date)}</span>
+                </div>
+              )}
+
+              {depCount > 0 && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Dependencies</span>
+                  <div className={styles.depList}>
+                    {Object.entries(data.dependencies).map(([dep, range]) => (
+                      <div key={dep} className={styles.depRow}>
+                        <Link to={`/registry/package/${encodeURIComponent(dep)}`} className={styles.depLink}>
+                          {dep}
+                        </Link>
+                        <span className={styles.depRange}>{range}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {peerDepCount > 0 && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Peer Dependencies</span>
+                  <div className={styles.depList}>
+                    {Object.entries(data.peerDependencies).map(([dep, range]) => (
+                      <div key={dep} className={styles.depRow}>
+                        <Link to={`/registry/package/${encodeURIComponent(dep)}`} className={styles.depLink}>
+                          {dep}
+                        </Link>
+                        <span className={styles.depRange}>{range}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -183,27 +228,4 @@ export function RegistryPackagePage() {
       </PageList>
     </PageLayout>
   );
-}
-
-function renderReadme(raw: string): string {
-  // Basic markdown → HTML for the readme. Handles the most common patterns.
-  // Full markdown rendering can be swapped in later (e.g. react-markdown).
-  return raw
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/```[\w]*\n([\s\S]*?)```/gm, '<pre><code>$1</code></pre>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(
-      /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
-    )
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[h|p|u|o|l|p|c|b|e])(.+)$/gm, '<p>$1</p>');
 }

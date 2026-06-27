@@ -2,6 +2,8 @@ import type { AppCtx, AppCtxQuery } from '../../types/app.types.js';
 import type { SearchQuery } from './registry.schema.js';
 import type { PackageDetailResponse, PackageMetaResponse, NpmDownloadCount } from '@llaab/schemas';
 
+import { renderReadmeToHtml } from '../../lib/readme-renderer.js';
+
 const NPM_REGISTRY = 'https://registry.npmjs.org';
 const NPM_API = 'https://api.npmjs.org';
 
@@ -76,11 +78,22 @@ async function fetchPackageMeta(name: string): Promise<PackageMetaResponse> {
   };
 }
 
-function extractReadme(packument: Record<string, unknown>, version: string): string | null {
+function extractRawReadme(packument: Record<string, unknown>, version: string): string | null {
   const versions = (packument.versions ?? {}) as Record<string, Record<string, unknown>>;
   return (
     (packument.readme as string | undefined) ?? (versions[version]?.readme as string | undefined) ?? null
   );
+}
+
+function extractVersionMeta(packument: Record<string, unknown>, version: string) {
+  const versions = (packument.versions ?? {}) as Record<string, Record<string, unknown>>;
+  const v = versions[version] ?? {};
+  return {
+    dependencies: (v.dependencies ?? {}) as Record<string, string>,
+    peerDependencies: (v.peerDependencies ?? {}) as Record<string, string>,
+    hasTypes: typeof v.types === 'string' || typeof v.typings === 'string',
+    isEsm: v.type === 'module',
+  };
 }
 
 export const npmSearch = {
@@ -141,9 +154,17 @@ export const npmPackage = {
         weeklyDownloads: downloads?.downloads,
       };
 
+      const rawReadme = extractRawReadme(packument, latestVersion);
+      const versionMeta = extractVersionMeta(packument, latestVersion);
+
+      const [readmeHtml] = await Promise.all([
+        rawReadme ? renderReadmeToHtml(rawReadme) : Promise.resolve(null),
+      ]);
+
       const detail: PackageDetailResponse = {
         ...meta,
-        readme: extractReadme(packument, latestVersion),
+        readmeHtml,
+        ...versionMeta,
       };
 
       return c.json(detail);

@@ -93,9 +93,13 @@ export interface PackageMetaResponse {
   weeklyDownloads?: number;
 }
 
-/** Full package detail — meta + readme, returned by /api/registry/npm/package/:name */
+/** Full package detail — rendered readme HTML + extra metadata, returned by /api/registry/npm/package/:name */
 export interface PackageDetailResponse extends PackageMetaResponse {
-  readme: string | null;
+  readmeHtml: string | null;
+  dependencies: Record<string, string>;
+  peerDependencies: Record<string, string>;
+  hasTypes: boolean;
+  isEsm: boolean;
 }
 
 /** A pinned npm package stored in the local pins file. */
