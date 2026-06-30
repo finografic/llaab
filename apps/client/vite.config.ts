@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, repoRoot, '');
   const serverUrl = env['LLAAB_API_URL'] ?? 'http://localhost:8888';
   const devHost = env['HOST'] ?? '127.0.0.1';
-  const devPort = Number(env['PORT'] ?? 3000);
+  const devPort = Number(env['PORT'] ?? 5050);
   const outDir = process.env['LLAAB_CLIENT_OUT_DIR']
     ? path.resolve(process.env['LLAAB_CLIENT_OUT_DIR'])
     : path.resolve(clientRoot, 'dist');

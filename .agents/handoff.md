@@ -54,7 +54,7 @@ Dependency chain (one-directional):
 
 ## Apps
 
-### `@llaab/client` — Vite 8 + React Router SPA (port 3000)
+### `@llaab/client` — Vite 8 + React Router SPA (port 5050)
 
 Pure UI. All data calls go to `@llaab/server` via `src/lib/api.ts` (Hono typed RPC client).
 Vite dev proxy forwards `/api/*` and `/terminal` → `LLAAB_API_URL` (default `http://localhost:8888`).
@@ -402,7 +402,7 @@ Docs: `docs/CLIENT_DATA_FETCHING.md`, `docs/server/HONO_RPC.md`. Migration write
 ## Vite migration (2026-06-13) — notable changes
 
 Astro removed; client is Vite 8 + React Router v7 SPA. All former Astro API routes and vault
-auth live on `apps/server`. **Ports:** client **3000**, server **8888** (icons 5001/5199).
+auth live on `apps/server`. **Ports:** client **5050**, server **8888** (icons 5001/5199).
 **Env:** `LLAAB_API_URL` (Vite proxy only), `LLAAB_API_KEY` (server), optional `VAULT_PASSWORD`
 (unset = open vault). Client uses same-origin `/api/*` and proxied `/terminal` WebSocket — no
 API keys in the browser bundle. `@llaab/core` / `@llaab/ingestion` removed from client deps.

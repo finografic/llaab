@@ -37,7 +37,7 @@ execution, and agent coordination.
 | Remove `@llaab/skills`       | No longer calls skills directly — goes via HTTP                 |
 | Remove `@llaab/ingestion`    | Same reason                                                     |
 | Add `hono/client` (optional) | Hono RPC — full end-to-end type safety from server router types |
-| Add `SERVER_URL` env var     | `http://localhost:3000` in dev; configurable                    |
+| Add `SERVER_URL` env var     | `http://localhost:5050` in dev; configurable                    |
 | Add `src/lib/api-client.ts`  | Thin fetch wrapper (or Hono RPC client) used by React islands   |
 
 ---
@@ -58,7 +58,7 @@ LLAAB_API_KEY=llaab-dev
 
 ```ts
 // Client request
-fetch('http://localhost:3000/api/ingest', {
+fetch('http://localhost:5050/api/ingest', {
   headers: { 'X-API-Key': import.meta.env.LLAAB_API_KEY },
   ...
 });
@@ -235,5 +235,5 @@ Hono supports streaming responses natively via `c.streamText()` — no extra ada
 ## Open Questions
 
 - Hono RPC vs plain fetch in the client — RPC gives full type safety but requires the router type to be exported and imported in the client. Straightforward with a monorepo, but adds a compile-time coupling. Plain fetch is simpler and fine for now.
-- Port convention — `3000` for server, `4321` for client (Astro default). Make explicit in `.env.example`.
+- Port convention — current Vite client is `5050`; server is `8888`. Make explicit in `.env.example`.
 - Agent triggers — will agents be triggered by HTTP (a `POST /agent/run` route) or by in-process calls? Shapes whether `routes/agent/` is needed or whether the agent layer is purely internal.

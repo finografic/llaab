@@ -7,7 +7,7 @@ How `@llaab/client` loads vault and pipeline data after the Astro → Vite migra
 ## Architecture
 
 ```text
-Browser (Vite SPA, :3000)
+Browser (Vite SPA, :5050)
   └─ React Router
        └─ QueryClientProvider (single root in main.tsx)
             └─ routes → TanStack Query hooks → api.* (Hono RPC)

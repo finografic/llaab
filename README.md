@@ -7,7 +7,7 @@ Local-first learning loop: structured vault nodes, governed LLM calls, and persi
 If you want LLAAB available in the browser at any time, the supported local setup is:
 
 - Bun API service on `http://127.0.0.1:8888`
-- Vite client on `http://llaab.localhost:3000`
+- Vite client on `http://llaab.localhost:5050`
 - `launchd` for login-time persistence
 - SwiftBar for a menu bar control
 
@@ -115,7 +115,7 @@ From the repo root:
 pnpm dev
 ```
 
-Runs the workspace dev stack (including the Vite client at `http://localhost:3000` — see [`apps/client/README.md`](apps/client/README.md)).
+Runs the workspace dev stack (including the Vite client at `http://localhost:5050` — see [`apps/client/README.md`](apps/client/README.md)).
 
 ### Client UI stack
 

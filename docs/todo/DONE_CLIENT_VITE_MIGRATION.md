@@ -29,7 +29,7 @@ browser bundle.
 ## Architecture after migration
 
 ```text
-Browser (Vite SPA, :3000 — llaab.localhost)
+Browser (Vite SPA, :5050 — llaab.localhost)
   └─ React Router (client-only)
        └─ QueryClientProvider (single root in main.tsx)
             └─ AppLayout → routes → feature components
@@ -165,7 +165,7 @@ Replace Astro entrypoints with Vite. Astro files can remain temporarily but **mu
   - [x] `@tailwindcss/vite` plugin
   - [x] `resolve.alias` for `components/*`, `ui`, `hooks`, `utils`, `@llaab/ui`
   - [x] Dev proxy `/api` + `/terminal` → `LLAAB_API_URL` (no bypass hacks)
-  - [x] `server.host` / `port` 3000 (match `llaab.localhost`)
+  - [x] `server.host` / `port` 5050 (match `llaab.localhost`)
 - [x] Add `src/main.tsx` — `createRoot`, `RouterProvider`, `QueryClientProvider`, `Toaster`
 - [x] Add `src/router.tsx` — `createBrowserRouter` with placeholder routes
 - [x] Update `apps/client/package.json` scripts: `"dev": "vite"`, `"build": "vite build"`, `"preview": "vite preview"`
@@ -274,7 +274,7 @@ Work top-to-bottom. Each route: create `src/routes/...tsx`, port markup from `.a
 ## Phase 7 — Tooling & ops
 
 - [x] Update `scripts/macos/com.llaab.client.plist` (or equivalent)
-- [x] Update `scripts/macos/llaab-service.sh` URLs — client **3000**, server **8888**
+- [x] Update `scripts/macos/llaab-service.sh` URLs — client **5050**, server **8888**
 - [x] Update root `package.json` / `turbo.json` if needed (lint-staged: drop Prettier Astro)
 - [x] Update `.vscode/settings.json` — drop `.astro` exclusions if desired; cssvar paths unchanged
 - [x] Production build: `vite build` → static `dist/` (or staged `.persistent/builds/`)

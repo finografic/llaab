@@ -13,7 +13,7 @@ This setup is meant for a "laboratory" workflow:
 Current local persistent services:
 
 - `com.llaab.server` — Bun API on `8888`
-- `com.llaab.client` — Vite SPA on `3000`
+- `com.llaab.client` — Vite SPA on `5050`
 - `com.llaab.icons` — icons write-back server + Lucide Manager picker on `5001` / `5199`
 
 These are managed by macOS `launchd` user agents and controlled through:
@@ -40,7 +40,7 @@ It is:
 ## Client runtime strategy
 
 The persistent client defaults to **Vite dev** so normal source edits get HMR at
-`http://llaab.localhost:3000`.
+`http://llaab.localhost:5050`.
 
 For preview/runtime-hardening checks, set `LLAAB_CLIENT_RUNTIME=preview`. Preview mode uses a
 **last-known-good build** model.
@@ -85,7 +85,7 @@ With staged promotion:
 
 Potential future hardening:
 
-- explicit health check for the Vite preview client (e.g. `GET /` on :3000)
+- explicit health check for the Vite preview client (e.g. `GET /` on :5050)
 - a deploy script that separates "build new runtime" from "restart runtime"
 - same last-known-good promotion model for other built local tools if needed
 

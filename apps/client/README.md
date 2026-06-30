@@ -6,7 +6,7 @@ Local-first React SPA for LLAAB — Vite 8 + React Router v7.
 
 | Command          | Action                         |
 | ---------------- | ------------------------------ |
-| `pnpm dev`       | Vite dev server on `:3000`     |
+| `pnpm dev`       | Vite dev server on `:5050`     |
 | `pnpm build`     | Production bundle → `dist/`    |
 | `pnpm preview`   | Serve `dist/` (proxies `/api`) |
 | `pnpm typecheck` | TypeScript check               |

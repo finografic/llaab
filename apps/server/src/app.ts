@@ -21,7 +21,7 @@ const _base = createApp();
 
 _base.use(
   cors({
-    origin: ['http://localhost:3000', 'http://llaab.localhost:3000'],
+    origin: ['http://localhost:5050', 'http://llaab.localhost:5050'],
     allowHeaders: ['Content-Type', 'X-API-Key'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,

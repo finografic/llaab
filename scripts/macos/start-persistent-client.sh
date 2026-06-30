@@ -8,7 +8,7 @@ cd /Users/justin/LLAAB
 
 export LLAAB_API_URL="${LLAAB_API_URL:-http://127.0.0.1:8888}"
 export HOST="${HOST:-127.0.0.1}"
-export PORT="${PORT:-3000}"
+export PORT="${PORT:-5050}"
 export LLAAB_VAULT="${LLAAB_VAULT:-$PWD/vault}"
 
 readonly persistent_root="/Users/justin/LLAAB/apps/client/.persistent"

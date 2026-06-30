@@ -11,7 +11,7 @@ import { hc } from 'hono/client';
 import type { AppType } from '../../../server/src/app.js';
 import type { TranscriptCanonicalCoverage } from '@llaab/schemas';
 
-const baseUrl = globalThis.window?.location.origin ?? 'http://localhost:3000';
+const baseUrl = globalThis.window?.location.origin ?? 'http://localhost:5050';
 
 const client = hc<AppType>(baseUrl, {
   fetch: (input: RequestInfo | URL, init?: RequestInit) =>

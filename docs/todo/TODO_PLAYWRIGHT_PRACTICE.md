@@ -25,7 +25,7 @@ browser automation, selectors, assertions, fixtures, network waits, and regressi
   export default defineConfig({
     testDir: './tests/e2e',
     use: {
-      baseURL: 'http://llaab.localhost:3000',
+      baseURL: 'http://llaab.localhost:5050',
       trace: 'on-first-retry',
       screenshot: 'only-on-failure',
     },

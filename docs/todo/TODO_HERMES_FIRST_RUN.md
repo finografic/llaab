@@ -30,7 +30,7 @@ Discord → Hermes gateway → LLAAB read-only vault query
 
 - Hermes is already installed on the Mac Studio.
 - Setup mode should be **Full setup**, not Quick Setup / Nous Portal.
-- LLAAB local ports: client `3000`, server `8888`.
+- LLAAB local ports: client `5050`, server `8888`.
 - Existing LLAAB MCP command: `pnpm dev:cli -- mcp`.
 - Existing MCP tools today: `vault_list`, `vault_read`.
 - Hermes secrets belong in `~/.hermes/.env`, never repo `.env` or committed config.

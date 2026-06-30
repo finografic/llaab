@@ -402,7 +402,7 @@ one hard-to-debug function.
 
 ## Terminal Panel
 
-The Terminal Panel is a browser UI for typed commands. It connects to the same origin via Vite proxy (`ws://localhost:3000/terminal` → Bun on `:8888`).
+The Terminal Panel is a browser UI for typed commands. It connects to the same origin via Vite proxy (`ws://localhost:5050/terminal` → Bun on `:8888`).
 by default, derived from `PUBLIC_SERVER_URL`.
 
 Supported commands:

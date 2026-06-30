@@ -98,8 +98,8 @@ The provider prefix is muted in the select label. Saving a task route persists b
 
 | Mode       | Client URL                    | API                           |
 | ---------- | ----------------------------- | ----------------------------- |
-| `pnpm dev` | `http://127.0.0.1:3000`       | Vite proxy → `:8888`          |
-| launchd    | `http://llaab.localhost:3000` | `vite dev` or preview + proxy |
+| `pnpm dev` | `http://127.0.0.1:5050`       | Vite proxy → `:8888`          |
+| launchd    | `http://llaab.localhost:5050` | `vite dev` or preview + proxy |
 
 Run server separately: `pnpm --filter @llaab/server dev`.
 
