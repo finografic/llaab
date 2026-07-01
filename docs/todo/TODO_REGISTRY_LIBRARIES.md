@@ -1,6 +1,6 @@
 # TODO — Registry: Pinned Libraries
 
-> **Status:** Not started.
+> **Status:** All 6 phases complete. Readme renderer (Phase 2 extension) committed in third batch.
 
 Add a "Registry" section to LLAAB for browsing and pinning npm packages. The UI mirrors npmx.dev (search → results list → package detail) with a Pin action on the detail page and a dedicated Pinned Libraries list. The npmx.dev repo at `/Users/justin/repos-finografic-ref/npmx.dev` is used as a reference — TypeScript types and API endpoint logic are lifted directly; Vue components are used as structural blueprints and rewritten as React.
 
@@ -11,12 +11,12 @@ Add a "Registry" section to LLAAB for browsing and pinning npm packages. The UI 
 
 ## Progress
 
-- [ ] Phase 1 — Types: `packages/schemas/src/npm-registry.ts`
-- [ ] Phase 2 — Server: npm proxy routes + pins CRUD + JSON store
-- [ ] Phase 3 — Client: TanStack Query hooks
-- [ ] Phase 4 — Client: `PackageCard` component + `LibraryPinsTable`
-- [ ] Phase 5 — Client: three route pages
-- [ ] Phase 6 — Router + nav wiring
+- [x] Phase 1 — Types: `packages/schemas/src/npm-registry.ts`
+- [x] Phase 2 — Server: npm proxy routes + pins CRUD + JSON store + readme renderer (marked+shiki+sanitize-html)
+- [x] Phase 3 — Client: TanStack Query hooks
+- [x] Phase 4 — Client: `PackageCard` component + `LibraryPinsTable`
+- [x] Phase 5 — Client: three route pages
+- [x] Phase 6 — Router + nav wiring
 
 ---
 

@@ -56,8 +56,8 @@ export async function openCodeFetchConfiguredModels(): Promise<OpenCodeModelInfo
     const body = await response.text().catch(() => '');
     throw new Error(
       body
-        ? `OpenCode Go /models failed: ${response.status} ${body}`
-        : `OpenCode Go /models failed: ${response.status}`,
+        ? `OpenCode /models failed: ${response.status} ${body}`
+        : `OpenCode /models failed: ${response.status}`,
     );
   }
 

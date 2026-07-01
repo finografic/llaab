@@ -3,7 +3,6 @@ import {
   AiModelInfo,
   AiModelInfoCapabilities,
   AiModelInfoHeader,
-  AiModelInfoMeta,
   AiModelInfoPricing,
 } from 'components/ui/elements/ai-model-info';
 import type { ModelAvailabilityKind, ModelCapability } from 'components/ui/elements/ai-model-info';
@@ -219,7 +218,6 @@ export function LlmModelInfoList({ models }: LlmModelInfoListProps) {
             <LlmModelFacts model={model} />
             <AiModelInfoCapabilities />
             <AiModelInfoPricing />
-            <AiModelInfoMeta />
           </AiModelInfo>
         );
       })}

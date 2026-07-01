@@ -159,6 +159,7 @@ Providers currently supported by the router:
 | `ollama`    | Ollama local server  | `OLLAMA_HOST` or `http://localhost:11434` |
 | `lmstudio`  | LM Studio local API  | `LLAAB_LMSTUDIO_BASE_URL` or `:1234/v1`   |
 | `anthropic` | Anthropic remote API | `ANTHROPIC_API_KEY` + configured model    |
+| `opencode`  | OpenCode Go cloud    | `OPENCODE_API_KEY` + `OPENCODE_BASE_URL`  |
 
 `GET /api/llm/status` returns the persisted task routing map plus provider-qualified local model
 options. `GET /api/llm/models` returns the same local model options in a smaller shape. The client

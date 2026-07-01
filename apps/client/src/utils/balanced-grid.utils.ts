@@ -29,17 +29,29 @@ export function getBalancedColumnCount(
   }
 
   for (let columns = cap; columns >= minColumns; columns--) {
-    if (itemCount % columns !== 1) {
+    if (itemCount % columns === 0) {
       return columns;
     }
   }
 
-  // Odd counts with a low max (e.g. 3 items at max 2) — stack to avoid a trailing orphan.
-  if (cap === minColumns && itemCount % minColumns === 1) {
+  let bestColumns = minColumns;
+  let bestEmpty = Number.POSITIVE_INFINITY;
+
+  for (let columns = cap; columns >= minColumns; columns--) {
+    const remainder = itemCount % columns;
+    if (remainder === 1) continue;
+    const empty = remainder === 0 ? 0 : columns - remainder;
+    if (empty < bestEmpty || (empty === bestEmpty && columns > bestColumns)) {
+      bestEmpty = empty;
+      bestColumns = columns;
+    }
+  }
+
+  if (bestEmpty === Number.POSITIVE_INFINITY) {
     return 1;
   }
 
-  return cap;
+  return bestColumns;
 }
 
 /**

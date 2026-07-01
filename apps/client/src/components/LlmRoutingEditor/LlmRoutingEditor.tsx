@@ -94,7 +94,7 @@ function isInstalled(
 function providerLabel(provider: LlmProvider) {
   if (provider === 'lmstudio') return 'LM Studio';
   if (provider === 'anthropic') return 'Anthropic';
-  if (provider === 'opencode') return 'OpenCode Go';
+  if (provider === 'opencode') return 'OpenCode';
   return 'Ollama';
 }
 

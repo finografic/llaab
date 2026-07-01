@@ -88,7 +88,7 @@ const PROVIDER_CONFIG: Record<string, { logo: string; color: string; bgClass: st
     bgClass: 'bg-cyan-100 dark:bg-cyan-950',
   },
   opencode: {
-    logo: 'OpenCode Go',
+    logo: 'OpenCode',
     color: 'text-fuchsia-600 dark:text-fuchsia-400',
     bgClass: 'bg-fuchsia-100 dark:bg-fuchsia-950',
   },
@@ -224,7 +224,7 @@ function AiModelInfoHeader({ className }: AiModelInfoHeaderProps) {
         {model.availability ? (
           <span
             className={cn(
-              'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+              'inline-flex translate-x-[10px] rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
               AVAILABILITY_CONFIG[model.availability].className,
             )}
           >

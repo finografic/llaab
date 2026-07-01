@@ -153,7 +153,7 @@ export async function resolveOpenCodeCatalog(): Promise<ResolvedCloudProviderCat
       fromCache: false,
       error:
         refreshed.source === 'config' && hasApiKey
-          ? 'OpenCode Go catalog — live /models refresh failed'
+          ? 'OpenCode catalog — live /models refresh failed'
           : undefined,
     };
   } catch (err) {
@@ -164,7 +164,7 @@ export async function resolveOpenCodeCatalog(): Promise<ResolvedCloudProviderCat
         source: 'cache',
         fetchedAt: cached.fetchedAt,
         fromCache: true,
-        error: err instanceof Error ? err.message : 'OpenCode Go catalog refresh failed',
+        error: err instanceof Error ? err.message : 'OpenCode catalog refresh failed',
       };
     }
 
@@ -174,7 +174,7 @@ export async function resolveOpenCodeCatalog(): Promise<ResolvedCloudProviderCat
       availability: hasApiKey ? 'catalog' : 'on-request',
       source: 'config',
       fromCache: false,
-      error: hasApiKey ? 'OpenCode Go unavailable' : 'OpenCode Go — set OPENCODE_API_KEY',
+      error: hasApiKey ? 'OpenCode unavailable' : 'OpenCode — set OPENCODE_API_KEY',
     };
   }
 }

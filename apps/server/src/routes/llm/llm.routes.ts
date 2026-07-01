@@ -80,7 +80,7 @@ export const models = {
         ...openCodeCatalog.models.map((model) => ({ model: model.name, provider: 'opencode' as const })),
       );
     } catch {
-      errors.opencode = 'OpenCode Go unavailable';
+      errors.opencode = 'OpenCode unavailable';
     }
 
     const statusCode = models.length > 0 ? 200 : 503;

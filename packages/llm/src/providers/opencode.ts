@@ -61,8 +61,8 @@ async function openCodeFetch<T>(path: string, init?: RequestInit): Promise<T> {
     const body = await response.text().catch(() => '');
     throw new Error(
       body
-        ? `OpenCode Go request failed: ${response.status} ${body}`
-        : `OpenCode Go request failed: ${response.status}`,
+        ? `OpenCode request failed: ${response.status} ${body}`
+        : `OpenCode request failed: ${response.status}`,
     );
   }
 
@@ -84,7 +84,7 @@ export async function openCodeComplete(prompt: string, opts: LlmCompleteOptions)
   });
 
   const text = response.choices?.[0]?.message?.content;
-  if (!text) throw new Error('Unexpected response from OpenCode Go');
+  if (!text) throw new Error('Unexpected response from OpenCode');
 
   await opts.onProgress?.({
     status: 'completed',
@@ -122,7 +122,7 @@ export async function openCodeListModelDetails(): Promise<OpenCodeModelInfo[]> {
 
 export const openCodeProvider: LlmProvider = {
   id: 'opencode',
-  displayName: 'OpenCode Go',
+  displayName: 'OpenCode',
   capabilities: ['chat', 'reason', 'summarize', 'extract', 'structure', 'plan', 'code_edit'],
   complete: openCodeComplete,
   stream: openCodeStream,

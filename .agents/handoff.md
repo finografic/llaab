@@ -47,6 +47,7 @@ Dependency chain (one-directional):
 - Icons: `@finografic/icons` + `@finografic/lucide-manager` via `@llaab/icons`
 - Server: Hono 4.x, http-status-codes, @hono/zod-validator
 - Client: Vite 8, React 19, React Router v7, React Hook Form 7.x, `@pierre/trees` (git-status file tree)
+- Registry: `marked` v18 + `shiki` v4 + `sanitize-html` on the server for readme rendering (`apps/server/src/lib/readme-renderer.ts`); npm types in `packages/schemas/src/npm-registry.ts`
 - CSS: Tailwind CSS 4, shadcn/ui, app-local semantic CSS variables
 - Linting: oxlint + oxfmt (`@finografic/oxc-config`); Prettier for markdown and legacy formats where needed
 - Hooks: husky + lint-staged (pre-commit: lint + format + typecheck)
@@ -156,21 +157,24 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 (`BalancedGrid`). Ingest and Icons cards reuse the same Lucide icons as the app-header shortcuts.
 `/icons` redirects to `/dev/icons` (Lucide picker / registry).
 
-| Route                    | Description                                                                                                                                           |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                      | Home dashboard — callout cards for core operator surfaces                                                                                             |
-| `/ingest`                | URL form with card-wide drag/drop; two-phase ingest; `RunPipelineCard` progress + grouped `RunsTable` (collapsed by subject, sortable published date) |
-| `/terminal`              | Typed command bus UI — actions rail, command injection, structured/raw/JSON output, durable command runs                                              |
-| `/crons`                 | One-shot cron recipe dashboard — Run Now, external trigger snippets, recent cron runs                                                                 |
-| `/llm`                   | LLM routing dashboard: provider/model selects, installed dots, Ollama + LM Studio models                                                              |
-| `/hermes`                | Hermes / MCP dashboard: Discord gateway notes, scoped vault tools, guardrails, cost-routing follow-up                                                 |
-| `/icons`                 | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
-| `/vault`                 | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
-| `/vault/transcripts/:id` | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                       |
-| `/vault/nodes`           | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                                                                    |
-| `/vault/nodes/:id`       | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                                                                          |
-| `/vault/sources/:id`     | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                        |
-| `/vault/runs/:id`        | Detail: summary grid, stages table, decisions list, error block                                                                                       |
+| Route                     | Description                                                                                                                                           |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                       | Home dashboard — callout cards for core operator surfaces                                                                                             |
+| `/ingest`                 | URL form with card-wide drag/drop; two-phase ingest; `RunPipelineCard` progress + grouped `RunsTable` (collapsed by subject, sortable published date) |
+| `/terminal`               | Typed command bus UI — actions rail, command injection, structured/raw/JSON output, durable command runs                                              |
+| `/crons`                  | One-shot cron recipe dashboard — Run Now, external trigger snippets, recent cron runs                                                                 |
+| `/llm`                    | LLM routing dashboard: provider/model selects, installed dots, Ollama + LM Studio models                                                              |
+| `/hermes`                 | Hermes / MCP dashboard: Discord gateway notes, scoped vault tools, guardrails, cost-routing follow-up                                                 |
+| `/icons`                  | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
+| `/vault`                  | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
+| `/vault/transcripts/:id`  | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                       |
+| `/vault/nodes`            | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                                                                    |
+| `/vault/nodes/:id`        | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                                                                          |
+| `/vault/sources/:id`      | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                        |
+| `/vault/runs/:id`         | Detail: summary grid, stages table, decisions list, error block                                                                                       |
+| `/registry`               | npm package search — 300 ms debounced input, `PackageCard` results list                                                                               |
+| `/registry/package/:name` | Package detail — install box, Types/ESM badges, parsed readme (marked+shiki), deps/peerDeps/metadata sidebar, pin/unpin toggle                        |
+| `/registry/pinned`        | Pinned libraries list — `LibraryPinsTable` (DataTable) with unpin action                                                                              |
 
 `AppSidebarLayout` (`packages/ui/src/components/app-sidebar-right-layout.tsx`) supports both
 percentage and absolute-unit (`px`/`rem`) sidebar sizing — `isPercentOrBare()` only computes
@@ -232,7 +236,7 @@ continues processing.
 | `GET /api/vault/transcripts/:id/ideas`                             | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`                                                                                                                                     |
 | `POST /api/vault/transcripts/:id/extract`                          | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }`                                                                                                                               |
 | `POST /api/vault/transcripts/:id/consolidate`                      | Single-pass canonical idea generation with quality validation from extracted candidate ideas; `RunNode`-backed (`runSkill`); returns `conflict: true` instead of overwriting coverage if a set already exists |
-| `POST /api/vault/transcripts/:id/canonical-ideas/resolve-conflict` | `{ keep: 'existing' \| 'incoming' }` — deletes the losing set's files, writes coverage if incoming wins                                                                                                       |
+| `POST /api/vault/transcripts/:id/canonical-ideas/resolve-conflict` | Resolves canonical idea conflicts with keep `existing` or `incoming`; deletes the losing set's files, writes coverage if incoming wins                                                                        |
 | `POST /api/vault/transcripts/:id/canonical-ideas/clean`            | Deletes every canonical-idea file + consolidate run for that transcript (incl. orphans) and clears coverage                                                                                                   |
 | `GET /api/runs`, `/:id`                                            | Run list + detail with full stage/decision trace                                                                                                                                                              |
 | `GET /api/runs/monitor`                                            | App-shell run monitor DTO: active/recent runs, steps, links, compact summaries                                                                                                                                |
@@ -248,6 +252,11 @@ continues processing.
 | `GET /api/llm/capabilities`                                        | Provider capability metadata + availability                                                                                                                                                                   |
 | `POST /api/agent/run`                                              | One-shot agent processor; optional `{ nodeId?, force? }`                                                                                                                                                      |
 | `GET /api/agent/status`                                            | Last run metadata                                                                                                                                                                                             |
+| `GET /api/registry/npm/search`                                     | Proxies npm registry search; `?q`, `?size`, `?from`                                                                                                                                                           |
+| `GET /api/registry/npm/package/:name`                              | Packument proxy → `PackageDetailResponse` (meta + `readmeHtml` via `readme-renderer.ts` + deps/hasTypes/isEsm)                                                                                                |
+| `GET /api/registry/pins`                                           | `PinnedLibrary[]` from `~/.llaab/pinned-libraries.json` (configurable via `LLAAB_PINS_PATH`)                                                                                                                  |
+| `POST /api/registry/pins`                                          | Pin a package by name; snapshots `PackageMetaResponse` at pin time                                                                                                                                            |
+| `DELETE /api/registry/pins/:name`                                  | Unpin by name                                                                                                                                                                                                 |
 
 ### `@llaab/icons` — Workspace icon registry package
 

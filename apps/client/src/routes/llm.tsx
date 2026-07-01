@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { LlmModelInfoList } from 'components/LlmModelInfoList/LlmModelInfoList';
-import type { OllamaModelInfo } from 'components/LlmModelInfoList/LlmModelInfoList';
 import { LlmRoutingEditor } from 'components/LlmRoutingEditor/LlmRoutingEditor';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Spinner } from 'components/ui/spinner';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { QUERY_KEYS } from 'queries/llm';
 import { useMemo } from 'react';
+import type { OllamaModelInfo } from 'components/LlmModelInfoList/LlmModelInfoList';
 
 import { apiGet } from 'lib/api-client';
 import { usePageTitle } from 'lib/use-page-title';
@@ -149,9 +149,9 @@ export function LlmPage() {
                 <dt>LLAAB_REMOTE_MODEL</dt>
                 <dd>remote tier default</dd>
                 <dt>OPENCODE_BASE_URL</dt>
-                <dd>OpenCode Go OpenAI-compatible endpoint</dd>
+                <dd>OpenCode OpenAI-compatible endpoint</dd>
                 <dt>OPENCODE_MODEL</dt>
-                <dd>OpenCode Go default model</dd>
+                <dd>OpenCode default model</dd>
               </dl>
             </section>
           </div>
