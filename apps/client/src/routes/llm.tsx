@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { LlmModelInfoList } from 'components/LlmModelInfoList/LlmModelInfoList';
+import type { OllamaModelInfo } from 'components/LlmModelInfoList/LlmModelInfoList';
 import { LlmRoutingEditor } from 'components/LlmRoutingEditor/LlmRoutingEditor';
 import { PageHero } from 'components/PageHero/PageHero';
+import { Spinner } from 'components/ui/spinner';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { QUERY_KEYS } from 'queries/llm';
 import { useMemo } from 'react';
@@ -14,45 +16,40 @@ import styles from './llm.module.css';
 interface RoutingEntry {
   tier: 'local-small' | 'local-mid' | 'local-strong' | 'remote';
   model: string;
-  provider: 'ollama' | 'anthropic' | 'lmstudio';
+  provider: 'ollama' | 'anthropic' | 'lmstudio' | 'opencode';
 }
 
+type LlmProvider = RoutingEntry['provider'];
+
 interface LlmStatusResponse {
+  availableProviders: LlmProvider[];
   routing: Record<
     'route' | 'format' | 'extract' | 'consolidate' | 'code' | 'reason' | 'reason-plus' | 'vision' | 'speech',
     RoutingEntry
   >;
   modelMap: Record<string, string>;
-  installedModelDetails: Array<{
-    created?: number;
-    digest?: string;
-    details?: {
-      domain?: string;
-      families?: string[];
-      family?: string;
-      format?: string;
-      parameter_size?: string;
-      parent_model?: string;
-      quantization_level?: string;
-    };
-    capabilities?: string[];
-    contextLength?: number;
-    modified_at?: Date | string;
-    name: string;
-    owned_by?: string;
-    provider?: 'ollama' | 'lmstudio';
-    size?: number;
-  }>;
-  installedModelOptions: Array<{ model: string; provider: 'ollama' | 'anthropic' | 'lmstudio' }>;
+  installedModelDetails: OllamaModelInfo[];
+  remoteModelDetails?: OllamaModelInfo[];
+  installedModelOptions: Array<{ model: string; provider: LlmProvider }>;
   installedModels: string[];
   lmStudioError?: string;
   ollamaError?: string;
+  openCodeError?: string;
+  remoteModelOptions: Array<{ model: string; provider: LlmProvider }>;
+  cloudCatalog?: {
+    opencode?: { source: string; fetchedAt?: string; fromCache: boolean };
+    anthropic?: { source: string; fetchedAt?: string; fromCache: boolean };
+  };
 }
 
 export function LlmPage() {
   usePageTitle('LLM Status');
 
-  const { data: status, error } = useQuery({
+  const {
+    data: status,
+    error,
+    isPending,
+  } = useQuery({
     queryKey: QUERY_KEYS.llm.status(),
     queryFn: () => apiGet<LlmStatusResponse>('/api/llm/status'),
     refetchOnMount: 'always',
@@ -60,10 +57,15 @@ export function LlmPage() {
   });
 
   const fetchError = error instanceof Error ? error.message : error ? 'Failed to reach server' : null;
-  const remoteModels = useMemo(
-    () => [status?.modelMap.remote].filter((model): model is string => Boolean(model)),
-    [status?.modelMap.remote],
-  );
+  const remoteModelOptions = status?.remoteModelOptions ?? [];
+
+  const allModelDetails = useMemo(() => {
+    if (!status) return [];
+    return [...(status.installedModelDetails ?? []), ...(status.remoteModelDetails ?? [])];
+  }, [status]);
+
+  const localCount = status?.installedModelDetails.length ?? 0;
+  const cloudCount = status?.remoteModelDetails?.length ?? 0;
 
   return (
     <PageLayout
@@ -71,7 +73,15 @@ export function LlmPage() {
         <PageHero
           eyebrow="Models"
           title="Status"
-          description="Active model routing and installed local models."
+          description="Active model routing, installed local models, and configured cloud providers."
+          meta={
+            isPending ? (
+              <span className={styles.heroLoading}>
+                <Spinner className="size-4" aria-hidden />
+                Loading model status…
+              </span>
+            ) : null
+          }
         />
       }
     >
@@ -89,33 +99,44 @@ export function LlmPage() {
               <h2 className={styles.llmSectionHeading}>Task routing</h2>
               <LlmRoutingEditor
                 routing={status.routing}
+                availableProviders={status.availableProviders}
                 installedModelOptions={status.installedModelOptions}
-                remoteModels={remoteModels}
+                remoteModelOptions={remoteModelOptions}
               />
             </section>
 
             <section className={styles.llmSection}>
               <h2 className={styles.llmSectionHeading}>
-                Installed local models
-                {status.ollamaError && status.lmStudioError ? (
+                Models
+                {status.ollamaError && status.lmStudioError && cloudCount === 0 ? (
                   <span className={`${styles.llmSectionBadge} ${styles.llmSectionBadgeErr}`}>offline</span>
                 ) : (
                   <span className={`${styles.llmSectionBadge} ${styles.llmSectionBadgeOk}`}>
-                    {status.installedModels.length} models
+                    {localCount} local · {cloudCount} cloud
                   </span>
                 )}
               </h2>
 
               {status.ollamaError ? <p className={styles.llmEmpty}>{status.ollamaError}</p> : null}
               {status.lmStudioError ? <p className={styles.llmEmpty}>{status.lmStudioError}</p> : null}
-
-              {!(status.ollamaError && status.lmStudioError) && status.installedModels.length === 0 ? (
-                <p className={styles.llmEmpty}>No models found — are Ollama or LM Studio running?</p>
+              {status.openCodeError ? <p className={styles.llmEmpty}>{status.openCodeError}</p> : null}
+              {status.cloudCatalog?.opencode?.fromCache ? (
+                <p className={styles.llmEmpty}>
+                  Cloud catalog served from configs/cloud-model-catalog.json
+                  {status.cloudCatalog.opencode.fetchedAt
+                    ? ` (updated ${new Date(status.cloudCatalog.opencode.fetchedAt).toLocaleString()})`
+                    : ''}
+                  .
+                </p>
               ) : null}
 
-              {status.installedModelDetails.length > 0 ? (
-                <LlmModelInfoList models={status.installedModelDetails} />
-              ) : null}
+              {allModelDetails.length === 0 ? (
+                <p className={styles.llmEmpty}>
+                  No models found — are Ollama or LM Studio running, or cloud keys configured?
+                </p>
+              ) : (
+                <LlmModelInfoList models={allModelDetails} />
+              )}
             </section>
 
             <section className={`${styles.llmSection} ${styles.llmSectionMuted}`}>
@@ -127,6 +148,10 @@ export function LlmPage() {
                 <dd>local-mid tier default</dd>
                 <dt>LLAAB_REMOTE_MODEL</dt>
                 <dd>remote tier default</dd>
+                <dt>OPENCODE_BASE_URL</dt>
+                <dd>OpenCode Go OpenAI-compatible endpoint</dd>
+                <dt>OPENCODE_MODEL</dt>
+                <dd>OpenCode Go default model</dd>
               </dl>
             </section>
           </div>

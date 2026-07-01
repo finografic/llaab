@@ -6,7 +6,9 @@ import {
   AiModelInfoMeta,
   AiModelInfoPricing,
 } from 'components/ui/elements/ai-model-info';
-import type { ModelCapability } from 'components/ui/elements/ai-model-info';
+import type { ModelAvailabilityKind, ModelCapability } from 'components/ui/elements/ai-model-info';
+
+import gridStyles from 'styles/llm-card-grid.module.css';
 
 export interface OllamaModelDetails {
   domain?: string;
@@ -25,10 +27,11 @@ export interface OllamaModelInfo {
   modified_at?: Date | string;
   name: string;
   owned_by?: string;
-  provider?: 'ollama' | 'lmstudio';
+  provider?: 'ollama' | 'lmstudio' | 'opencode' | 'anthropic';
   size?: number;
   capabilities?: string[];
   contextLength?: number;
+  availability?: ModelAvailabilityKind;
 }
 
 export interface LlmModelInfoListProps {
@@ -41,6 +44,7 @@ interface ModelInfoData {
   provider: string;
   contextWindow: number;
   capabilities: ModelCapability[];
+  availability?: ModelAvailabilityKind;
 }
 
 function formatBytes(bytes?: number) {
@@ -106,16 +110,41 @@ function inferCapabilities(model: OllamaModelInfo): ModelCapability[] {
     capabilities.push('tools', 'functions');
   }
 
+  if (model.provider === 'opencode' || model.provider === 'anthropic') {
+    capabilities.push('tools', 'reasoning');
+    if (normalized.includes('glm') || normalized.includes('qwen') || normalized.includes('claude')) {
+      capabilities.push('vision');
+    }
+  }
+
   return [...new Set(capabilities)];
 }
 
+function inferCloudContextWindow(model: OllamaModelInfo) {
+  if (model.contextLength) return model.contextLength;
+
+  const normalized = model.name.toLowerCase();
+  if (normalized.includes('claude')) return 200000;
+  if (normalized.includes('glm-5')) return 128000;
+  if (normalized.includes('qwen3.7')) return 128000;
+  if (normalized.includes('mimo')) return 128000;
+
+  return 0;
+}
+
 function toModelInfo(model: OllamaModelInfo): ModelInfoData {
+  const isCloud =
+    model.availability === 'cloud' || model.availability === 'catalog' || model.availability === 'on-request';
+
   return {
     id: model.name,
     name: model.name,
     provider: model.provider ?? 'ollama',
-    contextWindow: inferContextWindow(model),
+    contextWindow: isCloud ? inferCloudContextWindow(model) : inferContextWindow(model),
     capabilities: inferCapabilities(model),
+    availability:
+      model.availability ??
+      (model.provider === 'ollama' || model.provider === 'lmstudio' ? 'local' : undefined),
   };
 }
 
@@ -131,9 +160,26 @@ function DetailPill({ label, value }: { label: string; value?: string }) {
 }
 
 function LlmModelFacts({ model }: { model: OllamaModelInfo }) {
-  const { details, digest, modified_at: modifiedAt } = model;
+  const { details, digest, modified_at: modifiedAt, owned_by: ownedBy } = model;
   const shortDigest = digest?.slice(0, 12);
   const modified = formatDate(modifiedAt);
+  const isCloud = model.provider === 'opencode' || model.provider === 'anthropic';
+
+  if (isCloud && !details && !digest && !modified) {
+    return (
+      <div className="border-b border-border px-4 py-3">
+        <div className="flex flex-wrap gap-1.5">
+          <DetailPill label="owner" value={ownedBy ?? model.provider} />
+          {model.availability === 'catalog' ? (
+            <DetailPill label="note" value="configured list — live status not probed" />
+          ) : null}
+          {model.availability === 'on-request' ? (
+            <DetailPill label="note" value="provider API key not configured" />
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="border-b border-border px-4 py-3">
@@ -158,7 +204,7 @@ function LlmModelFacts({ model }: { model: OllamaModelInfo }) {
 
 export function LlmModelInfoList({ models }: LlmModelInfoListProps) {
   return (
-    <div className="grid gap-3">
+    <div className={gridStyles.cardGrid}>
       {models.map((model) => {
         const modelInfo = toModelInfo(model);
 
@@ -167,7 +213,7 @@ export function LlmModelInfoList({ models }: LlmModelInfoListProps) {
             key={model.name}
             model={modelInfo}
             showPricing={false}
-            className={cn('overflow-hidden')}
+            className={cn(gridStyles.cardGridItem, 'overflow-hidden')}
           >
             <AiModelInfoHeader />
             <LlmModelFacts model={model} />

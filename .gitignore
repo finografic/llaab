@@ -61,6 +61,7 @@ pids
 .cache/
 .llm-cache/
 configs/cron-history.json
+configs/cloud-model-catalog.json
 
 # Testing + Coverage
 coverage/

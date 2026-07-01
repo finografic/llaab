@@ -65,6 +65,12 @@ bootstrap_label() {
   launchctl bootstrap "gui/$UID" "$plist"
 }
 
+ensure_client_plist_port() {
+  if [[ -f "$client_plist" ]]; then
+    /usr/bin/plutil -replace EnvironmentVariables.PORT -string 5050 "$client_plist"
+  fi
+}
+
 ensure_lmstudio_plist() {
   mkdir -p "$launch_agents_dir" "$logs_dir"
 
@@ -147,6 +153,7 @@ start_server() {
 stop_server()  { launchctl bootout "gui/$UID/$server_label" >/dev/null 2>&1 || true; }
 
 start_client() {
+  ensure_client_plist_port
   bootstrap_label "$client_label" "$client_plist"
   wait_for_url "$client_url" "" 60
 }

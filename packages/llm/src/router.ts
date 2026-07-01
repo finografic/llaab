@@ -20,6 +20,7 @@ import {
   ollamaListModels,
   ollamaProvider,
 } from './providers/ollama.js';
+import { openCodeListModelDetails, openCodeListModels, openCodeProvider } from './providers/opencode.js';
 
 // ── Tier → model name (env-configurable) ─────────────────────────────────────
 
@@ -54,9 +55,10 @@ const PROVIDERS_BY_ID: Record<LlmProviderId, LlmProvider> = {
   ollama: ollamaProvider,
   anthropic: anthropicProvider,
   lmstudio: lmStudioProvider,
+  opencode: openCodeProvider,
 };
 
-const UNIQUE_PROVIDERS = [ollamaProvider, anthropicProvider, lmStudioProvider];
+const UNIQUE_PROVIDERS = [ollamaProvider, anthropicProvider, lmStudioProvider, openCodeProvider];
 
 const ROUTING_CONFIG_PATH = resolve(process.cwd(), 'configs/llm-routing.json');
 
@@ -270,5 +272,7 @@ export {
   ollamaGetModelContextLength,
   ollamaListModelDetails,
   ollamaListModels,
+  openCodeListModelDetails,
+  openCodeListModels,
 };
 export type { LlmCompleteResult, LlmProgress, LlmProviderId, ModelTier, TaskType };

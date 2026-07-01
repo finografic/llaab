@@ -13,7 +13,15 @@ label_exists() {
   launchctl print "gui/$UID/$1" >/dev/null 2>&1
 }
 
+ensure_client_plist_port() {
+  if [[ -f "$client_plist" ]]; then
+    /usr/bin/plutil -replace EnvironmentVariables.PORT -string 5050 "$client_plist"
+  fi
+}
+
 restart_client() {
+  ensure_client_plist_port
+
   if label_exists "$client_label"; then
     # bootout + bootstrap ensures updated plist/script changes are picked up.
     # kickstart -k reuses the cached plist and won't reflect script changes.

@@ -1,6 +1,6 @@
 import { getNodeFilePath, listNodes, updateNode } from '@llaab/core';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
-import { ingestYouTube } from '@llaab/skills';
+import { ingestYouTube, reconcileStaleRun } from '@llaab/skills';
 import type { AppCtx } from '../../types/app.types.js';
 import type { LabNode, RunMonitorItem, RunMonitorStep, RunNode } from '@llaab/schemas';
 
@@ -17,6 +17,19 @@ function titleCase(value: string): string {
 
 function isActiveRun(run: RunNode): boolean {
   return ACTIVE_STATUSES.has(run.run_status);
+}
+
+async function loadRunsWithStaleReconciliation(): Promise<RunNode[]> {
+  const all = await listNodes();
+  const runs = all
+    .filter((node): node is RunNode => node.type === 'run')
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  const reconciled: RunNode[] = [];
+  for (const run of runs) {
+    reconciled.push(isActiveRun(run) ? await reconcileStaleRun(run) : run);
+  }
+  return reconciled;
 }
 
 function nodeHref(node: LabNode): string {
@@ -157,9 +170,7 @@ export const monitor = {
     const limit = Number(c.req.query('limit') ?? 10);
     const all = await listNodes();
     const nodesById = new Map(all.map((node) => [node.id, node]));
-    const runs = all
-      .filter((node): node is RunNode => node.type === 'run')
-      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    const runs = await loadRunsWithStaleReconciliation();
     const activeRuns = runs.filter(isActiveRun);
     const recentRuns = runs
       .filter((run) => !isActiveRun(run) && !run.monitor_dismissed_at)

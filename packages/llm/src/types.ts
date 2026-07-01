@@ -9,7 +9,7 @@ export type TaskType =
   | 'vision'
   | 'speech';
 export type ModelTier = 'local-small' | 'local-mid' | 'local-strong' | 'remote';
-export type LlmProviderId = 'ollama' | 'anthropic' | 'lmstudio';
+export type LlmProviderId = 'ollama' | 'anthropic' | 'lmstudio' | 'opencode';
 
 export interface LlmCompleteOptions {
   model: string;

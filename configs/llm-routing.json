@@ -11,14 +11,14 @@
       "model": "gemma4:e4b-it-qat"
     },
     "extract": {
-      "tier": "local-mid",
-      "provider": "lmstudio",
-      "model": "google/gemma-4-e4b"
-    },
-    "consolidate": {
       "tier": "local-strong",
       "provider": "lmstudio",
       "model": "google/gemma-4-26b-a4b-qat"
+    },
+    "consolidate": {
+      "tier": "remote",
+      "provider": "opencode",
+      "model": "glm-5.2"
     },
     "reason": {
       "tier": "local-strong",

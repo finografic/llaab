@@ -17,12 +17,15 @@ import * as React from 'react';
 
 type ModelCapability = 'vision' | 'tools' | 'streaming' | 'json' | 'functions' | 'reasoning' | 'audio';
 
+type ModelAvailabilityKind = 'local' | 'cloud' | 'catalog' | 'on-request';
+
 interface ModelInfo {
   id: string;
   name: string;
   provider: string;
   contextWindow: number;
   capabilities: ModelCapability[];
+  availability?: ModelAvailabilityKind;
   inputPrice?: number;
   outputPrice?: number;
   releaseDate?: Date;
@@ -83,6 +86,30 @@ const PROVIDER_CONFIG: Record<string, { logo: string; color: string; bgClass: st
     logo: 'lmstudio',
     color: 'text-cyan-700 dark:text-cyan-300',
     bgClass: 'bg-cyan-100 dark:bg-cyan-950',
+  },
+  opencode: {
+    logo: 'OpenCode Go',
+    color: 'text-fuchsia-600 dark:text-fuchsia-400',
+    bgClass: 'bg-fuchsia-100 dark:bg-fuchsia-950',
+  },
+};
+
+const AVAILABILITY_CONFIG: Record<ModelAvailabilityKind, { label: string; className: string }> = {
+  'local': {
+    label: 'Installed',
+    className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+  },
+  'cloud': {
+    label: 'Cloud',
+    className: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
+  },
+  'catalog': {
+    label: 'Catalog',
+    className: 'bg-muted text-muted-foreground',
+  },
+  'on-request': {
+    label: 'On request',
+    className: 'bg-muted text-muted-foreground',
   },
 };
 
@@ -193,9 +220,23 @@ function AiModelInfoHeader({ className }: AiModelInfoHeaderProps) {
         <h3 className="font-semibold text-sm truncate">{model.name}</h3>
         <p className={cn('text-xs', providerConfig.color)}>{providerConfig.logo}</p>
       </div>
-      <div className="text-right shrink-0">
-        <p className="text-sm font-mono font-medium">{formatContextWindow(model.contextWindow)}</p>
-        <p className="text-xs text-muted-foreground">context</p>
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        {model.availability ? (
+          <span
+            className={cn(
+              'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+              AVAILABILITY_CONFIG[model.availability].className,
+            )}
+          >
+            {AVAILABILITY_CONFIG[model.availability].label}
+          </span>
+        ) : null}
+        {model.contextWindow > 0 ? (
+          <div className="text-right">
+            <p className="text-sm font-mono font-medium">{formatContextWindow(model.contextWindow)}</p>
+            <p className="text-xs text-muted-foreground">context</p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -354,4 +395,4 @@ export {
   AiModelInfoMeta,
   AiModelInfoBadge,
 };
-export type { AiModelInfoProps, ModelInfo, ModelCapability };
+export type { AiModelInfoProps, ModelAvailabilityKind, ModelInfo, ModelCapability };

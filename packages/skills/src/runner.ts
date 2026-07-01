@@ -8,6 +8,8 @@ import {
 } from '@llaab/schemas';
 import type { RunEvent, RunNode } from '@llaab/schemas';
 
+import { getRunStaleAfterMs } from './stale-run.js';
+
 export interface SkillRunRecord {
   name: string;
   /**
@@ -347,8 +349,18 @@ export async function runSkill<TInput, TOutput>(
 
   await createRunningRunNode({ name, runNodeId, startedAt, rawInput: input });
 
+  const timeoutMs = getRunStaleAfterMs(name);
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      const limitMinutes = Math.round(timeoutMs / 60_000);
+      reject(new Error(`Skill "${name}" exceeded ${limitMinutes} minute limit.`));
+    }, timeoutMs);
+  });
+
   try {
-    const result = await execute(input, runNodeId);
+    const result = await Promise.race([execute(input, runNodeId), timeoutPromise]);
+    clearTimeout(timeoutId);
     const completedAt = formatIsoUtcSeconds(new Date());
     const nestedTrace = extractNestedRunTrace(result);
     const publicResult = stripRunTrace(result);
@@ -377,6 +389,7 @@ export async function runSkill<TInput, TOutput>(
       result: publicResult,
     };
   } catch (error) {
+    clearTimeout(timeoutId);
     const completedAt = formatIsoUtcSeconds(new Date());
     const nestedTrace = extractNestedRunTraceFromError(error);
     const errorMessage = error instanceof Error ? error.message : String(error);

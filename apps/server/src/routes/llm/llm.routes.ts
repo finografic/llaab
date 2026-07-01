@@ -1,9 +1,12 @@
 import {
+  cloudCatalogModelToRemoteDetail,
   getLlmStatus,
   lmStudioListModelDetails,
   lmStudioListModels,
   ollamaListModelDetails,
   ollamaListModels,
+  resolveAnthropicCatalog,
+  resolveOpenCodeCatalog,
   routeLlm,
   streamLlm,
   updateLlmTaskRoute,
@@ -56,8 +59,8 @@ export const stream = {
 export const models = {
   path: '/models' as const,
   handler: async (c: AppCtx) => {
-    const models: Array<{ model: string; provider: 'ollama' | 'lmstudio' }> = [];
-    const errors: Partial<Record<'ollama' | 'lmstudio', string>> = {};
+    const models: Array<{ model: string; provider: 'ollama' | 'lmstudio' | 'opencode' }> = [];
+    const errors: Partial<Record<'ollama' | 'lmstudio' | 'opencode', string>> = {};
 
     try {
       models.push(...(await ollamaListModels()).map((model) => ({ model, provider: 'ollama' as const })));
@@ -69,6 +72,15 @@ export const models = {
       models.push(...(await lmStudioListModels()).map((model) => ({ model, provider: 'lmstudio' as const })));
     } catch {
       errors.lmstudio = 'LM Studio unavailable';
+    }
+
+    try {
+      const openCodeCatalog = await resolveOpenCodeCatalog();
+      models.push(
+        ...openCodeCatalog.models.map((model) => ({ model: model.name, provider: 'opencode' as const })),
+      );
+    } catch {
+      errors.opencode = 'OpenCode Go unavailable';
     }
 
     const statusCode = models.length > 0 ? 200 : 503;
@@ -85,6 +97,8 @@ export const status = {
     let lmStudioModelDetails: Awaited<ReturnType<typeof lmStudioListModelDetails>> = [];
     let ollamaError: string | undefined;
     let lmStudioError: string | undefined;
+    let openCodeError: string | undefined;
+
     try {
       installedModelDetails = await ollamaListModelDetails();
       installedModels = installedModelDetails.map((model) => model.name);
@@ -99,9 +113,39 @@ export const status = {
       lmStudioError = 'LM Studio unavailable';
     }
 
+    const openCodeCatalog = await resolveOpenCodeCatalog();
+    if (openCodeCatalog.error) {
+      openCodeError = openCodeCatalog.error;
+    }
+
+    const anthropicCatalog = resolveAnthropicCatalog(config.modelMap.remote);
+
     const installedModelOptions = [
       ...installedModelDetails.map((model) => ({ model: model.name, provider: 'ollama' as const })),
       ...lmStudioModelDetails.map((model) => ({ model: model.name, provider: 'lmstudio' as const })),
+    ];
+
+    const remoteModelOptions = [
+      ...openCodeCatalog.models.map((model) => ({ model: model.name, provider: 'opencode' as const })),
+      ...anthropicCatalog.models.map((model) => ({ model: model.name, provider: 'anthropic' as const })),
+    ];
+
+    const localModelDetails = [
+      ...installedModelDetails.map((model) => ({
+        ...model,
+        provider: 'ollama' as const,
+        availability: 'local' as const,
+      })),
+      ...lmStudioModelDetails.map((model) => ({ ...model, availability: 'local' as const })),
+    ];
+
+    const remoteModelDetails = [
+      ...openCodeCatalog.models.map((model) =>
+        cloudCatalogModelToRemoteDetail(model, openCodeCatalog.availability),
+      ),
+      ...anthropicCatalog.models.map((model) =>
+        cloudCatalogModelToRemoteDetail(model, anthropicCatalog.availability),
+      ),
     ];
 
     return c.json({
@@ -110,12 +154,24 @@ export const status = {
       routing: config.routing,
       installedModels,
       installedModelOptions,
-      installedModelDetails: [
-        ...installedModelDetails.map((model) => ({ ...model, provider: 'ollama' as const })),
-        ...lmStudioModelDetails,
-      ],
+      remoteModelOptions,
+      installedModelDetails: localModelDetails,
+      remoteModelDetails,
+      cloudCatalog: {
+        opencode: {
+          source: openCodeCatalog.source,
+          fetchedAt: openCodeCatalog.fetchedAt,
+          fromCache: openCodeCatalog.fromCache,
+        },
+        anthropic: {
+          source: anthropicCatalog.source,
+          fetchedAt: anthropicCatalog.fetchedAt,
+          fromCache: anthropicCatalog.fromCache,
+        },
+      },
       ollamaError,
       lmStudioError,
+      openCodeError,
     });
   },
 };

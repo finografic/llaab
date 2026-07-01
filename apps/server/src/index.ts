@@ -1,3 +1,5 @@
+import { reconcileAllStaleRuns } from '@llaab/skills';
+
 import { pc } from './utils/picocolors.js';
 
 import { app } from './app.js';
@@ -14,6 +16,12 @@ const LONG_RUNNING_PATHS = [
 ];
 
 console.log(pc.bold(`@llaab/server`) + pc.gray(` starting on port ${port}…`));
+
+void reconcileAllStaleRuns().then((count) => {
+  if (count > 0) {
+    console.log(pc.yellow(`Reconciled ${count} stale run${count === 1 ? '' : 's'}.`));
+  }
+});
 
 export default {
   port,

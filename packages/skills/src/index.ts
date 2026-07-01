@@ -13,6 +13,13 @@ export {
   type SkillRunRecord,
 } from './runner.js';
 export {
+  buildStaleRunErrorMessage,
+  getRunStaleAfterMs,
+  isRunStale,
+  reconcileAllStaleRuns,
+  reconcileStaleRun,
+} from './stale-run.js';
+export {
   findSkillRoutesByCapability,
   getAgentStatus,
   REGISTRY,

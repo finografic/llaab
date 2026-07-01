@@ -1,0 +1,82 @@
+.routingCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  padding: 12px 14px;
+}
+
+.routingCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.routingTaskLabel {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.providerLabel {
+  flex-shrink: 0;
+  /* ~zinc-500: one step darker than muted-foreground (~zinc-400) on the TW scale */
+  color: #71717a;
+}
+
+.routingTier {
+  flex: 0 0 120px;
+  min-width: 120px;
+  font-size: var(--text-md);
+  color: var(--text-muted);
+}
+
+.routingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.routingSelect {
+  flex: 1;
+  min-width: 0;
+}
+
+.statusDot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+}
+
+.statusDotAvailable {
+  background: var(--success-text);
+}
+
+.statusDotUnavailable {
+  background: var(--warning-text);
+}
+
+.statusDotSaving {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.selectTrigger {
+  height: 2rem;
+  width: 100%;
+  justify-content: space-between;
+  border-radius: var(--radius);
+  border-color: var(--border-subtle);
+  background: color-mix(in srgb, var(--background) 30%, transparent);
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+}
+
+.error {
+  grid-column: 1 / -1;
+  font-size: var(--text-sm);
+  color: var(--error-text);
+}

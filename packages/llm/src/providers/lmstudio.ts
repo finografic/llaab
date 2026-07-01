@@ -63,6 +63,8 @@ const DEFAULT_BASE_URL = 'http://localhost:1234/v1';
 const DEFAULT_CLI_PATH = `${process.env['HOME'] ?? ''}/.lmstudio/bin/lms`;
 const DEFAULT_TEMPERATURE = 0.3;
 const LOAD_TIMEOUT_MS = 5 * 60 * 1000;
+const DEFAULT_COMPLETION_TIMEOUT_MS = 20 * 60 * 1000;
+const DEFAULT_API_TIMEOUT_MS = 30 * 1000;
 const PROGRESS_POLL_INTERVAL_MS = 2500;
 
 const MODEL_LOAD_OVERRIDES: Record<string, { contextLength?: number; parallel?: number }> = {
@@ -99,10 +101,17 @@ function buildMessages(prompt: string, system?: string) {
   return messages;
 }
 
+function getCompletionTimeoutMs() {
+  const configured = Number(process.env['LLAAB_LMSTUDIO_COMPLETION_TIMEOUT_MS']);
+  return Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_COMPLETION_TIMEOUT_MS;
+}
+
 async function lmStudioFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const timeoutMs = path.includes('/chat/completions') ? getCompletionTimeoutMs() : DEFAULT_API_TIMEOUT_MS;
   const response = await fetch(`${getBaseUrl()}${path}`, {
     ...init,
     headers: getHeaders(),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) {
     const body = await response.text().catch(() => '');
