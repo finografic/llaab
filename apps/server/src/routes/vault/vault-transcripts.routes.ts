@@ -471,6 +471,15 @@ const CANONICAL_IDEA_DRAFT_JSON_SHAPE =
   '"possibleMissedIdeas":[{"title":"Distinct missed idea","reason":"Why it might be missing",' +
   '"sourceCandidateIdeaIds":["idea-id"],"recommendation":"promote"}]}';
 
+const CANONICAL_PROMOTION_RULES = `Canonical Promotion Rules:
+Canonical ideas are durable graph nodes, not a complete list of interesting details.
+
+Promote a candidate cluster only when it represents a reusable principle, workflow pattern, architectural pattern, failure mode, or decision rule.
+
+Merge examples, tactics, tools, anecdotes, and implementation details into broader canonical ideas unless they change the reusable lesson.
+
+When source material discusses quota limits, account switching, provider constraints, or similar tactics, describe the idea neutrally as a constraint, risk, or observed workflow pattern rather than as an endorsement.`;
+
 const DRAFT_CONSOLIDATION_RULES = `Category Separation Rule:
 Do not merge ideas that belong to different categories of concern, even if they are related. Keep separate when appropriate: workflow strategy; model behavior; historical role; interface/tooling architecture; runtime/sandboxing architecture; cost/performance implication.
 
@@ -509,6 +518,8 @@ function buildCanonicalDraftSystemPrompt(target: ConsolidationTarget): string {
 
 ${buildCountGuidance(target)}
 
+${CANONICAL_PROMOTION_RULES}
+
 ${DRAFT_CONSOLIDATION_RULES}
 
 Return ONLY valid JSON with this exact shape:
@@ -531,6 +542,8 @@ function buildCanonicalCompactSystemPrompt(target: ConsolidationTarget): string 
   return `You consolidate extracted candidate ideas into durable canonical ideas.
 
 ${buildCountGuidance(target)}
+
+${CANONICAL_PROMOTION_RULES}
 
 Do not optimize for minimum count. Do not pad to hit the target.
 Merge duplicates. Preserve distinct knowledge nodes.

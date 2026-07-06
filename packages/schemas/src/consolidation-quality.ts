@@ -28,6 +28,7 @@ export interface ConsolidationQualityResult {
 const MIN_CANONICAL_IDEAS = 4;
 const MAX_CANONICAL_IDEAS = 6;
 const MIN_COVERAGE_RATIO = 0.8;
+const MIN_REQUIRED_THEME_CANDIDATES = 2;
 
 function candidateHaystack(candidate: ConsolidationQualityCandidate): string {
   return `${candidate.id} ${candidate.title} ${candidate.body ?? ''} ${candidate.tags.join(' ')} ${candidate.domains.join(' ')}`.toLocaleLowerCase();
@@ -43,6 +44,13 @@ function matchesAny(haystack: string, patterns: RegExp[]): boolean {
 
 function anyCanonicalMatches(canonicalIdeas: ConsolidationQualityCanonical[], patterns: RegExp[]): boolean {
   return canonicalIdeas.some((idea) => matchesAny(canonicalHaystack(idea), patterns));
+}
+
+function matchingCandidates(
+  candidates: ConsolidationQualityCandidate[],
+  patterns: RegExp[],
+): ConsolidationQualityCandidate[] {
+  return candidates.filter((candidate) => matchesAny(candidateHaystack(candidate), patterns));
 }
 
 function hasDomainTag(idea: ConsolidationQualityCanonical): boolean {
@@ -84,9 +92,7 @@ const NON_DETERMINISM_TAG_PATTERNS = [/^non-determinism$/, /^model-behavior$/];
 function getNonDeterminismCandidates(
   candidates: ConsolidationQualityCandidate[],
 ): ConsolidationQualityCandidate[] {
-  return candidates.filter((candidate) =>
-    matchesAny(candidateHaystack(candidate), NON_DETERMINISM_CANDIDATE_PATTERNS),
-  );
+  return matchingCandidates(candidates, NON_DETERMINISM_CANDIDATE_PATTERNS);
 }
 
 function isDedicatedNonDeterminismIdea(idea: ConsolidationQualityCanonical): boolean {
@@ -173,19 +179,11 @@ function buildQualityScoreComponents(
       ? canonicalIdeas.filter((idea) => hasDomainTag(idea)).length / canonicalIdeas.length
       : 0;
 
-  const hasContextCandidates = candidates.some((candidate) =>
-    matchesAny(candidateHaystack(candidate), CONTEXT_CANDIDATE_PATTERNS),
-  );
-  const hasV8Candidates = candidates.some((candidate) =>
-    matchesAny(candidateHaystack(candidate), V8_CANDIDATE_PATTERNS),
-  );
+  const contextCandidates = matchingCandidates(candidates, CONTEXT_CANDIDATE_PATTERNS);
+  const v8Candidates = matchingCandidates(candidates, V8_CANDIDATE_PATTERNS);
   const nonDeterminismCandidates = getNonDeterminismCandidates(candidates);
-  const hasBashCandidates = candidates.some((candidate) =>
-    matchesAny(candidateHaystack(candidate), BASH_CANDIDATE_PATTERNS),
-  );
-  const hasTypedExecutionCandidates = candidates.some((candidate) =>
-    matchesAny(candidateHaystack(candidate), TYPED_EXECUTION_CANDIDATE_PATTERNS),
-  );
+  const bashCandidates = matchingCandidates(candidates, BASH_CANDIDATE_PATTERNS);
+  const typedExecutionCandidates = matchingCandidates(candidates, TYPED_EXECUTION_CANDIDATE_PATTERNS);
 
   return [
     {
@@ -204,12 +202,12 @@ function buildQualityScoreComponents(
       weight: 10,
     },
     {
-      applicable: hasContextCandidates,
+      applicable: contextCandidates.length >= MIN_REQUIRED_THEME_CANDIDATES,
       ratio: anyCanonicalMatches(canonicalIdeas, CONTEXT_CANONICAL_PATTERNS) ? 1 : 0,
       weight: 15,
     },
     {
-      applicable: hasV8Candidates,
+      applicable: v8Candidates.length >= MIN_REQUIRED_THEME_CANDIDATES,
       ratio: anyCanonicalMatches(canonicalIdeas, V8_CANONICAL_PATTERNS) ? 1 : 0,
       weight: 15,
     },
@@ -219,12 +217,12 @@ function buildQualityScoreComponents(
       weight: 15,
     },
     {
-      applicable: hasBashCandidates,
+      applicable: bashCandidates.length >= MIN_REQUIRED_THEME_CANDIDATES,
       ratio: anyCanonicalMatches(canonicalIdeas, BASH_CANONICAL_PATTERNS) ? 1 : 0,
       weight: 10,
     },
     {
-      applicable: hasTypedExecutionCandidates,
+      applicable: typedExecutionCandidates.length >= MIN_REQUIRED_THEME_CANDIDATES,
       ratio: anyCanonicalMatches(canonicalIdeas, TYPED_EXECUTION_CANONICAL_PATTERNS) ? 1 : 0,
       weight: 10,
     },
@@ -283,10 +281,11 @@ export function validateConsolidationQuality(
     });
   }
 
-  const hasContextCandidates = candidates.some((candidate) =>
-    matchesAny(candidateHaystack(candidate), CONTEXT_CANDIDATE_PATTERNS),
-  );
-  if (hasContextCandidates && !anyCanonicalMatches(canonicalIdeas, CONTEXT_CANONICAL_PATTERNS)) {
+  const contextCandidates = matchingCandidates(candidates, CONTEXT_CANDIDATE_PATTERNS);
+  if (
+    contextCandidates.length >= MIN_REQUIRED_THEME_CANDIDATES &&
+    !anyCanonicalMatches(canonicalIdeas, CONTEXT_CANONICAL_PATTERNS)
+  ) {
     issues.push({
       code: 'context_retrieval',
       message:
@@ -294,10 +293,11 @@ export function validateConsolidationQuality(
     });
   }
 
-  const hasV8Candidates = candidates.some((candidate) =>
-    matchesAny(candidateHaystack(candidate), V8_CANDIDATE_PATTERNS),
-  );
-  if (hasV8Candidates && !anyCanonicalMatches(canonicalIdeas, V8_CANONICAL_PATTERNS)) {
+  const v8Candidates = matchingCandidates(candidates, V8_CANDIDATE_PATTERNS);
+  if (
+    v8Candidates.length >= MIN_REQUIRED_THEME_CANDIDATES &&
+    !anyCanonicalMatches(canonicalIdeas, V8_CANONICAL_PATTERNS)
+  ) {
     issues.push({
       code: 'v8_runtime',
       message:
@@ -317,10 +317,11 @@ export function validateConsolidationQuality(
     });
   }
 
-  const hasBashCandidates = candidates.some((candidate) =>
-    matchesAny(candidateHaystack(candidate), BASH_CANDIDATE_PATTERNS),
-  );
-  if (hasBashCandidates && !anyCanonicalMatches(canonicalIdeas, BASH_CANONICAL_PATTERNS)) {
+  const bashCandidates = matchingCandidates(candidates, BASH_CANDIDATE_PATTERNS);
+  if (
+    bashCandidates.length >= MIN_REQUIRED_THEME_CANDIDATES &&
+    !anyCanonicalMatches(canonicalIdeas, BASH_CANONICAL_PATTERNS)
+  ) {
     issues.push({
       code: 'bash_execution',
       message:
@@ -328,11 +329,9 @@ export function validateConsolidationQuality(
     });
   }
 
-  const hasTypedExecutionCandidates = candidates.some((candidate) =>
-    matchesAny(candidateHaystack(candidate), TYPED_EXECUTION_CANDIDATE_PATTERNS),
-  );
+  const typedExecutionCandidates = matchingCandidates(candidates, TYPED_EXECUTION_CANDIDATE_PATTERNS);
   if (
-    hasTypedExecutionCandidates &&
+    typedExecutionCandidates.length >= MIN_REQUIRED_THEME_CANDIDATES &&
     !anyCanonicalMatches(canonicalIdeas, TYPED_EXECUTION_CANONICAL_PATTERNS)
   ) {
     issues.push({

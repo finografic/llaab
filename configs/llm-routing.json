@@ -11,9 +11,9 @@
       "model": "gemma4:e4b-it-qat"
     },
     "extract": {
-      "tier": "local-strong",
-      "provider": "lmstudio",
-      "model": "google/gemma-4-26b-a4b-qat"
+      "tier": "remote",
+      "provider": "opencode",
+      "model": "glm-5.2"
     },
     "consolidate": {
       "tier": "remote",

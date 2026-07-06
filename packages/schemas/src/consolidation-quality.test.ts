@@ -16,6 +16,12 @@ const theoCandidates: Array<{
     tags: ['sandboxing'],
   },
   {
+    id: 'runtime-isolation-uses-sandboxes-to-contain-agent-execution',
+    title: 'Runtime isolation sandboxes agent execution',
+    domains: ['d:infra'],
+    tags: ['runtime-isolation'],
+  },
+  {
     id: 'llm-non-determinism-worsens-as-context-window-size-increases-significantly',
     title: 'Non-determinism worsens with context',
     domains: ['d:llm'],
@@ -72,13 +78,13 @@ describe('validateConsolidationQuality', () => {
         title: 'V8 isolates enable lightweight runtime isolation',
         body: 'Multi-tenant sandboxing without Docker overhead.',
         tags: ['d:infra', 'v8-isolates', 'sandboxing'],
-        sourceCandidateIdeaIds: [theoCandidates[0]!.id],
+        sourceCandidateIdeaIds: [theoCandidates[0]!.id, theoCandidates[1]!.id],
       },
       {
         title: 'Large context windows increase LLM non-determinism',
         body: 'Excessive context harms model behavior and performance.',
         tags: ['d:llm', 'model-behavior', 'non-determinism'],
-        sourceCandidateIdeaIds: [theoCandidates[1]!.id, theoCandidates[2]!.id],
+        sourceCandidateIdeaIds: [theoCandidates[2]!.id, theoCandidates[3]!.id],
       },
     ];
 
@@ -96,19 +102,19 @@ describe('validateConsolidationQuality', () => {
         title: 'Targeted retrieval beats context stuffing',
         body: 'Search instead of dump.',
         tags: ['d:llm', 'context-management'],
-        sourceCandidateIdeaIds: [theoCandidates[5]!.id],
+        sourceCandidateIdeaIds: [theoCandidates[6]!.id],
       },
       {
         title: 'Bash execution layer',
         body: 'Bash is foundational.',
         tags: ['d:agents', 'bash'],
-        sourceCandidateIdeaIds: [theoCandidates[3]!.id],
+        sourceCandidateIdeaIds: [theoCandidates[4]!.id],
       },
       {
         title: 'Typed execution environments',
         body: 'TypeScript SDKs help.',
         tags: ['d:agents', 'typescript'],
-        sourceCandidateIdeaIds: [theoCandidates[4]!.id],
+        sourceCandidateIdeaIds: [theoCandidates[5]!.id],
       },
     ];
 
@@ -128,7 +134,7 @@ describe('validateConsolidationQuality', () => {
   });
 
   it('fails when non-determinism is folded into the context-retrieval idea', () => {
-    const nonDeterminismIds = [theoCandidates[1]!.id, theoCandidates[2]!.id];
+    const nonDeterminismIds = [theoCandidates[2]!.id, theoCandidates[3]!.id];
     const canonicalIdeas = [
       {
         title: 'Evolution from context stuffing to targeted retrieval',
@@ -136,7 +142,7 @@ describe('validateConsolidationQuality', () => {
         tags: ['d:llm', 'context-management', 'retrieval'],
         keyClaims: ['Massive context stuffing causes performance degradation and non-determinism'],
         sourceCandidateIdeaIds: [
-          theoCandidates[5]!.id,
+          theoCandidates[6]!.id,
           ...nonDeterminismIds,
           'early-ai-agents-failed-by-dumping-massive-codebases-into-prompts',
         ],
@@ -145,19 +151,19 @@ describe('validateConsolidationQuality', () => {
         title: 'Bash is a foundational but limited execution layer',
         body: 'Bash enabled the first agent execution layer but is limited.',
         tags: ['d:agents', 'bash', 'execution-layer'],
-        sourceCandidateIdeaIds: [theoCandidates[3]!.id],
+        sourceCandidateIdeaIds: [theoCandidates[4]!.id],
       },
       {
         title: 'Typed programmable execution layers replace raw terminal commands',
         body: 'TypeScript SDKs provide safer structured agent tooling.',
         tags: ['d:agents', 'typescript', 'typed-execution'],
-        sourceCandidateIdeaIds: [theoCandidates[4]!.id],
+        sourceCandidateIdeaIds: [theoCandidates[5]!.id],
       },
       {
         title: 'V8 isolates enable lightweight runtime isolation',
         body: 'Multi-tenant sandboxing without Docker overhead.',
         tags: ['d:infra', 'v8-isolates', 'sandboxing'],
-        sourceCandidateIdeaIds: [theoCandidates[0]!.id],
+        sourceCandidateIdeaIds: [theoCandidates[0]!.id, theoCandidates[1]!.id],
       },
     ];
 
@@ -167,5 +173,72 @@ describe('validateConsolidationQuality', () => {
     expect(result.passed).toBe(false);
     expect(result.score).toBeLessThan(100);
     expect(result.issues.map((issue) => issue.code)).toContain('non_determinism_separate');
+  });
+
+  it('does not fail a good consolidation for a single incidental typed-execution candidate', () => {
+    const candidates = [
+      {
+        id: 'known-problems-are-better-agent-benchmarks',
+        title: 'Known problems are better agent benchmarks',
+        domains: ['d:llm'],
+        tags: ['benchmarking'],
+      },
+      {
+        id: 'living-instruction-files-preserve-agent-guidance',
+        title: 'Living instruction files preserve agent guidance',
+        domains: ['d:automation'],
+        tags: ['agent-guidance'],
+      },
+      {
+        id: 'targeted-retrieval-avoids-context-stuffing',
+        title: 'Targeted retrieval avoids context stuffing',
+        domains: ['d:llm'],
+        tags: ['context-management'],
+      },
+      {
+        id: 'local-environment-integrity-prevents-agent-confusion',
+        title: 'Local environment integrity prevents agent confusion',
+        domains: ['d:infra'],
+        tags: ['dev-environment'],
+      },
+      {
+        id: 'typescript-sdk-detail-appears-as-a-single-side-note',
+        title: 'TypeScript SDK detail appears as a single side note',
+        domains: ['d:automation'],
+        tags: ['typescript'],
+      },
+    ];
+    const canonicalIdeas = [
+      {
+        title: 'Known problems make better AI benchmarks',
+        body: 'Familiar tasks make model output easier to judge.',
+        tags: ['d:llm', 'benchmarking'],
+        sourceCandidateIdeaIds: [candidates[0]!.id],
+      },
+      {
+        title: 'Living instruction files steer agent behavior',
+        body: 'Durable instructions capture recurring guidance.',
+        tags: ['d:automation', 'agent-guidance'],
+        sourceCandidateIdeaIds: [candidates[1]!.id],
+      },
+      {
+        title: 'Targeted retrieval beats context stuffing',
+        body: 'Search-driven context keeps prompts focused.',
+        tags: ['d:llm', 'context-management'],
+        sourceCandidateIdeaIds: [candidates[2]!.id],
+      },
+      {
+        title: 'Environment integrity is prerequisite for agent success',
+        body: 'Broken local setups confuse agent debugging.',
+        tags: ['d:infra', 'dev-environment'],
+        sourceCandidateIdeaIds: [candidates[3]!.id, candidates[4]!.id],
+      },
+    ];
+
+    const covered = canonicalIdeas.flatMap((idea) => idea.sourceCandidateIdeaIds);
+    const result = validateConsolidationQuality(candidates, canonicalIdeas, covered);
+
+    expect(result.passed).toBe(true);
+    expect(result.issues.map((issue) => issue.code)).not.toContain('typed_execution');
   });
 });
