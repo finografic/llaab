@@ -78,6 +78,28 @@ Intents required: **Message Content Intent** enabled on Bot tab.
 
 ---
 
+## Telegram
+
+| Setting         | Value                                                       |
+| --------------- | ----------------------------------------------------------- |
+| Bot             | **LLAAB Inbox**                                             |
+| Bot token       | `TELEGRAM_BOT_TOKEN` in `~/.hermes/.env`                    |
+| Allowlist       | Single owner Telegram user ID via `TELEGRAM_ALLOWED_USERS`  |
+| Home channel    | Owner DM via `TELEGRAM_HOME_CHANNEL`                        |
+| Mode            | Polling                                                     |
+| Gateway service | SwiftBar-managed launchd service `com.llaab.hermes.gateway` |
+
+Validated 2026-07-07:
+
+- `python-telegram-bot[webhooks]==22.6` installed in Hermes' venv.
+- Hermes gateway connects to Telegram and Discord together.
+- `hermes send --to telegram ...` delivers to the configured owner DM.
+- Telegram DM `Ping` reaches Hermes and receives a reply.
+
+Pending: LLAAB dropbox router/MCP inbox tools.
+
+---
+
 ## Tools enabled
 
 Wizard configures **CLI** and **Discord** toolsets separately (browser/search prompts appear

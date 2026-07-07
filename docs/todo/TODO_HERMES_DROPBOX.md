@@ -1,6 +1,7 @@
 # TODO — Hermes Dropbox Inbox
 
-> **Status:** Not started.
+> **Status:** Phase 1 complete (2026-07-07). Telegram bot, Hermes dependency, allowlist, inbound
+> DM, and outbound delivery are configured; LLAAB dropbox routing is not implemented yet.
 
 ## Goal
 
@@ -46,8 +47,8 @@ Primary recommendation:
 
 Purpose: define the inbox behavior before wiring another messaging surface.
 
-- [ ] Confirm the first inbox integration is **Telegram bot DM**.
-- [ ] Keep Discord as the existing operator console, not the primary dropbox.
+- [x] Confirm the first inbox integration is **Telegram bot DM** (2026-07-07).
+- [x] Keep Discord as the existing operator console, not the primary dropbox (2026-07-07).
 - [ ] Decide whether Discord gets a later `#inbox` fallback channel.
 - [ ] Define the default fallback behavior for unknown input: raw inbox capture.
 - [ ] Define the receipt style: one short confirmation with target/action/id.
@@ -60,14 +61,15 @@ Exit criteria: the inbox has a clear product contract and security boundary.
 
 Purpose: add the lowest-friction input channel.
 
-- [ ] Create a private Telegram bot for Hermes inbox use.
-- [ ] Store Telegram token only in `~/.hermes/.env`.
-- [ ] Restrict allowed Telegram user IDs to the owner account.
-- [ ] Configure Hermes Telegram gateway support if available in the installed Hermes version.
-- [ ] If Hermes lacks Telegram support, add a thin local Telegram bridge process outside
-      `apps/server`.
-- [ ] Document live Telegram config facts in `docs/integrations/hermes.md` without secrets.
-- [ ] Verify a plain Telegram DM reaches Hermes or the bridge.
+- [x] Create a private Telegram bot for Hermes inbox use (2026-07-07).
+- [x] Store Telegram token only in `~/.hermes/.env` (2026-07-07).
+- [x] Restrict allowed Telegram user IDs to the owner account (2026-07-07).
+- [x] Configure Hermes Telegram gateway support if available in the installed Hermes version
+      (2026-07-07).
+- [x] Confirm native Hermes Telegram support works; no thin local bridge needed yet (2026-07-07).
+- [x] Document live Telegram config facts in `docs/integrations/hermes.md` without secrets
+      (2026-07-07).
+- [x] Verify a plain Telegram DM reaches Hermes or the bridge (2026-07-07).
 
 Exit criteria: phone/desktop Telegram message can reach the local Hermes inbox path.
 
