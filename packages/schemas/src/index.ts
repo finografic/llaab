@@ -29,11 +29,23 @@ export {
   type HermesInboxRoute,
   type HermesInboxRouteAction,
   HermesInboxRouteActionSchema,
+  type HermesInboxExecutionResult,
+  HermesInboxExecutionResultSchema,
+  type HermesInboxExecutionStatus,
+  HermesInboxExecutionStatusSchema,
+  type HermesInboxLogEvent,
+  HermesInboxLogEventSchema,
+  type HermesInboxReceipt,
+  HermesInboxReceiptSchema,
   type HermesInboxRouteKind,
   HermesInboxRouteKindSchema,
   HermesInboxRouteSchema,
   type HermesInboxSource,
   HermesInboxSourceSchema,
+  type HermesInboxToolCall,
+  HermesInboxToolCallSchema,
+  type HermesInboxToolName,
+  HermesInboxToolNameSchema,
 } from './hermes-inbox.schema.js';
 export { type InstructionNode, InstructionNodeSchema } from './instruction-node.schema.js';
 export { type LabNode, NodeSchema } from './node.schema.js';

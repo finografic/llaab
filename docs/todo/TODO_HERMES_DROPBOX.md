@@ -1,7 +1,8 @@
 # TODO — Hermes Dropbox Inbox
 
-> **Status:** Phase 3 complete (2026-07-07). Telegram transport, deterministic routing, and
-> narrow MCP write tools exist; Telegram has not yet been wired to execute routes automatically.
+> **Status:** Phase 4 complete (2026-07-07). Telegram transport, deterministic routing, narrow
+> MCP write tools, receipt formatting, and route log events exist; Telegram execution wiring waits
+> on `LLAAB_API_KEY`.
 
 ## Goal
 
@@ -147,12 +148,12 @@ Captured todo: <short title>
 Saved to inbox: <raw item id>
 ```
 
-- [ ] Reply once per received item.
-- [ ] Include the resulting vault node id or run id when available.
-- [ ] Log route decisions in Hermes logs.
-- [ ] Persist enough metadata to debug bad routes later.
-- [ ] Avoid verbose summaries unless the user asks.
-- [ ] Record failures as inbox items with `status: failed` or equivalent.
+- [x] Reply once per received item (2026-07-07).
+- [x] Include the resulting vault node id or run id when available (2026-07-07).
+- [x] Log route decisions in Hermes logs (2026-07-07).
+- [x] Persist enough metadata to debug bad routes later (2026-07-07).
+- [x] Avoid verbose summaries unless the user asks (2026-07-07).
+- [x] Record failures as inbox items with `status: failed` or equivalent (2026-07-07).
 
 Exit criteria: every inbox drop gets a short, useful receipt and leaves an audit trail.
 

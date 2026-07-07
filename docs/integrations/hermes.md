@@ -97,6 +97,8 @@ Validated 2026-07-07:
 - Telegram DM `Ping` reaches Hermes and receives a reply.
 
 Pending: Telegram dropbox execution loop that calls the router and MCP tools automatically.
+`LLAAB_API_KEY` can be added afterward; until then, the receipt layer should return short
+`Inbox failed: ...` messages instead of silently dropping writes.
 
 ---
 
@@ -151,6 +153,12 @@ Write tools:
 
 The inbox write tools call existing LLAAB API endpoints with `LLAAB_API_KEY`. They do not expose
 terminal, browser, arbitrary file writes, or shell execution.
+
+Receipt and observability helpers live in `@llaab/core`:
+
+- `createHermesInboxToolCall`
+- `createHermesInboxReceipt`
+- `createHermesInboxLogEvent`
 
 ---
 
