@@ -1,8 +1,8 @@
 # TODO — Hermes Dropbox Inbox
 
-> **Status:** Phase 4 complete (2026-07-07). Telegram transport, deterministic routing, narrow
-> MCP write tools, receipt formatting, and route log events exist; Telegram execution wiring waits
-> on `LLAAB_API_KEY`.
+> **Status:** Phase 5 in progress (2026-07-07). Telegram transport, deterministic routing, narrow
+> MCP write tools, receipt formatting, route log events, and the `lab inbox` one-shot executor
+> exist; live Telegram mutation waits on `LLAAB_API_KEY`.
 
 ## Goal
 
@@ -161,11 +161,13 @@ Exit criteria: every inbox drop gets a short, useful receipt and leaves an audit
 
 Purpose: ship the first useful dropbox behavior using currently viable workflows.
 
+- [x] Add a one-shot `lab inbox "<message>"` executor for Hermes/Telegram wiring (2026-07-07).
+- [x] Return a short failure receipt when `LLAAB_API_KEY` is not configured yet (2026-07-07).
 - [ ] Telegram DM with YouTube URL starts the existing ingest pipeline.
 - [ ] Telegram DM with npm package URL creates a pinned library entry.
 - [ ] Telegram DM with `npx ...` or `npmx ...` captures a pinned command/library candidate.
 - [ ] Duplicate YouTube URLs follow existing dedupe behavior.
-- [ ] Duplicate library pins are idempotent.
+- [x] Duplicate library pins are idempotent in the inbox/MCP execution path (2026-07-07).
 - [ ] Unknown links save as raw inbox items instead of failing.
 - [ ] Receipts include the created/updated target.
 

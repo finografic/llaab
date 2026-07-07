@@ -282,6 +282,10 @@ export function createMcpServer(): McpServer {
       const result = await postJsonViaApi('/api/registry/pins', { name: args.name });
 
       if (!result.ok) {
+        if (result.status === 409) {
+          return textContent(`Pinned library ${args.name} (already pinned)`);
+        }
+
         return errorText(result.error);
       }
 
@@ -382,7 +386,9 @@ interface CaptureInboxArgs {
   payload?: Record<string, unknown>;
 }
 
-type ApiJsonResult = { ok: true; data: Record<string, unknown> } | { ok: false; error: string };
+type ApiJsonResult =
+  | { ok: true; data: Record<string, unknown>; status: number }
+  | { ok: false; error: string; status?: number };
 type CreateIdeaNodeResult = { ok: true; id: string; path: string } | { ok: false; error: string };
 
 async function createIdeaNodeViaApi(input: CreateIdeaNodeRequest): Promise<CreateIdeaNodeResult> {
@@ -436,7 +442,7 @@ async function postJsonViaApi(path: string, body: Record<string, unknown>): Prom
       return { ok: false, error: 'Request failed: unexpected API response.' };
     }
 
-    return { ok: true, data: parsed };
+    return { ok: true, data: parsed, status: response.status };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return { ok: false, error: `Request failed: ${message}` };

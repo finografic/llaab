@@ -160,6 +160,16 @@ Receipt and observability helpers live in `@llaab/core`:
 - `createHermesInboxReceipt`
 - `createHermesInboxLogEvent`
 
+The repo-side one-shot executor is:
+
+```bash
+lab inbox "https://youtu.be/..."
+lab inbox "https://www.npmjs.com/package/zod"
+lab inbox "todo: follow up on Hermes inbox"
+```
+
+Use `--json` when a gateway bridge needs the structured route, tool call, receipt, and log event.
+
 ---
 
 ## Computer Use (cua-driver)
