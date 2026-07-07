@@ -1,4 +1,6 @@
+import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { getNodeFilePath, listNodes } from '@llaab/core';
 import { NodeTypeSchema } from '@llaab/schemas';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -413,12 +415,12 @@ async function createIdeaNodeViaApi(input: CreateIdeaNodeRequest): Promise<Creat
 }
 
 async function postJsonViaApi(path: string, body: Record<string, unknown>): Promise<ApiJsonResult> {
-  const apiKey = process.env['LLAAB_API_KEY']?.trim();
+  const apiKey = resolveEnvValue('LLAAB_API_KEY');
   if (!apiKey) {
     return { ok: false, error: 'LLAAB_API_KEY is required for LLAAB MCP write tools.' };
   }
 
-  const apiUrl = (process.env['LLAAB_API_URL']?.trim() || DEFAULT_API_URL).replace(/\/+$/, '');
+  const apiUrl = (resolveEnvValue('LLAAB_API_URL') || DEFAULT_API_URL).replace(/\/+$/, '');
 
   try {
     const response = await fetch(`${apiUrl}${path}`, {
@@ -435,7 +437,7 @@ async function postJsonViaApi(path: string, body: Record<string, unknown>): Prom
 
     if (!response.ok) {
       const error = typeof parsed?.['error'] === 'string' ? parsed['error'] : responseText;
-      return { ok: false, error: `Request failed (${response.status}): ${error}` };
+      return { ok: false, error: `Request failed (${response.status}): ${error}`, status: response.status };
     }
 
     if (!parsed) {
@@ -506,4 +508,55 @@ function parseJsonObject(text: string): Record<string, unknown> | null {
   } catch {
     return null;
   }
+}
+
+function resolveEnvValue(name: string): string | undefined {
+  const direct = process.env[name]?.trim();
+
+  if (direct) {
+    return direct;
+  }
+
+  for (const path of envFileCandidates()) {
+    const value = readEnvFileValue(path, name);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function envFileCandidates(): string[] {
+  const home = process.env['HOME'];
+
+  return [
+    join(process.cwd(), '.env'),
+    '/Users/justin/LLAAB/.env',
+    ...(home ? [join(home, '.hermes', '.env')] : []),
+  ];
+}
+
+function readEnvFileValue(path: string, name: string): string | undefined {
+  if (!existsSync(path)) {
+    return undefined;
+  }
+
+  const prefix = `${name}=`;
+
+  for (const line of readFileSync(path, 'utf-8').split(/\r?\n/u)) {
+    if (!line.startsWith(prefix)) {
+      continue;
+    }
+
+    return (
+      line
+        .slice(prefix.length)
+        .trim()
+        .replace(/^["']|["']$/gu, '') || undefined
+    );
+  }
+
+  return undefined;
 }

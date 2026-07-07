@@ -97,8 +97,8 @@ Validated 2026-07-07:
 - Telegram DM `Ping` reaches Hermes and receives a reply.
 
 Pending: Telegram dropbox execution loop that calls the router and MCP tools automatically.
-`LLAAB_API_KEY` can be added afterward; until then, the receipt layer should return short
-`Inbox failed: ...` messages instead of silently dropping writes.
+`LLAAB_API_KEY` is configured in both repo `.env` and `~/.hermes/.env`; do not print or commit the
+value.
 
 ---
 
@@ -169,6 +169,13 @@ lab inbox "todo: follow up on Hermes inbox"
 ```
 
 Use `--json` when a gateway bridge needs the structured route, tool call, receipt, and log event.
+
+Validated 2026-07-07:
+
+- `lab inbox "todo: ..."` creates a real inbox todo node through the API.
+- `lab inbox "https://www.npmjs.com/package/zod"` pins the npm package.
+- Duplicate npm pin attempts return an idempotent already-pinned receipt.
+- MCP write tools can read `LLAAB_API_KEY` from local env files when the process env omits it.
 
 ---
 

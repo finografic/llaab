@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   createHermesInboxLogEvent,
   createHermesInboxReceipt,
@@ -227,12 +229,12 @@ type ApiJsonResult =
   | { ok: false; error: string; status?: number };
 
 async function postJsonViaApi(path: string, body: Record<string, unknown>): Promise<ApiJsonResult> {
-  const apiKey = process.env['LLAAB_API_KEY']?.trim();
+  const apiKey = resolveEnvValue('LLAAB_API_KEY');
   if (!apiKey) {
     return { ok: false, error: 'LLAAB_API_KEY is required' };
   }
 
-  const apiUrl = (process.env['LLAAB_API_URL']?.trim() || DEFAULT_API_URL).replace(/\/+$/u, '');
+  const apiUrl = (resolveEnvValue('LLAAB_API_URL') || DEFAULT_API_URL).replace(/\/+$/u, '');
 
   try {
     const response = await fetch(`${apiUrl}${path}`, {
@@ -355,4 +357,55 @@ function safeHostname(url: string): string {
   } catch {
     return 'web link';
   }
+}
+
+function resolveEnvValue(name: string): string | undefined {
+  const direct = process.env[name]?.trim();
+
+  if (direct) {
+    return direct;
+  }
+
+  for (const path of envFileCandidates()) {
+    const value = readEnvFileValue(path, name);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function envFileCandidates(): string[] {
+  const home = process.env['HOME'];
+
+  return [
+    join(process.cwd(), '.env'),
+    '/Users/justin/LLAAB/.env',
+    ...(home ? [join(home, '.hermes', '.env')] : []),
+  ];
+}
+
+function readEnvFileValue(path: string, name: string): string | undefined {
+  if (!existsSync(path)) {
+    return undefined;
+  }
+
+  const prefix = `${name}=`;
+
+  for (const line of readFileSync(path, 'utf-8').split(/\r?\n/u)) {
+    if (!line.startsWith(prefix)) {
+      continue;
+    }
+
+    return (
+      line
+        .slice(prefix.length)
+        .trim()
+        .replace(/^["']|["']$/gu, '') || undefined
+    );
+  }
+
+  return undefined;
 }

@@ -2,7 +2,8 @@
 
 > **Status:** Phase 5 in progress (2026-07-07). Telegram transport, deterministic routing, narrow
 > MCP write tools, receipt formatting, route log events, and the `lab inbox` one-shot executor
-> exist; live Telegram mutation waits on `LLAAB_API_KEY`.
+> exist; `LLAAB_API_KEY` is installed locally, and live Telegram mutation still needs the
+> Telegram dispatch bridge/manual phone smoke.
 
 ## Goal
 
@@ -163,6 +164,10 @@ Purpose: ship the first useful dropbox behavior using currently viable workflows
 
 - [x] Add a one-shot `lab inbox "<message>"` executor for Hermes/Telegram wiring (2026-07-07).
 - [x] Return a short failure receipt when `LLAAB_API_KEY` is not configured yet (2026-07-07).
+- [x] Install matching `LLAAB_API_KEY` values in repo `.env` and `~/.hermes/.env` (2026-07-07).
+- [x] Verify `lab inbox` can create a real inbox todo node through the API (2026-07-07).
+- [x] Verify `lab inbox` can pin an npm package through the API (2026-07-07).
+- [x] Verify MCP write tools can read `LLAAB_API_KEY` from local env files (2026-07-07).
 - [ ] Telegram DM with YouTube URL starts the existing ingest pipeline.
 - [ ] Telegram DM with npm package URL creates a pinned library entry.
 - [ ] Telegram DM with `npx ...` or `npmx ...` captures a pinned command/library candidate.
