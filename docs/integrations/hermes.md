@@ -96,7 +96,7 @@ Validated 2026-07-07:
 - `hermes send --to telegram ...` delivers to the configured owner DM.
 - Telegram DM `Ping` reaches Hermes and receives a reply.
 
-Pending: LLAAB dropbox router/MCP inbox tools.
+Pending: Telegram dropbox execution loop that calls the router and MCP tools automatically.
 
 ---
 
@@ -120,15 +120,37 @@ twice — expected, not a loop).
 
 ### Skipped / not configured
 
-| Tool                | Notes                                                                   |
-| ------------------- | ----------------------------------------------------------------------- |
-| Image Generation    | Skipped — no FAL/OpenAI image key                                       |
-| TTS provider wizard | Skipped — falls back to Edge                                            |
-| Mixture of Agents   | Needs `OPENROUTER_API_KEY`                                              |
-| Premium web extract | Firecrawl/Exa/Tavily etc. — ddgs is search-only                         |
-| Skills Hub (GitHub) | Needs `GITHUB_TOKEN`                                                    |
-| Context Engine      | Off                                                                     |
-| MCP servers         | `llaab` scoped tools (`vault_list`, `vault_read`, `vault_capture_idea`) |
+| Tool                | Notes                                           |
+| ------------------- | ----------------------------------------------- |
+| Image Generation    | Skipped — no FAL/OpenAI image key               |
+| TTS provider wizard | Skipped — falls back to Edge                    |
+| Mixture of Agents   | Needs `OPENROUTER_API_KEY`                      |
+| Premium web extract | Firecrawl/Exa/Tavily etc. — ddgs is search-only |
+| Skills Hub (GitHub) | Needs `GITHUB_TOKEN`                            |
+| Context Engine      | Off                                             |
+| MCP servers         | `llaab` scoped tools; see below                 |
+
+### LLAAB MCP server
+
+The repo MCP server is started with `lab mcp` and should stay narrow for inbox use.
+
+Read/search tools:
+
+- `vault_list`
+- `vault_read`
+
+Write tools:
+
+- `vault_capture_idea`
+- `vault_capture_inbox`
+- `vault_ingest_youtube`
+- `vault_pin_library`
+- `vault_capture_todo`
+- `vault_capture_web_link`
+- `vault_capture_attachment`
+
+The inbox write tools call existing LLAAB API endpoints with `LLAAB_API_KEY`. They do not expose
+terminal, browser, arbitrary file writes, or shell execution.
 
 ---
 

@@ -7,6 +7,7 @@ import type { NodeType } from '@llaab/schemas';
 
 const DEFAULT_API_URL = 'http://localhost:8888';
 const MAX_DERIVED_TITLE_LENGTH = 80;
+const INBOX_DEFAULT_TAGS = ['hermes', 'inbox'];
 
 /**
  * Creates the LLAAB vault MCP server.
@@ -89,6 +90,205 @@ export function createMcpServer(): McpServer {
           },
         ],
       };
+    },
+  );
+
+  // ── Tool: capture raw inbox item ──────────────────────────────────────────
+
+  const vaultCaptureInboxSchema = z.object({
+    raw_text: z.string().trim().optional().describe('Raw message text from the inbox surface.'),
+    route_kind: z.string().trim().min(1).optional().describe('Router kind, e.g. web_link or raw.'),
+    source: z
+      .record(z.string(), z.unknown())
+      .optional()
+      .describe('Optional platform metadata such as Telegram chat_id/message_id.'),
+    payload: z.record(z.string(), z.unknown()).optional().describe('Optional router payload to preserve.'),
+  });
+
+  server.registerTool(
+    'vault_capture_inbox',
+    {
+      description:
+        'Capture a raw Hermes inbox item as a LLAAB idea node. ' +
+        'Use this safe fallback when no more specific inbox tool applies.',
+      inputSchema: vaultCaptureInboxSchema,
+    },
+    async (args: z.infer<typeof vaultCaptureInboxSchema>) => {
+      const body = formatInboxBody(args);
+      const title = deriveIdeaTitle(args.raw_text?.trim() || args.route_kind || 'Hermes inbox item');
+      const result = await createIdeaNodeViaApi({
+        title,
+        body,
+        tags: [...INBOX_DEFAULT_TAGS, 'inbox:raw'],
+      });
+
+      if (!result.ok) {
+        return errorText(result.error);
+      }
+
+      return textContent(`Captured inbox item ${result.id} at ${result.path}`);
+    },
+  );
+
+  // ── Tool: capture todo note ───────────────────────────────────────────────
+
+  const vaultCaptureTodoSchema = z.object({
+    text: z.string().trim().min(1).describe('Todo text after the todo: prefix has been removed.'),
+    source: z.record(z.string(), z.unknown()).optional().describe('Optional platform metadata.'),
+  });
+
+  server.registerTool(
+    'vault_capture_todo',
+    {
+      description: 'Capture a short Hermes inbox todo as a LLAAB idea node tagged for later review.',
+      inputSchema: vaultCaptureTodoSchema,
+    },
+    async (args: z.infer<typeof vaultCaptureTodoSchema>) => {
+      const result = await createIdeaNodeViaApi({
+        title: `Todo: ${deriveIdeaTitle(args.text)}`,
+        body: formatInboxBody({ raw_text: args.text, route_kind: 'todo', source: args.source }),
+        tags: [...INBOX_DEFAULT_TAGS, 'inbox:todo'],
+      });
+
+      if (!result.ok) {
+        return errorText(result.error);
+      }
+
+      return textContent(`Captured todo ${result.id}`);
+    },
+  );
+
+  // ── Tool: capture web link ────────────────────────────────────────────────
+
+  const vaultCaptureWebLinkSchema = z.object({
+    url: z.url().describe('Blog, docs, GitHub, or generic URL to preserve.'),
+    kind: z.string().trim().min(1).optional().describe('Router kind, e.g. github_repo or web_link.'),
+    title: z.string().trim().min(1).optional().describe('Optional human label.'),
+    source: z.record(z.string(), z.unknown()).optional().describe('Optional platform metadata.'),
+    payload: z.record(z.string(), z.unknown()).optional().describe('Optional router metadata.'),
+  });
+
+  server.registerTool(
+    'vault_capture_web_link',
+    {
+      description: 'Capture a Hermes inbox web link for later article/docs/GitHub workflows.',
+      inputSchema: vaultCaptureWebLinkSchema,
+    },
+    async (args: z.infer<typeof vaultCaptureWebLinkSchema>) => {
+      const title = args.title ?? `Inbox link: ${new URL(args.url).hostname}`;
+      const result = await createIdeaNodeViaApi({
+        title,
+        body: formatInboxBody({
+          raw_text: args.url,
+          route_kind: args.kind ?? 'web_link',
+          source: args.source,
+          payload: args.payload ?? { url: args.url },
+        }),
+        tags: [...INBOX_DEFAULT_TAGS, 'inbox:link'],
+      });
+
+      if (!result.ok) {
+        return errorText(result.error);
+      }
+
+      return textContent(`Captured web link ${result.id}`);
+    },
+  );
+
+  // ── Tool: capture attachment metadata ─────────────────────────────────────
+
+  const vaultCaptureAttachmentSchema = z.object({
+    attachment: z.record(z.string(), z.unknown()).describe('Attachment metadata, not binary content.'),
+    source: z.record(z.string(), z.unknown()).optional().describe('Optional platform metadata.'),
+  });
+
+  server.registerTool(
+    'vault_capture_attachment',
+    {
+      description:
+        'Capture Hermes inbox attachment metadata for later file/screenshot processing. ' +
+        'This tool stores metadata only, not arbitrary files.',
+      inputSchema: vaultCaptureAttachmentSchema,
+    },
+    async (args: z.infer<typeof vaultCaptureAttachmentSchema>) => {
+      const filename =
+        typeof args.attachment['file_name'] === 'string' ? args.attachment['file_name'] : 'attachment';
+      const result = await createIdeaNodeViaApi({
+        title: `Inbox attachment: ${filename}`,
+        body: formatInboxBody({
+          route_kind: 'attachment',
+          source: args.source,
+          payload: { attachment: args.attachment },
+        }),
+        tags: [...INBOX_DEFAULT_TAGS, 'inbox:attachment'],
+      });
+
+      if (!result.ok) {
+        return errorText(result.error);
+      }
+
+      return textContent(`Captured attachment metadata ${result.id}`);
+    },
+  );
+
+  // ── Tool: trigger YouTube ingestion ───────────────────────────────────────
+
+  const vaultIngestYouTubeSchema = z.object({
+    url: z.url().describe('YouTube watch, short, or shorts URL.'),
+    title: z.string().trim().min(1).optional().describe('Optional title override.'),
+    tags: z.array(z.string().trim().min(1)).optional().describe('Optional vault tags.'),
+    skipExtraction: z.boolean().optional().describe('Skip post-ingest idea extraction.'),
+  });
+
+  server.registerTool(
+    'vault_ingest_youtube',
+    {
+      description: 'Start the existing LLAAB YouTube ingestion pipeline for a Hermes inbox URL.',
+      inputSchema: vaultIngestYouTubeSchema,
+    },
+    async (args: z.infer<typeof vaultIngestYouTubeSchema>) => {
+      const result = await postJsonViaApi('/api/ingest/youtube', {
+        url: args.url,
+        title: args.title,
+        tags: args.tags ?? INBOX_DEFAULT_TAGS,
+        skipExtraction: args.skipExtraction,
+      });
+
+      if (!result.ok) {
+        return errorText(result.error);
+      }
+
+      const ingestResult = asRecord(result.data['result']);
+      const id = typeof ingestResult?.['id'] === 'string' ? ingestResult['id'] : undefined;
+      const reused = ingestResult?.['reused'] === true ? ' (reused existing transcript)' : '';
+
+      return textContent(id ? `Queued YouTube ingest ${id}${reused}` : 'Queued YouTube ingest');
+    },
+  );
+
+  // ── Tool: pin npm library ─────────────────────────────────────────────────
+
+  const vaultPinLibrarySchema = z.object({
+    name: z.string().trim().min(1).describe('npm package name, e.g. @modelcontextprotocol/sdk'),
+  });
+
+  server.registerTool(
+    'vault_pin_library',
+    {
+      description: 'Pin an npm package in the LLAAB registry library list.',
+      inputSchema: vaultPinLibrarySchema,
+    },
+    async (args: z.infer<typeof vaultPinLibrarySchema>) => {
+      const result = await postJsonViaApi('/api/registry/pins', { name: args.name });
+
+      if (!result.ok) {
+        return errorText(result.error);
+      }
+
+      const pin = asRecord(result.data['pin']);
+      const name = typeof pin?.['name'] === 'string' ? pin['name'] : args.name;
+
+      return textContent(`Pinned library ${name}`);
     },
   );
 
@@ -175,29 +375,53 @@ interface CreateIdeaNodeRequest {
   tags?: string[];
 }
 
+interface CaptureInboxArgs {
+  raw_text?: string;
+  route_kind?: string;
+  source?: Record<string, unknown>;
+  payload?: Record<string, unknown>;
+}
+
+type ApiJsonResult = { ok: true; data: Record<string, unknown> } | { ok: false; error: string };
 type CreateIdeaNodeResult = { ok: true; id: string; path: string } | { ok: false; error: string };
 
 async function createIdeaNodeViaApi(input: CreateIdeaNodeRequest): Promise<CreateIdeaNodeResult> {
+  const result = await postJsonViaApi('/api/vault/nodes', {
+    type: 'idea',
+    title: input.title,
+    body: input.body,
+    tags: input.tags,
+  });
+
+  if (!result.ok) {
+    return { ok: false, error: result.error.replace('Request failed', 'Failed to capture idea') };
+  }
+
+  const id = result.data['id'];
+  const path = result.data['path'];
+  if (typeof id !== 'string' || typeof path !== 'string') {
+    return { ok: false, error: 'Failed to capture idea: unexpected API response.' };
+  }
+
+  return { ok: true, id, path };
+}
+
+async function postJsonViaApi(path: string, body: Record<string, unknown>): Promise<ApiJsonResult> {
   const apiKey = process.env['LLAAB_API_KEY']?.trim();
   if (!apiKey) {
-    return { ok: false, error: 'LLAAB_API_KEY is required to capture ideas via MCP.' };
+    return { ok: false, error: 'LLAAB_API_KEY is required for LLAAB MCP write tools.' };
   }
 
   const apiUrl = (process.env['LLAAB_API_URL']?.trim() || DEFAULT_API_URL).replace(/\/+$/, '');
 
   try {
-    const response = await fetch(`${apiUrl}/api/vault/nodes`, {
+    const response = await fetch(`${apiUrl}${path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': apiKey,
       },
-      body: JSON.stringify({
-        type: 'idea',
-        title: input.title,
-        body: input.body,
-        tags: input.tags,
-      }),
+      body: JSON.stringify(body),
     });
 
     const responseText = await response.text();
@@ -205,20 +429,52 @@ async function createIdeaNodeViaApi(input: CreateIdeaNodeRequest): Promise<Creat
 
     if (!response.ok) {
       const error = typeof parsed?.['error'] === 'string' ? parsed['error'] : responseText;
-      return { ok: false, error: `Failed to capture idea (${response.status}): ${error}` };
+      return { ok: false, error: `Request failed (${response.status}): ${error}` };
     }
 
-    const id = parsed?.['id'];
-    const path = parsed?.['path'];
-    if (typeof id !== 'string' || typeof path !== 'string') {
-      return { ok: false, error: 'Failed to capture idea: unexpected API response.' };
+    if (!parsed) {
+      return { ok: false, error: 'Request failed: unexpected API response.' };
     }
 
-    return { ok: true, id, path };
+    return { ok: true, data: parsed };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return { ok: false, error: `Failed to capture idea: ${message}` };
+    return { ok: false, error: `Request failed: ${message}` };
   }
+}
+
+function formatInboxBody(args: CaptureInboxArgs): string {
+  const parts = ['# Hermes Inbox Item'];
+
+  if (args.raw_text?.trim()) {
+    parts.push('', args.raw_text.trim());
+  }
+
+  const metadata = {
+    route_kind: args.route_kind,
+    source: args.source,
+    payload: args.payload,
+  };
+
+  parts.push('', '```json', JSON.stringify(metadata, null, 2), '```');
+
+  return parts.join('\n');
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+
+  return undefined;
+}
+
+function textContent(text: string) {
+  return { content: [{ type: 'text' as const, text }] };
+}
+
+function errorText(text: string) {
+  return { content: [{ type: 'text' as const, text }], isError: true };
 }
 
 function deriveIdeaTitle(body: string): string {

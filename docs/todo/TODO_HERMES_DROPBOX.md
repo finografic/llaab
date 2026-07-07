@@ -1,7 +1,7 @@
 # TODO — Hermes Dropbox Inbox
 
-> **Status:** Phase 2 complete (2026-07-07). Telegram transport is configured, and the shared
-> inbox route contract plus deterministic first-pass router exist; LLAAB write tools are next.
+> **Status:** Phase 3 complete (2026-07-07). Telegram transport, deterministic routing, and
+> narrow MCP write tools exist; Telegram has not yet been wired to execute routes automatically.
 
 ## Goal
 
@@ -117,17 +117,20 @@ Candidate MCP/API tools:
 | `vault_capture_inbox`      | Store raw inbox item with metadata                | Yes          |
 | `vault_ingest_youtube`     | Trigger existing YouTube ingestion pipeline       | Yes          |
 | `vault_pin_library`        | Save npm/npx library as pinned registry/library   | Yes          |
-| `vault_capture_todo`       | Store short todo note                             | Soon         |
-| `vault_capture_web_link`   | Store blog/docs/GitHub URL pending later workflow | Soon         |
-| `vault_capture_attachment` | Store file/screenshot metadata                    | Later        |
+| `vault_capture_todo`       | Store short todo note                             | Yes          |
+| `vault_capture_web_link`   | Store blog/docs/GitHub URL pending later workflow | Yes          |
+| `vault_capture_attachment` | Store file/screenshot metadata                    | Yes          |
 
-- [ ] Audit existing CLI MCP tool registration.
-- [ ] Add `vault_capture_inbox` as the safe fallback write.
-- [ ] Add or expose `vault_ingest_youtube` only after direct API smoke test.
-- [ ] Add or expose `vault_pin_library` for npm/npx-style links.
-- [ ] Keep tool allowlist narrow in `~/.hermes/config.yaml`.
-- [ ] Do not expose terminal/file/browser tools to the inbox channel.
-- [ ] Unit/smoke test each tool handler outside Telegram first.
+- [x] Audit existing CLI MCP tool registration (2026-07-07).
+- [x] Add `vault_capture_inbox` as the safe fallback write (2026-07-07).
+- [x] Add or expose `vault_ingest_youtube` only after direct API surface review (2026-07-07).
+- [x] Add or expose `vault_pin_library` for npm/npx-style links (2026-07-07).
+- [x] Add `vault_capture_todo` for `todo:` notes (2026-07-07).
+- [x] Add `vault_capture_web_link` for blog/docs/GitHub URLs (2026-07-07).
+- [x] Add `vault_capture_attachment` for file/screenshot metadata only (2026-07-07).
+- [x] Keep tool allowlist narrow in `~/.hermes/config.yaml` (2026-07-07).
+- [x] Do not expose terminal/file/browser tools to the inbox channel (2026-07-07).
+- [x] Unit/smoke test each tool handler outside Telegram first (2026-07-07).
 
 Exit criteria: the inbox router can call a minimal allowlisted LLAAB tool set.
 
