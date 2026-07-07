@@ -38,6 +38,7 @@ export type {
   OutputEvent,
   ShellExecCommand,
 } from './command-protocol.js';
+export { routeHermesInboxItem, routeHermesInboxText } from './hermes-inbox-router.js';
 export { deleteNode } from './utils/delete-node.utils.js';
 export { cleanRecentVaultActivity, countRecentVaultRuns } from './utils/clean-vault-activity.utils.js';
 export { readMarkdownFiles } from './storage/reader.utils.js';

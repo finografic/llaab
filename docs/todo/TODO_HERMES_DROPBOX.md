@@ -1,7 +1,7 @@
 # TODO — Hermes Dropbox Inbox
 
-> **Status:** Phase 1 complete (2026-07-07). Telegram bot, Hermes dependency, allowlist, inbound
-> DM, and outbound delivery are configured; LLAAB dropbox routing is not implemented yet.
+> **Status:** Phase 2 complete (2026-07-07). Telegram transport is configured, and the shared
+> inbox route contract plus deterministic first-pass router exist; LLAAB write tools are next.
 
 ## Goal
 
@@ -91,15 +91,17 @@ Supported first-pass inputs:
 | `todo: ...` text            | Capture todo item                                        |
 | Unknown text or URL         | Capture raw inbox item                                   |
 
-- [ ] Define a `HermesInboxItem` schema for raw incoming messages.
-- [ ] Define a `HermesInboxRoute` result schema: `kind`, `confidence`, `action`, `payload`.
-- [ ] Implement deterministic URL and prefix classifiers first.
-- [ ] Use model classification only when deterministic rules return ambiguous.
-- [ ] Add explicit routing for YouTube URLs.
-- [ ] Add explicit routing for npm package URLs.
-- [ ] Add explicit routing for `npx` / `npmx` command-like notes.
-- [ ] Add explicit routing for `todo:` notes.
-- [ ] Add fallback route for unknown inputs.
+- [x] Define a `HermesInboxItem` schema for raw incoming messages (2026-07-07).
+- [x] Define a `HermesInboxRoute` result schema: `kind`, `confidence`, `action`, `payload`
+      (2026-07-07).
+- [x] Implement deterministic URL and prefix classifiers first (2026-07-07).
+- [x] Reserve model classification for deterministic misses; current router falls back to raw
+      capture without invoking a model (2026-07-07).
+- [x] Add explicit routing for YouTube URLs (2026-07-07).
+- [x] Add explicit routing for npm package URLs (2026-07-07).
+- [x] Add explicit routing for `npx` / `npmx` command-like notes (2026-07-07).
+- [x] Add explicit routing for `todo:` notes (2026-07-07).
+- [x] Add fallback route for unknown inputs (2026-07-07).
 
 Exit criteria: a message can be classified without invoking an expensive reasoning model in normal
 known cases.

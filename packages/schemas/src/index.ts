@@ -17,6 +17,24 @@ export {
 } from './consolidation-quality.js';
 export { type DecisionNode, DecisionNodeSchema } from './decision-node.schema.js';
 export { type IdeaNode, IdeaNodeSchema } from './idea-node.schema.js';
+export {
+  type HermesInboxAttachment,
+  type HermesInboxAttachmentKind,
+  HermesInboxAttachmentKindSchema,
+  HermesInboxAttachmentSchema,
+  type HermesInboxItem,
+  HermesInboxItemSchema,
+  type HermesInboxPlatform,
+  HermesInboxPlatformSchema,
+  type HermesInboxRoute,
+  type HermesInboxRouteAction,
+  HermesInboxRouteActionSchema,
+  type HermesInboxRouteKind,
+  HermesInboxRouteKindSchema,
+  HermesInboxRouteSchema,
+  type HermesInboxSource,
+  HermesInboxSourceSchema,
+} from './hermes-inbox.schema.js';
 export { type InstructionNode, InstructionNodeSchema } from './instruction-node.schema.js';
 export { type LabNode, NodeSchema } from './node.schema.js';
 export {
