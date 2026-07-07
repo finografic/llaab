@@ -1,9 +1,9 @@
 # TODO — Hermes Dropbox Inbox
 
-> **Status:** Phase 5 in progress (2026-07-07). Telegram transport, deterministic routing, narrow
-> MCP write tools, receipt formatting, route log events, and the `lab inbox` one-shot executor
-> exist; `LLAAB_API_KEY` is installed locally, and live Telegram mutation still needs the
-> Telegram dispatch bridge/manual phone smoke.
+> **Status:** Phase 8 manual validation ready (2026-07-08). Telegram transport, deterministic
+> routing, narrow MCP write tools, receipt formatting, route log events, the `lab inbox` one-shot
+> executor, and the local Telegram dispatch bridge are wired. Remaining MVP risk is manual
+> phone/desktop validation, with YouTube last because it starts the heavier ingest workflow.
 
 ## Goal
 
@@ -51,11 +51,14 @@ Purpose: define the inbox behavior before wiring another messaging surface.
 
 - [x] Confirm the first inbox integration is **Telegram bot DM** (2026-07-07).
 - [x] Keep Discord as the existing operator console, not the primary dropbox (2026-07-07).
-- [ ] Decide whether Discord gets a later `#inbox` fallback channel.
-- [ ] Define the default fallback behavior for unknown input: raw inbox capture.
-- [ ] Define the receipt style: one short confirmation with target/action/id.
-- [ ] Confirm no inbox path can run shell commands or arbitrary file writes.
-- [ ] Confirm inbox writes require `LLAAB_API_KEY` through MCP child env or server API only.
+- [x] Defer any Discord `#inbox` fallback channel; Discord remains the operator console for the MVP
+      (2026-07-08).
+- [x] Define the default fallback behavior for unknown input: safe vault capture, not agent chat
+      execution (2026-07-08).
+- [x] Define the receipt style: one short confirmation with target/action/id (2026-07-08).
+- [x] Confirm no inbox path can run shell commands or arbitrary file writes (2026-07-08).
+- [x] Confirm inbox writes require `LLAAB_API_KEY` through MCP child env or server API only
+      (2026-07-08).
 
 Exit criteria: the inbox has a clear product contract and security boundary.
 
@@ -170,10 +173,11 @@ Purpose: ship the first useful dropbox behavior using currently viable workflows
 - [x] Verify MCP write tools can read `LLAAB_API_KEY` from local env files (2026-07-07).
 - [ ] Telegram DM with YouTube URL starts the existing ingest pipeline.
 - [x] Telegram DM with npm package URL creates a pinned library entry (2026-07-07).
-- [ ] Telegram DM with `npx ...` or `npmx ...` captures a pinned command/library candidate.
+- [ ] Telegram DM with `npx ...` or `npmx ...` captures a command/library candidate.
 - [ ] Duplicate YouTube URLs follow existing dedupe behavior.
 - [x] Duplicate library pins are idempotent in the inbox/MCP execution path (2026-07-07).
-- [ ] Unknown links save as raw inbox items instead of failing.
+- [x] Unknown generic links save as web-link inbox items instead of failing in the `lab inbox`
+      executor (2026-07-08).
 - [x] Receipts include the created/updated target when available (2026-07-07).
 
 Exit criteria: the inbox is useful for YouTube and npm/npx captures from the phone.
@@ -201,11 +205,16 @@ pipelines exist.
 Purpose: keep casual inbox usage cheap.
 
 - [x] Route deterministic classifications without LLM calls (2026-07-07).
-- [ ] Use local/cheap model only for ambiguous classification.
-- [ ] Use stronger remote models only for synthesis or risky mutation decisions.
-- [ ] Add config comments documenting model tier expectations.
+- [x] Avoid model use for ambiguous classification in the MVP; deterministic misses fall back to
+      capture (2026-07-08).
+- [x] Reserve stronger remote models for later synthesis or risky mutation decisions; no current
+      inbox route invokes them (2026-07-08).
+- [x] Document model tier expectations in this plan: routing is deterministic and model-free for
+      the MVP (2026-07-08).
 - [x] Log deterministic inbox route decisions before execution (2026-07-07).
-- [ ] Define an acceptable smoke-test cost target.
+- [x] Define an acceptable smoke-test cost target: zero LLM calls for Phase 8 routing/manual
+      validation, except any downstream YouTube extraction workflow the user intentionally starts
+      (2026-07-08).
 
 Exit criteria: routine inbox drops do not use the premium Hermes default model.
 
