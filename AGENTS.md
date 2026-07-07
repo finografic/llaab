@@ -7,12 +7,11 @@
 
 ## Project Memory Model
 
-- `docs/todo/ROADMAP.md` = milestone plan and completed history.
-- `docs/todo/NEXT_STEPS.md` = near-term tasks and manual checks.
+- `docs/todo/ROADMAP.md` = milestone plan, near-term tasks, and completed history.
 - `.agents/handoff.md` = stable current project state.
 - `.agents/memory.md` = chronological session log.
 
-Promote durable findings from memory → handoff, priorities → roadmap, and concrete follow-ups → next steps.
+Promote durable findings from memory → handoff, priorities and follow-ups → roadmap.
 
 Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMORY_MODEL.md)
 
@@ -21,7 +20,7 @@ Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMOR
 ## Roadmap and Planning Docs
 
 - Check `ROADMAP.md` before proposing new initiatives.
-- Use `NEXT_STEPS.md` for small follow-ups and manual validation.
+- Use `ROADMAP.md#next` for small follow-ups and manual validation.
 - Keep detailed plans in `docs/todo/TODO_*.md`; graduate completed plans to `DONE_*.md`.
 - Follow `.github/instructions/documentation/todo-done-docs.instructions.md`.
 
@@ -125,6 +124,26 @@ Hand-rolling what shadcn provides is not permitted.
 
 ---
 
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
+
+Rules:
+
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Cursor
+
+- Always-on rules: `.cursor/rules/` (`alwaysApply` — entry point is `AGENTS.md`, same as `CLAUDE.md`)
+
+---
+
 ## Learned User Preferences
 
 - Ingest `IngestPipeline` and app-wide `RunMonitor` (`RunMonitorProvider` in `AppLayout`) share `RunPipelineCard`—grey collapsible RUN shell with `AiChainOfThought` steps (blue active / green complete / orange warning); monitor adds activity log and `ExtractionModelCard` metrics in the card body.
@@ -154,17 +173,3 @@ Hand-rolling what shadcn provides is not permitted.
 - **Env / client / ports:** Monorepo `.env` at repo root; Vite `envDir` points there. `LLAAB_API_URL` proxies `/api` and `/terminal` only (not in the browser bundle); do not widen Vite `envPrefix`. **`PORT`** is the Vite dev port convention—keep `PORT` (not `LLAAB_PORT`). Auth: `LLAAB_API_KEY` (`X-API-Key` for API writes); optional `LLAAB_PASSWORD` (browser session for app writes); optional `VAULT_PASSWORD` (vault UI only—unset = open `/vault`). Dead vars removed: `OPENAI_API_KEY`, `LL_STATS_API_KEY`. Local: client **5050**, server **8888**, icons **5001**/**5199**. `com.llaab.client` launchd runs `vite dev` (HMR), not `vite preview`.
 - **Cloud model catalog:** `configs/cloud-model-catalog.json` (gitignored) cache-first via `packages/llm/src/cloud-model-catalog.ts`; optional `GET /models` metadata refresh (no chat tokens). `/llm` badges: Installed / Cloud / Catalog / On request.
 - **Canonical consolidation:** single-pass on `consolidate` LLM task (default `?mode=single-26b`); `consolidate-audit` removed. Prompts include canonical promotion rules; quality scoring in `packages/schemas/src/consolidation-quality.ts` applies theme checks only when ≥2 theme-matching candidates. API returns `qualityValidation` (percentage score); transcript UI shows score on the Canonical Ideas bar. **`extract`** and **`consolidate`** routed to OpenCode **`glm-5.2`** (`configs/llm-routing.json`).
-
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
-
-Rules:
-
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
