@@ -50,6 +50,7 @@ export function createHermesInboxToolCall(
         name: 'vault_capture_attachment',
         arguments: {
           attachment: route.payload['attachment'],
+          raw_text: stringPayload(route, 'raw_text'),
           source,
         },
       };

@@ -4,10 +4,13 @@ import {
   createHermesInboxLogEvent,
   createHermesInboxReceipt,
   createHermesInboxToolCall,
+  routeHermesInboxItem,
   routeHermesInboxText,
 } from '@llaab/core';
 import { defineCommand } from 'citty';
 import type {
+  HermesInboxAttachment,
+  HermesInboxAttachmentKind,
   HermesInboxExecutionResult,
   HermesInboxItem,
   HermesInboxPlatform,
@@ -27,7 +30,12 @@ export const inboxCommand = defineCommand({
     text: {
       type: 'positional',
       description: 'Bare inbox text, URL, or todo note.',
-      required: true,
+      required: false,
+    },
+    rawText: {
+      type: 'string',
+      description: 'Bare inbox text, URL, todo note, or attachment caption.',
+      alias: 'raw-text',
     },
     platform: {
       type: 'string',
@@ -63,23 +71,61 @@ export const inboxCommand = defineCommand({
       default: false,
       alias: 'skip-extraction',
     },
+    attachmentPath: {
+      type: 'string',
+      description: 'Local cached attachment path from the messaging bridge.',
+      alias: 'attachment-path',
+    },
+    attachmentName: {
+      type: 'string',
+      description: 'Original or cached attachment filename.',
+      alias: 'attachment-name',
+    },
+    attachmentMime: {
+      type: 'string',
+      description: 'Attachment MIME type.',
+      alias: 'attachment-mime',
+    },
+    attachmentKind: {
+      type: 'string',
+      description: 'Attachment kind: image, file, or unknown.',
+      alias: 'attachment-kind',
+    },
+    attachmentSize: {
+      type: 'string',
+      description: 'Attachment size in bytes.',
+      alias: 'attachment-size',
+    },
   },
   async run({ args }) {
-    const platform = parsePlatform(args.platform);
+    const platform = parsePlatform(optionValue(args, 'platform', 'platform'));
+    const text = (optionValue(args, 'rawText', 'raw-text') ?? args.text)?.trim();
+    const attachment = buildAttachment({
+      kind: optionValue(args, 'attachmentKind', 'attachment-kind'),
+      name: optionValue(args, 'attachmentName', 'attachment-name'),
+      mime: optionValue(args, 'attachmentMime', 'attachment-mime'),
+      path: optionValue(args, 'attachmentPath', 'attachment-path'),
+      size: optionValue(args, 'attachmentSize', 'attachment-size'),
+    });
+
+    if (!text && !attachment) {
+      throw new Error('Provide inbox text or attachment metadata.');
+    }
+
     const item: HermesInboxItem = {
-      raw_text: args.text,
+      raw_text: text,
       source: {
         platform,
-        user_id: args.user,
-        chat_id: args.chat,
-        message_id: args.message,
+        user_id: optionValue(args, 'user', 'user'),
+        chat_id: optionValue(args, 'chat', 'chat'),
+        message_id: optionValue(args, 'message', 'message'),
         timestamp: new Date().toISOString(),
       },
-      attachments: [],
+      attachments: attachment ? [attachment] : [],
       received_at: new Date().toISOString(),
     };
 
-    const route = routeHermesInboxText(args.text);
+    const route = attachment ? routeHermesInboxItem(item) : routeHermesInboxText(text ?? '');
     const toolCall = createHermesInboxToolCall(route, item);
 
     if (toolCall.name === 'vault_ingest_youtube' && args.skipExtraction) {
@@ -195,9 +241,11 @@ function buildIdeaCapture(toolCall: HermesInboxToolCall): { title: string; body:
     case 'vault_capture_attachment': {
       const attachment = recordArg(toolCall, 'attachment') ?? {};
       const filename = typeof attachment['file_name'] === 'string' ? attachment['file_name'] : 'attachment';
+      const rawText = stringArg(toolCall, 'raw_text');
       return {
         title: `Inbox attachment: ${filename}`,
         body: formatInboxBody({
+          raw_text: rawText,
           route_kind: 'attachment',
           source: recordArg(toolCall, 'source'),
           payload: { attachment },
@@ -310,6 +358,94 @@ function parsePlatform(value: unknown): HermesInboxPlatform {
   return value === 'telegram' || value === 'discord' || value === 'manual' || value === 'unknown'
     ? value
     : 'unknown';
+}
+
+function optionValue(args: Record<string, unknown>, key: string, flagName: string): string | undefined {
+  return optionString(args[key], flagName) ?? optionString(args[flagName], flagName);
+}
+
+function optionString(value: unknown, name: string): string | undefined {
+  if (typeof value === 'string' && value.trim()) {
+    return value;
+  }
+
+  return processArgValue(`--${name}`);
+}
+
+function processArgValue(flag: string): string | undefined {
+  const equalsPrefix = `${flag}=`;
+
+  for (let index = 0; index < process.argv.length; index += 1) {
+    const arg = process.argv[index];
+
+    if (arg === flag) {
+      const next = process.argv[index + 1];
+      return next && !next.startsWith('-') ? next : undefined;
+    }
+
+    if (arg?.startsWith(equalsPrefix)) {
+      return arg.slice(equalsPrefix.length);
+    }
+  }
+
+  return undefined;
+}
+
+function buildAttachment(input: {
+  kind?: string;
+  name?: string;
+  mime?: string;
+  path?: string;
+  size?: string;
+}): HermesInboxAttachment | undefined {
+  const localPath = input.path?.trim();
+  const fileName = input.name?.trim() || deriveFilename(localPath);
+  const mimeType = input.mime?.trim();
+  const sizeBytes = parseOptionalNonnegativeInteger(input.size);
+
+  if (!localPath && !fileName && !mimeType && sizeBytes === undefined) {
+    return undefined;
+  }
+
+  return {
+    kind: parseAttachmentKind(input.kind, mimeType),
+    file_name: fileName,
+    mime_type: mimeType,
+    size_bytes: sizeBytes,
+    local_path: localPath,
+  };
+}
+
+function parseAttachmentKind(value: unknown, mimeType?: string): HermesInboxAttachmentKind {
+  if (value === 'image' || value === 'file' || value === 'unknown') {
+    return value;
+  }
+
+  if (mimeType?.startsWith('image/')) {
+    return 'image';
+  }
+
+  return 'file';
+}
+
+function parseOptionalNonnegativeInteger(value: unknown): number | undefined {
+  if (typeof value !== 'string' || !value.trim()) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+function deriveFilename(path: string | undefined): string | undefined {
+  if (!path) {
+    return undefined;
+  }
+
+  const parts = path.split(/[\\/]/u).filter(Boolean);
+
+  return parts.at(-1);
 }
 
 function stringArg(toolCall: HermesInboxToolCall, key: string): string {

@@ -88,7 +88,14 @@ describe('routeHermesInboxItem', () => {
   it('routes attachments when text is absent', () => {
     expect(
       routeHermesInboxItem({
-        attachments: [{ kind: 'image', file_name: 'screenshot.png', mime_type: 'image/png' }],
+        attachments: [
+          {
+            kind: 'image',
+            file_name: 'screenshot.png',
+            mime_type: 'image/png',
+            local_path: '/tmp/screenshot.png',
+          },
+        ],
         source: { platform: 'telegram' },
       }),
     ).toMatchObject({
@@ -98,6 +105,28 @@ describe('routeHermesInboxItem', () => {
         attachment: {
           kind: 'image',
           file_name: 'screenshot.png',
+          mime_type: 'image/png',
+          local_path: '/tmp/screenshot.png',
+        },
+      },
+    });
+  });
+
+  it('prefers attachment capture when captions are unstructured', () => {
+    expect(
+      routeHermesInboxItem({
+        raw_text: 'screenshot from the error',
+        attachments: [{ kind: 'image', file_name: 'error.png', mime_type: 'image/png' }],
+        source: { platform: 'telegram' },
+      }),
+    ).toMatchObject({
+      kind: 'attachment',
+      action: 'capture_attachment',
+      payload: {
+        raw_text: 'screenshot from the error',
+        attachment: {
+          kind: 'image',
+          file_name: 'error.png',
           mime_type: 'image/png',
         },
       },

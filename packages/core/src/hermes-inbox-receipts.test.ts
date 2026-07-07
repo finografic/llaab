@@ -5,7 +5,7 @@ import {
   createHermesInboxReceipt,
   createHermesInboxToolCall,
 } from './hermes-inbox-receipts.js';
-import { routeHermesInboxText } from './hermes-inbox-router.js';
+import { routeHermesInboxItem, routeHermesInboxText } from './hermes-inbox-router.js';
 
 describe('createHermesInboxToolCall', () => {
   it('maps YouTube routes to the YouTube ingest tool', () => {
@@ -37,6 +37,27 @@ describe('createHermesInboxToolCall', () => {
       arguments: {
         raw_text: 'npx shadcn@latest add button',
         route_kind: 'command_candidate',
+      },
+    });
+  });
+
+  it('preserves attachment captions in attachment tool calls', () => {
+    const item = {
+      raw_text: 'caption from telegram',
+      attachments: [{ kind: 'image' as const, file_name: 'screen.png', mime_type: 'image/png' }],
+      source: { platform: 'telegram' as const },
+    };
+    const route = routeHermesInboxItem(item);
+
+    expect(createHermesInboxToolCall(route, item)).toMatchObject({
+      name: 'vault_capture_attachment',
+      arguments: {
+        attachment: {
+          kind: 'image',
+          file_name: 'screen.png',
+          mime_type: 'image/png',
+        },
+        raw_text: 'caption from telegram',
       },
     });
   });

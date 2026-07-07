@@ -6,12 +6,22 @@ const URL_CANDIDATE_RE = /https?:\/\/[^\s<>"')\]]+/i;
 
 export function routeHermesInboxItem(item: HermesInboxItem): HermesInboxRoute {
   const rawText = item.raw_text?.trim();
+  const attachment = item.attachments[0];
 
   if (rawText) {
-    return routeHermesInboxText(rawText);
-  }
+    const textRoute = routeHermesInboxText(rawText);
+    if (!attachment || textRoute.action !== 'capture_raw') {
+      return textRoute;
+    }
 
-  const attachment = item.attachments[0];
+    return {
+      kind: 'attachment',
+      confidence: 0.9,
+      action: 'capture_attachment',
+      payload: { attachment, raw_text: rawText },
+      reason: 'Message has an attachment and unstructured text.',
+    };
+  }
 
   if (attachment) {
     return {

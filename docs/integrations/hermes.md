@@ -166,14 +166,39 @@ The repo-side one-shot executor is:
 lab inbox "https://youtu.be/..."
 lab inbox "https://www.npmjs.com/package/zod"
 lab inbox "todo: follow up on Hermes inbox"
+lab inbox --attachmentPath /tmp/screenshot.png --attachmentName screenshot.png --attachmentMime image/png
 ```
 
 Use `--json` when a gateway bridge needs the structured route, tool call, receipt, and log event.
+Messaging bridges should prefer explicit options over positional text when attachments are present:
+
+```bash
+lab inbox \
+  --platform telegram \
+  --user "$TELEGRAM_USER_ID" \
+  --chat "$TELEGRAM_CHAT_ID" \
+  --message "$TELEGRAM_MESSAGE_ID" \
+  --rawText "$CAPTION" \
+  --attachmentPath "$CACHED_PATH" \
+  --attachmentName "$FILENAME" \
+  --attachmentMime "$MIME_TYPE" \
+  --attachmentKind image \
+  --attachmentSize "$SIZE_BYTES"
+```
+
+The local Telegram bridge in `~/.hermes/hermes-agent/gateway/platforms/base.py` intercepts owner DMs
+before normal agent handling when the message is a supported bare inbox item (`todo:`, URL, `npx`,
+`npmx`) or contains cached Telegram media. Set `LLAAB_TELEGRAM_INBOX_BRIDGE=0` in `~/.hermes/.env`
+to disable that bypass. Attachment binaries stay in Hermes' local media cache for now; LLAAB stores
+the cached path plus filename, MIME type, size, source message id, chat id, user id, and timestamp.
 
 Validated 2026-07-07:
 
 - `lab inbox "todo: ..."` creates a real inbox todo node through the API.
 - `lab inbox "https://www.npmjs.com/package/zod"` pins the npm package.
+- Telegram DM `todo: ...` creates a vault todo node and returns a short receipt.
+- Telegram DM npm package links pin libraries and return a short receipt.
+- `lab inbox --attachmentPath ...` routes screenshots/files to `vault_capture_attachment`.
 - Duplicate npm pin attempts return an idempotent already-pinned receipt.
 - MCP write tools can read `LLAAB_API_KEY` from local env files when the process env omits it.
 

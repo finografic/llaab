@@ -11,6 +11,7 @@ export const HermesInboxAttachmentSchema = z.object({
   file_name: z.string().min(1).optional(),
   mime_type: z.string().min(1).optional(),
   size_bytes: z.number().int().nonnegative().optional(),
+  local_path: z.string().min(1).optional(),
   url: z.url().optional(),
 });
 

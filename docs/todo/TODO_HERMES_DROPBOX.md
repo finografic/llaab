@@ -169,12 +169,12 @@ Purpose: ship the first useful dropbox behavior using currently viable workflows
 - [x] Verify `lab inbox` can pin an npm package through the API (2026-07-07).
 - [x] Verify MCP write tools can read `LLAAB_API_KEY` from local env files (2026-07-07).
 - [ ] Telegram DM with YouTube URL starts the existing ingest pipeline.
-- [ ] Telegram DM with npm package URL creates a pinned library entry.
+- [x] Telegram DM with npm package URL creates a pinned library entry (2026-07-07).
 - [ ] Telegram DM with `npx ...` or `npmx ...` captures a pinned command/library candidate.
 - [ ] Duplicate YouTube URLs follow existing dedupe behavior.
 - [x] Duplicate library pins are idempotent in the inbox/MCP execution path (2026-07-07).
 - [ ] Unknown links save as raw inbox items instead of failing.
-- [ ] Receipts include the created/updated target.
+- [x] Receipts include the created/updated target when available (2026-07-07).
 
 Exit criteria: the inbox is useful for YouTube and npm/npx captures from the phone.
 
@@ -182,11 +182,15 @@ Exit criteria: the inbox is useful for YouTube and npm/npx captures from the pho
 
 Purpose: broaden capture without overbuilding the processing pipelines.
 
-- [ ] Capture screenshots/photos as raw inbox attachment items.
-- [ ] Capture uploaded files as raw inbox attachment items.
-- [ ] Preserve original filename, MIME type, size, and source message timestamp.
-- [ ] Decide whether binaries live in vault assets, an inbox attachments folder, or app storage.
-- [ ] Capture `todo:` notes as typed todo nodes or inbox items tagged `todo`.
+- [x] Capture screenshots/photos as raw inbox attachment items in the `lab inbox` executor
+      (2026-07-07).
+- [x] Capture uploaded files as raw inbox attachment items in the `lab inbox` executor
+      (2026-07-07).
+- [x] Preserve cached filename, MIME type, size, local path, and source message timestamp
+      (2026-07-07).
+- [x] Keep binaries in the Hermes local media cache for now; store metadata/local path in the vault
+      inbox item until a vault assets pipeline exists (2026-07-07).
+- [x] Capture `todo:` notes as typed todo nodes or inbox items tagged `todo` (2026-07-07).
 - [ ] Add manual review UI/search path for raw inbox items.
 
 Exit criteria: files, screenshots, and short todo notes are never lost, even before specialized
@@ -196,11 +200,11 @@ pipelines exist.
 
 Purpose: keep casual inbox usage cheap.
 
-- [ ] Route deterministic classifications without LLM calls.
+- [x] Route deterministic classifications without LLM calls (2026-07-07).
 - [ ] Use local/cheap model only for ambiguous classification.
 - [ ] Use stronger remote models only for synthesis or risky mutation decisions.
 - [ ] Add config comments documenting model tier expectations.
-- [ ] Log when an inbox item escalates beyond deterministic routing.
+- [x] Log deterministic inbox route decisions before execution (2026-07-07).
 - [ ] Define an acceptable smoke-test cost target.
 
 Exit criteria: routine inbox drops do not use the premium Hermes default model.
@@ -210,12 +214,12 @@ Exit criteria: routine inbox drops do not use the premium Hermes default model.
 Run these from phone and desktop once the MVP is wired:
 
 - [ ] Send a YouTube URL.
-- [ ] Send an npm package URL.
+- [x] Send an npm package URL (2026-07-07).
 - [ ] Send an `npx` command note.
 - [ ] Send an `npmx` command note.
 - [ ] Send a GitHub repo URL.
 - [ ] Send a docs/blog URL.
-- [ ] Send `todo: test Hermes dropbox`.
+- [x] Send `todo: test Hermes dropbox` (2026-07-07).
 - [ ] Send a screenshot.
 - [ ] Send a small file.
 - [ ] Confirm all receipts are short and useful.
