@@ -84,7 +84,7 @@ export function createHermesInboxReceipt(
   if (result.status === 'failed') {
     return {
       status: 'failed',
-      text: `Inbox failed: ${result.error ?? route.kind}`,
+      text: failedReceiptText(route, result.error),
     };
   }
 
@@ -92,22 +92,22 @@ export function createHermesInboxReceipt(
 
   switch (route.action) {
     case 'ingest_youtube':
-      return { status: 'queued', text: withTarget('Queued YouTube ingest', target) };
+      return { status: 'queued', text: withTarget('✅ Ingested YouTube video', target) };
     case 'pin_library':
       return {
         status: 'pinned',
-        text: withTarget('Pinned library', target ?? stringPayload(route, 'package_name')),
+        text: withTarget('✅ Pinned npm package', target ?? stringPayload(route, 'package_name')),
       };
     case 'capture_todo':
-      return { status: 'captured', text: withTarget('Captured todo', target) };
+      return { status: 'captured', text: withTarget('✅ Captured todo', target) };
     case 'capture_web_link':
-      return { status: 'saved', text: withTarget('Saved link', target) };
+      return { status: 'saved', text: withTarget('✅ Saved link', target) };
     case 'capture_attachment':
-      return { status: 'saved', text: withTarget('Saved attachment', target) };
+      return { status: 'saved', text: withTarget('✅ Saved attachment', target) };
     case 'capture_command_candidate':
-      return { status: 'saved', text: withTarget('Saved command candidate', target) };
+      return { status: 'saved', text: withTarget('✅ Saved command candidate', target) };
     case 'capture_raw':
-      return { status: 'saved', text: withTarget('Saved to inbox', target) };
+      return { status: 'saved', text: withTarget('✅ Saved inbox item', target) };
   }
 }
 
@@ -135,4 +135,25 @@ function stringPayload(route: HermesInboxRoute, key: string): string {
 
 function withTarget(prefix: string, target: string | undefined): string {
   return target ? `${prefix}: ${target}` : prefix;
+}
+
+function failedReceiptText(route: HermesInboxRoute, error: string | undefined): string {
+  const detail = error ?? route.kind;
+
+  switch (route.action) {
+    case 'ingest_youtube':
+      return `❌ Failed YouTube ingest: ${detail}`;
+    case 'pin_library':
+      return `❌ Failed npm package pin: ${detail}`;
+    case 'capture_todo':
+      return `❌ Failed todo capture: ${detail}`;
+    case 'capture_web_link':
+      return `❌ Failed link capture: ${detail}`;
+    case 'capture_attachment':
+      return `❌ Failed attachment save: ${detail}`;
+    case 'capture_command_candidate':
+      return `❌ Failed command candidate save: ${detail}`;
+    case 'capture_raw':
+      return `❌ Failed inbox save: ${detail}`;
+  }
 }
