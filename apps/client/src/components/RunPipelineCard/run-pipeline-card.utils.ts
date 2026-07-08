@@ -82,7 +82,7 @@ export function buildIngestYoutubeMonitorSteps(run: RunMonitorItem): RunPipeline
     extractionStatus = 'warning';
   } else if (extractedEvent) {
     extractionStatus = 'complete';
-  } else if (extractingEvent || run.status === 'running') {
+  } else if (extractingEvent) {
     extractionStatus = 'active';
   } else if (run.status === 'completed' && !extractedEvent) {
     extractionStatus = 'warning';
