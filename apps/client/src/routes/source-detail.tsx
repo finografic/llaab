@@ -12,6 +12,7 @@ import type { SourceNode, TranscriptNode } from '@llaab/schemas';
 import type { SourceTranscriptsTableRow } from 'tables/SourceTranscriptsTable/SourceTranscriptsTable';
 
 import { api } from 'lib/api';
+import { parseResponseJson } from 'lib/parse-response-json';
 import { usePageTitle } from 'lib/use-page-title';
 import { formatAudienceCount } from 'utils/format-audience-count.utils';
 import { formatDetailDate } from 'utils/format-date.utils';
@@ -51,12 +52,12 @@ export function SourceDetailPage() {
     void (async () => {
       try {
         const res = await api.vault.sources[':id'].enrich.$post({ param: { id: initial.id } });
-        const body = (await res.json()) as {
+        const body = await parseResponseJson<{
           source?: SourceNode;
           error?: string;
           subscriptionError?: string;
           metadataCommitted?: boolean;
-        };
+        }>(res);
 
         if (cancelled) return;
 

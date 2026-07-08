@@ -5,6 +5,12 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 export type DataTableColumnAlign = 'left' | 'center' | 'right';
 
+/** Optional truncation limits for a table column — use `maxWidth`, `maxChars`, or both. */
+export interface DataTableColumnLimit {
+  maxWidth?: string | number;
+  maxChars?: number;
+}
+
 /**
  * Column definition extended with optional responsive visibility and alignment.
  *
@@ -12,11 +18,26 @@ export type DataTableColumnAlign = 'left' | 'center' | 'right';
  * (Tailwind mobile-first, matching {@link BREAKPOINTS}).
  *
  * `align` sets horizontal text alignment on header and body cells (defaults to `center`).
+ *
+ * `maxWidth` caps the column width (number values are treated as pixels).
+ * `maxChars` truncates plain accessor values with an ellipsis suffix.
  */
-export type DataTableColumnDef<TData, TValue = unknown> = ColumnDef<TData, TValue> & {
-  minVisible?: ScreenClass;
-  align?: DataTableColumnAlign;
-};
+export type DataTableColumnDef<TData, TValue = unknown> = ColumnDef<TData, TValue> &
+  DataTableColumnLimit & {
+    minVisible?: ScreenClass;
+    align?: DataTableColumnAlign;
+  };
+
+export function resolveDataTableMaxWidth(maxWidth?: string | number): string | undefined {
+  if (maxWidth === undefined) return undefined;
+  return typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth;
+}
+
+export function truncateChars(text: string, maxChars: number): string {
+  if (maxChars <= 0 || text.length <= maxChars) return text;
+  if (maxChars <= 3) return text.slice(0, maxChars);
+  return `${text.slice(0, maxChars - 3)}...`;
+}
 
 /**
  * Shorthand for a typed column array — pairs with `DataTable`'s `columns` prop so

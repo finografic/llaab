@@ -2,9 +2,11 @@ import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-tabl
 import { ArrowUpDown } from 'lucide-react';
 import { useMemo } from 'react';
 import type { DataTableColumnAlign, DataTableColumnDef } from '../lib/data-table-utils';
-import type { Column, ColumnDef, TableOptions } from '@tanstack/react-table';
+import type { Column, ColumnDef, Cell, TableOptions } from '@tanstack/react-table';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { minVisibleTableCellClass } from '../lib/breakpoints';
+import { resolveDataTableMaxWidth, truncateChars } from '../lib/data-table-utils';
 import { cn } from '../lib/utils';
 import { Button } from './button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
@@ -74,7 +76,51 @@ function columnAlignClass(align?: DataTableColumnAlign): string {
 function toTableColumns<TData, TValue>(
   columns: Array<DataTableColumnDef<TData, TValue>>,
 ): Array<ColumnDef<TData, TValue>> {
-  return columns.map(({ minVisible: _minVisible, align: _align, ...columnDef }) => columnDef);
+  return columns.map(
+    ({ minVisible: _minVisible, align: _align, maxWidth: _maxWidth, maxChars: _maxChars, ...columnDef }) =>
+      columnDef,
+  );
+}
+
+function columnLimitStyle(maxWidth?: string | number): CSSProperties | undefined {
+  const resolved = resolveDataTableMaxWidth(maxWidth);
+  return resolved ? { maxWidth: resolved } : undefined;
+}
+
+function renderTruncatedCellContent<TData>(
+  cell: Cell<TData, unknown>,
+  limits: { maxWidth?: string | number; maxChars?: number },
+): ReactNode {
+  const { maxWidth, maxChars } = limits;
+  const hasCustomCell = Boolean(cell.column.columnDef.cell);
+  const rawValue = cell.getValue();
+  const stringValue = typeof rawValue === 'string' ? rawValue : undefined;
+
+  let content: ReactNode = flexRender(cell.column.columnDef.cell, cell.getContext());
+  if (maxChars && stringValue && !hasCustomCell) {
+    content = truncateChars(stringValue, maxChars);
+  }
+
+  if (maxWidth === undefined && maxChars === undefined) {
+    return content;
+  }
+
+  const title =
+    stringValue && maxChars && stringValue.length > maxChars
+      ? stringValue
+      : maxWidth !== undefined && stringValue
+        ? stringValue
+        : undefined;
+
+  return (
+    <div
+      className={cn('min-w-0', maxWidth !== undefined && 'truncate')}
+      style={columnLimitStyle(maxWidth)}
+      title={title}
+    >
+      {content}
+    </div>
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -95,9 +141,10 @@ export function DataTable<TData, TValue = unknown>({
 }: DataTableProps<TData, TValue>) {
   const tableColumns = useMemo(() => toTableColumns(columns), [columns]);
 
-  const { visibilityClassByColumnId, alignClassByColumnId } = useMemo(() => {
+  const { visibilityClassByColumnId, alignClassByColumnId, limitByColumnId } = useMemo(() => {
     const visibility = new Map<string, string>();
     const align = new Map<string, string>();
+    const limits = new Map<string, { maxWidth?: string | number; maxChars?: number }>();
 
     for (const column of columns) {
       const columnId = resolveColumnId(column);
@@ -105,9 +152,12 @@ export function DataTable<TData, TValue = unknown>({
 
       visibility.set(columnId, minVisibleTableCellClass(column.minVisible));
       align.set(columnId, columnAlignClass(column.align));
+      if (column.maxWidth !== undefined || column.maxChars !== undefined) {
+        limits.set(columnId, { maxWidth: column.maxWidth, maxChars: column.maxChars });
+      }
     }
 
-    return { visibilityClassByColumnId: visibility, alignClassByColumnId: align };
+    return { visibilityClassByColumnId: visibility, alignClassByColumnId: align, limitByColumnId: limits };
   }, [columns]);
 
   const table = useReactTable({
@@ -130,6 +180,7 @@ export function DataTable<TData, TValue = unknown>({
                     visibilityClassByColumnId.get(header.column.id),
                     alignClassByColumnId.get(header.column.id),
                   )}
+                  style={columnLimitStyle(limitByColumnId.get(header.column.id)?.maxWidth)}
                 >
                   {header.isPlaceholder
                     ? null
@@ -143,17 +194,24 @@ export function DataTable<TData, TValue = unknown>({
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className={cn(
-                      visibilityClassByColumnId.get(cell.column.id),
-                      alignClassByColumnId.get(cell.column.id),
-                    )}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+                {row.getVisibleCells().map((cell) => {
+                  const limits = limitByColumnId.get(cell.column.id);
+
+                  return (
+                    <TableCell
+                      key={cell.id}
+                      className={cn(
+                        visibilityClassByColumnId.get(cell.column.id),
+                        alignClassByColumnId.get(cell.column.id),
+                      )}
+                      style={columnLimitStyle(limits?.maxWidth)}
+                    >
+                      {limits
+                        ? renderTruncatedCellContent(cell, limits)
+                        : flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))
           ) : (

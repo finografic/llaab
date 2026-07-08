@@ -1,3 +1,4 @@
+import { resolveDataTableMaxWidth } from '@llaab/ui/lib/data-table-utils';
 import { Button } from 'components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'components/ui/table';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
@@ -6,7 +7,8 @@ import { useMemo, useState } from 'react';
 import { RunsGroupHeader } from 'tables/RunsTable/RunsGroupHeader';
 import { buildSourcesById } from 'tables/RunsTable/RunsTable.utils';
 import type { SourceNode, TranscriptNode } from '@llaab/schemas';
-import type { ReactNode } from 'react';
+import type { DataTableColumnLimit } from '@llaab/ui/lib/data-table-utils';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { isIngestRun, isRunExtracting } from 'utils/run-display.utils';
 import type { RunGroup } from 'utils/run-grouping.utils';
@@ -57,6 +59,8 @@ export interface RunsTableProps {
   sources?: SourceNode[];
   transcripts?: TranscriptNode[];
   showHeading?: boolean;
+  /** Per-column truncation limits (e.g. title on the ingest page). */
+  columnLimits?: Partial<Record<SortColumn, DataTableColumnLimit>>;
 }
 
 function SortableHeader({
@@ -64,19 +68,21 @@ function SortableHeader({
   sort,
   onSort,
   className,
+  style,
   children,
 }: {
   column: SortColumn;
   sort: SortState;
   onSort: (column: SortColumn) => void;
   className?: string;
+  style?: CSSProperties;
   children: ReactNode;
 }) {
   const isActive = sort.column === column;
   const Icon = isActive ? (sort.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
 
   return (
-    <TableHead className={className}>
+    <TableHead className={className} style={style}>
       <Button
         variant="ghost"
         className={isActive ? 'text-foreground' : 'text-muted-foreground opacity-70'}
@@ -89,7 +95,12 @@ function SortableHeader({
   );
 }
 
-export function RunsTable({ sources = [], transcripts = [], showHeading = false }: RunsTableProps) {
+export function RunsTable({
+  sources = [],
+  transcripts = [],
+  showHeading = false,
+  columnLimits,
+}: RunsTableProps) {
   const [sort, setSort] = useState<SortState>({ column: 'date', direction: 'desc' });
   const { data: allRuns = [] } = useRuns({
     refetchInterval: (query) => {
@@ -119,6 +130,11 @@ export function RunsTable({ sources = [], transcripts = [], showHeading = false 
     }));
   }
 
+  const titleLimits = columnLimits?.title;
+  const titleHeaderStyle = titleLimits?.maxWidth
+    ? { maxWidth: resolveDataTableMaxWidth(titleLimits.maxWidth) }
+    : undefined;
+
   return (
     <div className={showHeading ? styles.withHeading : undefined}>
       {showHeading && (
@@ -132,7 +148,7 @@ export function RunsTable({ sources = [], transcripts = [], showHeading = false 
           <TableHeader>
             <TableRow>
               <TableHead className="w-0" />
-              <SortableHeader column="title" sort={sort} onSort={handleSort}>
+              <SortableHeader column="title" sort={sort} onSort={handleSort} style={titleHeaderStyle}>
                 Title
               </SortableHeader>
               <SortableHeader column="date" sort={sort} onSort={handleSort}>
@@ -158,7 +174,9 @@ export function RunsTable({ sources = [], transcripts = [], showHeading = false 
           </TableHeader>
           <TableBody>
             {sortedGroups.length ? (
-              sortedGroups.map((group) => <RunsGroupHeader key={group.key} group={group} />)
+              sortedGroups.map((group) => (
+                <RunsGroupHeader key={group.key} group={group} titleLimits={titleLimits} />
+              ))
             ) : (
               <TableRow>
                 <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">

@@ -10,6 +10,7 @@ import { RunsTable } from 'tables/RunsTable/RunsTable';
 import type { LabNode, SourceNode, TranscriptNode } from '@llaab/schemas';
 
 import { api } from 'lib/api';
+import { parseResponseJson } from 'lib/parse-response-json';
 import { usePageTitle } from 'lib/use-page-title';
 import { isYouTubeChannelSource } from 'utils/youtube-source.utils';
 
@@ -50,13 +51,13 @@ export function IngestPage() {
 
     let cancelled = false;
 
-    for (const source of sourcesToRefresh) {
-      refreshedSourceIds.current.add(source.id);
+    void (async () => {
+      for (const source of sourcesToRefresh) {
+        if (cancelled) return;
 
-      void (async () => {
         try {
           const res = await api.vault.sources[':id'].enrich.$post({ param: { id: source.id } });
-          const body = (await res.json()) as EnrichSourceResponse;
+          const body = await parseResponseJson<EnrichSourceResponse>(res);
 
           if (cancelled) return;
 
@@ -69,8 +70,10 @@ export function IngestPage() {
                 enrichError: body.error ?? 'Failed to refresh channel metadata.',
               },
             }));
-            return;
+            continue;
           }
+
+          refreshedSourceIds.current.add(source.id);
 
           queryClient.setQueryData<LabNode[]>(QUERY_KEYS.vault.nodes('source'), (current) =>
             current?.map((node) => (node.id === body.source?.id ? body.source : node)),
@@ -90,7 +93,7 @@ export function IngestPage() {
                 subscriptionError: body.subscriptionError,
               },
             }));
-            return;
+            continue;
           }
 
           setEnrichIssues((current) => {
@@ -111,8 +114,8 @@ export function IngestPage() {
             },
           }));
         }
-      })();
-    }
+      }
+    })();
 
     return () => {
       cancelled = true;
@@ -157,7 +160,12 @@ export function IngestPage() {
           </div>
         ) : null}
 
-        <RunsTable sources={sources} transcripts={transcripts} showHeading />
+        <RunsTable
+          sources={sources}
+          transcripts={transcripts}
+          showHeading
+          columnLimits={{ title: { maxWidth: 400, maxChars: 60 } }}
+        />
       </div>
     </PageLayout>
   );

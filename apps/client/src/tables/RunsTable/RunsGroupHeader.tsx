@@ -1,11 +1,14 @@
 import { BadgeCheckIcon, ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon } from '@llaab/icons';
+import { resolveDataTableMaxWidth, truncateChars } from '@llaab/ui/lib/data-table-utils';
 import { DeleteRunGroupAction } from 'components/DeleteRunGroupAction/DeleteRunGroupAction';
 import { Badge } from 'components/ui/badge';
 import { TableCell, TableRow } from 'components/ui/table';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RunsGroupRow } from 'tables/RunsTable/RunsGroupRow';
+import type { DataTableColumnLimit } from '@llaab/ui/lib/data-table-utils';
 
+import { cn } from 'lib/utils';
 import { isRunExtracting } from 'utils/run-display.utils';
 import type { RunGroup } from 'utils/run-grouping.utils';
 
@@ -14,12 +17,18 @@ import { fmtClickDate, fmtDuration, renderYouTubeSubscriptionIcon } from './Runs
 
 export interface RunGroupRowProps {
   group: RunGroup;
+  titleLimits?: DataTableColumnLimit;
 }
 
 /** Grouped row for the Runs table: a parent summary row plus collapsible per-run child rows. */
-export function RunsGroupHeader({ group }: RunGroupRowProps) {
+export function RunsGroupHeader({ group, titleLimits }: RunGroupRowProps) {
   const [expanded, setExpanded] = useState(false);
   const hasExtractingRun = useMemo(() => group.runs.some(isRunExtracting), [group.runs]);
+  const displayTitle = titleLimits?.maxChars ? truncateChars(group.title, titleLimits.maxChars) : group.title;
+  const titleCellStyle = titleLimits?.maxWidth
+    ? { maxWidth: resolveDataTableMaxWidth(titleLimits.maxWidth) }
+    : undefined;
+  const truncatedTitleClass = titleLimits ? styles.subjectTitleTruncated : undefined;
 
   return (
     <>
@@ -44,14 +53,20 @@ export function RunsGroupHeader({ group }: RunGroupRowProps) {
             </Badge>
           </button>
         </TableCell>
-        <TableCell>
+        <TableCell style={titleCellStyle}>
           <div className={styles.cellTitle}>
             {group.href ? (
-              <Link to={group.href} className={styles.subjectTitle}>
-                {group.title}
+              <Link
+                to={group.href}
+                className={cn(styles.subjectTitle, truncatedTitleClass)}
+                title={group.title}
+              >
+                {displayTitle}
               </Link>
             ) : (
-              <span className={styles.subjectTitle}>{group.title}</span>
+              <span className={cn(styles.subjectTitle, truncatedTitleClass)} title={group.title}>
+                {displayTitle}
+              </span>
             )}
           </div>
         </TableCell>

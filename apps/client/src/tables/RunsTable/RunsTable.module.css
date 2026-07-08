@@ -25,6 +25,14 @@ a.subjectTitle:hover {
   text-decoration: underline;
 }
 
+.subjectTitleTruncated {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .runsBadge {
   width: 2rem;
   margin-left: 0.66rem;

@@ -27,11 +27,12 @@ export const enrichSource = {
         const relativePath = `sources/${formatNodeFilename('source', id)}`;
         try {
           if (await isVaultFileTracked(relativePath)) {
-            await commitVaultFile(
+            const commitResult = await commitVaultFile(
               relativePath,
               `chore(vault): refresh source metadata for ${result.source.title}`,
+              { skipHooks: true },
             );
-            metadataCommitted = true;
+            metadataCommitted = !commitResult.skipped;
           }
         } catch (commitErr) {
           metadataCommitError =

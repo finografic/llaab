@@ -44,22 +44,51 @@ export async function isVaultFileTracked(pathRelativeToVault: string): Promise<b
   return result.exitCode === 0;
 }
 
+let gitOperationChain: Promise<unknown> = Promise.resolve();
+
+function withGitLock<T>(operation: () => Promise<T>): Promise<T> {
+  const next = gitOperationChain.then(operation, operation);
+  gitOperationChain = next.then(
+    () => undefined,
+    () => undefined,
+  );
+  return next;
+}
+
+export interface CommitVaultFileOptions {
+  /** Skip git hooks (e.g. lint-staged) for machine-generated chore commits. */
+  skipHooks?: boolean;
+}
+
 export async function commitVaultFile(
   pathRelativeToVault: string,
   message: string,
-): Promise<{ sha?: string }> {
-  const gitPath = toVaultGitPath(pathRelativeToVault);
+  options: CommitVaultFileOptions = {},
+): Promise<{ sha?: string; skipped?: boolean }> {
+  return withGitLock(async () => {
+    const gitPath = toVaultGitPath(pathRelativeToVault);
 
-  const add = await runGit(['add', '--', gitPath]);
-  if (add.exitCode !== 0) {
-    throw new Error(add.stderr || 'git add failed.');
-  }
+    const add = await runGit(['add', '--', gitPath]);
+    if (add.exitCode !== 0) {
+      throw new Error(add.stderr || 'git add failed.');
+    }
 
-  const commit = await runGit(['commit', '-m', message, '--', gitPath]);
-  if (commit.exitCode !== 0) {
-    throw new Error(commit.stderr || 'git commit failed.');
-  }
+    const diff = await runGit(['diff', '--cached', '--quiet', '--', gitPath]);
+    if (diff.exitCode === 0) {
+      return { skipped: true };
+    }
 
-  const rev = await runGit(['rev-parse', 'HEAD']);
-  return { sha: rev.exitCode === 0 ? rev.stdout.trim() : undefined };
+    const commitArgs = ['commit', '-m', message, '--', gitPath];
+    if (options.skipHooks) {
+      commitArgs.splice(1, 0, '--no-verify');
+    }
+
+    const commit = await runGit(commitArgs);
+    if (commit.exitCode !== 0) {
+      throw new Error(commit.stderr || 'git commit failed.');
+    }
+
+    const rev = await runGit(['rev-parse', 'HEAD']);
+    return { sha: rev.exitCode === 0 ? rev.stdout.trim() : undefined };
+  });
 }
