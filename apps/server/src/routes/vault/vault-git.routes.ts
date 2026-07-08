@@ -1,6 +1,3 @@
-import { spawn } from 'node:child_process';
-import { sep } from 'node:path';
-import { MONOREPO_ROOT } from '@llaab/core';
 import { NodeTypeSchema } from '@llaab/schemas';
 import type { AppCtx } from '../../types/app.types.js';
 import type {
@@ -10,24 +7,7 @@ import type {
   VaultGitStatusResponse,
 } from '@llaab/schemas';
 
-function runGit(args: string[]): Promise<{ exitCode: number; stderr: string; stdout: string }> {
-  return new Promise((resolve, reject) => {
-    const child = spawn('git', args, { cwd: MONOREPO_ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.setEncoding('utf8');
-    child.stderr.setEncoding('utf8');
-    child.stdout.on('data', (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on('data', (chunk) => {
-      stderr += chunk;
-    });
-    child.on('error', reject);
-    child.on('close', (code) => resolve({ exitCode: code ?? 1, stderr, stdout }));
-  });
-}
+import { runGit, toVaultGitPath } from '../../lib/vault-git.js';
 
 function mapPorcelainCode(code: string): VaultGitFileStatus {
   if (code.includes('?')) return 'untracked';
@@ -67,21 +47,6 @@ function buildVaultCommitMessage(countsByType: Record<string, number>, total: nu
     .map(([type, count]) => `- ${pluralize(count, `${type} file`)}`);
 
   return lines.length > 0 ? `${header}\n\n${lines.join('\n')}` : header;
-}
-
-function toVaultGitPath(path: string): string {
-  const normalizedPath = path.replaceAll('\\', '/');
-  const segments = normalizedPath.split('/');
-  if (
-    normalizedPath.startsWith('/') ||
-    normalizedPath.includes('\0') ||
-    segments.includes('..') ||
-    segments.includes('')
-  ) {
-    throw new Error('Invalid path.');
-  }
-
-  return ['vault', ...segments].join(sep);
 }
 
 async function getVaultGitStatus(): Promise<VaultGitStatusResponse> {

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS as RUN_KEYS } from 'queries/runs';
+import { QUERY_KEYS as VAULT_KEYS } from 'queries/vault';
 
 import { api } from 'lib/api';
 
@@ -17,6 +18,7 @@ export function useDiscardTranscript() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.list() });
+      void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.gitStatus() });
     },
   });
 }

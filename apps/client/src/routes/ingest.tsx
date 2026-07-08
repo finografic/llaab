@@ -19,6 +19,7 @@ interface EnrichSourceResponse {
   source?: SourceNode;
   error?: string;
   subscriptionError?: string;
+  metadataCommitted?: boolean;
 }
 
 interface SourceEnrichIssue {
@@ -75,6 +76,10 @@ export function IngestPage() {
             current?.map((node) => (node.id === body.source?.id ? body.source : node)),
           );
           queryClient.setQueryData<LabNode>(QUERY_KEYS.vault.node(body.source.id), body.source);
+
+          if (body.metadataCommitted) {
+            void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vault.gitStatus() });
+          }
 
           if (body.subscriptionError) {
             setEnrichIssues((current) => ({

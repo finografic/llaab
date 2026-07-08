@@ -16,6 +16,8 @@ export interface EnrichSourceOptions {
 export interface EnrichSourceResult {
   source: SourceNode;
   fetched: boolean;
+  /** True when enrich wrote changes to the source vault file. */
+  persisted: boolean;
   subscriptionChecked: boolean;
   /** Set when OAuth is configured but the subscription lookup fails. */
   subscriptionError?: string;
@@ -53,13 +55,14 @@ function isMetadataFresh(source: SourceNode, cacheTtlMs: number): boolean {
 async function refreshYouTubeSubscription(source: SourceNode): Promise<EnrichSourceResult> {
   const channelId = source.platform_id;
   if (!channelId) {
-    return { source, fetched: false, subscriptionChecked: false };
+    return { source, fetched: false, persisted: false, subscriptionChecked: false };
   }
 
   if (!hasYouTubeOAuthConfig()) {
     return {
       source,
       fetched: false,
+      persisted: false,
       subscriptionChecked: false,
       subscriptionError: 'Google OAuth env vars are not loaded in this process.',
     };
@@ -68,11 +71,11 @@ async function refreshYouTubeSubscription(source: SourceNode): Promise<EnrichSou
   try {
     const subscription = await checkYouTubeSubscription(channelId);
     if (!subscription) {
-      return { source, fetched: false, subscriptionChecked: false };
+      return { source, fetched: false, persisted: false, subscriptionChecked: false };
     }
 
     if (subscription.subscribed === source.youtube_subscribed) {
-      return { source, fetched: false, subscriptionChecked: true };
+      return { source, fetched: false, persisted: false, subscriptionChecked: true };
     }
 
     const filePath = getNodeFilePath('source', source.id);
@@ -86,12 +89,14 @@ async function refreshYouTubeSubscription(source: SourceNode): Promise<EnrichSou
     return {
       source: node as SourceNode,
       fetched: false,
+      persisted: true,
       subscriptionChecked: true,
     };
   } catch (error) {
     return {
       source,
       fetched: false,
+      persisted: false,
       subscriptionChecked: false,
       subscriptionError: formatSubscriptionError(error),
     };
@@ -106,7 +111,7 @@ export async function enrichSourceMetadata(
   const cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
 
   if (!isYouTubeSource(source)) {
-    return { source, fetched: false, subscriptionChecked: false };
+    return { source, fetched: false, persisted: false, subscriptionChecked: false };
   }
 
   if (!options.force && isMetadataFresh(source, cacheTtlMs)) {
@@ -157,6 +162,7 @@ export async function enrichSourceMetadata(
   return {
     source: node as SourceNode,
     fetched: true,
+    persisted: true,
     subscriptionChecked,
     subscriptionError,
   };

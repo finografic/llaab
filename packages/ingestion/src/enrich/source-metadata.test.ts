@@ -63,6 +63,7 @@ describe('enrichSourceMetadata', () => {
     expect(fetchYouTubeChannel).not.toHaveBeenCalled();
     expect(checkYouTubeSubscription).toHaveBeenCalledWith('UCbRP3c757lWg9M-U7TyEkXA');
     expect(result.fetched).toBe(false);
+    expect(result.persisted).toBe(true);
     expect(result.subscriptionChecked).toBe(true);
     expect(result.source.youtube_subscribed).toBe(true);
   });
@@ -92,6 +93,7 @@ describe('enrichSourceMetadata', () => {
     expect(fetchYouTubeChannel).toHaveBeenCalledWith(baseSource.url);
     expect(checkYouTubeSubscription).toHaveBeenCalledWith('UCbRP3c757lWg9M-U7TyEkXA');
     expect(result.fetched).toBe(true);
+    expect(result.persisted).toBe(true);
     expect(result.subscriptionChecked).toBe(true);
     expect(result.source.platform_id).toBe('UCbRP3c757lWg9M-U7TyEkXA');
     expect(result.source.youtube_subscribed).toBe(true);

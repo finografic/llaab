@@ -1,9 +1,10 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { PageHero } from 'components/PageHero/PageHero';
 import { buttonVariants } from 'components/ui/button';
 import { SourceProfilesDialog } from 'dialogs/SourceProfilesDialog/SourceProfilesDialog';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
-import { useVaultNode, useVaultNodes } from 'queries/vault';
+import { QUERY_KEYS, useVaultNode, useVaultNodes } from 'queries/vault';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { SourceTranscriptsTable } from 'tables/SourceTranscriptsTable/SourceTranscriptsTable';
@@ -24,6 +25,7 @@ import styles from './source-detail.module.css';
 
 export function SourceDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const { data: node, isLoading } = useVaultNode(id);
   const { data: transcriptNodes = [] } = useVaultNodes({ type: 'transcript' });
 
@@ -53,6 +55,7 @@ export function SourceDetailPage() {
           source?: SourceNode;
           error?: string;
           subscriptionError?: string;
+          metadataCommitted?: boolean;
         };
 
         if (cancelled) return;
@@ -64,6 +67,10 @@ export function SourceDetailPage() {
 
         setSource(body.source);
         setSubscriptionError(body.subscriptionError);
+
+        if (body.metadataCommitted) {
+          void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vault.gitStatus() });
+        }
       } catch (error) {
         if (!cancelled) {
           setEnrichError(error instanceof Error ? error.message : 'Failed to refresh channel metadata.');
@@ -74,7 +81,7 @@ export function SourceDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [node]);
+  }, [node, queryClient]);
 
   usePageTitle(source?.title ?? 'Source');
 

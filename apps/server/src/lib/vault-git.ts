@@ -1,0 +1,65 @@
+import { spawn } from 'node:child_process';
+import { sep } from 'node:path';
+import { MONOREPO_ROOT } from '@llaab/core';
+
+export function runGit(args: string[]): Promise<{ exitCode: number; stderr: string; stdout: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn('git', args, { cwd: MONOREPO_ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.on('error', reject);
+    child.on('close', (code) => resolve({ exitCode: code ?? 1, stderr, stdout }));
+  });
+}
+
+/** Path relative to vault/ (e.g. `sources/source.theo-t3-gg.md`) → repo-relative path for git. */
+export function toVaultGitPath(pathRelativeToVault: string): string {
+  const normalizedPath = pathRelativeToVault.replaceAll('\\', '/');
+  const segments = normalizedPath.split('/');
+  if (
+    normalizedPath.startsWith('/') ||
+    normalizedPath.includes('\0') ||
+    segments.includes('..') ||
+    segments.includes('')
+  ) {
+    throw new Error('Invalid path.');
+  }
+
+  return ['vault', ...segments].join(sep);
+}
+
+/** True when the file is already tracked in git (committed or staged). Untracked nodes return false. */
+export async function isVaultFileTracked(pathRelativeToVault: string): Promise<boolean> {
+  const gitPath = toVaultGitPath(pathRelativeToVault);
+  const result = await runGit(['ls-files', '--error-unmatch', '--', gitPath]);
+  return result.exitCode === 0;
+}
+
+export async function commitVaultFile(
+  pathRelativeToVault: string,
+  message: string,
+): Promise<{ sha?: string }> {
+  const gitPath = toVaultGitPath(pathRelativeToVault);
+
+  const add = await runGit(['add', '--', gitPath]);
+  if (add.exitCode !== 0) {
+    throw new Error(add.stderr || 'git add failed.');
+  }
+
+  const commit = await runGit(['commit', '-m', message, '--', gitPath]);
+  if (commit.exitCode !== 0) {
+    throw new Error(commit.stderr || 'git commit failed.');
+  }
+
+  const rev = await runGit(['rev-parse', 'HEAD']);
+  return { sha: rev.exitCode === 0 ? rev.stdout.trim() : undefined };
+}
