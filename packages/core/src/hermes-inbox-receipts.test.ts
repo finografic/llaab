@@ -58,7 +58,33 @@ describe('createHermesInboxToolCall', () => {
           mime_type: 'image/png',
         },
         raw_text: 'caption from telegram',
+        route_kind: 'image',
       },
+    });
+  });
+
+  it('formats image attachment receipts distinctly from other attachments', () => {
+    const imageRoute = routeHermesInboxItem({
+      attachments: [{ kind: 'image', file_name: 'screen.png', mime_type: 'image/png' }],
+      source: { platform: 'telegram' },
+    });
+
+    expect(createHermesInboxReceipt(imageRoute, { status: 'saved', target_id: 'idea.inbox-image' })).toEqual({
+      status: 'saved',
+      text: '✅ Saved image: idea.inbox-image',
+    });
+  });
+
+  it('formats docs attachment receipts distinctly from other attachments', () => {
+    const docsRoute = routeHermesInboxItem({
+      raw_text: 'docs: shadcn vite setup',
+      attachments: [{ kind: 'file', file_name: 'INBOX.md', mime_type: 'text/markdown' }],
+      source: { platform: 'telegram' },
+    });
+
+    expect(createHermesInboxReceipt(docsRoute, { status: 'saved', target_id: 'idea.inbox-docs' })).toEqual({
+      status: 'saved',
+      text: '✅ Saved docs attachment: idea.inbox-docs',
     });
   });
 });
@@ -82,6 +108,22 @@ describe('createHermesInboxReceipt', () => {
         text: '❌ Failed YouTube ingest: LLAAB_API_KEY is required',
       },
     );
+  });
+
+  it('formats route-specific web link receipts', () => {
+    const githubRoute = routeHermesInboxText('https://github.com/finografic/LLAAB');
+    const docsRoute = routeHermesInboxText('docs: https://ui.shadcn.com/docs/installation/vite');
+
+    expect(createHermesInboxReceipt(githubRoute, { status: 'saved', target_id: 'idea.github-repo' })).toEqual(
+      {
+        status: 'saved',
+        text: '✅ Saved GitHub repo: idea.github-repo',
+      },
+    );
+    expect(createHermesInboxReceipt(docsRoute, { status: 'saved', target_id: 'idea.docs-link' })).toEqual({
+      status: 'saved',
+      text: '✅ Saved docs link: idea.docs-link',
+    });
   });
 });
 

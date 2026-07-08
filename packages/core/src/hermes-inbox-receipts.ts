@@ -51,6 +51,7 @@ export function createHermesInboxToolCall(
         arguments: {
           attachment: route.payload['attachment'],
           raw_text: stringPayload(route, 'raw_text'),
+          route_kind: route.kind,
           source,
         },
       };
@@ -101,14 +102,56 @@ export function createHermesInboxReceipt(
     case 'capture_todo':
       return { status: 'captured', text: withTarget('✅ Captured todo', target) };
     case 'capture_web_link':
-      return { status: 'saved', text: withTarget('✅ Saved link', target) };
+      return { status: 'saved', text: withTarget(webLinkReceiptPrefix(route), target) };
     case 'capture_attachment':
-      return { status: 'saved', text: withTarget('✅ Saved attachment', target) };
+      return { status: 'saved', text: withTarget(attachmentReceiptPrefix(route), target) };
     case 'capture_command_candidate':
       return { status: 'saved', text: withTarget('✅ Saved command candidate', target) };
     case 'capture_raw':
-      return { status: 'saved', text: withTarget('✅ Saved inbox item', target) };
+      return { status: 'saved', text: withTarget(rawReceiptPrefix(route), target) };
   }
+}
+
+function webLinkReceiptPrefix(route: HermesInboxRoute): string {
+  switch (route.kind) {
+    case 'github_repo':
+      return '✅ Saved GitHub repo';
+    case 'docs_link':
+      return '✅ Saved docs link';
+    case 'post_link':
+      return '✅ Saved post link';
+    case 'code_link':
+      return '✅ Saved code link';
+    case 'web_link':
+      return '✅ Saved link';
+    case 'youtube_url':
+    case 'npm_package':
+    case 'command_candidate':
+    case 'todo':
+    case 'attachment':
+    case 'image':
+    case 'code_attachment':
+    case 'docs_attachment':
+    case 'code_snippet':
+    case 'raw':
+      return '✅ Saved link';
+  }
+}
+
+function attachmentReceiptPrefix(route: HermesInboxRoute): string {
+  if (route.kind === 'code_attachment') {
+    return '✅ Saved code attachment';
+  }
+
+  if (route.kind === 'docs_attachment') {
+    return '✅ Saved docs attachment';
+  }
+
+  return route.kind === 'image' ? '✅ Saved image' : '✅ Saved attachment';
+}
+
+function rawReceiptPrefix(route: HermesInboxRoute): string {
+  return route.kind === 'code_snippet' ? '✅ Saved code snippet' : '✅ Saved inbox item';
 }
 
 export function createHermesInboxLogEvent(input: {
@@ -154,6 +197,8 @@ function failedReceiptText(route: HermesInboxRoute, error: string | undefined): 
     case 'capture_command_candidate':
       return `❌ Failed command candidate save: ${detail}`;
     case 'capture_raw':
-      return `❌ Failed inbox save: ${detail}`;
+      return route.kind === 'code_snippet'
+        ? `❌ Failed code snippet save: ${detail}`
+        : `❌ Failed inbox save: ${detail}`;
   }
 }

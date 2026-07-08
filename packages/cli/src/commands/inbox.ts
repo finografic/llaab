@@ -207,6 +207,10 @@ async function executeIdeaCapture(toolCall: HermesInboxToolCall): Promise<Hermes
   });
 
   if (!result.ok) {
+    if (result.status === 409) {
+      return { status: 'saved', target_label: `${capture.title} (already exists)` };
+    }
+
     return { status: 'failed', error: result.error };
   }
 
@@ -227,48 +231,145 @@ function buildIdeaCapture(toolCall: HermesInboxToolCall): { title: string; body:
     }
     case 'vault_capture_web_link': {
       const url = stringArg(toolCall, 'url');
+      const routeKind = stringArg(toolCall, 'kind') || 'web_link';
       return {
-        title: `Inbox link: ${safeHostname(url)}`,
+        title: webLinkTitle(routeKind, url, recordArg(toolCall, 'payload')),
         body: formatInboxBody({
           raw_text: url,
-          route_kind: stringArg(toolCall, 'kind') || 'web_link',
+          route_kind: routeKind,
           source: recordArg(toolCall, 'source'),
           payload: recordArg(toolCall, 'payload') ?? { url },
         }),
-        tags: [...INBOX_DEFAULT_TAGS, 'inbox:link'],
+        tags: [...INBOX_DEFAULT_TAGS, ...webLinkTags(routeKind)],
       };
     }
     case 'vault_capture_attachment': {
       const attachment = recordArg(toolCall, 'attachment') ?? {};
       const filename = typeof attachment['file_name'] === 'string' ? attachment['file_name'] : 'attachment';
       const rawText = stringArg(toolCall, 'raw_text');
+      const routeKind = stringArg(toolCall, 'route_kind') || 'attachment';
       return {
-        title: `Inbox attachment: ${filename}`,
+        title: attachmentTitle(routeKind, filename),
         body: formatInboxBody({
           raw_text: rawText,
-          route_kind: 'attachment',
+          route_kind: routeKind,
           source: recordArg(toolCall, 'source'),
           payload: { attachment },
         }),
-        tags: [...INBOX_DEFAULT_TAGS, 'inbox:attachment'],
+        tags: [...INBOX_DEFAULT_TAGS, ...attachmentTags(routeKind)],
       };
     }
     case 'vault_capture_inbox':
-      return {
-        title: deriveTitle(
-          stringArg(toolCall, 'raw_text') || stringArg(toolCall, 'route_kind') || 'Hermes inbox item',
-        ),
-        body: formatInboxBody({
-          raw_text: stringArg(toolCall, 'raw_text'),
-          route_kind: stringArg(toolCall, 'route_kind') || 'raw',
-          source: recordArg(toolCall, 'source'),
-          payload: recordArg(toolCall, 'payload'),
-        }),
-        tags: [...INBOX_DEFAULT_TAGS, 'inbox:raw'],
-      };
+      return inboxCapture(stringArg(toolCall, 'route_kind') || 'raw', {
+        rawText: stringArg(toolCall, 'raw_text'),
+        source: recordArg(toolCall, 'source'),
+        payload: recordArg(toolCall, 'payload'),
+      });
     case 'vault_ingest_youtube':
     case 'vault_pin_library':
       throw new Error(`Unsupported idea capture tool: ${toolCall.name}`);
+  }
+}
+
+function inboxCapture(
+  routeKind: string,
+  input: {
+    rawText: string;
+    source?: Record<string, unknown>;
+    payload?: Record<string, unknown>;
+  },
+): { title: string; body: string; tags: string[] } {
+  if (routeKind === 'code_snippet') {
+    return {
+      title: `Code snippet: ${deriveTitle(input.rawText || 'snippet')}`,
+      body: formatInboxBody({
+        raw_text: input.rawText,
+        route_kind: routeKind,
+        source: input.source,
+        payload: input.payload,
+      }),
+      tags: [...INBOX_DEFAULT_TAGS, 'inbox:code', 'inbox:snippet'],
+    };
+  }
+
+  return {
+    title: deriveTitle(input.rawText || routeKind || 'Hermes inbox item'),
+    body: formatInboxBody({
+      raw_text: input.rawText,
+      route_kind: routeKind,
+      source: input.source,
+      payload: input.payload,
+    }),
+    tags: [...INBOX_DEFAULT_TAGS, 'inbox:raw'],
+  };
+}
+
+function attachmentTitle(routeKind: string, filename: string): string {
+  if (routeKind === 'image') {
+    return `Inbox image: ${filename}`;
+  }
+
+  if (routeKind === 'code_attachment') {
+    return `Code attachment: ${filename}`;
+  }
+
+  if (routeKind === 'docs_attachment') {
+    return `Docs attachment: ${filename}`;
+  }
+
+  return `Inbox attachment: ${filename}`;
+}
+
+function attachmentTags(routeKind: string): string[] {
+  if (routeKind === 'image') {
+    return ['inbox:image'];
+  }
+
+  if (routeKind === 'code_attachment') {
+    return ['inbox:attachment', 'inbox:code'];
+  }
+
+  if (routeKind === 'docs_attachment') {
+    return ['inbox:attachment', 'inbox:docs'];
+  }
+
+  return ['inbox:attachment'];
+}
+
+function webLinkTitle(routeKind: string, url: string, payload: Record<string, unknown> | undefined): string {
+  if (routeKind === 'github_repo') {
+    const owner = typeof payload?.['owner'] === 'string' ? payload['owner'] : undefined;
+    const repo = typeof payload?.['repo'] === 'string' ? payload['repo'] : undefined;
+    return owner && repo ? `GitHub repo: ${owner}/${repo}` : `GitHub repo: ${safeHostname(url)}`;
+  }
+
+  if (routeKind === 'docs_link') {
+    return `Docs link: ${webLinkAddress(url)}`;
+  }
+
+  if (routeKind === 'post_link') {
+    return `Post link: ${webLinkAddress(url)}`;
+  }
+
+  if (routeKind === 'code_link') {
+    return `Code link: ${webLinkAddress(url)}`;
+  }
+
+  return `Inbox link: ${webLinkAddress(url)}`;
+}
+
+function webLinkTags(routeKind: string): string[] {
+  switch (routeKind) {
+    case 'github_repo':
+      return ['inbox:link', 'inbox:github'];
+    case 'docs_link':
+      return ['inbox:link', 'inbox:docs'];
+    case 'post_link':
+      return ['inbox:link', 'inbox:post'];
+    case 'code_link':
+      return ['inbox:link', 'inbox:code'];
+    default:
+      return ['inbox:link'];
   }
 }
 
@@ -490,6 +591,16 @@ function parseJsonObject(text: string): Record<string, unknown> | null {
 function safeHostname(url: string): string {
   try {
     return new URL(url).hostname;
+  } catch {
+    return 'web link';
+  }
+}
+
+function webLinkAddress(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const pathname = parsed.pathname.replace(/\/+$/u, '');
+    return pathname ? `${parsed.hostname}${pathname}` : parsed.hostname;
   } catch {
     return 'web link';
   }

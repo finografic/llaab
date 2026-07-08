@@ -177,7 +177,7 @@ export function createMcpServer(): McpServer {
       inputSchema: vaultCaptureWebLinkSchema,
     },
     async (args: z.infer<typeof vaultCaptureWebLinkSchema>) => {
-      const title = args.title ?? `Inbox link: ${new URL(args.url).hostname}`;
+      const title = args.title ?? webLinkTitle(args.kind ?? 'web_link', args.url, args.payload);
       const result = await createIdeaNodeViaApi({
         title,
         body: formatInboxBody({
@@ -186,7 +186,7 @@ export function createMcpServer(): McpServer {
           source: args.source,
           payload: args.payload ?? { url: args.url },
         }),
-        tags: [...INBOX_DEFAULT_TAGS, 'inbox:link'],
+        tags: [...INBOX_DEFAULT_TAGS, ...webLinkTags(args.kind ?? 'web_link')],
       });
 
       if (!result.ok) {
@@ -201,6 +201,8 @@ export function createMcpServer(): McpServer {
 
   const vaultCaptureAttachmentSchema = z.object({
     attachment: z.record(z.string(), z.unknown()).describe('Attachment metadata, not binary content.'),
+    raw_text: z.string().trim().optional().describe('Optional caption or extracted attachment text.'),
+    route_kind: z.string().trim().min(1).optional().describe('Router kind, e.g. code_attachment.'),
     source: z.record(z.string(), z.unknown()).optional().describe('Optional platform metadata.'),
   });
 
@@ -215,14 +217,16 @@ export function createMcpServer(): McpServer {
     async (args: z.infer<typeof vaultCaptureAttachmentSchema>) => {
       const filename =
         typeof args.attachment['file_name'] === 'string' ? args.attachment['file_name'] : 'attachment';
+      const routeKind = args.route_kind ?? 'attachment';
       const result = await createIdeaNodeViaApi({
-        title: `Inbox attachment: ${filename}`,
+        title: attachmentTitle(routeKind, filename),
         body: formatInboxBody({
-          route_kind: 'attachment',
+          raw_text: args.raw_text,
+          route_kind: routeKind,
           source: args.source,
           payload: { attachment: args.attachment },
         }),
-        tags: [...INBOX_DEFAULT_TAGS, 'inbox:attachment'],
+        tags: [...INBOX_DEFAULT_TAGS, ...attachmentTags(routeKind)],
       });
 
       if (!result.ok) {
@@ -373,6 +377,81 @@ export function createMcpServer(): McpServer {
   );
 
   return server;
+}
+
+function webLinkTitle(routeKind: string, url: string, payload: Record<string, unknown> | undefined): string {
+  if (routeKind === 'github_repo') {
+    const owner = typeof payload?.['owner'] === 'string' ? payload['owner'] : undefined;
+    const repo = typeof payload?.['repo'] === 'string' ? payload['repo'] : undefined;
+    return owner && repo ? `GitHub repo: ${owner}/${repo}` : `GitHub repo: ${new URL(url).hostname}`;
+  }
+
+  if (routeKind === 'docs_link') {
+    return `Docs link: ${webLinkAddress(url)}`;
+  }
+
+  if (routeKind === 'post_link') {
+    return `Post link: ${webLinkAddress(url)}`;
+  }
+
+  if (routeKind === 'code_link') {
+    return `Code link: ${webLinkAddress(url)}`;
+  }
+
+  return `Inbox link: ${webLinkAddress(url)}`;
+}
+
+function webLinkTags(routeKind: string): string[] {
+  switch (routeKind) {
+    case 'github_repo':
+      return ['inbox:link', 'inbox:github'];
+    case 'docs_link':
+      return ['inbox:link', 'inbox:docs'];
+    case 'post_link':
+      return ['inbox:link', 'inbox:post'];
+    case 'code_link':
+      return ['inbox:link', 'inbox:code'];
+    default:
+      return ['inbox:link'];
+  }
+}
+
+function attachmentTitle(routeKind: string, filename: string): string {
+  if (routeKind === 'image') {
+    return `Inbox image: ${filename}`;
+  }
+
+  if (routeKind === 'code_attachment') {
+    return `Code attachment: ${filename}`;
+  }
+
+  if (routeKind === 'docs_attachment') {
+    return `Docs attachment: ${filename}`;
+  }
+
+  return `Inbox attachment: ${filename}`;
+}
+
+function attachmentTags(routeKind: string): string[] {
+  if (routeKind === 'image') {
+    return ['inbox:image'];
+  }
+
+  if (routeKind === 'code_attachment') {
+    return ['inbox:attachment', 'inbox:code'];
+  }
+
+  if (routeKind === 'docs_attachment') {
+    return ['inbox:attachment', 'inbox:docs'];
+  }
+
+  return ['inbox:attachment'];
+}
+
+function webLinkAddress(url: string): string {
+  const parsed = new URL(url);
+  const pathname = parsed.pathname.replace(/\/+$/u, '');
+  return pathname ? `${parsed.hostname}${pathname}` : parsed.hostname;
 }
 
 interface CreateIdeaNodeRequest {

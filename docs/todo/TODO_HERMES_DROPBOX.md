@@ -178,7 +178,18 @@ Purpose: ship the first useful dropbox behavior using currently viable workflows
 - [x] Verify MCP write tools can read `LLAAB_API_KEY` from local env files (2026-07-07).
 - [x] Telegram DM with YouTube URL starts the existing ingest pipeline (2026-07-08).
 - [x] Telegram DM with npm package URL creates a pinned library entry (2026-07-07).
-- [ ] Telegram DM with `npx ...` or `npmx ...` captures a command/library candidate.
+- [x] Telegram DM with `npx ...` or `npmx ...` captures a command/library candidate
+      (2026-07-09).
+- [x] Route `pnpm dlx ...` as a safe command candidate rather than executing it (2026-07-09).
+- [ ] Retest Telegram DM with `pnpm dlx ...` after command-candidate routing fix.
+- [x] Add package pin support for `https://npmx.dev/package/{package}` URLs (2026-07-09).
+- [ ] Retest Telegram DM with `https://npmx.dev/package/{package}` after npmx.dev package URL
+      support.
+- [x] Route GitHub repository URLs with `github_repo` metadata and GitHub-specific receipt text
+      (2026-07-09).
+- [ ] Retest Telegram DM with a GitHub repo URL after GitHub-specific capture update.
+- [x] Add explicit `docs:` and `post:` URL prefixes for docs/article/blog captures (2026-07-09).
+- [ ] Retest Telegram DM with `docs:` and `post:` URL prefixes.
 - [ ] Duplicate YouTube URLs follow existing dedupe behavior.
 - [x] Duplicate library pins are idempotent in the inbox/MCP execution path (2026-07-07).
 - [x] Unknown generic links save as web-link inbox items instead of failing in the `lab inbox`
@@ -199,8 +210,19 @@ Purpose: broaden capture without overbuilding the processing pipelines.
       (2026-07-07).
 - [x] Keep binaries in the Hermes local media cache for now; store metadata/local path in the vault
       inbox item until a vault assets pipeline exists (2026-07-07).
+- [x] Route screenshot/photo attachments as `image` captures with image-specific receipts and tags
+      (2026-07-09).
+- [x] Route `docs:` attachment captions as docs attachments with docs-specific receipts and tags
+      (2026-07-09).
+- [x] Route `code:` inputs as snippet/code captures for code files, GitHub blob URLs, code-reference
+      links, and obvious pasted JSX/TSX snippets (2026-07-09).
 - [x] Capture `todo:` notes as typed todo nodes or inbox items tagged `todo` (2026-07-07).
 - [ ] Add manual review UI/search path for raw inbox items.
+- [ ] Design AI-assisted inbox categorization for links and attachments: infer docs/posts/skills,
+      suggest tags, route recognized artifacts to canonical destinations, and allow explicit
+      user-defined overrides.
+- [ ] Design AI-assisted snippet extraction for arbitrary docs/blog/code-reference links, including
+      first-code-block capture and language inference beyond deterministic URL/file-extension routing.
 
 Exit criteria: files, screenshots, and short todo notes are never lost, even before specialized
 pipelines exist.
@@ -229,15 +251,16 @@ Run these from phone and desktop once the MVP is wired:
 
 - [x] Send a YouTube URL (2026-07-08).
 - [x] Send an npm package URL (2026-07-07).
-- [ ] Send an `npx` command note.
-- [ ] Send an `npmx` command note.
-- [ ] Send a GitHub repo URL.
-- [ ] Send a docs/blog URL.
+- [x] Send an `npx` command note (2026-07-09).
+- [x] Send an `npmx` command note (2026-07-09).
+- [ ] Send a `pnpm dlx` command note after routing fix.
+- [ ] Send a GitHub repo URL after GitHub-specific capture update.
+- [ ] Send a docs/blog URL with `docs:` or `post:` prefix.
 - [x] Send `todo: test Hermes dropbox` (2026-07-07).
-- [ ] Send a screenshot.
-- [ ] Send a small file.
+- [x] Send a screenshot (2026-07-09).
+- [x] Send a small file (2026-07-09).
 - [x] Confirm all receipts are short and useful (2026-07-08).
-- [ ] Confirm unknown inputs are captured, not dropped.
+- [x] Confirm unknown inputs are captured, not dropped (2026-07-09).
 - [ ] Confirm unauthorized Telegram user is rejected.
 - [ ] Confirm Discord operator console still works unchanged.
 
