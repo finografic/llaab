@@ -239,6 +239,100 @@ Key vault directories:
 
 ---
 
+## working vault
+
+**The `working vault` is the volatile, inspectable workspace where LLAAB stores raw and generated
+knowledge before promotion.**
+
+In LLAAB terms, the working vault is still valuable and versionable, but it is not the same lifecycle
+as stable source code. It contains transcripts, source nodes, idea nodes, run nodes, raw captures,
+attachments metadata, extraction outputs, and temporary canonical candidates.
+
+Why it matters here:
+
+- it changes frequently during ingestion, extraction, consolidation, and Hermes inbox use
+- it should be versioned independently from app/source code
+- it should not make normal source-code commits noisy
+
+Planned storage contract:
+
+```
+LLAAB parent repo = application source + docs + committed knowledge
+vault repo        = working vault data
+```
+
+---
+
+## vault data repo
+
+**The `vault data repo` is the Git repository that tracks `vault/` working data separately from the
+main LLAAB source repo.**
+
+The preferred first implementation is a normal nested Git repo at `vault/.git`, with `/vault/`
+ignored by the parent LLAAB repo. This is not a Git submodule unless the parent repo explicitly
+tracks `vault` as a gitlink and creates `.gitmodules`.
+
+Why it matters here:
+
+- vault data remains commit-able
+- app/source commits stay clean
+- submodule complexity is avoided
+
+A simple mental model is:
+
+```
+/Users/justin/LLAAB/.git       = source repo
+/Users/justin/LLAAB/vault/.git = data repo
+```
+
+---
+
+## knowledge
+
+**`Knowledge` is the committed, promoted, stable layer of LLAAB's intelligence.**
+
+In LLAAB terms, knowledge is not every generated node. It is the smaller set of mature artifacts that
+have been accepted as canonical enough to live with source code: wiki pages, knowledge-graph
+summaries, canonical skill specs, agent profiles, curated references, durable prompts, and project
+decisions.
+
+Why it matters here:
+
+- agents need a stable place to look for canonical context
+- mature knowledge should change less often than raw vault data
+- committed knowledge gives the project memory that can travel with the source repo
+
+Planned storage contract:
+
+```
+vault/     = working memory and generated data
+knowledge/ = promoted canonical artifacts committed with source
+```
+
+---
+
+## promoted artifact
+
+**A `promoted artifact` is a mature output moved from working vault data into committed knowledge.**
+
+Promotion is a lifecycle transition, not just a file copy. It means an idea, reference, summary,
+graph, skill, prompt, decision, or agent profile has been reviewed enough to become stable project
+knowledge.
+
+Why it matters here:
+
+- it creates a clear boundary between generation and canon
+- it keeps `knowledge/` useful instead of becoming another noisy dump
+- it gives agents a predictable trust gradient: read `knowledge/` before raw `vault/` data
+
+A simple mental model is:
+
+```
+vault candidate → review/consolidation → promoted artifact → knowledge/
+```
+
+---
+
 ## source **[candidates: #1]**
 
 **A `source` is the origin of knowledge: the person, channel, repo, publication, or other entity content comes from.**
