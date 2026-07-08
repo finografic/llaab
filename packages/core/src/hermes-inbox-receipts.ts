@@ -7,6 +7,8 @@ import type {
   HermesInboxToolCall,
 } from '@llaab/schemas';
 
+const INBOX_RECEIPT_HEADER = '💾 Inbox';
+
 export function createHermesInboxToolCall(
   route: HermesInboxRoute,
   item?: HermesInboxItem,
@@ -84,7 +86,7 @@ export function createHermesInboxReceipt(
   if (result.status === 'failed') {
     return {
       status: 'failed',
-      text: failedReceiptText(route, result.error),
+      text: inboxReceiptText(failedReceiptText(route, result.error)),
     };
   }
 
@@ -92,22 +94,24 @@ export function createHermesInboxReceipt(
 
   switch (route.action) {
     case 'ingest_youtube':
-      return { status: 'queued', text: withTarget('✅ Ingested YouTube video', target) };
+      return { status: 'queued', text: inboxReceiptText(withTarget('✅ Ingested YouTube video', target)) };
     case 'pin_library':
       return {
         status: 'pinned',
-        text: withTarget('✅ Pinned npm package', target ?? stringPayload(route, 'package_name')),
+        text: inboxReceiptText(
+          withTarget('✅ Pinned npm package', target ?? stringPayload(route, 'package_name')),
+        ),
       };
     case 'capture_todo':
-      return { status: 'captured', text: withTarget('✅ Captured todo', target) };
+      return { status: 'captured', text: inboxReceiptText(withTarget('✅ Captured todo', target)) };
     case 'capture_web_link':
-      return { status: 'saved', text: withTarget('✅ Saved link', target) };
+      return { status: 'saved', text: inboxReceiptText(withTarget('✅ Saved link', target)) };
     case 'capture_attachment':
-      return { status: 'saved', text: withTarget('✅ Saved attachment', target) };
+      return { status: 'saved', text: inboxReceiptText(withTarget('✅ Saved attachment', target)) };
     case 'capture_command_candidate':
-      return { status: 'saved', text: withTarget('✅ Saved command candidate', target) };
+      return { status: 'saved', text: inboxReceiptText(withTarget('✅ Saved command candidate', target)) };
     case 'capture_raw':
-      return { status: 'saved', text: withTarget('✅ Saved inbox item', target) };
+      return { status: 'saved', text: inboxReceiptText(withTarget('✅ Saved inbox item', target)) };
   }
 }
 
@@ -135,6 +139,10 @@ function stringPayload(route: HermesInboxRoute, key: string): string {
 
 function withTarget(prefix: string, target: string | undefined): string {
   return target ? `${prefix}: ${target}` : prefix;
+}
+
+function inboxReceiptText(body: string): string {
+  return `${INBOX_RECEIPT_HEADER}\n${body}`;
 }
 
 function failedReceiptText(route: HermesInboxRoute, error: string | undefined): string {

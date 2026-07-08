@@ -69,7 +69,7 @@ describe('createHermesInboxReceipt', () => {
 
     expect(createHermesInboxReceipt(route, { status: 'captured', target_id: 'idea.test-receipts' })).toEqual({
       status: 'captured',
-      text: '✅ Captured todo: idea.test-receipts',
+      text: '💾 Inbox\n✅ Captured todo: idea.test-receipts',
     });
   });
 
@@ -79,7 +79,7 @@ describe('createHermesInboxReceipt', () => {
     expect(createHermesInboxReceipt(route, { status: 'failed', error: 'LLAAB_API_KEY is required' })).toEqual(
       {
         status: 'failed',
-        text: '❌ Failed YouTube ingest: LLAAB_API_KEY is required',
+        text: '💾 Inbox\n❌ Failed YouTube ingest: LLAAB_API_KEY is required',
       },
     );
   });
@@ -101,7 +101,7 @@ describe('createHermesInboxLogEvent', () => {
     ).toMatchObject({
       event: 'hermes_inbox_route',
       tool_call: { name: 'vault_capture_web_link' },
-      receipt: { text: '❌ Failed link capture: missing key' },
+      receipt: { text: '💾 Inbox\n❌ Failed link capture: missing key' },
       status: 'failed',
       error: 'missing key',
     });
