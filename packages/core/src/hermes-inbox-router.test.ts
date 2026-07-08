@@ -33,7 +33,7 @@ describe('routeHermesInboxText', () => {
     });
   });
 
-  it('routes npx and npmx notes as command candidates', () => {
+  it('routes package runner notes as command candidates', () => {
     expect(routeHermesInboxText('npx shadcn@latest add button')).toMatchObject({
       kind: 'command_candidate',
       action: 'capture_command_candidate',
@@ -44,6 +44,12 @@ describe('routeHermesInboxText', () => {
       kind: 'command_candidate',
       action: 'capture_command_candidate',
       payload: { command: 'npmx vite' },
+    });
+
+    expect(routeHermesInboxText('pnpm dlx shadcn@latest add button')).toMatchObject({
+      kind: 'command_candidate',
+      action: 'capture_command_candidate',
+      payload: { command: 'pnpm dlx shadcn@latest add button' },
     });
   });
 

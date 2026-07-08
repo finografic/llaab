@@ -1,7 +1,7 @@
 import type { HermesInboxItem, HermesInboxRoute } from '@llaab/schemas';
 
 const TODO_PREFIX_RE = /^\s*todo:\s*/i;
-const COMMAND_CANDIDATE_RE = /^\s*(?:npx|npmx)\s+\S+/i;
+const COMMAND_CANDIDATE_RE = /^\s*(?:npx|npmx|pnpm\s+dlx)\s+\S+/i;
 const URL_CANDIDATE_RE = /https?:\/\/[^\s<>"')\]]+/i;
 
 export function routeHermesInboxItem(item: HermesInboxItem): HermesInboxRoute {
@@ -59,7 +59,7 @@ export function routeHermesInboxText(rawText: string): HermesInboxRoute {
       confidence: 0.92,
       action: 'capture_command_candidate',
       payload: { command: text },
-      reason: 'Message starts with npx or npmx.',
+      reason: 'Message starts with npx, npmx, or pnpm dlx.',
     };
   }
 
