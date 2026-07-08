@@ -87,6 +87,7 @@ Intents required: **Message Content Intent** enabled on Bot tab.
 | Allowlist       | Single owner Telegram user ID via `TELEGRAM_ALLOWED_USERS`  |
 | Home channel    | Owner DM via `TELEGRAM_HOME_CHANNEL`                        |
 | Mode            | Polling                                                     |
+| Reactions       | `telegram.reactions: true` in `~/.hermes/config.yaml`       |
 | Gateway service | SwiftBar-managed launchd service `com.llaab.hermes.gateway` |
 
 Validated 2026-07-07:
@@ -96,7 +97,15 @@ Validated 2026-07-07:
 - `hermes send --to telegram ...` delivers to the configured owner DM.
 - Telegram DM `Ping` reaches Hermes and receives a reply.
 
-Pending: Telegram dropbox execution loop that calls the router and MCP tools automatically.
+Validated 2026-07-08:
+
+- Telegram reactions are enabled for the owner DM.
+- Hermes applies `eyes` to the owner's message while processing.
+- Hermes swaps the reaction to `thumbs up` on success or `thumbs down` on failure.
+- Inbox drops receive one final explicit receipt message, such as
+  `✅ Ingested YouTube video: electron-is-getting-replaced-deno-programming`.
+- Telegram dropbox execution calls the deterministic inbox router and LLAAB API tooling directly.
+
 `LLAAB_API_KEY` is configured in both repo `.env` and `~/.hermes/.env`; do not print or commit the
 value.
 
@@ -192,6 +201,14 @@ before normal agent handling when the message is a supported bare inbox item (`t
 to disable that bypass. Attachment binaries stay in Hermes' local media cache for now; LLAAB stores
 the cached path plus filename, MIME type, size, source message id, chat id, user id, and timestamp.
 
+Telegram inbox UX contract:
+
+1. Hermes uses the platform default lifecycle reactions on the user's original message.
+2. `eyes` means the drop was received and is being processed.
+3. `thumbs up` means the route finished successfully; `thumbs down` means the route failed.
+4. Hermes sends exactly one final receipt message with the result and target id/title.
+5. The bridge does not send an intermediate `Received...` message.
+
 Validated 2026-07-07:
 
 - `lab inbox "todo: ..."` creates a real inbox todo node through the API.
@@ -201,6 +218,12 @@ Validated 2026-07-07:
 - `lab inbox --attachmentPath ...` routes screenshots/files to `vault_capture_attachment`.
 - Duplicate npm pin attempts return an idempotent already-pinned receipt.
 - MCP write tools can read `LLAAB_API_KEY` from local env files when the process env omits it.
+
+Validated 2026-07-08:
+
+- Telegram DM YouTube links start the existing ingest pipeline.
+- Telegram DM YouTube receipts return after ingest completion without timing out.
+- Telegram reaction flow shows `eyes` while running and `thumbs up` after success.
 
 ---
 

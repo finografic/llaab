@@ -146,10 +146,11 @@ Purpose: make the inbox feel reliable without requiring follow-up questions.
 Receipt examples:
 
 ```text
-Queued YouTube ingest: <title or video id>
-Pinned library: npm <package>
-Captured todo: <short title>
-Saved to inbox: <raw item id>
+✅ Ingested YouTube video: <title or video id>
+✅ Pinned npm package: <package>
+✅ Captured todo: <short title>
+✅ Saved inbox item: <raw item id>
+❌ Failed YouTube ingest: <reason>
 ```
 
 - [x] Reply once per received item (2026-07-07).
@@ -158,6 +159,10 @@ Saved to inbox: <raw item id>
 - [x] Persist enough metadata to debug bad routes later (2026-07-07).
 - [x] Avoid verbose summaries unless the user asks (2026-07-07).
 - [x] Record failures as inbox items with `status: failed` or equivalent (2026-07-07).
+- [x] Use Hermes default Telegram reactions for progress: `eyes` while running, `thumbs up` on
+      success, `thumbs down` on failure (2026-07-08).
+- [x] Send one final explicit receipt message instead of an intermediate `Received...` message
+      (2026-07-08).
 
 Exit criteria: every inbox drop gets a short, useful receipt and leaves an audit trail.
 
@@ -171,7 +176,7 @@ Purpose: ship the first useful dropbox behavior using currently viable workflows
 - [x] Verify `lab inbox` can create a real inbox todo node through the API (2026-07-07).
 - [x] Verify `lab inbox` can pin an npm package through the API (2026-07-07).
 - [x] Verify MCP write tools can read `LLAAB_API_KEY` from local env files (2026-07-07).
-- [ ] Telegram DM with YouTube URL starts the existing ingest pipeline.
+- [x] Telegram DM with YouTube URL starts the existing ingest pipeline (2026-07-08).
 - [x] Telegram DM with npm package URL creates a pinned library entry (2026-07-07).
 - [ ] Telegram DM with `npx ...` or `npmx ...` captures a command/library candidate.
 - [ ] Duplicate YouTube URLs follow existing dedupe behavior.
@@ -222,7 +227,7 @@ Exit criteria: routine inbox drops do not use the premium Hermes default model.
 
 Run these from phone and desktop once the MVP is wired:
 
-- [ ] Send a YouTube URL.
+- [x] Send a YouTube URL (2026-07-08).
 - [x] Send an npm package URL (2026-07-07).
 - [ ] Send an `npx` command note.
 - [ ] Send an `npmx` command note.
@@ -231,7 +236,7 @@ Run these from phone and desktop once the MVP is wired:
 - [x] Send `todo: test Hermes dropbox` (2026-07-07).
 - [ ] Send a screenshot.
 - [ ] Send a small file.
-- [ ] Confirm all receipts are short and useful.
+- [x] Confirm all receipts are short and useful (2026-07-08).
 - [ ] Confirm unknown inputs are captured, not dropped.
 - [ ] Confirm unauthorized Telegram user is rejected.
 - [ ] Confirm Discord operator console still works unchanged.
