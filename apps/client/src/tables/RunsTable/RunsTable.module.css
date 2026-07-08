@@ -232,11 +232,11 @@ a.subjectTitle:hover {
   color: var(--accent-dim);
 }
 
-.followUnknown {
+.notSubscribed {
   display: inline-flex;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
+  align-items: center;
+  color: var(--text-muted);
+  opacity: 0.5;
 }
 
 .groupRow {

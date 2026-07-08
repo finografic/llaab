@@ -3,7 +3,6 @@ import type { QueuedIngestItem } from '../ingest-form.types';
 
 export interface IngestQueueListProps {
   items: QueuedIngestItem[];
-  currentUrl: string | null;
   status: string | null;
   onRemove: (id: string) => void;
 }
@@ -13,31 +12,16 @@ export interface IngestQueueListProps {
  * time — this is just visibility into what's waiting, with a way to back an item out before
  * its turn comes up.
  */
-export function IngestQueueList({ items, currentUrl, status, onRemove }: IngestQueueListProps) {
-  if (items.length === 0 && !currentUrl && !status) return null;
+export function IngestQueueList({ items, status, onRemove }: IngestQueueListProps) {
+  if (items.length === 0 && !status) return null;
 
   return (
     <div className="pipeline">
       <div className="pipeline-chain__header text-muted-foreground">
         Queue
-        <span className="font-mono text-xs">
-          {currentUrl ? 'processing' : 'idle'}
-          {items.length > 0 ? ` · ${items.length} waiting` : ''}
-        </span>
+        {items.length > 0 ? <span className="font-mono text-xs">{` · ${items.length} waiting`}</span> : null}
       </div>
       {status ? <p className="text-sm text-muted-foreground">{status}</p> : null}
-      {currentUrl ? (
-        <div className="pipeline-card pipeline-card--active">
-          <div className="pipeline-card__main">
-            <div className="pipeline-card__row">
-              <div className="pipeline-card__title min-w-0">
-                <span className="pipeline-card__status">Current</span>
-                <span className="pipeline-card__path truncate">{currentUrl}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
       {items.map((item, index) => (
         <div key={item.id} className="pipeline-card pipeline-card--neutral">
           <div className="pipeline-card__main">

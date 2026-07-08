@@ -3,6 +3,7 @@ import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
+import { CheckIcon } from 'lucide-react';
 import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
 import { QUERY_KEYS, useRunMonitor } from 'queries/runs';
 import {
@@ -62,7 +63,7 @@ function parseRunInputSummary(value?: string): { url?: string } | null {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (typeof parsed === 'string') return parseRunInputSummary(parsed);
-    if (parsed && typeof parsed === 'object') return parsed as { url?: string };
+    if (parsed && typeof parsed === 'object') return parsed;
   } catch {
     return null;
   }
@@ -151,15 +152,22 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const dropzoneDesc = useMemo(() => {
     if (sourceKind === 'youtube') {
-      return durableBusy
-        ? 'YouTube video URL detected.\nA video is already processing — this will be added to the queue.'
-        : 'YouTube video URL detected.\nClick Ingest YouTube to fetch the transcript.';
+      return 'YouTube video URL detected.';
     }
     if (sourceKind === 'webpage') {
       return 'Website or online reference detected. Drop recognition works; this source type is not yet wired for ingestion.';
     }
     return 'The form classifies the source asset and adapts the ingest action.';
-  }, [sourceKind, durableBusy]);
+  }, [sourceKind]);
+
+  const processingUrl = currentQueueUrl ?? (activeIngestRun ? getRunInputUrl(activeIngestRun) : null);
+  const trimmedUrl = urlValue.trim();
+  const isInputProcessing =
+    sourceKind === 'youtube' &&
+    durableBusy &&
+    processingUrl != null &&
+    trimmedUrl.length > 0 &&
+    trimmedUrl === processingUrl;
 
   useEffect(() => {
     const preventWindowDropNavigation = (event: DragEvent) => {
@@ -624,35 +632,47 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       <div className="ingest-dropzone__title">
         Drop a browser URL or page link to populate the source field
       </div>
-      <div className="ingest-dropzone__desc">{dropzoneDesc}</div>
+      {sourceKind === 'youtube' ? (
+        <div className="ingest-dropzone__desc ingest-dropzone__desc--youtube">
+          <CheckIcon className="size-4 shrink-0 text-green-600 dark:text-green-400" aria-hidden />
+          <span className="text-green-600 dark:text-green-400">{dropzoneDesc}</span>
+        </div>
+      ) : (
+        <div className="ingest-dropzone__desc">{dropzoneDesc}</div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="ingest-form__stack">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="url">Source URL</Label>
-            <div className="flex gap-2 items-start">
+            <div className="flex items-center gap-2">
               <Input
                 id="url"
                 type="url"
                 autoComplete="off"
                 spellCheck={false}
                 placeholder="https://www.youtube.com/watch?v=…"
+                className={
+                  isInputProcessing
+                    ? 'ingest-form__url-input ingest-form__url-input--processing'
+                    : 'ingest-form__url-input'
+                }
                 {...register('url', {
                   required: 'URL is required.',
                   validate: { validUrl: (value) => isHttpUrl(value) || 'Must be a valid URL.' },
                 })}
               />
-              <Button type="submit" disabled={!canSubmit} className="shrink-0">
+              <Button
+                type="submit"
+                disabled={!canSubmit}
+                size="lg"
+                className="ingest-form__submit-btn shrink-0"
+              >
                 {buttonLabel}
               </Button>
             </div>
 
             {errors.url ? <p className="text-sm text-destructive">{errors.url.message}</p> : null}
-            {!errors.url && sourceKind === 'youtube' ? (
-              <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                Detected YouTube URL. This can be ingested now.
-              </p>
-            ) : null}
             {!errors.url && sourceKind === 'webpage' ? (
               <p className="text-sm text-muted-foreground">
                 Detected website/online reference. Recognition works, but this ingestion path is not wired
@@ -723,12 +743,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         />
       ) : null}
 
-      <IngestQueueList
-        items={queue}
-        currentUrl={currentQueueUrl}
-        status={queueStatus}
-        onRemove={removeFromQueue}
-      />
+      <IngestQueueList items={queue} status={queueStatus} onRemove={removeFromQueue} />
     </div>
   );
 }

@@ -9,6 +9,26 @@
   min-height: 352px;
 }
 
+.ingest-page__enrich-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ingest-page__enrich-alert--warning {
+  border-color: oklch(0.42 0.12 40 / 0.4);
+  background: oklch(0.24 0.05 40 / 0.25);
+  color: oklch(0.7 0.19 40);
+}
+
+.ingest-page__enrich-alert--warning [data-slot='alert-title'] {
+  color: inherit;
+}
+
+.ingest-page__enrich-alert--warning [data-slot='alert-description'] {
+  color: color-mix(in oklab, currentColor 85%, var(--text-muted));
+}
+
 /* IngestForm root — flex column for the form + status blocks */
 .ingest-form {
   display: flex;
@@ -18,8 +38,7 @@
   border: 1px dashed var(--border);
   border-radius: calc(var(--radius) * 1.25);
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--surface) 85%, transparent), transparent),
-    var(--surface);
+    linear-gradient(180deg, color-mix(in oklab, var(--surface) 85%, transparent), transparent), var(--surface);
   transition:
     border-color var(--duration) var(--ease),
     background var(--duration) var(--ease),
@@ -65,6 +84,29 @@
   font-size: var(--text-base);
   line-height: 1.5;
   color: var(--text-muted);
+}
+
+.ingest-dropzone__desc--youtube {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.ingest-form__url-input {
+  height: 2.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.ingest-form__submit-btn {
+  height: 2.25rem;
+}
+
+.ingest-form__url-input--processing {
+  border-color: color-mix(in oklab, var(--accent) 50%, transparent);
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface));
 }
 
 .field-hint {
@@ -353,7 +395,7 @@
 }
 
 .pipeline-card__item-list li::before {
-  content: '▪';
+  content: "▪";
   flex-shrink: 0;
   font-size: var(--text-xs);
   opacity: 0.5;

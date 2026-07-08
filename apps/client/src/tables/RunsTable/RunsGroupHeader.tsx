@@ -1,11 +1,4 @@
-import {
-  BadgeCheckIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  ExternalLinkIcon,
-  UserCheckIcon,
-  UserXIcon,
-} from '@llaab/icons';
+import { BadgeCheckIcon, ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon } from '@llaab/icons';
 import { DeleteRunGroupAction } from 'components/DeleteRunGroupAction/DeleteRunGroupAction';
 import { Badge } from 'components/ui/badge';
 import { TableCell, TableRow } from 'components/ui/table';
@@ -17,7 +10,7 @@ import { isRunExtracting } from 'utils/run-display.utils';
 import type { RunGroup } from 'utils/run-grouping.utils';
 
 import styles from './RunsTable.module.css';
-import { fmtClickDate, fmtDuration } from './RunsTable.utils';
+import { fmtClickDate, fmtDuration, renderYouTubeSubscriptionIcon } from './RunsTable.utils';
 
 export interface RunGroupRowProps {
   group: RunGroup;
@@ -89,21 +82,7 @@ export function RunsGroupHeader({ group }: RunGroupRowProps) {
         <TableCell>
           {group.source ? (
             <div className={styles.authorCell}>
-              {group.source.youtube_subscribed === true ? (
-                <span className={styles.follow}>
-                  <UserCheckIcon size={18} />
-                </span>
-              ) : group.source.youtube_subscribed === false ? (
-                <span className={styles.muted}>
-                  <UserXIcon size={18} />
-                </span>
-              ) : (
-                <span
-                  className={styles.followUnknown}
-                  title="YouTube subscription status unknown"
-                  aria-label="YouTube subscription status unknown"
-                />
-              )}
+              {renderYouTubeSubscriptionIcon(group.source)}
               <Link to={`/vault/sources/${group.source.id}`} className={styles.authorLink}>
                 {group.source.title}
               </Link>

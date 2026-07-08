@@ -12,6 +12,7 @@ import {
   extractRunSubjectTitle,
 } from 'utils/metadata-rendering.utils';
 import type { RunDisplayStatus } from 'utils/run-display.utils';
+import { isYouTubeChannelSource } from 'utils/youtube-source.utils';
 
 import styles from './RunsTable.module.css';
 
@@ -91,6 +92,27 @@ export function renderRunSourceCell({ row }: CellContext<RunNode, unknown>) {
   );
 }
 
+export function renderYouTubeSubscriptionIcon(source: SourceNode | undefined) {
+  if (!source || !isYouTubeChannelSource(source)) return null;
+
+  if (source.youtube_subscribed === true) {
+    return (
+      <span className={styles.follow} title="Subscribed on YouTube" aria-label="Subscribed on YouTube">
+        <UserCheckIcon size={18} aria-hidden />
+      </span>
+    );
+  }
+
+  const title =
+    source.youtube_subscribed === false ? 'Not subscribed on YouTube' : 'YouTube subscription status unknown';
+
+  return (
+    <span className={styles.notSubscribed} title={title} aria-label={title}>
+      <UserXIcon size={18} aria-hidden />
+    </span>
+  );
+}
+
 export function renderRunAuthorCell(run: RunNode, sourcesById: Map<string, SourceNode>) {
   const sourceId = extractRunSourceId(run);
   const source = sourceId ? sourcesById.get(sourceId) : undefined;
@@ -102,21 +124,7 @@ export function renderRunAuthorCell(run: RunNode, sourcesById: Map<string, Sourc
 
   return (
     <div className={styles.authorCell}>
-      {source?.youtube_subscribed === true ? (
-        <span className={styles.follow}>
-          <UserCheckIcon size={18} />
-        </span>
-      ) : source?.youtube_subscribed === false ? (
-        <span className={styles.muted}>
-          <UserXIcon size={18} />
-        </span>
-      ) : (
-        <span
-          className={styles.followUnknown}
-          title="YouTube subscription status unknown"
-          aria-label="YouTube subscription status unknown"
-        />
-      )}
+      {renderYouTubeSubscriptionIcon(source)}
       {author &&
         (sourceId ? (
           <Link to={`/vault/sources/${sourceId}`} className={styles.authorLink}>

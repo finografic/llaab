@@ -6,6 +6,9 @@ stored as `transcript` nodes in the vault.
 For the broader orchestration architecture around harness prep, control, command routing, and run
 observability, see [07 — Orchestration and adapters](07_ORCHESTRATION_AND_ADAPTERS.md).
 
+For **YouTube subscription status** (`youtube_subscribed` on `SourceNode`, Google OAuth setup, and
+refresh-token renewal, see [YouTube OAuth](/docs/integrations/youtube-oauth.md).
+
 ---
 
 ## Overview
@@ -219,12 +222,14 @@ pnpm dev:clean:vault:recent
 
 ## Troubleshooting
 
-| Symptom                              | Likely cause                                | Fix                                                                                  |
-| ------------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `yt-dlp` not found                   | Not installed or not on PATH                | `brew install yt-dlp`                                                                |
-| Transcript empty                     | Video has no auto-captions                  | Expected — node is stored without body                                               |
-| Final sentence cut short             | SRT truncation (pre-fix state)              | Pipeline now uses VTT + sentence trim                                                |
-| Duplicate sentence at end            | Last-cue force-add bug (pre-fix state)      | Fixed — fully-contained cues are dropped                                             |
-| Re-ingest returns existing node      | Node dedup matched on `source_item_id`      | Run `pnpm dev:clean:vault:recent` first                                              |
-| Extraction failed — transcript saved | LLM model not running or wrong model name   | Check Ollama is running; set `LLAAB_LOCAL_MID_MODEL` in `.env` to an installed model |
-| Ideas created but body is empty      | Expected — idea body is intentionally empty | The title phrase IS the idea content                                                 |
+| Symptom                                | Likely cause                                            | Fix                                                                                  |
+| -------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `yt-dlp` not found                     | Not installed or not on PATH                            | `brew install yt-dlp`                                                                |
+| Transcript empty                       | Video has no auto-captions                              | Expected — node is stored without body                                               |
+| Final sentence cut short               | SRT truncation (pre-fix state)                          | Pipeline now uses VTT + sentence trim                                                |
+| Duplicate sentence at end              | Last-cue force-add bug (pre-fix state)                  | Fixed — fully-contained cues are dropped                                             |
+| Re-ingest returns existing node        | Node dedup matched on `source_item_id`                  | Run `pnpm dev:clean:vault:recent` first                                              |
+| Extraction failed — transcript saved   | LLM model not running or wrong model name               | Check Ollama is running; set `LLAAB_LOCAL_MID_MODEL` in `.env` to an installed model |
+| Ideas created but body is empty        | Expected — idea body is intentionally empty             | The title phrase IS the idea content                                                 |
+| Missing `youtube_subscribed` on source | OAuth refresh token invalid or enrich not run           | See [YouTube OAuth](/docs/integrations/youtube-oauth.md)                             |
+| `invalid_grant` on subscription check  | Stale/wrong refresh token or Playground client mismatch | Re-issue token per [YouTube OAuth](/docs/integrations/youtube-oauth.md)              |
