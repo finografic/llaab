@@ -1,9 +1,10 @@
 import { resolveDataTableMaxWidth } from '@llaab/ui/lib/data-table-utils';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from 'components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'components/ui/table';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
-import { useRuns } from 'queries/runs';
-import { useMemo, useState } from 'react';
+import { QUERY_KEYS, useRunMonitor, useRuns } from 'queries/runs';
+import { useEffect, useMemo, useState } from 'react';
 import { RunsGroupHeader } from 'tables/RunsTable/RunsGroupHeader';
 import { buildSourcesById } from 'tables/RunsTable/RunsTable.utils';
 import type { SourceNode, TranscriptNode } from '@llaab/schemas';
@@ -101,13 +102,32 @@ export function RunsTable({
   showHeading = false,
   columnLimits,
 }: RunsTableProps) {
+  const queryClient = useQueryClient();
   const [sort, setSort] = useState<SortState>({ column: 'date', direction: 'desc' });
+  const { data: monitorData } = useRunMonitor();
+  const monitorRunIds = useMemo(
+    () => new Set([...(monitorData?.active ?? []), ...(monitorData?.recent ?? [])].map((run) => run.id)),
+    [monitorData?.active, monitorData?.recent],
+  );
   const { data: allRuns = [] } = useRuns({
     refetchInterval: (query) => {
       const data = query.state.data ?? [];
+      const hasMonitorRunMissingFromList = [...monitorRunIds].some(
+        (runId) => !data.some((run) => run.id === runId),
+      );
+      if ((monitorData?.active.length ?? 0) > 0 || hasMonitorRunMissingFromList) {
+        return 1000;
+      }
       return data.some(isRunExtracting) ? 1000 : false;
     },
   });
+
+  useEffect(() => {
+    if ((monitorData?.active.length ?? 0) > 0 || (monitorData?.recent.length ?? 0) > 0) {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.list() });
+    }
+  }, [monitorData?.active, monitorData?.recent, queryClient]);
+
   const runs = useMemo(() => allRuns.filter(isIngestRun), [allRuns]);
   const sourcesById = useMemo(() => buildSourcesById(sources), [sources]);
   const transcriptsById = useMemo(

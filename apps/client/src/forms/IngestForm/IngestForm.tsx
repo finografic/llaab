@@ -170,6 +170,14 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     trimmedUrl === processingUrl;
 
   useEffect(() => {
+    if (!processingUrl || trimmedUrl.length > 0) {
+      return;
+    }
+
+    setValue('url', processingUrl, { shouldDirty: false, shouldTouch: false, shouldValidate: true });
+  }, [processingUrl, setValue, trimmedUrl]);
+
+  useEffect(() => {
     const preventWindowDropNavigation = (event: DragEvent) => {
       if (event.target instanceof Element && event.target.closest('.ingest-form')) return;
       event.preventDefault();

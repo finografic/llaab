@@ -66,15 +66,17 @@ export function buildIngestYoutubeMonitorSteps(run: RunMonitorItem): RunPipeline
   const extractionFailed = run.steps.some(
     (step) => /execute|extract/i.test(step.title) && step.status === 'failed',
   );
+  const extractedEvent = findEvent(run, /extracted \d+ ideas?/i);
+  const extractingEvent = findEvent(run, /extracting ideas/i);
 
   const transcriptStatus = transcriptFailed
     ? 'warning'
-    : reused
+    : reused || extractingEvent || extractedEvent
       ? 'complete'
-      : stepStatusFromEvents(run, /fetching transcript|saved transcript/i, /saved transcript/i, false);
+      : run.status === 'running' || run.status === 'pending'
+        ? 'active'
+        : stepStatusFromEvents(run, /fetching transcript|saved transcript/i, /saved transcript/i, false);
 
-  const extractedEvent = findEvent(run, /extracted \d+ ideas?/i);
-  const extractingEvent = findEvent(run, /extracting ideas/i);
   let extractionStatus: StepStatus = 'pending';
   if (extractionFailed || run.error) {
     extractionStatus = 'warning';
