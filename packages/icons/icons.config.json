@@ -434,5 +434,21 @@
   {
     "exportName": "GitCommitVertical",
     "lucideName": "git-commit-vertical"
+  },
+  {
+    "exportName": "ChartLine",
+    "lucideName": "chart-line"
+  },
+  {
+    "exportName": "Box",
+    "lucideName": "box"
+  },
+  {
+    "exportName": "Pin",
+    "lucideName": "pin"
+  },
+  {
+    "exportName": "PinOff",
+    "lucideName": "pin-off"
   }
 ]
