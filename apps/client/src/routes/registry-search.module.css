@@ -23,9 +23,89 @@
 }
 
 .results {
+  --registry-col-published: 120px;
+  --registry-col-downloads: 200px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.sortHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Match PackageCard horizontal padding (1rem left / 0.25rem right) */
+  padding: 0 0.25rem 2px 1rem;
+}
+
+.sortTitleCol .sortButton {
+  /* Nudge Title left to align with package names */
+  margin-left: -10px;
+}
+
+.sortTitleCol {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.sortPublishedCol {
+  display: flex;
+  flex: 0 1 var(--registry-col-published);
+  align-items: center;
+  justify-content: center;
+  width: var(--registry-col-published);
+  min-width: 0;
+}
+
+.sortDownloadsCol {
+  display: flex;
+  flex: 0 1 var(--registry-col-downloads);
+  align-items: center;
+  justify-content: flex-end;
+  width: var(--registry-col-downloads);
+  min-width: 0;
+}
+
+/* Matches PackageCard pin button column (icon-sm ~28px) */
+.sortPinCol {
+  flex: 0 0 28px;
+  width: 28px;
+}
+
+.sortButton {
+  height: auto;
+  padding: 4px 6px;
+  gap: 4px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sortButtonIdle {
+  color: var(--text-faint);
+}
+
+.sortButtonIdle:hover {
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.sortButtonActive {
+  color: var(--text);
+}
+
+.sortButtonActive:hover {
+  color: var(--text);
+  background: transparent;
+}
+
+.sortIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 .empty {
@@ -33,4 +113,21 @@
   color: var(--text-faint);
   padding: 40px 0;
   text-align: center;
+}
+
+@media (max-width: 800px) {
+  .sortHeader {
+    flex-wrap: wrap;
+  }
+
+  .sortTitleCol {
+    flex: 1 1 100%;
+  }
+
+  .sortPublishedCol,
+  .sortDownloadsCol {
+    flex: 1 1 auto;
+    width: auto;
+    justify-content: flex-start;
+  }
 }

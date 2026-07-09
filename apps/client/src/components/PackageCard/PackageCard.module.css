@@ -1,8 +1,6 @@
 .card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: calc(16px - 0.5rem) 20px calc(16px - 0.25rem);
+  display: block;
+  padding: calc(16px - 0.25rem) 0.25rem calc(16px - 0.25rem) 1rem;
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   background: var(--surface);
@@ -18,10 +16,23 @@
   background: var(--surface-raised);
 }
 
+.body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
 }
 
@@ -35,12 +46,22 @@
   overflow-wrap: anywhere;
 }
 
+.pinCol {
+  display: flex;
+  flex: 0 0 28px;
+  align-items: flex-start;
+  justify-content: flex-end;
+  width: 28px;
+  align-self: stretch;
+  padding-top: 1px;
+}
+
 .pinButton {
   flex-shrink: 0;
   color: var(--text-faint);
   opacity: 0.5;
   cursor: pointer;
-  transform: scale(1.1);
+  transform: scale(1.1) translateY(-0.33rem);
 }
 
 .pinButton:hover {
@@ -65,6 +86,7 @@
 }
 
 .description {
+  margin: 0;
   font-size: var(--text-sm);
   color: var(--text-muted);
   line-height: 1.5;
@@ -75,14 +97,6 @@
 }
 
 .meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.metaLeft {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -116,11 +130,42 @@
   white-space: nowrap;
 }
 
+.publishedCol {
+  display: flex;
+  flex: 0 1 var(--registry-col-published, 120px);
+  align-items: center;
+  justify-content: center;
+  width: var(--registry-col-published, 120px);
+  min-width: 0;
+  align-self: stretch;
+}
+
+.published {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.downloadsCol {
+  display: flex;
+  flex: 0 1 var(--registry-col-downloads, 200px);
+  align-items: center;
+  justify-content: flex-end;
+  width: var(--registry-col-downloads, 200px);
+  min-width: 0;
+  align-self: stretch;
+  svg {
+    opacity: 0.33;
+    transform: translate(-0.2rem, -0.1rem);
+  }
+}
+
 .downloads {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--text);
@@ -147,4 +192,25 @@
   border: 1px solid var(--border-subtle);
   color: var(--text-faint);
   background: var(--surface-raised);
+}
+
+@media (max-width: 800px) {
+  .body {
+    flex-wrap: wrap;
+  }
+
+  .main {
+    flex: 1 1 100%;
+  }
+
+  .publishedCol,
+  .downloadsCol {
+    flex: 1 1 auto;
+    width: auto;
+    justify-content: flex-start;
+  }
+
+  .published {
+    text-align: left;
+  }
 }

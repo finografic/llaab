@@ -64,86 +64,93 @@ export function PackageCard({ pkg, weeklyDownloads, dependents }: PackageCardPro
     }
   }
 
-  const metaParts: ReactNode[] = [];
+  const metaParts: Array<{ key: string; node: ReactNode }> = [];
   if (pkg.version) {
-    metaParts.push(
-      <span key="version" className={styles.metaItem}>
-        v{pkg.version}
-      </span>,
-    );
-  }
-  if (pkg.date) {
-    metaParts.push(
-      <span key="date" className={styles.metaItem}>
-        {formatPackageListDate(pkg.date)}
-      </span>,
-    );
+    metaParts.push({
+      key: 'version',
+      node: <span className={styles.metaItem}>v{pkg.version}</span>,
+    });
   }
   if (dependentsLabel) {
-    metaParts.push(
-      <span key="dependents" className={styles.dependents}>
-        <BoxIcon className={styles.metaIcon} aria-hidden />
-        <span>{dependentsLabel}</span>
-      </span>,
-    );
+    metaParts.push({
+      key: 'dependents',
+      node: (
+        <span className={styles.dependents}>
+          <BoxIcon className={styles.metaIcon} aria-hidden />
+          <span>{dependentsLabel}</span>
+        </span>
+      ),
+    });
   }
 
   return (
     <Link to={`/registry/package/${encodedName}`} className={styles.card}>
-      <div className={styles.header}>
-        <span className={styles.name}>{pkg.name}</span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className={cn(styles.pinButton, isPinned && styles.pinButtonActive)}
-          onClick={handlePinToggle}
-          disabled={pinPending}
-          aria-label={isPinned ? `Unpin ${pkg.name}` : `Pin ${pkg.name}`}
-          aria-pressed={isPinned}
-        >
-          {isPinned ? (
-            <PinIcon className={styles.pinIcon} aria-hidden />
-          ) : (
-            <PinOffIcon className={styles.pinIcon} aria-hidden />
-          )}
-        </Button>
-      </div>
-
-      {pkg.description && <p className={styles.description}>{pkg.description}</p>}
-
-      <div className={styles.meta}>
-        {metaParts.length > 0 ? (
-          <div className={styles.metaLeft}>
-            {metaParts.map((part, i) => (
-              <span key={i} className={styles.metaSegment}>
-                {i > 0 ? (
-                  <span className={styles.middot} aria-hidden>
-                    ·
-                  </span>
-                ) : null}
-                {part}
-              </span>
-            ))}
+      <div className={styles.body}>
+        <div className={styles.main}>
+          <div className={styles.header}>
+            <span className={styles.name}>{pkg.name}</span>
           </div>
-        ) : null}
-        {downloads != null && downloads > 0 ? (
-          <span className={styles.downloads}>
-            <DownloadIcon className={styles.metaIcon} aria-hidden />
-            <span>{formatWeeklyDownloads(downloads)}</span>
-          </span>
-        ) : null}
-      </div>
 
-      {pkg.keywords && pkg.keywords.length > 0 ? (
-        <div className={styles.tags}>
-          {pkg.keywords.slice(0, 6).map((kw) => (
-            <span key={kw} className={styles.tag}>
-              {kw}
-            </span>
-          ))}
+          {pkg.description ? <p className={styles.description}>{pkg.description}</p> : null}
+
+          {metaParts.length > 0 ? (
+            <div className={styles.meta}>
+              {metaParts.map((part, i) => (
+                <span key={part.key} className={styles.metaSegment}>
+                  {i > 0 ? (
+                    <span className={styles.middot} aria-hidden>
+                      ·
+                    </span>
+                  ) : null}
+                  {part.node}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {pkg.keywords && pkg.keywords.length > 0 ? (
+            <div className={styles.tags}>
+              {pkg.keywords.slice(0, 6).map((kw) => (
+                <span key={kw} className={styles.tag}>
+                  {kw}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
-      ) : null}
+
+        <div className={styles.publishedCol}>
+          {pkg.date ? <span className={styles.published}>{formatPackageListDate(pkg.date)}</span> : null}
+        </div>
+
+        <div className={styles.downloadsCol}>
+          {downloads != null && downloads > 0 ? (
+            <span className={styles.downloads}>
+              <DownloadIcon className={styles.metaIcon} aria-hidden />
+              <span>{formatWeeklyDownloads(downloads)}</span>
+            </span>
+          ) : null}
+        </div>
+
+        <div className={styles.pinCol}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className={cn(styles.pinButton, isPinned && styles.pinButtonActive)}
+            onClick={handlePinToggle}
+            disabled={pinPending}
+            aria-label={isPinned ? `Unpin ${pkg.name}` : `Pin ${pkg.name}`}
+            aria-pressed={isPinned}
+          >
+            {isPinned ? (
+              <PinIcon className={styles.pinIcon} aria-hidden />
+            ) : (
+              <PinOffIcon className={styles.pinIcon} aria-hidden />
+            )}
+          </Button>
+        </div>
+      </div>
     </Link>
   );
 }
