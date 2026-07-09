@@ -37,6 +37,7 @@ export { useVaultFile } from './useVaultFile';
 export { useVaultFileDiff } from './useVaultFileDiff';
 export { useVaultClean } from './useVaultClean';
 export { useVaultNodes, useVaultNode } from './useVaultNodes';
+export { useUpdateVaultNode, useBatchUpdateVaultNodes } from './useUpdateVaultNode';
 export { useVaultTree } from './useVaultTree';
 export { useVaultGitStatus } from './useVaultGitStatus';
 export { useVaultGitCommit } from './useVaultGitCommit';

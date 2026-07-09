@@ -26,6 +26,29 @@ export const createNodeBodySchema = z.object({
 
 export type CreateNodeBody = z.infer<typeof createNodeBodySchema>;
 
+export const updateVaultNodeBodySchema = z
+  .object({
+    tags: z.array(z.string()).optional(),
+    status: z.enum(['seed', 'growing', 'mature', 'archived']).optional(),
+  })
+  .refine((body) => body.tags !== undefined || body.status !== undefined, {
+    message: 'Provide tags and/or status to update.',
+  });
+
+export type UpdateVaultNodeBody = z.infer<typeof updateVaultNodeBodySchema>;
+
+export const batchUpdateVaultNodesBodySchema = z
+  .object({
+    ids: z.array(z.string().min(1)).min(1),
+    tags: z.array(z.string()).optional(),
+    status: z.enum(['seed', 'growing', 'mature', 'archived']).optional(),
+  })
+  .refine((body) => body.tags !== undefined || body.status !== undefined, {
+    message: 'Provide tags and/or status to update.',
+  });
+
+export type BatchUpdateVaultNodesBody = z.infer<typeof batchUpdateVaultNodesBodySchema>;
+
 export const deleteRunQuerySchema = z.object({
   deleteProduced: z.enum(['true', 'false']).optional(),
 });

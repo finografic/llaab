@@ -5,6 +5,7 @@ import { requireVaultSession } from '../../middlewares/vault-auth.middleware.js'
 import * as routes from './vault.routes.js';
 import {
   cleanRecentBodySchema,
+  batchUpdateVaultNodesBodySchema,
   createNodeBodySchema,
   deleteRunQuerySchema,
   deleteRunsPreviewBodySchema,
@@ -12,6 +13,7 @@ import {
   promoteCanonicalIdeaBodySchema,
   resolveCanonicalIdeaConflictBodySchema,
   updateSourceProfilesBodySchema,
+  updateVaultNodeBodySchema,
   vaultLoginBodySchema,
 } from './vault.schema.js';
 
@@ -25,7 +27,17 @@ export const vaultRouter = createRouter()
   .get(routes.file.path, routes.file.handler)
   .get(routes.listVaultNodes.path, zValidator('query', listNodesQuerySchema), routes.listVaultNodes.handler)
   .post(routes.createVaultNode.path, zValidator('json', createNodeBodySchema), routes.createVaultNode.handler)
+  .post(
+    routes.batchUpdateVaultNodes.path,
+    zValidator('json', batchUpdateVaultNodesBodySchema),
+    routes.batchUpdateVaultNodes.handler,
+  )
   .get(routes.nodeDetail.path, routes.nodeDetail.handler)
+  .patch(
+    routes.updateVaultNode.path,
+    zValidator('json', updateVaultNodeBodySchema),
+    routes.updateVaultNode.handler,
+  )
   .post(routes.enrichSource.path, routes.enrichSource.handler)
   .patch(
     routes.updateSourceProfiles.path,

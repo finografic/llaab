@@ -1,6 +1,6 @@
 # TODO — Inbox Views and Review Workflows
 
-> **Status:** Phase 3 complete (2026-07-09). Phases 4–8 not started.
+> **Status:** Phase 4 complete (2026-07-09). Phases 5–8 not started.
 
 ## Goal
 
@@ -223,15 +223,17 @@ types still fall back gracefully.
 
 Purpose: turn inbox review from passive browsing into a lightweight triage loop.
 
-- [ ] Add review states if the data model supports it: new, reviewed, archived, promoted, failed.
-- [ ] Add archive/unarchive action for captures that no longer need attention.
-- [ ] Add mark-reviewed action.
-- [ ] Add failed-capture view.
-- [ ] Add "open target node" action when a capture produced a node/run/pin.
-- [ ] Add "open source" action for URL-backed captures.
-- [ ] Add "promote" placeholders for resources, snippets, docs, and skills.
-- [ ] Add batch archive for reviewed captures.
-- [ ] Add safe bulk action confirmations.
+- [x] Add review states if the data model supports it: new, reviewed, archived, promoted, failed
+      (tag convention `inbox:*` via `inbox-review.utils.ts` + `PATCH /api/vault/nodes/:id`,
+      2026-07-09).
+- [x] Add archive/unarchive action for captures that no longer need attention (2026-07-09).
+- [x] Add mark-reviewed action (2026-07-09).
+- [x] Add failed-capture view (attention filter `failed` + review-state filter, 2026-07-09).
+- [x] Add "open target node" action when a capture produced a node/run/pin (2026-07-09).
+- [x] Add "open source" action for URL-backed captures (2026-07-09).
+- [x] Add "promote" placeholders for resources, snippets, docs, and skills (2026-07-09).
+- [x] Add batch archive for reviewed captures (2026-07-09).
+- [x] Add safe bulk action confirmations (`AlertDialog`, 2026-07-09).
 
 Exit criteria: the user can clear the inbox without deleting useful captured knowledge.
 

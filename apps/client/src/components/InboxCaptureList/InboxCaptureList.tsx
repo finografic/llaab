@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { DefaultInboxCaptureSummary, getInboxListRowRenderer } from 'lib/inbox-capture-renderers';
 import { routeKindLabel } from 'lib/inbox-capture.utils';
 import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
+import { getInboxReviewState } from 'lib/inbox-review.utils';
 import { formatDetailDate } from 'utils/format-date.utils';
 
 import styles from './InboxCaptureList.module.css';
@@ -83,7 +84,7 @@ function DefaultInboxCaptureListRow({
       </div>
       <div className={styles.meta}>
         <Badge variant="outline">{platform}</Badge>
-        <Badge variant="outline">{node.status}</Badge>
+        <Badge variant="outline">{getInboxReviewState(node)}</Badge>
       </div>
       <div className={styles.date}>{formatDetailDate(receivedAt)}</div>
     </Link>

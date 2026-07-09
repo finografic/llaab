@@ -1,8 +1,21 @@
 import { readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
-import { cleanRecentVaultActivity, createNode, getNodeFilePath, listNodes, VAULT_ROOT } from '@llaab/core';
+import {
+  cleanRecentVaultActivity,
+  createNode,
+  getNodeFilePath,
+  listNodes,
+  updateNode,
+  VAULT_ROOT,
+} from '@llaab/core';
 import type { AppCtx, AppCtxJson, AppCtxQuery } from '../../types/app.types.js';
-import type { CleanRecentBody, CreateNodeBody, ListNodesQuery } from './vault.schema.js';
+import type {
+  BatchUpdateVaultNodesBody,
+  CleanRecentBody,
+  CreateNodeBody,
+  ListNodesQuery,
+  UpdateVaultNodeBody,
+} from './vault.schema.js';
 
 import { readVaultRootTree } from '../../lib/vault-tree.js';
 
@@ -91,6 +104,64 @@ export const nodeDetail = {
     const node = nodes.find((n) => n.id === id);
     if (!node) return c.json({ error: 'Node not found' }, 404);
     return c.json({ node });
+  },
+};
+
+export const updateVaultNode = {
+  path: '/nodes/:id' as const,
+  handler: async (c: AppCtxJson<UpdateVaultNodeBody>) => {
+    const { id } = c.req.param() as { id: string };
+    const body = c.req.valid('json');
+    const nodes = await listNodes();
+    const node = nodes.find((n) => n.id === id);
+    if (!node) return c.json({ error: 'Node not found' }, 404);
+
+    try {
+      const result = await updateNode(getNodeFilePath(node.type, node.id), (current) => ({
+        ...current,
+        tags: body.tags ?? current.tags,
+        status: body.status ?? current.status,
+        updated_at: new Date().toISOString(),
+      }));
+      return c.json({ node: result.node });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update node.';
+      return c.json({ error: message }, 500);
+    }
+  },
+};
+
+export const batchUpdateVaultNodes = {
+  path: '/nodes/batch' as const,
+  handler: async (c: AppCtxJson<BatchUpdateVaultNodesBody>) => {
+    const body = c.req.valid('json');
+    const nodes = await listNodes();
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    const updated = [];
+    const missing: string[] = [];
+
+    for (const id of body.ids) {
+      const node = byId.get(id);
+      if (!node) {
+        missing.push(id);
+        continue;
+      }
+
+      try {
+        const result = await updateNode(getNodeFilePath(node.type, node.id), (current) => ({
+          ...current,
+          tags: body.tags ?? current.tags,
+          status: body.status ?? current.status,
+          updated_at: new Date().toISOString(),
+        }));
+        updated.push(result.node);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to update node.';
+        return c.json({ error: message, id }, 500);
+      }
+    }
+
+    return c.json({ nodes: updated, missing });
   },
 };
 

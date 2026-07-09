@@ -1,9 +1,11 @@
+import { InboxCaptureActions } from 'components/InboxCaptureActions/InboxCaptureActions';
 import { Badge } from 'components/ui/badge';
 import { Link } from 'react-router-dom';
 
 import { getInboxDetailRenderer } from 'lib/inbox-capture-renderers';
 import { routeKindLabel } from 'lib/inbox-capture.utils';
 import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
+import { getInboxReviewState } from 'lib/inbox-review.utils';
 import { formatDetailDate } from 'utils/format-date.utils';
 
 import styles from './InboxCaptureDetail.module.css';
@@ -18,6 +20,10 @@ export function InboxCaptureDetail({ capture }: InboxCaptureDetailProps) {
   return (
     <>
       <CoreInboxCaptureMeta capture={capture} />
+      <section className="section">
+        <h2 className="section__heading">Review actions</h2>
+        <InboxCaptureActions capture={capture} />
+      </section>
       {CustomDetail ? <CustomDetail capture={capture} /> : <FallbackInboxCaptureBody capture={capture} />}
     </>
   );
@@ -31,6 +37,7 @@ function CoreInboxCaptureMeta({ capture }: InboxCaptureDetailProps) {
       <div className={styles.metaRow}>
         <Badge variant="secondary">{routeKindLabel(routeKind)}</Badge>
         <Badge variant="outline">{platform}</Badge>
+        <Badge variant="outline">{getInboxReviewState(node)}</Badge>
         <Badge variant="outline">{node.status}</Badge>
         <Badge variant="outline">{node.type}</Badge>
       </div>
@@ -58,10 +65,13 @@ function CoreInboxCaptureMeta({ capture }: InboxCaptureDetailProps) {
           <dd>
             <span className="meta-mono">{routeKind}</span>
           </dd>
-          <dt>Review / status</dt>
+          <dt>Review state</dt>
+          <dd>
+            <Badge variant="secondary">{getInboxReviewState(node)}</Badge>
+          </dd>
+          <dt>Node status</dt>
           <dd>
             <span className={`badge badge--status badge--${node.status}`}>{node.status}</span>
-            <span className="meta-text"> (node lifecycle; inbox review state comes in Phase 4)</span>
           </dd>
           <dt>Source platform</dt>
           <dd>{platform}</dd>

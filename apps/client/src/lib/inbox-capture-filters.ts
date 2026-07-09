@@ -2,19 +2,30 @@ import { HermesInboxPlatformSchema, HermesInboxRouteKindSchema } from '@llaab/sc
 import type { HermesInboxPlatform, HermesInboxRouteKind } from '@llaab/schemas';
 
 import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
+import { getInboxReviewState } from 'lib/inbox-review.utils';
+import type { InboxReviewState } from 'lib/inbox-review.utils';
 
 export const INBOX_ROUTE_KIND_FILTERS = HermesInboxRouteKindSchema.options;
 
 export const INBOX_PLATFORM_FILTERS = HermesInboxPlatformSchema.options;
 
+export const INBOX_REVIEW_STATE_FILTERS = [
+  'new',
+  'reviewed',
+  'archived',
+  'promoted',
+  'failed',
+] as const satisfies readonly InboxReviewState[];
+
 export type InboxGroupBy = 'none' | 'route_kind' | 'platform';
 export type InboxSortOrder = 'newest' | 'oldest';
-export type InboxAttentionFilter = 'all' | 'needs_attention';
+export type InboxAttentionFilter = 'all' | 'needs_attention' | 'failed';
 
 export interface InboxCaptureFilters {
   routeKind: HermesInboxRouteKind | 'all';
   platform: HermesInboxPlatform | 'all';
   status: string;
+  reviewState: InboxReviewState | 'all';
   search: string;
   sort: InboxSortOrder;
   groupBy: InboxGroupBy;
@@ -25,6 +36,7 @@ export const DEFAULT_INBOX_CAPTURE_FILTERS: InboxCaptureFilters = {
   routeKind: 'all',
   platform: 'all',
   status: 'all',
+  reviewState: 'all',
   search: '',
   sort: 'newest',
   groupBy: 'none',
@@ -41,6 +53,7 @@ export function parseInboxFiltersFromSearchParams(params: URLSearchParams): Inbo
   const routeKindRaw = params.get('kind') ?? 'all';
   const platformRaw = params.get('platform') ?? 'all';
   const status = params.get('status') ?? 'all';
+  const reviewRaw = params.get('review') ?? 'all';
   const search = params.get('q') ?? '';
   const sortRaw = params.get('sort') ?? 'newest';
   const groupByRaw = params.get('group') ?? 'none';
@@ -48,15 +61,19 @@ export function parseInboxFiltersFromSearchParams(params: URLSearchParams): Inbo
 
   const routeKindParsed = HermesInboxRouteKindSchema.safeParse(routeKindRaw);
   const platformParsed = HermesInboxPlatformSchema.safeParse(platformRaw);
+  const reviewState = INBOX_REVIEW_STATE_FILTERS.includes(reviewRaw as InboxReviewState)
+    ? (reviewRaw as InboxReviewState)
+    : 'all';
 
   return {
     routeKind: routeKindParsed.success ? routeKindParsed.data : 'all',
     platform: platformParsed.success ? platformParsed.data : 'all',
     status: status || 'all',
+    reviewState,
     search,
     sort: sortRaw === 'oldest' ? 'oldest' : 'newest',
     groupBy: groupByRaw === 'route_kind' || groupByRaw === 'platform' ? groupByRaw : 'none',
-    attention: attentionRaw === 'needs_attention' ? 'needs_attention' : 'all',
+    attention: attentionRaw === 'needs_attention' || attentionRaw === 'failed' ? attentionRaw : 'all',
   };
 }
 
@@ -65,6 +82,7 @@ export function inboxFiltersToSearchParams(filters: InboxCaptureFilters): URLSea
   if (filters.routeKind !== 'all') params.set('kind', filters.routeKind);
   if (filters.platform !== 'all') params.set('platform', filters.platform);
   if (filters.status !== 'all') params.set('status', filters.status);
+  if (filters.reviewState !== 'all') params.set('review', filters.reviewState);
   if (filters.search.trim()) params.set('q', filters.search.trim());
   if (filters.sort !== 'newest') params.set('sort', filters.sort);
   if (filters.groupBy !== 'none') params.set('group', filters.groupBy);
@@ -82,7 +100,11 @@ export function filterInboxCaptures(
     if (filters.routeKind !== 'all' && capture.routeKind !== filters.routeKind) return false;
     if (filters.platform !== 'all' && capture.platform !== filters.platform) return false;
     if (filters.status !== 'all' && capture.node.status !== filters.status) return false;
+    if (filters.reviewState !== 'all' && getInboxReviewState(capture.node) !== filters.reviewState) {
+      return false;
+    }
     if (filters.attention === 'needs_attention' && !needsAttention(capture)) return false;
+    if (filters.attention === 'failed' && getInboxReviewState(capture.node) !== 'failed') return false;
     if (query && !matchesSearch(capture, query)) return false;
     return true;
   });
@@ -119,10 +141,14 @@ export function groupInboxCaptures(
 }
 
 function needsAttention(capture: ParsedInboxCapture): boolean {
-  if (capture.malformed) return true;
+  const reviewState = getInboxReviewState(capture.node);
+  if (reviewState === 'archived' || reviewState === 'promoted' || reviewState === 'reviewed') {
+    return false;
+  }
+  if (reviewState === 'failed' || capture.malformed) return true;
   if (capture.routeKind === 'raw' || capture.routeKind === 'unknown') return true;
   if (capture.node.tags.includes('inbox:raw')) return true;
-  return false;
+  return reviewState === 'new';
 }
 
 function matchesSearch(capture: ParsedInboxCapture, query: string): boolean {
@@ -141,7 +167,7 @@ function matchesSearch(capture: ParsedInboxCapture, query: string): boolean {
       const value = payload[key];
       if (typeof value === 'string') haystacks.push(value);
     }
-    const {attachment} = payload;
+    const { attachment } = payload;
     if (attachment && typeof attachment === 'object' && !Array.isArray(attachment)) {
       const fileName = (attachment as Record<string, unknown>)['file_name'];
       if (typeof fileName === 'string') haystacks.push(fileName);

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'c
 import {
   DEFAULT_INBOX_CAPTURE_FILTERS,
   INBOX_PLATFORM_FILTERS,
+  INBOX_REVIEW_STATE_FILTERS,
   INBOX_ROUTE_KIND_FILTERS,
 } from 'lib/inbox-capture-filters';
 import type {
@@ -14,6 +15,7 @@ import type {
   InboxSortOrder,
 } from 'lib/inbox-capture-filters';
 import { routeKindLabel } from 'lib/inbox-capture.utils';
+import type { InboxReviewState } from 'lib/inbox-review.utils';
 
 import styles from './InboxCaptureFilters.module.css';
 
@@ -85,7 +87,7 @@ export function InboxCaptureFilters({ filters, statusOptions, onChange }: InboxC
           </Select>
         </div>
         <div className={styles.field}>
-          <span className={styles.label}>Status</span>
+          <span className={styles.label}>Node status</span>
           <Select value={filters.status} onValueChange={(value) => patch({ status: value ?? 'all' })}>
             <SelectTrigger size="sm">
               <SelectValue placeholder="All statuses" />
@@ -95,6 +97,25 @@ export function InboxCaptureFilters({ filters, statusOptions, onChange }: InboxC
               {statusOptions.map((status) => (
                 <SelectItem key={status} value={status}>
                   {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className={styles.field}>
+          <span className={styles.label}>Review</span>
+          <Select
+            value={filters.reviewState}
+            onValueChange={(value) => patch({ reviewState: (value ?? 'all') as InboxReviewState | 'all' })}
+          >
+            <SelectTrigger size="sm">
+              <SelectValue placeholder="All review states" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All review states</SelectItem>
+              {INBOX_REVIEW_STATE_FILTERS.map((state) => (
+                <SelectItem key={state} value={state}>
+                  {state}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -145,7 +166,8 @@ export function InboxCaptureFilters({ filters, statusOptions, onChange }: InboxC
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All captures</SelectItem>
-              <SelectItem value="needs_attention">Failed / raw / unknown</SelectItem>
+              <SelectItem value="needs_attention">Needs attention</SelectItem>
+              <SelectItem value="failed">Failed only</SelectItem>
             </SelectContent>
           </Select>
         </div>
