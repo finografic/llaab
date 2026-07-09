@@ -1,6 +1,6 @@
 # TODO — Inbox Views and Review Workflows
 
-> **Status:** Phase 0 complete (2026-07-09). Phases 1–8 not started.
+> **Status:** Phase 1 complete (2026-07-09). Phases 2–8 not started.
 
 ## Goal
 
@@ -127,18 +127,25 @@ work starts.
 
 Purpose: create the reusable UI shell for every inbox-derived type.
 
-- [ ] Create a base inbox list route using the existing `PageLayout` + `PageHero` pattern.
-- [ ] Create a base inbox detail route using the existing `PageDetail` pattern.
-- [ ] Use existing vault/node query patterns before adding new API shapes.
-- [ ] Add a shared `InboxCaptureList` component for route-kind-aware rows.
-- [ ] Add a shared `InboxCaptureDetail` component for route-kind-aware detail rendering.
-- [ ] Add a registry/map from route kind or stored tags to renderer components.
-- [ ] Add a default list row renderer for unknown route kinds.
-- [ ] Add a default detail renderer for unknown route kinds.
-- [ ] Show stable core metadata everywhere: title, route kind, status/review state, source platform,
-      received timestamp, target node id, and receipt/result.
-- [ ] Ensure default renderers can display raw body/frontmatter without throwing.
-- [ ] Add empty, loading, error, and malformed-node states.
+- [x] Create a base inbox list route using the existing `PageLayout` + `PageHero` pattern
+      (`/vault/inbox`, 2026-07-09).
+- [x] Create a base inbox detail route using the existing `PageDetail` pattern
+      (`/vault/inbox/:id`, 2026-07-09).
+- [x] Use existing vault/node query patterns before adding new API shapes
+      (`useVaultNodes({ tags: ['hermes', 'inbox'] })`, 2026-07-09).
+- [x] Add a shared `InboxCaptureList` component for route-kind-aware rows (2026-07-09).
+- [x] Add a shared `InboxCaptureDetail` component for route-kind-aware detail rendering
+      (2026-07-09).
+- [x] Add a registry/map from route kind or stored tags to renderer components
+      (`inbox-capture-renderers.tsx`, 2026-07-09).
+- [x] Add a default list row renderer for unknown route kinds (2026-07-09).
+- [x] Add a default detail renderer for unknown route kinds (2026-07-09).
+- [x] Show stable core metadata everywhere: title, route kind, status/review state, source platform,
+      received timestamp, target node id, and receipt/result (receipt not persisted on nodes yet;
+      status shown as node lifecycle, 2026-07-09).
+- [x] Ensure default renderers can display raw body/frontmatter without throwing (2026-07-09).
+- [x] Add empty, loading, error, and malformed-node states (2026-07-09).
+- [x] Add Vault nav item for Inbox (`nav-menu.config.ts` + `NAV_MENU_DESIGN.md`, 2026-07-09).
 
 Exit criteria: all current inbox captures can be listed and opened, even if a type-specific view
 does not exist yet.

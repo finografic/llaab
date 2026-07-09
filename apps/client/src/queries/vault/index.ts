@@ -1,9 +1,31 @@
+export interface VaultNodesQueryKeyInput {
+  type?: string;
+  tags?: string[];
+  search?: string;
+  status?: string;
+  limit?: number;
+}
+
 export const QUERY_KEYS = {
   vault: {
     all: ['vault'] as const,
     file: (path: string) => [...QUERY_KEYS.vault.all, 'file', path] as const,
     fileDiff: (path: string) => [...QUERY_KEYS.vault.all, 'file-diff', path] as const,
-    nodes: (type?: string) => [...QUERY_KEYS.vault.all, 'nodes', type ?? 'all'] as const,
+    nodes: (input?: string | VaultNodesQueryKeyInput) => {
+      if (typeof input === 'string' || input === undefined) {
+        return [...QUERY_KEYS.vault.all, 'nodes', input ?? 'all'] as const;
+      }
+
+      return [
+        ...QUERY_KEYS.vault.all,
+        'nodes',
+        input.type ?? 'all',
+        input.tags?.join(',') ?? '',
+        input.search ?? '',
+        input.status ?? '',
+        input.limit ?? '',
+      ] as const;
+    },
     node: (id: string) => [...QUERY_KEYS.vault.all, 'node', id] as const,
     tree: () => [...QUERY_KEYS.vault.all, 'tree'] as const,
     enrichedSource: (id: string) => [...QUERY_KEYS.vault.all, 'source', id, 'enriched'] as const,

@@ -41,6 +41,12 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         live: true,
       },
       {
+        label: 'Inbox',
+        description: 'Hermes and Telegram captures awaiting review',
+        href: '/vault/inbox',
+        live: true,
+      },
+      {
         label: 'Search',
         description: 'Full-text search across vault nodes',
         href: '/vault/search',

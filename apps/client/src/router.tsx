@@ -40,6 +40,10 @@ const TranscriptsPage = lazy(() =>
 const TranscriptDetailPage = lazy(() =>
   import('routes/transcript-detail').then((module) => ({ default: module.TranscriptDetailPage })),
 );
+const InboxPage = lazy(() => import('routes/inbox').then((module) => ({ default: module.InboxPage })));
+const InboxDetailPage = lazy(() =>
+  import('routes/inbox-detail').then((module) => ({ default: module.InboxDetailPage })),
+);
 const RegistrySearchPage = lazy(() =>
   import('routes/registry-search').then((module) => ({ default: module.RegistrySearchPage })),
 );
@@ -171,6 +175,16 @@ export const router = createBrowserRouter([
             path: 'nodes/:id',
             element: lazyElement(NodeDetailPage),
             handle: { title: 'Node' } satisfies RouteHandle,
+          },
+          {
+            path: 'inbox',
+            element: lazyElement(InboxPage),
+            handle: { title: 'Inbox' } satisfies RouteHandle,
+          },
+          {
+            path: 'inbox/:id',
+            element: lazyElement(InboxDetailPage),
+            handle: { title: 'Inbox capture' } satisfies RouteHandle,
           },
           {
             path: 'transcripts',

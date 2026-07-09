@@ -45,6 +45,7 @@ megamenu panel on hover/click.
 | **Nodes**        | Ideas, skills, resources, prompts, and instructions by type | `/vault/nodes`       | Live       |
 | **Transcripts**  | Ingested transcripts with summaries and linked ideas        | `/vault/transcripts` | Live       |
 | **Sources**      | Channels, repos, and other origin entities                  | `/vault/sources`     | Live       |
+| **Inbox**        | Hermes and Telegram captures awaiting review                | `/vault/inbox`       | Live       |
 | **Search**       | Full-text search across vault nodes                         | `/vault/search`      | `[future]` |
 
 ### Design notes
@@ -214,6 +215,7 @@ should have redirects.
 | —             | `/llm/capabilities`    | New — capability browser                |
 | —             | `/system/doctor`       | New — health check page                 |
 | —             | `/system/harness`      | New — harness inspector                 |
+| —             | `/vault/inbox`         | Done — Hermes inbox capture review      |
 | —             | `/vault/search`        | New — full-text vault search            |
 | —             | `/ingest/article`      | New — article ingestion                 |
 | —             | `/ingest/document`     | New — document ingestion (liteparse)    |
