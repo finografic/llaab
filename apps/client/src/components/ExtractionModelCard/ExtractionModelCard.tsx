@@ -86,38 +86,32 @@ export function ExtractionModelCard({
       <div
         className={cn(
           'flex w-full items-center gap-3 leading-none',
-          hasModelMeta ? 'justify-between' : 'justify-end',
+          hasModelMeta && hasStats ? 'justify-between' : hasModelMeta ? 'justify-start' : 'justify-end',
           className,
         )}
       >
         {hasModelMeta ? (
-          <div
-            className={cn(
-              'flex w-full flex-wrap items-center gap-1.5',
-              hasModelMeta ? 'justify-between' : 'justify-end',
-              className,
-            )}
-          >
-            {model ? (
-              <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
-                {model}
+          <div className="flex shrink-0 flex-wrap items-center justify-start gap-1.5">
+            {provider ? (
+              <span className="-translate-x-2 rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                {provider}
               </span>
             ) : null}
-            {provider ? (
-              <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground">
-                {provider}
+            {model ? (
+              <span
+                className={cn(
+                  'rounded-full border border-border bg-muted/30 px-2 py-0.5 font-mono text-xs text-muted-foreground',
+                  !provider && '-translate-x-2',
+                )}
+              >
+                {model}
               </span>
             ) : null}
           </div>
         ) : null}
 
         {hasStats ? (
-          <div
-            className={cn(
-              'flex shrink-0 flex-wrap items-center justify-end gap-x-0 gap-y-1',
-              !hasModelMeta && 'justify-center',
-            )}
-          >
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-0 gap-y-1">
             {promptTokens != null ? (
               <CompactBarMetric Icon={ArrowUpIcon} value={promptTokens.toLocaleString()} />
             ) : null}

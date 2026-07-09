@@ -1,3 +1,4 @@
+import { BadgeCheckIcon } from '@llaab/icons';
 import { cn } from '@llaab/ui/lib/utils';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Col, Container, Row } from 'components/ui/grid';
@@ -96,6 +97,8 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                 const isActive = transcript.id === selectedId;
                 const subtitle = transcriptAuthor(transcript);
                 const hasLatency = transcript.llm_duration_ms != null;
+                const ideaCount = transcript.extracted_idea_ids.length;
+                const isConsolidated = Boolean(transcript.canonical_coverage?.canonical_idea_ids.length);
 
                 return (
                   <Link
@@ -117,27 +120,50 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                         </Col>
 
                         {transcript.summary ? (
-                          <Col xs={12}>
-                            <span className="text-xs line-clamp-2 whitespace-normal text-muted-foreground">
+                          <Col xs={12} className="pb-2">
+                            <span className="text-base line-clamp-2 whitespace-normal text-muted-foreground">
                               {transcript.summary}
                             </span>
                           </Col>
                         ) : null}
 
                         <Col
-                          xs={12}
-                          className="self-center text-xs font-mono text-muted-foreground text-right"
+                          xs={6}
+                          className="my-1 self-center text-left text-xs font-mono text-muted-foreground"
                         >
                           {fmtListDateNumeric(transcript.created_at)}
+                        </Col>
+                        <Col
+                          xs={6}
+                          className="my-1 flex items-center justify-end gap-1 self-center text-xs font-mono text-muted-foreground"
+                        >
+                          {isConsolidated ? (
+                            <BadgeCheckIcon
+                              size={14}
+                              className="mr-0.5 shrink-0 text-(--consolidation-text)"
+                              aria-label="Canonical ideas consolidated"
+                            />
+                          ) : (
+                            <span aria-hidden className="mr-0.5 inline-block w-3.5 shrink-0" />
+                          )}
+                          <span
+                            className={
+                              isConsolidated ? 'font-semibold text-(--consolidation-text)' : 'font-semibold'
+                            }
+                          >
+                            {ideaCount} ideas
+                          </span>
                         </Col>
                         <Col xs={12} className="flex items-center justify-end pt-2">
                           {hasLatency ? (
                             <ExtractionModelCard
                               variant="compact-bar"
                               model={transcript.llm_model}
+                              provider={transcript.llm_provider}
                               promptTokens={transcript.llm_prompt_tokens}
                               completionTokens={transcript.llm_completion_tokens}
                               durationMs={transcript.llm_duration_ms}
+                              showTotalTokens={false}
                             />
                           ) : null}
                         </Col>

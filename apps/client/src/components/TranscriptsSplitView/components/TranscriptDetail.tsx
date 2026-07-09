@@ -38,7 +38,7 @@ import { heartbeatStore, useElapsedMs } from 'lib/heartbeat';
 import { parseConsolidateRunTranscriptId } from 'utils/canonical-idea-conflict.utils';
 import { formatDurationMs } from 'utils/format-date.utils';
 
-import { fmtDetailDate, splitTags } from '../transcript-split.utils';
+import { fmtDetailDate, fmtListDateNumeric, splitTags } from '../transcript-split.utils';
 import styles from './TranscriptDetail.module.css';
 
 export interface TranscriptDetailProps {
@@ -521,7 +521,9 @@ export function TranscriptDetail({
                     <Col xs={11}>
                       <span className={styles.runOptionBody}>
                         <span className={styles.runOptionHeader}>
-                          <span className={styles.runOptionTitle}>{fmtRunDate(run.startedAt)}</span>
+                          <span className={styles.runOptionTitle}>
+                            {run.startedAt ? fmtListDateNumeric(run.startedAt) : 'Run'}
+                          </span>
                           <span className={styles.runOptionCount}>{run.ideaIds.length} ideas</span>
                         </span>
                         {hasExtractionMeta(run) ? (
@@ -532,6 +534,7 @@ export function TranscriptDetail({
                             promptTokens={run.promptTokens}
                             completionTokens={run.completionTokens}
                             durationMs={run.durationMs}
+                            showTotalTokens={false}
                           />
                         ) : null}
                       </span>
