@@ -333,6 +333,119 @@ vault candidate → review/consolidation → promoted artifact → knowledge/
 
 ---
 
+## capture
+
+**A `capture` is something saved into LLAAB before deeper review, extraction, routing, or promotion.**
+
+In LLAAB terms, a capture is the first durable form of a dropped note, link, file, image, snippet,
+or other input. It may later become a resource, idea, skill, prompt, instruction, transcript, or
+promoted artifact, but at capture time the important guarantee is that it is not lost.
+
+Why it matters here:
+
+- it gives inbox saves a neutral name before their final type is known
+- it separates "saved safely" from "fully processed"
+- it lets review workflows handle unknown or partially classified inputs without pretending they
+  are mature knowledge
+
+A simple mental model is:
+
+```
+incoming input → capture → review/enrich/promote → node or promoted artifact
+```
+
+---
+
+## inbox item
+
+**An `inbox item` is the raw incoming envelope received by an inbox transport.**
+
+In LLAAB terms, an inbox item is about provenance and delivery: raw text, attachments, source
+platform, user/chat/message identifiers, and received timestamp. Telegram, Discord, a manual form,
+or a future share-sheet shortcut can all produce inbox items.
+
+An inbox item is not necessarily the final stored knowledge object. The router turns it into a
+capture, run, pinned library, or other target.
+
+Why it matters here:
+
+- it keeps transport details separate from content type
+- it preserves enough metadata to debug bad routes or failed captures
+- it lets Telegram remain an inbox mechanism rather than a content taxonomy
+
+A simple mental model is:
+
+```
+inbox item = what arrived, where it came from, and when
+capture    = what LLAAB saved from it
+```
+
+---
+
+## route kind
+
+**A `route kind` is the deterministic classification assigned to an inbox item before execution.**
+
+In LLAAB terms, route kinds are cheap, explicit labels such as `docs_link`, `code_snippet`, `image`,
+or `command_candidate`. They decide which safe action the inbox may take, but they are not always
+the final semantic type of the saved knowledge.
+
+Why it matters here:
+
+- route kinds keep inbox behavior predictable and testable
+- they avoid using an LLM for common classifications
+- they provide useful facets for review UI filters
+
+A simple mental model is:
+
+```
+inbox item → route kind → safe action → capture/target
+```
+
+---
+
+## media asset
+
+**A `media asset` is a saved binary, image, or file payload associated with a capture.**
+
+In LLAAB terms, media assets include screenshots, photos, PDFs, Markdown files, archives, and other
+uploaded files. A media asset may be stored in a temporary Hermes cache at first, then later moved
+into a dedicated vault assets pipeline.
+
+Why it matters here:
+
+- files need different preview and retention behavior than text-only captures
+- screenshots/images should not be confused with generic attachments
+- future asset storage can evolve without changing the meaning of the original capture
+
+---
+
+## review state
+
+**A `review state` is the human workflow state of a capture.**
+
+Review state answers whether a capture is still new, has been reviewed, was archived, failed, or
+was promoted into a more mature node or artifact. It is separate from route kind: a `docs_link` can
+be new, reviewed, archived, or promoted.
+
+Potential review states:
+
+| State      | Meaning                                            |
+| ---------- | -------------------------------------------------- |
+| `new`      | Captured but not yet reviewed                      |
+| `reviewed` | Seen and accepted without further action for now   |
+| `archived` | Preserved but hidden from active review            |
+| `promoted` | Turned into a more mature node or knowledge output |
+| `failed`   | Capture or downstream action failed                |
+
+Why it matters here:
+
+- it makes inbox review clear without deleting data
+- it gives UI filters a simple "needs attention" axis
+- it supports promotion without losing original provenance
+
+---
+
 ## source **[candidates: #1]**
 
 **A `source` is the origin of knowledge: the person, channel, repo, publication, or other entity content comes from.**

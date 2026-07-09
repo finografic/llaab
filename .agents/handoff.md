@@ -426,8 +426,8 @@ YAML `profiles` object-array parsing so all source nodes load for runs author li
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
-Hermes setup and follow-ups: `docs/todo/TODO_HERMES_LAYER.md` and
-`docs/todo/TODO_HERMES_DROPBOX.md`. Vault/knowledge split plan:
+Hermes setup and follow-ups: `docs/todo/TODO_HERMES_LAYER.md`,
+`docs/todo/DONE_HERMES_DROPBOX.md`, and `docs/todo/TODO_INBOX_VIEWS.md`. Vault/knowledge split plan:
 `docs/todo/TODO_VAULT_KNOWLEDGE_SPLIT.md`; current shape is source/docs/`knowledge/` in the parent
 repo and volatile working data in the nested `vault/.git` repo.
 Playwright learning playground: `docs/todo/TODO_PLAYWRIGHT_PRACTICE.md`.
@@ -469,8 +469,9 @@ receipts such as `✅ Ingested YouTube video: ...`, `✅ Saved docs link: ...`, 
 snippet: ...`. Attachments win over embedded URLs so uploaded files are never lost; `docs:` captions
 on Markdown attachments route as docs attachments. Distinct docs links are keyed by full URL path,
 not just host. Remaining manual checks: unauthorized Telegram user rejection and Discord operator
-console unchanged. Future inbox work is in `TODO_HERMES_DROPBOX.md`: AI-assisted categorization,
-snippet extraction from arbitrary docs/blog/code-reference links, and richer review/search surfaces.
+console unchanged. Future inbox work is in `TODO_INBOX_VIEWS.md`: shared list/detail views,
+fallback renderers, AI-assisted categorization, snippet extraction from arbitrary docs/blog/code-
+reference links, and richer review/search surfaces.
 
 ## Local Dev Ops
 

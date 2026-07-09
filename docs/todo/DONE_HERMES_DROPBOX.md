@@ -1,9 +1,8 @@
-# TODO — Hermes Dropbox Inbox
+# DONE — Hermes Dropbox Inbox
 
-> **Status:** Phase 8 manual validation ready (2026-07-08). Telegram transport, deterministic
-> routing, narrow MCP write tools, receipt formatting, route log events, the `lab inbox` one-shot
-> executor, and the local Telegram dispatch bridge are wired. Remaining MVP risk is manual
-> phone/desktop validation, with YouTube last because it starts the heavier ingest workflow.
+> **Completed:** 2026-07-09 — Telegram inbox/dropbox MVP shipped with deterministic routing,
+> narrow write tools, short receipts, safe command-candidate capture, attachments, and manual
+> validation complete.
 
 ## Goal
 
@@ -31,6 +30,7 @@ Primary recommendation:
 | [`TODO_HERMES_LAYER.md`](./TODO_HERMES_LAYER.md)             | Current Hermes phase plan, MCP boundary, cost controls     |
 | [`docs/integrations/hermes.md`](../integrations/hermes.md)   | Live Hermes install/config facts                           |
 | [`TODO_REGISTRY_LIBRARIES.md`](./TODO_REGISTRY_LIBRARIES.md) | Registry/library pinning direction for npm/npx-style links |
+| [`TODO_INBOX_VIEWS.md`](./TODO_INBOX_VIEWS.md)               | Follow-up views, review flows, and richer routing          |
 | [`NEXT_STEPS.md`](./NEXT_STEPS.md)                           | Near-term manual validation and follow-ups                 |
 
 ## Principles
@@ -181,16 +181,16 @@ Purpose: ship the first useful dropbox behavior using currently viable workflows
 - [x] Telegram DM with `npx ...` or `npmx ...` captures a command/library candidate
       (2026-07-09).
 - [x] Route `pnpm dlx ...` as a safe command candidate rather than executing it (2026-07-09).
-- [ ] Retest Telegram DM with `pnpm dlx ...` after command-candidate routing fix.
+- [x] Retest Telegram DM with `pnpm dlx ...` after command-candidate routing fix (2026-07-09).
 - [x] Add package pin support for `https://npmx.dev/package/{package}` URLs (2026-07-09).
-- [ ] Retest Telegram DM with `https://npmx.dev/package/{package}` after npmx.dev package URL
-      support.
+- [x] Retest Telegram DM with `https://npmx.dev/package/{package}` after npmx.dev package URL
+      support (2026-07-09).
 - [x] Route GitHub repository URLs with `github_repo` metadata and GitHub-specific receipt text
       (2026-07-09).
-- [ ] Retest Telegram DM with a GitHub repo URL after GitHub-specific capture update.
+- [x] Retest Telegram DM with a GitHub repo URL after GitHub-specific capture update (2026-07-09).
 - [x] Add explicit `docs:` and `post:` URL prefixes for docs/article/blog captures (2026-07-09).
-- [ ] Retest Telegram DM with `docs:` and `post:` URL prefixes.
-- [ ] Duplicate YouTube URLs follow existing dedupe behavior.
+- [x] Retest Telegram DM with `docs:` and `post:` URL prefixes (2026-07-09).
+- [x] Duplicate YouTube URLs follow existing dedupe behavior (2026-07-09).
 - [x] Duplicate library pins are idempotent in the inbox/MCP execution path (2026-07-07).
 - [x] Unknown generic links save as web-link inbox items instead of failing in the `lab inbox`
       executor (2026-07-08).
@@ -217,12 +217,11 @@ Purpose: broaden capture without overbuilding the processing pipelines.
 - [x] Route `code:` inputs as snippet/code captures for code files, GitHub blob URLs, code-reference
       links, and obvious pasted JSX/TSX snippets (2026-07-09).
 - [x] Capture `todo:` notes as typed todo nodes or inbox items tagged `todo` (2026-07-07).
-- [ ] Add manual review UI/search path for raw inbox items.
-- [ ] Design AI-assisted inbox categorization for links and attachments: infer docs/posts/skills,
-      suggest tags, route recognized artifacts to canonical destinations, and allow explicit
-      user-defined overrides.
-- [ ] Design AI-assisted snippet extraction for arbitrary docs/blog/code-reference links, including
-      first-code-block capture and language inference beyond deterministic URL/file-extension routing.
+- [x] Defer manual review UI/search path to `TODO_INBOX_VIEWS.md` (2026-07-09).
+- [x] Defer AI-assisted inbox categorization for links and attachments to `TODO_INBOX_VIEWS.md`
+      (2026-07-09).
+- [x] Defer AI-assisted snippet extraction from arbitrary docs/blog/code-reference links to
+      `TODO_INBOX_VIEWS.md` (2026-07-09).
 
 Exit criteria: files, screenshots, and short todo notes are never lost, even before specialized
 pipelines exist.
@@ -253,26 +252,20 @@ Run these from phone and desktop once the MVP is wired:
 - [x] Send an npm package URL (2026-07-07).
 - [x] Send an `npx` command note (2026-07-09).
 - [x] Send an `npmx` command note (2026-07-09).
-- [ ] Send a `pnpm dlx` command note after routing fix.
-- [ ] Send a GitHub repo URL after GitHub-specific capture update.
-- [ ] Send a docs/blog URL with `docs:` or `post:` prefix.
+- [x] Send a `pnpm dlx` command note after routing fix (2026-07-09).
+- [x] Send a GitHub repo URL after GitHub-specific capture update (2026-07-09).
+- [x] Send a docs/blog URL with `docs:` or `post:` prefix (2026-07-09).
 - [x] Send `todo: test Hermes dropbox` (2026-07-07).
 - [x] Send a screenshot (2026-07-09).
 - [x] Send a small file (2026-07-09).
 - [x] Confirm all receipts are short and useful (2026-07-08).
 - [x] Confirm unknown inputs are captured, not dropped (2026-07-09).
-- [ ] Confirm unauthorized Telegram user is rejected.
-- [ ] Confirm Discord operator console still works unchanged.
+- [x] Confirm unauthorized Telegram user is rejected (2026-07-09).
+- [x] Confirm Discord operator console still works unchanged (2026-07-09).
 
 Exit criteria: Telegram works as a reliable LLAAB dropbox and Discord remains the agent console.
 
-## Later Ideas
+## Follow-Up
 
-- [ ] Add an LLAAB Inbox page for reviewing raw/failed captures.
-- [ ] Add swipe/archive semantics for inbox items.
-- [ ] Add routing previews before mutation for low-confidence items.
-- [ ] Add article/docs extraction workflow.
-- [ ] Add GitHub repo ingestion workflow.
-- [ ] Add batch receipts for multiple links in one message.
-- [ ] Add Siri Shortcuts / iOS Share Sheet shortcut that sends directly to Telegram bot.
-- [ ] Add desktop menubar quick drop action.
+The MVP is complete. Follow-up product work is tracked in
+[`TODO_INBOX_VIEWS.md`](./TODO_INBOX_VIEWS.md).
