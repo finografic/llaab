@@ -1,7 +1,6 @@
 # TODO — Inbox Views and Review Workflows
 
-> **Status:** Not started. Created after the Hermes Telegram inbox/dropbox MVP manual validation
-> completed on 2026-07-09.
+> **Status:** Phase 0 complete (2026-07-09). Phases 1–8 not started.
 
 ## Goal
 
@@ -70,9 +69,56 @@ Purpose: make the UI nouns precise before building routes.
 - [x] Add `review state` to `LLAAB_GLOSSARY.md` (2026-07-09).
 - [x] Document the distinction between transport (`Telegram`) and stored content type
       (`resource`, `capture`, `media asset`, etc.) (2026-07-09).
-- [ ] Audit current saved inbox outputs and map each `HermesInboxRouteKind` to the node/capture
-      shape it currently writes.
-- [ ] Decide whether captures remain `IdeaNode`-backed for now or need a dedicated schema later.
+- [x] Audit current saved inbox outputs and map each `HermesInboxRouteKind` to the node/capture
+      shape it currently writes (2026-07-09).
+- [x] Decide whether captures remain `IdeaNode`-backed for now or need a dedicated schema later
+      (2026-07-09).
+
+### Phase 0 audit — route kind → write shape (2026-07-09)
+
+Entry path: Telegram/manual → `lab inbox` / MCP → `routeHermesInboxItem` → tool call → LLAAB API.
+
+| `HermesInboxRouteKind` | Tool                       | API                        | Stored as                       | Tags (beyond `hermes`, `inbox`)  | Body / payload notes                                     |
+| ---------------------- | -------------------------- | -------------------------- | ------------------------------- | -------------------------------- | -------------------------------------------------------- |
+| `youtube_url`          | `vault_ingest_youtube`     | `POST /api/ingest/youtube` | `transcript` (+ run)            | (ingest tags)                    | No Hermes body JSON; receipt status `queued`             |
+| `npm_package`          | `vault_pin_library`        | `POST /api/registry/pins`  | Registry pin (not a vault node) | n/a                              | Pin name from package; status `pinned`                   |
+| `todo`                 | `vault_capture_todo`       | `POST /api/vault/nodes`    | `idea` at `vault/nodes/ideas/`  | `inbox:todo`                     | Body JSON `route_kind`, `source`, optional `payload`     |
+| `docs_link`            | `vault_capture_web_link`   | same                       | `idea`                          | `inbox:link`, `inbox:docs`       | `payload.url` (+ label)                                  |
+| `post_link`            | same                       | same                       | `idea`                          | `inbox:link`, `inbox:post`       | same                                                     |
+| `code_link`            | same                       | same                       | `idea`                          | `inbox:link`, `inbox:code`       | same                                                     |
+| `github_repo`          | same                       | same                       | `idea`                          | `inbox:link`, `inbox:github`     | `payload.owner` / `repo` / `url`                         |
+| `web_link`             | same                       | same                       | `idea`                          | `inbox:link`                     | `payload.url`                                            |
+| `image`                | `vault_capture_attachment` | same                       | `idea`                          | `inbox:image`                    | Binary stays in Hermes media cache; `local_path` in JSON |
+| `code_attachment`      | same                       | same                       | `idea`                          | `inbox:attachment`, `inbox:code` | same                                                     |
+| `docs_attachment`      | same                       | same                       | `idea`                          | `inbox:attachment`, `inbox:docs` | same                                                     |
+| `attachment`           | same                       | same                       | `idea`                          | `inbox:attachment`               | same                                                     |
+| `command_candidate`    | `vault_capture_inbox`      | same                       | `idea`                          | `inbox:raw` (today)              | `payload.command`; tag facet is coarse — UI uses body    |
+| `code_snippet`         | same                       | same                       | `idea`                          | `inbox:code`, `inbox:snippet`    | raw text + optional language hints in payload            |
+| `raw`                  | same                       | same                       | `idea`                          | `inbox:raw`                      | fallback capture                                         |
+
+Provenance fields live in a fenced JSON block in the idea body (`route_kind`, `source.platform`,
+`payload`) — not YAML frontmatter. `source.platform` is `telegram` \| `discord` \| `manual` \|
+`unknown`. Execution receipt status (`queued` / `saved` / `pinned` / `failed`) is not persisted on
+the node today.
+
+List API already supports inbox filtering: `GET /api/vault/nodes?tags=hermes,inbox` (and optional
+`type`, `search`, `status`). Client `useVaultNodes` does not yet pass `tags`/`search` — Phase 1
+extends that.
+
+### Schema decision (2026-07-09)
+
+**Keep captures `IdeaNode`-backed for now.** Do not introduce a dedicated `CaptureNode` schema
+until review/promote volume justifies it.
+
+Rationale:
+
+- Hermes already writes almost all drops as `type: idea` with stable `hermes`/`inbox` tags.
+- YouTube and npm are intentional exceptions (`transcript` / registry pin) and should appear in
+  inbox UI as related outcomes, not force a new node type.
+- `route_kind` + transport provenance are recoverable from body JSON; UI parsers own that contract.
+- Node `status` (`seed` / `growing` / `mature` / `archived`) is the generic lifecycle — **not**
+  inbox triage. Phase 4 may add `review_state` via tags (e.g. `inbox:reviewed`) or an optional
+  schema field later; do not overload `status`.
 
 Exit criteria: route kinds, captures, resources, and inbox items have stable language before UI
 work starts.
