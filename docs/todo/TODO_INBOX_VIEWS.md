@@ -1,6 +1,6 @@
 # TODO — Inbox Views and Review Workflows
 
-> **Status:** Phase 2 complete (2026-07-09). Phases 3–8 not started.
+> **Status:** Phase 3 complete (2026-07-09). Phases 4–8 not started.
 
 ## Goal
 
@@ -178,36 +178,43 @@ Purpose: improve beyond default fallback rendering for each important capture ty
 
 ### Resources and Links
 
-- [ ] Add `docs_link` detail renderer with URL, domain, path, title, tags, and future extraction
-      actions.
-- [ ] Add `post_link` detail renderer with article/blog-oriented labels.
-- [ ] Add `github_repo` detail renderer with owner, repo, URL, and future repo-ingest actions.
-- [ ] Add `web_link` generic fallback renderer.
-- [ ] Add npm package/pinned-library cross-linking from inbox captures to registry/pinned views.
+- [x] Add `docs_link` detail renderer with URL, domain, path, title, tags, and future extraction
+      actions (2026-07-09).
+- [x] Add `post_link` detail renderer with article/blog-oriented labels (2026-07-09).
+- [x] Add `github_repo` detail renderer with owner, repo, URL, and future repo-ingest actions
+      (2026-07-09).
+- [x] Add `web_link` generic fallback renderer (2026-07-09).
+- [x] Add npm package/pinned-library cross-linking from inbox captures to registry/pinned views
+      (2026-07-09).
 
 ### Code and Snippets
 
-- [ ] Add `code_snippet` detail renderer with syntax-highlighted code where language is known.
-- [ ] Add `code_link` detail renderer for GitHub blobs and docs/code-reference URLs.
-- [ ] Add `code_attachment` detail renderer with file name, language, local path, and preview when
-      text is available.
-- [ ] Normalize JSX/JSX-like display language to `tsx`.
-- [ ] Add copy/open actions where safe.
+- [x] Add `code_snippet` detail renderer with language-labeled code block and copy action
+      (monospace preview; no new highlighter dependency, 2026-07-09).
+- [x] Add `code_link` detail renderer for GitHub blobs and docs/code-reference URLs (2026-07-09).
+- [x] Add `code_attachment` detail renderer with file name, language, local path, and preview when
+      text is available (2026-07-09).
+- [x] Normalize JSX/JSX-like display language to `tsx` (2026-07-09).
+- [x] Add copy/open actions where safe (2026-07-09).
 
 ### Media and Attachments
 
-- [ ] Add `image` renderer with thumbnail/preview, file metadata, and local path.
-- [ ] Add `attachment` renderer for non-image files.
-- [ ] Add `docs_attachment` renderer for Markdown/docs uploads.
-- [ ] Separate visual labels for image, document, archive, and unknown file attachments.
-- [ ] Avoid assuming Hermes media-cache paths are permanent until a vault assets pipeline exists.
+- [x] Add `image` renderer with thumbnail/preview, file metadata, and local path (2026-07-09).
+- [x] Add `attachment` renderer for non-image files (2026-07-09).
+- [x] Add `docs_attachment` renderer for Markdown/docs uploads (2026-07-09).
+- [x] Separate visual labels for image, document, archive, and unknown file attachments
+      (2026-07-09).
+- [x] Avoid assuming Hermes media-cache paths are permanent until a vault assets pipeline exists
+      (2026-07-09).
 
 ### Notes and Commands
 
-- [ ] Add `todo` detail renderer with concise note body and source metadata.
-- [ ] Add `command_candidate` detail renderer for `npx`, `npmx`, and `pnpm dlx` references.
-- [ ] Make command candidates clearly non-executable from Telegram captures.
-- [ ] Add a future action placeholder for "promote to reference/skill/prompt" where appropriate.
+- [x] Add `todo` detail renderer with concise note body and source metadata (2026-07-09).
+- [x] Add `command_candidate` detail renderer for `npx`, `npmx`, and `pnpm dlx` references
+      (2026-07-09).
+- [x] Make command candidates clearly non-executable from Telegram captures (2026-07-09).
+- [x] Add a future action placeholder for "promote to reference/skill/prompt" where appropriate
+      (2026-07-09).
 
 Exit criteria: common capture categories have useful, purpose-built detail views while unknown
 types still fall back gracefully.

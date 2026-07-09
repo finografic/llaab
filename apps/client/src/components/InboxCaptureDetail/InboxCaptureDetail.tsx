@@ -1,5 +1,4 @@
 import { Badge } from 'components/ui/badge';
-import { Button } from 'components/ui/button';
 import { Link } from 'react-router-dom';
 
 import { getInboxDetailRenderer } from 'lib/inbox-capture-renderers';
@@ -15,27 +14,17 @@ export interface InboxCaptureDetailProps {
 
 export function InboxCaptureDetail({ capture }: InboxCaptureDetailProps) {
   const CustomDetail = getInboxDetailRenderer(capture.routeKind);
-  if (CustomDetail) {
-    return <CustomDetail capture={capture} />;
-  }
 
-  return <DefaultInboxCaptureDetail capture={capture} />;
+  return (
+    <>
+      <CoreInboxCaptureMeta capture={capture} />
+      {CustomDetail ? <CustomDetail capture={capture} /> : <FallbackInboxCaptureBody capture={capture} />}
+    </>
+  );
 }
 
-function DefaultInboxCaptureDetail({ capture }: InboxCaptureDetailProps) {
-  const {
-    node,
-    routeKind,
-    platform,
-    receivedAt,
-    provenance,
-    rawText,
-    bodyWithoutJson,
-    parseError,
-    malformed,
-  } = capture;
-  const payload = provenance?.payload;
-  const url = typeof payload?.['url'] === 'string' ? payload['url'] : undefined;
+function CoreInboxCaptureMeta({ capture }: InboxCaptureDetailProps) {
+  const { node, routeKind, platform, receivedAt, provenance, parseError, malformed } = capture;
 
   return (
     <>
@@ -92,17 +81,20 @@ function DefaultInboxCaptureDetail({ capture }: InboxCaptureDetailProps) {
           ) : null}
         </dl>
       </section>
+    </>
+  );
+}
 
+function FallbackInboxCaptureBody({ capture }: InboxCaptureDetailProps) {
+  const { node, provenance, rawText, bodyWithoutJson, malformed } = capture;
+  const payload = provenance?.payload;
+  const url = typeof payload?.['url'] === 'string' ? payload['url'] : undefined;
+
+  return (
+    <>
       {url ? (
         <section className="section">
           <h2 className="section__heading">Link</h2>
-          <div className={styles.actions}>
-            <Button asChild variant="outline" size="sm">
-              <a href={url} target="_blank" rel="noreferrer">
-                Open source URL
-              </a>
-            </Button>
-          </div>
           <p className="meta-mono">{url}</p>
         </section>
       ) : null}

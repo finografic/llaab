@@ -32,3 +32,41 @@
   flex-wrap: wrap;
   gap: var(--space-2);
 }
+
+.metaPair {
+  display: contents;
+}
+
+.codeBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.codeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.codePre {
+  margin: 0;
+}
+
+.imagePreview {
+  max-width: min(100%, 28rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--surface) 92%, var(--muted) 8%);
+}
+
+.promotePlaceholder {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.nonExecutable {
+  color: var(--warning-text, var(--muted-foreground));
+  font-size: 0.875rem;
+}

@@ -1,11 +1,25 @@
+import {
+  AttachmentDetail,
+  CodeAttachmentDetail,
+  CodeLinkDetail,
+  CodeSnippetDetail,
+  CommandCandidateDetail,
+  DocsAttachmentDetail,
+  DocsLinkDetail,
+  GitHubRepoDetail,
+  ImageDetail,
+  NpmPackageDetail,
+  PostLinkDetail,
+  TodoDetail,
+  WebLinkDetail,
+} from 'components/InboxCaptureDetail/inbox-capture-type-renderers';
+import type { InboxCaptureRendererProps } from 'components/InboxCaptureDetail/inbox-capture-type-renderers';
 import type { ComponentType, ReactNode } from 'react';
 
 import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
 import { routeKindLabel } from 'lib/inbox-capture.utils';
 
-export interface InboxCaptureRendererProps {
-  capture: ParsedInboxCapture;
-}
+export type { InboxCaptureRendererProps };
 
 export interface InboxCaptureListRowProps extends InboxCaptureRendererProps {
   selected?: boolean;
@@ -19,7 +33,19 @@ export const INBOX_CAPTURE_RENDERERS: Record<
     Detail?: ComponentType<InboxCaptureRendererProps>;
   }
 > = {
-  // Type-specific renderers land in Phase 3; defaults cover all kinds until then.
+  docs_link: { Detail: DocsLinkDetail },
+  post_link: { Detail: PostLinkDetail },
+  github_repo: { Detail: GitHubRepoDetail },
+  web_link: { Detail: WebLinkDetail },
+  npm_package: { Detail: NpmPackageDetail },
+  code_snippet: { Detail: CodeSnippetDetail },
+  code_link: { Detail: CodeLinkDetail },
+  code_attachment: { Detail: CodeAttachmentDetail },
+  image: { Detail: ImageDetail },
+  attachment: { Detail: AttachmentDetail },
+  docs_attachment: { Detail: DocsAttachmentDetail },
+  todo: { Detail: TodoDetail },
+  command_candidate: { Detail: CommandCandidateDetail },
 };
 
 export function getInboxListRowRenderer(
@@ -34,7 +60,7 @@ export function getInboxDetailRenderer(
   return INBOX_CAPTURE_RENDERERS[routeKind]?.Detail;
 }
 
-export function DefaultInboxCaptureSummary({ capture }: InboxCaptureRendererProps): ReactNode {
+export function DefaultInboxCaptureSummary({ capture }: { capture: ParsedInboxCapture }): ReactNode {
   const { rawText, provenance, routeKind } = capture;
   const url = typeof provenance?.payload?.['url'] === 'string' ? provenance.payload['url'] : undefined;
   const command =
