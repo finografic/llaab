@@ -11,7 +11,7 @@ const Toaster = ({ theme = 'dark', position = 'bottom-right', ...props }: Toaste
       position={position}
       className="toaster group"
       icons={{
-        success: <CircleCheckIcon className="size-4 text-[var(--success-text)]" />,
+        success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,
         warning: <TriangleAlertIcon className="size-4" />,
         error: <OctagonXIcon className="size-4" />,
@@ -29,6 +29,13 @@ const Toaster = ({ theme = 'dark', position = 'bottom-right', ...props }: Toaste
         classNames: {
           toast: 'cn-toast',
           success: 'llaab-toast-success',
+          error: 'llaab-toast-error',
+          warning: 'llaab-toast-warning',
+          info: 'llaab-toast-info',
+          title: 'text-left',
+          description: 'text-left',
+          content: 'min-w-0 flex-1 text-left',
+          icon: 'shrink-0',
         },
       }}
       {...props}

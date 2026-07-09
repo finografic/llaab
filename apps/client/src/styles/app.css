@@ -281,13 +281,50 @@
 }
 
 /* ── Sonner toasts ──────────────────────────────────────────────────────────── */
+/* Icon in a fixed left column; message fills the rest — both left-aligned. */
 
-.llaab-toast-success {
-  flex-direction: row-reverse;
+[data-sonner-toast].cn-toast {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+[data-sonner-toast].cn-toast [data-icon] {
+  flex: 0 0 auto;
+  margin-left: 0;
+  margin-right: 0;
+  justify-content: flex-start;
+}
+
+[data-sonner-toast].cn-toast [data-content] {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: flex-start;
+  text-align: left;
+}
+
+[data-sonner-toast].cn-toast [data-title],
+[data-sonner-toast].cn-toast [data-description] {
+  text-align: left;
 }
 
 .llaab-toast-success [data-icon] {
   color: var(--success-text);
+}
+
+.llaab-toast-error [data-icon] {
+  color: var(--error-text);
+}
+
+.llaab-toast-warning [data-icon] {
+  color: var(--warning-text);
+}
+
+.llaab-toast-info [data-icon] {
+  color: var(--info-text);
 }
 
 /* ── Shared vault badge chips ───────────────────────────────────────────────── */
