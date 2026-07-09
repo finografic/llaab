@@ -1,6 +1,6 @@
 # TODO — Vault and Knowledge Split
 
-> **Status:** Phases 0-3 complete (2026-07-09). Phases 4-8 in progress.
+> **Status:** Phases 0-6 complete (2026-07-09). Phase 7 partially validated; Phase 8 optional.
 
 ## Purpose
 
@@ -17,7 +17,7 @@ This keeps app/source commits clean without losing version control for vault dat
 ## Target Shape
 
 ```text
-/Users/justin/LLAAB/
+~/LLAAB/
   .git/                         # parent app/source repo
   .gitignore                    # ignores /vault/
   knowledge/                    # committed stable knowledge artifacts
@@ -51,19 +51,19 @@ entirely and must not track `vault` as a gitlink.
 
 ## Existing Vault Folder Audit
 
-- [ ] Audit `vault/nodes/canonical-ideas/`.
+- [x] Audit `vault/nodes/canonical-ideas/`.
       Keep generated canonical candidates in `vault/`; promote only mature accepted summaries to
       `knowledge/wikis/` or `knowledge/knowledge-graphs/`.
-- [ ] Audit `vault/nodes/decisions/`.
+- [x] Audit `vault/nodes/decisions/`.
       Keep raw decision nodes in `vault/`; promote stable project decisions to
       `knowledge/decisions/` only when they become canonical architecture memory.
-- [ ] Audit `vault/nodes/instructions/` and `vault/nodes/prompts/`.
+- [x] Audit `vault/nodes/instructions/` and `vault/nodes/prompts/`.
       Keep generated prompt/instruction nodes in `vault/`; promote reusable canonical prompt specs to
       `knowledge/prompts/`.
-- [ ] Audit `vault/nodes/resources/`, `vault/sources/`, and `vault/transcripts/`.
+- [x] Audit `vault/nodes/resources/`, `vault/sources/`, and `vault/transcripts/`.
       Keep source material and extracted references in `vault/`; promote curated reference summaries to
       `knowledge/references/`.
-- [ ] Audit `vault/skills/` and `vault/nodes/*skill*` usage.
+- [x] Audit `vault/skills/` and `vault/nodes/*skill*` usage.
       Keep experimental/generated skill nodes in `vault/`; promote stable, reusable skill specs to
       `knowledge/skills/`.
 
@@ -77,7 +77,7 @@ entirely and must not track `vault` as a gitlink.
 
 ## Phase 1 — Initialize Nested Vault Repo
 
-- [x] From `/Users/justin/LLAAB/vault`, run `git init`.
+- [x] From `~/LLAAB/vault`, run `git init`.
 - [x] Add a vault-local `.gitignore` for transient files such as `.tmp/`, caches, lockfiles, and local
       scratch files.
 - [x] Stage the current vault contents inside the nested repo.
@@ -113,46 +113,113 @@ entirely and must not track `vault` as a gitlink.
 - [x] Search for assumptions that `vault/` is parent-repo tracked.
 - [x] Audit vault git helper code that auto-commits metadata.
 - [x] Decide whether vault git operations should run from the nested `vault/.git` repo.
-- [ ] Update any server/client labels that imply vault data is committed with source code.
-- [ ] Add or update tests for path resolution and vault git status behavior if code changes are needed.
+- [x] Update any server/client labels that imply vault data is committed with source code.
+- [x] Add or update tests for path resolution and vault git status behavior if code changes are needed.
 
 ## Phase 5 — Promotion Workflow
 
-- [ ] Define "promoted artifact" criteria.
-- [ ] Define how a vault node becomes a `knowledge/` artifact.
-- [ ] Decide whether promotion is manual-only for now.
-- [ ] Add a future command placeholder, such as `lab knowledge promote <node-id>`, if useful.
-- [ ] Document provenance conventions from `knowledge/*` back to vault node ids.
-- [ ] Document review expectations before committing `knowledge/` artifacts.
+- [x] Define "promoted artifact" criteria.
+- [x] Define how a vault node becomes a `knowledge/` artifact.
+- [x] Decide whether promotion is manual-only for now.
+- [x] Add a future command placeholder, such as `lab knowledge promote <node-id>`, if useful.
+- [x] Document provenance conventions from `knowledge/*` back to vault node ids.
+- [x] Document review expectations before committing `knowledge/` artifacts.
+
+Promotion criteria:
+
+- The artifact has been reviewed by a human or a deliberate review pass.
+- It is stable enough to help future source checkouts without requiring the originating raw context.
+- It has a clear destination under `knowledge/` and is not merely a generated vault node copied as-is.
+- It preserves provenance back to source vault node ids, transcript ids, source ids, run ids, or URLs.
+- Canonical-idea nodes are preferred source ingredients for `knowledge/wikis/` and
+  `knowledge/knowledge-graphs/`, but they remain working vault data until reviewed and promoted.
+
+Promotion process:
+
+1. Select a candidate from the working vault.
+2. Rewrite or consolidate it into a stable artifact for the relevant `knowledge/` folder.
+3. Add provenance metadata or a short "Sources" section that points back to the originating vault data.
+4. Review the artifact for usefulness, privacy, and duplication.
+5. Commit the promoted artifact in the parent LLAAB repo.
+
+Expected first promotion path:
+
+```text
+vault transcripts/sources -> extracted ideas -> canonical ideas
+  -> reviewed wiki page or knowledge-graph summary in knowledge/
+```
+
+Promotion is manual-only for now. A future CLI shape can be:
+
+```bash
+lab knowledge promote <node-id>
+```
+
+That command should prepare a draft artifact and provenance, not silently commit it.
 
 ## Phase 6 — Documentation
 
-- [ ] Update `LLAAB_GLOSSARY.md` with `working vault`, `knowledge`, `promoted artifact`, and
+- [x] Update `LLAAB_GLOSSARY.md` with `working vault`, `knowledge`, `promoted artifact`, and
       `vault data repo`.
-- [ ] Update `.agents/handoff.md` with the new source/data split.
-- [ ] Update `docs/integrations/hermes.md` if Hermes inbox receipts mention vault commit behavior.
-- [ ] Update any relevant README sections.
-- [ ] Add a short "Common Git Commands" section for parent repo vs nested vault repo.
+- [x] Update `.agents/handoff.md` with the new source/data split.
+- [x] Update `docs/integrations/hermes.md` if Hermes inbox receipts mention vault commit behavior.
+- [x] Update any relevant README sections.
+- [x] Add a short "Common Git Commands" section for parent repo vs nested vault repo.
+
+Common Git commands:
+
+```bash
+# Parent source repo
+git status --short
+git add knowledge docs apps packages
+git commit -m "docs(knowledge): promote artifact"
+
+# Nested vault data repo
+git -C vault status --short
+git -C vault add --all
+git -C vault commit -m "chore(vault): commit generated data"
+```
+
+GitHub remote setup for `vault/`:
+
+1. Create an empty GitHub repo with no README, license, or `.gitignore`.
+2. Add it from the parent checkout:
+
+   ```bash
+   git -C vault remote add origin <repo-url>
+   git -C vault branch -M main
+   git -C vault push -u origin main
+   ```
+
+3. Keep the parent LLAAB repo separate; do not add `vault/` as a submodule.
 
 ## Phase 7 — Validation
 
-- [ ] Parent repo: source-code change creates a clean app commit with no vault noise.
+- [x] Parent repo: source-code change creates a clean app commit with no vault noise.
 - [ ] Vault repo: ingest creates expected dirty vault data in `vault/.git`.
-- [ ] Vault repo: committing generated nodes works independently.
+- [x] Vault repo: committing generated nodes works independently.
 - [ ] LLAAB app: ingest page still lists runs/transcripts.
 - [ ] LLAAB app: source detail and transcript pages still load vault nodes.
 - [ ] LLAAB app: discard still removes the expected vault files.
 - [ ] Hermes: Telegram YouTube URL still ingests and returns the expected receipt.
 - [ ] Hermes: Telegram todo still creates a vault todo node.
-- [ ] No `.gitmodules` file is created.
+- [x] No `.gitmodules` file is created.
+
+Validated automatically on 2026-07-09:
+
+- Parent `git status --short` ignores a temporary `vault/raw/*` file.
+- Nested vault repo can track and commit vault-local structure independently.
+- `GET /api/vault/git/status` logic reads from nested `vault/.git` and expands untracked files with
+  `--untracked-files=all`.
+- Vault git path validation rejects absolute paths and `..` escapes.
 
 ## Phase 8 — Optional Later Move
 
 If nested Git ever feels too hidden, consider a second migration:
 
 ```text
-/Users/justin/LLAAB/          # source repo
-/Users/justin/LLAAB-vault/    # sibling data repo
+~/LLAAB/          # source repo
+~/LLAAB-vault/    # sibling data repo
 ```
 
 That later move would require adding and validating a configurable `LLAAB_VAULT_DIR`. It is not

@@ -105,7 +105,7 @@ Exit criteria: iPhone message → Hermes reply on Mac Studio.
 Purpose: prove LLAAB’s existing MCP server works before Hermes launches it.
 
 ```bash
-cd /Users/justin/LLAAB
+cd ~/LLAAB
 pnpm dev:cli -- mcp
 ```
 
@@ -128,10 +128,10 @@ mcp_servers:
   llaab:
     command: /Users/justin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node
     args:
-      - /Users/justin/LLAAB/packages/cli/dist/index.js
+      - ~/LLAAB/packages/cli/dist/index.js
       - mcp
     env:
-      LLAAB_VAULT: /Users/justin/LLAAB/vault
+      LLAAB_VAULT: ~/LLAAB/vault
     tools:
       include:
         - vault_list
@@ -189,7 +189,7 @@ Write-tool MCP child env, when needed:
 
 ```yaml
 env:
-  LLAAB_VAULT: "/Users/justin/LLAAB/vault"
+  LLAAB_VAULT: "~/LLAAB/vault"
   LLAAB_API_URL: "http://localhost:8888"
   LLAAB_API_KEY: "..." # from a secret env source; do not commit
 ```

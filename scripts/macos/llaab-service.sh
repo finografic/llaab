@@ -8,7 +8,8 @@ readonly icons_label="com.llaab.icons"
 readonly lmstudio_label="com.lmstudio.server"
 readonly hermes_gateway_label="com.llaab.hermes.gateway"
 readonly launch_agents_dir="$HOME/Library/LaunchAgents"
-readonly script_dir="/Users/justin/LLAAB/scripts/macos"
+readonly script_dir="${0:A:h}"
+readonly repo_dir="${script_dir:h:h}"
 readonly logs_dir="$HOME/Library/Logs/llaab"
 readonly sentinel_file="/tmp/llaab-dev-refreshing"
 readonly server_plist="$launch_agents_dir/$server_label.plist"
@@ -16,8 +17,8 @@ readonly client_plist="$launch_agents_dir/$client_label.plist"
 readonly icons_plist="$launch_agents_dir/$icons_label.plist"
 readonly lmstudio_plist="$launch_agents_dir/$lmstudio_label.plist"
 readonly hermes_gateway_plist="$launch_agents_dir/$hermes_gateway_label.plist"
-readonly lmstudio_bin="/Users/justin/.lmstudio/bin/lms"
-readonly hermes_bin="/Users/justin/.local/bin/hermes"
+readonly lmstudio_bin="$HOME/.lmstudio/bin/lms"
+readonly hermes_bin="$HOME/.local/bin/hermes"
 readonly client_log="$logs_dir/client.stdout.log"
 readonly hermes_gateway_log="$logs_dir/hermes-gateway.stdout.log"
 readonly repair_log="$logs_dir/repair-all.log"
@@ -26,10 +27,11 @@ readonly server_health_url="$server_url/"
 readonly client_url="http://llaab.localhost:5050"
 readonly lmstudio_url="http://127.0.0.1:1234/v1/models"
 readonly icons_url="$(
-  /Users/justin/.nvm/versions/node/v24.16.0/bin/node --input-type=module <<'NODE'
+  env LLAAB_ICONS_CONFIG="$repo_dir/packages/icons/lucide-manager.config.json" node --input-type=module <<'NODE'
 import { readFileSync } from 'node:fs';
 
-const configPath = '/Users/justin/LLAAB/packages/icons/lucide-manager.config.json';
+const configPath = process.env.LLAAB_ICONS_CONFIG;
+if (!configPath) throw new Error('LLAAB_ICONS_CONFIG is required.');
 const raw = JSON.parse(readFileSync(configPath, 'utf-8'));
 const port = raw?.manager?.server?.port ?? 5199;
 const configuredHost = raw?.manager?.server?.host;
@@ -196,13 +198,13 @@ ensure_hermes_gateway_plist() {
     <string>run</string>
   </array>
   <key>WorkingDirectory</key>
-  <string>/Users/justin/LLAAB</string>
+  <string>$repo_dir</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>
-    <string>/Users/justin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:/Users/justin/.local/bin:/Users/justin/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <string>$HOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$HOME/.local/bin:$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>HOME</key>
-    <string>/Users/justin</string>
+    <string>$HOME</string>
     <key>HERMES_ACCEPT_HOOKS</key>
     <string>1</string>
   </dict>

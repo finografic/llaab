@@ -18,6 +18,7 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 // ── CLI args / paths ──────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ const instDst = path.join(target, '.github/instructions');
 const instSrc = path.join(source, '.github/instructions');
 
 // Fallback source for copying missing canonical instruction files.
-const FALLBACK_SOURCE = process.env['INSTRUCTIONS_FALLBACK'] ?? '/Users/justin/LLAAB';
+const FALLBACK_SOURCE = process.env['INSTRUCTIONS_FALLBACK'] ?? path.join(os.homedir(), 'LLAAB');
 
 console.log('refactor-agent-instructions');
 console.log(`  target   : ${target}`);

@@ -17,6 +17,54 @@ Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMOR
 
 ---
 
+## Vault and Knowledge Repos
+
+LLAAB uses a two-repo local layout:
+
+```text
+~/LLAAB/
+  .git/          # parent source repo: app, packages, docs, knowledge/
+  knowledge/     # promoted canonical artifacts committed with source
+  vault/
+    .git/        # nested private data repo: generated/runtime vault data
+```
+
+Rules:
+
+- Parent repo commits may include app/source/docs and `knowledge/`.
+- Parent repo commits must not add `vault/` contents or a `vault` gitlink/submodule.
+- `vault/` commits happen from the nested vault repo with `git -C vault ...`.
+- `vault/` is for runtime captures, transcripts, sources, run traces, extracted ideas,
+  canonical-idea candidates, raw files, inbox drops, prompts, resources, decisions, and draft skills.
+- `knowledge/` is for reviewed promoted artifacts. Canonical ideas from `vault/` are source
+  ingredients for `knowledge/wikis/` and `knowledge/knowledge-graphs/`, not automatically promoted.
+- Do not rewrite parent Git history to purge old `vault/` commits unless the user explicitly asks for
+  a destructive history rewrite and accepts the remote coordination cost.
+
+Reference: [`docs/process/VAULT_KNOWLEDGE_REPOS.md`](./docs/process/VAULT_KNOWLEDGE_REPOS.md)
+
+---
+
+## Runtime Agents
+
+External agent files instruct tools working on this repo. Runtime agent files define agents that
+LLAAB itself runs.
+
+When generating or altering LLAAB runtime agents, agent definitions, runtime skills, MCP/tool
+contracts, or related hooks/events, follow [`docs/agents/RUNTIME_AGENTS.md`](./docs/agents/RUNTIME_AGENTS.md).
+
+Short rule:
+
+```text
+AGENTS.md / .github/instructions/ = external agents working on LLAAB
+docs/agents/                   = runtime-agent architecture and implementation rules
+knowledge/agents/              = promoted runtime agent definitions
+knowledge/skills/              = promoted runtime/development skills
+vault/                         = drafts, captures, generated candidates, traces
+```
+
+---
+
 ## Roadmap and Planning Docs
 
 - Check `ROADMAP.md` before proposing new initiatives.
@@ -39,6 +87,9 @@ Project-specific rules live in `.github/instructions/project/**/*.instructions.m
   — Any process worth showing live status for must be durable (a `RunNode` from the moment it
   starts) and globally observable (status derived from shared query state, never page-local
   mutation state). Complements, does not relax, Agent Execution above.
+- **Runtime Agents:** `.github/instructions/project/runtime-agents.instructions.md`
+  — External agent files instruct tools working on LLAAB; runtime agent files define agents LLAAB
+  runs. Use `docs/agents/RUNTIME_AGENTS.md` for locations and lifecycle boundaries.
 - **Components:** `.github/instructions/project/components-shadcn.instructions.md`
   — shadcn/ui first; canonical component location; install procedure; token usage.
 - **Component file organization:** `.github/instructions/project/component-file-organization.instructions.md`

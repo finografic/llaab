@@ -382,10 +382,10 @@ mcp_servers:
   llaab:
     command: /Users/justin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node
     args:
-      - /Users/justin/LLAAB/packages/cli/dist/index.js
+      - ~/LLAAB/packages/cli/dist/index.js
       - mcp
     env:
-      LLAAB_VAULT: /Users/justin/LLAAB/vault
+      LLAAB_VAULT: ~/LLAAB/vault
     tools:
       include:
         - vault_list
@@ -408,4 +408,5 @@ Validated:
 
 Next: extend write tools (ingest, capture idea) only after the read-only path stays stable.
 
-Hermes remains a **consumer** of LLAAB vault via MCP — canonical memory stays in LLAAB.
+Hermes remains a **consumer** of LLAAB vault via MCP. Runtime inbox/vault data stays in the nested
+vault repo; promoted canonical memory belongs in parent-repo `knowledge/`.

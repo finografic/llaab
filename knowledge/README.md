@@ -13,6 +13,10 @@ Promotion is manual for now:
 3. Preserve enough provenance to find the originating vault node or source again.
 4. Commit the promoted artifact in the parent LLAAB repo.
 
+Canonical-idea nodes are expected to be the main ingredients for many wiki pages and knowledge-graph
+summaries. They still live in the working vault until they are reviewed, rewritten if needed, and
+committed here as promoted artifacts.
+
 Subfolders:
 
 - `wikis/` — durable topic pages and curated project memory.

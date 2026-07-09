@@ -11,22 +11,24 @@
 
 set -euo pipefail
 
-readonly control_script="/Users/justin/LLAAB/scripts/macos/llaab-service.sh"
-readonly dev_refresh_script="/Users/justin/LLAAB/scripts/macos/dev-refresh.sh"
-readonly logs_dir="/Users/justin/Library/Logs/llaab"
+readonly repo_dir="${LLAAB_REPO_DIR:-$HOME/LLAAB}"
+readonly control_script="$repo_dir/scripts/macos/llaab-service.sh"
+readonly dev_refresh_script="$repo_dir/scripts/macos/dev-refresh.sh"
+readonly logs_dir="$HOME/Library/Logs/llaab"
 readonly client_log="$logs_dir/client.stdout.log"
-readonly hermes_gateway_log="/Users/justin/.hermes/logs/gateway.log"
+readonly hermes_gateway_log="$HOME/.hermes/logs/gateway.log"
 readonly icons_log="$logs_dir/icons.stdout.log"
 readonly repair_log="$logs_dir/repair-all.log"
 readonly server_log="$logs_dir/server.stdout.log"
-readonly hermes_bin="/Users/justin/.local/bin/hermes"
+readonly hermes_bin="$HOME/.local/bin/hermes"
 readonly app_url="http://llaab.localhost:5050"
 readonly ingest_url="http://llaab.localhost:5050/ingest"
 readonly icons_url="$(
-  /Users/justin/.nvm/versions/node/v24.16.0/bin/node --input-type=module <<'NODE'
+  env LLAAB_ICONS_CONFIG="$repo_dir/packages/icons/lucide-manager.config.json" node --input-type=module <<'NODE'
 import { readFileSync } from 'node:fs';
 
-const configPath = '/Users/justin/LLAAB/packages/icons/lucide-manager.config.json';
+const configPath = process.env.LLAAB_ICONS_CONFIG;
+if (!configPath) throw new Error('LLAAB_ICONS_CONFIG is required.');
 const raw = JSON.parse(readFileSync(configPath, 'utf-8'));
 const port = raw?.manager?.server?.port ?? 5199;
 const configuredHost = raw?.manager?.server?.host;

@@ -92,7 +92,7 @@ Recommended compact `output_summary` shape:
   "type": "transcript",
   "title": "The language holding our agents back.",
   "transcript_id": "the-language-holding-our-agents-back",
-  "transcript_path": "/Users/justin/LLAAB/vault/transcripts/transcript.the-language-holding-our-agents-back.md",
+  "transcript_path": "~/LLAAB/vault/transcripts/transcript.the-language-holding-our-agents-back.md",
   "source_id": "theo-t3-gg",
   "source_item_id": "TilDSWeiAlw",
   "source_url": "https://www.youtube.com/watch?v=TilDSWeiAlw",

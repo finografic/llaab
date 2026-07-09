@@ -281,8 +281,8 @@ Why it matters here:
 A simple mental model is:
 
 ```
-/Users/justin/LLAAB/.git       = source repo
-/Users/justin/LLAAB/vault/.git = data repo
+~/LLAAB/.git       = source repo
+~/LLAAB/vault/.git = data repo
 ```
 
 ---
@@ -443,6 +443,58 @@ Why it matters here:
 - it makes inbox review clear without deleting data
 - it gives UI filters a simple "needs attention" axis
 - it supports promotion without losing original provenance
+
+---
+
+## external agent
+
+**An `external agent` is a tool that works on the LLAAB repository from outside the LLAAB runtime.**
+
+Examples include Codex, Claude Code, Cursor, Hermes, OpenCode, and similar tools when they are
+editing source files, running tests, or helping maintain the repo.
+
+Why it matters here:
+
+- external agents need repo-editing instructions
+- external agent instructions live in `AGENTS.md`, `.github/instructions/`, and tool-native config
+- external agents should not invent runtime-agent file locations
+
+The boundary is:
+
+```text
+external agent = works on LLAAB
+runtime agent  = runs inside/by LLAAB
+```
+
+---
+
+## runtime agent
+
+**A `runtime agent` is an agent executed by LLAAB as part of the product/runtime.**
+
+Runtime agents are LLAAB-owned capabilities. They may inspect vault data, run one-shot workflows,
+call tools, produce `RunNode` traces, and eventually use promoted definitions from
+`knowledge/agents/`.
+
+Why it matters here:
+
+- runtime agents are product behavior, not repo-maintenance helpers
+- their architecture belongs in `docs/agents/`
+- their promoted definitions belong in `knowledge/agents/`
+- their drafts and generated candidates begin in `vault/`
+
+Use `runtime agent` as the canonical term. Use `local agent`, `worker agent`, or `operator agent`
+only when describing execution location, job role, or permission level.
+
+---
+
+## agent definition
+
+**An `agent definition` is a reviewed, durable description of an agent LLAAB can run.**
+
+An agent definition may include the agent's purpose, inputs, outputs, tools, permissions, prompt
+contract, failure behavior, and review expectations. Promoted agent definitions live in
+`knowledge/agents/`.
 
 ---
 

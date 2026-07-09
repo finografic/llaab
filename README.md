@@ -190,6 +190,30 @@ await ingestYouTube({
 - **Vault output** defaults to `./vault` under the current working directory (override with `LLAAB_VAULT` if you use a custom vault root). In the standard checkout, `vault/` is a nested data repo; promoted stable artifacts live in parent-repo `knowledge/`.
 - **Duplicates:** the same YouTube `videoId` reuses the existing transcript node and skips re-fetching (see `docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`).
 
+## Vault and Knowledge Repos
+
+LLAAB uses two Git repos in the standard local checkout:
+
+```text
+~/LLAAB/
+  .git/          # parent source repo: app, packages, docs, knowledge/
+  knowledge/     # promoted canonical artifacts committed with source
+  vault/
+    .git/        # nested private data repo: runtime working vault
+```
+
+- `vault/` is a nested Git repo for runtime working data: inbox drops, raw files, transcripts,
+  sources, run traces, extracted ideas, canonical-idea candidates, prompts, resources, decisions,
+  and draft skill nodes.
+- `knowledge/` is committed with the main LLAAB source repo and holds promoted artifacts that have
+  been reviewed enough to become canonical project knowledge.
+- Do not promote by folder name alone. A `canonical-idea` node in `vault/` is still generated
+  working data until reviewed and rewritten as a stable `knowledge/` artifact.
+- Canonical ideas are expected to be primary ingredients for future `knowledge/wikis/` pages and
+  `knowledge/knowledge-graphs/` summaries.
+
+More detail: [`docs/process/VAULT_KNOWLEDGE_REPOS.md`](docs/process/VAULT_KNOWLEDGE_REPOS.md).
+
 ## Further reading
 
 - Control layer and execution checklist: [`docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`](docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md)

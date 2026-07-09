@@ -2,16 +2,19 @@
 
 set -euo pipefail
 
-export PATH="/Users/justin/.bun/bin:/Users/justin/.nvm/versions/node/v24.16.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="$HOME/.bun/bin:$HOME/.nvm/versions/node/v24.16.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-cd /Users/justin/LLAAB
+readonly script_dir="${0:A:h}"
+readonly repo_dir="${script_dir:h:h}"
+
+cd "$repo_dir"
 
 export LLAAB_API_URL="${LLAAB_API_URL:-http://127.0.0.1:8888}"
 export HOST="${HOST:-127.0.0.1}"
 export PORT="${PORT:-5050}"
 export LLAAB_VAULT="${LLAAB_VAULT:-$PWD/vault}"
 
-readonly persistent_root="/Users/justin/LLAAB/apps/client/.persistent"
+readonly persistent_root="$repo_dir/apps/client/.persistent"
 readonly builds_dir="$persistent_root/builds"
 readonly current_link="$persistent_root/current"
 readonly runtime_mode="${LLAAB_CLIENT_RUNTIME:-dev}"

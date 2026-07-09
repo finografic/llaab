@@ -78,12 +78,12 @@ These fields exist on every node through `BaseNodeSchema`:
 
 These utilities now operate on the new schema system:
 
-| Utility                                                                                                | What It Does                                                                                                |
-| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| [`create-node.utils.ts`](/Users/justin/LLAAB/packages/core/src/utils/create-node.utils.ts)             | Creates validated nodes, serializes frontmatter, and writes markdown files into the correct vault location. |
-| [`parse-frontmatter.utils.ts`](/Users/justin/LLAAB/packages/core/src/utils/parse-frontmatter.utils.ts) | Splits frontmatter from markdown body and parses a simple human-writable YAML-like format.                  |
-| [`read-node.utils.ts`](/Users/justin/LLAAB/packages/core/src/utils/read-node.utils.ts)                 | Reads one markdown file and validates it through `NodeSchema`.                                              |
-| [`list-nodes.utils.ts`](/Users/justin/LLAAB/packages/core/src/utils/list-nodes.utils.ts)               | Recursively scans the vault, reads nodes, and filters by type, status, tags, or search text.                |
+| Utility                                                                                    | What It Does                                                                                                |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| [`create-node.utils.ts`](~/LLAAB/packages/core/src/utils/create-node.utils.ts)             | Creates validated nodes, serializes frontmatter, and writes markdown files into the correct vault location. |
+| [`parse-frontmatter.utils.ts`](~/LLAAB/packages/core/src/utils/parse-frontmatter.utils.ts) | Splits frontmatter from markdown body and parses a simple human-writable YAML-like format.                  |
+| [`read-node.utils.ts`](~/LLAAB/packages/core/src/utils/read-node.utils.ts)                 | Reads one markdown file and validates it through `NodeSchema`.                                              |
+| [`list-nodes.utils.ts`](~/LLAAB/packages/core/src/utils/list-nodes.utils.ts)               | Recursively scans the vault, reads nodes, and filters by type, status, tags, or search text.                |
 
 ## File Naming And Storage
 
@@ -121,16 +121,16 @@ The starter kit was not copied blindly. The parts that matched the current repo 
 
 Adopted or adapted:
 
-| Source File                           | Result                                                                                                                                                                               |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `transcript.ts`                       | Used as the basis for the richer deterministic transcript cleaner in [`packages/ingestion/src/clean/transcript.ts`](/Users/justin/LLAAB/packages/ingestion/src/clean/transcript.ts). |
-| `text.ts`                             | Used as the basis for paragraph structuring in [`packages/ingestion/src/structure/text.ts`](/Users/justin/LLAAB/packages/ingestion/src/structure/text.ts).                           |
-| `youtube.ts`                          | Adapted into a real `yt-dlp`-backed fetcher in [`packages/ingestion/src/fetch/youtube.ts`](/Users/justin/LLAAB/packages/ingestion/src/fetch/youtube.ts).                             |
-| `create-node.utils.ts`                | Reworked into the current validated node writer in [`packages/core/src/utils/create-node.utils.ts`](/Users/justin/LLAAB/packages/core/src/utils/create-node.utils.ts).               |
-| `parse-frontmatter.utils.ts`          | Adapted into the current lightweight parser in [`packages/core/src/utils/parse-frontmatter.utils.ts`](/Users/justin/LLAAB/packages/core/src/utils/parse-frontmatter.utils.ts).       |
-| `list-nodes.utils.ts`                 | Adapted into the current recursive vault scanner in [`packages/core/src/utils/list-nodes.utils.ts`](/Users/justin/LLAAB/packages/core/src/utils/list-nodes.utils.ts).                |
-| `capture-idea.ts`                     | Adapted into the current idea skill, including inbox appending and light auto-tagging.                                                                                               |
-| `pipeline.ts` and `ingest-youtube.ts` | Adapted so YouTube ingestion creates typed `transcript` and `source` nodes.                                                                                                          |
+| Source File                           | Result                                                                                                                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `transcript.ts`                       | Used as the basis for the richer deterministic transcript cleaner in [`packages/ingestion/src/clean/transcript.ts`](~/LLAAB/packages/ingestion/src/clean/transcript.ts). |
+| `text.ts`                             | Used as the basis for paragraph structuring in [`packages/ingestion/src/structure/text.ts`](~/LLAAB/packages/ingestion/src/structure/text.ts).                           |
+| `youtube.ts`                          | Adapted into a real `yt-dlp`-backed fetcher in [`packages/ingestion/src/fetch/youtube.ts`](~/LLAAB/packages/ingestion/src/fetch/youtube.ts).                             |
+| `create-node.utils.ts`                | Reworked into the current validated node writer in [`packages/core/src/utils/create-node.utils.ts`](~/LLAAB/packages/core/src/utils/create-node.utils.ts).               |
+| `parse-frontmatter.utils.ts`          | Adapted into the current lightweight parser in [`packages/core/src/utils/parse-frontmatter.utils.ts`](~/LLAAB/packages/core/src/utils/parse-frontmatter.utils.ts).       |
+| `list-nodes.utils.ts`                 | Adapted into the current recursive vault scanner in [`packages/core/src/utils/list-nodes.utils.ts`](~/LLAAB/packages/core/src/utils/list-nodes.utils.ts).                |
+| `capture-idea.ts`                     | Adapted into the current idea skill, including inbox appending and light auto-tagging.                                                                                   |
+| `pipeline.ts` and `ingest-youtube.ts` | Adapted so YouTube ingestion creates typed `transcript` and `source` nodes.                                                                                              |
 
 Not copied directly:
 

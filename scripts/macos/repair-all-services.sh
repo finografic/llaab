@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-readonly repo_dir="/Users/justin/LLAAB"
+readonly script_dir="${0:A:h}"
+readonly repo_dir="${script_dir:h:h}"
 readonly service_script="$repo_dir/scripts/macos/llaab-service.sh"
 readonly logs_dir="$HOME/Library/Logs/llaab"
 readonly log_file="$logs_dir/repair-all.log"
@@ -10,7 +11,7 @@ readonly sentinel_file="/tmp/llaab-dev-refreshing"
 readonly client_cache_dir="$repo_dir/apps/client/node_modules/.vite"
 readonly client_persistent_dir="$repo_dir/apps/client/.persistent"
 
-export PATH="/Users/justin/.bun/bin:/Users/justin/.nvm/versions/node/v24.16.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="$HOME/.bun/bin:$HOME/.nvm/versions/node/v24.16.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 mkdir -p "$logs_dir"
 exec > >(tee -a "$log_file") 2>&1

@@ -49,8 +49,8 @@ function buildVaultCommitMessage(countsByType: Record<string, number>, total: nu
   return lines.length > 0 ? `${header}\n\n${lines.join('\n')}` : header;
 }
 
-async function getVaultGitStatus(): Promise<VaultGitStatusResponse> {
-  const status = await runGit(['status', '--porcelain=v1']);
+export async function getVaultGitStatus(): Promise<VaultGitStatusResponse> {
+  const status = await runGit(['status', '--porcelain=v1', '--untracked-files=all']);
   if (status.exitCode !== 0) {
     throw new Error(status.stderr || 'git status failed.');
   }

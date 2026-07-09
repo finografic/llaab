@@ -173,11 +173,11 @@ Private server only. Follow security checklist from the setup guide.
 
 No new MCP code yet — wire what exists today (`vault_list`, `vault_read`).
 
-**Prerequisites:** LLAAB repo at `/Users/justin/LLAAB`; built CLI at
+**Prerequisites:** LLAAB repo at `~/LLAAB`; built CLI at
 `packages/cli/dist/index.js`.
 
 ```bash
-cd /Users/justin/LLAAB
+cd ~/LLAAB
 pnpm dev:cli -- mcp   # should block on stdio; Ctrl+C to exit
 ```
 
@@ -189,10 +189,10 @@ mcp_servers:
   llaab:
     command: /Users/justin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node
     args:
-      - /Users/justin/LLAAB/packages/cli/dist/index.js
+      - ~/LLAAB/packages/cli/dist/index.js
       - mcp
     env:
-      LLAAB_VAULT: /Users/justin/LLAAB/vault
+      LLAAB_VAULT: ~/LLAAB/vault
     tools:
       include:
         - vault_list
@@ -229,7 +229,7 @@ MCP child env for write tools:
 
 ```yaml
 env:
-  LLAAB_VAULT: "/Users/justin/LLAAB/vault"
+  LLAAB_VAULT: "~/LLAAB/vault"
   LLAAB_API_URL: "http://localhost:8888"
   LLAAB_API_KEY: "..."   # from root .env — child process only, not committed
 ```

@@ -2,8 +2,11 @@
 
 set -euo pipefail
 
-export PATH="/Users/justin/.bun/bin:/Users/justin/.nvm/versions/node/v24.16.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="$HOME/.bun/bin:$HOME/.nvm/versions/node/v24.16.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-cd /Users/justin/LLAAB
+readonly script_dir="${0:A:h}"
+readonly repo_dir="${script_dir:h:h}"
+
+cd "$repo_dir"
 
 exec /opt/homebrew/bin/pnpm --filter @llaab/icons dev

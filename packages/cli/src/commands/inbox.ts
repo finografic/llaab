@@ -626,10 +626,11 @@ function resolveEnvValue(name: string): string | undefined {
 
 function envFileCandidates(): string[] {
   const home = process.env['HOME'];
+  const llaabRepo = process.env['LLAAB_REPO_DIR'] ?? (home ? join(home, 'LLAAB') : undefined);
 
   return [
     join(process.cwd(), '.env'),
-    '/Users/justin/LLAAB/.env',
+    ...(llaabRepo ? [join(llaabRepo, '.env')] : []),
     ...(home ? [join(home, '.hermes', '.env')] : []),
   ];
 }

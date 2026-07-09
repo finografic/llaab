@@ -1,6 +1,7 @@
 #!/bin/zsh
 
-readonly repo_dir="/Users/justin/LLAAB"
+readonly script_dir="${0:A:h}"
+readonly repo_dir="${script_dir:h:h}"
 readonly service_script="$repo_dir/scripts/macos/llaab-service.sh"
 readonly sentinel_file="/tmp/llaab-dev-refreshing"
 readonly log_file="$HOME/Library/Logs/llaab/dev-refresh.log"
