@@ -1,6 +1,8 @@
 # TODO — Inbox Views and Review Workflows
 
-> **Status:** Phase 4 complete (2026-07-09). Phases 5–8 not started.
+> **Status:** Phases 0–8 complete for MVP inbox views (2026-07-09). Remaining deferred items:
+> code-block URL extraction, snippet/docs-attachment promote destinations, pin/run provenance
+> cross-links.
 
 ## Goal
 
@@ -241,17 +243,22 @@ Exit criteria: the user can clear the inbox without deleting useful captured kno
 
 Purpose: add intelligence only where deterministic routing is not enough.
 
-- [ ] Keep deterministic route kinds as the first pass.
-- [ ] Add opt-in AI categorization for ambiguous captures.
-- [ ] Suggest tags for links, attachments, snippets, and notes.
-- [ ] Suggest whether a link is docs, post/article, repo, package, or generic resource.
-- [ ] Suggest whether Markdown attachments are docs, skill drafts, prompts, instructions, or notes.
-- [ ] Extract first useful code block from arbitrary docs/blog/code-reference URLs.
-- [ ] Infer code language beyond deterministic file extension/URL hints.
-- [ ] Suggest canonical destination: working vault, resource, skill, prompt, instruction,
-      `knowledge/`, or archive.
-- [ ] Log model usage and cost for enrichment actions.
-- [ ] Never run enrichment automatically on casual inbox drops.
+- [x] Keep deterministic route kinds as the first pass (2026-07-09).
+- [x] Add opt-in AI categorization for ambiguous captures (`InboxCaptureEnrichment`, 2026-07-09).
+- [x] Suggest tags for links, attachments, snippets, and notes (2026-07-09).
+- [x] Suggest whether a link is docs, post/article, repo, package, or generic resource
+      (2026-07-09).
+- [x] Suggest whether Markdown attachments are docs, skill drafts, prompts, instructions, or notes
+      (2026-07-09).
+- [ ] Extract first useful code block from arbitrary docs/blog/code-reference URLs
+      (deferred — needs fetch/extract pipeline).
+- [x] Infer code language beyond deterministic file extension/URL hints (LLM suggestion field,
+      2026-07-09).
+- [x] Suggest canonical destination: working vault, resource, skill, prompt, instruction,
+      `knowledge/`, or archive (2026-07-09).
+- [x] Log model usage and cost for enrichment actions (provider/model + token counts in UI,
+      2026-07-09).
+- [x] Never run enrichment automatically on casual inbox drops (2026-07-09).
 
 Exit criteria: AI helps triage and enrich captures without increasing routine inbox cost.
 
@@ -259,13 +266,19 @@ Exit criteria: AI helps triage and enrich captures without increasing routine in
 
 Purpose: connect inbox captures to the larger vault/knowledge lifecycle.
 
-- [ ] Promote docs/post links to `ResourceNode` or the chosen resource shape.
-- [ ] Promote GitHub repos to resource/source records once repo ingestion exists.
-- [ ] Promote useful code snippets into references, prompts, skills, or `knowledge/` as appropriate.
-- [ ] Promote Markdown docs attachments into the right destination after user confirmation.
-- [ ] Link promoted outputs back to their original inbox capture.
-- [ ] Preserve provenance from Telegram/source message through promoted node/artifact.
-- [ ] Coordinate with `TODO_VAULT_KNOWLEDGE_SPLIT.md` before writing to `knowledge/`.
+- [x] Promote docs/post links to `ResourceNode` or the chosen resource shape
+      (`POST /api/vault/nodes/resource` + promote UI, 2026-07-09).
+- [x] Promote GitHub repos to resource records (resource_type `repo`; full repo ingestion still
+      later, 2026-07-09).
+- [ ] Promote useful code snippets into references, prompts, skills, or `knowledge/` as appropriate
+      (placeholder only — dedicated destinations later).
+- [ ] Promote Markdown docs attachments into the right destination after user confirmation
+      (placeholder only).
+- [x] Link promoted outputs back to their original inbox capture (`related` + `from-inbox:` /
+      `to-resource:` tags, 2026-07-09).
+- [x] Preserve provenance from Telegram/source message through promoted node/artifact (capture body + source capture id in resource body, 2026-07-09).
+- [x] Coordinate with `TODO_VAULT_KNOWLEDGE_SPLIT.md` before writing to `knowledge/` (promote stays
+      in working vault `resource` nodes only, 2026-07-09).
 
 Exit criteria: inbox captures can mature into durable LLAAB knowledge without losing provenance.
 
@@ -273,13 +286,17 @@ Exit criteria: inbox captures can mature into durable LLAAB knowledge without lo
 
 Purpose: make the new views discoverable without cluttering the app.
 
-- [ ] Decide whether `/inbox` is a top-level route or grouped under Vault/Registry/Pipeline.
-- [ ] Add nav entry only after the base list/detail route is useful.
-- [ ] Cross-link captures from existing node detail pages when provenance is known.
-- [ ] Cross-link from pinned libraries to their originating inbox capture where available.
-- [ ] Cross-link from runs to the inbox item that triggered them where available.
-- [ ] Add route handles/title metadata consistent with current router patterns.
-- [ ] Keep page headings in the canonical `PageLayout` + `PageHero` pattern.
+- [x] Decide whether `/inbox` is a top-level route or grouped under Vault/Registry/Pipeline
+      (`/vault/inbox` under Vault; matches vault session + node data, 2026-07-09).
+- [x] Add nav entry only after the base list/detail route is useful (Vault → Inbox, 2026-07-09).
+- [x] Cross-link captures from existing node detail pages when provenance is known
+      (`Open inbox capture` on inbox-tagged nodes, 2026-07-09).
+- [ ] Cross-link from pinned libraries to their originating inbox capture where available
+      (deferred — pins are registry records without stable capture ids today).
+- [ ] Cross-link from runs to the inbox item that triggered them where available
+      (deferred — YouTube ingest produces transcripts/runs without capture envelope ids).
+- [x] Add route handles/title metadata consistent with current router patterns (2026-07-09).
+- [x] Keep page headings in the canonical `PageLayout` + `PageHero` pattern (2026-07-09).
 
 Exit criteria: inbox review is easy to reach and connected to existing LLAAB surfaces.
 
@@ -287,16 +304,22 @@ Exit criteria: inbox review is easy to reach and connected to existing LLAAB sur
 
 Purpose: prove that the UI can handle current and future captures safely.
 
-- [ ] Seed/test with examples for every current `HermesInboxRouteKind`.
-- [ ] Verify all examples render in the base list.
-- [ ] Verify all examples open in detail view.
-- [ ] Verify unknown/malformed captures render fallback UI instead of errors.
-- [ ] Verify filters and search work on current Telegram test captures.
-- [ ] Verify archive/review state persists if implemented.
-- [ ] Verify route changes do not affect Telegram inbox capture behavior.
-- [ ] Run focused TypeScript checks for touched packages/apps.
-- [ ] Run focused UI tests if route/component test patterns exist.
-- [ ] Run markdown lint for this TODO when updated.
+- [x] Seed/test with examples for every current `HermesInboxRouteKind` (unit coverage for parse +
+      filter paths; live Telegram captures already in vault, 2026-07-09).
+- [x] Verify all examples render in the base list (default renderer + live vault captures,
+      2026-07-09).
+- [x] Verify all examples open in detail view (type registry + fallback, 2026-07-09).
+- [x] Verify unknown/malformed captures render fallback UI instead of errors (unit test +
+      default detail, 2026-07-09).
+- [x] Verify filters and search work on current Telegram test captures (URL params + filter util
+      tests, 2026-07-09).
+- [x] Verify archive/review state persists if implemented (tag PATCH API, 2026-07-09).
+- [x] Verify route changes do not affect Telegram inbox capture behavior (UI/API only; no Hermes
+      router edits, 2026-07-09).
+- [x] Run focused TypeScript checks for touched packages/apps (2026-07-09).
+- [x] Run focused UI tests if route/component test patterns exist
+      (`inbox-capture.utils.test.ts`, 2026-07-09).
+- [x] Run markdown lint for this TODO when updated (pre-commit md-lint, 2026-07-09).
 
 Exit criteria: the inbox review UI is robust enough to become the default place to inspect inbox
 drops.

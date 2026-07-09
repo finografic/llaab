@@ -1,4 +1,6 @@
 import { InboxCaptureActions } from 'components/InboxCaptureActions/InboxCaptureActions';
+import { InboxCaptureEnrichment } from 'components/InboxCaptureEnrichment/InboxCaptureEnrichment';
+import { InboxCapturePromote } from 'components/InboxCapturePromote/InboxCapturePromote';
 import { Badge } from 'components/ui/badge';
 import { Link } from 'react-router-dom';
 
@@ -25,6 +27,8 @@ export function InboxCaptureDetail({ capture }: InboxCaptureDetailProps) {
         <InboxCaptureActions capture={capture} />
       </section>
       {CustomDetail ? <CustomDetail capture={capture} /> : <FallbackInboxCaptureBody capture={capture} />}
+      <InboxCaptureEnrichment capture={capture} />
+      <InboxCapturePromote capture={capture} />
     </>
   );
 }

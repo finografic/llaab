@@ -13,6 +13,7 @@ import type {
   BatchUpdateVaultNodesBody,
   CleanRecentBody,
   CreateNodeBody,
+  CreateResourceNodeBody,
   ListNodesQuery,
   UpdateVaultNodeBody,
 } from './vault.schema.js';
@@ -92,6 +93,37 @@ export const createVaultNode = {
         return c.json({ error: 'A node with that title already exists.' }, 409);
       }
       return c.json({ error: 'Failed to create node.' }, 500);
+    }
+  },
+};
+
+export const createVaultResourceNode = {
+  path: '/nodes/resource' as const,
+  handler: async (c: AppCtxJson<CreateResourceNodeBody>) => {
+    const body = c.req.valid('json');
+    try {
+      const {
+        id,
+        path: createdPath,
+        node,
+      } = await createNode({
+        type: 'resource',
+        title: body.title,
+        body: body.body,
+        tags: body.tags,
+        extra: {
+          related: body.related ?? [],
+          url: body.url,
+          resource_type: body.resource_type ?? 'reference',
+          description: body.description,
+        },
+      });
+      return c.json({ id, path: createdPath, type: node.type }, 201);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('already exists')) {
+        return c.json({ error: 'A node with that title already exists.' }, 409);
+      }
+      return c.json({ error: 'Failed to create resource node.' }, 500);
     }
   },
 };

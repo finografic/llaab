@@ -26,6 +26,21 @@ export const createNodeBodySchema = z.object({
 
 export type CreateNodeBody = z.infer<typeof createNodeBodySchema>;
 
+export const createResourceNodeBodySchema = z.object({
+  type: z.literal('resource'),
+  title: z.string().min(1, 'Title is required'),
+  body: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  related: z.array(z.string()).optional(),
+  url: z.string().url().optional(),
+  resource_type: z
+    .enum(['tool', 'library', 'api', 'dataset', 'reference', 'article', 'repo', 'other'])
+    .optional(),
+  description: z.string().optional(),
+});
+
+export type CreateResourceNodeBody = z.infer<typeof createResourceNodeBodySchema>;
+
 export const updateVaultNodeBodySchema = z
   .object({
     tags: z.array(z.string()).optional(),

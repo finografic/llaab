@@ -4,8 +4,8 @@ import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { useVaultNode } from 'queries/vault';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import type { IdeaNode, InstructionNode, PromptNode, ResourceNode, SkillNode } from '@llaab/schemas';
 
+import { isInboxCaptureNode } from 'lib/inbox-capture.utils';
 import { usePageTitle } from 'lib/use-page-title';
 import { formatDetailDate } from 'utils/format-date.utils';
 
@@ -27,11 +27,11 @@ export function NodeDetailPage() {
     );
   }
 
-  const idea = node.type === 'idea' ? (node) : null;
-  const skill = node.type === 'skill' ? (node) : null;
-  const prompt = node.type === 'prompt' ? (node) : null;
-  const instruction = node.type === 'instruction' ? (node) : null;
-  const resource = node.type === 'resource' ? (node) : null;
+  const idea = node.type === 'idea' ? node : null;
+  const skill = node.type === 'skill' ? node : null;
+  const prompt = node.type === 'prompt' ? node : null;
+  const instruction = node.type === 'instruction' ? node : null;
+  const resource = node.type === 'resource' ? node : null;
 
   return (
     <PageLayout
@@ -49,6 +49,14 @@ export function NodeDetailPage() {
                 <>
                   <span className="meta-sep">·</span>
                   <span className="meta-text">updated {formatDetailDate(node.updated_at)}</span>
+                </>
+              ) : null}
+              {isInboxCaptureNode(node) ? (
+                <>
+                  <span className="meta-sep">·</span>
+                  <Link to={`/vault/inbox/${node.id}`} className="meta-link">
+                    Open inbox capture
+                  </Link>
                 </>
               ) : null}
             </>

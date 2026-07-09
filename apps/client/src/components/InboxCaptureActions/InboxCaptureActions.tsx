@@ -85,9 +85,6 @@ export function InboxCaptureActions({ capture }: InboxCaptureActionsProps) {
           </a>
         </Button>
       ) : null}
-      <Button type="button" size="sm" variant="ghost" disabled title="Promotion paths land in Phase 6">
-        Promote (soon)
-      </Button>
 
       <AlertDialog open={confirmArchive} onOpenChange={setConfirmArchive}>
         <AlertDialogContent>
@@ -105,6 +102,7 @@ export function InboxCaptureActions({ capture }: InboxCaptureActionsProps) {
               onClick={() => {
                 void applyReviewState('archived', 'Archived capture').then(() => {
                   setConfirmArchive(false);
+                  return undefined;
                 });
               }}
             >
