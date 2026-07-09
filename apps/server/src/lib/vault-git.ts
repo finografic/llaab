@@ -1,10 +1,13 @@
 import { spawn } from 'node:child_process';
 import { sep } from 'node:path';
-import { MONOREPO_ROOT } from '@llaab/core';
+import { VAULT_ROOT } from '@llaab/core';
 
 export function runGit(args: string[]): Promise<{ exitCode: number; stderr: string; stdout: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn('git', args, { cwd: MONOREPO_ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn('git', args, {
+      cwd: VAULT_ROOT,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
     let stdout = '';
     let stderr = '';
 
@@ -21,7 +24,7 @@ export function runGit(args: string[]): Promise<{ exitCode: number; stderr: stri
   });
 }
 
-/** Path relative to vault/ (e.g. `sources/source.theo-t3-gg.md`) → repo-relative path for git. */
+/** Path relative to vault/ (e.g. `sources/source.theo-t3-gg.md`) → vault repo path for git. */
 export function toVaultGitPath(pathRelativeToVault: string): string {
   const normalizedPath = pathRelativeToVault.replaceAll('\\', '/');
   const segments = normalizedPath.split('/');
@@ -34,7 +37,7 @@ export function toVaultGitPath(pathRelativeToVault: string): string {
     throw new Error('Invalid path.');
   }
 
-  return ['vault', ...segments].join(sep);
+  return segments.join(sep);
 }
 
 /** True when the file is already tracked in git (committed or staged). Untracked nodes return false. */

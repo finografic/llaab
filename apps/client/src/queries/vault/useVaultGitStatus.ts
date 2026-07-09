@@ -8,7 +8,7 @@ import { INGEST_FORM_RESET_EVENT } from 'lib/ingest-form-events';
 import { QUERY_KEYS } from './index';
 
 /**
- * Vault-scoped `git status`. Refetched explicitly on two signals (no polling):
+ * Nested vault repo `git status`. Refetched explicitly on two signals (no polling):
  * - the ingest-form-reset event, fired after an ingest run completes
  * - any mutation anywhere in the app succeeding — almost every mutation here can touch files
  * under vault/ (consolidate, clean, promote, discard, ...), and new ones are easy to forget to

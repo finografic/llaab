@@ -106,6 +106,7 @@ deps-xscan-report.json
 graphify-out/cache/
 
 # Vault scratch
+/vault/
 vault/.tmp/
 vault/.agent-loop/
 

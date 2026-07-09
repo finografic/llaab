@@ -1,6 +1,6 @@
 # TODO — Vault and Knowledge Split
 
-> **Status:** Not started.
+> **Status:** Phases 0-3 complete (2026-07-09). Phases 4-8 in progress.
 
 ## Purpose
 
@@ -69,50 +69,50 @@ entirely and must not track `vault` as a gitlink.
 
 ## Phase 0 — Safety Snapshot
 
-- [ ] Confirm no active ingest/extraction/consolidation run is writing to `vault/`.
-- [ ] Capture parent repo status before migration.
-- [ ] Capture a full `vault/` file count and size summary.
-- [ ] Confirm `.gitmodules` does not exist or does not mention `vault`.
-- [ ] Decide whether the nested vault repo gets a remote immediately or remains local-first.
+- [x] Confirm no active ingest/extraction/consolidation run is writing to `vault/`.
+- [x] Capture parent repo status before migration.
+- [x] Capture a full `vault/` file count and size summary.
+- [x] Confirm `.gitmodules` does not exist or does not mention `vault`.
+- [x] Decide whether the nested vault repo gets a remote immediately or remains local-first.
 
 ## Phase 1 — Initialize Nested Vault Repo
 
-- [ ] From `/Users/justin/LLAAB/vault`, run `git init`.
-- [ ] Add a vault-local `.gitignore` for transient files such as `.tmp/`, caches, lockfiles, and local
+- [x] From `/Users/justin/LLAAB/vault`, run `git init`.
+- [x] Add a vault-local `.gitignore` for transient files such as `.tmp/`, caches, lockfiles, and local
       scratch files.
-- [ ] Stage the current vault contents inside the nested repo.
-- [ ] Commit the initial vault snapshot.
-- [ ] Verify `git -C vault status` reports the expected clean or intentionally dirty vault state.
-- [ ] Verify the parent repo has not created `.gitmodules`.
+- [x] Stage the current vault contents inside the nested repo.
+- [x] Commit the initial vault snapshot.
+- [x] Verify `git -C vault status` reports the expected clean or intentionally dirty vault state.
+- [x] Verify the parent repo has not created `.gitmodules`.
 
 ## Phase 2 — Stop Parent Repo Tracking Vault Data
 
-- [ ] Add `/vault/` to the parent `.gitignore`.
-- [ ] Remove vault files from the parent index with `git rm -r --cached vault`.
-- [ ] Confirm all vault files still exist on disk.
-- [ ] Confirm parent `git status` shows only index removals for old tracked vault files plus the
+- [x] Add `/vault/` to the parent `.gitignore`.
+- [x] Remove vault files from the parent index with `git rm -r --cached vault`.
+- [x] Confirm all vault files still exist on disk.
+- [x] Confirm parent `git status` shows only index removals for old tracked vault files plus the
       `.gitignore` change.
-- [ ] Commit the parent change that stops tracking generated vault data.
-- [ ] Confirm parent `git status` no longer shows vault runtime churn.
+- [x] Commit the parent change that stops tracking generated vault data.
+- [x] Confirm parent `git status` no longer shows vault runtime churn.
 
 ## Phase 3 — Create Committed Knowledge Skeleton
 
-- [ ] Create `knowledge/README.md` explaining the promotion contract.
-- [ ] Create `knowledge/wikis/README.md`.
-- [ ] Create `knowledge/knowledge-graphs/README.md`.
-- [ ] Create `knowledge/skills/README.md`.
-- [ ] Create `knowledge/agents/README.md`.
-- [ ] Create `knowledge/references/README.md`.
-- [ ] Create `knowledge/prompts/README.md`.
-- [ ] Create `knowledge/decisions/README.md`.
-- [ ] Commit the `knowledge/` skeleton in the parent repo.
+- [x] Create `knowledge/README.md` explaining the promotion contract.
+- [x] Create `knowledge/wikis/README.md`.
+- [x] Create `knowledge/knowledge-graphs/README.md`.
+- [x] Create `knowledge/skills/README.md`.
+- [x] Create `knowledge/agents/README.md`.
+- [x] Create `knowledge/references/README.md`.
+- [x] Create `knowledge/prompts/README.md`.
+- [x] Create `knowledge/decisions/README.md`.
+- [x] Commit the `knowledge/` skeleton in the parent repo.
 
 ## Phase 4 — Code and Config Audit
 
-- [ ] Confirm LLAAB runtime can keep using `vault/` at the same path with no code changes.
-- [ ] Search for assumptions that `vault/` is parent-repo tracked.
-- [ ] Audit vault git helper code that auto-commits metadata.
-- [ ] Decide whether vault git operations should run from the nested `vault/.git` repo.
+- [x] Confirm LLAAB runtime can keep using `vault/` at the same path with no code changes.
+- [x] Search for assumptions that `vault/` is parent-repo tracked.
+- [x] Audit vault git helper code that auto-commits metadata.
+- [x] Decide whether vault git operations should run from the nested `vault/.git` repo.
 - [ ] Update any server/client labels that imply vault data is committed with source code.
 - [ ] Add or update tests for path resolution and vault git status behavior if code changes are needed.
 

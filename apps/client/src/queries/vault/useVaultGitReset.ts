@@ -7,7 +7,7 @@ import { apiPost } from 'lib/api-client';
 import { QUERY_KEYS } from './index';
 
 /**
- * Discards every uncommitted change under `vault/` — both tracked modifications (git checkout)
+ * Discards every uncommitted change in the nested vault repo — both tracked modifications (git checkout)
  * and untracked files (git clean) — then invalidates broadly so any open page (transcripts,
  * runs, ideas, ...) re-fetches and reflects files that may have just been deleted from disk.
  */

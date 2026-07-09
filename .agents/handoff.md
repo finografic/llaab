@@ -125,16 +125,17 @@ indicator (LLAAB still can't see external scheduler state) — stored in `config
 and toggled via `PATCH /api/crons/:id`; `runCronRecipe` checks it before doing any work, so Run Now,
 `cron.run`, and external triggers are all blocked the same way while disabled. `/crons` shows this
 as an active/disabled toggle (green pause / grey play) left of Run Now, not a read-only badge.
-`VaultGitPanel` (`apps/client/src/components/VaultGitPanel/`) shows `git status` scoped to `vault/`
+`VaultGitPanel` (`apps/client/src/components/VaultGitPanel/`) shows `git status` from the nested
+`vault/.git` repo
 via `@pierre/trees`'s `FileTree` (themed via `constants/pierre-trees-theme.ts` CSS custom-property
 overrides), grouped by node type, with an auto-generated commit message
 (`chore(vault): commit N files` + per-type bullet breakdown), a Commit button, and a Reset button
-(discards all uncommitted `vault/` changes — `git checkout HEAD` + `git clean -fd`, both scoped to
-`vault/` — behind a confirm dialog). Server-side git operations
-(`apps/server/src/routes/vault/vault-git.routes.ts`) shell out to `git` scoped with a `-- vault`
-pathspec for status/commit/reset. The git-status query refetches after _any_ mutation in the app
-succeeds (subscribes to the TanStack `MutationCache`), not just a few manually-wired ones — nearly
-every mutation here can touch `vault/` files, so this stays correct without per-mutation wiring.
+(discards all uncommitted nested-vault changes — `git checkout HEAD -- .` + `git clean -fd -- .` —
+behind a confirm dialog). Server-side git operations (`apps/server/src/routes/vault/vault-git.routes.ts`)
+shell out to `git` with `cwd` set to `VAULT_ROOT`, so parent source commits stay free of vault data
+noise. The git-status query refetches after _any_ mutation in the app succeeds (subscribes to the
+TanStack `MutationCache`), not just a few manually-wired ones — nearly every mutation here can touch
+`vault/` files, so this stays correct without per-mutation wiring.
 Inner pages use `PageLayout` (hero / optional aside / main zones) and `PageHero`. `src/router.tsx`
 lazy-loads route components so the initial SPA chunk stays smaller; route handles set
 title/full-bleed page chrome. Navigation structure: `lib/nav-menu.config.ts`; design spec:
@@ -427,7 +428,8 @@ Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
 Hermes setup and follow-ups: `docs/todo/TODO_HERMES_LAYER.md` and
 `docs/todo/TODO_HERMES_DROPBOX.md`. Vault/knowledge split plan:
-`docs/todo/TODO_VAULT_KNOWLEDGE_SPLIT.md`.
+`docs/todo/TODO_VAULT_KNOWLEDGE_SPLIT.md`; current shape is source/docs/`knowledge/` in the parent
+repo and volatile working data in the nested `vault/.git` repo.
 Playwright learning playground: `docs/todo/TODO_PLAYWRIGHT_PRACTICE.md`.
 UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07. P0 is empty.
 Orchestration phases 0–10 are complete. The Phase 6b addendum content is consolidated into

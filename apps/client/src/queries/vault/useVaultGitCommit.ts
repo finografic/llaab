@@ -5,7 +5,7 @@ import { apiPost } from 'lib/api-client';
 
 import { QUERY_KEYS } from './index';
 
-/** Commit all currently-changed files under `vault/`, invalidating the git status query on success. */
+/** Commit all currently-changed files in the nested vault repo, invalidating the git status query on success. */
 export function useVaultGitCommit() {
   const queryClient = useQueryClient();
 

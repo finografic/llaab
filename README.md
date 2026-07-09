@@ -187,7 +187,7 @@ await ingestYouTube({
 "
 ```
 
-- **Vault output** defaults to `./vault` under the current working directory (override with `LLAAB_VAULT` if you use a custom vault root).
+- **Vault output** defaults to `./vault` under the current working directory (override with `LLAAB_VAULT` if you use a custom vault root). In the standard checkout, `vault/` is a nested data repo; promoted stable artifacts live in parent-repo `knowledge/`.
 - **Duplicates:** the same YouTube `videoId` reuses the existing transcript node and skips re-fetching (see `docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`).
 
 ## Further reading
