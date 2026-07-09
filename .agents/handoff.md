@@ -425,7 +425,9 @@ YAML `profiles` object-array parsing so all source nodes load for runs author li
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
-Hermes setup and follow-ups: `docs/todo/TODO_HERMES_LAYER.md`.
+Hermes setup and follow-ups: `docs/todo/TODO_HERMES_LAYER.md` and
+`docs/todo/TODO_HERMES_DROPBOX.md`. Vault/knowledge split plan:
+`docs/todo/TODO_VAULT_KNOWLEDGE_SPLIT.md`.
 Playwright learning playground: `docs/todo/TODO_PLAYWRIGHT_PRACTICE.md`.
 UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07. P0 is empty.
 Orchestration phases 0–10 are complete. The Phase 6b addendum content is consolidated into
@@ -444,21 +446,29 @@ mix code + graph files — hook rebuild is normal; commit again or discard if un
 
 ## Hermes / MCP
 
-Hermes is installed and connected to Discord as `lab`. The active provider/model seen in
-OpenCode usage is `glm-5.2` via OpenCode Go. The Discord gateway is managed by launchd through
-`scripts/macos/llaab-service.sh` as `com.llaab.hermes.gateway`; SwiftBar includes Hermes Gateway
-start/stop/restart, Hermes Client, Hermes Agent, and Tail Gateway Log actions. A foreground
-terminal running `hermes gateway run` is no longer required.
+Hermes is installed and connected to Discord as `lab` and Telegram as the LLAAB Inbox bot. Discord
+remains the operator/command surface; Telegram owner DMs are the zero-friction inbox/dropbox. The
+active provider/model seen in OpenCode usage is `glm-5.2` via OpenCode Go. The gateway is managed
+by launchd through `scripts/macos/llaab-service.sh` as `com.llaab.hermes.gateway`; SwiftBar includes
+Hermes Gateway start/stop/restart, Hermes Client, Hermes Agent, and Tail Gateway Log actions. A
+foreground terminal running `hermes gateway run` is no longer required. Gateway lifecycle notices
+are sent to the home channel: 🟡 shutting down and 🟢 online.
 
 Hermes MCP access is intentionally scoped to the LLAAB repo/vault. The `llaab` MCP server runs the
-built CLI with Node and exposes `vault_list`, `vault_read`, and `vault_capture_idea`; Hermes also
-shows MCP resource helpers (`list_resources`, `read_resource`). `vault_capture_idea` is the only
-write tool so far and creates raw `idea` nodes for later consolidation. Verified from Discord:
-listing Hermes-tagged nodes, reading nodes, and capturing ideas all work.
+built CLI with Node and exposes vault read helpers plus inbox write helpers. Telegram inbox writes
+are deterministic and do not execute shell commands. Known routes: YouTube URL ingest, npm package
+pinning (`npmjs.com` and `npmx.dev/package/*`), `npx`/`npmx`/`pnpm dlx` command candidates, `todo:`
+notes, GitHub repo links, `docs:` links/attachments, `post:` links, generic links, images,
+attachments, and `code:` snippets/links/attachments. Obvious JSX/TSX paste without a prefix also
+routes as a code snippet; JSX-like snippets normalize to `tsx`.
 
-Early Hermes smoke tests cost about `$0.53`, so `TODO_HERMES_LAYER.md` tracks model routing and
-cost controls. Preferred direction: deterministic cheap routing for greetings/simple reads/status
-first, with agent-chosen escalation only inside explicit guardrails.
+Telegram inbox feedback uses Hermes reactions for quick processing state and short explicit final
+receipts such as `✅ Ingested YouTube video: ...`, `✅ Saved docs link: ...`, or `✅ Saved code
+snippet: ...`. Attachments win over embedded URLs so uploaded files are never lost; `docs:` captions
+on Markdown attachments route as docs attachments. Distinct docs links are keyed by full URL path,
+not just host. Remaining manual checks: unauthorized Telegram user rejection and Discord operator
+console unchanged. Future inbox work is in `TODO_HERMES_DROPBOX.md`: AI-assisted categorization,
+snippet extraction from arbitrary docs/blog/code-reference links, and richer review/search surfaces.
 
 ## Local Dev Ops
 
