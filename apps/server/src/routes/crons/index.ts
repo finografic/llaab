@@ -7,5 +7,6 @@ import { createCronRecipeBodySchema, updateCronRecipeBodySchema } from './crons.
 export const cronsRouter = createRouter()
   .get(routes.list.path, routes.list.handler)
   .post(routes.create.path, zValidator('json', createCronRecipeBodySchema), routes.create.handler)
+  .post(routes.repair.path, routes.repair.handler)
   .post(routes.run.path, routes.run.handler)
   .patch(routes.update.path, zValidator('json', updateCronRecipeBodySchema), routes.update.handler);

@@ -7,7 +7,7 @@ import type { CreateCronRecipeBody, UpdateCronRecipeBody } from './crons.schema.
 import type { IdeaNode, RunNode, TranscriptNode } from '@llaab/schemas';
 
 import { consolidateTranscriptIdeasForTranscript } from '../vault/vault-transcripts.routes.js';
-import { appendCronHistoryEntry } from './cron-history.js';
+import { appendCronHistoryEntry, listCronHistory } from './cron-history.js';
 
 export interface CronScript {
   id: string;
@@ -30,12 +30,18 @@ export interface CronRecipe {
   }>;
 }
 
+export type CronRecipeHealth = 'ok' | 'stale' | 'failing' | 'never_ran' | 'not_installed';
+
 export interface CronRecipeDto extends CronRecipe {
   /**
    * Whether this recipe is installed in the user's crontab. LLAAB still owns no long-running
    * scheduler; it only manages one-shot endpoint lines in the host crontab.
    */
   enabled: boolean;
+  /** Operational truth: installed lines can still be failing (e.g. 401) or stale. */
+  health: CronRecipeHealth;
+  healthDetail?: string;
+  lastRunAt?: string;
 }
 
 export interface CronRecipeRunResult {
@@ -57,9 +63,10 @@ export interface CronRecipeRunResult {
 
 const RECENT_TRANSCRIPTS_WINDOW_DAYS = 7;
 const MANAGED_CRONTAB_MARKER_PREFIX = '# llaab:cron:';
-const LOCAL_API_ORIGIN = 'http://127.0.0.1:8888';
-const CURL_BIN = '/usr/bin/curl';
 const CRON_RECIPES_PATH = resolve(process.cwd(), 'configs/cron-recipes.json');
+const CRON_RUNNER_SCRIPT = resolve(process.cwd(), 'scripts/macos/llaab-cron-run.sh');
+/** Treat a 6h recipe as stale after 2 missed windows (+ buffer). */
+const STALE_AFTER_MS = 13 * 60 * 60 * 1000;
 let crontabWriteQueue = Promise.resolve();
 
 type CronRecipeConfig = Omit<CronRecipe, 'command' | 'scheduleExamples'>;
@@ -69,26 +76,28 @@ interface CronRecipesFile {
   recipes: Record<string, CronRecipeConfigPatch>;
 }
 
-function cronRunUrl(recipeId: string): string {
-  return `${LOCAL_API_ORIGIN}/api/crons/${recipeId}/run`;
-}
-
 function cronLogPath(recipeId: string): string {
   return `/tmp/llaab-cron-${recipeId}.log`;
 }
 
 function cronCommand(recipe: Pick<CronRecipe, 'cronExpression' | 'id'>): string {
+  // Wrapper sources repo .env and sends X-API-Key — bare curl 401s when LLAAB_API_KEY is set.
   return [
     recipe.cronExpression,
-    CURL_BIN,
-    '-fsS',
-    '-X',
-    'POST',
-    cronRunUrl(recipe.id),
-    `>${cronLogPath(recipe.id)}`,
-    '2>&1',
+    CRON_RUNNER_SCRIPT,
+    recipe.id,
     `${MANAGED_CRONTAB_MARKER_PREFIX}${recipe.id}`,
   ].join(' ');
+}
+
+function readCronLogSnippet(recipeId: string): string {
+  const path = cronLogPath(recipeId);
+  if (!existsSync(path)) return '';
+  try {
+    return readFileSync(path, 'utf8').trim();
+  } catch {
+    return '';
+  }
 }
 
 export const CRON_SCRIPTS: CronScript[] = [
@@ -176,8 +185,8 @@ function materializeRecipe(config: CronRecipeConfig): CronRecipe {
     command: `cron.run ${config.id}`,
     scheduleExamples: [
       {
-        label: 'macOS launchd',
-        value: `${CURL_BIN} -fsS -X POST ${cronRunUrl(config.id)}`,
+        label: 'macOS launchd / manual',
+        value: `${CRON_RUNNER_SCRIPT} ${config.id}`,
       },
       {
         label: 'cron',
@@ -302,7 +311,9 @@ async function updateCrontab(mutator: (current: string) => string): Promise<void
     .catch(() => undefined)
     .then(async () => {
       const current = await readCrontab();
-      await writeCrontab(mutator(current));
+      const next = mutator(current);
+      if (next === current) return;
+      await writeCrontab(next);
     });
 
   await crontabWriteQueue;
@@ -322,6 +333,10 @@ async function isCronRecipeEnabled(id: string): Promise<boolean> {
   return crontab.split('\n').some((line) => line.includes(`${MANAGED_CRONTAB_MARKER_PREFIX}${id}`));
 }
 
+function managedLineNeedsRewrite(line: string): boolean {
+  return line.includes(MANAGED_CRONTAB_MARKER_PREFIX) && !line.includes(CRON_RUNNER_SCRIPT);
+}
+
 export async function setCronRecipeEnabled(id: string, enabled: boolean): Promise<boolean> {
   const recipe = findRecipe(id);
   if (!recipe) throw new Error(`Unknown cron recipe: ${id}`);
@@ -333,6 +348,72 @@ export async function setCronRecipeEnabled(id: string, enabled: boolean): Promis
     return `${withoutRecipe}${withoutRecipe ? '\n' : ''}${cronCommand(recipe)}\n`;
   });
   return enabled;
+}
+
+/** Reinstall every currently-installed recipe with the current authenticated runner command. */
+export async function repairInstalledCronRecipes(): Promise<string[]> {
+  const crontab = await readCrontab();
+  const repaired: string[] = [];
+  for (const recipe of listCronRecipes()) {
+    const marker = `${MANAGED_CRONTAB_MARKER_PREFIX}${recipe.id}`;
+    const line = crontab.split('\n').find((entry) => entry.includes(marker));
+    if (!line) continue;
+    if (!managedLineNeedsRewrite(line) && line.includes(CRON_RUNNER_SCRIPT)) continue;
+    await setCronRecipeEnabled(recipe.id, true);
+    repaired.push(recipe.id);
+  }
+  return repaired;
+}
+
+function resolveRecipeHealth(args: {
+  enabled: boolean;
+  recipeId: string;
+  crontabLine?: string;
+  lastRunAt?: string;
+  lastRunStatus?: CronHistoryEntry['status'];
+}): { health: CronRecipeHealth; healthDetail?: string } {
+  if (!args.enabled) {
+    return { health: 'not_installed', healthDetail: 'Not installed in crontab' };
+  }
+
+  if (args.crontabLine && managedLineNeedsRewrite(args.crontabLine)) {
+    return {
+      health: 'failing',
+      healthDetail: 'Crontab line is outdated (bare curl without API key) — click Repair crontab',
+    };
+  }
+
+  if (args.lastRunStatus === 'failed') {
+    return { health: 'failing', healthDetail: 'Last recorded run failed' };
+  }
+
+  if (args.lastRunAt) {
+    const ageMs = Date.now() - Date.parse(args.lastRunAt);
+    if (Number.isFinite(ageMs) && ageMs > STALE_AFTER_MS) {
+      return {
+        health: 'stale',
+        healthDetail: `Last successful run was ${Math.floor(ageMs / (60 * 60 * 1000))}h ago`,
+      };
+    }
+    return { health: 'ok' };
+  }
+
+  // No history yet — fall back to /tmp cron log (may still show pre-repair 401s).
+  const log = readCronLogSnippet(args.recipeId);
+  if (/401|Unauthorized/i.test(log)) {
+    return {
+      health: 'failing',
+      healthDetail: 'Last crontab trigger got HTTP 401 — runner must send X-API-Key',
+    };
+  }
+  if (/curl:|error|failed/i.test(log)) {
+    return { health: 'failing', healthDetail: log.slice(0, 160) || 'Cron log reports an error' };
+  }
+
+  return {
+    health: 'never_ran',
+    healthDetail: 'Installed, but no successful history entry yet',
+  };
 }
 
 export async function createCronRecipe(input: CreateCronRecipeBody): Promise<CronRecipeDto> {
@@ -349,7 +430,12 @@ export async function createCronRecipe(input: CreateCronRecipeBody): Promise<Cro
     scriptId: input.scriptId,
   });
 
-  return { ...recipe, enabled: false };
+  return {
+    ...recipe,
+    enabled: false,
+    health: 'not_installed',
+    healthDetail: 'Not installed in crontab',
+  };
 }
 
 export async function updateCronRecipe(id: string, input: UpdateCronRecipeBody): Promise<CronRecipeDto> {
@@ -372,17 +458,51 @@ export async function updateCronRecipe(id: string, input: UpdateCronRecipeBody):
     await setCronRecipeEnabled(id, shouldBeEnabled);
   }
 
-  return { ...updated, enabled: shouldBeEnabled };
+  const history = listCronHistory();
+  const lastEntry = history.find((entry) => entry.recipeId === id);
+  const { health, healthDetail } = resolveRecipeHealth({
+    enabled: shouldBeEnabled,
+    recipeId: id,
+    lastRunAt: lastEntry?.startedAt,
+    lastRunStatus: lastEntry?.status,
+  });
+
+  return {
+    ...updated,
+    enabled: shouldBeEnabled,
+    health,
+    healthDetail,
+    lastRunAt: lastEntry?.startedAt,
+  };
 }
 
 export async function listCronRecipesWithState(): Promise<CronRecipeDto[]> {
+  // Do not rewrite crontab on GET — that can hang under launchd. Repair happens on enable/update
+  // via setCronRecipeEnabled, or explicitly via POST /api/crons/repair.
   const crontab = await readCrontab();
-  return listCronRecipes().map((recipe) => ({
-    ...recipe,
-    enabled: crontab
-      .split('\n')
-      .some((line) => line.includes(`${MANAGED_CRONTAB_MARKER_PREFIX}${recipe.id}`)),
-  }));
+  const history = listCronHistory();
+
+  return listCronRecipes().map((recipe) => {
+    const marker = `${MANAGED_CRONTAB_MARKER_PREFIX}${recipe.id}`;
+    const crontabLine = crontab.split('\n').find((line) => line.includes(marker));
+    const enabled = Boolean(crontabLine);
+    const lastEntry = history.find((entry) => entry.recipeId === recipe.id);
+    const { health, healthDetail } = resolveRecipeHealth({
+      enabled,
+      recipeId: recipe.id,
+      crontabLine,
+      lastRunAt: lastEntry?.startedAt,
+      lastRunStatus: lastEntry?.status,
+    });
+
+    return {
+      ...recipe,
+      enabled,
+      health,
+      healthDetail,
+      lastRunAt: lastEntry?.startedAt,
+    };
+  });
 }
 
 function transcriptHasCanonicalSet(transcript: TranscriptNode): boolean {

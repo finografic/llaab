@@ -4,6 +4,8 @@ import { apiGet, apiPatch, apiPost } from 'lib/api-client';
 
 import { QUERY_KEYS } from './index';
 
+export type CronRecipeHealth = 'ok' | 'stale' | 'failing' | 'never_ran' | 'not_installed';
+
 export interface CronRecipe {
   id: string;
   title: string;
@@ -16,6 +18,10 @@ export interface CronRecipe {
    * Whether LLAAB has installed this recipe's managed line in the user crontab.
    */
   enabled: boolean;
+  /** Operational truth beyond crontab install (stale / failing / never ran). */
+  health: CronRecipeHealth;
+  healthDetail?: string;
+  lastRunAt?: string;
   scheduleExamples: Array<{
     label: string;
     value: string;
@@ -162,6 +168,25 @@ export function useSetCronRecipeEnabled() {
 
   return useMutation({
     mutationFn: (input: SetCronRecipeEnabledInput) => updateCronRecipe(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crons.list() });
+    },
+  });
+}
+
+async function repairCronRecipes(): Promise<{
+  success: boolean;
+  repaired: string[];
+  recipes: CronRecipe[];
+}> {
+  return apiPost('/api/crons/repair', {});
+}
+
+export function useRepairCronRecipes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: repairCronRecipes,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.crons.list() });
     },

@@ -8,6 +8,7 @@ export const QUERY_KEYS = {
 export {
   useCreateCronRecipe,
   useCronRecipes,
+  useRepairCronRecipes,
   useRunCronRecipe,
   useSetCronRecipeEnabled,
   useUpdateCronRecipe,
@@ -15,6 +16,7 @@ export {
 export type {
   CronHistoryEntry,
   CronRecipe,
+  CronRecipeHealth,
   CronRecipeWriteInput,
   CronRecipeRunResponse,
   CronRecipeRunResult,

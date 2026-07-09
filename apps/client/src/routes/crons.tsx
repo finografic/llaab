@@ -20,7 +20,12 @@ import { Textarea } from 'components/ui/textarea';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import { ChevronDownIcon, ChevronRightIcon, EditIcon, PlusIcon, TimerIcon } from 'lucide-react';
-import { useCreateCronRecipe, useCronRecipes, useUpdateCronRecipe } from 'queries/crons';
+import {
+  useCreateCronRecipe,
+  useCronRecipes,
+  useRepairCronRecipes,
+  useUpdateCronRecipe,
+} from 'queries/crons';
 import { Fragment, useMemo, useState } from 'react';
 import type { CronHistoryEntry, CronRecipe, CronRecipeWriteInput, CronScript } from 'queries/crons';
 import type { FormEvent } from 'react';
@@ -281,12 +286,14 @@ export function CronsPage() {
   usePageTitle('Crons');
 
   const { data, isLoading } = useCronRecipes();
+  const repairCrons = useRepairCronRecipes();
   const recipes = data?.recipes ?? EMPTY_RECIPES;
   const scripts = data?.scripts ?? EMPTY_SCRIPTS;
   const history = data?.history ?? EMPTY_HISTORY;
   const scriptsById = useMemo(() => new Map(scripts.map((script) => [script.id, script])), [scripts]);
   const [syntaxOpen, setSyntaxOpen] = useState(false);
   const [addRecipeOpen, setAddRecipeOpen] = useState(false);
+  const needsRepair = recipes.some((recipe) => recipe.health === 'failing' || recipe.health === 'stale');
 
   return (
     <PageLayout
@@ -294,7 +301,22 @@ export function CronsPage() {
         <PageHero
           eyebrow="Execute"
           title="Crons"
-          right={<CronRecipeFormDialog mode="add" scripts={scripts} />}
+          right={
+            <div className="flex items-center gap-2">
+              {needsRepair ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={repairCrons.isPending}
+                  onClick={() => repairCrons.mutate()}
+                >
+                  {repairCrons.isPending ? 'Repairing…' : 'Repair crontab'}
+                </Button>
+              ) : null}
+              <CronRecipeFormDialog mode="add" scripts={scripts} />
+            </div>
+          }
           meta={
             <>
               {recipes.length} recipe{recipes.length !== 1 ? 's' : ''}
@@ -307,9 +329,21 @@ export function CronsPage() {
         {isLoading ? <p className="text-sm text-muted-foreground">Loading cron recipes…</p> : null}
 
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Enabled recipes are installed in the user crontab. Disabling a recipe removes LLAAB's managed
-          crontab line without touching unrelated entries.
+          Installed recipes have a managed line in the user crontab. Health reflects whether that line is
+          actually succeeding (stale / failing / never ran), not only whether it is installed. Uninstalling
+          removes LLAAB&apos;s managed line without touching unrelated entries. Crontab triggers use{' '}
+          <code className="font-mono text-xs">scripts/macos/llaab-cron-run.sh</code> so API-key auth works.
         </p>
+        {repairCrons.error ? (
+          <p className="text-sm text-destructive">
+            {repairCrons.error instanceof Error ? repairCrons.error.message : 'Repair failed.'}
+          </p>
+        ) : null}
+        {repairCrons.data?.repaired?.length ? (
+          <p className="text-sm text-(--success-text)">
+            Repaired crontab lines for: {repairCrons.data.repaired.join(', ')}
+          </p>
+        ) : null}
 
         <Collapsible open={syntaxOpen} onOpenChange={setSyntaxOpen}>
           <CollapsibleTrigger className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">

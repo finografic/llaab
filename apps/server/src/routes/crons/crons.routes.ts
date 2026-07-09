@@ -6,6 +6,7 @@ import {
   createCronRecipe,
   listCronRecipesWithState,
   listCronScripts,
+  repairInstalledCronRecipes,
   runCronRecipe,
   updateCronRecipe,
 } from './cron-recipes.js';
@@ -18,6 +19,28 @@ export const list = {
       scripts: listCronScripts(),
       history: listCronHistory(),
     }),
+};
+
+export const repair = {
+  path: '/repair' as const,
+  handler: async (c: AppCtx) => {
+    try {
+      const repaired = await repairInstalledCronRecipes();
+      return c.json({
+        success: true,
+        repaired,
+        recipes: await listCronRecipesWithState(),
+      });
+    } catch (err) {
+      return c.json(
+        {
+          success: false,
+          error: err instanceof Error ? err.message : 'Failed to repair cron recipes',
+        },
+        500,
+      );
+    }
+  },
 };
 
 export const create = {
