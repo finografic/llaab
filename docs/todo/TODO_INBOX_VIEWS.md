@@ -1,6 +1,6 @@
 # TODO — Inbox Views and Review Workflows
 
-> **Status:** Phase 1 complete (2026-07-09). Phases 2–8 not started.
+> **Status:** Phase 2 complete (2026-07-09). Phases 3–8 not started.
 
 ## Goal
 
@@ -154,18 +154,20 @@ does not exist yet.
 
 Purpose: make the list useful once captures accumulate.
 
-- [ ] Add route-kind filters:
+- [x] Add route-kind filters:
       `youtube_url`, `npm_package`, `command_candidate`, `todo`, `github_repo`, `docs_link`,
       `post_link`, `code_link`, `code_snippet`, `web_link`, `image`, `code_attachment`,
-      `docs_attachment`, `attachment`, `raw`.
-- [ ] Add source-platform filter: Telegram, manual, Discord, unknown.
-- [ ] Add status/review-state filter once review state exists.
-- [ ] Add text search across title, body, URL, file name, and route reason.
-- [ ] Add date sorting by received/captured timestamp.
-- [ ] Add grouped views by route kind.
-- [ ] Add grouped views by source platform.
-- [ ] Add a quick filter for failed/raw/unknown captures.
-- [ ] Preserve filter state using the existing persisted UI state pattern if useful.
+      `docs_attachment`, `attachment`, `raw` (2026-07-09).
+- [x] Add source-platform filter: Telegram, manual, Discord, unknown (2026-07-09).
+- [x] Add status/review-state filter once review state exists (node `status` filter for now;
+      dedicated review state still Phase 4, 2026-07-09).
+- [x] Add text search across title, body, URL, file name, and route reason (2026-07-09).
+- [x] Add date sorting by received/captured timestamp (2026-07-09).
+- [x] Add grouped views by route kind (2026-07-09).
+- [x] Add grouped views by source platform (2026-07-09).
+- [x] Add a quick filter for failed/raw/unknown captures (2026-07-09).
+- [x] Preserve filter state using URL search params (`kind`, `platform`, `status`, `q`, `sort`,
+      `group`, `attention`, 2026-07-09).
 
 Exit criteria: the inbox review page can answer "what came in?", "what failed?", and "what still
 needs attention?" quickly.
