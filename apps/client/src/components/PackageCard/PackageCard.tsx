@@ -4,9 +4,11 @@ import { Button } from 'components/ui/button';
 import { useIsLibraryPinned, usePinLibrary, useUnpinLibrary } from 'queries/registry';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import type { NpmSearchPackage, PackageMetaResponse } from '@llaab/schemas';
+import type { NpmSearchPackage, PackageMetaResponse, PackageTypesStatus } from '@llaab/schemas';
 import type { MouseEvent, ReactNode } from 'react';
 
+import typescriptDeclarationIcon from '../../assets/typescript-declaration.svg';
+import typescriptIcon from '../../assets/typescript.svg';
 import styles from './PackageCard.module.css';
 
 function formatWeeklyDownloads(n: number): string {
@@ -30,13 +32,44 @@ function formatPackageListDate(ts: string): string {
   return `${month} ${day}, ${year}`;
 }
 
+function TypesStatusIcon({ status }: { status: PackageTypesStatus }) {
+  switch (status) {
+    case 'included':
+      return (
+        <img
+          src={typescriptIcon}
+          alt="Includes TypeScript types"
+          title="Includes TypeScript types"
+          className={styles.typesIcon}
+        />
+      );
+    case 'declarations':
+      return (
+        <img
+          src={typescriptDeclarationIcon}
+          alt="TypeScript declarations via @types"
+          title="TypeScript declarations via @types"
+          className={styles.typesIcon}
+        />
+      );
+    case 'none':
+      return null;
+    default: {
+      const exhaustive: never = status;
+      return exhaustive;
+    }
+  }
+}
+
 interface PackageCardProps {
   pkg: NpmSearchPackage | PackageMetaResponse;
   weeklyDownloads?: number;
   dependents?: string;
+  /** Pinned tab only — omit on Search so npm hits stay undistorted. */
+  typesStatus?: PackageTypesStatus;
 }
 
-export function PackageCard({ pkg, weeklyDownloads, dependents }: PackageCardProps) {
+export function PackageCard({ pkg, weeklyDownloads, dependents, typesStatus }: PackageCardProps) {
   const encodedName = encodeURIComponent(pkg.name);
   const downloads = weeklyDownloads ?? (pkg as PackageMetaResponse).weeklyDownloads;
   const dependentsLabel = dependents ? formatDependents(dependents) : null;
@@ -89,6 +122,7 @@ export function PackageCard({ pkg, weeklyDownloads, dependents }: PackageCardPro
         <div className={styles.main}>
           <div className={styles.header}>
             <span className={styles.name}>{pkg.name}</span>
+            {typesStatus != null ? <TypesStatusIcon status={typesStatus} /> : null}
           </div>
 
           {pkg.description ? <p className={styles.description}>{pkg.description}</p> : null}

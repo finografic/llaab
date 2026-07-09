@@ -5,11 +5,58 @@ import { BookmarkCheckIcon, BookmarkIcon, ArrowLeftIcon } from 'lucide-react';
 import { useNpmPackage, useIsLibraryPinned, usePinLibrary, useUnpinLibrary } from 'queries/registry';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import type { PackageTypesStatus } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
 import { formatDetailDate } from 'utils/format-date.utils';
 
+import typescriptDeclarationIcon from '../assets/typescript-declaration.svg';
+import typescriptIcon from '../assets/typescript.svg';
 import styles from './registry-package.module.css';
+
+function TypesStatusIcon({ status }: { status: PackageTypesStatus }) {
+  switch (status) {
+    case 'included':
+      return (
+        <img
+          src={typescriptIcon}
+          alt="Includes TypeScript types"
+          title="Includes TypeScript types"
+          className={styles.typesIcon}
+        />
+      );
+    case 'declarations':
+      return (
+        <img
+          src={typescriptDeclarationIcon}
+          alt="TypeScript declarations via @types"
+          title="TypeScript declarations via @types"
+          className={styles.typesIcon}
+        />
+      );
+    case 'none':
+      return null;
+    default: {
+      const exhaustive: never = status;
+      return exhaustive;
+    }
+  }
+}
+
+function typesBadgeLabel(status: PackageTypesStatus, typesPackageName?: string): string | null {
+  switch (status) {
+    case 'included':
+      return '✓ Types';
+    case 'declarations':
+      return typesPackageName ? `✓ ${typesPackageName}` : '✓ @types';
+    case 'none':
+      return null;
+    default: {
+      const exhaustive: never = status;
+      return exhaustive;
+    }
+  }
+}
 
 function fmtDownloads(n?: number): string {
   if (n == null) return '—';
@@ -42,6 +89,8 @@ export function RegistryPackagePage() {
   const pinPending = pinLibrary.isPending || unpinLibrary.isPending;
   const depCount = data ? Object.keys(data.dependencies).length : 0;
   const peerDepCount = data ? Object.keys(data.peerDependencies).length : 0;
+  const typesStatus = data?.typesStatus ?? (data?.hasTypes ? 'included' : 'none');
+  const typesBadge = data ? typesBadgeLabel(typesStatus, data.typesPackageName) : null;
 
   return (
     <PageLayout
@@ -49,6 +98,7 @@ export function RegistryPackagePage() {
         <PageHero
           eyebrow="Registry"
           title={name}
+          titleAddon={data ? <TypesStatusIcon status={typesStatus} /> : null}
           right={
             <button
               type="button"
@@ -85,9 +135,9 @@ export function RegistryPackagePage() {
                 <span> npm install {name}</span>
               </div>
 
-              {(data.hasTypes || data.isEsm) && (
+              {(typesBadge || data.isEsm) && (
                 <div className={styles.badges}>
-                  {data.hasTypes && <span className={styles.badge}>✓ Types</span>}
+                  {typesBadge ? <span className={styles.badge}>{typesBadge}</span> : null}
                   {data.isEsm && <span className={styles.badge}>✓ ESM</span>}
                 </div>
               )}

@@ -46,6 +46,13 @@
   overflow-wrap: anywhere;
 }
 
+.typesIcon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
 .pinCol {
   display: flex;
   flex: 0 0 28px;

@@ -72,6 +72,15 @@ export interface NpmDownloadCount {
 }
 
 /**
+ * TypeScript typing status for a package version.
+ *
+ * - `included` — ships its own types (`types`/`typings`/exports types)
+ * - `declarations` — no bundled types, but `@types/<name>` exists on npm
+ * - `none` — JS-only / no known declarations
+ */
+export type PackageTypesStatus = 'included' | 'declarations' | 'none';
+
+/**
  * Lightweight package metadata — slim payload for cards and the detail page.
  * Shape mirrors npmx.dev's /api/registry/package-meta response.
  */
@@ -91,6 +100,10 @@ export interface PackageMetaResponse {
   author?: NpmPerson;
   maintainers?: NpmPerson[];
   weeklyDownloads?: number;
+  /** Set when meta is built from a packument (pin snapshot / detail). Absent on npm search hits. */
+  typesStatus?: PackageTypesStatus;
+  /** Present when `typesStatus === 'declarations'`. */
+  typesPackageName?: string;
 }
 
 /** Full package detail — rendered readme HTML + extra metadata, returned by /api/registry/npm/package/:name */
@@ -98,7 +111,9 @@ export interface PackageDetailResponse extends PackageMetaResponse {
   readmeHtml: string | null;
   dependencies: Record<string, string>;
   peerDependencies: Record<string, string>;
+  /** @deprecated Prefer `typesStatus`; true when status is not `none`. */
   hasTypes: boolean;
+  typesStatus: PackageTypesStatus;
   isEsm: boolean;
 }
 

@@ -11,7 +11,7 @@ import { useNpmSearch, usePinnedLibraries } from 'queries/registry';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
-import type { NpmSearchResult, PinnedLibrary } from '@llaab/schemas';
+import type { NpmSearchResult, PackageTypesStatus, PinnedLibrary } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
 
@@ -41,7 +41,7 @@ function publishedTimestamp(result: NpmSearchResult): number {
   return Number.isFinite(ts) ? ts : 0;
 }
 
-function sortResults(results: NpmSearchResult[], sort: SortState | null): NpmSearchResult[] {
+function sortResults(results: LibraryListItem[], sort: SortState | null): LibraryListItem[] {
   if (!sort) return results;
 
   return [...results].toSorted((a, b) => {
@@ -76,7 +76,11 @@ function nextSortState(current: SortState | null, column: SortColumn): SortState
   return null;
 }
 
-function pinToSearchResult(pin: PinnedLibrary): NpmSearchResult {
+type LibraryListItem = NpmSearchResult & {
+  typesStatus?: PackageTypesStatus;
+};
+
+function pinToListItem(pin: PinnedLibrary): LibraryListItem {
   return {
     package: {
       name: pin.meta.name,
@@ -90,6 +94,7 @@ function pinToSearchResult(pin: PinnedLibrary): NpmSearchResult {
       maintainers: pin.meta.maintainers,
     },
     downloads: pin.meta.weeklyDownloads != null ? { weekly: pin.meta.weeklyDownloads } : undefined,
+    typesStatus: pin.meta.typesStatus ?? 'none',
   };
 }
 
@@ -159,6 +164,7 @@ function LibraryResultsPanel({
   sort,
   onSort,
   autoFocus,
+  showTypesStatus = false,
 }: {
   query: string;
   onQueryChange: (value: string) => void;
@@ -168,10 +174,12 @@ function LibraryResultsPanel({
   loadingLabel: string;
   emptyIdle: string | null;
   emptyNoMatch: string | null;
-  results: NpmSearchResult[];
+  results: LibraryListItem[];
   sort: SortState | null;
   onSort: (column: SortColumn) => void;
   autoFocus?: boolean;
+  /** Pinned tab only — Search omits so npm hits stay undistorted. */
+  showTypesStatus?: boolean;
 }) {
   return (
     <div className={styles.tabPanel}>
@@ -230,6 +238,7 @@ function LibraryResultsPanel({
               pkg={result.package}
               weeklyDownloads={result.downloads?.weekly}
               dependents={result.dependents}
+              typesStatus={showTypesStatus ? (result.typesStatus ?? 'none') : undefined}
             />
           ))}
         </div>
@@ -280,7 +289,7 @@ export function RegistrySearchPage() {
   const { data: searchData, isLoading: searchLoading } = useNpmSearch(tab === 'search' ? debouncedQuery : '');
 
   const pinnedResults = useMemo(() => {
-    const filtered = filterPins(pins, debouncedQuery).map(pinToSearchResult);
+    const filtered = filterPins(pins, debouncedQuery).map(pinToListItem);
     return sortResults(filtered, sort);
   }, [pins, debouncedQuery, sort]);
 
@@ -350,6 +359,7 @@ export function RegistrySearchPage() {
               sort={sort}
               onSort={handleSort}
               autoFocus
+              showTypesStatus
             />
           </TabsContent>
 

@@ -131,6 +131,7 @@ export {
   type NpmSearchTrustedPublisher,
   type PackageDetailResponse,
   type PackageMetaResponse,
+  type PackageTypesStatus,
   type PinnedLibrary,
 } from './npm-registry.js';
 export {

@@ -1,6 +1,11 @@
 import type { AppCtx, AppCtxQuery } from '../../types/app.types.js';
 import type { SearchQuery } from './registry.schema.js';
-import type { PackageDetailResponse, PackageMetaResponse, NpmDownloadCount } from '@llaab/schemas';
+import type {
+  NpmDownloadCount,
+  PackageDetailResponse,
+  PackageMetaResponse,
+  PackageTypesStatus,
+} from '@llaab/schemas';
 
 import { renderReadmeToHtml } from '../../lib/readme-renderer.js';
 
@@ -10,6 +15,47 @@ const NPM_API = 'https://api.npmjs.org';
 function encodePackageName(name: string): string {
   // Scoped packages: @scope/name → @scope%2Fname
   return name.startsWith('@') ? `@${encodeURIComponent(name.slice(1))}` : name;
+}
+
+function getTypesPackageName(packageName: string): string {
+  if (packageName.startsWith('@')) {
+    // @scope/name → @types/scope__name
+    return `@types/${packageName.slice(1).replace('/', '__')}`;
+  }
+  return `@types/${packageName}`;
+}
+
+function exportsDeclareTypes(exportsField: unknown): boolean {
+  if (!exportsField || typeof exportsField !== 'object') return false;
+
+  const visit = (node: unknown): boolean => {
+    if (!node || typeof node !== 'object') return false;
+    if (Array.isArray(node)) return node.some(visit);
+    const record = node as Record<string, unknown>;
+    if (typeof record.types === 'string' || typeof record.typings === 'string') return true;
+    return Object.values(record).some(visit);
+  };
+
+  return visit(exportsField);
+}
+
+function hasBundledTypes(versionManifest: Record<string, unknown>): boolean {
+  if (typeof versionManifest.types === 'string' || typeof versionManifest.typings === 'string') {
+    return true;
+  }
+  return exportsDeclareTypes(versionManifest.exports);
+}
+
+async function typesPackageExists(packageName: string): Promise<string | null> {
+  const typesName = getTypesPackageName(packageName);
+  try {
+    const res = await fetch(`${NPM_REGISTRY}/${encodePackageName(typesName)}`, {
+      method: 'HEAD',
+    });
+    return res.ok ? typesName : null;
+  } catch {
+    return null;
+  }
 }
 
 function normalizeAuthor(raw: unknown): PackageMetaResponse['author'] {
@@ -58,6 +104,7 @@ async function fetchPackageMeta(name: string): Promise<PackageMetaResponse> {
   const latestVersion = distTags.latest ?? Object.values(distTags)[0] ?? '';
   const time = (packument.time ?? {}) as Record<string, string>;
   const date = time[latestVersion] ?? time.modified ?? '';
+  const versionMeta = await extractVersionMeta(packument, latestVersion);
 
   return {
     name: packument.name as string,
@@ -75,6 +122,8 @@ async function fetchPackageMeta(name: string): Promise<PackageMetaResponse> {
     author: normalizeAuthor(packument.author),
     maintainers: (packument.maintainers as PackageMetaResponse['maintainers']) ?? undefined,
     weeklyDownloads: downloads?.downloads,
+    typesStatus: versionMeta.typesStatus,
+    typesPackageName: versionMeta.typesPackageName,
   };
 }
 
@@ -85,13 +134,30 @@ function extractRawReadme(packument: Record<string, unknown>, version: string): 
   );
 }
 
-function extractVersionMeta(packument: Record<string, unknown>, version: string) {
+async function extractVersionMeta(packument: Record<string, unknown>, version: string) {
   const versions = (packument.versions ?? {}) as Record<string, Record<string, unknown>>;
   const v = versions[version] ?? {};
+  const packageName = (packument.name as string | undefined) ?? '';
+
+  let typesStatus: PackageTypesStatus = 'none';
+  let typesPackageName: string | undefined;
+
+  if (hasBundledTypes(v)) {
+    typesStatus = 'included';
+  } else if (packageName) {
+    const found = await typesPackageExists(packageName);
+    if (found) {
+      typesStatus = 'declarations';
+      typesPackageName = found;
+    }
+  }
+
   return {
     dependencies: (v.dependencies ?? {}) as Record<string, string>,
     peerDependencies: (v.peerDependencies ?? {}) as Record<string, string>,
-    hasTypes: typeof v.types === 'string' || typeof v.typings === 'string',
+    hasTypes: typesStatus !== 'none',
+    typesStatus,
+    typesPackageName,
     isEsm: v.type === 'module',
   };
 }
@@ -155,9 +221,8 @@ export const npmPackage = {
       };
 
       const rawReadme = extractRawReadme(packument, latestVersion);
-      const versionMeta = extractVersionMeta(packument, latestVersion);
-
-      const [readmeHtml] = await Promise.all([
+      const [versionMeta, readmeHtml] = await Promise.all([
+        extractVersionMeta(packument, latestVersion),
         rawReadme ? renderReadmeToHtml(rawReadme) : Promise.resolve(null),
       ]);
 

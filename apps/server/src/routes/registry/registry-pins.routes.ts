@@ -9,7 +9,24 @@ export const listPins = {
   path: '/pins' as const,
   handler: async (c: AppCtx) => {
     const pins = await readPins();
-    return c.json({ pins });
+    let dirty = false;
+
+    const next = await Promise.all(
+      pins.map(async (pin) => {
+        if (pin.meta.typesStatus != null) return pin;
+        try {
+          const meta = await fetchPackageMeta(pin.name);
+          dirty = true;
+          return { ...pin, meta };
+        } catch {
+          dirty = true;
+          return { ...pin, meta: { ...pin.meta, typesStatus: 'none' as const } };
+        }
+      }),
+    );
+
+    if (dirty) await writePins(next);
+    return c.json({ pins: next });
   },
 };
 
