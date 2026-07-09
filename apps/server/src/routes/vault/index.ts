@@ -44,6 +44,7 @@ export const vaultRouter = createRouter()
     zValidator('json', updateVaultNodeBodySchema),
     routes.updateVaultNode.handler,
   )
+  .delete(routes.deleteVaultNode.path, routes.deleteVaultNode.handler)
   .post(routes.enrichSource.path, routes.enrichSource.handler)
   .patch(
     routes.updateSourceProfiles.path,

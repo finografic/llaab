@@ -6,15 +6,13 @@
 
 .row {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.7fr) minmax(0, 0.6fr) auto;
-  gap: var(--space-3);
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface);
-  color: inherit;
-  text-decoration: none;
   transition:
     border-color 120ms ease,
     background-color 120ms ease;
@@ -27,6 +25,16 @@
 
 .rowSelected {
   border-color: var(--accent);
+}
+
+.rowMain {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.7fr) minmax(0, 0.6fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
 }
 
 .title {
@@ -59,6 +67,12 @@
   justify-self: end;
 }
 
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+}
+
 .empty,
 .state {
   color: var(--muted-foreground);
@@ -76,7 +90,7 @@
 }
 
 @media (max-width: 800px) {
-  .row {
+  .rowMain {
     grid-template-columns: 1fr;
   }
 

@@ -21,15 +21,18 @@ async function fetchVaultNodes({
   status,
   limit,
 }: Omit<UseVaultNodesOptions, 'enabled'>): Promise<LabNode[]> {
-  const res = await api.vault.nodes.$get({
-    query: {
-      type,
-      tags: tags?.length ? tags : undefined,
-      limit,
-      status,
-      search,
-    },
-  });
+  // Hono RPC types the query from Zod *output* (tags: string[]), but the wire format
+  // must be a comma-separated string — otherwise the client emits `?tags=a&tags=b`
+  // and Zod rejects it with 400.
+  const query = {
+    type,
+    tags: tags?.length ? tags.join(',') : undefined,
+    limit: limit !== undefined ? String(limit) : undefined,
+    status,
+    search,
+  } as Parameters<typeof api.vault.nodes.$get>[0]['query'];
+
+  const res = await api.vault.nodes.$get({ query });
   const body = (await res.json()) as { nodes?: LabNode[] };
 
   if (!res.ok || !body.nodes) {

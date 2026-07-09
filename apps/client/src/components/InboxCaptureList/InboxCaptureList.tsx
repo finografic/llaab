@@ -1,3 +1,4 @@
+import { DeleteInboxCaptureAction } from 'components/DeleteInboxCaptureAction/DeleteInboxCaptureAction';
 import { Badge } from 'components/ui/badge';
 import { Link } from 'react-router-dom';
 
@@ -68,25 +69,29 @@ function DefaultInboxCaptureListRow({
   const { node, routeKind, platform, receivedAt, malformed } = capture;
 
   return (
-    <Link
-      to={`/vault/inbox/${node.id}`}
-      className={`${styles.row}${selected ? ` ${styles.rowSelected}` : ''}`}
-    >
-      <div>
-        <div className={styles.title}>{node.title || 'Untitled capture'}</div>
-        <div className={styles.summary}>
-          <DefaultInboxCaptureSummary capture={capture} />
+    <div className={`${styles.row}${selected ? ` ${styles.rowSelected}` : ''}`}>
+      <Link to={`/vault/inbox/${node.id}`} className={styles.rowMain}>
+        <div>
+          <div className={styles.title}>{node.title || 'Untitled capture'}</div>
+          <div className={styles.summary}>
+            <DefaultInboxCaptureSummary capture={capture} />
+          </div>
+          {malformed ? <div className={styles.malformed}>Malformed provenance JSON</div> : null}
         </div>
-        {malformed ? <div className={styles.malformed}>Malformed provenance JSON</div> : null}
+        <div className={styles.meta}>
+          <Badge variant="secondary">{routeKindLabel(routeKind)}</Badge>
+        </div>
+        <div className={styles.meta}>
+          <Badge variant="outline">{platform}</Badge>
+          <Badge variant="outline">{getInboxReviewState(node)}</Badge>
+        </div>
+        <div className={styles.date}>{formatDetailDate(receivedAt)}</div>
+      </Link>
+      <div className={styles.actions}>
+        {node.type === 'idea' || node.type === 'resource' ? (
+          <DeleteInboxCaptureAction capture={capture} color="dim" />
+        ) : null}
       </div>
-      <div className={styles.meta}>
-        <Badge variant="secondary">{routeKindLabel(routeKind)}</Badge>
-      </div>
-      <div className={styles.meta}>
-        <Badge variant="outline">{platform}</Badge>
-        <Badge variant="outline">{getInboxReviewState(node)}</Badge>
-      </div>
-      <div className={styles.date}>{formatDetailDate(receivedAt)}</div>
-    </Link>
+    </div>
   );
 }

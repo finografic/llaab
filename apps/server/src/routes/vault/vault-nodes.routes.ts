@@ -3,6 +3,7 @@ import { resolve, sep } from 'node:path';
 import {
   cleanRecentVaultActivity,
   createNode,
+  deleteNode,
   getNodeFilePath,
   listNodes,
   updateNode,
@@ -17,6 +18,7 @@ import type {
   ListNodesQuery,
   UpdateVaultNodeBody,
 } from './vault.schema.js';
+import type { LabNode } from '@llaab/schemas';
 
 import { readVaultRootTree } from '../../lib/vault-tree.js';
 
@@ -197,6 +199,39 @@ export const batchUpdateVaultNodes = {
   },
 };
 
+export const deleteVaultNode = {
+  path: '/nodes/:id' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param() as { id: string };
+    const nodes = await listNodes();
+    const node = nodes.find((entry) => entry.id === id);
+    if (!node) return c.json({ error: 'Node not found' }, 404);
+
+    // Transcripts/sources/runs have dedicated discard/delete flows with richer cleanup.
+    if (node.type !== 'idea' && node.type !== 'resource') {
+      return c.json(
+        {
+          error: `Delete via this endpoint supports idea/resource nodes only (got ${node.type}).`,
+        },
+        400,
+      );
+    }
+
+    try {
+      const scrubbed = await scrubNodeReferences(id, nodes);
+      await deleteNode(node.type, node.id);
+      return c.json({
+        success: true,
+        deleted: { id: node.id, type: node.type, title: node.title },
+        scrubbedReferences: scrubbed,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete node.';
+      return c.json({ error: message }, 500);
+    }
+  },
+};
+
 export const nodeRaw = {
   path: '/nodes/:id/raw' as const,
   handler: async (c: AppCtx) => {
@@ -212,3 +247,57 @@ export const nodeRaw = {
     return c.text(content);
   },
 };
+
+async function scrubNodeReferences(
+  deletedId: string,
+  nodes: LabNode[],
+): Promise<Array<{ id: string; type: LabNode['type']; changes: string[] }>> {
+  const scrubbed: Array<{ id: string; type: LabNode['type']; changes: string[] }> = [];
+  const provenanceTagPrefixes = [`from-inbox:${deletedId}`, `to-resource:${deletedId}`];
+
+  for (const current of nodes) {
+    if (current.id === deletedId) continue;
+
+    const changes: string[] = [];
+    const nextRelated = current.related.filter((relatedId) => relatedId !== deletedId);
+    if (nextRelated.length !== current.related.length) {
+      changes.push('related');
+    }
+
+    const nextTags = current.tags.filter(
+      (tag) => !provenanceTagPrefixes.includes(tag) && tag !== `inbox:from:${deletedId}`,
+    );
+    if (nextTags.length !== current.tags.length) {
+      changes.push('tags');
+    }
+
+    let nextBody = current.body;
+    const beforeBody = nextBody;
+    nextBody = nextBody
+      .replace(new RegExp(`^Source capture:\\s*\`${escapeRegExp(deletedId)}\`\\s*$`, 'gm'), '')
+      .replaceAll(`from-inbox:${deletedId}`, '')
+      .replaceAll(`to-resource:${deletedId}`, '')
+      .replace(/\n{3,}/g, '\n\n');
+    if (nextBody !== beforeBody) {
+      changes.push('body');
+    }
+
+    if (changes.length === 0) continue;
+
+    const cleanedBody = nextBody.trimEnd();
+    await updateNode(getNodeFilePath(current.type, current.id), (node) => ({
+      ...node,
+      related: nextRelated,
+      tags: nextTags,
+      body: cleanedBody.length > 0 ? `${cleanedBody}\n` : '',
+      updated_at: new Date().toISOString(),
+    }));
+    scrubbed.push({ id: current.id, type: current.type, changes });
+  }
+
+  return scrubbed;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

@@ -5,14 +5,23 @@ export const listNodesQuerySchema = z.object({
   type: NodeTypeSchema.optional(),
   status: z.enum(['seed', 'growing', 'mature', 'archived']).optional(),
   tags: z
-    .string()
+    .union([z.string(), z.array(z.string())])
     .optional()
-    .transform((val) => (val ? val.split(',').map((t) => t.trim()) : undefined)),
+    .transform((val) => {
+      if (val === undefined) return undefined;
+      const parts = Array.isArray(val) ? val : val.split(',');
+      const tags = parts.map((tag) => tag.trim()).filter(Boolean);
+      return tags.length > 0 ? tags : undefined;
+    }),
   search: z.string().optional(),
   limit: z
-    .string()
+    .union([z.string(), z.number()])
     .optional()
-    .transform((val) => (val ? Number.parseInt(val, 10) : undefined)),
+    .transform((val) => {
+      if (val === undefined) return undefined;
+      const parsed = typeof val === 'number' ? val : Number.parseInt(val, 10);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }),
 });
 
 export type ListNodesQuery = z.infer<typeof listNodesQuerySchema>;
