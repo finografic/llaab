@@ -113,15 +113,15 @@ function AiChainOfThoughtHeader({
           <Lightbulb className="size-4 text-amber-600 dark:text-amber-400" />
         </div>
       ) : null}
-      <div className="flex flex-1 items-center gap-2 text-left">
-        <span className="font-medium">{title}</span>
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-left">
+        <span className="block min-w-0 flex-1 overflow-hidden font-medium">{title}</span>
         {stepCount !== undefined && (
-          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="inline-flex shrink-0 items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
             {completedCount !== undefined ? `${completedCount}/${stepCount}` : `${stepCount} steps`}
           </span>
         )}
       </div>
-      {children}
+      <div className="flex shrink-0 items-center gap-2">{children}</div>
       <ChevronDown
         className={cn(
           'size-4 shrink-0 text-muted-foreground transition-transform duration-200',

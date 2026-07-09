@@ -14,9 +14,10 @@ import {
   AlertDialogTitle,
 } from 'components/ui/alert-dialog';
 import { Button } from 'components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
-import { HashIcon, SparklesIcon } from 'lucide-react';
+import { ChevronDownIcon, HashIcon, SparklesIcon } from 'lucide-react';
 import { QUERY_KEYS as RUN_KEYS, useRunMonitor } from 'queries/runs';
 import {
   useCleanCanonicalIdeaArtifacts,
@@ -113,6 +114,7 @@ export function TranscriptDetail({
   );
   const visibleIdeas = selectedRun?.ideas ?? extractedIdeas;
   const visibleIdeaCount = selectedRun?.ideaIds.length ?? transcript.extracted_idea_ids.length;
+  const hasCanonicalIdeas = canonicalIdeas.length > 0;
   const ideaTitleById = useMemo(() => {
     const entries = new Map<string, string>();
     for (const idea of extractedIdeas) entries.set(idea.id, idea.title);
@@ -788,64 +790,73 @@ export function TranscriptDetail({
       </section>
 
       <section className="section">
-        <h2 className="section__heading">
-          Extracted ideas
-          {visibleIdeaCount > 0 ? <span className="section__count">{visibleIdeaCount}</span> : null}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="ml-auto h-auto cursor-pointer rounded-sm border-border-subtle px-2.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-50"
-            disabled={isExtracting}
-            onClick={handleReExtract}
-          >
-            {isExtracting ? 'Extracting...' : visibleIdeaCount > 0 ? 'Re-extract' : 'Extract now'}
-          </Button>
-          {extractStatus ? (
-            <span className={`normal-case text-[11px] font-normal tracking-normal ${extractStatusClass}`}>
-              {extractStatus}
-            </span>
-          ) : null}
-        </h2>
+        <Collapsible key={transcript.id} defaultOpen={!hasCanonicalIdeas}>
+          <div className={styles.extractedIdeasHeader}>
+            <CollapsibleTrigger className={styles.extractedIdeasTrigger}>
+              <span className={styles.extractedIdeasHeadingLabel}>
+                Extracted ideas
+                {visibleIdeaCount > 0 ? <span className="section__count">{visibleIdeaCount}</span> : null}
+              </span>
+              <ChevronDownIcon className={styles.extractedIdeasChevron} aria-hidden />
+            </CollapsibleTrigger>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-auto shrink-0 cursor-pointer rounded-sm border-border-subtle px-2.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-50"
+              disabled={isExtracting}
+              onClick={handleReExtract}
+            >
+              {isExtracting ? 'Extracting...' : visibleIdeaCount > 0 ? 'Re-extract' : 'Extract now'}
+            </Button>
+            {extractStatus ? (
+              <span className={`normal-case text-[11px] font-normal tracking-normal ${extractStatusClass}`}>
+                {extractStatus}
+              </span>
+            ) : null}
+          </div>
 
-        {visibleIdeaCount === 0 ? <p className={styles.emptyNote}>No ideas extracted yet.</p> : null}
-        {visibleIdeaCount > 0 && visibleIdeas.length > 0 ? (
-          <ul className={styles.ideaList}>
-            {visibleIdeas.map((idea) => {
-              const ideaTags = splitTags(idea.tags);
-              return (
-                <li key={idea.id} className={styles.ideaItem}>
-                  <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
-                    <p className={styles.ideaTitle}>{idea.title}</p>
-                    <div className="tags">
-                      {ideaTags.domain.length > 0 ? (
-                        <span className={`${styles.ideaTags} idea-tags--domain`}>
-                          {ideaTags.domain.map((tag) => (
-                            <span key={tag} className="tag tag--sm" data-tag={tag}>
-                              {tag}
+          <CollapsibleContent className={styles.extractedIdeasContent}>
+            {visibleIdeaCount === 0 ? <p className={styles.emptyNote}>No ideas extracted yet.</p> : null}
+            {visibleIdeaCount > 0 && visibleIdeas.length > 0 ? (
+              <ul className={styles.ideaList}>
+                {visibleIdeas.map((idea) => {
+                  const ideaTags = splitTags(idea.tags);
+                  return (
+                    <li key={idea.id} className={styles.ideaItem}>
+                      <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
+                        <p className={styles.ideaTitle}>{idea.title}</p>
+                        <div className="tags">
+                          {ideaTags.domain.length > 0 ? (
+                            <span className={`${styles.ideaTags} idea-tags--domain`}>
+                              {ideaTags.domain.map((tag) => (
+                                <span key={tag} className="tag tag--sm" data-tag={tag}>
+                                  {tag}
+                                </span>
+                              ))}
                             </span>
-                          ))}
-                        </span>
-                      ) : null}
-                      {ideaTags.generated.length > 0 ? (
-                        <span className={`${styles.ideaTags} idea-tags--topic`}>
-                          {ideaTags.generated.map((tag) => (
-                            <span key={tag} className="tag tag--sm" data-tag={tag}>
-                              {tag}
+                          ) : null}
+                          {ideaTags.generated.length > 0 ? (
+                            <span className={`${styles.ideaTags} idea-tags--topic`}>
+                              {ideaTags.generated.map((tag) => (
+                                <span key={tag} className="tag tag--sm" data-tag={tag}>
+                                  {tag}
+                                </span>
+                              ))}
                             </span>
-                          ))}
-                        </span>
-                      ) : null}
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-        {visibleIdeaCount > 0 && visibleIdeas.length === 0 ? (
-          <p className={styles.emptyNote}>Ideas listed in IDs but nodes not found in vault.</p>
-        ) : null}
+                          ) : null}
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+            {visibleIdeaCount > 0 && visibleIdeas.length === 0 ? (
+              <p className={styles.emptyNote}>Ideas listed in IDs but nodes not found in vault.</p>
+            ) : null}
+          </CollapsibleContent>
+        </Collapsible>
       </section>
 
       {transcript.body ? (

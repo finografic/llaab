@@ -1,0 +1,43 @@
+---
+description: After server/package/.env changes, agents must trigger Rebuild & Reload App
+alwaysApply: true
+---
+
+# Rebuild & Reload after runtime-affecting changes
+
+When you change code or config that the **running** LLAAB server or client will not pick up via HMR alone, you **must** trigger a rebuild/reload before telling the user to verify in the browser.
+
+## When to trigger (required)
+
+Run Rebuild & Reload after changing any of:
+
+- `apps/server/**` (routes, middleware, `index.ts`, lib helpers)
+- `packages/**` consumed by the server (`@llaab/core`, `@llaab/ingestion`, `@llaab/skills`, `@llaab/llm`, `@llaab/schemas`, `@llaab/control`, …)
+- Root `.env` / `.env.example` values the server reads at process start
+- Anything that only takes effect after a server restart (Bun idle timeouts, git helpers, enrich, vault routes, auth, etc.)
+
+Client-only UI under `apps/client/**` usually hot-reloads; still reload if the change depends on a rebuilt workspace package or a restarted API.
+
+## How to trigger
+
+Prefer the same path as SwiftBar **Rebuild & Reload App**:
+
+```bash
+mkdir -p "$HOME/Library/Logs/llaab"
+./scripts/macos/dev-refresh.sh
+```
+
+If `dev-refresh.sh` fails, fall back to restarting the server (and client if needed):
+
+```bash
+./scripts/macos/llaab-service.sh stop-server
+./scripts/macos/llaab-service.sh start-server
+# and/or stop-client / start-client
+```
+
+Do **not** assume the user will click SwiftBar. Agents own the reload when their changes require it.
+
+## After reload
+
+- Confirm the server is up (e.g. `llaab-service.sh status` or a quick health/API check).
+- Only then ask the user to hard-refresh the browser and verify.

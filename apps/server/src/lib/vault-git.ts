@@ -1,6 +1,51 @@
 import { spawn } from 'node:child_process';
 import { sep } from 'node:path';
 import { VAULT_ROOT } from '@llaab/core';
+import { formatNodeFilename } from '@llaab/schemas';
+
+export function buildAutoSourceMetadataCommitMessage(sourceTitle: string): string {
+  return `chore(vault-auto): refresh source metadata for ${sourceTitle}`;
+}
+
+export interface AutoCommitSourceMetadataResult {
+  committed: boolean;
+  skipped?: boolean;
+  sha?: string;
+  error?: string;
+}
+
+/** Auto-commit a tracked source file after enrich metadata refresh. Skips untracked sources. */
+export async function autoCommitTrackedSourceMetadata(
+  sourceId: string,
+  sourceTitle: string,
+): Promise<AutoCommitSourceMetadataResult> {
+  const relativePath = `sources/${formatNodeFilename('source', sourceId)}`;
+
+  try {
+    if (!(await isVaultFileTracked(relativePath))) {
+      return { committed: false, skipped: true };
+    }
+
+    const commitResult = await commitVaultFile(
+      relativePath,
+      buildAutoSourceMetadataCommitMessage(sourceTitle),
+      {
+        skipHooks: true,
+      },
+    );
+
+    return {
+      committed: !commitResult.skipped,
+      skipped: commitResult.skipped,
+      sha: commitResult.sha,
+    };
+  } catch (error) {
+    return {
+      committed: false,
+      error: error instanceof Error ? error.message : 'Failed to auto-commit source metadata refresh.',
+    };
+  }
+}
 
 export function runGit(args: string[]): Promise<{ exitCode: number; stderr: string; stdout: string }> {
   return new Promise((resolve, reject) => {
@@ -49,7 +94,7 @@ export async function isVaultFileTracked(pathRelativeToVault: string): Promise<b
 
 let gitOperationChain: Promise<unknown> = Promise.resolve();
 
-function withGitLock<T>(operation: () => Promise<T>): Promise<T> {
+export function withVaultGitLock<T>(operation: () => Promise<T>): Promise<T> {
   const next = gitOperationChain.then(operation, operation);
   gitOperationChain = next.then(
     () => undefined,
@@ -68,7 +113,7 @@ export async function commitVaultFile(
   message: string,
   options: CommitVaultFileOptions = {},
 ): Promise<{ sha?: string; skipped?: boolean }> {
-  return withGitLock(async () => {
+  return withVaultGitLock(async () => {
     const gitPath = toVaultGitPath(pathRelativeToVault);
 
     const add = await runGit(['add', '--', gitPath]);

@@ -1,14 +1,10 @@
-import { SparklesIcon } from '@llaab/icons';
+import { CheckCircleIcon, XIcon } from '@llaab/icons';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
-import {
-  buildMonitorPipelineSteps,
-  CONSOLIDATION_SKILL_ID,
-  RunPipelineCard,
-} from 'components/RunPipelineCard/RunPipelineCard';
-import { Badge } from 'components/ui/badge';
+import { buildMonitorPipelineSteps, RunPipelineCard } from 'components/RunPipelineCard/RunPipelineCard';
 import { Button } from 'components/ui/button';
 import { ScrollArea } from 'components/ui/scroll-area';
-import { ActivityIcon, RotateCcwIcon, XIcon } from 'lucide-react';
+import { Spinner } from 'components/ui/spinner';
+import { ActivityIcon, RotateCcwIcon } from 'lucide-react';
 import { useRunMonitorState } from 'providers/RunMonitorProvider';
 import { useDismissAllRuns, useDismissRun, useRetryRun, useRunMonitor } from 'queries/runs';
 import { useMemo } from 'react';
@@ -27,29 +23,50 @@ function isActiveRun(run: RunMonitorItem) {
   return ACTIVE_STATUSES.has(run.status);
 }
 
-function getStatusVariant(status: RunMonitorItem['status']) {
-  if (status === 'failed') return 'destructive';
-  if (status === 'completed') return 'default';
-  return 'secondary';
-}
-
-function StatusBadge({ run }: { run: RunMonitorItem }) {
-  if (run.skill_id === CONSOLIDATION_SKILL_ID && isActiveRun(run)) {
-    return (
-      <Badge variant="outline" className={styles.consolidationBadge}>
-        <SparklesIcon aria-hidden />
-        Consolidating…
-      </Badge>
-    );
+function MonitorStatusIcon({ run }: { run: RunMonitorItem }) {
+  if (run.status === 'pending' || run.status === 'running') {
+    return <Spinner className={styles.statusIconExtracting} aria-label={run.status} />;
   }
 
+  switch (run.status) {
+    case 'completed':
+      return <CheckCircleIcon size={16} className={styles.statusIconCompleted} aria-label="Completed" />;
+    case 'failed':
+      return <XIcon size={16} className={styles.statusIconFailed} aria-label="Failed" />;
+    case 'cancelled':
+      return <XIcon size={16} className={styles.statusIconCancelled} aria-label="Cancelled" />;
+    default: {
+      const _exhaustive: never = run.status;
+      return _exhaustive;
+    }
+  }
+}
+
+function MonitorDismissButton({
+  runId,
+  disabled,
+  onDismiss,
+}: {
+  runId: string;
+  disabled: boolean;
+  onDismiss: (runId: string) => void;
+}) {
   return (
-    <Badge
-      variant={getStatusVariant(run.status)}
-      className={isActiveRun(run) ? styles.runningBadge : undefined}
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      className={styles.dismissIconButton}
+      disabled={disabled}
+      aria-label="Dismiss run"
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onDismiss(runId);
+      }}
     >
-      {run.status}
-    </Badge>
+      <XIcon aria-hidden />
+    </Button>
   );
 }
 
@@ -69,19 +86,43 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
   const startedAtMs = useMemo(() => (run.started_at ? Date.parse(run.started_at) : null), [run.started_at]);
   const liveElapsedSecs = useElapsedSeconds(isActive ? startedAtMs : null);
 
-  const headerMeta = isActive
-    ? startedAtMs != null && (
-        <span className="font-mono text-xs text-muted-foreground">{formatElapsed(liveElapsedSecs)}</span>
-      )
-    : run.duration_ms != null && (
-        <span className="font-mono text-xs text-muted-foreground">
-          {(run.duration_ms / 1000).toFixed(1)}s
-        </span>
-      );
+  const handleDismiss = (runId: string) => {
+    dismissRun(runId);
+    dismissMutate(runId);
+  };
 
-  const footer = !isActive ? (
-    <div className={styles.monitorFooter}>
-      {canRetry ? (
+  const latencyMeta =
+    isActive && startedAtMs != null ? (
+      <span className="font-mono text-xs text-muted-foreground">{formatElapsed(liveElapsedSecs)}</span>
+    ) : run.duration_ms != null ? (
+      <span className="font-mono text-xs text-muted-foreground">{(run.duration_ms / 1000).toFixed(1)}s</span>
+    ) : null;
+
+  const headerMeta = (
+    <span className={styles.headerMetaCluster}>
+      {latencyMeta}
+      {!isActive ? (
+        <MonitorDismissButton
+          runId={run.id}
+          disabled={dismissRunMutation.isPending}
+          onDismiss={handleDismiss}
+        />
+      ) : null}
+    </span>
+  );
+
+  const headerTitle = (
+    <span className={styles.titleWithStatus}>
+      <span className={styles.statusIconSlot}>
+        <MonitorStatusIcon run={run} />
+      </span>
+      <span className={styles.titleText}>{run.title}</span>
+    </span>
+  );
+
+  const footer =
+    canRetry && !isActive ? (
+      <div className={styles.monitorFooter}>
         <Button
           type="button"
           variant="ghost"
@@ -92,22 +133,8 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
           <RotateCcwIcon aria-hidden className={retryRun.isPending ? 'animate-spin' : undefined} />
           Retry
         </Button>
-      ) : null}
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        disabled={dismissRunMutation.isPending}
-        onClick={() => {
-          dismissRun(run.id);
-          dismissMutate(run.id);
-        }}
-      >
-        <XIcon aria-hidden />
-        Dismiss
-      </Button>
-    </div>
-  ) : null;
+      </div>
+    ) : null;
 
   if (!hasDetails) {
     return (
@@ -115,10 +142,10 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
         <div className={styles.cardHeader}>
           <div className={styles.titleGroup}>
             <Link to={run.run_link.href} className={styles.title}>
-              {run.title}
+              {headerTitle}
             </Link>
           </div>
-          <StatusBadge run={run} />
+          {headerMeta}
         </div>
         {footer}
       </article>
@@ -128,9 +155,8 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
   return (
     <RunPipelineCard
       className={styles.pipelineCard}
-      headerTitle={run.title}
+      headerTitle={headerTitle}
       headerHref={run.run_link.href}
-      headerBadge={<StatusBadge run={run} />}
       headerMeta={headerMeta}
       summary={run.output_summary ?? run.input_summary}
       metaLinks={metaLinks}

@@ -1,9 +1,13 @@
+import { CheckCircleIcon, XIcon } from '@llaab/icons';
 import { DeleteRunAction } from 'components/DeleteRunAction/DeleteRunAction';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
+import { Spinner } from 'components/ui/spinner';
 import { TableCell, TableRow } from 'components/ui/table';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import type { ReactNode } from 'react';
 
+import type { RunDisplayStatus } from 'utils/run-display.utils';
 import { getRunDisplayStatus, getRunElapsedDurationMs, isRunExtracting } from 'utils/run-display.utils';
 import type { RunGroup } from 'utils/run-grouping.utils';
 
@@ -14,15 +18,35 @@ export interface RunsGroupRowProps {
   group: RunGroup;
 }
 
-function RunModelBadges({ model, provider }: { model?: string; provider?: string }) {
-  if (!model && !provider) return null;
-
-  return (
-    <span className={styles.modelBadges}>
-      {provider ? <span className={styles.modelBadge}>{provider}</span> : null}
-      {model ? <span className={styles.modelBadge}>{model}</span> : null}
-    </span>
-  );
+function renderRunStatusIcon(displayStatus: RunDisplayStatus): ReactNode {
+  switch (displayStatus) {
+    case 'completed':
+      return (
+        <span className={styles.statusIconSlot}>
+          <CheckCircleIcon size={16} className={styles.statusCompletedIcon} aria-label="Completed" />
+        </span>
+      );
+    case 'extracting':
+      return (
+        <span className={styles.statusIconSlot}>
+          <Spinner className={styles.statusExtractingIcon} aria-label="Extracting" />
+        </span>
+      );
+    case 'failed':
+      return (
+        <span className={styles.statusIconSlot}>
+          <XIcon size={16} className={styles.statusFailedIcon} aria-label="Failed" />
+        </span>
+      );
+    case 'pending':
+    case 'running':
+    case 'cancelled':
+      return <span className={`${styles.status} ${STATUS_CLASS[displayStatus]}`}>{displayStatus}</span>;
+    default: {
+      const _exhaustive: never = displayStatus;
+      return _exhaustive;
+    }
+  }
 }
 
 /** Grouped row for the Runs table: a parent summary row plus collapsible per-run child rows. */
@@ -52,9 +76,7 @@ export function RunsGroupRow({ group }: RunsGroupRowProps) {
 
         return (
           <TableRow key={run.id} className={styles.childRow}>
-            <TableCell className="pr-0">
-              <span className={`${styles.status} ${STATUS_CLASS[displayStatus]}`}>{displayStatus}</span>
-            </TableCell>
+            <TableCell className="pr-0">{renderRunStatusIcon(displayStatus)}</TableCell>
             <TableCell>
               <div className={styles.childRowTitle}>
                 <Link to={`/vault/runs/${run.id}`} className={`${styles.mono} ${styles.childRowId}`}>
@@ -62,24 +84,31 @@ export function RunsGroupRow({ group }: RunsGroupRowProps) {
                 </Link>
               </div>
             </TableCell>
-            <TableCell className="pl-1.5" colSpan={3}>
-              <RunModelBadges model={model} provider={provider} />
-            </TableCell>
             <TableCell className="text-center">
               <span className={styles.nodesCell}>
                 <span className={styles.mono}>{run.produced_node_ids.length}</span>
               </span>
             </TableCell>
-            <TableCell className="text-right pr-4">
-              <ExtractionModelCard
-                variant="compact-bar"
-                showModel={false}
-                showTotalTokens={false}
-                durationMs={getRunElapsedDurationMs(run, now)}
-                promptTokens={run.llm?.prompt_tokens}
-                completionTokens={run.llm?.completion_tokens}
-                className={styles.childRowMetrics}
-              />
+            <TableCell className="pr-1" colSpan={4}>
+              <div className={styles.childRowModelMeta}>
+                {/* Left under Date: provider + model only */}
+                <ExtractionModelCard
+                  variant="compact-bar"
+                  provider={provider}
+                  model={model}
+                  className={`${styles.childRowModelChips} w-auto justify-start`}
+                />
+                {/* Right under Latency: tokens + duration only */}
+                <ExtractionModelCard
+                  variant="compact-bar"
+                  showModel={false}
+                  showTotalTokens={false}
+                  durationMs={getRunElapsedDurationMs(run, now)}
+                  promptTokens={run.llm?.prompt_tokens}
+                  completionTokens={run.llm?.completion_tokens}
+                  className={`${styles.childRowMetrics} w-auto justify-end`}
+                />
+              </div>
             </TableCell>
             <TableCell className="text-center pr-0.5">
               {extracting ? null : <DeleteRunAction run={run} color="dim" />}

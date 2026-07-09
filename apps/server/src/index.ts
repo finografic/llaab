@@ -10,6 +10,7 @@ const COMMAND_TIMEOUT_MS = 120_000;
 const LONG_RUNNING_PATHS = [
   /^\/api\/ingest\/youtube$/,
   /^\/api\/crons\/[^/]+\/run$/,
+  /^\/api\/vault\/sources\/[^/]+\/enrich$/,
   /^\/api\/vault\/transcripts\/[^/]+\/extract$/,
   /^\/api\/vault\/transcripts\/[^/]+\/consolidate$/,
   /^\/terminal$/,
@@ -29,7 +30,7 @@ export default {
   fetch(req: Request, server: Bun.Server<undefined>) {
     const pathname = new URL(req.url).pathname;
 
-    // These routes can spend tens of seconds waiting on yt-dlp or the model.
+    // These routes can spend tens of seconds waiting on yt-dlp, YouTube OAuth, or the model.
     // Disable Bun's default 10s idle timeout so the client sees the real result.
     if (LONG_RUNNING_PATHS.some((pattern) => pattern.test(pathname))) {
       server.timeout(req, 0);

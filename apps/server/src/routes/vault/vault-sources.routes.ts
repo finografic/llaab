@@ -1,11 +1,10 @@
 import { getNodeFilePath, listNodes, updateNode } from '@llaab/core';
 import { enrichSourceMetadata } from '@llaab/ingestion';
-import { formatNodeFilename } from '@llaab/schemas';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { UpdateSourceProfilesBody } from './vault.schema.js';
 import type { SourceNode } from '@llaab/schemas';
 
-import { commitVaultFile, isVaultFileTracked } from '../../lib/vault-git.js';
+import { autoCommitTrackedSourceMetadata } from '../../lib/vault-git.js';
 
 export const enrichSource = {
   path: '/sources/:id/enrich' as const,
@@ -24,20 +23,9 @@ export const enrichSource = {
       let metadataCommitError: string | undefined;
 
       if (result.persisted) {
-        const relativePath = `sources/${formatNodeFilename('source', id)}`;
-        try {
-          if (await isVaultFileTracked(relativePath)) {
-            const commitResult = await commitVaultFile(
-              relativePath,
-              `chore(vault): refresh source metadata for ${result.source.title}`,
-              { skipHooks: true },
-            );
-            metadataCommitted = !commitResult.skipped;
-          }
-        } catch (commitErr) {
-          metadataCommitError =
-            commitErr instanceof Error ? commitErr.message : 'Failed to commit source metadata refresh.';
-        }
+        const commitResult = await autoCommitTrackedSourceMetadata(id, result.source.title);
+        metadataCommitted = commitResult.committed;
+        metadataCommitError = commitResult.error;
       }
 
       return c.json({

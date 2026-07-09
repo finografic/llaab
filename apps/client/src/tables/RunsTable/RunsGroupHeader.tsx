@@ -9,6 +9,7 @@ import { RunsGroupRow } from 'tables/RunsTable/RunsGroupRow';
 import type { DataTableColumnLimit } from '@llaab/ui/lib/data-table-utils';
 
 import { cn } from 'lib/utils';
+import { extractRunAuthor, extractRunSourceId } from 'utils/metadata-rendering.utils';
 import { isRunExtracting } from 'utils/run-display.utils';
 import type { RunGroup } from 'utils/run-grouping.utils';
 
@@ -29,6 +30,9 @@ export function RunsGroupHeader({ group, titleLimits }: RunGroupRowProps) {
     ? { maxWidth: resolveDataTableMaxWidth(titleLimits.maxWidth) }
     : undefined;
   const truncatedTitleClass = titleLimits ? styles.subjectTitleTruncated : undefined;
+  const primaryRun = group.runs[0];
+  const authorSourceId = group.source?.id ?? (primaryRun ? extractRunSourceId(primaryRun) : undefined);
+  const authorLabel = group.source?.title ?? (primaryRun ? extractRunAuthor(primaryRun) : undefined);
 
   return (
     <>
@@ -70,6 +74,20 @@ export function RunsGroupHeader({ group, titleLimits }: RunGroupRowProps) {
             )}
           </div>
         </TableCell>
+        <TableCell className="text-center pt-3.5">
+          <span className={styles.nodesCell}>
+            {group.isConsolidated ? (
+              <BadgeCheckIcon
+                size={14}
+                className={styles.consolidatedIcon}
+                aria-label="Canonical ideas consolidated"
+              />
+            ) : (
+              <span aria-hidden className={styles.consolidatedIconPlaceholder} />
+            )}
+            <span className={styles.mono}>{group.totalNodes}</span>
+          </span>
+        </TableCell>
         <TableCell>
           {group.publishedAt ? (
             <time className={styles.mono} dateTime={group.publishedAt}>
@@ -95,33 +113,25 @@ export function RunsGroupHeader({ group, titleLimits }: RunGroupRowProps) {
           )}
         </TableCell>
         <TableCell>
-          {group.source ? (
+          {authorLabel ? (
             <div className={styles.authorCell}>
               {renderYouTubeSubscriptionIcon(group.source)}
-              <Link to={`/vault/sources/${group.source.id}`} className={styles.authorLink}>
-                {group.source.title}
-              </Link>
+              {authorSourceId ? (
+                <Link to={`/vault/sources/${authorSourceId}`} className={styles.authorLink}>
+                  {authorLabel}
+                </Link>
+              ) : (
+                <span className={styles.authorName}>{authorLabel}</span>
+              )}
             </div>
           ) : (
             <span className={styles.muted}>—</span>
           )}
         </TableCell>
-        <TableCell className="text-center pt-3.5">
-          <span className={styles.nodesCell}>
-            {group.isConsolidated ? (
-              <BadgeCheckIcon
-                size={14}
-                className={styles.consolidatedIcon}
-                aria-label="Canonical ideas consolidated"
-              />
-            ) : (
-              <span aria-hidden className={styles.consolidatedIconPlaceholder} />
-            )}
-            <span className={styles.mono}>{group.totalNodes}</span>
-          </span>
-        </TableCell>
         <TableCell className="text-right pt-3.5 pr-1">
-          <span className={styles.mono}>~ {fmtDuration(group.avgDurationMs)}</span>
+          <span className={`${styles.mono} ${styles.latencyValue}`}>
+            ~ {fmtDuration(group.avgDurationMs)}
+          </span>
         </TableCell>
         <TableCell className="text-center pr-0.5">
           {hasExtractingRun ? null : <DeleteRunGroupAction title={group.title} runs={group.runs} />}

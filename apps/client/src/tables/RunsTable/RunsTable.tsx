@@ -171,13 +171,6 @@ export function RunsTable({
               <SortableHeader column="title" sort={sort} onSort={handleSort} style={titleHeaderStyle}>
                 Title
               </SortableHeader>
-              <SortableHeader column="date" sort={sort} onSort={handleSort}>
-                Date
-              </SortableHeader>
-              <TableHead>Source</TableHead>
-              <SortableHeader column="author" sort={sort} onSort={handleSort}>
-                Author
-              </SortableHeader>
               <SortableHeader
                 column="nodes"
                 sort={sort}
@@ -185,6 +178,13 @@ export function RunsTable({
                 className="text-center max-w-[58px]"
               >
                 Nodes
+              </SortableHeader>
+              <SortableHeader column="date" sort={sort} onSort={handleSort}>
+                Date
+              </SortableHeader>
+              <TableHead>Source</TableHead>
+              <SortableHeader column="author" sort={sort} onSort={handleSort}>
+                Author
               </SortableHeader>
               <SortableHeader column="latency" sort={sort} onSort={handleSort} className="text-right pr-1">
                 Latency

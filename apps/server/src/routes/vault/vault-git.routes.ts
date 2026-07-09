@@ -7,7 +7,7 @@ import type {
   VaultGitStatusResponse,
 } from '@llaab/schemas';
 
-import { runGit, toVaultGitPath } from '../../lib/vault-git.js';
+import { runGit, toVaultGitPath, withVaultGitLock } from '../../lib/vault-git.js';
 
 function mapPorcelainCode(code: string): VaultGitFileStatus {
   if (code.includes('?')) return 'untracked';
@@ -128,27 +128,29 @@ export const vaultGitCommit = {
   path: '/git/commit' as const,
   handler: async (c: AppCtx) => {
     try {
-      const status = await getVaultGitStatus();
-      if (status.totalCount === 0) {
-        return c.json({ error: 'No vault changes to commit.' }, 400);
-      }
+      return await withVaultGitLock(async () => {
+        const status = await getVaultGitStatus();
+        if (status.totalCount === 0) {
+          return c.json({ error: 'No vault changes to commit.' }, 400);
+        }
 
-      const add = await runGit(['add', '--all']);
-      if (add.exitCode !== 0) {
-        throw new Error(add.stderr || 'git add failed.');
-      }
+        const add = await runGit(['add', '--all']);
+        if (add.exitCode !== 0) {
+          throw new Error(add.stderr || 'git add failed.');
+        }
 
-      const commit = await runGit(['commit', '-m', status.commitMessage]);
-      if (commit.exitCode !== 0) {
-        throw new Error(commit.stderr || 'git commit failed.');
-      }
+        const commit = await runGit(['commit', '-m', status.commitMessage]);
+        if (commit.exitCode !== 0) {
+          throw new Error(commit.stderr || 'git commit failed.');
+        }
 
-      const rev = await runGit(['rev-parse', 'HEAD']);
+        const rev = await runGit(['rev-parse', 'HEAD']);
 
-      return c.json({
-        committedCount: status.totalCount,
-        commitMessage: status.commitMessage,
-        sha: rev.exitCode === 0 ? rev.stdout.trim() : undefined,
+        return c.json({
+          committedCount: status.totalCount,
+          commitMessage: status.commitMessage,
+          sha: rev.exitCode === 0 ? rev.stdout.trim() : undefined,
+        });
       });
     } catch (err) {
       return c.json(
@@ -165,24 +167,26 @@ export const vaultGitReset = {
   path: '/git/reset' as const,
   handler: async (c: AppCtx) => {
     try {
-      const status = await getVaultGitStatus();
-      if (status.totalCount === 0) {
-        return c.json({ error: 'No vault changes to reset.' }, 400);
-      }
+      return await withVaultGitLock(async () => {
+        const status = await getVaultGitStatus();
+        if (status.totalCount === 0) {
+          return c.json({ error: 'No vault changes to reset.' }, 400);
+        }
 
-      // Discard tracked vault modifications/deletions back to the last vault commit...
-      const checkout = await runGit(['checkout', 'HEAD', '--', '.']);
-      if (checkout.exitCode !== 0) {
-        throw new Error(checkout.stderr || 'git checkout failed.');
-      }
+        // Discard tracked vault modifications/deletions back to the last vault commit...
+        const checkout = await runGit(['checkout', 'HEAD', '--', '.']);
+        if (checkout.exitCode !== 0) {
+          throw new Error(checkout.stderr || 'git checkout failed.');
+        }
 
-      // ...then remove untracked vault files and dirs (new, never-committed nodes).
-      const clean = await runGit(['clean', '-fd', '--', '.']);
-      if (clean.exitCode !== 0) {
-        throw new Error(clean.stderr || 'git clean failed.');
-      }
+        // ...then remove untracked vault files and dirs (new, never-committed nodes).
+        const clean = await runGit(['clean', '-fd', '--', '.']);
+        if (clean.exitCode !== 0) {
+          throw new Error(clean.stderr || 'git clean failed.');
+        }
 
-      return c.json({ resetCount: status.totalCount });
+        return c.json({ resetCount: status.totalCount });
+      });
     } catch (err) {
       return c.json(
         {

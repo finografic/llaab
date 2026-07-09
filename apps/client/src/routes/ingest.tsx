@@ -164,7 +164,7 @@ export function IngestPage() {
           sources={sources}
           transcripts={transcripts}
           showHeading
-          columnLimits={{ title: { maxWidth: 400, maxChars: 60 } }}
+          columnLimits={{ title: { maxWidth: '20rem', maxChars: 60 } }}
         />
       </div>
     </PageLayout>

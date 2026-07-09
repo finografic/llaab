@@ -4,7 +4,10 @@ readonly script_dir="${0:A:h}"
 readonly repo_dir="${script_dir:h:h}"
 readonly service_script="$repo_dir/scripts/macos/llaab-service.sh"
 readonly sentinel_file="/tmp/llaab-dev-refreshing"
-readonly log_file="$HOME/Library/Logs/llaab/dev-refresh.log"
+readonly log_dir="$HOME/Library/Logs/llaab"
+readonly log_file="$log_dir/dev-refresh.log"
+
+mkdir -p "$log_dir"
 
 # SwiftBar runs with a minimal PATH — add Homebrew and the nvm node bin so pnpm works.
 # pnpm at /opt/homebrew/bin/pnpm is a #!/usr/bin/env node script and needs node in PATH.
