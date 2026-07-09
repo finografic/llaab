@@ -79,6 +79,15 @@ Components that do not exist in the shadcn registry but follow its conventions
 - use shadcn CSS tokens (`--primary`, `--muted-foreground`, etc.) rather than
   hard-coded colour values
 
+## Tabs (LLAAB defaults)
+
+Canonical primitive: `packages/ui/src/components/tabs.tsx` (`components/ui/tabs`).
+
+- **Default list variant:** `line` (underline). Use `variant="default"` only for pill/segmented tabs.
+- **Default trigger size:** `text-base` and `px-2.5` (shadcn `px-1.5` + `0.25rem` each side).
+- Prefer these defaults; override with `className` or a future `size` variant only when a denser control is required.
+- Do not re-declare line/size styles in page CSS modules — change the shared primitive instead.
+
 ## CSS tokens vs hard-coded values
 
 Never hard-code hex or rgb colours in component files or Astro pages. Instead use:

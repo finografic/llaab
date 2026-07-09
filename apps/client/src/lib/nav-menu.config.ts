@@ -60,14 +60,8 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
     items: [
       {
         label: 'Libraries',
-        description: 'Search and browse npm packages',
+        description: 'Pinned favourites and npm package search',
         href: '/registry',
-        live: true,
-      },
-      {
-        label: 'Pinned',
-        description: 'Your saved library collection',
-        href: '/registry/pinned',
         live: true,
       },
     ],

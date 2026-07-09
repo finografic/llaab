@@ -1,21 +1,23 @@
-import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from '@llaab/icons';
+import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, MagnifyingGlassIcon } from '@llaab/icons';
 import { cn } from '@llaab/ui/lib/utils';
 import { PackageCard } from 'components/PackageCard/PackageCard';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Button } from 'components/ui/button';
-import { Input } from 'components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from 'components/ui/input-group';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/ui/tabs';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
-import { useNpmSearch } from 'queries/registry';
+import { useNpmSearch, usePinnedLibraries } from 'queries/registry';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
-import type { NpmSearchResult } from '@llaab/schemas';
+import type { NpmSearchResult, PinnedLibrary } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
 
 import styles from './registry-search.module.css';
 
+type RegistryTab = 'pinned' | 'search';
 type SortColumn = 'title' | 'published' | 'downloads';
 type SortDirection = 'asc' | 'desc';
 
@@ -58,15 +60,11 @@ function sortResults(results: NpmSearchResult[], sort: SortState | null): NpmSea
   });
 }
 
-/** First click direction when activating a column from relevance (off). */
 function defaultDirectionFor(column: SortColumn): SortDirection {
   return column === 'title' ? 'asc' : 'desc';
 }
 
-/**
- * Cycle: off → primary → opposite → off (relevance).
- * Primary: title A–Z; published/downloads newest / highest first.
- */
+/** Cycle: off → primary → opposite → off (relevance / pin order). */
 function nextSortState(current: SortState | null, column: SortColumn): SortState | null {
   if (current?.column !== column) {
     return { column, direction: defaultDirectionFor(column) };
@@ -76,6 +74,38 @@ function nextSortState(current: SortState | null, column: SortColumn): SortState
     return { column, direction: primary === 'asc' ? 'desc' : 'asc' };
   }
   return null;
+}
+
+function pinToSearchResult(pin: PinnedLibrary): NpmSearchResult {
+  return {
+    package: {
+      name: pin.meta.name,
+      version: pin.meta.version,
+      description: pin.meta.description,
+      keywords: pin.meta.keywords,
+      date: pin.meta.date,
+      links: pin.meta.links,
+      license: pin.meta.license,
+      author: pin.meta.author,
+      maintainers: pin.meta.maintainers,
+    },
+    downloads: pin.meta.weeklyDownloads != null ? { weekly: pin.meta.weeklyDownloads } : undefined,
+  };
+}
+
+function filterPins(pins: PinnedLibrary[], query: string): PinnedLibrary[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return pins;
+  return pins.filter((pin) => {
+    const { name, description, keywords } = pin.meta;
+    if (name.toLowerCase().includes(q)) return true;
+    if (description?.toLowerCase().includes(q)) return true;
+    return keywords?.some((kw) => kw.toLowerCase().includes(q)) ?? false;
+  });
+}
+
+function parseTab(raw: string | null): RegistryTab {
+  return raw === 'search' ? 'search' : 'pinned';
 }
 
 function SortHeaderButton({
@@ -96,7 +126,7 @@ function SortHeaderButton({
 
   const ariaSort = isActive
     ? `Sort by ${children}, ${sort.direction}ending — click to ${
-        sort.direction === defaultDirectionFor(column) ? 'reverse' : 'clear to relevance'
+        sort.direction === defaultDirectionFor(column) ? 'reverse' : 'clear to default order'
       }`
     : `Sort by ${children}`;
 
@@ -116,10 +146,103 @@ function SortHeaderButton({
   );
 }
 
+function LibraryResultsPanel({
+  query,
+  onQueryChange,
+  placeholder,
+  countLabel,
+  isLoading,
+  loadingLabel,
+  emptyIdle,
+  emptyNoMatch,
+  results,
+  sort,
+  onSort,
+  autoFocus,
+}: {
+  query: string;
+  onQueryChange: (value: string) => void;
+  placeholder: string;
+  countLabel: string;
+  isLoading: boolean;
+  loadingLabel: string;
+  emptyIdle: string | null;
+  emptyNoMatch: string | null;
+  results: NpmSearchResult[];
+  sort: SortState | null;
+  onSort: (column: SortColumn) => void;
+  autoFocus?: boolean;
+}) {
+  return (
+    <div className={styles.tabPanel}>
+      <p className={styles.packageCount}>{countLabel}</p>
+
+      <div className={styles.searchRow}>
+        <InputGroup
+          className={cn(
+            styles.searchGroup,
+            'has-[[data-slot=input-group-control]:focus-visible]:ring-0',
+            'has-[[data-slot=input-group-control]:focus-visible]:border-ring',
+          )}
+        >
+          <InputGroupAddon align="inline-start" className={styles.searchIconSlot}>
+            <MagnifyingGlassIcon className={styles.searchIcon} aria-hidden />
+          </InputGroupAddon>
+          <InputGroupInput
+            className={styles.searchInput}
+            placeholder={placeholder}
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            autoFocus={autoFocus}
+          />
+        </InputGroup>
+      </div>
+
+      {isLoading && <p className={styles.empty}>{loadingLabel}</p>}
+
+      {!isLoading && emptyIdle ? <p className={styles.empty}>{emptyIdle}</p> : null}
+
+      {!isLoading && emptyNoMatch ? <p className={styles.empty}>{emptyNoMatch}</p> : null}
+
+      {!isLoading && results.length > 0 ? (
+        <div className={styles.results}>
+          <div className={styles.sortHeader} role="row">
+            <div className={styles.sortTitleCol}>
+              <SortHeaderButton column="title" sort={sort} onSort={onSort}>
+                Title
+              </SortHeaderButton>
+            </div>
+            <div className={styles.sortPublishedCol}>
+              <SortHeaderButton column="published" sort={sort} onSort={onSort}>
+                Last Publish
+              </SortHeaderButton>
+            </div>
+            <div className={styles.sortDownloadsCol}>
+              <SortHeaderButton column="downloads" sort={sort} onSort={onSort}>
+                Downloads
+              </SortHeaderButton>
+            </div>
+            <div className={styles.sortPinCol} aria-hidden />
+          </div>
+          {results.map((result) => (
+            <PackageCard
+              key={result.package.name}
+              pkg={result.package}
+              weeklyDownloads={result.downloads?.weekly}
+              dependents={result.dependents}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function RegistrySearchPage() {
   usePageTitle('Library Registry');
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseTab(searchParams.get('tab'));
   const urlQuery = searchParams.get('q') ?? '';
   const [query, setQuery] = useState(urlQuery);
   const [debouncedQuery] = useDebounce(query, 300);
@@ -133,7 +256,7 @@ export function RegistrySearchPage() {
     setQuery(urlQuery);
   }, [urlQuery]);
 
-  // Debounced input → live ?q= (npmx-style)
+  // Debounced input → live ?q=
   useEffect(() => {
     if (debouncedQuery === urlQuery) return;
     lastPushedQuery.current = debouncedQuery;
@@ -148,83 +271,110 @@ export function RegistrySearchPage() {
     );
   }, [debouncedQuery, setSearchParams, urlQuery]);
 
-  // New search → restore npm relevance order
+  // New query or tab → restore default order
   useEffect(() => {
     setSort(null);
-  }, [debouncedQuery]);
+  }, [debouncedQuery, tab]);
 
-  const { data, isLoading } = useNpmSearch(debouncedQuery);
-  const results = data?.objects;
-  const sortedResults = useMemo(() => sortResults(results ?? [], sort), [results, sort]);
+  const { data: pins = [], isLoading: pinsLoading } = usePinnedLibraries();
+  const { data: searchData, isLoading: searchLoading } = useNpmSearch(tab === 'search' ? debouncedQuery : '');
 
-  const packageCountLabel = data != null ? `${data.total.toLocaleString()} packages found` : '\u00a0';
+  const pinnedResults = useMemo(() => {
+    const filtered = filterPins(pins, debouncedQuery).map(pinToSearchResult);
+    return sortResults(filtered, sort);
+  }, [pins, debouncedQuery, sort]);
+
+  const searchResults = useMemo(
+    () => sortResults(searchData?.objects ?? [], sort),
+    [searchData?.objects, sort],
+  );
 
   function handleSort(column: SortColumn) {
     setSort((current) => nextSortState(current, column));
   }
 
+  function handleTabChange(next: string) {
+    const nextTab = parseTab(next);
+    setQuery('');
+    lastPushedQuery.current = '';
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (nextTab === 'pinned') params.delete('tab');
+        else params.set('tab', nextTab);
+        params.delete('q');
+        return params;
+      },
+      { replace: true },
+    );
+  }
+
+  const pinnedCountLabel =
+    pins.length === 0 && !pinsLoading
+      ? '0 pinned packages'
+      : `${pinnedResults.length.toLocaleString()} of ${pins.length.toLocaleString()} pinned ${
+          pins.length === 1 ? 'package' : 'packages'
+        }`;
+
+  const searchCountLabel =
+    searchData != null ? `${searchData.total.toLocaleString()} packages found` : '\u00a0';
+
   return (
-    <PageLayout
-      hero={
-        <PageHero
-          eyebrow="Registry"
-          title="Libraries"
-          meta={<span className={styles.packageCount}>{packageCountLabel}</span>}
-        />
-      }
-    >
+    <PageLayout hero={<PageHero eyebrow="Registry" title="Libraries" />}>
       <PageList width="wide">
-        <div className={styles.searchRow}>
-          <Input
-            className={styles.searchInput}
-            placeholder="Search npm packages…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoFocus
-          />
-        </div>
+        <Tabs value={tab} onValueChange={handleTabChange} className={styles.tabs}>
+          <TabsList>
+            <TabsTrigger value="pinned">Pinned</TabsTrigger>
+            <TabsTrigger value="search">Search</TabsTrigger>
+          </TabsList>
 
-        {isLoading && <p className={styles.empty}>Searching…</p>}
+          <TabsContent value="pinned" className={styles.tabsContent}>
+            <LibraryResultsPanel
+              query={query}
+              onQueryChange={setQuery}
+              placeholder="Filter pinned packages…"
+              countLabel={pinsLoading ? '\u00a0' : pinnedCountLabel}
+              isLoading={pinsLoading}
+              loadingLabel="Loading pinned packages…"
+              emptyIdle={
+                !pinsLoading && pins.length === 0
+                  ? 'No pinned packages yet. Switch to Search and pin favourites.'
+                  : null
+              }
+              emptyNoMatch={
+                !pinsLoading && pins.length > 0 && pinnedResults.length === 0
+                  ? `No pinned packages match “${debouncedQuery}”.`
+                  : null
+              }
+              results={pinnedResults}
+              sort={sort}
+              onSort={handleSort}
+              autoFocus
+            />
+          </TabsContent>
 
-        {!isLoading && debouncedQuery.length === 0 && (
-          <p className={styles.empty}>Type a package name to search npm.</p>
-        )}
-
-        {!isLoading && debouncedQuery.length > 0 && (results?.length ?? 0) === 0 && (
-          <p className={styles.empty}>No packages found for &ldquo;{debouncedQuery}&rdquo;.</p>
-        )}
-
-        {sortedResults.length > 0 && (
-          <div className={styles.results}>
-            <div className={styles.sortHeader} role="row">
-              <div className={styles.sortTitleCol}>
-                <SortHeaderButton column="title" sort={sort} onSort={handleSort}>
-                  Title
-                </SortHeaderButton>
-              </div>
-              <div className={styles.sortPublishedCol}>
-                <SortHeaderButton column="published" sort={sort} onSort={handleSort}>
-                  Last Publish
-                </SortHeaderButton>
-              </div>
-              <div className={styles.sortDownloadsCol}>
-                <SortHeaderButton column="downloads" sort={sort} onSort={handleSort}>
-                  Downloads
-                </SortHeaderButton>
-              </div>
-              {/* Spacer matches PackageCard pin column so header labels stay aligned */}
-              <div className={styles.sortPinCol} aria-hidden />
-            </div>
-            {sortedResults.map((result) => (
-              <PackageCard
-                key={result.package.name}
-                pkg={result.package}
-                weeklyDownloads={result.downloads?.weekly}
-                dependents={result.dependents}
-              />
-            ))}
-          </div>
-        )}
+          <TabsContent value="search" className={styles.tabsContent}>
+            <LibraryResultsPanel
+              query={query}
+              onQueryChange={setQuery}
+              placeholder="Search npm packages…"
+              countLabel={searchCountLabel}
+              isLoading={searchLoading}
+              loadingLabel="Searching…"
+              emptyIdle={
+                !searchLoading && debouncedQuery.length === 0 ? 'Type a package name to search npm.' : null
+              }
+              emptyNoMatch={
+                !searchLoading && debouncedQuery.length > 0 && searchResults.length === 0
+                  ? `No packages found for “${debouncedQuery}”.`
+                  : null
+              }
+              results={searchResults}
+              sort={sort}
+              onSort={handleSort}
+            />
+          </TabsContent>
+        </Tabs>
       </PageList>
     </PageLayout>
   );

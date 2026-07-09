@@ -1,7 +1,25 @@
+.tabs {
+  width: 100%;
+  gap: var(--space-4);
+}
+
+.tabsContent {
+  margin-top: var(--space-2);
+}
+
+.tabPanel {
+  display: flex;
+  flex-direction: column;
+}
+
 .packageCount {
   display: block;
   min-height: 1.5em;
+  margin: 0 0 var(--space-3) var(--space-3);
   line-height: 1.5;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-faint);
 }
 
 .searchRow {
@@ -10,8 +28,30 @@
   margin-bottom: 24px;
 }
 
-.searchInput {
+.searchGroup {
   flex: 1;
+  height: 2.25rem;
+  background: transparent;
+}
+
+/* Global :focus-visible outline (offset + smaller radius) fights the control */
+.searchGroup :focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+
+.searchIconSlot {
+  background: transparent;
+  color: var(--text-faint);
+}
+
+.searchIcon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.55;
+}
+
+.searchInput {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
 }

@@ -87,7 +87,7 @@
 
 .description {
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
   color: var(--text-muted);
   line-height: 1.5;
   display: -webkit-box;
@@ -214,3 +214,4 @@
     text-align: left;
   }
 }
+
