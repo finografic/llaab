@@ -6,6 +6,3 @@ node_modules/
 
 # Ignore transcripts output
 vault/transcripts/
-
-# graphify-generated architecture report (machine output; not hand-edited)
-graphify-out/

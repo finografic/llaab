@@ -82,9 +82,6 @@ html/
 cookies.txt
 cookies_*.txt
 
-# Graphify
-graphify-out/
-
 # Archives
 *.tar
 *.tar.gz
@@ -100,10 +97,6 @@ Desktop.ini
 
 # Security
 deps-xscan-report.json
-
-# Project-specific
-# graphify — commit graph artifacts; ignore local rebuild cache
-graphify-out/cache/
 
 # Vault scratch
 /vault/

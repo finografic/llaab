@@ -229,7 +229,7 @@ required for the first split because keeping `vault/` in place avoids code-path 
 
 - [ ] Should the nested vault repo get a remote now, or stay local until the workflow settles?
 - [ ] Should generated run nodes be committed frequently, squashed periodically, or archived outside Git?
-- [ ] Should `knowledge/knowledge-graphs/` store Mermaid summaries, Graphify exports, or both?
+- [ ] Should `knowledge/knowledge-graphs/` store Mermaid summaries, structured graph JSON, or both?
 - [ ] Should promoted agent profiles live as markdown only, or eventually compile into Hermes/LLAAB agent
       config?
 - [ ] Should mature canonical skills become schema-backed `SkillNode`s, markdown specs, executable package

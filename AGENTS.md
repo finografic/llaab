@@ -176,20 +176,6 @@ Hand-rolling what shadcn provides is not permitted.
 
 ---
 
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
-
-Rules:
-
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
-
 ## Cursor
 
 - Always-on rules: `.cursor/rules/` (`alwaysApply` — entry point is `AGENTS.md`, same as `CLAUDE.md`)
@@ -220,8 +206,15 @@ Rules:
 - Ubiquitous-language terms are defined in [`LLAAB_GLOSSARY.md`](/LLAAB_GLOSSARY.md) (the glossary artifact); **shared vocabulary** is the broader goal in prose—do not use _vocabulary_ and _glossary_ interchangeably for that file.
 - YouTube: transcript ingestion deduplicates by `sourceType === 'youtube'` + `sourceItemId`; `youtube_subscribed` (Google OAuth + YouTube API) is set only at **enrich** in `enrichSourceMetadata`—not during ingest. Enrich runs client-side from `/ingest` (background, serialized—one source at a time) and `/vault/sources/:id` on load; mark refreshed only on success. `POST /api/vault/sources/:id/enrich` must stay in server `LONG_RUNNING_PATHS` (disable Bun’s 10s idle timeout)—otherwise Vite returns 502 empty body after the file write but before commit/response. Tracked sources auto-commit metadata in the nested `vault/` (`llaab-vault`) repo (`chore(vault-auto): refresh source metadata for …`); untracked/new ingest sources skip auto-commit so Discard still works—vault git uses `VAULT_ROOT` cwd, a mutex, and `--no-verify` on machine metadata commits. On `SourceNode`, `follow` is an unimplemented future LLAAB auto-refresh flag—not YouTube subscription; `youtube_subscribed` drives subscription UI. `GOOGLE_OAUTH_*` vars live in repo `.env`. **OAuth setup / token renewal:** [docs/integrations/youtube-oauth.md](docs/integrations/youtube-oauth.md).
 - `@finografic/md-lint` (`pnpm run lint:md`) classifies markdown as **standard**, **agent**, or **vault** (`vault/**/*.md`). Root `.markdownlint.jsonc` rule keys apply globally; optional **`standard` / `agent` / `vault`** objects are md-lint-only scope overrides (not upstream markdownlint) merged preset → global → category.
-- `graphify-out/` is gitignored—regenerated locally by husky post-commit/post-checkout hooks; agents still run `graphify query` when `graphify-out/graph.json` exists on disk.
 - Client primary nav is shadcn `NavigationMenu` (`components/NavMenu/NavMenu.tsx`); menu structure in `apps/client/src/lib/nav-menu.config.ts` (`viewport={false}`; Tailwind `hidden md:flex` only—no `display` on CSS-module wrappers). **SPA:** routes in `src/routes/` wired in `src/router.tsx`; tsconfig aliases (`components/*`, `lib/*`, …)—not `@/*`. Vault routes use `vaultSessionLoader` + `VaultLayout`; `handle: { title, fullBleed? }` for `AppLayout`. TanStack Query in `src/queries/`; do not pass `initialData: []`.
 - **Env / client / ports:** Monorepo `.env` at repo root; Vite `envDir` points there. `LLAAB_API_URL` proxies `/api` and `/terminal` only (not in the browser bundle); do not widen Vite `envPrefix`. **`PORT`** is the Vite dev port convention—keep `PORT` (not `LLAAB_PORT`). Auth: `LLAAB_API_KEY` (`X-API-Key` for API writes); optional `LLAAB_PASSWORD` (browser session for app writes); optional `VAULT_PASSWORD` (vault UI only—unset = open `/vault`). Dead vars removed: `OPENAI_API_KEY`, `LL_STATS_API_KEY`. Local: client **5050**, server **8888**, icons **5001**/**5199**. `com.llaab.client` launchd runs `vite dev` (HMR), not `vite preview`. **Managed crontab** must call `scripts/macos/llaab-cron-run.sh` (sources `.env`, POSTs with `X-API-Key` via temp header file)—bare `curl` 401s when `LLAAB_API_KEY` is set; repair outdated lines via `/crons` Repair (do not rewrite crontab on every GET list).
 - **Cloud model catalog:** `configs/cloud-model-catalog.json` (gitignored) cache-first via `packages/llm/src/cloud-model-catalog.ts`; optional `GET /models` metadata refresh (no chat tokens). `/llm` badges: Installed / Cloud / Catalog / On request.
 - **Canonical consolidation:** single-pass on `consolidate` LLM task (default `?mode=single-26b`); `consolidate-audit` removed. Prompts include canonical promotion rules; quality scoring in `packages/schemas/src/consolidation-quality.ts` applies theme checks only when ≥2 theme-matching candidates. API returns `qualityValidation` (percentage score); transcript UI shows score on the Canonical Ideas bar. **`extract`** and **`consolidate`** routed to OpenCode **`glm-5.2`** (`configs/llm-routing.json`).
+
+<!-- lean-ctx -->
+
+## lean-ctx
+
+lean-ctx is active — the MCP tools replace native equivalents.
+Full rules: LEAN-CTX.md (open on demand — do not auto-load).
+<!-- /lean-ctx -->

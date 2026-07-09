@@ -436,15 +436,14 @@ Orchestration phases 0–10 are complete. The Phase 6b addendum content is conso
 `DONE_ORCHESTRATION.md`; there is no separate addendum tracking file.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.
 
-## Agent tooling (graphify)
+## Agent context tooling
 
-`graphify-out/` holds a committed knowledge graph (`graph.json`, `GRAPH_REPORT.md`, manifest) built
-from the repo. Agents should run `graphify query` / `path` / `explain` before broad grep when the
-graph exists; `graphify update .` after code changes (AST-only). Husky `post-commit` / `post-checkout`
-hooks auto-rebuild the graph when non-`graphify-out/` files change. Integrations: `AGENTS.md` +
-`CLAUDE.md` sections, `.cursor/rules/graphify.mdc` (`alwaysApply`), `.claude/settings.json` and
-`.codex/hooks.json` PreToolUse nudges. Expect `graphify-out/` to show as modified after commits that
-mix code + graph files — hook rebuild is normal; commit again or discard if undesired.
+Repo graph hooks and generated context artifacts are no longer part of the default LLAAB agent
+path. LeanCTX is installed through Homebrew with local agent integrations detected by its setup,
+including Codex, VS Code/Cursor workspace MCP, Claude Code, OpenCode, Copilot CLI, and Hermes MCP
+config. Treat this as a context-hygiene pilot: Hermes usage is registered but not validated for the
+LLAAB inbox/runtime path, and raw reads/search remain the escape hatch while evaluating whether
+LeanCTX actually reduces context noise.
 
 ## Hermes / MCP
 
