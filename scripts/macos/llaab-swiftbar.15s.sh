@@ -22,24 +22,6 @@ readonly repair_log="$logs_dir/repair-all.log"
 readonly server_log="$logs_dir/server.stdout.log"
 readonly hermes_bin="$HOME/.local/bin/hermes"
 readonly app_url="http://llaab.localhost:5050"
-readonly ingest_url="http://llaab.localhost:5050/ingest"
-readonly icons_url="$(
-  env LLAAB_ICONS_CONFIG="$repo_dir/packages/icons/lucide-manager.config.json" node --input-type=module <<'NODE'
-import { readFileSync } from 'node:fs';
-
-const configPath = process.env.LLAAB_ICONS_CONFIG;
-if (!configPath) throw new Error('LLAAB_ICONS_CONFIG is required.');
-const raw = JSON.parse(readFileSync(configPath, 'utf-8'));
-const port = raw?.manager?.server?.port ?? 5199;
-const configuredHost = raw?.manager?.server?.host;
-const host =
-  configuredHost && configuredHost !== '0.0.0.0' && configuredHost !== '::' && configuredHost !== '::1'
-    ? configuredHost
-    : 'localhost';
-
-process.stdout.write(`http://${host}:${port}/`);
-NODE
-)"
 readonly github_url="https://github.com/finografic"
 
 status_output="$("$control_script" status)"
@@ -78,8 +60,6 @@ fi
 
 echo "---"
 echo "Open App | href=$app_url shortcut=CMD+SHIFT+L"
-echo "Open Ingest | href=$ingest_url shortcut=CMD+SHIFT+I"
-echo "Open Icons | href=$icons_url"
 echo "---"
 echo "Rebuild & Reload App | bash=$dev_refresh_script terminal=false refresh=true"
 
