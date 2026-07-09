@@ -13,10 +13,13 @@ export {
   type SkillRunRecord,
 } from './runner.js';
 export {
+  buildOrphanedRunErrorMessage,
   buildStaleRunErrorMessage,
   getRunStaleAfterMs,
+  isRunActive,
   isRunStale,
   reconcileAllStaleRuns,
+  reconcileOrphanedActiveRuns,
   reconcileStaleRun,
 } from './stale-run.js';
 export {

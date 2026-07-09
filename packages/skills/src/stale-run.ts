@@ -27,8 +27,12 @@ export function getRunStaleAfterMs(skillId?: string): number {
   return DEFAULT_STALE_MS;
 }
 
+export function isRunActive(run: RunNode): boolean {
+  return ACTIVE_RUN_STATUSES.has(run.run_status);
+}
+
 export function isRunStale(run: RunNode, nowMs = Date.now()): boolean {
-  if (!ACTIVE_RUN_STATUSES.has(run.run_status)) return false;
+  if (!isRunActive(run)) return false;
   if (!run.started_at) return false;
 
   const startedMs = Date.parse(run.started_at);
@@ -39,10 +43,14 @@ export function isRunStale(run: RunNode, nowMs = Date.now()): boolean {
 
 export function buildStaleRunErrorMessage(skillId?: string): string {
   const limitMinutes = Math.round(getRunStaleAfterMs(skillId) / 60_000);
-  return `Run exceeded maximum duration (${limitMinutes}m) with no completion recorded — likely interrupted while the provider was busy or the server restarted.`;
+  return `Run exceeded maximum duration (${limitMinutes}m) with no completion recorded — the skill handler likely hung (provider stall) while the server stayed up.`;
 }
 
-async function failStaleRunNode(run: RunNode, completedAt: string, error: string): Promise<void> {
+export function buildOrphanedRunErrorMessage(): string {
+  return 'Run aborted: server restarted while this skill was still in progress (in-memory work does not survive restarts).';
+}
+
+async function failActiveRunNode(run: RunNode, completedAt: string, error: string): Promise<void> {
   const skillName = run.skill_id ?? 'unknown-skill';
   const runPath = getNodeFilePath('run', run.id);
 
@@ -70,7 +78,7 @@ async function failStaleRunNode(run: RunNode, completedAt: string, error: string
         ...current.decisions,
         {
           type: 'reject' as const,
-          reason: 'Run was marked failed after exceeding the maximum active duration.',
+          reason: 'Run was marked failed after the skill handler stopped without completing.',
         },
       ],
       events: [
@@ -92,21 +100,43 @@ async function failStaleRunNode(run: RunNode, completedAt: string, error: string
   });
 }
 
+async function rereadRun(runId: string): Promise<RunNode> {
+  const runPath = getNodeFilePath('run', runId);
+  const updated = await readNode(runPath);
+  if (updated.type !== 'run') {
+    throw new Error(`Expected run node after reconciliation: ${runId}`);
+  }
+  return updated;
+}
+
 export async function reconcileStaleRun(run: RunNode): Promise<RunNode> {
   if (!isRunStale(run)) return run;
 
   const completedAt = formatIsoUtcSeconds(new Date());
   const error = buildStaleRunErrorMessage(run.skill_id);
 
-  await failStaleRunNode(run, completedAt, error);
+  await failActiveRunNode(run, completedAt, error);
+  return rereadRun(run.id);
+}
 
-  const runPath = getNodeFilePath('run', run.id);
-  const updated = await readNode(runPath);
-  if (updated.type !== 'run') {
-    throw new Error(`Expected run node after stale reconciliation: ${run.id}`);
+/**
+ * Fail every still-active RunNode. Call on server boot: LLAAB has no background workers, so any
+ * `pending`/`running` run left on disk after a restart is orphaned in-memory work.
+ */
+export async function reconcileOrphanedActiveRuns(): Promise<number> {
+  const all = await listNodes({ type: 'run' });
+  const completedAt = formatIsoUtcSeconds(new Date());
+  const error = buildOrphanedRunErrorMessage();
+  let reconciled = 0;
+
+  for (const node of all) {
+    if (node.type !== 'run') continue;
+    if (!isRunActive(node)) continue;
+    await failActiveRunNode(node, completedAt, error);
+    reconciled += 1;
   }
 
-  return updated;
+  return reconciled;
 }
 
 export async function reconcileAllStaleRuns(): Promise<number> {

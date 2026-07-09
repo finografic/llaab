@@ -1,4 +1,4 @@
-import { reconcileAllStaleRuns } from '@llaab/skills';
+import { reconcileOrphanedActiveRuns } from '@llaab/skills';
 
 import { pc } from './utils/picocolors.js';
 
@@ -18,9 +18,10 @@ const LONG_RUNNING_PATHS = [
 
 console.log(pc.bold(`@llaab/server`) + pc.gray(` starting on port ${port}…`));
 
-void reconcileAllStaleRuns().then((count) => {
+// Any pending/running RunNode on disk after boot is orphaned — handlers live only in-process.
+void reconcileOrphanedActiveRuns().then((count) => {
   if (count > 0) {
-    console.log(pc.yellow(`Reconciled ${count} stale run${count === 1 ? '' : 's'}.`));
+    console.log(pc.yellow(`Failed ${count} orphaned active run${count === 1 ? '' : 's'} after restart.`));
   }
 });
 
