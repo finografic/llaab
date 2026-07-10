@@ -1,10 +1,12 @@
-import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, MagnifyingGlassIcon } from '@llaab/icons';
+import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from '@llaab/icons';
 import { cn } from '@llaab/ui/lib/utils';
 import { PackageCard } from 'components/PackageCard/PackageCard';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Button } from 'components/ui/button';
-import { InputGroup, InputGroupAddon, InputGroupInput } from 'components/ui/input-group';
+import { Col, Row } from 'components/ui/grid';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/ui/tabs';
+import { RegistryAddPinForm } from 'forms/RegistryAddPinForm/RegistryAddPinForm';
+import { RegistrySearchCard } from 'forms/RegistryAddPinForm/RegistrySearchCard';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import { useNpmSearch, usePinnedLibraries } from 'queries/registry';
@@ -152,9 +154,6 @@ function SortHeaderButton({
 }
 
 function LibraryResultsPanel({
-  query,
-  onQueryChange,
-  placeholder,
   countLabel,
   isLoading,
   loadingLabel,
@@ -163,12 +162,8 @@ function LibraryResultsPanel({
   results,
   sort,
   onSort,
-  autoFocus,
   showTypesStatus = false,
 }: {
-  query: string;
-  onQueryChange: (value: string) => void;
-  placeholder: string;
   countLabel: string;
   isLoading: boolean;
   loadingLabel: string;
@@ -177,34 +172,12 @@ function LibraryResultsPanel({
   results: LibraryListItem[];
   sort: SortState | null;
   onSort: (column: SortColumn) => void;
-  autoFocus?: boolean;
   /** Pinned tab only — Search omits so npm hits stay undistorted. */
   showTypesStatus?: boolean;
 }) {
   return (
     <div className={styles.tabPanel}>
       <p className={styles.packageCount}>{countLabel}</p>
-
-      <div className={styles.searchRow}>
-        <InputGroup
-          className={cn(
-            styles.searchGroup,
-            'has-[[data-slot=input-group-control]:focus-visible]:ring-0',
-            'has-[[data-slot=input-group-control]:focus-visible]:border-ring',
-          )}
-        >
-          <InputGroupAddon align="inline-start" className={styles.searchIconSlot}>
-            <MagnifyingGlassIcon className={styles.searchIcon} aria-hidden />
-          </InputGroupAddon>
-          <InputGroupInput
-            className={styles.searchInput}
-            placeholder={placeholder}
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            autoFocus={autoFocus}
-          />
-        </InputGroup>
-      </div>
 
       {isLoading && <p className={styles.empty}>{loadingLabel}</p>}
 
@@ -328,26 +301,52 @@ export function RegistrySearchPage() {
   const searchCountLabel =
     searchData != null ? `${searchData.total.toLocaleString()} packages found` : '\u00a0';
 
+  const showSearch = tab === 'search' || pinsLoading || pins.length > 0;
+  const searchResultCount =
+    tab === 'pinned'
+      ? pinsLoading
+        ? null
+        : pinnedResults.length
+      : searchLoading
+        ? null
+        : (searchData?.total ?? null);
+
   return (
-    <PageLayout hero={<PageHero eyebrow="Registry" title="Libraries" />}>
+    <PageLayout hero={<PageHero eyebrow="Registry" title="Packages" />}>
       <PageList width="wide">
+        <Row className={styles.toolbarRow} align="stretch">
+          {showSearch ? (
+            <Col xs={12} md={6} className={styles.toolbarCol}>
+              <RegistrySearchCard
+                kind="packages"
+                tab={tab}
+                query={query}
+                onQueryChange={setQuery}
+                resultCount={searchResultCount}
+                isLoading={tab === 'search' ? searchLoading : pinsLoading}
+                autoFocus
+              />
+            </Col>
+          ) : null}
+          <Col xs={12} md={showSearch ? 6 : 12} className={styles.toolbarCol}>
+            <RegistryAddPinForm />
+          </Col>
+        </Row>
+
         <Tabs value={tab} onValueChange={handleTabChange} className={styles.tabs}>
           <TabsList>
             <TabsTrigger value="pinned">Pinned</TabsTrigger>
-            <TabsTrigger value="search">Search</TabsTrigger>
+            <TabsTrigger value="search">Search results</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pinned" className={styles.tabsContent}>
             <LibraryResultsPanel
-              query={query}
-              onQueryChange={setQuery}
-              placeholder="Filter pinned packages…"
               countLabel={pinsLoading ? '\u00a0' : pinnedCountLabel}
               isLoading={pinsLoading}
               loadingLabel="Loading pinned packages…"
               emptyIdle={
                 !pinsLoading && pins.length === 0
-                  ? 'No pinned packages yet. Switch to Search and pin favourites.'
+                  ? 'No pinned packages yet. Drop an npm URL above, or switch to Search.'
                   : null
               }
               emptyNoMatch={
@@ -358,16 +357,12 @@ export function RegistrySearchPage() {
               results={pinnedResults}
               sort={sort}
               onSort={handleSort}
-              autoFocus
               showTypesStatus
             />
           </TabsContent>
 
           <TabsContent value="search" className={styles.tabsContent}>
             <LibraryResultsPanel
-              query={query}
-              onQueryChange={setQuery}
-              placeholder="Search npm packages…"
               countLabel={searchCountLabel}
               isLoading={searchLoading}
               loadingLabel="Searching…"

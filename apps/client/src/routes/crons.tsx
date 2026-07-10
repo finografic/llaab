@@ -86,7 +86,7 @@ function CronFrequencyInputs({ value, onChange }: { value: string; onChange: (va
       <div className="flex flex-wrap gap-2">
         {CRON_PARTS.map((part, index) => (
           <label key={part.key} className="grid gap-1">
-            <span className="text-xs text-muted-foreground">{part.label}</span>
+            <span className="text-xs text-[color:var(--text-muted)]">{part.label}</span>
             <Input
               className="w-16 text-center font-mono"
               value={parts[index] === '*' ? '' : parts[index]}

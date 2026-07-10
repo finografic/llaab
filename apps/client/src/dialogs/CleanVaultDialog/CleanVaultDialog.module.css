@@ -12,7 +12,6 @@
 
 .fieldLabel {
   font-size: var(--text-sm);
-  color: var(--text-muted);
 }
 
 .hoursInputRow {

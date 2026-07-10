@@ -12,6 +12,20 @@
   flex-direction: column;
 }
 
+.toolbarRow {
+  margin-bottom: var(--space-4);
+}
+
+.toolbarCol {
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbarCol > * {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
 .packageCount {
   display: block;
   min-height: 1.5em;
@@ -25,7 +39,9 @@
 .searchRow {
   display: flex;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 0;
+  height: 100%;
+  align-items: flex-start;
 }
 
 .searchGroup {

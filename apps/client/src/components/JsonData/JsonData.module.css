@@ -51,6 +51,6 @@
 
 .toggleLabel {
   font-size: var(--text-sm);
-  color: var(--text-faint);
+  color: var(--text-muted);
   cursor: pointer;
 }
