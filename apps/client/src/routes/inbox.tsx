@@ -31,6 +31,8 @@ import { usePageTitle } from 'lib/use-page-title';
 
 import styles from './inbox.module.css';
 
+const ACTION_BACKED_ROUTE_KINDS = new Set(['youtube_url', 'npm_package', 'github_repo']);
+
 export function InboxPage() {
   usePageTitle('Inbox');
 
@@ -57,6 +59,16 @@ export function InboxPage() {
   const reviewedVisible = filteredCaptures.filter(
     (capture) => getInboxReviewState(capture.node) === 'reviewed',
   );
+  const newVisibleCount = filteredCaptures.filter(
+    (capture) => getInboxReviewState(capture.node) === 'new',
+  ).length;
+  const attentionVisibleCount = filteredCaptures.filter(
+    (capture) =>
+      capture.malformed || capture.routeKind === 'raw' || getInboxReviewState(capture.node) === 'failed',
+  ).length;
+  const actionBackedVisibleCount = filteredCaptures.filter((capture) =>
+    ACTION_BACKED_ROUTE_KINDS.has(capture.routeKind),
+  ).length;
 
   const archiveReviewed = async () => {
     try {
@@ -120,6 +132,25 @@ export function InboxPage() {
             setSearchParams(inboxFiltersToSearchParams(next), { replace: true });
           }}
         />
+
+        <div className={styles.summaryGrid} aria-label="Inbox summary">
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryValue}>{filteredCaptures.length}</span>
+            <span className={styles.summaryLabel}>Visible</span>
+          </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryValue}>{newVisibleCount}</span>
+            <span className={styles.summaryLabel}>New</span>
+          </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryValue}>{attentionVisibleCount}</span>
+            <span className={styles.summaryLabel}>Attention</span>
+          </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryValue}>{actionBackedVisibleCount}</span>
+            <span className={styles.summaryLabel}>Action-backed</span>
+          </div>
+        </div>
 
         {groups.map((group) => (
           <section key={group.key} className={styles.group}>

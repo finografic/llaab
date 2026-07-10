@@ -229,10 +229,10 @@ export function routeHermesInboxText(rawText: string): HermesInboxRoute {
   if (githubRepo) {
     return {
       kind: 'github_repo',
-      confidence: 0.88,
-      action: 'capture_web_link',
+      confidence: 0.95,
+      action: 'pin_repository',
       payload: githubRepo,
-      reason: 'URL matches a GitHub repository.',
+      reason: 'URL matches a GitHub repository and should be pinned.',
     };
   }
 

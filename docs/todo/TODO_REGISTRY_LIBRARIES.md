@@ -172,7 +172,7 @@ Add Registry section (between Vault and Pipeline):
   id: 'registry',
   label: 'Registry',
   items: [
-    { label: 'Libraries', description: 'Search and browse npm packages', href: '/registry', live: true },
+    { label: 'Libraries', description: 'Search and browse npm packages', href: '/registry/packages', live: true },
     { label: 'Pinned', description: 'Your saved library collection', href: '/registry/pinned', live: true },
   ],
 },

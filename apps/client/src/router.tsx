@@ -90,6 +90,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'registry',
+        element: <Navigate to="/registry/packages" replace />,
+      },
+      {
+        path: 'registry/packages',
         element: lazyElement(RegistrySearchPage),
         handle: { title: 'Library Registry' } satisfies RouteHandle,
       },

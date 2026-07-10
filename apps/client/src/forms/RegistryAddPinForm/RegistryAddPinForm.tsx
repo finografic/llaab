@@ -81,7 +81,7 @@ export function RegistryAddPinForm() {
         toast.success(`Pinned ${name}`);
         setUrl('');
         setError(null);
-        void navigate('/registry');
+        void navigate('/registry/packages');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to pin package.');
       }

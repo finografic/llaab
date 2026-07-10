@@ -29,6 +29,15 @@ describe('createHermesInboxToolCall', () => {
     });
   });
 
+  it('maps GitHub repository routes to the repository pin tool', () => {
+    const route = routeHermesInboxText('https://github.com/finografic/LLAAB');
+
+    expect(createHermesInboxToolCall(route)).toEqual({
+      name: 'vault_pin_repository',
+      arguments: { fullName: 'finografic/LLAAB' },
+    });
+  });
+
   it('maps command candidates to safe raw inbox capture', () => {
     const route = routeHermesInboxText('npx shadcn@latest add button');
 
@@ -110,16 +119,20 @@ describe('createHermesInboxReceipt', () => {
     );
   });
 
-  it('formats route-specific web link receipts', () => {
+  it('formats GitHub repository pin receipts', () => {
     const githubRoute = routeHermesInboxText('https://github.com/finografic/LLAAB');
+
+    expect(
+      createHermesInboxReceipt(githubRoute, { status: 'pinned', target_label: 'finografic/LLAAB' }),
+    ).toEqual({
+      status: 'pinned',
+      text: '✅ Pinned GitHub repo: finografic/LLAAB',
+    });
+  });
+
+  it('formats route-specific web link receipts', () => {
     const docsRoute = routeHermesInboxText('docs: https://ui.shadcn.com/docs/installation/vite');
 
-    expect(createHermesInboxReceipt(githubRoute, { status: 'saved', target_id: 'idea.github-repo' })).toEqual(
-      {
-        status: 'saved',
-        text: '✅ Saved GitHub repo: idea.github-repo',
-      },
-    );
     expect(createHermesInboxReceipt(docsRoute, { status: 'saved', target_id: 'idea.docs-link' })).toEqual({
       status: 'saved',
       text: '✅ Saved docs link: idea.docs-link',

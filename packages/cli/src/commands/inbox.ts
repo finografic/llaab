@@ -153,6 +153,8 @@ async function executeInboxToolCall(toolCall: HermesInboxToolCall): Promise<Herm
       return executeYouTubeIngest(toolCall);
     case 'vault_pin_library':
       return executeLibraryPin(toolCall);
+    case 'vault_pin_repository':
+      return executeRepositoryPin(toolCall);
     case 'vault_capture_todo':
     case 'vault_capture_web_link':
     case 'vault_capture_attachment':
@@ -193,6 +195,24 @@ async function executeLibraryPin(toolCall: HermesInboxToolCall): Promise<HermesI
 
   const pin = asRecord(result.data['pin']);
   const pinnedName = typeof pin?.['name'] === 'string' ? pin['name'] : name;
+
+  return { status: 'pinned', target_label: pinnedName };
+}
+
+async function executeRepositoryPin(toolCall: HermesInboxToolCall): Promise<HermesInboxExecutionResult> {
+  const fullName = stringArg(toolCall, 'fullName');
+  const result = await postJsonViaApi('/api/registry/repo-pins', { fullName });
+
+  if (!result.ok) {
+    if (result.status === 409) {
+      return { status: 'pinned', target_label: `${fullName} (already pinned)` };
+    }
+
+    return { status: 'failed', error: result.error };
+  }
+
+  const pin = asRecord(result.data['pin']);
+  const pinnedName = typeof pin?.['fullName'] === 'string' ? pin['fullName'] : fullName;
 
   return { status: 'pinned', target_label: pinnedName };
 }
@@ -267,6 +287,7 @@ function buildIdeaCapture(toolCall: HermesInboxToolCall): { title: string; body:
       });
     case 'vault_ingest_youtube':
     case 'vault_pin_library':
+    case 'vault_pin_repository':
       throw new Error(`Unsupported idea capture tool: ${toolCall.name}`);
   }
 }

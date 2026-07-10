@@ -27,6 +27,11 @@ export function createHermesInboxToolCall(
         name: 'vault_pin_library',
         arguments: { name: stringPayload(route, 'package_name') },
       };
+    case 'pin_repository':
+      return {
+        name: 'vault_pin_repository',
+        arguments: { fullName: repoFullName(route) },
+      };
     case 'capture_todo':
       return {
         name: 'vault_capture_todo',
@@ -98,6 +103,11 @@ export function createHermesInboxReceipt(
       return {
         status: 'pinned',
         text: withTarget('✅ Pinned npm package', target ?? stringPayload(route, 'package_name')),
+      };
+    case 'pin_repository':
+      return {
+        status: 'pinned',
+        text: withTarget('✅ Pinned GitHub repo', target ?? repoFullName(route)),
       };
     case 'capture_todo':
       return { status: 'captured', text: withTarget('✅ Captured todo', target) };
@@ -176,6 +186,13 @@ function stringPayload(route: HermesInboxRoute, key: string): string {
   return typeof value === 'string' ? value : '';
 }
 
+function repoFullName(route: HermesInboxRoute): string {
+  const owner = stringPayload(route, 'owner');
+  const repo = stringPayload(route, 'repo');
+
+  return owner && repo ? `${owner}/${repo}` : '';
+}
+
 function withTarget(prefix: string, target: string | undefined): string {
   return target ? `${prefix}: ${target}` : prefix;
 }
@@ -188,6 +205,8 @@ function failedReceiptText(route: HermesInboxRoute, error: string | undefined): 
       return `❌ Failed YouTube ingest: ${detail}`;
     case 'pin_library':
       return `❌ Failed npm package pin: ${detail}`;
+    case 'pin_repository':
+      return `❌ Failed GitHub repo pin: ${detail}`;
     case 'capture_todo':
       return `❌ Failed todo capture: ${detail}`;
     case 'capture_web_link':

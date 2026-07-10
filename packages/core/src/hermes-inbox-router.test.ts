@@ -70,10 +70,10 @@ describe('routeHermesInboxText', () => {
     });
   });
 
-  it('routes GitHub repo URLs as web links with repo metadata', () => {
+  it('routes GitHub repo URLs to repository pinning', () => {
     expect(routeHermesInboxText('https://github.com/finografic/LLAAB')).toMatchObject({
       kind: 'github_repo',
-      action: 'capture_web_link',
+      action: 'pin_repository',
       payload: {
         owner: 'finografic',
         repo: 'LLAAB',

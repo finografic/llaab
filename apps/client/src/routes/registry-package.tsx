@@ -87,7 +87,7 @@ export function RegistryPackagePage() {
   const unpinLibrary = useUnpinLibrary();
 
   usePageTitle(name || 'Package');
-  useSecondaryBackAction('/registry', 'Back to search');
+  useSecondaryBackAction('/registry/packages', 'Back to search');
 
   async function handlePinToggle() {
     if (isPinned) {

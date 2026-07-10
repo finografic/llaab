@@ -61,7 +61,7 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
       {
         label: 'Packages',
         description: 'Pinned favourites and npm package search',
-        href: '/registry',
+        href: '/registry/packages',
         live: true,
       },
       {

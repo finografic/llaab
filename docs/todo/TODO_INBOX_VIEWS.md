@@ -1,7 +1,7 @@
 # TODO — Inbox Views and Review Workflows
 
 > **Status:** Phases 0–8 complete for MVP inbox views (2026-07-09). Remaining deferred items:
-> code-block URL extraction, snippet/docs-attachment promote destinations, pin/run provenance
+> code-block URL extraction, snippet/docs-attachment promote destinations, registry/run provenance
 > cross-links.
 
 ## Goal
@@ -80,32 +80,54 @@ Purpose: make the UI nouns precise before building routes.
 
 Entry path: Telegram/manual → `lab inbox` / MCP → `routeHermesInboxItem` → tool call → LLAAB API.
 
-| `HermesInboxRouteKind` | Tool                       | API                        | Stored as                       | Tags (beyond `hermes`, `inbox`)  | Body / payload notes                                     |
-| ---------------------- | -------------------------- | -------------------------- | ------------------------------- | -------------------------------- | -------------------------------------------------------- |
-| `youtube_url`          | `vault_ingest_youtube`     | `POST /api/ingest/youtube` | `transcript` (+ run)            | (ingest tags)                    | No Hermes body JSON; receipt status `queued`             |
-| `npm_package`          | `vault_pin_library`        | `POST /api/registry/pins`  | Registry pin (not a vault node) | n/a                              | Pin name from package; status `pinned`                   |
-| `todo`                 | `vault_capture_todo`       | `POST /api/vault/nodes`    | `idea` at `vault/nodes/ideas/`  | `inbox:todo`                     | Body JSON `route_kind`, `source`, optional `payload`     |
-| `docs_link`            | `vault_capture_web_link`   | same                       | `idea`                          | `inbox:link`, `inbox:docs`       | `payload.url` (+ label)                                  |
-| `post_link`            | same                       | same                       | `idea`                          | `inbox:link`, `inbox:post`       | same                                                     |
-| `code_link`            | same                       | same                       | `idea`                          | `inbox:link`, `inbox:code`       | same                                                     |
-| `github_repo`          | same                       | same                       | `idea`                          | `inbox:link`, `inbox:github`     | `payload.owner` / `repo` / `url`                         |
-| `web_link`             | same                       | same                       | `idea`                          | `inbox:link`                     | `payload.url`                                            |
-| `image`                | `vault_capture_attachment` | same                       | `idea`                          | `inbox:image`                    | Binary stays in Hermes media cache; `local_path` in JSON |
-| `code_attachment`      | same                       | same                       | `idea`                          | `inbox:attachment`, `inbox:code` | same                                                     |
-| `docs_attachment`      | same                       | same                       | `idea`                          | `inbox:attachment`, `inbox:docs` | same                                                     |
-| `attachment`           | same                       | same                       | `idea`                          | `inbox:attachment`               | same                                                     |
-| `command_candidate`    | `vault_capture_inbox`      | same                       | `idea`                          | `inbox:raw` (today)              | `payload.command`; tag facet is coarse — UI uses body    |
-| `code_snippet`         | same                       | same                       | `idea`                          | `inbox:code`, `inbox:snippet`    | raw text + optional language hints in payload            |
-| `raw`                  | same                       | same                       | `idea`                          | `inbox:raw`                      | fallback capture                                         |
+| `HermesInboxRouteKind` | Tool                       | API                            | Stored as                                  | Tags (beyond `hermes`, `inbox`)  | Body / payload notes                                     |
+| ---------------------- | -------------------------- | ------------------------------ | ------------------------------------------ | -------------------------------- | -------------------------------------------------------- |
+| `youtube_url`          | `vault_ingest_youtube`     | `POST /api/ingest/youtube`     | `transcript` (+ run)                       | (ingest tags)                    | No Hermes body JSON; receipt status `queued`             |
+| `npm_package`          | `vault_pin_library`        | `POST /api/registry/pins`      | Registry pin (not a vault node)            | n/a                              | Pin name from package; status `pinned`                   |
+| `todo`                 | `vault_capture_todo`       | `POST /api/vault/nodes`        | `idea` at `vault/nodes/ideas/`             | `inbox:todo`                     | Body JSON `route_kind`, `source`, optional `payload`     |
+| `docs_link`            | `vault_capture_web_link`   | same                           | `idea`                                     | `inbox:link`, `inbox:docs`       | `payload.url` (+ label)                                  |
+| `post_link`            | same                       | same                           | `idea`                                     | `inbox:link`, `inbox:post`       | same                                                     |
+| `code_link`            | same                       | same                           | `idea`                                     | `inbox:link`, `inbox:code`       | same                                                     |
+| `github_repo`          | `vault_pin_repository`     | `POST /api/registry/repo-pins` | Registry repository pin (not a vault node) | n/a                              | Pin full name from `payload.owner` / `repo`              |
+| `web_link`             | same                       | same                           | `idea`                                     | `inbox:link`                     | `payload.url`                                            |
+| `image`                | `vault_capture_attachment` | same                           | `idea`                                     | `inbox:image`                    | Binary stays in Hermes media cache; `local_path` in JSON |
+| `code_attachment`      | same                       | same                           | `idea`                                     | `inbox:attachment`, `inbox:code` | same                                                     |
+| `docs_attachment`      | same                       | same                           | `idea`                                     | `inbox:attachment`, `inbox:docs` | same                                                     |
+| `attachment`           | same                       | same                           | `idea`                                     | `inbox:attachment`               | same                                                     |
+| `command_candidate`    | `vault_capture_inbox`      | same                           | `idea`                                     | `inbox:raw` (today)              | `payload.command`; tag facet is coarse — UI uses body    |
+| `code_snippet`         | same                       | same                           | `idea`                                     | `inbox:code`, `inbox:snippet`    | raw text + optional language hints in payload            |
+| `raw`                  | same                       | same                           | `idea`                                     | `inbox:raw`                      | fallback capture                                         |
 
 Provenance fields live in a fenced JSON block in the idea body (`route_kind`, `source.platform`,
 `payload`) — not YAML frontmatter. `source.platform` is `telegram` \| `discord` \| `manual` \|
 `unknown`. Execution receipt status (`queued` / `saved` / `pinned` / `failed`) is not persisted on
-the node today.
+the node today. Registry-backed route kinds (`npm_package`, `github_repo`) currently create pins
+instead of vault capture nodes, so `/vault/inbox` only shows them after separate provenance
+cross-linking exists.
 
 List API already supports inbox filtering: `GET /api/vault/nodes?tags=hermes,inbox` (and optional
 `type`, `search`, `status`). Client `useVaultNodes` does not yet pass `tags`/`search` — Phase 1
 extends that.
+
+### Route action coverage (2026-07-10)
+
+| Route kind          | Immediate action        | Current status | Follow-up                              |
+| ------------------- | ----------------------- | -------------- | -------------------------------------- |
+| `youtube_url`       | Start YouTube ingest    | Active         | Persist inbox → run provenance         |
+| `npm_package`       | Pin package registry    | Active         | Persist inbox → package pin provenance |
+| `github_repo`       | Pin repository registry | Active         | Persist inbox → repo pin provenance    |
+| `todo`              | Save inbox capture      | Active         | Promote to task/reference later        |
+| `docs_link`         | Save inbox capture      | Active         | Add docs extraction workflow           |
+| `post_link`         | Save inbox capture      | Active         | Add article extraction workflow        |
+| `code_link`         | Save inbox capture      | Active         | Extract first useful code block        |
+| `web_link`          | Save inbox capture      | Active         | Improve deterministic categorization   |
+| `image`             | Save media capture      | Active         | Add vault asset pipeline               |
+| `code_attachment`   | Save media capture      | Active         | Promote snippets/references            |
+| `docs_attachment`   | Save media capture      | Active         | Promote docs/skills/prompts            |
+| `attachment`        | Save media capture      | Active         | Add attachment subtype routing         |
+| `command_candidate` | Save safe reference     | Active         | Promote to command reference/skill     |
+| `code_snippet`      | Save snippet capture    | Active         | Promote to knowledge/skill/reference   |
+| `raw`               | Save fallback capture   | Active         | Review and reroute manually            |
 
 ### Schema decision (2026-07-09)
 
@@ -282,7 +304,53 @@ Purpose: connect inbox captures to the larger vault/knowledge lifecycle.
 
 Exit criteria: inbox captures can mature into durable LLAAB knowledge without losing provenance.
 
-## Phase 7 — Navigation and Information Architecture
+## Phase 7 — Registry Pins as Knowledge Resources
+
+Purpose: make curated package/repository pins available to agents as knowledge, not just UI
+bookmarks.
+
+Pinned packages and repositories are persistent registry records today. That is useful for manual
+lookup, but not enough for LLAAB's knowledge loop: agents should be able to discover and recommend
+pinned resources when they relate to extracted ideas, transcripts, topics, skills, or projects.
+
+Target model:
+
+```text
+registry pin
+  → resource node projection
+  → inbox provenance / pin rationale
+  → tags, topics, and relationships
+  → retrievable agent/LLM context
+```
+
+- [ ] Treat registry pins as curated resource signals, not merely bookmarks.
+- [ ] Create or sync a `ResourceNode` for each pinned npm package.
+- [ ] Create or sync a `ResourceNode` for each pinned GitHub repository.
+- [ ] Keep the registry JSON stores as the fast pin/unpin source of truth for UI state.
+- [ ] Make projected resource nodes the knowledge-graph participant for retrieval and relationships.
+- [ ] Store package/repo metadata on projected resource nodes: name/full name, URL, description,
+      ecosystem/language, version/stars/downloads, license, owner/author, and last refreshed time.
+- [ ] Preserve pin provenance when available: originating inbox item, source platform, message id,
+      timestamp, route kind, and receipt/action result.
+- [ ] Add an explicit pin rationale field or body section for why this package/repo matters.
+- [ ] Link projected resources back to the registry pin identity so unpin/update flows can find them.
+- [ ] Add tags/topics to projected resources through deterministic metadata first, then optional
+      AI-assisted enrichment.
+- [ ] Connect projected resources to related ideas, transcripts, canonical ideas, skills, agents,
+      and topic clusters.
+- [ ] Include projected pinned resources in agent/LLM retrieval context.
+- [ ] Add retrieval tests or smoke checks proving a topic with related ideas can surface a pinned
+      package/repository without the user naming it.
+- [ ] Decide whether projected resources are updated automatically on pin refresh or via an explicit
+      one-shot sync action.
+- [ ] Add UI cross-links:
+      registry pin → resource node; resource node → registry detail; inbox item → pin/resource.
+- [ ] Show projection status in registry views: `resource linked`, `needs sync`, `missing resource`.
+
+Exit criteria: a pinned package/repository can be recommended by LLAAB because it is connected to
+the same knowledge graph as ideas, transcripts, topics, and skills.
+
+## Phase 8 — Navigation and Information Architecture
 
 Purpose: make the new views discoverable without cluttering the app.
 
@@ -300,7 +368,7 @@ Purpose: make the new views discoverable without cluttering the app.
 
 Exit criteria: inbox review is easy to reach and connected to existing LLAAB surfaces.
 
-## Phase 8 — Validation
+## Phase 9 — Validation
 
 Purpose: prove that the UI can handle current and future captures safely.
 

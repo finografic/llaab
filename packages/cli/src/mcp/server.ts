@@ -302,6 +302,41 @@ export function createMcpServer(): McpServer {
     },
   );
 
+  // ── Tool: pin GitHub repository ───────────────────────────────────────────
+
+  const vaultPinRepositorySchema = z.object({
+    fullName: z
+      .string()
+      .trim()
+      .min(3)
+      .regex(/^[^/]+\/[^/]+$/u)
+      .describe('GitHub repo name, e.g. owner/repo'),
+  });
+
+  server.registerTool(
+    'vault_pin_repository',
+    {
+      description: 'Pin a GitHub repository in the LLAAB registry repository list.',
+      inputSchema: vaultPinRepositorySchema,
+    },
+    async (args: z.infer<typeof vaultPinRepositorySchema>) => {
+      const result = await postJsonViaApi('/api/registry/repo-pins', { fullName: args.fullName });
+
+      if (!result.ok) {
+        if (result.status === 409) {
+          return textContent(`Pinned repository ${args.fullName} (already pinned)`);
+        }
+
+        return errorText(result.error);
+      }
+
+      const pin = asRecord(result.data['pin']);
+      const fullName = typeof pin?.['fullName'] === 'string' ? pin['fullName'] : args.fullName;
+
+      return textContent(`Pinned repository ${fullName}`);
+    },
+  );
+
   // ── Tool: list / search nodes ─────────────────────────────────────────────
 
   const vaultListSchema = z.object({
