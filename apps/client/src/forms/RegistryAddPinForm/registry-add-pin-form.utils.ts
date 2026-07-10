@@ -1,5 +1,8 @@
 import { extractDroppedUrl, isHttpUrl } from '../IngestForm/ingest-form.utils';
 
+/** Below this pin count, typing in the search field switches to Search results. */
+export const MIN_PINNED = 10;
+
 export type RegistryUrlKind = 'library' | 'repository' | 'unknown';
 
 const NPM_PACKAGE_PATH = /^\/package\/(@[^/]+\/[^/]+|[^/]+)\/?$/i;

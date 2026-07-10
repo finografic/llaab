@@ -26,7 +26,16 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
+  min-width: 0;
+}
+
+/* Cap title copy width; .main stays flex:1 so UPDATED/STARS headers stay aligned. */
+.titleBlock {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  width: 100%;
+  max-width: 768px;
   min-width: 0;
 }
 

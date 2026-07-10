@@ -2,6 +2,7 @@ import { MagnifyingGlassIcon } from '@llaab/icons';
 import { cn } from '@llaab/ui/lib/utils';
 import { InputGroup, InputGroupAddon, InputGroupInput } from 'components/ui/input-group';
 import { Label } from 'components/ui/label';
+import { siGithub, siNpm } from 'simple-icons';
 
 import styles from './registry-toolbar-card.module.css';
 
@@ -63,6 +64,16 @@ function resolveFeedback(args: {
   return { text: '', tone: 'muted' };
 }
 
+function BrandIcon({ kind }: { kind: RegistrySearchKind }) {
+  const icon = kind === 'packages' ? siNpm : siGithub;
+  return (
+    <svg role="img" viewBox="0 0 24 24" className={styles.titleBrandIcon} aria-hidden>
+      <title>{icon.title}</title>
+      <path fill="currentColor" d={icon.path} />
+    </svg>
+  );
+}
+
 export function RegistrySearchCard({
   kind,
   tab,
@@ -72,7 +83,7 @@ export function RegistrySearchCard({
   isLoading = false,
   autoFocus = false,
 }: RegistrySearchCardProps) {
-  const title = kind === 'packages' ? 'Search packages' : 'Search repositories';
+  const title = kind === 'packages' ? 'Search packages' : 'Search Github';
   const inputLabel = kind === 'packages' ? 'Search package name' : 'Search repository name';
   const placeholder =
     tab === 'pinned'
@@ -89,7 +100,10 @@ export function RegistrySearchCard({
 
   return (
     <div className={styles.card}>
-      <h2 className={styles.title}>{title}</h2>
+      <h2 className={styles.title}>
+        <BrandIcon kind={kind} />
+        {title}
+      </h2>
 
       <p
         className={cn(

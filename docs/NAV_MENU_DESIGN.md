@@ -27,11 +27,12 @@
 ## Top-level items
 
 ```
-[LLAAB logo]   Vault   Pipeline   Execute   Models   System
+[LLAAB logo]   Vault   Registry   Pipeline   Execute   Models   System
 ```
 
-`LLAAB` is the brand mark / home link (not a dropdown). The five navigation items each open a
-megamenu panel on hover/click.
+`LLAAB` is the brand mark / home link (not a dropdown). Top-level items each open a
+megamenu panel on **click only** (hover must not open menus). Radix hover is suppressed via
+`onPointerMove` / `onPointerLeave` `preventDefault` on each `NavigationMenuTrigger`.
 
 ---
 
@@ -57,7 +58,23 @@ looking feel without being speculative.
 
 ---
 
-## 2. Pipeline
+## 2. Registry
+
+> Pin and search npm packages and GitHub repositories.
+
+| Label            | Description                                    | Route             | Status |
+| ---------------- | ---------------------------------------------- | ----------------- | ------ |
+| **Packages**     | Pinned favourites and npm package search       | `/registry`       | Live   |
+| **Repositories** | Pinned favourites and GitHub repository search | `/registry/repos` | Live   |
+
+### Design notes
+
+Packages (formerly “Libraries” in the nav) is the npm registry surface. Repositories is the
+GitHub counterpart. Both share pinned/search tabs and the Add New Registry drop-zone toolbar.
+
+---
+
+## 3. Pipeline
 
 > Bring content in and pull structure out — ingestion and extraction.
 
@@ -78,7 +95,7 @@ after model upgrades. The future ingestion types (article, document) align with 
 
 ---
 
-## 3. Execute
+## 4. Execute
 
 > Run skills, inspect traces, and interact with the command bus.
 
@@ -100,7 +117,7 @@ capabilities.
 
 ---
 
-## 4. Models
+## 5. Models
 
 > LLM providers, routing, and execution metadata.
 
@@ -118,7 +135,7 @@ provider interface and capability map exist; the remaining work is route/page im
 
 ---
 
-## 5. System
+## 6. System
 
 > Tooling, diagnostics, and project configuration.
 
@@ -145,6 +162,11 @@ a simple view of the current harness prep pipeline configuration and validation 
 The navigation menu replaces `NavbarVertical` (the current left sidebar). It should be
 **horizontal**, positioned in the header area where `AppHeaderV2` currently lives. The sidebar
 is removed; `AppLayout` simplifies to header + main content area + footer.
+
+### Open behavior
+
+Desktop megamenus open and close on **click** only — never on hover. Click the same trigger
+again (or outside) to close. Mobile continues to use the Sheet + Accordion pattern.
 
 ### Megamenu panel style
 
@@ -182,6 +204,7 @@ The active top-level item is highlighted based on the current route prefix. Rout
 | Top-level | Active when route starts with                    |
 | --------- | ------------------------------------------------ |
 | Vault     | `/vault`                                         |
+| Registry  | `/registry`                                      |
 | Pipeline  | `/ingest`, `/pipeline`                           |
 | Execute   | `/vault/runs`, `/agent`, `/terminal`, `/execute` |
 | Models    | `/llm`                                           |

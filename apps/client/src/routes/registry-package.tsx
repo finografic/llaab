@@ -1,9 +1,12 @@
 import { PageHero } from 'components/PageHero/PageHero';
+import pageHeroStyles from 'components/PageHero/PageHero.module.css';
+import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarContext';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
-import { BookmarkCheckIcon, BookmarkIcon, ArrowLeftIcon } from 'lucide-react';
+import { BookmarkCheckIcon, BookmarkIcon } from 'lucide-react';
 import { useNpmPackage, useIsLibraryPinned, usePinLibrary, useUnpinLibrary } from 'queries/registry';
 import { Link, useParams } from 'react-router-dom';
+import { siNpm } from 'simple-icons';
 import { toast } from 'sonner';
 import type { PackageTypesStatus } from '@llaab/schemas';
 
@@ -13,6 +16,15 @@ import { formatDetailDate } from 'utils/format-date.utils';
 import typescriptDeclarationIcon from '../assets/typescript-declaration.svg';
 import typescriptIcon from '../assets/typescript.svg';
 import styles from './registry-package.module.css';
+
+function NpmTitleIcon() {
+  return (
+    <svg role="img" viewBox="0 0 24 24" className={pageHeroStyles.titlePrefixIcon} aria-hidden>
+      <title>{siNpm.title}</title>
+      <path fill="currentColor" d={siNpm.path} />
+    </svg>
+  );
+}
 
 function TypesStatusIcon({ status }: { status: PackageTypesStatus }) {
   switch (status) {
@@ -75,6 +87,7 @@ export function RegistryPackagePage() {
   const unpinLibrary = useUnpinLibrary();
 
   usePageTitle(name || 'Package');
+  useSecondaryBackAction('/registry', 'Back to search');
 
   async function handlePinToggle() {
     if (isPinned) {
@@ -98,6 +111,7 @@ export function RegistryPackagePage() {
         <PageHero
           eyebrow="Registry"
           title={name}
+          titlePrefix={<NpmTitleIcon />}
           titleAddon={data ? <TypesStatusIcon status={typesStatus} /> : null}
           right={
             <button
@@ -118,12 +132,7 @@ export function RegistryPackagePage() {
         />
       }
     >
-      <PageList width="wide">
-        <Link to="/registry" className={styles.backLink}>
-          <ArrowLeftIcon size={12} aria-hidden />
-          Back to search
-        </Link>
-
+      <PageList width="full">
         {isLoading && <p className={styles.loading}>Loading…</p>}
 
         {!isLoading && data && (

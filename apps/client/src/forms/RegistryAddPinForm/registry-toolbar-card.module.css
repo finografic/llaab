@@ -11,29 +11,19 @@
     linear-gradient(180deg, color-mix(in oklab, var(--surface) 85%, transparent), transparent), var(--surface);
   transition:
     border-color var(--duration) var(--ease),
-    background var(--duration) var(--ease),
-    transform var(--duration) var(--ease),
-    box-shadow var(--duration) var(--ease);
+    border-style var(--duration) var(--ease),
+    background var(--duration) var(--ease);
 }
 
-/* Dashed outline only on the Add card — it is a drop target.
-   Resting border ~white/25 brightness via zinc-600 (not translucent white). */
-.cardDropzone {
-  border-style: dashed;
-  border-color: var(--color-zinc-600, #52525b);
+/* Same element as idle dashed border — only color/style/bg change (no size shift). */
+.card:global(.drop-zone) {
+  border: 1px dashed var(--color-zinc-600, #52525b);
 }
 
-.cardDropzone:hover {
-  border-color: var(--accent);
-}
-
-.cardDropActive,
-.cardDropzone.cardDropActive:hover {
+.card:global(.drop-zone--active) {
   border-color: oklch(0.68 0.2 145);
-  border-style: dotted;
+  border-style: dashed;
   background: color-mix(in oklab, oklch(0.68 0.2 145 / 0.1) 100%, var(--surface));
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 1px oklch(0.68 0.2 145 / 0.25);
 }
 
 .title {
@@ -56,6 +46,7 @@
   height: 1rem;
   flex-shrink: 0;
 }
+
 
 .feedback {
   display: flex;
@@ -124,6 +115,13 @@
   width: 14px;
   height: 14px;
   opacity: 0.55;
+}
+
+.titleBrandIcon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: #fff;
 }
 
 .submitBtn {

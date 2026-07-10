@@ -5,6 +5,7 @@ import { PageHero } from 'components/PageHero/PageHero';
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/ui/tabs';
+import { MIN_PINNED } from 'forms/RegistryAddPinForm/registry-add-pin-form.utils';
 import { RegistryAddPinForm } from 'forms/RegistryAddPinForm/RegistryAddPinForm';
 import { RegistrySearchCard } from 'forms/RegistryAddPinForm/RegistrySearchCard';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
@@ -294,14 +295,27 @@ export function RegistrySearchPage() {
   const pinnedCountLabel =
     pins.length === 0 && !pinsLoading
       ? '0 pinned packages'
-      : `${pinnedResults.length.toLocaleString()} of ${pins.length.toLocaleString()} pinned ${
-          pins.length === 1 ? 'package' : 'packages'
-        }`;
+      : `${pins.length.toLocaleString()} pinned ${pins.length === 1 ? 'package' : 'packages'} total`;
 
   const searchCountLabel =
     searchData != null ? `${searchData.total.toLocaleString()} packages found` : '\u00a0';
 
-  const showSearch = tab === 'search' || pinsLoading || pins.length > 0;
+  function handleQueryChange(value: string) {
+    setQuery(value);
+    if (tab === 'pinned' && !pinsLoading && pins.length < MIN_PINNED && value.trim().length > 0) {
+      // Preserve the typed query — handleTabChange would clear it.
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev);
+          params.set('tab', 'search');
+          return params;
+        },
+        { replace: true },
+      );
+    }
+  }
+
+  const showSearch = true;
   const searchResultCount =
     tab === 'pinned'
       ? pinsLoading
@@ -321,14 +335,14 @@ export function RegistrySearchPage() {
                 kind="packages"
                 tab={tab}
                 query={query}
-                onQueryChange={setQuery}
+                onQueryChange={handleQueryChange}
                 resultCount={searchResultCount}
                 isLoading={tab === 'search' ? searchLoading : pinsLoading}
                 autoFocus
               />
             </Col>
           ) : null}
-          <Col xs={12} md={showSearch ? 6 : 12} className={styles.toolbarCol}>
+          <Col xs={12} md={6} className={styles.toolbarCol}>
             <RegistryAddPinForm />
           </Col>
         </Row>
@@ -346,7 +360,7 @@ export function RegistrySearchPage() {
               loadingLabel="Loading pinned packages…"
               emptyIdle={
                 !pinsLoading && pins.length === 0
-                  ? 'No pinned packages yet. Drop an npm URL above, or switch to Search.'
+                  ? 'No pinned packages yet. Drop an npm URL above, or switch to Search results.'
                   : null
               }
               emptyNoMatch={

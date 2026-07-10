@@ -35,29 +35,14 @@
   flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-4);
-  border: 1px dashed var(--border);
-  border-radius: calc(var(--radius) * 1.25);
   background:
     linear-gradient(180deg, color-mix(in oklab, var(--surface) 85%, transparent), transparent), var(--surface);
-  transition:
-    border-color var(--duration) var(--ease),
-    background var(--duration) var(--ease),
-    transform var(--duration) var(--ease),
-    box-shadow var(--duration) var(--ease);
 }
 
 .ingest-form__stack {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-}
-
-.ingest-form--drop-active {
-  border-color: oklch(0.68 0.2 145);
-  border-style: dotted;
-  background: color-mix(in oklab, oklch(0.68 0.2 145 / 0.1) 100%, var(--surface));
-  transform: translateY(-1px);
-  box-shadow: 0 0 0 1px oklch(0.68 0.2 145 / 0.25);
 }
 
 /* URL input uses monospace — intentional for this form */

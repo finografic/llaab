@@ -164,37 +164,39 @@ function LibraryPackageCard({
     <Link to={`/registry/package/${encodedName}`} className={styles.card}>
       <div className={styles.body}>
         <div className={styles.main}>
-          <div className={styles.header}>
-            <span className={styles.name}>{pkg.name}</span>
-            {typesStatus != null ? <TypesStatusIcon status={typesStatus} /> : null}
+          <div className={styles.titleBlock}>
+            <div className={styles.header}>
+              <span className={styles.name}>{pkg.name}</span>
+              {typesStatus != null ? <TypesStatusIcon status={typesStatus} /> : null}
+            </div>
+
+            {pkg.description ? <p className={styles.description}>{pkg.description}</p> : null}
+
+            {metaParts.length > 0 ? (
+              <div className={styles.meta}>
+                {metaParts.map((part, i) => (
+                  <span key={part.key} className={styles.metaSegment}>
+                    {i > 0 ? (
+                      <span className={styles.middot} aria-hidden>
+                        ·
+                      </span>
+                    ) : null}
+                    {part.node}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            {pkg.keywords && pkg.keywords.length > 0 ? (
+              <div className={styles.tags}>
+                {pkg.keywords.slice(0, 6).map((kw) => (
+                  <span key={kw} className={styles.tag}>
+                    {kw}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
-
-          {pkg.description ? <p className={styles.description}>{pkg.description}</p> : null}
-
-          {metaParts.length > 0 ? (
-            <div className={styles.meta}>
-              {metaParts.map((part, i) => (
-                <span key={part.key} className={styles.metaSegment}>
-                  {i > 0 ? (
-                    <span className={styles.middot} aria-hidden>
-                      ·
-                    </span>
-                  ) : null}
-                  {part.node}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          {pkg.keywords && pkg.keywords.length > 0 ? (
-            <div className={styles.tags}>
-              {pkg.keywords.slice(0, 6).map((kw) => (
-                <span key={kw} className={styles.tag}>
-                  {kw}
-                </span>
-              ))}
-            </div>
-          ) : null}
         </div>
 
         <div className={styles.publishedCol}>
@@ -277,36 +279,38 @@ function RepoPackageCard({ repo }: { repo: GithubRepoSearchItem | RepoMetaRespon
     <Link to={href} className={styles.card}>
       <div className={styles.body}>
         <div className={styles.main}>
-          <div className={styles.header}>
-            <span className={styles.name}>{repo.fullName}</span>
+          <div className={styles.titleBlock}>
+            <div className={styles.header}>
+              <span className={styles.name}>{repo.fullName}</span>
+            </div>
+
+            {repo.description ? <p className={styles.description}>{repo.description}</p> : null}
+
+            {metaParts.length > 0 ? (
+              <div className={styles.meta}>
+                {metaParts.map((part, i) => (
+                  <span key={part.key} className={styles.metaSegment}>
+                    {i > 0 ? (
+                      <span className={styles.middot} aria-hidden>
+                        ·
+                      </span>
+                    ) : null}
+                    {part.node}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            {repo.topics && repo.topics.length > 0 ? (
+              <div className={styles.tags}>
+                {repo.topics.slice(0, 6).map((topic) => (
+                  <span key={topic} className={styles.tag}>
+                    {topic}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
-
-          {repo.description ? <p className={styles.description}>{repo.description}</p> : null}
-
-          {metaParts.length > 0 ? (
-            <div className={styles.meta}>
-              {metaParts.map((part, i) => (
-                <span key={part.key} className={styles.metaSegment}>
-                  {i > 0 ? (
-                    <span className={styles.middot} aria-hidden>
-                      ·
-                    </span>
-                  ) : null}
-                  {part.node}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          {repo.topics && repo.topics.length > 0 ? (
-            <div className={styles.tags}>
-              {repo.topics.slice(0, 6).map((topic) => (
-                <span key={topic} className={styles.tag}>
-                  {topic}
-                </span>
-              ))}
-            </div>
-          ) : null}
         </div>
 
         <div className={styles.publishedCol}>

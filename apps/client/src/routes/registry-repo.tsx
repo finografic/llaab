@@ -1,15 +1,27 @@
 import { PageHero } from 'components/PageHero/PageHero';
+import pageHeroStyles from 'components/PageHero/PageHero.module.css';
+import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarContext';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
-import { BookmarkCheckIcon, BookmarkIcon, ArrowLeftIcon } from 'lucide-react';
+import { BookmarkCheckIcon, BookmarkIcon } from 'lucide-react';
 import { useGithubRepo, useIsRepositoryPinned, usePinRepository, useUnpinRepository } from 'queries/registry';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { siGithub } from 'simple-icons';
 import { toast } from 'sonner';
 
 import { usePageTitle } from 'lib/use-page-title';
 import { formatDetailDate } from 'utils/format-date.utils';
 
 import styles from './registry-repo.module.css';
+
+function GithubTitleIcon() {
+  return (
+    <svg role="img" viewBox="0 0 24 24" className={pageHeroStyles.titlePrefixIcon} aria-hidden>
+      <title>{siGithub.title}</title>
+      <path fill="currentColor" d={siGithub.path} />
+    </svg>
+  );
+}
 
 function fmtCount(n?: number): string {
   if (n == null) return '—';
@@ -31,6 +43,7 @@ export function RegistryRepoPage() {
   const unpinRepository = useUnpinRepository();
 
   usePageTitle(fullName || 'Repository');
+  useSecondaryBackAction('/registry/repos', 'Back to search');
 
   async function handlePinToggle() {
     if (isPinned) {
@@ -50,6 +63,7 @@ export function RegistryRepoPage() {
         <PageHero
           eyebrow="Registry"
           title={fullName}
+          titlePrefix={<GithubTitleIcon />}
           right={
             <button
               type="button"
@@ -69,29 +83,12 @@ export function RegistryRepoPage() {
         />
       }
     >
-      <PageList width="wide">
-        <Link to="/registry/repos" className={styles.backLink}>
-          <ArrowLeftIcon size={12} aria-hidden />
-          Back to search
-        </Link>
-
+      <PageList width="full">
         {isLoading && <p className={styles.loading}>Loading…</p>}
 
         {!isLoading && data && (
           <div className={styles.layout}>
             <div className={styles.readmeColumn}>
-              <div className={styles.installBox}>
-                <span className={styles.installPrompt}>↗</span>
-                <a
-                  href={data.htmlUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.githubLink}
-                >
-                  {data.htmlUrl.replace('https://', '')}
-                </a>
-              </div>
-
               {(data.language || data.isArchived || data.isFork || data.isTemplate) && (
                 <div className={styles.badges}>
                   {data.language ? <span className={styles.badge}>{data.language}</span> : null}

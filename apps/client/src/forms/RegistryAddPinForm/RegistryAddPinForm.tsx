@@ -136,7 +136,7 @@ export function RegistryAddPinForm() {
 
   return (
     <div
-      className={cn(styles.card, styles.cardDropzone, isDropActive && styles.cardDropActive)}
+      className={cn(styles.card, 'drop-zone', isDropActive && 'drop-zone--active')}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}

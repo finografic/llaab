@@ -12,3 +12,7 @@
 .wide {
   max-width: var(--content-max);
 }
+
+.full {
+  max-width: none;
+}

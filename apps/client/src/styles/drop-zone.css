@@ -1,0 +1,26 @@
+/**
+ * Shared drop-target chrome — resting dashed border; accent only while dragging.
+ * Used by IngestForm and RegistryAddPinForm.
+ *
+ * Idle and active must share the same 1px border box — only color/style/background
+ * change. No translate or extra ring/shadow (those shift layout or clip the top edge).
+ */
+.drop-zone {
+  border: 1px dashed var(--color-zinc-600, #52525b);
+  border-radius: calc(var(--radius) * 1.25);
+  transition:
+    border-color var(--duration) var(--ease),
+    border-style var(--duration) var(--ease),
+    background var(--duration) var(--ease);
+}
+
+.drop-zone--active {
+  border-color: oklch(0.68 0.2 145);
+  border-style: dashed;
+  background: color-mix(in oklab, oklch(0.68 0.2 145 / 0.1) 100%, var(--surface));
+}
+
+/* Beat page-specific resting backgrounds (e.g. .ingest-form gradient). */
+.ingest-form.drop-zone--active {
+  background: color-mix(in oklab, oklch(0.68 0.2 145 / 0.1) 100%, var(--surface));
+}

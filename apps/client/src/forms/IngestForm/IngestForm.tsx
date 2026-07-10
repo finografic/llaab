@@ -630,7 +630,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   return (
     <div
-      className={`ingest-form${isDropActive ? ' ingest-form--drop-active' : ''}`}
+      className={`ingest-form drop-zone${isDropActive ? ' drop-zone--active' : ''}`}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}

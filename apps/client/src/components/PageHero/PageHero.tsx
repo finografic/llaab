@@ -6,6 +6,8 @@ import styles from './PageHero.module.css';
 interface PageHeroProps {
   eyebrow?: string;
   title: string;
+  /** Optional content rendered immediately before the title (e.g. brand icons). */
+  titlePrefix?: ReactNode;
   /** Optional content rendered immediately after the title (e.g. status icons). */
   titleAddon?: ReactNode;
   bordered?: boolean;
@@ -18,6 +20,7 @@ interface PageHeroProps {
 export function PageHero({
   eyebrow,
   title,
+  titlePrefix,
   titleAddon,
   bordered = true,
   description,
@@ -38,6 +41,7 @@ export function PageHero({
 
           <div className={styles.titleRow}>
             <div className={styles.titleGroup}>
+              {titlePrefix}
               <h1 className={styles.title}>{title}</h1>
               {titleAddon}
             </div>

@@ -79,6 +79,9 @@ export function NavMenu({ pathname }: NavMenuProps) {
                   navigationMenuTriggerStyle(),
                   activeSectionId === section.id && 'bg-muted/60 text-foreground',
                 )}
+                // Radix opens on hover by default — prevent that so menus are click-only.
+                onPointerMove={(event) => event.preventDefault()}
+                onPointerLeave={(event) => event.preventDefault()}
               >
                 {section.label}
               </NavigationMenuTrigger>
