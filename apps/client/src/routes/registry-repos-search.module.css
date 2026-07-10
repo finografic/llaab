@@ -1,0 +1,173 @@
+.tabs {
+  width: 100%;
+  gap: var(--space-4);
+}
+
+.tabsContent {
+  margin-top: var(--space-2);
+}
+
+.tabPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.packageCount {
+  display: block;
+  min-height: 1.5em;
+  margin: 0 0 var(--space-3) var(--space-3);
+  line-height: 1.5;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+.searchRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.searchGroup {
+  flex: 1;
+  height: 2.25rem;
+  background: transparent;
+}
+
+/* Global :focus-visible outline (offset + smaller radius) fights the control */
+.searchGroup :focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+
+.searchIconSlot {
+  background: transparent;
+  color: var(--text-faint);
+}
+
+.searchIcon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.55;
+}
+
+.searchInput {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.resultCount {
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  margin-bottom: 12px;
+}
+
+.results {
+  --registry-col-published: 120px;
+  --registry-col-downloads: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sortHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Match PackageCard horizontal padding (1rem left / 0.25rem right) */
+  padding: 0 0.25rem 2px 1rem;
+}
+
+.sortTitleCol .sortButton {
+  /* Nudge Title left to align with package names */
+  margin-left: -10px;
+}
+
+.sortTitleCol {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.sortPublishedCol {
+  display: flex;
+  flex: 0 1 var(--registry-col-published);
+  align-items: center;
+  justify-content: center;
+  width: var(--registry-col-published);
+  min-width: 0;
+}
+
+.sortDownloadsCol {
+  display: flex;
+  flex: 0 1 var(--registry-col-downloads);
+  align-items: center;
+  justify-content: flex-end;
+  width: var(--registry-col-downloads);
+  min-width: 0;
+}
+
+/* Matches PackageCard pin button column (icon-sm ~28px) */
+.sortPinCol {
+  flex: 0 0 28px;
+  width: 28px;
+}
+
+.sortButton {
+  height: auto;
+  padding: 4px 6px;
+  gap: 4px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sortButtonIdle {
+  color: var(--text-faint);
+}
+
+.sortButtonIdle:hover {
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.sortButtonActive {
+  color: var(--text);
+}
+
+.sortButtonActive:hover {
+  color: var(--text);
+  background: transparent;
+}
+
+.sortIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.empty {
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  padding: 40px 0;
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .sortHeader {
+    flex-wrap: wrap;
+  }
+
+  .sortTitleCol {
+    flex: 1 1 100%;
+  }
+
+  .sortPublishedCol,
+  .sortDownloadsCol {
+    flex: 1 1 auto;
+    width: auto;
+    justify-content: flex-start;
+  }
+}

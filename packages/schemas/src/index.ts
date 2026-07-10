@@ -135,6 +135,14 @@ export {
   type PinnedLibrary,
 } from './npm-registry.js';
 export {
+  type GithubRepoSearchItem,
+  type GithubRepoSearchResponse,
+  type PinnedRepository,
+  type RepoDetailResponse,
+  type RepoLanguageShare,
+  type RepoMetaResponse,
+} from './github-registry.js';
+export {
   type VaultGitCommitResponse,
   VaultGitCommitResponseSchema,
   type VaultGitFileStatus,

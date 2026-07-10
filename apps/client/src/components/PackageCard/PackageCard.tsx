@@ -1,10 +1,23 @@
-import { BoxIcon, DownloadIcon, PinIcon, PinOffIcon } from '@llaab/icons';
+import { BoxIcon, DownloadIcon, PinIcon, PinOffIcon, StarIcon } from '@llaab/icons';
 import { cn } from '@llaab/ui/lib/utils';
 import { Button } from 'components/ui/button';
-import { useIsLibraryPinned, usePinLibrary, useUnpinLibrary } from 'queries/registry';
+import {
+  useIsLibraryPinned,
+  useIsRepositoryPinned,
+  usePinLibrary,
+  usePinRepository,
+  useUnpinLibrary,
+  useUnpinRepository,
+} from 'queries/registry';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import type { NpmSearchPackage, PackageMetaResponse, PackageTypesStatus } from '@llaab/schemas';
+import type {
+  GithubRepoSearchItem,
+  NpmSearchPackage,
+  PackageMetaResponse,
+  PackageTypesStatus,
+  RepoMetaResponse,
+} from '@llaab/schemas';
 import type { MouseEvent, ReactNode } from 'react';
 
 import typescriptDeclarationIcon from '../../assets/typescript-declaration.svg';
@@ -13,6 +26,10 @@ import styles from './PackageCard.module.css';
 
 function formatWeeklyDownloads(n: number): string {
   return `${n.toLocaleString('en-US')} / week`;
+}
+
+function formatStars(n: number): string {
+  return n.toLocaleString('en-US');
 }
 
 function formatDependents(raw: string): string | null {
@@ -61,7 +78,8 @@ function TypesStatusIcon({ status }: { status: PackageTypesStatus }) {
   }
 }
 
-interface PackageCardProps {
+interface LibraryCardProps {
+  variant?: 'library';
   pkg: NpmSearchPackage | PackageMetaResponse;
   weeklyDownloads?: number;
   dependents?: string;
@@ -69,7 +87,33 @@ interface PackageCardProps {
   typesStatus?: PackageTypesStatus;
 }
 
-export function PackageCard({ pkg, weeklyDownloads, dependents, typesStatus }: PackageCardProps) {
+interface RepoCardProps {
+  variant: 'repo';
+  repo: GithubRepoSearchItem | RepoMetaResponse;
+}
+
+export type PackageCardProps = LibraryCardProps | RepoCardProps;
+
+export function PackageCard(props: PackageCardProps) {
+  if (props.variant === 'repo') {
+    return <RepoPackageCard repo={props.repo} />;
+  }
+  return (
+    <LibraryPackageCard
+      pkg={props.pkg}
+      weeklyDownloads={props.weeklyDownloads}
+      dependents={props.dependents}
+      typesStatus={props.typesStatus}
+    />
+  );
+}
+
+function LibraryPackageCard({
+  pkg,
+  weeklyDownloads,
+  dependents,
+  typesStatus,
+}: Omit<LibraryCardProps, 'variant'>) {
   const encodedName = encodeURIComponent(pkg.name);
   const downloads = weeklyDownloads ?? (pkg as PackageMetaResponse).weeklyDownloads;
   const dependentsLabel = dependents ? formatDependents(dependents) : null;
@@ -175,6 +219,118 @@ export function PackageCard({ pkg, weeklyDownloads, dependents, typesStatus }: P
             onClick={handlePinToggle}
             disabled={pinPending}
             aria-label={isPinned ? `Unpin ${pkg.name}` : `Pin ${pkg.name}`}
+            aria-pressed={isPinned}
+          >
+            {isPinned ? (
+              <PinIcon className={styles.pinIcon} aria-hidden />
+            ) : (
+              <PinOffIcon className={styles.pinIcon} aria-hidden />
+            )}
+          </Button>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function RepoPackageCard({ repo }: { repo: GithubRepoSearchItem | RepoMetaResponse }) {
+  const isPinned = useIsRepositoryPinned(repo.fullName);
+  const pinRepository = usePinRepository();
+  const unpinRepository = useUnpinRepository();
+  const pinPending = pinRepository.isPending || unpinRepository.isPending;
+  const updated = repo.pushedAt ?? repo.updatedAt;
+  const href = `/registry/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.name)}`;
+
+  async function handlePinToggle(e: MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (pinPending) return;
+
+    try {
+      if (isPinned) {
+        await unpinRepository.mutateAsync(repo.fullName);
+        toast.success(`Unpinned ${repo.fullName}`);
+      } else {
+        await pinRepository.mutateAsync(repo.fullName);
+        toast.success(`Pinned ${repo.fullName}`);
+      }
+    } catch {
+      toast.error(isPinned ? `Failed to unpin ${repo.fullName}` : `Failed to pin ${repo.fullName}`);
+    }
+  }
+
+  const metaParts: Array<{ key: string; node: ReactNode }> = [];
+  if (repo.language) {
+    metaParts.push({
+      key: 'language',
+      node: <span className={styles.metaItem}>{repo.language}</span>,
+    });
+  }
+  if (repo.license) {
+    metaParts.push({
+      key: 'license',
+      node: <span className={styles.metaItem}>{repo.license}</span>,
+    });
+  }
+
+  return (
+    <Link to={href} className={styles.card}>
+      <div className={styles.body}>
+        <div className={styles.main}>
+          <div className={styles.header}>
+            <span className={styles.name}>{repo.fullName}</span>
+          </div>
+
+          {repo.description ? <p className={styles.description}>{repo.description}</p> : null}
+
+          {metaParts.length > 0 ? (
+            <div className={styles.meta}>
+              {metaParts.map((part, i) => (
+                <span key={part.key} className={styles.metaSegment}>
+                  {i > 0 ? (
+                    <span className={styles.middot} aria-hidden>
+                      ·
+                    </span>
+                  ) : null}
+                  {part.node}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {repo.topics && repo.topics.length > 0 ? (
+            <div className={styles.tags}>
+              {repo.topics.slice(0, 6).map((topic) => (
+                <span key={topic} className={styles.tag}>
+                  {topic}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className={styles.publishedCol}>
+          {updated ? <span className={styles.published}>{formatPackageListDate(updated)}</span> : null}
+        </div>
+
+        <div className={styles.downloadsCol}>
+          {repo.stars > 0 ? (
+            <span className={styles.downloads}>
+              <StarIcon className={styles.metaIcon} aria-hidden />
+              <span>{formatStars(repo.stars)}</span>
+            </span>
+          ) : null}
+        </div>
+
+        <div className={styles.pinCol}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className={cn(styles.pinButton, isPinned && styles.pinButtonActive)}
+            onClick={handlePinToggle}
+            disabled={pinPending}
+            aria-label={isPinned ? `Unpin ${repo.fullName}` : `Pin ${repo.fullName}`}
             aria-pressed={isPinned}
           >
             {isPinned ? (

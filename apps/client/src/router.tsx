@@ -53,6 +53,12 @@ const RegistryPackagePage = lazy(() =>
 const RegistryPinnedPage = lazy(() =>
   import('routes/registry-pinned').then((module) => ({ default: module.RegistryPinnedPage })),
 );
+const RegistryReposSearchPage = lazy(() =>
+  import('routes/registry-repos-search').then((module) => ({ default: module.RegistryReposSearchPage })),
+);
+const RegistryRepoPage = lazy(() =>
+  import('routes/registry-repo').then((module) => ({ default: module.RegistryRepoPage })),
+);
 
 function lazyElement(Component: ComponentType): ReactElement {
   return (
@@ -96,6 +102,16 @@ export const router = createBrowserRouter([
         path: 'registry/package/:name',
         element: lazyElement(RegistryPackagePage),
         handle: { title: 'Package' } satisfies RouteHandle,
+      },
+      {
+        path: 'registry/repos',
+        element: lazyElement(RegistryReposSearchPage),
+        handle: { title: 'Repository Registry' } satisfies RouteHandle,
+      },
+      {
+        path: 'registry/repos/:owner/:repo',
+        element: lazyElement(RegistryRepoPage),
+        handle: { title: 'Repository' } satisfies RouteHandle,
       },
       {
         path: 'ingest',

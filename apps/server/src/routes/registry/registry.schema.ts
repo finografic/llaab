@@ -16,5 +16,13 @@ export const pinBodySchema = z.object({
   name: z.string().min(1),
 });
 
+export const repoPinBodySchema = z.object({
+  fullName: z
+    .string()
+    .min(3)
+    .regex(/^[^/]+\/[^/]+$/, 'Expected owner/repo'),
+});
+
 export type SearchQuery = z.infer<typeof searchQuerySchema>;
 export type PinBody = z.infer<typeof pinBodySchema>;
+export type RepoPinBody = z.infer<typeof repoPinBodySchema>;

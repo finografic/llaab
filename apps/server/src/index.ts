@@ -13,6 +13,7 @@ const LONG_RUNNING_PATHS = [
   /^\/api\/vault\/sources\/[^/]+\/enrich$/,
   /^\/api\/vault\/transcripts\/[^/]+\/extract$/,
   /^\/api\/vault\/transcripts\/[^/]+\/consolidate$/,
+  /^\/api\/registry\/github\/repo\/[^/]+\/[^/]+$/,
   /^\/terminal$/,
 ];
 

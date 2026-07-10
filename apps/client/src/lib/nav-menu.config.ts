@@ -64,6 +64,12 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         href: '/registry',
         live: true,
       },
+      {
+        label: 'Repositories',
+        description: 'Pinned favourites and GitHub repository search',
+        href: '/registry/repos',
+        live: true,
+      },
     ],
   },
   {
