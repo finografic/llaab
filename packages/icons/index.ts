@@ -66,6 +66,7 @@ export const {
   GitPullRequestCreateArrowIcon,
   GridIcon,
   HomeIcon,
+  InboxIcon,
   InfoCircledIcon,
   LandPlotIcon,
   LanguageIcon,

@@ -90,7 +90,7 @@ export function RegistryAddPinForm() {
 
     setError(
       isHttpUrl(trimmed)
-        ? 'Paste an npmjs.com package URL or a github.com repository URL.'
+        ? 'Paste an npmjs.com / npmx.dev package URL or a github.com repository URL.'
         : 'Paste a valid npm or GitHub URL (or owner/repo / package name).',
     );
   }
@@ -149,7 +149,7 @@ export function RegistryAddPinForm() {
 
       <p className={cn(styles.feedback, detection && styles.feedbackAccent)}>
         {detection ? <CheckIcon className={styles.feedbackIcon} aria-hidden /> : null}
-        <span>{detection ?? 'Paste or drop an npm or GitHub URL to pin it.'}</span>
+        <span>{detection ?? 'Paste or drop an npm, npmx, or GitHub URL to pin it.'}</span>
       </p>
 
       <form onSubmit={handleSubmit} noValidate className={styles.field}>

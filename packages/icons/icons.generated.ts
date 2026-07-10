@@ -67,6 +67,7 @@ const ICONS = {
   GitPullRequestCreateArrowIcon:  Lucide.GitPullRequestCreateArrow,
   GridIcon:                       Lucide.Grid3x3,
   HomeIcon:                       Lucide.House,
+  InboxIcon:                      Lucide.Inbox,
   InfoCircledIcon:                Lucide.Info,
   LandPlotIcon:                   Lucide.LandPlot,
   LanguageIcon:                   Lucide.Languages,

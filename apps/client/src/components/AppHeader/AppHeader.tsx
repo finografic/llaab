@@ -1,4 +1,4 @@
-import { BrainIcon, LandPlotIcon, PipetteIcon, VoicemailIcon } from '@llaab/icons';
+import { BrainIcon, InboxIcon, LandPlotIcon, PipetteIcon, VoicemailIcon } from '@llaab/icons';
 import { NavMenu } from 'components/NavMenu/NavMenu';
 import { buttonVariants } from 'components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
@@ -29,6 +29,9 @@ export function AppHeader({ actions }: AppHeaderProps) {
         </Link>
         <Link to="/llm" className={iconButtonClass} aria-label="LLM models">
           <BrainIcon className="icon" aria-hidden />
+        </Link>
+        <Link to="/vault/inbox" className={iconButtonClass} aria-label="Inbox">
+          <InboxIcon className="icon" aria-hidden />
         </Link>
         <Link to="/dev/icons" className={iconButtonClass} aria-label="LLAAB Icons">
           <LandPlotIcon className="icon" aria-hidden />

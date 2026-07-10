@@ -44,7 +44,7 @@ export function parseGithubRepoRef(value: string): string | null {
   }
 }
 
-/** Parse npm package name from an npmjs.com URL (or bare package name with `/` for scopes). */
+/** Parse npm package name from an npmjs.com / npmx.dev URL (or bare package name with `/` for scopes). */
 export function parseNpmPackageRef(value: string): string | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -61,7 +61,7 @@ export function parseNpmPackageRef(value: string): string | null {
   }
 
   const host = hostnameOf(trimmed);
-  if (host !== 'npmjs.com' && host !== 'npmjs.org') return null;
+  if (host !== 'npmjs.com' && host !== 'npmjs.org' && host !== 'npmx.dev') return null;
 
   try {
     const { pathname } = new URL(trimmed);

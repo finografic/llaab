@@ -450,5 +450,9 @@
   {
     "exportName": "PinOff",
     "lucideName": "pin-off"
+  },
+  {
+    "exportName": "Inbox",
+    "lucideName": "inbox"
   }
 ]
