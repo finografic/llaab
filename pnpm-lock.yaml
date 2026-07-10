@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  typescript: 6.0.3
-
 importers:
 
   .:
@@ -3413,13 +3410,13 @@ packages:
     peerDependencies:
       '@types/node': '*'
       cosmiconfig: '>=9'
-      typescript: 6.0.3
+      typescript: '>=5'
 
   cosmiconfig@9.0.2:
     resolution: {integrity: sha512-gtTZxTDau1wL7Y7zifc2dd8jHSK/k6BTx/2Xp/BpdlAdnlYWFVt7qhJqgwi7637yRwRQ3qL4ZidbB4I8tA5VOg==}
     engines: {node: '>=14'}
     peerDependencies:
-      typescript: 6.0.3
+      typescript: '>=4.9.5'
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -5215,7 +5212,7 @@ packages:
       '@ts-macro/tsc': ^0.3.6
       '@typescript/native-preview': '>=7.0.0-dev.20260325.1'
       rolldown: ^1.0.0
-      typescript: 6.0.3
+      typescript: ^5.0.0 || ^6.0.0
       vue-tsc: ~3.2.0 || ~3.3.0
     peerDependenciesMeta:
       '@ts-macro/tsc':
@@ -5635,7 +5632,7 @@ packages:
       '@vitejs/devtools': '*'
       publint: ^0.3.8
       tsx: '*'
-      typescript: 6.0.3
+      typescript: ^5.0.0 || ^6.0.0
       unplugin-unused: ^0.5.0
       unrun: '*'
     peerDependenciesMeta:
