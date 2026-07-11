@@ -43,6 +43,7 @@ pids
 *.pid
 *.seed
 *.pid.lock
+configs/cron-history.json
 
 # Cache
 .cache/
