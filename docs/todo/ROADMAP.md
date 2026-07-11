@@ -261,15 +261,6 @@ with simple full-text search only if it does not conflict with future context as
 
 Reference: [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) §3
 
-### Migrate Tailwind page layouts to `@llaab/ui` Grid
-
-Replace multi-column Tailwind layout (`flex`/`grid`/`grid-cols-*` used as page structure) with
-`Container` / `Row` / `Col` from `components/ui/grid`. Explicit non-goals: shadcn internals,
-micro `flex items-center gap-*`, `BalancedGrid`, resizable sidebars, and true CSS Grid shells.
-Phased inventory → conventions → high-traffic routes → forms → sweep.
-
-Detail: [`docs/todo/TODO_GRID_LAYOUT_MIGRATION.md`](./TODO_GRID_LAYOUT_MIGRATION.md)
-
 ---
 
 ## P3 — Backlog / Ideas
@@ -359,6 +350,14 @@ architecture reference.
 
 Detail: [`docs/todo/DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md),
 [`docs/07_ORCHESTRATION_AND_ADAPTERS.md`](../07_ORCHESTRATION_AND_ADAPTERS.md)
+
+### Migrate Tailwind page layouts to `@llaab/ui` Grid
+
+Completed 2026-07-11. Multi-column page/section layouts now use `Row`/`Col` from
+`components/ui/grid` where appropriate; `BalancedGrid`, `llm-card-grid`, `PageLayout`, and micro
+flex patterns remain documented exceptions.
+
+Detail: [`docs/todo/DONE_GRID_LAYOUT_MIGRATION.md`](./DONE_GRID_LAYOUT_MIGRATION.md)
 
 ### Install and validate `@finografic/ai-harness` in the transcript extraction path
 

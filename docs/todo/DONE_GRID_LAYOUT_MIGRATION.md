@@ -1,6 +1,6 @@
-# TODO — Migrate Tailwind Layouts to `@llaab/ui` Grid
+# DONE — Migrate Tailwind Layouts to `@llaab/ui` Grid
 
-> **Status:** Complete (Jul 11, 2026) — browser spot-check pending. Convert page/section Tailwind layout
+> **Completed:** Jul 11, 2026. Browser spot-check pending. Convert page/section Tailwind layout
 > (`flex` / `grid` / `grid-cols-*` / responsive column utilities) to
 > `Container` / `Row` / `Col` from `components/ui/grid`. Do **not** treat as a blind
 > find-and-replace: micro-alignment, shadcn internals, and intentional special layouts stay
