@@ -202,6 +202,7 @@ click-only. Types: `packages/schemas/src/npm-registry.ts`, `github-registry.ts`.
 Both `POST`s snapshot live meta at pin time (`PackageMetaResponse` / `RepoMetaResponse`) and return
 **409** when already pinned (UI and Hermes treat that as idempotent success for libraries). Pin
 requires `X-API-Key` when `LLAAB_API_KEY` is set (same as other writes).
+Registry pins are projected into `ResourceNode`s so packages/repositories become first-class vault knowledge resources rather than only UI bookmarks; architecture reference: `docs/process/REGISTRY_RESOURCE_PROJECTIONS.md`.
 
 `AppSidebarLayout` (`packages/ui/src/components/app-sidebar-right-layout.tsx`) supports both
 percentage and absolute-unit (`px`/`rem`) sidebar sizing — `isPercentOrBare()` only computes
