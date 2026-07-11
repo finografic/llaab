@@ -165,7 +165,7 @@ function RegistryPackageCard({
       ),
     });
   }
-  if (resource) {
+  if (resource && resource.status !== 'linked') {
     metaParts.push({
       key: 'resource',
       node: <ProjectionStatus status={resource.status} />,
@@ -292,7 +292,7 @@ function RepoPackageCard({
       node: <span className={styles.metaItem}>{repo.license}</span>,
     });
   }
-  if (resource) {
+  if (resource && resource.status !== 'linked') {
     metaParts.push({
       key: 'resource',
       node: <ProjectionStatus status={resource.status} />,
@@ -374,12 +374,7 @@ function RepoPackageCard({
 }
 
 function ProjectionStatus({ status }: { status: PackageRegistryResourceProjectionStatus['status'] }) {
-  const label =
-    status === 'linked'
-      ? 'Resource linked'
-      : status === 'needs_sync'
-        ? 'Resource needs sync'
-        : 'Resource missing';
+  const label = status === 'needs_sync' ? 'Resource needs sync' : 'Resource missing';
 
-  return <span className={styles.projectionStatus}>{label}</span>;
+  return <span className={styles.projectionStatusWarning}>{label}</span>;
 }

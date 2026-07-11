@@ -5,6 +5,8 @@ import { apiGet, apiPost } from 'lib/api-client';
 
 import { REGISTRY_QUERY_KEYS } from './index';
 
+const PINNED_REGISTRY_REFETCH_MS = 5_000;
+
 async function fetchPins(): Promise<PinnedPackage[]> {
   const res = await apiGet<{ pins: PinnedPackage[] }>('/api/registry/pins');
   return res.pins;
@@ -27,6 +29,9 @@ export function usePinnedPackages() {
     queryKey: REGISTRY_QUERY_KEYS.registry.pins(),
     queryFn: fetchPins,
     staleTime: 30_000,
+    refetchInterval: PINNED_REGISTRY_REFETCH_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 }
 

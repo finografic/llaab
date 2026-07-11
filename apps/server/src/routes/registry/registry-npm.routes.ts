@@ -13,10 +13,29 @@ import { fetchPackageSocketScores, isSocketConfigured } from '../../lib/registry
 
 const NPM_REGISTRY = 'https://registry.npmjs.org';
 const NPM_API = 'https://api.npmjs.org';
+const GITHUB_API = 'https://api.github.com';
 
 function encodePackageName(name: string): string {
   // Scoped packages: @scope/name → @scope%2Fname
   return name.startsWith('@') ? `@${encodeURIComponent(name.slice(1))}` : name;
+}
+
+function githubHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Accept': 'application/vnd.github+json',
+    'User-Agent': 'llaab-registry',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+  const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
+async function githubFetch(path: string, init?: RequestInit): Promise<Response> {
+  return fetch(`${GITHUB_API}${path}`, {
+    ...init,
+    headers: { ...githubHeaders(), ...(init?.headers as Record<string, string> | undefined) },
+  });
 }
 
 /** Last-week downloads + WoW % change vs the prior 7-day window. */
@@ -128,6 +147,51 @@ function normalizeBugsUrl(raw: unknown): string | undefined {
   return (raw as { url?: string }).url;
 }
 
+function parseGitHubRepoUrl(url: string | undefined): { owner: string; repo: string } | null {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./u, '');
+    if (hostname !== 'github.com') return null;
+
+    const [owner, repo] = parsed.pathname.split('/').filter(Boolean);
+    if (!owner || !repo) return null;
+
+    return { owner, repo: repo.replace(/\.git$/u, '') };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchGitHubReadmeMarkdown(repositoryUrl: string | undefined): Promise<string | null> {
+  const repoRef = parseGitHubRepoUrl(repositoryUrl);
+  if (!repoRef) return null;
+
+  const res = await githubFetch(
+    `/repos/${encodeURIComponent(repoRef.owner)}/${encodeURIComponent(repoRef.repo)}/readme`,
+    { headers: { Accept: 'application/vnd.github.raw+json' } },
+  );
+  if (!res.ok) return null;
+
+  const text = await res.text();
+  return text.trim() ? text : null;
+}
+
+async function renderPackageReadme(
+  packument: Record<string, unknown>,
+  version: string,
+): Promise<string | null> {
+  const rawReadme = extractRawReadme(packument, version);
+  if (rawReadme?.trim()) {
+    return renderReadmeToHtml(rawReadme);
+  }
+
+  return fetchGitHubReadmeMarkdown(normalizeRepoUrl(packument.repository)).then((fallbackReadme) =>
+    fallbackReadme ? renderReadmeToHtml(fallbackReadme) : null,
+  );
+}
+
 async function fetchPackageMeta(name: string): Promise<PackageMetaResponse> {
   const encoded = encodePackageName(name);
 
@@ -169,9 +233,10 @@ async function fetchPackageMeta(name: string): Promise<PackageMetaResponse> {
 
 function extractRawReadme(packument: Record<string, unknown>, version: string): string | null {
   const versions = (packument.versions ?? {}) as Record<string, Record<string, unknown>>;
-  return (
-    (packument.readme as string | undefined) ?? (versions[version]?.readme as string | undefined) ?? null
-  );
+  const readme =
+    (packument.readme as string | undefined) ?? (versions[version]?.readme as string | undefined);
+
+  return readme?.trim() ? readme : null;
 }
 
 async function extractVersionMeta(packument: Record<string, unknown>, version: string) {
@@ -261,10 +326,9 @@ export const npmPackage = {
         weeklyDownloadsChangePercent: downloadStats.weeklyDownloadsChangePercent,
       };
 
-      const rawReadme = extractRawReadme(packument, latestVersion);
       const [versionMeta, readmeHtml] = await Promise.all([
         extractVersionMeta(packument, latestVersion),
-        rawReadme ? renderReadmeToHtml(rawReadme) : Promise.resolve(null),
+        renderPackageReadme(packument, latestVersion),
       ]);
 
       const detail: PackageDetailResponse = {

@@ -138,10 +138,11 @@
   color: var(--text);
 }
 
-.projectionStatus {
-  color: var(--accent);
+.projectionStatusWarning {
+  color: color-mix(in oklch, var(--warning-text) 78%, var(--success-text));
   font-family: inherit;
   font-size: inherit;
+  font-weight: 600;
 }
 
 .dependents {
