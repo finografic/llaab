@@ -1,0 +1,24 @@
+.paneRow {
+  min-height: 58vh;
+}
+
+.mainCol {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .mainCol {
+    flex: 1 1 0 !important;
+    max-width: none !important;
+  }
+}
+
+.aside {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .aside {
+    width: 400px;
+  }
+}

@@ -4,6 +4,7 @@ import { RegistryInstallStats } from 'components/RegistryInstallStats/RegistryIn
 import { RegistrySidebarPinButton } from 'components/RegistrySidebarPinButton/RegistrySidebarPinButton';
 import { RegistrySidebarSectionLabel } from 'components/RegistrySidebarSectionLabel/RegistrySidebarSectionLabel';
 import { RegistrySocketScores } from 'components/RegistrySocketScores/RegistrySocketScores';
+import { Col, Row } from 'components/ui/grid';
 import { parseGithubRepoRef } from 'forms/RegistryAddPinForm/registry-add-pin-form.utils';
 import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarContext';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
@@ -175,9 +176,8 @@ export function RegistryPackagePage() {
         {isLoading && <p className={styles.loading}>Loading…</p>}
 
         {!isLoading && data && (
-          <div className={styles.layout}>
-            {/* ── Left: install + readme ── */}
-            <div className={styles.readmeColumn}>
+          <Row className={styles.layoutRow} align="stretch" nogutter>
+            <Col xs={12} className={styles.readmeColumn}>
               <div className={styles.installBox}>
                 <span className={styles.installPrompt}>$</span>
                 <span> npm install {name}</span>
@@ -197,10 +197,9 @@ export function RegistryPackagePage() {
               ) : (
                 <p className={styles.readmeEmpty}>No readme available.</p>
               )}
-            </div>
+            </Col>
 
-            {/* ── Right: metadata sidebar ── */}
-            <aside className={styles.sidebar}>
+            <Col xs={12} md="content" className={styles.sidebar}>
               {linkedRepoFullName && data.links.repository ? (
                 <div className={styles.sidebarSection}>
                   <div className={styles.sidebarLabelRow}>
@@ -376,8 +375,8 @@ export function RegistryPackagePage() {
                   </div>
                 </div>
               )}
-            </aside>
-          </div>
+            </Col>
+          </Row>
         )}
       </PageList>
     </PageLayout>

@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from 'components/ui/alert-dialog';
 import { Button } from 'components/ui/button';
+import { Col, Row } from 'components/ui/grid';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import { useBatchUpdateVaultNodes, useVaultNodes } from 'queries/vault';
@@ -133,24 +134,32 @@ export function InboxPage() {
           }}
         />
 
-        <div className={styles.summaryGrid} aria-label="Inbox summary">
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{filteredCaptures.length}</span>
-            <span className={styles.summaryLabel}>Visible</span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{newVisibleCount}</span>
-            <span className={styles.summaryLabel}>New</span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{attentionVisibleCount}</span>
-            <span className={styles.summaryLabel}>Attention</span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{actionBackedVisibleCount}</span>
-            <span className={styles.summaryLabel}>Action-backed</span>
-          </div>
-        </div>
+        <Row gutterWidth={12} aria-label="Inbox summary">
+          <Col xs={6} md={3}>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryValue}>{filteredCaptures.length}</span>
+              <span className={styles.summaryLabel}>Visible</span>
+            </div>
+          </Col>
+          <Col xs={6} md={3}>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryValue}>{newVisibleCount}</span>
+              <span className={styles.summaryLabel}>New</span>
+            </div>
+          </Col>
+          <Col xs={6} md={3}>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryValue}>{attentionVisibleCount}</span>
+              <span className={styles.summaryLabel}>Attention</span>
+            </div>
+          </Col>
+          <Col xs={6} md={3}>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryValue}>{actionBackedVisibleCount}</span>
+              <span className={styles.summaryLabel}>Action-backed</span>
+            </div>
+          </Col>
+        </Row>
 
         {groups.map((group) => (
           <section key={group.key} className={styles.group}>

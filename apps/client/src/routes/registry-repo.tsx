@@ -4,6 +4,7 @@ import { RegistryInstallStats } from 'components/RegistryInstallStats/RegistryIn
 import { RegistrySidebarPinButton } from 'components/RegistrySidebarPinButton/RegistrySidebarPinButton';
 import { RegistrySidebarSectionLabel } from 'components/RegistrySidebarSectionLabel/RegistrySidebarSectionLabel';
 import { RegistrySocketScores } from 'components/RegistrySocketScores/RegistrySocketScores';
+import { Col, Row } from 'components/ui/grid';
 import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarContext';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
@@ -129,8 +130,8 @@ export function RegistryRepoPage() {
         {isLoading && <p className={styles.loading}>Loading…</p>}
 
         {!isLoading && data && (
-          <div className={styles.layout}>
-            <div className={styles.readmeColumn}>
+          <Row className={styles.layoutRow} align="stretch" nogutter>
+            <Col xs={12} className={styles.readmeColumn}>
               {(data.language || data.isArchived || data.isFork || data.isTemplate) && (
                 <div className={styles.badges}>
                   {data.language ? <span className={styles.badge}>{data.language}</span> : null}
@@ -149,9 +150,9 @@ export function RegistryRepoPage() {
               ) : (
                 <p className={styles.readmeEmpty}>No readme available.</p>
               )}
-            </div>
+            </Col>
 
-            <aside className={styles.sidebar}>
+            <Col xs={12} md="content" className={styles.sidebar}>
               <div className={styles.sidebarSection}>
                 <div className={styles.sidebarLabelRow}>
                   <RegistrySidebarSectionLabel kind="repository" target={data.fullName}>
@@ -309,8 +310,8 @@ export function RegistryRepoPage() {
                   {data.owner}
                 </a>
               </div>
-            </aside>
-          </div>
+            </Col>
+          </Row>
         )}
       </PageList>
     </PageLayout>

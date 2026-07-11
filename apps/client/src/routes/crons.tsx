@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from 'components/ui/dialog';
+import { Col, Row } from 'components/ui/grid';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { NativeSelect, NativeSelectOption } from 'components/ui/native-select';
@@ -216,43 +217,47 @@ function CronRecipeFormDialog({
             />
           </div>
 
-          <div className="grid gap-3 md:grid-cols-[1fr_2fr]">
-            <div className="grid gap-2">
-              <Label htmlFor={`${mode}-cron-risk`}>Risk</Label>
-              <NativeSelect
-                id={`${mode}-cron-risk`}
-                className="w-full"
-                value={values.risk}
-                onChange={(event) =>
-                  setValues((current) => ({
-                    ...current,
-                    risk: event.target.value as CronRecipe['risk'],
-                  }))
-                }
-              >
-                <NativeSelectOption value="low">low</NativeSelectOption>
-                <NativeSelectOption value="medium">medium</NativeSelectOption>
-                <NativeSelectOption value="high">high</NativeSelectOption>
-              </NativeSelect>
-            </div>
+          <Row gutterWidth={12}>
+            <Col xs={12} md={4}>
+              <div className="grid gap-2">
+                <Label htmlFor={`${mode}-cron-risk`}>Risk</Label>
+                <NativeSelect
+                  id={`${mode}-cron-risk`}
+                  className="w-full"
+                  value={values.risk}
+                  onChange={(event) =>
+                    setValues((current) => ({
+                      ...current,
+                      risk: event.target.value as CronRecipe['risk'],
+                    }))
+                  }
+                >
+                  <NativeSelectOption value="low">low</NativeSelectOption>
+                  <NativeSelectOption value="medium">medium</NativeSelectOption>
+                  <NativeSelectOption value="high">high</NativeSelectOption>
+                </NativeSelect>
+              </div>
+            </Col>
 
-            <div className="grid gap-2">
-              <Label htmlFor={`${mode}-cron-script`}>Script</Label>
-              <NativeSelect
-                id={`${mode}-cron-script`}
-                className="w-full"
-                value={values.scriptId}
-                onChange={(event) => setValues((current) => ({ ...current, scriptId: event.target.value }))}
-                required
-              >
-                {formScripts.map((script) => (
-                  <NativeSelectOption key={script.id} value={script.id}>
-                    {script.title}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
-          </div>
+            <Col xs={12} md={8}>
+              <div className="grid gap-2">
+                <Label htmlFor={`${mode}-cron-script`}>Script</Label>
+                <NativeSelect
+                  id={`${mode}-cron-script`}
+                  className="w-full"
+                  value={values.scriptId}
+                  onChange={(event) => setValues((current) => ({ ...current, scriptId: event.target.value }))}
+                  required
+                >
+                  {formScripts.map((script) => (
+                    <NativeSelectOption key={script.id} value={script.id}>
+                      {script.title}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              </div>
+            </Col>
+          </Row>
 
           <CronFrequencyInputs
             value={values.cronExpression}

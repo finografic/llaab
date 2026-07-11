@@ -1,28 +1,32 @@
-.layout {
-  display: flex;
-  align-items: stretch;
+.layoutRow {
   width: 100%;
-  gap: 0;
 }
 
 .readmeColumn {
-  flex: 1 1 auto;
   min-width: 0;
   overflow-x: hidden;
   padding-right: 24px;
 }
 
-@media (max-width: 900px) {
-  .layout {
-    flex-direction: column;
+@media (min-width: 901px) {
+  .readmeColumn {
+    flex: 1 1 0 !important;
+    max-width: calc(100% - 340px) !important;
   }
+}
 
+@media (max-width: 900px) {
   .readmeColumn {
     padding-right: 0;
   }
 
+  .readmeColumn,
   .sidebar {
-    flex: none;
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  .sidebar {
     min-width: 0;
     width: 100%;
     border-left: none;
@@ -422,3 +426,4 @@
   color: var(--text-faint);
   padding: 40px 0;
 }
+

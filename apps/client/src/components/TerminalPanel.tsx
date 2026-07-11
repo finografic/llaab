@@ -1,5 +1,7 @@
+import { cn } from '@llaab/ui/lib/utils';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
+import { Col, Row } from 'components/ui/grid';
 import { Input } from 'components/ui/input';
 import { ScrollArea } from 'components/ui/scroll-area';
 import {
@@ -16,6 +18,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import type { Command, OutputEnvelope, OutputEvent } from 'types/terminal-protocol';
+
+import styles from './TerminalPanel.module.css';
 
 type AiRunTask = Extract<Command, { kind: 'ai.run' }>['task'];
 type OutputMode = 'structured' | 'raw' | 'json';
@@ -543,71 +547,78 @@ export function TerminalPanel() {
         <Badge variant={connected ? 'default' : 'secondary'}>{connected ? 'connected' : 'offline'}</Badge>
       </div>
 
-      <div className="grid min-h-[58vh] gap-3 lg:grid-cols-[400px_minmax(0,1fr)]">
-        <aside className="rounded-md border bg-card p-3">
-          <div className="mb-3">
-            <h2 className="text-sm font-medium">Actions</h2>
-            <p className="text-xs text-muted-foreground">Click to paste into Run.</p>
-          </div>
-          <div className="grid gap-3">
-            {COMMAND_ACTION_GROUPS.map((group) => {
-              const Icon = group.icon;
-              return (
-                <div key={group.label} className="grid gap-1">
-                  <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-normal text-muted-foreground">
-                    <Icon aria-hidden className="size-3.5" />
-                    {group.label}
-                  </div>
-                  <div className="grid gap-0.5">
-                    {group.actions.map((action) => (
-                      <button
-                        key={action.command}
-                        type="button"
-                        className="min-w-0 rounded py-1 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        onClick={() => insertCommand(action.command)}
-                      >
-                        <span className="block truncate text-sm">{action.label}</span>
-                        <span className="block truncate font-mono text-xs text-primary">
-                          {action.command}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </aside>
-
-        <div className="flex h-full min-w-0 flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">Output</span>
-            {(['structured', 'raw', 'json'] as const).map((mode) => (
-              <Button
-                key={mode}
-                type="button"
-                variant={outputMode === mode ? 'default' : 'outline'}
-                size="xs"
-                onClick={() => setOutputMode(mode)}
-              >
-                {mode}
-              </Button>
-            ))}
-          </div>
-
-          <ScrollArea className="min-h-[52vh] flex-1 rounded-md border bg-card p-3">
-            <div className="space-y-1 font-mono text-sm">
-              {lines.map((line) => (
-                <div key={line.id} className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 whitespace-pre-wrap">
-                  <span className="text-muted-foreground">{line.kind}</span>
-                  {renderLine(line)}
-                </div>
-              ))}
-              <div ref={bottomRef} />
+      <Row className={styles.paneRow} align="stretch" gutterWidth={12}>
+        <Col xs={12} lg="content">
+          <aside className={cn('rounded-md border bg-card p-3', styles.aside)}>
+            <div className="mb-3">
+              <h2 className="text-sm font-medium">Actions</h2>
+              <p className="text-xs text-muted-foreground">Click to paste into Run.</p>
             </div>
-          </ScrollArea>
-        </div>
-      </div>
+            <div className="grid gap-3">
+              {COMMAND_ACTION_GROUPS.map((group) => {
+                const Icon = group.icon;
+                return (
+                  <div key={group.label} className="grid gap-1">
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-normal text-muted-foreground">
+                      <Icon aria-hidden className="size-3.5" />
+                      {group.label}
+                    </div>
+                    <div className="grid gap-0.5">
+                      {group.actions.map((action) => (
+                        <button
+                          key={action.command}
+                          type="button"
+                          className="min-w-0 rounded py-1 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          onClick={() => insertCommand(action.command)}
+                        >
+                          <span className="block truncate text-sm">{action.label}</span>
+                          <span className="block truncate font-mono text-xs text-primary">
+                            {action.command}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
+        </Col>
+
+        <Col xs={12} className={styles.mainCol}>
+          <div className="flex h-full min-w-0 flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">Output</span>
+              {(['structured', 'raw', 'json'] as const).map((mode) => (
+                <Button
+                  key={mode}
+                  type="button"
+                  variant={outputMode === mode ? 'default' : 'outline'}
+                  size="xs"
+                  onClick={() => setOutputMode(mode)}
+                >
+                  {mode}
+                </Button>
+              ))}
+            </div>
+
+            <ScrollArea className="min-h-[52vh] flex-1 rounded-md border bg-card p-3">
+              <div className="space-y-1 font-mono text-sm">
+                {lines.map((line) => (
+                  <div
+                    key={line.id}
+                    className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 whitespace-pre-wrap"
+                  >
+                    <span className="text-muted-foreground">{line.kind}</span>
+                    {renderLine(line)}
+                  </div>
+                ))}
+                <div ref={bottomRef} />
+              </div>
+            </ScrollArea>
+          </div>
+        </Col>
+      </Row>
 
       {recentHistory.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
