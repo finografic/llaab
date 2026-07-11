@@ -8,15 +8,54 @@ import type {
 } from '@llaab/schemas';
 
 import { renderReadmeToHtml } from '../../lib/readme-renderer.js';
-import { fetchRepoMeta } from './registry-github.routes.js';
+import { fetchPackageInstallStats } from '../../lib/registry/package-install-stats.js';
+import { fetchPackageSocketScores, isSocketConfigured } from '../../lib/registry/package-socket-scores.js';
 
 const NPM_REGISTRY = 'https://registry.npmjs.org';
 const NPM_API = 'https://api.npmjs.org';
-const GITHUB_REPO_PATH = /^\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/i;
 
 function encodePackageName(name: string): string {
   // Scoped packages: @scope/name → @scope%2Fname
   return name.startsWith('@') ? `@${encodeURIComponent(name.slice(1))}` : name;
+}
+
+/** Last-week downloads + WoW % change vs the prior 7-day window. */
+async function fetchWeeklyDownloads(encodedName: string): Promise<{
+  weeklyDownloads?: number;
+  weeklyDownloadsChangePercent?: number;
+}> {
+  try {
+    const currentRes = await fetch(`${NPM_API}/downloads/point/last-week/${encodedName}`);
+    if (!currentRes.ok) return {};
+    const current = (await currentRes.json()) as NpmDownloadCount;
+    const weeklyDownloads = current.downloads;
+
+    let weeklyDownloadsChangePercent: number | undefined;
+    if (current.start && current.end && current.downloads > 0) {
+      const start = new Date(`${current.start}T00:00:00.000Z`);
+      const end = new Date(`${current.end}T00:00:00.000Z`);
+      if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+        const dayMs = 86_400_000;
+        const prevStart = new Date(start.getTime() - 7 * dayMs).toISOString().slice(0, 10);
+        const prevEnd = new Date(end.getTime() - 7 * dayMs).toISOString().slice(0, 10);
+        const prevRes = await fetch(`${NPM_API}/downloads/point/${prevStart}:${prevEnd}/${encodedName}`);
+        if (prevRes.ok) {
+          const prev = (await prevRes.json()) as NpmDownloadCount;
+          if (typeof prev.downloads === 'number' && prev.downloads > 0) {
+            weeklyDownloadsChangePercent =
+              Math.round(((current.downloads - prev.downloads) / prev.downloads) * 1000) / 10;
+          }
+        }
+      }
+    }
+
+    return {
+      weeklyDownloads,
+      ...(weeklyDownloadsChangePercent != null ? { weeklyDownloadsChangePercent } : {}),
+    };
+  } catch {
+    return {};
+  }
 }
 
 function getTypesPackageName(packageName: string): string {
@@ -89,31 +128,15 @@ function normalizeBugsUrl(raw: unknown): string | undefined {
   return (raw as { url?: string }).url;
 }
 
-/** `owner/repo` from a normalized GitHub repository URL, if any. */
-function githubFullNameFromUrl(url?: string): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.replace(/^www\./, '').toLowerCase() !== 'github.com') return null;
-    const match = parsed.pathname.match(GITHUB_REPO_PATH);
-    if (!match?.[1] || !match[2]) return null;
-    return `${match[1]}/${match[2].replace(/\.git$/i, '')}`;
-  } catch {
-    return null;
-  }
-}
-
 async function fetchPackageMeta(name: string): Promise<PackageMetaResponse> {
   const encoded = encodePackageName(name);
 
-  const [packument, downloads] = await Promise.all([
+  const [packument, downloadStats] = await Promise.all([
     fetch(`${NPM_REGISTRY}/${encoded}`).then((r) => {
       if (!r.ok) throw new Error(`npm registry error: ${r.status}`);
       return r.json() as Promise<Record<string, unknown>>;
     }),
-    fetch(`${NPM_API}/downloads/point/last-week/${encoded}`)
-      .then((r) => (r.ok ? (r.json() as Promise<NpmDownloadCount>) : null))
-      .catch(() => null),
+    fetchWeeklyDownloads(encoded),
   ]);
 
   const distTags = (packument['dist-tags'] ?? {}) as Record<string, string>;
@@ -137,7 +160,8 @@ async function fetchPackageMeta(name: string): Promise<PackageMetaResponse> {
     },
     author: normalizeAuthor(packument.author),
     maintainers: (packument.maintainers as PackageMetaResponse['maintainers']) ?? undefined,
-    weeklyDownloads: downloads?.downloads,
+    weeklyDownloads: downloadStats.weeklyDownloads,
+    weeklyDownloadsChangePercent: downloadStats.weeklyDownloadsChangePercent,
     typesStatus: versionMeta.typesStatus,
     typesPackageName: versionMeta.typesPackageName,
   };
@@ -154,6 +178,7 @@ async function extractVersionMeta(packument: Record<string, unknown>, version: s
   const versions = (packument.versions ?? {}) as Record<string, Record<string, unknown>>;
   const v = versions[version] ?? {};
   const packageName = (packument.name as string | undefined) ?? '';
+  const dist = (v.dist ?? {}) as { unpackedSize?: number };
 
   let typesStatus: PackageTypesStatus = 'none';
   let typesPackageName: string | undefined;
@@ -175,6 +200,7 @@ async function extractVersionMeta(packument: Record<string, unknown>, version: s
     typesStatus,
     typesPackageName,
     isEsm: v.type === 'module',
+    unpackedSize: typeof dist.unpackedSize === 'number' ? dist.unpackedSize : undefined,
   };
 }
 
@@ -203,14 +229,12 @@ export const npmPackage = {
 
     try {
       const encoded = encodePackageName(decoded);
-      const [packument, downloads] = await Promise.all([
+      const [packument, downloadStats] = await Promise.all([
         fetch(`${NPM_REGISTRY}/${encoded}`).then((r) => {
           if (!r.ok) throw new Error(`npm registry error: ${r.status}`);
           return r.json() as Promise<Record<string, unknown>>;
         }),
-        fetch(`${NPM_API}/downloads/point/last-week/${encoded}`)
-          .then((r) => (r.ok ? (r.json() as Promise<NpmDownloadCount>) : null))
-          .catch(() => null),
+        fetchWeeklyDownloads(encoded),
       ]);
 
       const distTags = (packument['dist-tags'] ?? {}) as Record<string, string>;
@@ -233,22 +257,20 @@ export const npmPackage = {
         },
         author: normalizeAuthor(packument.author),
         maintainers: (packument.maintainers as PackageMetaResponse['maintainers']) ?? undefined,
-        weeklyDownloads: downloads?.downloads,
+        weeklyDownloads: downloadStats.weeklyDownloads,
+        weeklyDownloadsChangePercent: downloadStats.weeklyDownloadsChangePercent,
       };
 
       const rawReadme = extractRawReadme(packument, latestVersion);
-      const repoFullName = githubFullNameFromUrl(meta.links.repository);
-      const [versionMeta, readmeHtml, repoMeta] = await Promise.all([
+      const [versionMeta, readmeHtml] = await Promise.all([
         extractVersionMeta(packument, latestVersion),
         rawReadme ? renderReadmeToHtml(rawReadme) : Promise.resolve(null),
-        repoFullName ? fetchRepoMeta(repoFullName).catch(() => null) : Promise.resolve(null),
       ]);
 
       const detail: PackageDetailResponse = {
         ...meta,
         readmeHtml,
         ...versionMeta,
-        ...(repoMeta ? { stars: repoMeta.stars, openIssues: repoMeta.openIssues } : {}),
       };
 
       return c.json(detail);
@@ -259,4 +281,52 @@ export const npmPackage = {
   },
 };
 
-export { fetchPackageMeta };
+/** Lazy install-size + vuln count (npmx-style tree walk). */
+export const npmPackageStats = {
+  path: '/npm/package/:name/stats' as const,
+  handler: async (c: AppCtx) => {
+    const name = c.req.param('name') ?? '';
+    const decoded = decodeURIComponent(name);
+    const version = c.req.query('version') || undefined;
+
+    try {
+      const stats = await fetchPackageInstallStats(decoded, version);
+      return c.json(stats);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Package stats failed';
+      return c.json({ error: message }, 502);
+    }
+  },
+};
+
+/** Lazy Socket.dev category scores (requires SOCKET_API_TOKEN). */
+export const npmPackageSocketScores = {
+  path: '/npm/package/:name/socket-scores' as const,
+  handler: async (c: AppCtx) => {
+    const name = c.req.param('name') ?? '';
+    const decoded = decodeURIComponent(name);
+    const requestedVersion = c.req.query('version') || undefined;
+
+    if (!isSocketConfigured()) {
+      return c.json({ configured: false });
+    }
+
+    try {
+      let version = requestedVersion;
+      if (!version || version === 'latest') {
+        const meta = await fetchPackageMeta(decoded);
+        version = meta.version;
+      }
+      if (!version) {
+        return c.json({ error: 'No version found' }, 404);
+      }
+      const scores = await fetchPackageSocketScores(decoded, version);
+      return c.json(scores);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Socket scores failed';
+      return c.json({ error: message }, 502);
+    }
+  },
+};
+
+export { fetchPackageMeta, fetchWeeklyDownloads };

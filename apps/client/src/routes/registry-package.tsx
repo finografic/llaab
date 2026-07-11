@@ -1,6 +1,9 @@
 import { PageHero } from 'components/PageHero/PageHero';
 import pageHeroStyles from 'components/PageHero/PageHero.module.css';
+import { RegistryInstallStats } from 'components/RegistryInstallStats/RegistryInstallStats';
 import { RegistrySidebarPinButton } from 'components/RegistrySidebarPinButton/RegistrySidebarPinButton';
+import { RegistrySidebarSectionLabel } from 'components/RegistrySidebarSectionLabel/RegistrySidebarSectionLabel';
+import { RegistrySocketScores } from 'components/RegistrySocketScores/RegistrySocketScores';
 import { parseGithubRepoRef } from 'forms/RegistryAddPinForm/registry-add-pin-form.utils';
 import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarContext';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
@@ -8,6 +11,7 @@ import { PageList } from 'layouts/PageList/PageList';
 import { BookmarkCheckIcon, BookmarkIcon } from 'lucide-react';
 import {
   useNpmPackage,
+  useGithubRepoMeta,
   useIsPackagePinned,
   usePinPackage,
   usePinnedPackages,
@@ -20,6 +24,7 @@ import type { PackageTypesStatus } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
 import { formatDetailDateOnly } from 'utils/format-date.utils';
+import { formatDownloadsChangeParts } from 'utils/format-downloads-change.utils';
 
 import typescriptDeclarationIcon from '../assets/typescript-declaration.svg';
 import typescriptIcon from '../assets/typescript.svg';
@@ -90,6 +95,23 @@ function fmtCount(n?: number): string {
   return n.toLocaleString('en-US');
 }
 
+function DownloadsChange({ changePercent }: { changePercent?: number }) {
+  const parts = formatDownloadsChangeParts(changePercent);
+  if (!parts) return null;
+  const arrowClass =
+    parts.tone === 'up'
+      ? styles.downloadsChangeArrowUp
+      : parts.tone === 'down'
+        ? styles.downloadsChangeArrowDown
+        : styles.downloadsChangeArrowFlat;
+  return (
+    <span className={styles.downloadsChange}>
+      <span className={arrowClass}>{parts.arrow}</span>
+      <span className={styles.downloadsChangePercent}>{parts.percent}</span>
+    </span>
+  );
+}
+
 export function RegistryPackagePage() {
   const { name: encodedName = '' } = useParams<{ name: string }>();
   const name = decodeURIComponent(encodedName);
@@ -120,6 +142,7 @@ export function RegistryPackagePage() {
   const typesBadge = data ? typesBadgeLabel(typesStatus, data.typesPackageName) : null;
   const resource = pins.find((pin) => pin.name === name)?.resource;
   const linkedRepoFullName = data?.links.repository ? parseGithubRepoRef(data.links.repository) : null;
+  const { data: repoMeta } = useGithubRepoMeta(linkedRepoFullName ?? '');
 
   return (
     <PageLayout
@@ -167,6 +190,8 @@ export function RegistryPackagePage() {
                 </div>
               )}
 
+              <RegistrySocketScores packageName={name} version={data.version} />
+
               {data.readmeHtml ? (
                 <div className={styles.readmeContent} dangerouslySetInnerHTML={{ __html: data.readmeHtml }} />
               ) : (
@@ -179,7 +204,9 @@ export function RegistryPackagePage() {
               {linkedRepoFullName && data.links.repository ? (
                 <div className={styles.sidebarSection}>
                   <div className={styles.sidebarLabelRow}>
-                    <span className={styles.sidebarLabel}>Repository</span>
+                    <RegistrySidebarSectionLabel kind="repository" target={linkedRepoFullName}>
+                      Repository
+                    </RegistrySidebarSectionLabel>
                     <RegistrySidebarPinButton kind="repository" target={linkedRepoFullName} />
                   </div>
                   <a
@@ -195,7 +222,9 @@ export function RegistryPackagePage() {
 
               <div className={styles.sidebarSection}>
                 <div className={styles.sidebarLabelRow}>
-                  <span className={styles.sidebarLabel}>Package</span>
+                  <RegistrySidebarSectionLabel kind="package" target={name}>
+                    Package
+                  </RegistrySidebarSectionLabel>
                   <RegistrySidebarPinButton kind="package" target={name} />
                 </div>
                 <a
@@ -245,28 +274,74 @@ export function RegistryPackagePage() {
               {data.weeklyDownloads != null && (
                 <div className={styles.sidebarSection}>
                   <span className={styles.sidebarLabel}>Downloads</span>
-                  <span className={styles.sidebarValue}>{fmtDownloads(data.weeklyDownloads)}</span>
+                  <div className={styles.sidebarValueRow}>
+                    <span className={styles.sidebarValue}>{fmtDownloads(data.weeklyDownloads)}</span>
+                    <DownloadsChange changePercent={data.weeklyDownloadsChangePercent} />
+                  </div>
                 </div>
               )}
 
-              {data.stars != null && (
+              {repoMeta ? (
                 <div className={styles.sidebarSection}>
                   <span className={styles.sidebarLabel}>Stars</span>
-                  <span className={styles.sidebarValue}>{fmtCount(data.stars)}</span>
+                  <span className={styles.sidebarValue}>{fmtCount(repoMeta.stars)}</span>
                 </div>
-              )}
+              ) : null}
 
-              {data.openIssues != null && (
+              {repoMeta ? (
                 <div className={styles.sidebarSection}>
                   <span className={styles.sidebarLabel}>Open Issues</span>
-                  <span className={styles.sidebarValue}>{fmtCount(data.openIssues)}</span>
+                  <span className={styles.sidebarValue}>{fmtCount(repoMeta.openIssues)}</span>
                 </div>
-              )}
+              ) : null}
 
               {data.license && (
                 <div className={styles.sidebarSection}>
                   <span className={styles.sidebarLabel}>License</span>
                   <span className={styles.sidebarValue}>{data.license}</span>
+                </div>
+              )}
+
+              <RegistryInstallStats
+                packageName={name}
+                version={data.version}
+                unpackedSize={data.unpackedSize}
+              />
+
+              {data.keywords && data.keywords.length > 0 && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Tags</span>
+                  <div className={styles.tags}>
+                    {data.keywords.map((kw) => (
+                      <span key={kw} className={styles.tag}>
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {resource ? (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
+                  {resource.id ? (
+                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
+                      {resource.id}
+                    </Link>
+                  ) : (
+                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
+                  )}
+                </div>
+              ) : null}
+
+              {data.maintainers && data.maintainers.length > 0 && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Maintainers</span>
+                  {data.maintainers.map((m) => (
+                    <span key={m.name ?? m.email} className={styles.sidebarValue}>
+                      {m.name ?? m.email}
+                    </span>
+                  ))}
                 </div>
               )}
 
@@ -301,43 +376,6 @@ export function RegistryPackagePage() {
                   </div>
                 </div>
               )}
-
-              {data.keywords && data.keywords.length > 0 && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Tags</span>
-                  <div className={styles.tags}>
-                    {data.keywords.map((kw) => (
-                      <span key={kw} className={styles.tag}>
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {data.maintainers && data.maintainers.length > 0 && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Maintainers</span>
-                  {data.maintainers.map((m) => (
-                    <span key={m.name ?? m.email} className={styles.sidebarValue}>
-                      {m.name ?? m.email}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {resource ? (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
-                  {resource.id ? (
-                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
-                      {resource.id}
-                    </Link>
-                  ) : (
-                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
-                  )}
-                </div>
-              ) : null}
             </aside>
           </div>
         )}

@@ -1,0 +1,34 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.value {
+  font-size: var(--text-md);
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.muted {
+  color: var(--text-faint);
+}
+
+.vulnOk {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-faint);
+}
+
+.vulnWarn {
+  color: var(--warning-text);
+}

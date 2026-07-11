@@ -1,0 +1,22 @@
+.label {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.labelLink {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.labelLink:hover {
+  color: var(--text);
+  text-decoration: underline;
+}

@@ -1,12 +1,16 @@
 import { PageHero } from 'components/PageHero/PageHero';
 import pageHeroStyles from 'components/PageHero/PageHero.module.css';
+import { RegistryInstallStats } from 'components/RegistryInstallStats/RegistryInstallStats';
 import { RegistrySidebarPinButton } from 'components/RegistrySidebarPinButton/RegistrySidebarPinButton';
+import { RegistrySidebarSectionLabel } from 'components/RegistrySidebarSectionLabel/RegistrySidebarSectionLabel';
+import { RegistrySocketScores } from 'components/RegistrySocketScores/RegistrySocketScores';
 import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarContext';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import { BookmarkCheckIcon, BookmarkIcon } from 'lucide-react';
 import {
   useGithubRepo,
+  useGithubRepoNpm,
   useIsRepositoryPinned,
   usePinRepository,
   usePinnedRepositories,
@@ -18,6 +22,7 @@ import { toast } from 'sonner';
 
 import { usePageTitle } from 'lib/use-page-title';
 import { formatDetailDateOnly } from 'utils/format-date.utils';
+import { formatDownloadsChangeParts } from 'utils/format-downloads-change.utils';
 
 import styles from './registry-repo.module.css';
 
@@ -42,6 +47,23 @@ function fmtDownloads(n?: number): string {
   return `${String(n)} / week`;
 }
 
+function DownloadsChange({ changePercent }: { changePercent?: number }) {
+  const parts = formatDownloadsChangeParts(changePercent);
+  if (!parts) return null;
+  const arrowClass =
+    parts.tone === 'up'
+      ? styles.downloadsChangeArrowUp
+      : parts.tone === 'down'
+        ? styles.downloadsChangeArrowDown
+        : styles.downloadsChangeArrowFlat;
+  return (
+    <span className={styles.downloadsChange}>
+      <span className={arrowClass}>{parts.arrow}</span>
+      <span className={styles.downloadsChangePercent}>{parts.percent}</span>
+    </span>
+  );
+}
+
 export function RegistryRepoPage() {
   const { owner: encodedOwner = '', repo: encodedRepo = '' } = useParams<{
     owner: string;
@@ -52,6 +74,7 @@ export function RegistryRepoPage() {
   const fullName = owner && repo ? `${owner}/${repo}` : '';
 
   const { data, isLoading } = useGithubRepo(fullName);
+  const { data: npmInfo } = useGithubRepoNpm(fullName);
   const isPinned = useIsRepositoryPinned(fullName);
   const { data: pins = [] } = usePinnedRepositories();
   const pinRepository = usePinRepository();
@@ -72,6 +95,9 @@ export function RegistryRepoPage() {
 
   const pinPending = pinRepository.isPending || unpinRepository.isPending;
   const resource = pins.find((pin) => pin.fullName === fullName)?.resource;
+  const npmPackage = npmInfo?.npmPackage;
+  const weeklyDownloads = npmInfo?.weeklyDownloads;
+  const weeklyDownloadsChangePercent = npmInfo?.weeklyDownloadsChangePercent;
 
   return (
     <PageLayout
@@ -116,6 +142,8 @@ export function RegistryRepoPage() {
 
               {data.description ? <p className={styles.repoDescription}>{data.description}</p> : null}
 
+              {npmPackage ? <RegistrySocketScores packageName={npmPackage} /> : null}
+
               {data.readmeHtml ? (
                 <div className={styles.readmeContent} dangerouslySetInnerHTML={{ __html: data.readmeHtml }} />
               ) : (
@@ -126,7 +154,9 @@ export function RegistryRepoPage() {
             <aside className={styles.sidebar}>
               <div className={styles.sidebarSection}>
                 <div className={styles.sidebarLabelRow}>
-                  <span className={styles.sidebarLabel}>Repository</span>
+                  <RegistrySidebarSectionLabel kind="repository" target={data.fullName}>
+                    Repository
+                  </RegistrySidebarSectionLabel>
                   <RegistrySidebarPinButton kind="repository" target={data.fullName} />
                 </div>
                 <a
@@ -139,27 +169,29 @@ export function RegistryRepoPage() {
                 </a>
               </div>
 
-              {data.npmPackage ? (
+              {npmPackage ? (
                 <div className={styles.sidebarSection}>
                   <div className={styles.sidebarLabelRow}>
-                    <span className={styles.sidebarLabel}>Package</span>
-                    <RegistrySidebarPinButton kind="package" target={data.npmPackage} />
+                    <RegistrySidebarSectionLabel kind="package" target={npmPackage}>
+                      Package
+                    </RegistrySidebarSectionLabel>
+                    <RegistrySidebarPinButton kind="package" target={npmPackage} />
                   </div>
                   <a
-                    href={`https://npmx.dev/package/${encodeURIComponent(data.npmPackage)}`}
+                    href={`https://npmx.dev/package/${encodeURIComponent(npmPackage)}`}
                     className={styles.sidebarLink}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    npmx.dev/package/{data.npmPackage}
+                    npmx.dev/package/{npmPackage}
                   </a>
                   <a
-                    href={`https://www.npmjs.com/package/${encodeURIComponent(data.npmPackage)}`}
+                    href={`https://www.npmjs.com/package/${encodeURIComponent(npmPackage)}`}
                     className={styles.sidebarLink}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    npmjs.com/package/{data.npmPackage}
+                    npmjs.com/package/{npmPackage}
                   </a>
                 </div>
               ) : null}
@@ -192,10 +224,13 @@ export function RegistryRepoPage() {
                 </div>
               )}
 
-              {data.weeklyDownloads != null && (
+              {weeklyDownloads != null && (
                 <div className={styles.sidebarSection}>
                   <span className={styles.sidebarLabel}>Downloads</span>
-                  <span className={styles.sidebarValue}>{fmtDownloads(data.weeklyDownloads)}</span>
+                  <div className={styles.sidebarValueRow}>
+                    <span className={styles.sidebarValue}>{fmtDownloads(weeklyDownloads)}</span>
+                    <DownloadsChange changePercent={weeklyDownloadsChangePercent} />
+                  </div>
                 </div>
               )}
 
@@ -215,6 +250,13 @@ export function RegistryRepoPage() {
                   <span className={styles.sidebarValue}>{data.license}</span>
                 </div>
               )}
+
+              {npmPackage ? (
+                <RegistryInstallStats
+                  packageName={npmPackage}
+                  version={data.latestVersion?.replace(/^v/, '')}
+                />
+              ) : null}
 
               {data.languages.length > 0 && (
                 <div className={styles.sidebarSection}>
@@ -243,18 +285,6 @@ export function RegistryRepoPage() {
                 </div>
               )}
 
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Maintainer</span>
-                <a
-                  href={`https://github.com/${encodeURIComponent(data.owner)}`}
-                  className={styles.sidebarLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {data.owner}
-                </a>
-              </div>
-
               {resource ? (
                 <div className={styles.sidebarSection}>
                   <span className={styles.sidebarLabel}>Knowledge Resource</span>
@@ -267,6 +297,18 @@ export function RegistryRepoPage() {
                   )}
                 </div>
               ) : null}
+
+              <div className={styles.sidebarSection}>
+                <span className={styles.sidebarLabel}>Maintainer</span>
+                <a
+                  href={`https://github.com/${encodeURIComponent(data.owner)}`}
+                  className={styles.sidebarLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {data.owner}
+                </a>
+              </div>
             </aside>
           </div>
         )}

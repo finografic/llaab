@@ -9,6 +9,8 @@ import { pinBodySchema, repoPinBodySchema, searchQuerySchema } from './registry.
 
 export const registryRouter = createRouter()
   .get(npmRoutes.npmSearch.path, zValidator('query', searchQuerySchema), npmRoutes.npmSearch.handler)
+  .get(npmRoutes.npmPackageStats.path, npmRoutes.npmPackageStats.handler)
+  .get(npmRoutes.npmPackageSocketScores.path, npmRoutes.npmPackageSocketScores.handler)
   .get(npmRoutes.npmPackage.path, npmRoutes.npmPackage.handler)
   .get(pinRoutes.listPins.path, pinRoutes.listPins.handler)
   .post(pinRoutes.pinPackage.path, zValidator('json', pinBodySchema), pinRoutes.pinPackage.handler)
@@ -18,6 +20,8 @@ export const registryRouter = createRouter()
     zValidator('query', searchQuerySchema),
     githubRoutes.githubSearch.handler,
   )
+  .get(githubRoutes.githubRepoMeta.path, githubRoutes.githubRepoMeta.handler)
+  .get(githubRoutes.githubRepoNpm.path, githubRoutes.githubRepoNpm.handler)
   .get(githubRoutes.githubRepo.path, githubRoutes.githubRepo.handler)
   .get(repoPinRoutes.listRepoPins.path, repoPinRoutes.listRepoPins.handler)
   .post(

@@ -105,6 +105,11 @@ export interface PackageMetaResponse {
   author?: NpmPerson;
   maintainers?: NpmPerson[];
   weeklyDownloads?: number;
+  /**
+   * Week-over-week % change in downloads (last-week vs prior week).
+   * Positive = up, negative = down. Omitted when prior week is unavailable.
+   */
+  weeklyDownloadsChangePercent?: number;
   /** Set when meta is built from a packument (pin snapshot / detail). Absent on npm search hits. */
   typesStatus?: PackageTypesStatus;
   /** Present when `typesStatus === 'declarations'`. */
@@ -120,10 +125,35 @@ export interface PackageDetailResponse extends PackageMetaResponse {
   hasTypes: boolean;
   typesStatus: PackageTypesStatus;
   isEsm: boolean;
-  /** From linked GitHub repository when resolvable. */
-  stars?: number;
-  /** From linked GitHub repository when resolvable. */
-  openIssues?: number;
+  /** Unpacked tarball size of this version (bytes), from npm `dist.unpackedSize`. */
+  unpackedSize?: number;
+}
+
+/**
+ * Lazy install-size + vulnerability stats for a package (npmx-style tree walk).
+ * Fetched separately so the main package detail stays fast.
+ */
+export interface PackageInstallStatsResponse {
+  package: string;
+  version: string;
+  selfSize: number;
+  totalSize: number;
+  dependencyCount: number;
+  vulnCount: number;
+}
+
+/** Socket.dev category scores (0–100), lazy-fetched when SOCKET_API_TOKEN is set. */
+export interface PackageSocketScoresResponse {
+  configured: boolean;
+  package?: string;
+  version?: string;
+  scores?: {
+    supplyChain: number;
+    vulnerability: number;
+    quality: number;
+    maintenance: number;
+    license: number;
+  };
 }
 
 /** A pinned npm package stored in the local pins file. */

@@ -6,9 +6,11 @@ import type {
   RepoDetailResponse,
   RepoLanguageShare,
   RepoMetaResponse,
+  RepoNpmInfoResponse,
 } from '@llaab/schemas';
 
 import { renderReadmeToHtml } from '../../lib/readme-renderer.js';
+import { fetchWeeklyDownloads } from './registry-npm.routes.js';
 
 const GITHUB_API = 'https://api.github.com';
 
@@ -138,7 +140,14 @@ async function fetchLatestVersion(owner: string, repo: string): Promise<string |
 async function fetchNpmPackageInfo(
   owner: string,
   repo: string,
-): Promise<{ name: string; weeklyDownloads?: number } | undefined> {
+): Promise<
+  | {
+      name: string;
+      weeklyDownloads?: number;
+      weeklyDownloadsChangePercent?: number;
+    }
+  | undefined
+> {
   const res = await githubFetch(
     `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/package.json`,
   );
@@ -156,16 +165,19 @@ async function fetchNpmPackageInfo(
     const name = pkg.name.trim();
     const encoded = name.startsWith('@') ? `@${encodeURIComponent(name.slice(1))}` : name;
 
-    const [npmHead, downloadsRes] = await Promise.all([
+    const [npmHead, downloadStats] = await Promise.all([
       fetch(`https://registry.npmjs.org/${encoded}`, { method: 'HEAD' }),
-      fetch(`https://api.npmjs.org/downloads/point/last-week/${encoded}`)
-        .then((r) => (r.ok ? (r.json() as Promise<{ downloads?: number }>) : null))
-        .catch(() => null),
+      fetchWeeklyDownloads(encoded),
     ]);
     if (!npmHead.ok) return undefined;
 
-    const weeklyDownloads = typeof downloadsRes?.downloads === 'number' ? downloadsRes.downloads : undefined;
-    return weeklyDownloads != null ? { name, weeklyDownloads } : { name };
+    return {
+      name,
+      ...(downloadStats.weeklyDownloads != null ? { weeklyDownloads: downloadStats.weeklyDownloads } : {}),
+      ...(downloadStats.weeklyDownloadsChangePercent != null
+        ? { weeklyDownloadsChangePercent: downloadStats.weeklyDownloadsChangePercent }
+        : {}),
+    };
   } catch {
     return undefined;
   }
@@ -221,12 +233,11 @@ export const githubRepo = {
     if (!owner || !repo) return c.json({ error: 'Missing owner/repo' }, 400);
 
     try {
-      const [raw, readmeMd, languages, latestVersion, npmInfo] = await Promise.all([
+      const [raw, readmeMd, languages, latestVersion] = await Promise.all([
         fetchRepoJson(owner, repo),
         fetchReadmeMarkdown(owner, repo),
         fetchLanguages(owner, repo),
         fetchLatestVersion(owner, repo),
-        fetchNpmPackageInfo(owner, repo),
       ]);
 
       const meta = mapRepoMeta(raw);
@@ -237,8 +248,6 @@ export const githubRepo = {
         readmeHtml,
         languages: toLanguageShares(languages),
         latestVersion,
-        ...(npmInfo?.name ? { npmPackage: npmInfo.name } : {}),
-        ...(npmInfo?.weeklyDownloads != null ? { weeklyDownloads: npmInfo.weeklyDownloads } : {}),
         watchers: (raw.subscribers_count as number) ?? (raw.watchers_count as number) ?? 0,
         sizeKb: (raw.size as number) ?? 0,
         createdAt: (raw.created_at as string) ?? '',
@@ -251,6 +260,49 @@ export const githubRepo = {
       return c.json(detail);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Repository fetch failed';
+      return c.json({ error: message }, 502);
+    }
+  },
+};
+
+/** Slim GitHub meta for package-detail sidebar (stars / open issues). */
+export const githubRepoMeta = {
+  path: '/github/repo/:owner/:repo/meta' as const,
+  handler: async (c: AppCtx) => {
+    const owner = decodeURIComponent(c.req.param('owner') ?? '');
+    const repo = decodeURIComponent(c.req.param('repo') ?? '');
+    if (!owner || !repo) return c.json({ error: 'Missing owner/repo' }, 400);
+
+    try {
+      const meta = await fetchRepoMeta(`${owner}/${repo}`);
+      return c.json(meta);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Repository meta fetch failed';
+      return c.json({ error: message }, 502);
+    }
+  },
+};
+
+/** Lazy npm package resolution from a GitHub repo's root package.json. */
+export const githubRepoNpm = {
+  path: '/github/repo/:owner/:repo/npm' as const,
+  handler: async (c: AppCtx) => {
+    const owner = decodeURIComponent(c.req.param('owner') ?? '');
+    const repo = decodeURIComponent(c.req.param('repo') ?? '');
+    if (!owner || !repo) return c.json({ error: 'Missing owner/repo' }, 400);
+
+    try {
+      const npmInfo = await fetchNpmPackageInfo(owner, repo);
+      const payload: RepoNpmInfoResponse = {
+        ...(npmInfo?.name ? { npmPackage: npmInfo.name } : {}),
+        ...(npmInfo?.weeklyDownloads != null ? { weeklyDownloads: npmInfo.weeklyDownloads } : {}),
+        ...(npmInfo?.weeklyDownloadsChangePercent != null
+          ? { weeklyDownloadsChangePercent: npmInfo.weeklyDownloadsChangePercent }
+          : {}),
+      };
+      return c.json(payload);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Repository npm info failed';
       return c.json({ error: message }, 502);
     }
   },

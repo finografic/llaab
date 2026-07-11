@@ -27,6 +27,7 @@
     width: 100%;
     border-left: none;
     padding-left: 0;
+    margin-top: 0;
   }
 }
 
@@ -43,7 +44,8 @@
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   color: var(--text);
-  margin-bottom: 12px;
+  margin-top: 12px;
+  margin-bottom: 16px;
 }
 
 .installPrompt {
@@ -106,10 +108,24 @@
   line-height: 1.3;
 }
 
-.readmeContent h1 { font-size: var(--text-2xl); }
-.readmeContent h2 { font-size: var(--text-xl); border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.3em; }
-.readmeContent h3 { font-size: var(--text-lg); }
-.readmeContent h4 { font-size: var(--text-base); }
+.readmeContent > :first-child {
+  margin-top: 0.5em;
+}
+
+.readmeContent h1 {
+  font-size: var(--text-2xl);
+}
+.readmeContent h2 {
+  font-size: var(--text-xl);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.3em;
+}
+.readmeContent h3 {
+  font-size: var(--text-lg);
+}
+.readmeContent h4 {
+  font-size: var(--text-base);
+}
 
 /* shiki wraps blocks in <pre class="shiki"> */
 .readmeContent :global(.shiki) {
@@ -221,16 +237,16 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  flex: 0 0 320px;
-  min-width: 320px;
-  width: 320px;
+  flex: 0 0 340px;
+  min-width: 340px;
+  width: 340px;
   gap: 18px;
   position: sticky;
-  top: calc(var(--header-h) + 16px);
+  top: 0;
   z-index: 1;
   height: fit-content;
   border-left: 1px solid var(--border-subtle);
-  padding: 0 0 24px 24px;
+  padding: 8px 20px 24px 24px;
   background: var(--bg);
 }
 
@@ -260,6 +276,40 @@
   font-size: var(--text-md); /* +1 from --text-sm */
   color: var(--text);
   font-family: var(--font-mono);
+}
+
+.sidebarValueRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.downloadsChange {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.downloadsChangePercent {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.downloadsChangeArrowUp {
+  color: var(--success-text);
+}
+
+.downloadsChangeArrowDown {
+  color: var(--error-text);
+}
+
+.downloadsChangeArrowFlat {
+  color: var(--text-faint);
 }
 
 .sidebarLink {
@@ -343,7 +393,10 @@
   background: var(--surface);
   color: var(--text-muted);
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
 }
 
 .pinButton:hover {
@@ -369,4 +422,3 @@
   color: var(--text-faint);
   padding: 40px 0;
 }
-

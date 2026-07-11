@@ -1,0 +1,122 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 0 0.5rem;
+  padding: 0.85rem 0 0;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.headerLabel {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.headerLink {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.headerLink:hover {
+  text-decoration: underline;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+}
+
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 5.5rem;
+}
+
+.ringWrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+}
+
+.ringTrack {
+  stroke: var(--border-subtle);
+}
+
+.ringValue {
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+.ringOk {
+  stroke: var(--success-text);
+}
+
+.ringWarn {
+  stroke: var(--warning-text);
+}
+
+.ringDanger {
+  stroke: var(--error-text);
+}
+
+.score {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.scoreOk {
+  color: var(--success-text);
+}
+
+.scoreWarn {
+  color: var(--warning-text);
+}
+
+.scoreDanger {
+  color: var(--error-text);
+}
+
+.label {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--text-muted);
+  max-width: 6.5rem;
+}
+
+.skeleton {
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--border-subtle) 70%, transparent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}

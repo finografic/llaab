@@ -130,7 +130,9 @@ export {
   type NpmSearchResult,
   type NpmSearchTrustedPublisher,
   type PackageDetailResponse,
+  type PackageInstallStatsResponse,
   type PackageMetaResponse,
+  type PackageSocketScoresResponse,
   type PackageTypesStatus,
   type PinnedLibrary,
   type PinnedPackage,
@@ -144,6 +146,7 @@ export {
   type RepoDetailResponse,
   type RepoLanguageShare,
   type RepoMetaResponse,
+  type RepoNpmInfoResponse,
 } from './github-registry.js';
 export {
   type VaultGitCommitResponse,
