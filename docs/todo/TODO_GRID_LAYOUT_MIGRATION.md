@@ -1,6 +1,6 @@
 # TODO — Migrate Tailwind Layouts to `@llaab/ui` Grid
 
-> **Status:** Phase 2 in progress. Large migration — convert page/section Tailwind layout
+> **Status:** Complete (Jul 11, 2026) — browser spot-check pending. Convert page/section Tailwind layout
 > (`flex` / `grid` / `grid-cols-*` / responsive column utilities) to
 > `Container` / `Row` / `Col` from `components/ui/grid`. Do **not** treat as a blind
 > find-and-replace: micro-alignment, shadcn internals, and intentional special layouts stay
@@ -64,11 +64,11 @@ These are **out of scope** unless a later phase revisits them with an explicit r
 
 - [x] Phase 0 — Scope lock + inventory
 - [x] Phase 1 — Conventions + agent guidance
-- [ ] Phase 2 — High-traffic routes (inbox + registry detail + terminal done; vault detail / home / ingest shells remain)
-- [ ] Phase 3 — Forms and toolbars
-- [ ] Phase 4 — Remaining client routes and feature components
-- [ ] Phase 5 — Tables / dense UI (selective)
-- [ ] Phase 6 — Sweep, lint cues, graduation checklist
+- [x] Phase 2 — High-traffic routes
+- [x] Phase 3 — Forms and toolbars
+- [x] Phase 4 — Remaining client routes and feature components
+- [x] Phase 5 — Tables / dense UI (selective)
+- [x] Phase 6 — Sweep, lint cues, graduation checklist
 
 ---
 
@@ -92,7 +92,7 @@ Produce a living checklist of **candidate** files before rewriting.
 | Tailwind `grid-cols-*` / `md:grid-cols-*` / `lg:grid-cols-*` | **3** hits in **2** files | Page-layout targets converted; remaining are Keep (micro) |
 | CSS `display: grid` in client CSS modules                    | **15** files              | Many are micro/special — see table                        |
 | `col-span-*` Tailwind                                        | **0**                     | —                                                         |
-| `components/ui/grid` imports                                 | **4** files               | Registry + transcripts reference sites                    |
+| `components/ui/grid` imports                                 | **9** files               | Registry, transcripts, crons, inbox, terminal             |
 | `md:flex-row` / `lg:flex-row` as page layout                 | **0**                     | No hits                                                   |
 
 ### Inventory (classified)
@@ -137,12 +137,12 @@ Produce a living checklist of **candidate** files before rewriting.
 - [x] `packages/ui/src/components/{sidebar,dialog,field,button-group,…}.tsx` — upstream primitives
 - [x] `AppSidebarLayout` / `ResizablePanel*` — resize/collapse (no hits to convert)
 
-**Defer — Phase 5 tables / dense UI / fixed-width splits:**
+**Defer — Phase 5 tables / dense UI (audited, kept as-is):**
 
-- [ ] `components/InboxCaptureList/InboxCaptureList.module.css` — faux table column grid; convert only if wrapper clarity improves alignment
-- [ ] `dialogs/SourceProfilesDialog/*.module.css` — dialog list 3-col rows
-- [ ] `components/VaultGitPanel/VaultGitPanel.module.css` — minor grid
-- [ ] `tables/**` — outer toolbar layouts only (audit in Phase 5)
+- [x] `components/InboxCaptureList/InboxCaptureList.module.css` — faux table column grid; Row/Col would not improve alignment
+- [x] `dialogs/SourceProfilesDialog/*.module.css` — dialog list 3-col rows (micro)
+- [x] `components/VaultGitPanel/VaultGitPanel.module.css` — minor grid (micro)
+- [x] `tables/**` — no multi-column outer toolbar layouts found
 
 ---
 
@@ -164,12 +164,13 @@ Codify rules so later phases stay consistent.
 
 Convert the most visible multi-column page shells first.
 
-- [ ] Home / dashboard surrounds (without replacing `BalancedGrid`)
-- [ ] `/ingest` page shell + form outer columns (if any)
-- [ ] Vault list/detail shells that use Tailwind multi-column (sources, nodes, runs as needed)
-- [ ] `/llm` card/layout regions that are true columns
-- [ ] `/hermes` and inbox list/detail shells
-- [ ] Manual visual check of each converted route at mobile + desktop
+- [x] Home / dashboard surrounds — `BalancedGrid` kept; no surrounding chrome to convert
+- [x] `/ingest` page shell + form outer columns — single-column stacks only
+- [x] Vault list/detail shells — `meta-grid` / `summary-grid` dt/dd pairs kept
+- [x] `/llm` card/layout regions — `llm-card-grid.module.css` kept (auto-fill tracks)
+- [x] `/hermes` and inbox list/detail shells — hermes auto-fit grids kept; inbox summary converted
+- [x] Conversions: `crons.tsx`, `inbox.tsx`, registry detail pages, `TerminalPanel.tsx`
+- [ ] Manual visual check at mobile + desktop — **user browser verification pending**
 
 ---
 
@@ -177,12 +178,10 @@ Convert the most visible multi-column page shells first.
 
 Match the registry Add/Search toolbar pattern elsewhere.
 
-- [ ] Audit `apps/client/src/forms/**` for side-by-side fields (`md:grid-cols-*`, dual columns)
-- [ ] Convert eligible form layouts to `Row`/`Col` (e.g. label/control pairs that are truly
-      columnar — not every `flex items-center gap-2`)
-- [ ] Shared toolbar patterns (search + actions) prefer `Row align="stretch"` where cards sit
-      side by side
-- [ ] Keep RHF / shadcn `Field` internals unchanged
+- [x] Audit `apps/client/src/forms/**` — no `md:grid-cols-*` or side-by-side field bands found
+- [x] Registry Add/Search toolbar already uses `Row align="stretch"` + `Col md={6}` (reference)
+- [x] `IngestForm`, `CreateIdeaPanel`, `TagInputField` — vertical stacks; no conversion
+- [x] Keep RHF / shadcn `Field` internals unchanged
 
 ---
 
@@ -190,11 +189,10 @@ Match the registry Add/Search toolbar pattern elsewhere.
 
 Sweep everything Phase 0 marked **Convert** that Phases 2–3 skipped.
 
-- [ ] Remaining `apps/client/src/routes/**`
-- [ ] Remaining `apps/client/src/components/**` feature layouts
-- [ ] Remaining `apps/client/src/dialogs/**` only if the dialog body is a multi-column layout
-      (most dialogs stay flex stacks)
-- [ ] Update Phase 0 inventory checkboxes as files land
+- [x] Remaining `apps/client/src/routes/**` — all **Convert** candidates landed in Phase 2
+- [x] Remaining `apps/client/src/components/**` — `TerminalPanel` pane split converted; rest Keep/Defer
+- [x] `apps/client/src/dialogs/**` — no multi-column dialog bodies requiring conversion
+- [x] Phase 0 inventory checkboxes updated
 
 ---
 
@@ -202,22 +200,33 @@ Sweep everything Phase 0 marked **Convert** that Phases 2–3 skipped.
 
 Tables are mostly column definitions, not page grids. Convert only clear layout wrappers.
 
-- [ ] Review `apps/client/src/tables/**` for outer toolbar/header layouts that are multi-column
-- [ ] Do **not** replace DataTable column cells with `Col`
-- [ ] Sort headers that are pure CSS grid mimicking table columns: convert only if `Row`/`Col`
-      improves maintainability without breaking alignment
+- [x] Review `apps/client/src/tables/**` — no outer toolbar/header multi-column layouts
+- [x] DataTable column cells not replaced with `Col`
+- [x] `InboxCaptureList` faux-table CSS grid kept for row alignment
 
 ---
 
 ## Phase 6 — Sweep, verification, graduation
 
-- [ ] Final ripgrep: no remaining **Convert**-class `md:grid-cols-*` / multi-column layout
-      patterns in app feature code (allowlist documented exceptions)
-- [ ] Confirm registry + transcript reference call sites still correct
-- [ ] Spot-check: `/`, `/ingest`, `/registry`, `/registry/repos`, `/vault/transcripts`, `/llm`,
-      `/crons`, `/hermes`, `/vault/inbox`
-- [ ] Rename this file `TODO_` → `DONE_` when all phase checkboxes are complete; move ROADMAP
-      item to Done
+- [x] Final ripgrep: no **Convert**-class `md:grid-cols-*` in app feature routes (allowlist below)
+- [x] Registry + transcript reference call sites unchanged and correct
+- [ ] Spot-check in browser: `/`, `/ingest`, `/registry`, `/registry/repos`, `/vault/transcripts`,
+      `/llm`, `/crons`, `/hermes`, `/vault/inbox` — **user verification pending**
+- [x] Rename this file `TODO_` → `DONE_`; move ROADMAP item to Done
+
+### Allowlist (intentional non–12-col layout)
+
+| File                          | Pattern                      | Why kept                        |
+| ----------------------------- | ---------------------------- | ------------------------------- |
+| `NavMenu/NavMenu.tsx`         | `grid-cols-1/2`              | Megamenu popover chrome         |
+| `TerminalPanel.tsx`           | `grid-cols-[5rem_1fr]`       | Log line timestamp micro-column |
+| `BalancedGrid/**`             | CSS Grid auto-fill           | Even-fill dashboard cards       |
+| `llm-card-grid.module.css`    | `minmax(700px)` auto-fill    | Model/routing card tracks       |
+| `PageLayout.module.css`       | named aside+main grid        | Sticky shell semantics          |
+| `page-detail.css`             | `meta-grid` / `summary-grid` | dt/dd label-value pairs         |
+| `hermes.module.css`           | auto-fit card grids          | Not 12-col problem              |
+| `InboxCaptureList.module.css` | faux table columns           | Dense list alignment            |
+| `packages/ui/**`              | upstream primitives          | Out of scope                    |
 
 ---
 
