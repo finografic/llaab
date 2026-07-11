@@ -47,7 +47,7 @@ Dependency chain (one-directional):
 - Icons: `@finografic/icons` + `@finografic/lucide-manager` via `@llaab/icons`
 - Server: Hono 4.x, http-status-codes, @hono/zod-validator
 - Client: Vite 8, React 19, React Router v7, React Hook Form 7.x, `@pierre/trees` (git-status file tree)
-- Registry: `marked` v18 + `shiki` v4 + `sanitize-html` on the server for readme rendering (`apps/server/src/lib/readme-renderer.ts`); npm types in `packages/schemas/src/npm-registry.ts`
+- Registry: `marked` v18 + `shiki` v4 + `sanitize-html` on the server for readme rendering (`apps/server/src/lib/readme-renderer.ts`); npm types in `packages/schemas/src/npm-registry.ts`; GitHub registry types in `packages/schemas/src/github-registry.ts`
 - CSS: Tailwind CSS 4, shadcn/ui, app-local semantic CSS variables
 - Linting: oxlint + oxfmt (`@finografic/oxc-config`); Prettier for markdown and legacy formats where needed
 - Hooks: husky + lint-staged (pre-commit: lint + format + typecheck)
@@ -71,11 +71,14 @@ Vault pages fetch via TanStack Query hooks + Hono RPC (`/api/vault/*`); optional
 Layout hierarchy: `index.html` + `main.tsx` mount a single React tree. `AppLayout` wraps a sticky
 header + `SecondaryActionBar` (header of one resizable right-hand `AppSidebarLayout` slot) + main +
 footer. `AppHeader` hosts `NavMenu` (brand link + shadcn megamenus + mobile sheet) plus navigation
-shortcuts (ingest, transcripts, LLM, icons). `SecondaryActionBar` holds global contextual
+shortcuts (ingest, transcripts, LLM, inbox, icons). `SecondaryActionBar` holds global contextual
 actions — Clean Vault (dialog), Vault Changes, Activity Monitor (renamed from "Run Monitor" —
 it's not ingest-specific anymore) — that share the single sidebar slot: `AppLayout` owns
 `activePanel: 'runs' | 'vaultGit' | null` as the one source of truth for which panel renders
 (mutually exclusive), syncing it to the resizable panel imperatively via `usePanelRef()`.
+Per-route leading actions (e.g. registry detail back) register via
+`useSecondaryBackAction` / `useSecondaryLeadingAction` (`SecondaryActionBarContext`) and clear on
+unmount.
 `RunMonitor` keeps its own `RunMonitorProvider` (zustand) for selected/dismissed run state only —
 not panel open/closed, which `AppLayout` now owns. Full pattern, icon-button tiers, and badge
 conventions: `apps/client/src/layouts/AGENTS.md`. New rule for any process with a live-status UI:
@@ -125,6 +128,7 @@ indicator (LLAAB still can't see external scheduler state) — stored in `config
 and toggled via `PATCH /api/crons/:id`; `runCronRecipe` checks it before doing any work, so Run Now,
 `cron.run`, and external triggers are all blocked the same way while disabled. `/crons` shows this
 as an active/disabled toggle (green pause / grey play) left of Run Now, not a read-only badge.
+Cron run history is runtime state, not committed configuration: `configs/cron-history.json` is ignored/untracked and is recreated automatically on the next cron run. Durable recipe definitions remain in `configs/cron-recipes.json` and stay committed.
 `VaultGitPanel` (`apps/client/src/components/VaultGitPanel/`) shows `git status` from the nested
 `vault/.git` repo
 via `@pierre/trees`'s `FileTree` (themed via `constants/pierre-trees-theme.ts` CSS custom-property
@@ -158,24 +162,46 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 (`BalancedGrid`). Ingest and Icons cards reuse the same Lucide icons as the app-header shortcuts.
 `/icons` redirects to `/dev/icons` (Lucide picker / registry).
 
-| Route                     | Description                                                                                                                                           |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                       | Home dashboard — callout cards for core operator surfaces                                                                                             |
-| `/ingest`                 | URL form with card-wide drag/drop; two-phase ingest; `RunPipelineCard` progress + grouped `RunsTable` (collapsed by subject, sortable published date) |
-| `/terminal`               | Typed command bus UI — actions rail, command injection, structured/raw/JSON output, durable command runs                                              |
-| `/crons`                  | One-shot cron recipe dashboard — Run Now, external trigger snippets, recent cron runs                                                                 |
-| `/llm`                    | LLM routing dashboard: provider/model selects, installed dots, Ollama + LM Studio models                                                              |
-| `/hermes`                 | Hermes / MCP dashboard: Discord gateway notes, scoped vault tools, guardrails, cost-routing follow-up                                                 |
-| `/icons`                  | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
-| `/vault`                  | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
-| `/vault/transcripts/:id`  | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                       |
-| `/vault/nodes`            | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                                                                    |
-| `/vault/nodes/:id`        | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                                                                          |
-| `/vault/sources/:id`      | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                        |
-| `/vault/runs/:id`         | Detail: summary grid, stages table, decisions list, error block                                                                                       |
-| `/registry`               | npm package search — 300 ms debounced input, `PackageCard` results list                                                                               |
-| `/registry/package/:name` | Package detail — install box, Types/ESM badges, parsed readme (marked+shiki), deps/peerDeps/metadata sidebar, pin/unpin toggle                        |
-| `/registry/pinned`        | Pinned libraries list — `LibraryPinsTable` (DataTable) with unpin action                                                                              |
+| Route                          | Description                                                                                                                                                                                                                                        |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                            | Home dashboard — callout cards for core operator surfaces                                                                                                                                                                                          |
+| `/ingest`                      | URL form with card-wide drag/drop; two-phase ingest; `RunPipelineCard` progress + grouped `RunsTable` (collapsed by subject, sortable published date)                                                                                              |
+| `/terminal`                    | Typed command bus UI — actions rail, command injection, structured/raw/JSON output, durable command runs                                                                                                                                           |
+| `/crons`                       | One-shot cron recipe dashboard — Run Now, external trigger snippets, recent cron runs                                                                                                                                                              |
+| `/llm`                         | LLM routing dashboard: provider/model selects, installed dots, Ollama + LM Studio models                                                                                                                                                           |
+| `/hermes`                      | Hermes / MCP dashboard: Discord gateway notes, scoped vault tools, guardrails, cost-routing follow-up                                                                                                                                              |
+| `/icons`                       | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                                                                                                                  |
+| `/vault`                       | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                                                                                                                   |
+| `/vault/transcripts/:id`       | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                                                                                                                    |
+| `/vault/nodes`                 | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                                                                                                                                                                 |
+| `/vault/nodes/:id`             | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                                                                                                                                                                       |
+| `/vault/sources/:id`           | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                                                                                                                     |
+| `/vault/runs/:id`              | Detail: summary grid, stages table, decisions list, error block                                                                                                                                                                                    |
+| `/registry`                    | Packages list — shared Add/Search toolbar; Pinned \| Search results tabs; `PackageCard` list (Title / Last Publish / Downloads)                                                                                                                    |
+| `/registry/package/:name`      | Package detail — full-width layout; npm title prefix; install box + Types/ESM badges + readme; sticky metadata aside (deps, links, pin); SecondaryActionBar back to `/registry`                                                                    |
+| `/registry/pinned`             | Redirects into `/registry` Pinned tab                                                                                                                                                                                                              |
+| `/registry/repos`              | Repositories list — same toolbar/tabs pattern against GitHub; `PackageCard variant="repo"` (Title / Updated / Stars)                                                                                                                               |
+| `/registry/repos/:owner/:repo` | Repo detail — full-width layout; GitHub title prefix; badges/description/readme; sticky aside (stars/forks/languages/topics/pin); no duplicate GitHub URL chrome in main (aside has Repository link); SecondaryActionBar back to `/registry/repos` |
+
+**Registry UI (Packages + Repositories):** Both list pages share `forms/RegistryAddPinForm` —
+Add New Registry (paste/drop URL → pin) + Search card always visible. Add form accepts
+`npmjs.com` / `npmjs.org` / `npmx.dev` package URLs and `github.com` repo URLs (plus bare
+`@scope/name`, package name, or `owner/repo`). Search auto-switches from Pinned → Search results
+when pinned count `< MIN_PINNED` (10). Detail pages use `PageList width="full"` (no 1200px cap);
+main column flexes, aside fixed 320px. Nav label is **Packages** (not Libraries); megamenus are
+click-only. Types: `packages/schemas/src/npm-registry.ts`, `github-registry.ts`. Client queries:
+`apps/client/src/queries/registry/`.
+
+**Registry pins (Hermes-relevant):** Pins are **not** vault nodes — JSON files under `~/.llaab/`.
+
+| Kind       | Store file (override env)                                    | List / pin / unpin API                                                            | Body / key                    |
+| ---------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- | ----------------------------- |
+| Package    | `~/.llaab/pinned-libraries.json` (`LLAAB_PINS_PATH`)         | `GET/POST /api/registry/pins`, `DELETE /api/registry/pins/:name`                  | `{ name }` — npm package name |
+| Repository | `~/.llaab/pinned-repositories.json` (`LLAAB_REPO_PINS_PATH`) | `GET/POST /api/registry/repo-pins`, `DELETE /api/registry/repo-pins/:owner/:repo` | `{ fullName }` — `owner/repo` |
+
+Both `POST`s snapshot live meta at pin time (`PackageMetaResponse` / `RepoMetaResponse`) and return
+**409** when already pinned (UI and Hermes treat that as idempotent success for libraries). Pin
+requires `X-API-Key` when `LLAAB_API_KEY` is set (same as other writes).
 
 `AppSidebarLayout` (`packages/ui/src/components/app-sidebar-right-layout.tsx`) supports both
 percentage and absolute-unit (`px`/`rem`) sidebar sizing — `isPercentOrBare()` only computes
@@ -254,10 +280,15 @@ continues processing.
 | `POST /api/agent/run`                                              | One-shot agent processor; optional `{ nodeId?, force? }`                                                                                                                                                      |
 | `GET /api/agent/status`                                            | Last run metadata                                                                                                                                                                                             |
 | `GET /api/registry/npm/search`                                     | Proxies npm registry search; `?q`, `?size`, `?from`                                                                                                                                                           |
-| `GET /api/registry/npm/package/:name`                              | Packument proxy → `PackageDetailResponse` (meta + `readmeHtml` via `readme-renderer.ts` + deps/hasTypes/isEsm)                                                                                                |
-| `GET /api/registry/pins`                                           | `PinnedLibrary[]` from `~/.llaab/pinned-libraries.json` (configurable via `LLAAB_PINS_PATH`)                                                                                                                  |
-| `POST /api/registry/pins`                                          | Pin a package by name; snapshots `PackageMetaResponse` at pin time                                                                                                                                            |
-| `DELETE /api/registry/pins/:name`                                  | Unpin by name                                                                                                                                                                                                 |
+| `GET /api/registry/npm/package/:name`                              | Packument proxy → `PackageDetailResponse` (meta + `readmeHtml` via `readme-renderer.ts` + deps/typesStatus/isEsm)                                                                                             |
+| `GET /api/registry/pins`                                           | `PinnedLibrary[]` from `~/.llaab/pinned-libraries.json` (`LLAAB_PINS_PATH`)                                                                                                                                   |
+| `POST /api/registry/pins`                                          | Pin package `{ name }` — snapshots meta; **409** if already pinned                                                                                                                                            |
+| `DELETE /api/registry/pins/:name`                                  | Unpin package by name                                                                                                                                                                                         |
+| `GET /api/registry/github/search`                                  | Proxies GitHub repo search; `?q`, `?size`, `?from`                                                                                                                                                            |
+| `GET /api/registry/github/repo/:owner/:repo`                       | Repo detail DTO (meta + languages + `readmeHtml`)                                                                                                                                                             |
+| `GET /api/registry/repo-pins`                                      | `PinnedRepository[]` from `~/.llaab/pinned-repositories.json` (`LLAAB_REPO_PINS_PATH`)                                                                                                                        |
+| `POST /api/registry/repo-pins`                                     | Pin repo `{ fullName }` — snapshots meta; **409** if already pinned                                                                                                                                           |
+| `DELETE /api/registry/repo-pins/:owner/:repo`                      | Unpin repository                                                                                                                                                                                              |
 
 ### `@llaab/icons` — Workspace icon registry package
 
@@ -458,10 +489,20 @@ are sent to the home channel: 🟡 shutting down and 🟢 online.
 Hermes MCP access is intentionally scoped to the LLAAB repo/vault. The `llaab` MCP server runs the
 built CLI with Node and exposes vault read helpers plus inbox write helpers. Telegram inbox writes
 are deterministic and do not execute shell commands. Known routes: YouTube URL ingest, npm package
-pinning (`npmjs.com` and `npmx.dev/package/*`), `npx`/`npmx`/`pnpm dlx` command candidates, `todo:`
-notes, GitHub repo links, `docs:` links/attachments, `post:` links, generic links, images,
-attachments, and `code:` snippets/links/attachments. Obvious JSX/TSX paste without a prefix also
-routes as a code snippet; JSX-like snippets normalize to `tsx`.
+pinning (`npmjs.com` and `npmx.dev/package/*` → `vault_pin_library` → `POST /api/registry/pins`),
+`npx`/`npmx`/`pnpm dlx` command candidates, `todo:` notes, GitHub repo links, `docs:` links/attachments,
+`post:` links, generic links, images, attachments, and `code:` snippets/links/attachments. Obvious
+JSX/TSX paste without a prefix also routes as a code snippet; JSX-like snippets normalize to `tsx`.
+
+**Hermes → registry pins (current vs gap):** Package pins are wired end-to-end — inbox
+`npm_package` → MCP/CLI `vault_pin_library` → `POST /api/registry/pins` with `{ name }` (409 =
+already pinned). Repository pins exist on the **server/UI** (`POST /api/registry/repo-pins` with
+`{ fullName: "owner/repo" }`, store `~/.llaab/pinned-repositories.json`, list at `/registry/repos`)
+but Hermes inbox still treats `github_repo` as a **web-link IdeaNode capture** (`inbox:github`),
+not a registry pin. Follow-up for Hermes repo pinning: add `vault_pin_repository` (mirror
+`vault_pin_library` in MCP + `lab inbox` executor), map `github_repo` routes to that tool instead
+of (or in addition to) idea capture, and treat 409 as idempotent success. Allowlist the new tool
+in `~/.hermes/config.yaml` the same way as `vault_pin_library`.
 
 Telegram inbox feedback uses Hermes reactions for quick processing state and short explicit final
 receipts such as `✅ Ingested YouTube video: ...`, `✅ Saved docs link: ...`, or `✅ Saved code
