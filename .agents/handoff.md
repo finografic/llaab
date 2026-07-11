@@ -188,7 +188,7 @@ Add New Registry (paste/drop URL → pin) + Search card always visible. Add form
 `npmjs.com` / `npmjs.org` / `npmx.dev` package URLs and `github.com` repo URLs (plus bare
 `@scope/name`, package name, or `owner/repo`). Search auto-switches from Pinned → Search results
 when pinned count `< MIN_PINNED` (10). Detail pages use `PageList width="full"` (no 1200px cap);
-main column flexes, aside fixed 320px. Nav label is **Packages** (not Libraries); megamenus are
+main column flexes, aside fixed 320px. Nav label is **Packages** (not Packages); megamenus are
 click-only. Types: `packages/schemas/src/npm-registry.ts`, `github-registry.ts`. Client queries:
 `apps/client/src/queries/registry/`.
 
@@ -196,11 +196,11 @@ click-only. Types: `packages/schemas/src/npm-registry.ts`, `github-registry.ts`.
 
 | Kind       | Store file (override env)                                    | List / pin / unpin API                                                            | Body / key                    |
 | ---------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- | ----------------------------- |
-| Package    | `~/.llaab/pinned-libraries.json` (`LLAAB_PINS_PATH`)         | `GET/POST /api/registry/pins`, `DELETE /api/registry/pins/:name`                  | `{ name }` — npm package name |
+| Package    | `~/.llaab/pinned-packages.json` (`LLAAB_PACKAGE_PINS_PATH`)  | `GET/POST /api/registry/pins`, `DELETE /api/registry/pins/:name`                  | `{ name }` — npm package name |
 | Repository | `~/.llaab/pinned-repositories.json` (`LLAAB_REPO_PINS_PATH`) | `GET/POST /api/registry/repo-pins`, `DELETE /api/registry/repo-pins/:owner/:repo` | `{ fullName }` — `owner/repo` |
 
 Both `POST`s snapshot live meta at pin time (`PackageMetaResponse` / `RepoMetaResponse`) and return
-**409** when already pinned (UI and Hermes treat that as idempotent success for libraries). Pin
+**409** when already pinned (UI and Hermes treat that as idempotent success for packages). Pin
 requires `X-API-Key` when `LLAAB_API_KEY` is set (same as other writes).
 Registry pins are projected into `ResourceNode`s so packages/repositories become first-class vault knowledge resources rather than only UI bookmarks; architecture reference: `docs/process/REGISTRY_RESOURCE_PROJECTIONS.md`.
 
@@ -282,7 +282,7 @@ continues processing.
 | `GET /api/agent/status`                                            | Last run metadata                                                                                                                                                                                             |
 | `GET /api/registry/npm/search`                                     | Proxies npm registry search; `?q`, `?size`, `?from`                                                                                                                                                           |
 | `GET /api/registry/npm/package/:name`                              | Packument proxy → `PackageDetailResponse` (meta + `readmeHtml` via `readme-renderer.ts` + deps/typesStatus/isEsm)                                                                                             |
-| `GET /api/registry/pins`                                           | `PinnedLibrary[]` from `~/.llaab/pinned-libraries.json` (`LLAAB_PINS_PATH`)                                                                                                                                   |
+| `GET /api/registry/pins`                                           | `PinnedPackage[]` from `~/.llaab/pinned-packages.json` (`LLAAB_PACKAGE_PINS_PATH`)                                                                                                                            |
 | `POST /api/registry/pins`                                          | Pin package `{ name }` — snapshots meta; **409** if already pinned                                                                                                                                            |
 | `DELETE /api/registry/pins/:name`                                  | Unpin package by name                                                                                                                                                                                         |
 | `GET /api/registry/github/search`                                  | Proxies GitHub repo search; `?q`, `?size`, `?from`                                                                                                                                                            |
@@ -490,20 +490,20 @@ are sent to the home channel: 🟡 shutting down and 🟢 online.
 Hermes MCP access is intentionally scoped to the LLAAB repo/vault. The `llaab` MCP server runs the
 built CLI with Node and exposes vault read helpers plus inbox write helpers. Telegram inbox writes
 are deterministic and do not execute shell commands. Known routes: YouTube URL ingest, npm package
-pinning (`npmjs.com` and `npmx.dev/package/*` → `vault_pin_library` → `POST /api/registry/pins`),
+pinning (`npmjs.com` and `npmx.dev/package/*` → `vault_pin_package` → `POST /api/registry/pins`),
 `npx`/`npmx`/`pnpm dlx` command candidates, `todo:` notes, GitHub repo links, `docs:` links/attachments,
 `post:` links, generic links, images, attachments, and `code:` snippets/links/attachments. Obvious
 JSX/TSX paste without a prefix also routes as a code snippet; JSX-like snippets normalize to `tsx`.
 
 **Hermes → registry pins (current vs gap):** Package pins are wired end-to-end — inbox
-`npm_package` → MCP/CLI `vault_pin_library` → `POST /api/registry/pins` with `{ name }` (409 =
+`npm_package` → MCP/CLI `vault_pin_package` → `POST /api/registry/pins` with `{ name }` (409 =
 already pinned). Repository pins exist on the **server/UI** (`POST /api/registry/repo-pins` with
 `{ fullName: "owner/repo" }`, store `~/.llaab/pinned-repositories.json`, list at `/registry/repos`)
 but Hermes inbox still treats `github_repo` as a **web-link IdeaNode capture** (`inbox:github`),
 not a registry pin. Follow-up for Hermes repo pinning: add `vault_pin_repository` (mirror
-`vault_pin_library` in MCP + `lab inbox` executor), map `github_repo` routes to that tool instead
+`vault_pin_package` in MCP + `lab inbox` executor), map `github_repo` routes to that tool instead
 of (or in addition to) idea capture, and treat 409 as idempotent success. Allowlist the new tool
-in `~/.hermes/config.yaml` the same way as `vault_pin_library`.
+in `~/.hermes/config.yaml` the same way as `vault_pin_package`.
 
 Telegram inbox feedback uses Hermes reactions for quick processing state and short explicit final
 receipts such as `✅ Ingested YouTube video: ...`, `✅ Saved docs link: ...`, or `✅ Saved code

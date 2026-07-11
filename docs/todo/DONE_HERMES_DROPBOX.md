@@ -14,7 +14,7 @@ Target experience:
 
 ```text
 Share URL/file/note → Hermes inbox gateway → deterministic router → LLAAB MCP/API tool
-                                      → vault node / ingest run / pinned library / todo
+                                      → vault node / ingest run / pinned package / todo
 ```
 
 Primary recommendation:
@@ -29,7 +29,7 @@ Primary recommendation:
 | ------------------------------------------------------------ | ---------------------------------------------------------- |
 | [`TODO_HERMES_LAYER.md`](./TODO_HERMES_LAYER.md)             | Current Hermes phase plan, MCP boundary, cost controls     |
 | [`docs/integrations/hermes.md`](../integrations/hermes.md)   | Live Hermes install/config facts                           |
-| [`TODO_REGISTRY_LIBRARIES.md`](./TODO_REGISTRY_LIBRARIES.md) | Registry/library pinning direction for npm/npx-style links |
+| [`TODO_REGISTRY_LIBRARIES.md`](./TODO_REGISTRY_LIBRARIES.md) | Registry/package pinning direction for npm/npx-style links |
 | [`TODO_INBOX_VIEWS.md`](./TODO_INBOX_VIEWS.md)               | Follow-up views, review flows, and richer routing          |
 | [`NEXT_STEPS.md`](./NEXT_STEPS.md)                           | Near-term manual validation and follow-ups                 |
 
@@ -87,7 +87,7 @@ Supported first-pass inputs:
 | Input shape                 | Intended action                                          |
 | --------------------------- | -------------------------------------------------------- |
 | YouTube URL                 | Start YouTube ingestion                                  |
-| `npmjs.com/package/...` URL | Pin/register library package                             |
+| `npmjs.com/package/...` URL | Pin/register package                                     |
 | `npx ...` / `npmx ...` note | Capture command/library candidate                        |
 | GitHub repo URL             | Capture repo candidate until repo workflow exists        |
 | Blog/docs URL               | Capture web reference until article/docs workflow exists |
@@ -121,7 +121,7 @@ Candidate MCP/API tools:
 | -------------------------- | ------------------------------------------------- | ------------ |
 | `vault_capture_inbox`      | Store raw inbox item with metadata                | Yes          |
 | `vault_ingest_youtube`     | Trigger existing YouTube ingestion pipeline       | Yes          |
-| `vault_pin_library`        | Save npm/npx library as pinned registry/library   | Yes          |
+| `vault_pin_package`        | Save npm/npx package as pinned registry package   | Yes          |
 | `vault_capture_todo`       | Store short todo note                             | Yes          |
 | `vault_capture_web_link`   | Store blog/docs/GitHub URL pending later workflow | Yes          |
 | `vault_capture_attachment` | Store file/screenshot metadata                    | Yes          |
@@ -129,7 +129,7 @@ Candidate MCP/API tools:
 - [x] Audit existing CLI MCP tool registration (2026-07-07).
 - [x] Add `vault_capture_inbox` as the safe fallback write (2026-07-07).
 - [x] Add or expose `vault_ingest_youtube` only after direct API surface review (2026-07-07).
-- [x] Add or expose `vault_pin_library` for npm/npx-style links (2026-07-07).
+- [x] Add or expose `vault_pin_package` for npm/npx-style links (2026-07-07).
 - [x] Add `vault_capture_todo` for `todo:` notes (2026-07-07).
 - [x] Add `vault_capture_web_link` for blog/docs/GitHub URLs (2026-07-07).
 - [x] Add `vault_capture_attachment` for file/screenshot metadata only (2026-07-07).
@@ -177,7 +177,7 @@ Purpose: ship the first useful dropbox behavior using currently viable workflows
 - [x] Verify `lab inbox` can pin an npm package through the API (2026-07-07).
 - [x] Verify MCP write tools can read `LLAAB_API_KEY` from local env files (2026-07-07).
 - [x] Telegram DM with YouTube URL starts the existing ingest pipeline (2026-07-08).
-- [x] Telegram DM with npm package URL creates a pinned library entry (2026-07-07).
+- [x] Telegram DM with npm package URL creates a pinned package entry (2026-07-07).
 - [x] Telegram DM with `npx ...` or `npmx ...` captures a command/library candidate
       (2026-07-09).
 - [x] Route `pnpm dlx ...` as a safe command candidate rather than executing it (2026-07-09).
@@ -191,7 +191,7 @@ Purpose: ship the first useful dropbox behavior using currently viable workflows
 - [x] Add explicit `docs:` and `post:` URL prefixes for docs/article/blog captures (2026-07-09).
 - [x] Retest Telegram DM with `docs:` and `post:` URL prefixes (2026-07-09).
 - [x] Duplicate YouTube URLs follow existing dedupe behavior (2026-07-09).
-- [x] Duplicate library pins are idempotent in the inbox/MCP execution path (2026-07-07).
+- [x] Duplicate package pins are idempotent in the inbox/MCP execution path (2026-07-07).
 - [x] Unknown generic links save as web-link inbox items instead of failing in the `lab inbox`
       executor (2026-07-08).
 - [x] Receipts include the created/updated target when available (2026-07-07).

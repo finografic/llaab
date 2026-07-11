@@ -83,7 +83,7 @@ Entry path: Telegram/manual → `lab inbox` / MCP → `routeHermesInboxItem` →
 | `HermesInboxRouteKind` | Tool                       | API                            | Stored as                                  | Tags (beyond `hermes`, `inbox`)  | Body / payload notes                                     |
 | ---------------------- | -------------------------- | ------------------------------ | ------------------------------------------ | -------------------------------- | -------------------------------------------------------- |
 | `youtube_url`          | `vault_ingest_youtube`     | `POST /api/ingest/youtube`     | `transcript` (+ run)                       | (ingest tags)                    | No Hermes body JSON; receipt status `queued`             |
-| `npm_package`          | `vault_pin_library`        | `POST /api/registry/pins`      | Registry pin (not a vault node)            | n/a                              | Pin name from package; status `pinned`                   |
+| `npm_package`          | `vault_pin_package`        | `POST /api/registry/pins`      | Registry pin (not a vault node)            | n/a                              | Pin name from package; status `pinned`                   |
 | `todo`                 | `vault_capture_todo`       | `POST /api/vault/nodes`        | `idea` at `vault/nodes/ideas/`             | `inbox:todo`                     | Body JSON `route_kind`, `source`, optional `payload`     |
 | `docs_link`            | `vault_capture_web_link`   | same                           | `idea`                                     | `inbox:link`, `inbox:docs`       | `payload.url` (+ label)                                  |
 | `post_link`            | same                       | same                           | `idea`                                     | `inbox:link`, `inbox:post`       | same                                                     |
@@ -369,7 +369,7 @@ Purpose: make the new views discoverable without cluttering the app.
 - [x] Add nav entry only after the base list/detail route is useful (Vault → Inbox, 2026-07-09).
 - [x] Cross-link captures from existing node detail pages when provenance is known
       (`Open inbox capture` on inbox-tagged nodes, 2026-07-09).
-- [ ] Cross-link from pinned libraries to their originating inbox capture where available
+- [ ] Cross-link from pinned packages to their originating inbox capture where available
       (deferred — pins are registry records without stable capture ids today).
 - [ ] Cross-link from runs to the inbox item that triggered them where available
       (deferred — YouTube ingest produces transcripts/runs without capture envelope ids).

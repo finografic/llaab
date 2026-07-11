@@ -5,6 +5,7 @@ import { NodeIdSchema } from './primitives.schema.js';
 
 export const ResourceTypeSchema = z.enum([
   'tool',
+  'package',
   'library',
   'api',
   'dataset',

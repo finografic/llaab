@@ -272,34 +272,45 @@ export function createMcpServer(): McpServer {
     },
   );
 
-  // ── Tool: pin npm library ─────────────────────────────────────────────────
+  // ── Tool: pin npm package ─────────────────────────────────────────────────
 
-  const vaultPinLibrarySchema = z.object({
+  const vaultPinPackageSchema = z.object({
     name: z.string().trim().min(1).describe('npm package name, e.g. @modelcontextprotocol/sdk'),
   });
+
+  async function pinPackageFromTool(args: z.infer<typeof vaultPinPackageSchema>) {
+    const result = await postJsonViaApi('/api/registry/pins', { name: args.name });
+
+    if (!result.ok) {
+      if (result.status === 409) {
+        return textContent(`Pinned package ${args.name} (already pinned)`);
+      }
+
+      return errorText(result.error);
+    }
+
+    const pin = asRecord(result.data['pin']);
+    const name = typeof pin?.['name'] === 'string' ? pin['name'] : args.name;
+
+    return textContent(`Pinned package ${name}`);
+  }
+
+  server.registerTool(
+    'vault_pin_package',
+    {
+      description: 'Pin an npm package in the LLAAB registry package list.',
+      inputSchema: vaultPinPackageSchema,
+    },
+    pinPackageFromTool,
+  );
 
   server.registerTool(
     'vault_pin_library',
     {
-      description: 'Pin an npm package in the LLAAB registry library list.',
-      inputSchema: vaultPinLibrarySchema,
+      description: 'Deprecated alias for vault_pin_package.',
+      inputSchema: vaultPinPackageSchema,
     },
-    async (args: z.infer<typeof vaultPinLibrarySchema>) => {
-      const result = await postJsonViaApi('/api/registry/pins', { name: args.name });
-
-      if (!result.ok) {
-        if (result.status === 409) {
-          return textContent(`Pinned library ${args.name} (already pinned)`);
-        }
-
-        return errorText(result.error);
-      }
-
-      const pin = asRecord(result.data['pin']);
-      const name = typeof pin?.['name'] === 'string' ? pin['name'] : args.name;
-
-      return textContent(`Pinned library ${name}`);
-    },
+    pinPackageFromTool,
   );
 
   // ── Tool: pin GitHub repository ───────────────────────────────────────────

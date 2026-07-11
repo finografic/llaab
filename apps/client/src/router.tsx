@@ -95,7 +95,7 @@ export const router = createBrowserRouter([
       {
         path: 'registry/packages',
         element: lazyElement(RegistrySearchPage),
-        handle: { title: 'Library Registry' } satisfies RouteHandle,
+        handle: { title: 'Package Registry' } satisfies RouteHandle,
       },
       {
         path: 'registry/pinned',

@@ -22,10 +22,10 @@ describe('routeHermesInboxText', () => {
     });
   });
 
-  it('routes npm package URLs to library pinning', () => {
+  it('routes npm package URLs to package pinning', () => {
     expect(routeHermesInboxText('https://www.npmjs.com/package/@modelcontextprotocol/sdk')).toMatchObject({
       kind: 'npm_package',
-      action: 'pin_library',
+      action: 'pin_package',
       payload: {
         package_name: '@modelcontextprotocol/sdk',
         url: 'https://www.npmjs.com/package/@modelcontextprotocol/sdk',
@@ -34,7 +34,7 @@ describe('routeHermesInboxText', () => {
 
     expect(routeHermesInboxText('https://npmx.dev/package/zod')).toMatchObject({
       kind: 'npm_package',
-      action: 'pin_library',
+      action: 'pin_package',
       payload: {
         package_name: 'zod',
         url: 'https://npmx.dev/package/zod',

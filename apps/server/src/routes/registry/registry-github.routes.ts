@@ -12,7 +12,7 @@ import { renderReadmeToHtml } from '../../lib/readme-renderer.js';
 
 const GITHUB_API = 'https://api.github.com';
 
-function githubHeaders(): HeadersInit {
+function githubHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Accept': 'application/vnd.github+json',
     'User-Agent': 'llaab-registry',
@@ -92,7 +92,7 @@ function toLanguageShares(languages: Record<string, number>): RepoLanguageShare[
       bytes,
       percent: Math.round((bytes / total) * 1000) / 10,
     }))
-    .toSorted((a, b) => b.bytes - a.bytes);
+    .sort((a, b) => b.bytes - a.bytes);
 }
 
 async function fetchRepoJson(owner: string, repo: string): Promise<Record<string, unknown>> {

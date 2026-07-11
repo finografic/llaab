@@ -14,6 +14,7 @@ const RESOURCE_TYPES: ResourceType[] = [
   'reference',
   'article',
   'repo',
+  'package',
   'library',
   'tool',
   'api',
@@ -135,7 +136,7 @@ function defaultResourceType(routeKind: string): ResourceType {
     case 'post_link':
       return 'article';
     case 'npm_package':
-      return 'library';
+      return 'package';
     default:
       return 'reference';
   }

@@ -1,17 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { PinnedLibrary } from '@llaab/schemas';
+import type { PinnedPackage } from '@llaab/schemas';
 
 import { apiGet, apiPost } from 'lib/api-client';
 
 import { REGISTRY_QUERY_KEYS } from './index';
 
-async function fetchPins(): Promise<PinnedLibrary[]> {
-  const res = await apiGet<{ pins: PinnedLibrary[] }>('/api/registry/pins');
+async function fetchPins(): Promise<PinnedPackage[]> {
+  const res = await apiGet<{ pins: PinnedPackage[] }>('/api/registry/pins');
   return res.pins;
 }
 
-async function pinPackage(name: string): Promise<PinnedLibrary> {
-  const res = await apiPost<{ pin: PinnedLibrary }>('/api/registry/pins', { name });
+async function pinPackage(name: string): Promise<PinnedPackage> {
+  const res = await apiPost<{ pin: PinnedPackage }>('/api/registry/pins', { name });
   return res.pin;
 }
 
@@ -22,7 +22,7 @@ async function unpinPackage(name: string): Promise<void> {
   });
 }
 
-export function usePinnedLibraries() {
+export function usePinnedPackages() {
   return useQuery({
     queryKey: REGISTRY_QUERY_KEYS.registry.pins(),
     queryFn: fetchPins,
@@ -30,7 +30,7 @@ export function usePinnedLibraries() {
   });
 }
 
-export function usePinLibrary() {
+export function usePinPackage() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (name: string) => pinPackage(name),
@@ -40,7 +40,7 @@ export function usePinLibrary() {
   });
 }
 
-export function useUnpinLibrary() {
+export function useUnpinPackage() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (name: string) => unpinPackage(name),
@@ -50,7 +50,7 @@ export function useUnpinLibrary() {
   });
 }
 
-export function useIsLibraryPinned(name: string): boolean {
-  const { data: pins = [] } = usePinnedLibraries();
+export function useIsPackagePinned(name: string): boolean {
+  const { data: pins = [] } = usePinnedPackages();
   return pins.some((p) => p.name === name);
 }

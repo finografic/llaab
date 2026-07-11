@@ -10,11 +10,11 @@ import { RegistryAddPinForm } from 'forms/RegistryAddPinForm/RegistryAddPinForm'
 import { RegistrySearchCard } from 'forms/RegistryAddPinForm/RegistrySearchCard';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
-import { useNpmSearch, usePinnedLibraries } from 'queries/registry';
+import { useNpmSearch, usePinnedPackages } from 'queries/registry';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
-import type { NpmSearchResult, PackageTypesStatus, PinnedLibrary } from '@llaab/schemas';
+import type { NpmSearchResult, PackageTypesStatus, PinnedPackage } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
 
@@ -44,7 +44,7 @@ function publishedTimestamp(result: NpmSearchResult): number {
   return Number.isFinite(ts) ? ts : 0;
 }
 
-function sortResults(results: LibraryListItem[], sort: SortState | null): LibraryListItem[] {
+function sortResults(results: PackageListItem[], sort: SortState | null): PackageListItem[] {
   if (!sort) return results;
 
   return [...results].toSorted((a, b) => {
@@ -79,12 +79,12 @@ function nextSortState(current: SortState | null, column: SortColumn): SortState
   return null;
 }
 
-type LibraryListItem = NpmSearchResult & {
+type PackageListItem = NpmSearchResult & {
   typesStatus?: PackageTypesStatus;
-  resource?: PinnedLibrary['resource'];
+  resource?: PinnedPackage['resource'];
 };
 
-function pinToListItem(pin: PinnedLibrary): LibraryListItem {
+function pinToListItem(pin: PinnedPackage): PackageListItem {
   return {
     package: {
       name: pin.meta.name,
@@ -103,7 +103,7 @@ function pinToListItem(pin: PinnedLibrary): LibraryListItem {
   };
 }
 
-function filterPins(pins: PinnedLibrary[], query: string): PinnedLibrary[] {
+function filterPins(pins: PinnedPackage[], query: string): PinnedPackage[] {
   const q = query.trim().toLowerCase();
   if (!q) return pins;
   return pins.filter((pin) => {
@@ -156,7 +156,7 @@ function SortHeaderButton({
   );
 }
 
-function LibraryResultsPanel({
+function PackageResultsPanel({
   countLabel,
   isLoading,
   loadingLabel,
@@ -172,7 +172,7 @@ function LibraryResultsPanel({
   loadingLabel: string;
   emptyIdle: string | null;
   emptyNoMatch: string | null;
-  results: LibraryListItem[];
+  results: PackageListItem[];
   sort: SortState | null;
   onSort: (column: SortColumn) => void;
   /** Pinned tab only — Search omits so npm hits stay undistorted. */
@@ -225,7 +225,7 @@ function LibraryResultsPanel({
 }
 
 export function RegistrySearchPage() {
-  usePageTitle('Library Registry');
+  usePageTitle('Package Registry');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = parseTab(searchParams.get('tab'));
@@ -262,7 +262,7 @@ export function RegistrySearchPage() {
     setSort(null);
   }, [debouncedQuery, tab]);
 
-  const { data: pins = [], isLoading: pinsLoading } = usePinnedLibraries();
+  const { data: pins = [], isLoading: pinsLoading } = usePinnedPackages();
   const { data: searchData, isLoading: searchLoading } = useNpmSearch(tab === 'search' ? debouncedQuery : '');
 
   const pinnedResults = useMemo(() => {
@@ -357,7 +357,7 @@ export function RegistrySearchPage() {
           </TabsList>
 
           <TabsContent value="pinned" className={styles.tabsContent}>
-            <LibraryResultsPanel
+            <PackageResultsPanel
               countLabel={pinsLoading ? '\u00a0' : pinnedCountLabel}
               isLoading={pinsLoading}
               loadingLabel="Loading pinned packages…"
@@ -379,7 +379,7 @@ export function RegistrySearchPage() {
           </TabsContent>
 
           <TabsContent value="search" className={styles.tabsContent}>
-            <LibraryResultsPanel
+            <PackageResultsPanel
               countLabel={searchCountLabel}
               isLoading={searchLoading}
               loadingLabel="Searching…"

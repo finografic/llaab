@@ -145,7 +145,7 @@ export function NpmPackageDetail({ capture }: InboxCaptureRendererProps) {
             Open in registry
           </ButtonLink>
         ) : null}
-        {packageName ? <ButtonLink to="/registry/packages">Open pinned libraries</ButtonLink> : null}
+        {packageName ? <ButtonLink to="/registry/packages">Open pinned packages</ButtonLink> : null}
         {url ? <ExternalLinkButton href={url} label="Open on npm" /> : null}
       </div>
     </CaptureSection>

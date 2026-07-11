@@ -155,7 +155,7 @@ Write tools:
 - `vault_capture_idea`
 - `vault_capture_inbox`
 - `vault_ingest_youtube`
-- `vault_pin_library`
+- `vault_pin_package`
 - `vault_capture_todo`
 - `vault_capture_web_link`
 - `vault_capture_attachment`
@@ -214,7 +214,7 @@ Validated 2026-07-07:
 - `lab inbox "todo: ..."` creates a real inbox todo node through the API.
 - `lab inbox "https://www.npmjs.com/package/zod"` pins the npm package.
 - Telegram DM `todo: ...` creates a vault todo node and returns a short receipt.
-- Telegram DM npm package links pin libraries and return a short receipt.
+- Telegram DM npm package links pin packages and return a short receipt.
 - `lab inbox --attachmentPath ...` routes screenshots/files to `vault_capture_attachment`.
 - Duplicate npm pin attempts return an idempotent already-pinned receipt.
 - MCP write tools can read `LLAAB_API_KEY` from local env files when the process env omits it.

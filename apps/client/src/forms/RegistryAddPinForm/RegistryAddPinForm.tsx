@@ -3,7 +3,7 @@ import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { CheckIcon, PinIcon } from 'lucide-react';
-import { usePinLibrary, usePinRepository } from 'queries/registry';
+import { usePinPackage, usePinRepository } from 'queries/registry';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -20,8 +20,8 @@ import styles from './registry-toolbar-card.module.css';
 
 function detectedLabel(kind: ReturnType<typeof classifyRegistryUrl>): string | null {
   switch (kind) {
-    case 'library':
-      return 'Library URL detected';
+    case 'package':
+      return 'Package URL detected';
     case 'repository':
       return 'Repository URL detected';
     case 'unknown':
@@ -35,7 +35,7 @@ function detectedLabel(kind: ReturnType<typeof classifyRegistryUrl>): string | n
 
 export function RegistryAddPinForm() {
   const navigate = useNavigate();
-  const pinLibrary = usePinLibrary();
+  const pinPackageMutation = usePinPackage();
   const pinRepository = usePinRepository();
 
   const [url, setUrl] = useState('');
@@ -45,7 +45,7 @@ export function RegistryAddPinForm() {
 
   const kind = useMemo(() => classifyRegistryUrl(url), [url]);
   const detection = detectedLabel(kind);
-  const busy = pinLibrary.isPending || pinRepository.isPending;
+  const busy = pinPackageMutation.isPending || pinRepository.isPending;
   const canSubmit = !busy && kind !== 'unknown' && url.trim().length > 0;
 
   async function pinFromValue(raw: string) {
@@ -70,14 +70,14 @@ export function RegistryAddPinForm() {
       return;
     }
 
-    if (nextKind === 'library') {
+    if (nextKind === 'package') {
       const name = parseNpmPackageRef(trimmed);
       if (!name) {
         setError('Could not parse an npm package from that URL.');
         return;
       }
       try {
-        await pinLibrary.mutateAsync(name);
+        await pinPackageMutation.mutateAsync(name);
         toast.success(`Pinned ${name}`);
         setUrl('');
         setError(null);

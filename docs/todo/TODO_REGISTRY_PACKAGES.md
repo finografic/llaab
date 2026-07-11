@@ -1,10 +1,10 @@
-# TODO — Registry: Pinned Libraries
+# TODO — Registry: Pinned Packages
 
 > **Status:** All 6 phases complete. Readme renderer (Phase 2 extension) committed in third batch.
 
-Add a "Registry" section to LLAAB for browsing and pinning npm packages. The UI mirrors npmx.dev (search → results list → package detail) with a Pin action on the detail page and a dedicated Pinned Libraries list. The npmx.dev repo at `/Users/justin/repos-finografic-ref/npmx.dev` is used as a reference — TypeScript types and API endpoint logic are lifted directly; Vue components are used as structural blueprints and rewritten as React.
+Add a "Registry" section to LLAAB for browsing and pinning npm packages. The UI mirrors npmx.dev (search → results list → package detail) with a Pin action on the detail page and a dedicated Pinned Packages list. The npmx.dev repo at `/Users/justin/repos-finografic-ref/npmx.dev` is used as a reference — TypeScript types and API endpoint logic are lifted directly; Vue components are used as structural blueprints and rewritten as React.
 
-**Scope (v1 — libraries only):** search, results list, package detail (readme + metadata sidebar), pin/unpin, pinned list.  
+**Scope (v1 — packages only):** search, results list, package detail (readme + metadata sidebar), pin/unpin, pinned list.  
 **Out of scope:** version distribution charts, file browser, compare, Algolia, provenance badges, i18n.
 
 ---
@@ -14,7 +14,7 @@ Add a "Registry" section to LLAAB for browsing and pinning npm packages. The UI 
 - [x] Phase 1 — Types: `packages/schemas/src/npm-registry.ts`
 - [x] Phase 2 — Server: npm proxy routes + pins CRUD + JSON store + readme renderer (marked+shiki+sanitize-html)
 - [x] Phase 3 — Client: TanStack Query hooks
-- [x] Phase 4 — Client: `PackageCard` component + `LibraryPinsTable`
+- [x] Phase 4 — Client: `PackageCard` component + `PackagePinsTable`
 - [x] Phase 5 — Client: three route pages
 - [x] Phase 6 — Router + nav wiring
 
@@ -34,7 +34,7 @@ Lift from `/Users/justin/repos-finografic-ref/npmx.dev/shared/types/npm-registry
 Add LLAAB-native type:
 
 ```ts
-export interface PinnedLibrary {
+export interface PinnedPackage {
   name: string
   pinnedAt: string          // ISO timestamp
   meta: PackageMetaResponse // snapshot at pin time
@@ -51,12 +51,12 @@ export interface PinnedLibrary {
 
 ### `registry-pins.store.ts`
 
-Tiny JSON file store — raw `fs.readFile` / `writeFile` (follows `writer.utils.ts` pattern from `packages/core/src/storage/`). Pins file lives at `~/.llaab/pinned-libraries.json` (configurable via `LLAAB_PINS_PATH` env var).
+Tiny JSON file store — raw `fs.readFile` / `writeFile` (follows `writer.utils.ts` pattern from `packages/core/src/storage/`). Pins file lives at `~/.llaab/pinned-packages.json` (configurable via `LLAAB_PACKAGE_PINS_PATH` env var).
 
 ```ts
 // exports:
-readPins(): Promise<PinnedLibrary[]>
-writePins(pins: PinnedLibrary[]): Promise<void>
+readPins(): Promise<PinnedPackage[]>
+writePins(pins: PinnedPackage[]): Promise<void>
 ```
 
 ### `registry-npm.routes.ts`
@@ -77,8 +77,8 @@ GET /npm/package/:name  (encoded; supports @scope/name)
 ### `registry-pins.routes.ts`
 
 ```
-GET  /pins           → readPins() → PinnedLibrary[]
-POST /pins           → body: { name } → fetch meta → add → return PinnedLibrary
+GET  /pins           → readPins() → PinnedPackage[]
+POST /pins           → body: { name } → fetch meta → add → return PinnedPackage
 DELETE /pins/:name   → remove by name → return { success: true }
 ```
 
@@ -102,12 +102,12 @@ Wire all routes into `createRouter()`. Export `registryRouter`. No auth middlewa
 
 Follow pattern in `apps/client/src/queries/vault/useVaultFile.ts` (private fetch fn above exported hook, `QUERY_KEYS` from `./index`).
 
-| File                    | Hook(s)                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------ |
-| `index.ts`              | `REGISTRY_QUERY_KEYS`                                                                      |
-| `useNpmSearch.ts`       | `useNpmSearch(query)` — enabled when `query.length > 0`, `staleTime: 60_000`               |
-| `useNpmPackage.ts`      | `useNpmPackage(name)` — `staleTime: 5 * 60_000`                                            |
-| `usePinnedLibraries.ts` | `usePinnedLibraries()`, `usePinLibrary()`, `useUnpinLibrary()`, `useIsLibraryPinned(name)` |
+| File                   | Hook(s)                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `index.ts`             | `REGISTRY_QUERY_KEYS`                                                                     |
+| `useNpmSearch.ts`      | `useNpmSearch(query)` — enabled when `query.length > 0`, `staleTime: 60_000`              |
+| `useNpmPackage.ts`     | `useNpmPackage(name)` — `staleTime: 5 * 60_000`                                           |
+| `usePinnedPackages.ts` | `usePinnedPackages()`, `usePinPackage()`, `useUnpinPackage()`, `useIsPackagePinned(name)` |
 
 Use 300 ms debounce at the call site (route level), not inside the hook.
 
@@ -117,11 +117,11 @@ Use 300 ms debounce at the call site (route level), not inside the hook.
 
 ### `apps/client/src/components/PackageCard/PackageCard.tsx`
 
-Renders a single npm search result / list card. Fields: name (bold mono, links to `/registry/package/:name`), description, version badge, license, weekly downloads, keywords tag row, publish date. Used in search results; pinned list uses `LibraryPinsTable` instead.
+Renders a single npm search result / list card. Fields: name (bold mono, links to `/registry/package/:name`), description, version badge, license, weekly downloads, keywords tag row, publish date. Used in search results; pinned list uses `PackagePinsTable` instead.
 
-### `apps/client/src/tables/LibraryPinsTable/LibraryPinsTable.tsx`
+### `apps/client/src/tables/PackagePinsTable/PackagePinsTable.tsx`
 
-Copy `apps/client/src/tables/SourcesTable/SourcesTable.tsx` as template. Columns: Name (link to detail), Description, Version, License, Downloads, Pinned date, Unpin action (icon button). All cell renderers at module scope with explicit `CellContext<PinnedLibrary, unknown>`.
+Copy `apps/client/src/tables/SourcesTable/SourcesTable.tsx` as template. Columns: Name (link to detail), Description, Version, License, Downloads, Pinned date, Unpin action (icon button). All cell renderers at module scope with explicit `CellContext<PinnedPackage, unknown>`.
 
 ---
 
@@ -129,25 +129,25 @@ Copy `apps/client/src/tables/SourcesTable/SourcesTable.tsx` as template. Columns
 
 ### `apps/client/src/routes/registry-search.tsx`
 
-- `PageLayout` + `PageHero` (eyebrow "Registry", title "Libraries")
+- `PageLayout` + `PageHero` (eyebrow "Registry", title "Packages")
 - Controlled search input → 300 ms debounce → `useNpmSearch(debouncedQuery)`
 - Results: count + list of `<PackageCard>` items
 - Empty/loading states
-- Handle: `{ title: 'Library Registry' }`
+- Handle: `{ title: 'Package Registry' }`
 
 ### `apps/client/src/routes/registry-package.tsx`
 
 - Param `:name` (URL-encoded; supports `@scope%2Fname`)
 - `PageLayout` + `PageHero` (title = package name, back link to search)
 - Two-column layout: left = readme rendered as markdown; right = metadata sidebar (version, license, downloads, deps, keywords, maintainers, repo link)
-- Pin toggle in `PageHero` right slot — `BookmarkIcon` / `BookmarkCheckIcon` (Lucide); calls `usePinLibrary` / `useUnpinLibrary`
+- Pin toggle in `PageHero` right slot — `BookmarkIcon` / `BookmarkCheckIcon` (Lucide); calls `usePinPackage` / `useUnpinPackage`
 - Handle: `{ title: packageName }`
 
 ### `apps/client/src/routes/registry-pinned.tsx`
 
-- `PageLayout` + `PageHero` (eyebrow "Registry", title "Pinned Libraries", meta = count)
-- `PageList` wrapping `LibraryPinsTable`
-- Handle: `{ title: 'Pinned Libraries' }`
+- `PageLayout` + `PageHero` (eyebrow "Registry", title "Pinned Packages", meta = count)
+- `PageList` wrapping `PackagePinsTable`
+- Handle: `{ title: 'Pinned Packages' }`
 
 ---
 
@@ -158,8 +158,8 @@ Copy `apps/client/src/tables/SourcesTable/SourcesTable.tsx` as template. Columns
 Add three lazy imports and route entries inside `AppLayout` children:
 
 ```tsx
-{ path: 'registry', element: lazyElement(RegistrySearchPage), handle: { title: 'Library Registry' } },
-{ path: 'registry/pinned', element: lazyElement(RegistryPinnedPage), handle: { title: 'Pinned Libraries' } },
+{ path: 'registry', element: lazyElement(RegistrySearchPage), handle: { title: 'Package Registry' } },
+{ path: 'registry/pinned', element: lazyElement(RegistryPinnedPage), handle: { title: 'Pinned Packages' } },
 { path: 'registry/package/:name', element: lazyElement(RegistryPackagePage), handle: { title: 'Package' } },
 ```
 
@@ -172,7 +172,7 @@ Add Registry section (between Vault and Pipeline):
   id: 'registry',
   label: 'Registry',
   items: [
-    { label: 'Libraries', description: 'Search and browse npm packages', href: '/registry/packages', live: true },
+    { label: 'Packages', description: 'Search and browse npm packages', href: '/registry/packages', live: true },
     { label: 'Pinned', description: 'Your saved library collection', href: '/registry/pinned', live: true },
   ],
 },
@@ -195,9 +195,9 @@ Add Registry section (between Vault and Pipeline):
 | `apps/client/src/queries/registry/index.ts`                    | query keys                 |
 | `apps/client/src/queries/registry/useNpmSearch.ts`             |                            |
 | `apps/client/src/queries/registry/useNpmPackage.ts`            |                            |
-| `apps/client/src/queries/registry/usePinnedLibraries.ts`       |                            |
+| `apps/client/src/queries/registry/usePinnedPackages.ts`        |                            |
 | `apps/client/src/components/PackageCard/PackageCard.tsx`       | + `.module.css`            |
-| `apps/client/src/tables/LibraryPinsTable/LibraryPinsTable.tsx` | + `.module.css`            |
+| `apps/client/src/tables/PackagePinsTable/PackagePinsTable.tsx` | + `.module.css`            |
 | `apps/client/src/routes/registry-search.tsx`                   | + `.module.css`            |
 | `apps/client/src/routes/registry-package.tsx`                  | + `.module.css`            |
 | `apps/client/src/routes/registry-pinned.tsx`                   | + `.module.css`            |
@@ -221,4 +221,4 @@ Add Registry section (between Vault and Pipeline):
 4. Click a card → detail page loads readme + metadata sidebar
 5. Click Pin → bookmark icon toggles; `/registry/pinned` shows the pinned package
 6. Unpin from pinned list → row disappears; detail page reverts to unpin state
-7. Check `~/.llaab/pinned-libraries.json` exists and contains correct JSON
+7. Check `~/.llaab/pinned-packages.json` exists and contains correct JSON

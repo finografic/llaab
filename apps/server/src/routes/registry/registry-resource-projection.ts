@@ -3,7 +3,7 @@ import { toNodeId } from '@llaab/schemas';
 import type {
   LabNode,
   PackageRegistryResourceProjectionStatus,
-  PinnedLibrary,
+  PinnedPackage,
   PinnedRepository,
   RepoRegistryResourceProjectionStatus,
   ResourceNode,
@@ -54,7 +54,7 @@ export function repoProjectionStatus(
   return index.repos.get(fullName) ?? { status: 'missing' };
 }
 
-export async function projectPinnedLibraryResource(pin: PinnedLibrary): Promise<RegistryResourceProjection> {
+export async function projectPinnedPackageResource(pin: PinnedPackage): Promise<RegistryResourceProjection> {
   const id = `registry-package-${toNodeId(pin.name)}`;
   const identityTag = `package:${pin.name}`;
   const tags = uniqueTags([
@@ -65,7 +65,7 @@ export async function projectPinnedLibraryResource(pin: PinnedLibrary): Promise<
     identityTag,
     ...tagValues('keyword', pin.meta.keywords),
   ]);
-  const body = buildPinnedLibraryBody(pin);
+  const body = buildPinnedPackageBody(pin);
 
   return upsertResourceNode({
     id,
@@ -73,7 +73,7 @@ export async function projectPinnedLibraryResource(pin: PinnedLibrary): Promise<
     body,
     tags,
     url: pin.meta.links.npm,
-    resource_type: 'library',
+    resource_type: 'package',
     description: pin.meta.description,
     identityTag,
   });
@@ -161,7 +161,7 @@ function isResourceNode(node: LabNode): node is ResourceNode {
   return node.type === 'resource';
 }
 
-function buildPinnedLibraryBody(pin: PinnedLibrary): string {
+function buildPinnedPackageBody(pin: PinnedPackage): string {
   return [
     `Registry package pin for \`${pin.name}\`.`,
     '',

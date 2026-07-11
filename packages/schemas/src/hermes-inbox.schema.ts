@@ -50,6 +50,10 @@ export const HermesInboxRouteKindSchema = z.enum([
 
 export const HermesInboxRouteActionSchema = z.enum([
   'ingest_youtube',
+  'pin_package',
+  /**
+   * @deprecated Use `pin_package`.
+   */
   'pin_library',
   'pin_repository',
   'capture_command_candidate',
@@ -70,6 +74,10 @@ export const HermesInboxRouteSchema = z.object({
 export const HermesInboxToolNameSchema = z.enum([
   'vault_capture_inbox',
   'vault_ingest_youtube',
+  'vault_pin_package',
+  /**
+   * @deprecated Use `vault_pin_package`.
+   */
   'vault_pin_library',
   'vault_pin_repository',
   'vault_capture_todo',

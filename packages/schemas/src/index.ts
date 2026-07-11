@@ -133,6 +133,7 @@ export {
   type PackageMetaResponse,
   type PackageTypesStatus,
   type PinnedLibrary,
+  type PinnedPackage,
   type RegistryResourceProjectionStatus as PackageRegistryResourceProjectionStatus,
 } from './npm-registry.js';
 export {

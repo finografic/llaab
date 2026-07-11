@@ -218,7 +218,7 @@ export function routeHermesInboxText(rawText: string): HermesInboxRoute {
     return {
       kind: 'npm_package',
       confidence: 0.97,
-      action: 'pin_library',
+      action: 'pin_package',
       payload: npmPackage,
       reason: 'URL matches a supported npm package URL.',
     };

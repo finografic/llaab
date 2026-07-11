@@ -22,9 +22,10 @@ export function createHermesInboxToolCall(
           tags: ['hermes', 'inbox'],
         },
       };
+    case 'pin_package':
     case 'pin_library':
       return {
-        name: 'vault_pin_library',
+        name: 'vault_pin_package',
         arguments: { name: stringPayload(route, 'package_name') },
       };
     case 'pin_repository':
@@ -99,6 +100,7 @@ export function createHermesInboxReceipt(
   switch (route.action) {
     case 'ingest_youtube':
       return { status: 'queued', text: withTarget('✅ Ingested YouTube video', target) };
+    case 'pin_package':
     case 'pin_library':
       return {
         status: 'pinned',
@@ -203,6 +205,7 @@ function failedReceiptText(route: HermesInboxRoute, error: string | undefined): 
   switch (route.action) {
     case 'ingest_youtube':
       return `❌ Failed YouTube ingest: ${detail}`;
+    case 'pin_package':
     case 'pin_library':
       return `❌ Failed npm package pin: ${detail}`;
     case 'pin_repository':

@@ -11,14 +11,14 @@ search, review workflows, and later knowledge synthesis.
 
 | Layer               | Purpose                        | Location                                                     |
 | ------------------- | ------------------------------ | ------------------------------------------------------------ |
-| Package pins        | Fast package registry state    | `~/.llaab/pinned-libraries.json` (`LLAAB_PINS_PATH`)         |
+| Package pins        | Fast package registry state    | `~/.llaab/pinned-packages.json` (`LLAAB_PACKAGE_PINS_PATH`)  |
 | Repository pins     | Fast repository registry state | `~/.llaab/pinned-repositories.json` (`LLAAB_REPO_PINS_PATH`) |
 | Resource projection | Knowledge-base representation  | `vault/nodes/resources/*.md`                                 |
 
 The pin JSON files answer registry UI questions such as "what is pinned?" and
 "what metadata did we snapshot at pin time?"
 
-The resource nodes answer knowledge questions such as "what tools, libraries,
+The resource nodes answer knowledge questions such as "what tools, packages,
 repositories, or references are part of the system's working context?"
 
 ## Projection Flow
@@ -42,7 +42,7 @@ Projection identity is deterministic.
 
 | Pin kind    | Resource id                  | Identity tag        | Resource type |
 | ----------- | ---------------------------- | ------------------- | ------------- |
-| npm package | `registry-package-{package}` | `package:{name}`    | `library`     |
+| npm package | `registry-package-{package}` | `package:{name}`    | `package`     |
 | GitHub repo | `registry-repo-{owner-repo}` | `repo:{owner/repo}` | `repo`        |
 
 The projection index scans existing `ResourceNode` files and builds lookup maps

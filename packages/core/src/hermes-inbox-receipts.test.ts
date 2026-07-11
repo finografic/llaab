@@ -20,11 +20,11 @@ describe('createHermesInboxToolCall', () => {
     });
   });
 
-  it('maps npm package routes to the library pin tool', () => {
+  it('maps npm package routes to the package pin tool', () => {
     const route = routeHermesInboxText('https://www.npmjs.com/package/zod');
 
     expect(createHermesInboxToolCall(route)).toEqual({
-      name: 'vault_pin_library',
+      name: 'vault_pin_package',
       arguments: { name: 'zod' },
     });
   });

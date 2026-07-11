@@ -12,7 +12,7 @@ export const REGISTRY_QUERY_KEYS = {
 
 export { useNpmSearch } from './useNpmSearch';
 export { useNpmPackage } from './useNpmPackage';
-export { usePinnedLibraries, usePinLibrary, useUnpinLibrary, useIsLibraryPinned } from './usePinnedLibraries';
+export { usePinnedPackages, usePinPackage, useUnpinPackage, useIsPackagePinned } from './usePinnedPackages';
 export { useGithubRepoSearch } from './useGithubRepoSearch';
 export { useGithubRepo } from './useGithubRepo';
 export {

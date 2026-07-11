@@ -1,6 +1,6 @@
 /**
  * Npm Registry API types — lifted from npmx.dev/shared/types/npm-registry.ts
- * and extended with LLAAB-native PinnedLibrary type.
+ * and extended with LLAAB-native pinned package types.
  */
 
 export interface NpmPerson {
@@ -123,9 +123,12 @@ export interface PackageDetailResponse extends PackageMetaResponse {
 }
 
 /** A pinned npm package stored in the local pins file. */
-export interface PinnedLibrary {
+export interface PinnedPackage {
   name: string;
   pinnedAt: string;
   meta: PackageMetaResponse;
   resource?: RegistryResourceProjectionStatus;
 }
+
+/** @deprecated Use `PinnedPackage`. */
+export type PinnedLibrary = PinnedPackage;

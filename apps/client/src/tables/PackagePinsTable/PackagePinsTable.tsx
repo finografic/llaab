@@ -3,13 +3,13 @@ import { DataTable, sortableHeader } from 'components/ui/data-table';
 import { XIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import type { PinnedLibrary } from '@llaab/schemas';
+import type { PinnedPackage } from '@llaab/schemas';
 import type { DataTableColumns } from '@llaab/ui/lib/data-table-utils';
 import type { CellContext } from '@tanstack/react-table';
 
 import { formatDetailDate } from 'utils/format-date.utils';
 
-import styles from './LibraryPinsTable.module.css';
+import styles from './PackagePinsTable.module.css';
 
 function fmtDownloads(n?: number): string {
   if (n == null) return '—';
@@ -18,7 +18,7 @@ function fmtDownloads(n?: number): string {
   return String(n);
 }
 
-function renderNameCell({ row }: CellContext<PinnedLibrary, unknown>) {
+function renderNameCell({ row }: CellContext<PinnedPackage, unknown>) {
   const { name, meta } = row.original;
   return (
     <div className={styles.titleCell}>
@@ -30,11 +30,11 @@ function renderNameCell({ row }: CellContext<PinnedLibrary, unknown>) {
   );
 }
 
-function renderVersionCell({ row }: CellContext<PinnedLibrary, unknown>) {
+function renderVersionCell({ row }: CellContext<PinnedPackage, unknown>) {
   return <span className={styles.mono}>{row.original.meta.version}</span>;
 }
 
-function renderLicenseCell({ row }: CellContext<PinnedLibrary, unknown>) {
+function renderLicenseCell({ row }: CellContext<PinnedPackage, unknown>) {
   return row.original.meta.license ? (
     <span className={styles.mono}>{row.original.meta.license}</span>
   ) : (
@@ -42,17 +42,17 @@ function renderLicenseCell({ row }: CellContext<PinnedLibrary, unknown>) {
   );
 }
 
-function renderDownloadsCell({ row }: CellContext<PinnedLibrary, unknown>) {
+function renderDownloadsCell({ row }: CellContext<PinnedPackage, unknown>) {
   return <span className={styles.mono}>{fmtDownloads(row.original.meta.weeklyDownloads)}</span>;
 }
 
-function renderPinnedAtCell({ getValue }: CellContext<PinnedLibrary, unknown>) {
+function renderPinnedAtCell({ getValue }: CellContext<PinnedPackage, unknown>) {
   const ts = getValue<string>();
   return <time className={styles.mono}>{formatDetailDate(ts)}</time>;
 }
 
 function makeUnpinCell(onUnpin: (name: string) => void) {
-  return function UnpinCell({ row }: CellContext<PinnedLibrary, unknown>) {
+  return function UnpinCell({ row }: CellContext<PinnedPackage, unknown>) {
     return (
       <button
         type="button"
@@ -66,7 +66,7 @@ function makeUnpinCell(onUnpin: (name: string) => void) {
   };
 }
 
-function makeColumns(onUnpin: (name: string) => void): DataTableColumns<PinnedLibrary> {
+function makeColumns(onUnpin: (name: string) => void): DataTableColumns<PinnedPackage> {
   return [
     {
       id: 'name',
@@ -105,19 +105,19 @@ function makeColumns(onUnpin: (name: string) => void): DataTableColumns<PinnedLi
   ];
 }
 
-interface LibraryPinsTableProps {
-  pins: PinnedLibrary[];
+interface PackagePinsTableProps {
+  pins: PinnedPackage[];
   onUnpin: (name: string) => void;
 }
 
-export function LibraryPinsTable({ pins, onUnpin }: LibraryPinsTableProps) {
+export function PackagePinsTable({ pins, onUnpin }: PackagePinsTableProps) {
   const columns = useMemo(() => makeColumns(onUnpin), [onUnpin]);
 
   return (
     <DataTable
       columns={columns}
       data={pins}
-      emptyMessage="No pinned libraries yet. Search for packages and pin your favourites."
+      emptyMessage="No pinned packages yet. Search for packages and pin your favourites."
       options={{ getSortedRowModel: getSortedRowModel() }}
     />
   );

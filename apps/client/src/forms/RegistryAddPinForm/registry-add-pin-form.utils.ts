@@ -3,7 +3,7 @@ import { extractDroppedUrl, isHttpUrl } from '../IngestForm/ingest-form.utils';
 /** Below this pin count, typing in the search field switches to Search results. */
 export const MIN_PINNED = 10;
 
-export type RegistryUrlKind = 'library' | 'repository' | 'unknown';
+export type RegistryUrlKind = 'package' | 'repository' | 'unknown';
 
 const NPM_PACKAGE_PATH = /^\/package\/(@[^/]+\/[^/]+|[^/]+)\/?$/i;
 const GITHUB_REPO_PATH = /^\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/i;
@@ -76,7 +76,7 @@ export function classifyRegistryUrl(value: string): RegistryUrlKind {
   const trimmed = value.trim();
   if (!trimmed) return 'unknown';
   if (parseGithubRepoRef(trimmed)) return 'repository';
-  if (parseNpmPackageRef(trimmed)) return 'library';
+  if (parseNpmPackageRef(trimmed)) return 'package';
   return 'unknown';
 }
 

@@ -365,7 +365,7 @@ platform, user/chat/message identifiers, and received timestamp. Telegram, Disco
 or a future share-sheet shortcut can all produce inbox items.
 
 An inbox item is not necessarily the final stored knowledge object. The router turns it into a
-capture, run, pinned library, or other target.
+capture, run, pinned package, or other target.
 
 Why it matters here:
 

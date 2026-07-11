@@ -151,8 +151,9 @@ async function executeInboxToolCall(toolCall: HermesInboxToolCall): Promise<Herm
   switch (toolCall.name) {
     case 'vault_ingest_youtube':
       return executeYouTubeIngest(toolCall);
+    case 'vault_pin_package':
     case 'vault_pin_library':
-      return executeLibraryPin(toolCall);
+      return executePackagePin(toolCall);
     case 'vault_pin_repository':
       return executeRepositoryPin(toolCall);
     case 'vault_capture_todo':
@@ -181,7 +182,7 @@ async function executeYouTubeIngest(toolCall: HermesInboxToolCall): Promise<Herm
   return { status: 'queued', target_id: id, target_label: id ? `${id}${reused}` : undefined };
 }
 
-async function executeLibraryPin(toolCall: HermesInboxToolCall): Promise<HermesInboxExecutionResult> {
+async function executePackagePin(toolCall: HermesInboxToolCall): Promise<HermesInboxExecutionResult> {
   const name = stringArg(toolCall, 'name');
   const result = await postJsonViaApi('/api/registry/pins', { name });
 
@@ -286,6 +287,7 @@ function buildIdeaCapture(toolCall: HermesInboxToolCall): { title: string; body:
         payload: recordArg(toolCall, 'payload'),
       });
     case 'vault_ingest_youtube':
+    case 'vault_pin_package':
     case 'vault_pin_library':
     case 'vault_pin_repository':
       throw new Error(`Unsupported idea capture tool: ${toolCall.name}`);

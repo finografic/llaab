@@ -2,11 +2,11 @@ import { BoxIcon, DownloadIcon, PinIcon, PinOffIcon, StarIcon } from '@llaab/ico
 import { cn } from '@llaab/ui/lib/utils';
 import { Button } from 'components/ui/button';
 import {
-  useIsLibraryPinned,
+  useIsPackagePinned,
   useIsRepositoryPinned,
-  usePinLibrary,
+  usePinPackage,
   usePinRepository,
-  useUnpinLibrary,
+  useUnpinPackage,
   useUnpinRepository,
 } from 'queries/registry';
 import { Link } from 'react-router-dom';
@@ -80,8 +80,8 @@ function TypesStatusIcon({ status }: { status: PackageTypesStatus }) {
   }
 }
 
-interface LibraryCardProps {
-  variant?: 'library';
+interface PackageCardVariantProps {
+  variant?: 'package';
   pkg: NpmSearchPackage | PackageMetaResponse;
   weeklyDownloads?: number;
   dependents?: string;
@@ -96,14 +96,14 @@ interface RepoCardProps {
   resource?: RepoRegistryResourceProjectionStatus;
 }
 
-export type PackageCardProps = LibraryCardProps | RepoCardProps;
+export type PackageCardProps = PackageCardVariantProps | RepoCardProps;
 
 export function PackageCard(props: PackageCardProps) {
   if (props.variant === 'repo') {
     return <RepoPackageCard repo={props.repo} resource={props.resource} />;
   }
   return (
-    <LibraryPackageCard
+    <RegistryPackageCard
       pkg={props.pkg}
       weeklyDownloads={props.weeklyDownloads}
       dependents={props.dependents}
@@ -113,21 +113,21 @@ export function PackageCard(props: PackageCardProps) {
   );
 }
 
-function LibraryPackageCard({
+function RegistryPackageCard({
   pkg,
   weeklyDownloads,
   dependents,
   typesStatus,
   resource,
-}: Omit<LibraryCardProps, 'variant'>) {
+}: Omit<PackageCardVariantProps, 'variant'>) {
   const encodedName = encodeURIComponent(pkg.name);
   const downloads = weeklyDownloads ?? (pkg as PackageMetaResponse).weeklyDownloads;
   const dependentsLabel = dependents ? formatDependents(dependents) : null;
 
-  const isPinned = useIsLibraryPinned(pkg.name);
-  const pinLibrary = usePinLibrary();
-  const unpinLibrary = useUnpinLibrary();
-  const pinPending = pinLibrary.isPending || unpinLibrary.isPending;
+  const isPinned = useIsPackagePinned(pkg.name);
+  const pinPackageMutation = usePinPackage();
+  const unpinPackageMutation = useUnpinPackage();
+  const pinPending = pinPackageMutation.isPending || unpinPackageMutation.isPending;
 
   async function handlePinToggle(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -136,10 +136,10 @@ function LibraryPackageCard({
 
     try {
       if (isPinned) {
-        await unpinLibrary.mutateAsync(pkg.name);
+        await unpinPackageMutation.mutateAsync(pkg.name);
         toast.success(`Unpinned ${pkg.name}`);
       } else {
-        await pinLibrary.mutateAsync(pkg.name);
+        await pinPackageMutation.mutateAsync(pkg.name);
         toast.success(`Pinned ${pkg.name}`);
       }
     } catch {

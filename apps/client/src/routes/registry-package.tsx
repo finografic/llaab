@@ -6,10 +6,10 @@ import { PageList } from 'layouts/PageList/PageList';
 import { BookmarkCheckIcon, BookmarkIcon } from 'lucide-react';
 import {
   useNpmPackage,
-  useIsLibraryPinned,
-  usePinLibrary,
-  usePinnedLibraries,
-  useUnpinLibrary,
+  useIsPackagePinned,
+  usePinPackage,
+  usePinnedPackages,
+  useUnpinPackage,
 } from 'queries/registry';
 import { Link, useParams } from 'react-router-dom';
 import { siNpm } from 'simple-icons';
@@ -88,25 +88,25 @@ export function RegistryPackagePage() {
   const name = decodeURIComponent(encodedName);
 
   const { data, isLoading } = useNpmPackage(name);
-  const isPinned = useIsLibraryPinned(name);
-  const { data: pins = [] } = usePinnedLibraries();
-  const pinLibrary = usePinLibrary();
-  const unpinLibrary = useUnpinLibrary();
+  const isPinned = useIsPackagePinned(name);
+  const { data: pins = [] } = usePinnedPackages();
+  const pinPackageMutation = usePinPackage();
+  const unpinPackageMutation = useUnpinPackage();
 
   usePageTitle(name || 'Package');
   useSecondaryBackAction('/registry/packages', 'Back to search');
 
   async function handlePinToggle() {
     if (isPinned) {
-      await unpinLibrary.mutateAsync(name);
+      await unpinPackageMutation.mutateAsync(name);
       toast.success(`Unpinned ${name}`);
     } else {
-      await pinLibrary.mutateAsync(name);
+      await pinPackageMutation.mutateAsync(name);
       toast.success(`Pinned ${name}`);
     }
   }
 
-  const pinPending = pinLibrary.isPending || unpinLibrary.isPending;
+  const pinPending = pinPackageMutation.isPending || unpinPackageMutation.isPending;
   const depCount = data ? Object.keys(data.dependencies).length : 0;
   const peerDepCount = data ? Object.keys(data.peerDependencies).length : 0;
   const typesStatus = data?.typesStatus ?? (data?.hasTypes ? 'included' : 'none');
