@@ -59,6 +59,10 @@ export interface RepoDetailResponse extends RepoMetaResponse {
   readmeHtml: string | null;
   languages: RepoLanguageShare[];
   latestVersion?: string;
+  /** Npm package name from root package.json when published; omit when unknown. */
+  npmPackage?: string;
+  /** Weekly npm downloads when `npmPackage` is known. */
+  weeklyDownloads?: number;
   watchers: number;
   sizeKb: number;
   createdAt: string;

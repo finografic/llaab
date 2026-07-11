@@ -1,0 +1,29 @@
+.pinButton {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--text-faint);
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.pinButton:hover {
+  color: var(--text-muted);
+  background: transparent;
+  opacity: 1;
+}
+
+.pinButtonActive {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.pinButtonActive:hover {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.pinIcon {
+  width: 13.6px;
+  height: 13.6px;
+}

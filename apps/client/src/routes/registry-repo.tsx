@@ -1,5 +1,6 @@
 import { PageHero } from 'components/PageHero/PageHero';
 import pageHeroStyles from 'components/PageHero/PageHero.module.css';
+import { RegistrySidebarPinButton } from 'components/RegistrySidebarPinButton/RegistrySidebarPinButton';
 import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarContext';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
@@ -16,7 +17,7 @@ import { siGithub } from 'simple-icons';
 import { toast } from 'sonner';
 
 import { usePageTitle } from 'lib/use-page-title';
-import { formatDetailDate } from 'utils/format-date.utils';
+import { formatDetailDateOnly } from 'utils/format-date.utils';
 
 import styles from './registry-repo.module.css';
 
@@ -32,6 +33,13 @@ function GithubTitleIcon() {
 function fmtCount(n?: number): string {
   if (n == null) return '—';
   return n.toLocaleString('en-US');
+}
+
+function fmtDownloads(n?: number): string {
+  if (n == null) return '—';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M / week`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K / week`;
+  return `${String(n)} / week`;
 }
 
 export function RegistryRepoPage() {
@@ -117,7 +125,10 @@ export function RegistryRepoPage() {
 
             <aside className={styles.sidebar}>
               <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Repository</span>
+                <div className={styles.sidebarLabelRow}>
+                  <span className={styles.sidebarLabel}>Repository</span>
+                  <RegistrySidebarPinButton kind="repository" target={data.fullName} />
+                </div>
                 <a
                   href={data.htmlUrl}
                   className={styles.sidebarLink}
@@ -127,6 +138,31 @@ export function RegistryRepoPage() {
                   {data.fullName}
                 </a>
               </div>
+
+              {data.npmPackage ? (
+                <div className={styles.sidebarSection}>
+                  <div className={styles.sidebarLabelRow}>
+                    <span className={styles.sidebarLabel}>Package</span>
+                    <RegistrySidebarPinButton kind="package" target={data.npmPackage} />
+                  </div>
+                  <a
+                    href={`https://npmx.dev/package/${encodeURIComponent(data.npmPackage)}`}
+                    className={styles.sidebarLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    npmx.dev/package/{data.npmPackage}
+                  </a>
+                  <a
+                    href={`https://www.npmjs.com/package/${encodeURIComponent(data.npmPackage)}`}
+                    className={styles.sidebarLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    npmjs.com/package/{data.npmPackage}
+                  </a>
+                </div>
+              ) : null}
 
               {data.homepage && (
                 <div className={styles.sidebarSection}>
@@ -149,32 +185,29 @@ export function RegistryRepoPage() {
                 </div>
               )}
 
+              {data.pushedAt && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Last updated</span>
+                  <span className={styles.sidebarValue}>{formatDetailDateOnly(data.pushedAt)}</span>
+                </div>
+              )}
+
+              {data.weeklyDownloads != null && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Downloads</span>
+                  <span className={styles.sidebarValue}>{fmtDownloads(data.weeklyDownloads)}</span>
+                </div>
+              )}
+
               <div className={styles.sidebarSection}>
                 <span className={styles.sidebarLabel}>Stars</span>
                 <span className={styles.sidebarValue}>{fmtCount(data.stars)}</span>
               </div>
 
               <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Forks</span>
-                <span className={styles.sidebarValue}>{fmtCount(data.forks)}</span>
-              </div>
-
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Watchers</span>
-                <span className={styles.sidebarValue}>{fmtCount(data.watchers)}</span>
-              </div>
-
-              <div className={styles.sidebarSection}>
                 <span className={styles.sidebarLabel}>Open Issues</span>
                 <span className={styles.sidebarValue}>{fmtCount(data.openIssues)}</span>
               </div>
-
-              {data.pushedAt && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Last updated</span>
-                  <span className={styles.sidebarValue}>{formatDetailDate(data.pushedAt)}</span>
-                </div>
-              )}
 
               {data.license && (
                 <div className={styles.sidebarSection}>

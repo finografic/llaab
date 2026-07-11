@@ -94,6 +94,9 @@
     ]
   },
   "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs,css,md}": [
+      "python3 scripts/strip-lean-ctx-markers.py"
+    ],
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
       "oxfmt --no-error-on-unmatched-pattern",
       "oxlint --fix"

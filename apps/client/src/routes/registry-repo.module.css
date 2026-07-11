@@ -228,6 +228,14 @@
   gap: 5px;
 }
 
+.sidebarLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 1.5rem;
+}
+
 .sidebarLabel {
   font-size: var(--text-sm); /* +1 from 10px */
   font-family: var(--font-mono);
@@ -375,3 +383,4 @@
   color: var(--text-faint);
   padding: 40px 0;
 }
+

@@ -1,5 +1,7 @@
 import { PageHero } from 'components/PageHero/PageHero';
 import pageHeroStyles from 'components/PageHero/PageHero.module.css';
+import { RegistrySidebarPinButton } from 'components/RegistrySidebarPinButton/RegistrySidebarPinButton';
+import { parseGithubRepoRef } from 'forms/RegistryAddPinForm/registry-add-pin-form.utils';
 import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarContext';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
@@ -17,7 +19,7 @@ import { toast } from 'sonner';
 import type { PackageTypesStatus } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
-import { formatDetailDate } from 'utils/format-date.utils';
+import { formatDetailDateOnly } from 'utils/format-date.utils';
 
 import typescriptDeclarationIcon from '../assets/typescript-declaration.svg';
 import typescriptIcon from '../assets/typescript.svg';
@@ -83,6 +85,11 @@ function fmtDownloads(n?: number): string {
   return `${String(n)} / week`;
 }
 
+function fmtCount(n?: number): string {
+  if (n == null) return '—';
+  return n.toLocaleString('en-US');
+}
+
 export function RegistryPackagePage() {
   const { name: encodedName = '' } = useParams<{ name: string }>();
   const name = decodeURIComponent(encodedName);
@@ -112,6 +119,7 @@ export function RegistryPackagePage() {
   const typesStatus = data?.typesStatus ?? (data?.hasTypes ? 'included' : 'none');
   const typesBadge = data ? typesBadgeLabel(typesStatus, data.typesPackageName) : null;
   const resource = pins.find((pin) => pin.name === name)?.resource;
+  const linkedRepoFullName = data?.links.repository ? parseGithubRepoRef(data.links.repository) : null;
 
   return (
     <PageLayout
@@ -168,8 +176,28 @@ export function RegistryPackagePage() {
 
             {/* ── Right: metadata sidebar ── */}
             <aside className={styles.sidebar}>
+              {linkedRepoFullName && data.links.repository ? (
+                <div className={styles.sidebarSection}>
+                  <div className={styles.sidebarLabelRow}>
+                    <span className={styles.sidebarLabel}>Repository</span>
+                    <RegistrySidebarPinButton kind="repository" target={linkedRepoFullName} />
+                  </div>
+                  <a
+                    href={data.links.repository}
+                    className={styles.sidebarLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {linkedRepoFullName}
+                  </a>
+                </div>
+              ) : null}
+
               <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>npm</span>
+                <div className={styles.sidebarLabelRow}>
+                  <span className={styles.sidebarLabel}>Package</span>
+                  <RegistrySidebarPinButton kind="package" target={name} />
+                </div>
                 <a
                   href={`https://npmx.dev/package/${encodeURIComponent(name)}`}
                   className={styles.sidebarLink}
@@ -187,20 +215,6 @@ export function RegistryPackagePage() {
                   npmjs.com/package/{name}
                 </a>
               </div>
-
-              {data.links.repository && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Repository</span>
-                  <a
-                    href={data.links.repository}
-                    className={styles.sidebarLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {data.links.repository.replace('https://github.com/', '')}
-                  </a>
-                </div>
-              )}
 
               {data.links.homepage && (
                 <div className={styles.sidebarSection}>
@@ -221,6 +235,13 @@ export function RegistryPackagePage() {
                 <span className={styles.sidebarValue}>{data.version}</span>
               </div>
 
+              {data.date && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Last updated</span>
+                  <span className={styles.sidebarValue}>{formatDetailDateOnly(data.date)}</span>
+                </div>
+              )}
+
               {data.weeklyDownloads != null && (
                 <div className={styles.sidebarSection}>
                   <span className={styles.sidebarLabel}>Downloads</span>
@@ -228,10 +249,17 @@ export function RegistryPackagePage() {
                 </div>
               )}
 
-              {data.date && (
+              {data.stars != null && (
                 <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Last updated</span>
-                  <span className={styles.sidebarValue}>{formatDetailDate(data.date)}</span>
+                  <span className={styles.sidebarLabel}>Stars</span>
+                  <span className={styles.sidebarValue}>{fmtCount(data.stars)}</span>
+                </div>
+              )}
+
+              {data.openIssues != null && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Open Issues</span>
+                  <span className={styles.sidebarValue}>{fmtCount(data.openIssues)}</span>
                 </div>
               )}
 

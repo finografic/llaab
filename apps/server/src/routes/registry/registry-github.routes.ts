@@ -134,6 +134,43 @@ async function fetchLatestVersion(owner: string, repo: string): Promise<string |
   return tags[0]?.name;
 }
 
+/** Resolve a published npm package name (+ weekly downloads) from root package.json. */
+async function fetchNpmPackageInfo(
+  owner: string,
+  repo: string,
+): Promise<{ name: string; weeklyDownloads?: number } | undefined> {
+  const res = await githubFetch(
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/package.json`,
+  );
+  if (!res.ok) return undefined;
+
+  try {
+    const data = (await res.json()) as { encoding?: string; content?: string };
+    if (data.encoding !== 'base64' || typeof data.content !== 'string') return undefined;
+
+    const raw = Buffer.from(data.content.replace(/\n/g, ''), 'base64').toString('utf8');
+    const pkg = JSON.parse(raw) as { name?: unknown; private?: unknown };
+    if (pkg.private === true) return undefined;
+    if (typeof pkg.name !== 'string' || !pkg.name.trim()) return undefined;
+
+    const name = pkg.name.trim();
+    const encoded = name.startsWith('@') ? `@${encodeURIComponent(name.slice(1))}` : name;
+
+    const [npmHead, downloadsRes] = await Promise.all([
+      fetch(`https://registry.npmjs.org/${encoded}`, { method: 'HEAD' }),
+      fetch(`https://api.npmjs.org/downloads/point/last-week/${encoded}`)
+        .then((r) => (r.ok ? (r.json() as Promise<{ downloads?: number }>) : null))
+        .catch(() => null),
+    ]);
+    if (!npmHead.ok) return undefined;
+
+    const weeklyDownloads = typeof downloadsRes?.downloads === 'number' ? downloadsRes.downloads : undefined;
+    return weeklyDownloads != null ? { name, weeklyDownloads } : { name };
+  } catch {
+    return undefined;
+  }
+}
+
 export async function fetchRepoMeta(fullName: string): Promise<RepoMetaResponse> {
   const [owner, repo] = fullName.split('/');
   if (!owner || !repo) throw new Error('Invalid repository full name');
@@ -184,11 +221,12 @@ export const githubRepo = {
     if (!owner || !repo) return c.json({ error: 'Missing owner/repo' }, 400);
 
     try {
-      const [raw, readmeMd, languages, latestVersion] = await Promise.all([
+      const [raw, readmeMd, languages, latestVersion, npmInfo] = await Promise.all([
         fetchRepoJson(owner, repo),
         fetchReadmeMarkdown(owner, repo),
         fetchLanguages(owner, repo),
         fetchLatestVersion(owner, repo),
+        fetchNpmPackageInfo(owner, repo),
       ]);
 
       const meta = mapRepoMeta(raw);
@@ -199,6 +237,8 @@ export const githubRepo = {
         readmeHtml,
         languages: toLanguageShares(languages),
         latestVersion,
+        ...(npmInfo?.name ? { npmPackage: npmInfo.name } : {}),
+        ...(npmInfo?.weeklyDownloads != null ? { weeklyDownloads: npmInfo.weeklyDownloads } : {}),
         watchers: (raw.subscribers_count as number) ?? (raw.watchers_count as number) ?? 0,
         sizeKb: (raw.size as number) ?? 0,
         createdAt: (raw.created_at as string) ?? '',

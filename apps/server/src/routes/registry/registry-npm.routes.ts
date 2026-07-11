@@ -8,9 +8,11 @@ import type {
 } from '@llaab/schemas';
 
 import { renderReadmeToHtml } from '../../lib/readme-renderer.js';
+import { fetchRepoMeta } from './registry-github.routes.js';
 
 const NPM_REGISTRY = 'https://registry.npmjs.org';
 const NPM_API = 'https://api.npmjs.org';
+const GITHUB_REPO_PATH = /^\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/i;
 
 function encodePackageName(name: string): string {
   // Scoped packages: @scope/name → @scope%2Fname
@@ -85,6 +87,20 @@ function normalizeBugsUrl(raw: unknown): string | undefined {
   if (!raw) return undefined;
   if (typeof raw === 'string') return raw;
   return (raw as { url?: string }).url;
+}
+
+/** `owner/repo` from a normalized GitHub repository URL, if any. */
+function githubFullNameFromUrl(url?: string): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.replace(/^www\./, '').toLowerCase() !== 'github.com') return null;
+    const match = parsed.pathname.match(GITHUB_REPO_PATH);
+    if (!match?.[1] || !match[2]) return null;
+    return `${match[1]}/${match[2].replace(/\.git$/i, '')}`;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchPackageMeta(name: string): Promise<PackageMetaResponse> {
@@ -221,15 +237,18 @@ export const npmPackage = {
       };
 
       const rawReadme = extractRawReadme(packument, latestVersion);
-      const [versionMeta, readmeHtml] = await Promise.all([
+      const repoFullName = githubFullNameFromUrl(meta.links.repository);
+      const [versionMeta, readmeHtml, repoMeta] = await Promise.all([
         extractVersionMeta(packument, latestVersion),
         rawReadme ? renderReadmeToHtml(rawReadme) : Promise.resolve(null),
+        repoFullName ? fetchRepoMeta(repoFullName).catch(() => null) : Promise.resolve(null),
       ]);
 
       const detail: PackageDetailResponse = {
         ...meta,
         readmeHtml,
         ...versionMeta,
+        ...(repoMeta ? { stars: repoMeta.stars, openIssues: repoMeta.openIssues } : {}),
       };
 
       return c.json(detail);

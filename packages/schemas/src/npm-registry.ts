@@ -120,6 +120,10 @@ export interface PackageDetailResponse extends PackageMetaResponse {
   hasTypes: boolean;
   typesStatus: PackageTypesStatus;
   isEsm: boolean;
+  /** From linked GitHub repository when resolvable. */
+  stars?: number;
+  /** From linked GitHub repository when resolvable. */
+  openIssues?: number;
 }
 
 /** A pinned npm package stored in the local pins file. */
