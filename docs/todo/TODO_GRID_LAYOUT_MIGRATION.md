@@ -187,6 +187,8 @@ Match the registry Add/Search toolbar pattern elsewhere.
 
 ## Phase 4 — Remaining client routes and feature components
 
+Completed Jul 11, 2026 — no additional code changes required.
+
 Sweep everything Phase 0 marked **Convert** that Phases 2–3 skipped.
 
 - [x] Remaining `apps/client/src/routes/**` — all **Convert** candidates landed in Phase 2
@@ -197,6 +199,8 @@ Sweep everything Phase 0 marked **Convert** that Phases 2–3 skipped.
 ---
 
 ## Phase 5 — Tables / dense UI (selective)
+
+Completed Jul 11, 2026 — deferred dense layouts kept as-is.
 
 Tables are mostly column definitions, not page grids. Convert only clear layout wrappers.
 
