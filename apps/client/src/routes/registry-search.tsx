@@ -81,6 +81,7 @@ function nextSortState(current: SortState | null, column: SortColumn): SortState
 
 type LibraryListItem = NpmSearchResult & {
   typesStatus?: PackageTypesStatus;
+  resource?: PinnedLibrary['resource'];
 };
 
 function pinToListItem(pin: PinnedLibrary): LibraryListItem {
@@ -98,6 +99,7 @@ function pinToListItem(pin: PinnedLibrary): LibraryListItem {
     },
     downloads: pin.meta.weeklyDownloads != null ? { weekly: pin.meta.weeklyDownloads } : undefined,
     typesStatus: pin.meta.typesStatus ?? 'none',
+    resource: pin.resource,
   };
 }
 
@@ -213,6 +215,7 @@ function LibraryResultsPanel({
               weeklyDownloads={result.downloads?.weekly}
               dependents={result.dependents}
               typesStatus={showTypesStatus ? (result.typesStatus ?? 'none') : undefined}
+              resource={showTypesStatus ? result.resource : undefined}
             />
           ))}
         </div>

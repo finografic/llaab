@@ -80,6 +80,11 @@ export interface NpmDownloadCount {
  */
 export type PackageTypesStatus = 'included' | 'declarations' | 'none';
 
+export interface RegistryResourceProjectionStatus {
+  id?: string;
+  status: 'linked' | 'missing' | 'needs_sync';
+}
+
 /**
  * Lightweight package metadata — slim payload for cards and the detail page.
  * Shape mirrors npmx.dev's /api/registry/package-meta response.
@@ -122,4 +127,5 @@ export interface PinnedLibrary {
   name: string;
   pinnedAt: string;
   meta: PackageMetaResponse;
+  resource?: RegistryResourceProjectionStatus;
 }

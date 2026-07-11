@@ -138,6 +138,12 @@
   color: var(--text);
 }
 
+.projectionStatus {
+  color: var(--accent);
+  font-family: inherit;
+  font-size: inherit;
+}
+
 .dependents {
   display: inline-flex;
   align-items: center;
@@ -230,4 +236,3 @@
     text-align: left;
   }
 }
-

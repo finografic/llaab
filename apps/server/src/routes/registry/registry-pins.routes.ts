@@ -4,6 +4,11 @@ import type { PinnedLibrary } from '@llaab/schemas';
 
 import { fetchPackageMeta } from './registry-npm.routes.js';
 import { readPins, writePins } from './registry-pins.store.js';
+import {
+  packageProjectionStatus,
+  projectPinnedLibraryResource,
+  readRegistryResourceProjectionIndex,
+} from './registry-resource-projection.js';
 
 export const listPins = {
   path: '/pins' as const,
@@ -26,7 +31,13 @@ export const listPins = {
     );
 
     if (dirty) await writePins(next);
-    return c.json({ pins: next });
+
+    const projections = await readRegistryResourceProjectionIndex();
+    const pinsWithResources = next.map((pin) => ({
+      ...pin,
+      resource: packageProjectionStatus(projections, pin.name),
+    }));
+    return c.json({ pins: pinsWithResources });
   },
 };
 
@@ -36,15 +47,18 @@ export const pinLibrary = {
     const { name } = c.req.valid('json');
     const pins = await readPins();
 
-    if (pins.some((p) => p.name === name)) {
-      return c.json({ error: 'Already pinned' }, 409);
+    const existing = pins.find((p) => p.name === name);
+    if (existing) {
+      const resource = await projectPinnedLibraryResource(existing);
+      return c.json({ error: 'Already pinned', pin: existing, resource }, 409);
     }
 
     try {
       const meta = await fetchPackageMeta(name);
       const pin: PinnedLibrary = { name, pinnedAt: new Date().toISOString(), meta };
       await writePins([...pins, pin]);
-      return c.json({ pin }, 201);
+      const resource = await projectPinnedLibraryResource(pin);
+      return c.json({ pin, resource }, 201);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch package';
       return c.json({ error: message }, 502);

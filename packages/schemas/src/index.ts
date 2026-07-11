@@ -133,11 +133,13 @@ export {
   type PackageMetaResponse,
   type PackageTypesStatus,
   type PinnedLibrary,
+  type RegistryResourceProjectionStatus as PackageRegistryResourceProjectionStatus,
 } from './npm-registry.js';
 export {
   type GithubRepoSearchItem,
   type GithubRepoSearchResponse,
   type PinnedRepository,
+  type RegistryResourceProjectionStatus as RepoRegistryResourceProjectionStatus,
   type RepoDetailResponse,
   type RepoLanguageShare,
   type RepoMetaResponse,

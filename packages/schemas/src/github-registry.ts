@@ -67,8 +67,14 @@ export interface RepoDetailResponse extends RepoMetaResponse {
   isTemplate: boolean;
 }
 
+export interface RegistryResourceProjectionStatus {
+  id?: string;
+  status: 'linked' | 'missing' | 'needs_sync';
+}
+
 export interface PinnedRepository {
   fullName: string;
   pinnedAt: string;
   meta: RepoMetaResponse;
+  resource?: RegistryResourceProjectionStatus;
 }

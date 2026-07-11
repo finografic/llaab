@@ -4,7 +4,13 @@ import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarCont
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import { BookmarkCheckIcon, BookmarkIcon } from 'lucide-react';
-import { useNpmPackage, useIsLibraryPinned, usePinLibrary, useUnpinLibrary } from 'queries/registry';
+import {
+  useNpmPackage,
+  useIsLibraryPinned,
+  usePinLibrary,
+  usePinnedLibraries,
+  useUnpinLibrary,
+} from 'queries/registry';
 import { Link, useParams } from 'react-router-dom';
 import { siNpm } from 'simple-icons';
 import { toast } from 'sonner';
@@ -83,6 +89,7 @@ export function RegistryPackagePage() {
 
   const { data, isLoading } = useNpmPackage(name);
   const isPinned = useIsLibraryPinned(name);
+  const { data: pins = [] } = usePinnedLibraries();
   const pinLibrary = usePinLibrary();
   const unpinLibrary = useUnpinLibrary();
 
@@ -104,6 +111,7 @@ export function RegistryPackagePage() {
   const peerDepCount = data ? Object.keys(data.peerDependencies).length : 0;
   const typesStatus = data?.typesStatus ?? (data?.hasTypes ? 'included' : 'none');
   const typesBadge = data ? typesBadgeLabel(typesStatus, data.typesPackageName) : null;
+  const resource = pins.find((pin) => pin.name === name)?.resource;
 
   return (
     <PageLayout
@@ -178,6 +186,19 @@ export function RegistryPackagePage() {
                   <span className={styles.sidebarValue}>{fmtDownloads(data.weeklyDownloads)}</span>
                 </div>
               )}
+
+              {resource ? (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
+                  {resource.id ? (
+                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
+                      {resource.id}
+                    </Link>
+                  ) : (
+                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
+                  )}
+                </div>
+              ) : null}
 
               {data.date && (
                 <div className={styles.sidebarSection}>

@@ -323,29 +323,39 @@ registry pin
   → retrievable agent/LLM context
 ```
 
-- [ ] Treat registry pins as curated resource signals, not merely bookmarks.
-- [ ] Create or sync a `ResourceNode` for each pinned npm package.
-- [ ] Create or sync a `ResourceNode` for each pinned GitHub repository.
-- [ ] Keep the registry JSON stores as the fast pin/unpin source of truth for UI state.
-- [ ] Make projected resource nodes the knowledge-graph participant for retrieval and relationships.
-- [ ] Store package/repo metadata on projected resource nodes: name/full name, URL, description,
-      ecosystem/language, version/stars/downloads, license, owner/author, and last refreshed time.
+- [x] Treat registry pins as curated resource signals, not merely bookmarks (2026-07-10).
+- [x] Create or sync a `ResourceNode` for each pinned npm package on pin/duplicate-pin repair
+      (2026-07-10).
+- [x] Create or sync a `ResourceNode` for each pinned GitHub repository on pin/duplicate-pin repair
+      (2026-07-10).
+- [x] Keep the registry JSON stores as the fast pin/unpin source of truth for UI state
+      (2026-07-10).
+- [x] Make projected resource nodes the knowledge-graph participant for retrieval and relationships
+      (2026-07-10).
+- [x] Store package/repo metadata on projected resource nodes: name/full name, URL, description,
+      ecosystem/language, version/stars/downloads, license, owner/author, and last refreshed time
+      (2026-07-10).
 - [ ] Preserve pin provenance when available: originating inbox item, source platform, message id,
       timestamp, route kind, and receipt/action result.
-- [ ] Add an explicit pin rationale field or body section for why this package/repo matters.
-- [ ] Link projected resources back to the registry pin identity so unpin/update flows can find them.
-- [ ] Add tags/topics to projected resources through deterministic metadata first, then optional
-      AI-assisted enrichment.
+- [x] Add an explicit pin rationale field or body section for why this package/repo matters
+      (2026-07-10).
+- [x] Link projected resources back to the registry pin identity so unpin/update flows can find them
+      (2026-07-10).
+- [x] Add tags/topics to projected resources through deterministic metadata first, then optional
+      AI-assisted enrichment later (2026-07-10).
 - [ ] Connect projected resources to related ideas, transcripts, canonical ideas, skills, agents,
       and topic clusters.
 - [ ] Include projected pinned resources in agent/LLM retrieval context.
 - [ ] Add retrieval tests or smoke checks proving a topic with related ideas can surface a pinned
       package/repository without the user naming it.
-- [ ] Decide whether projected resources are updated automatically on pin refresh or via an explicit
-      one-shot sync action.
-- [ ] Add UI cross-links:
-      registry pin → resource node; resource node → registry detail; inbox item → pin/resource.
-- [ ] Show projection status in registry views: `resource linked`, `needs sync`, `missing resource`.
+- [x] Decide whether projected resources are updated automatically on pin refresh or via an explicit
+      one-shot sync action (initial choice: sync during pin/duplicate-pin repair only, 2026-07-10).
+- [x] Add UI cross-links for registry pin → resource node from package/repo detail sidebars
+      (2026-07-10).
+- [ ] Add resource node → registry detail cross-links.
+- [ ] Add inbox item → pin/resource cross-links.
+- [x] Show projection status in registry list views: `resource linked`, `needs sync`,
+      `missing resource` (2026-07-10).
 
 Exit criteria: a pinned package/repository can be recommended by LLAAB because it is connected to
 the same knowledge graph as ideas, transcripts, topics, and skills.

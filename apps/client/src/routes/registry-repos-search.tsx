@@ -44,7 +44,7 @@ function updatedTimestamp(repo: GithubRepoSearchItem): number {
   return Number.isFinite(ts) ? ts : 0;
 }
 
-function sortRepos(results: GithubRepoSearchItem[], sort: SortState | null): GithubRepoSearchItem[] {
+function sortRepos<T extends GithubRepoSearchItem>(results: T[], sort: SortState | null): T[] {
   if (!sort) return results;
 
   return [...results].toSorted((a, b) => {
@@ -79,7 +79,11 @@ function nextSortState(current: SortState | null, column: SortColumn): SortState
   return null;
 }
 
-function pinToListItem(pin: PinnedRepository): GithubRepoSearchItem {
+type RepoListItem = GithubRepoSearchItem & {
+  resource?: PinnedRepository['resource'];
+};
+
+function pinToListItem(pin: PinnedRepository): RepoListItem {
   return {
     fullName: pin.meta.fullName,
     name: pin.meta.name,
@@ -95,6 +99,7 @@ function pinToListItem(pin: PinnedRepository): GithubRepoSearchItem {
     pushedAt: pin.meta.pushedAt,
     htmlUrl: pin.meta.htmlUrl,
     homepage: pin.meta.homepage,
+    resource: pin.resource,
   };
 }
 
@@ -167,7 +172,7 @@ function RepoResultsPanel({
   loadingLabel: string;
   emptyIdle: string | null;
   emptyNoMatch: string | null;
-  results: GithubRepoSearchItem[];
+  results: RepoListItem[];
   sort: SortState | null;
   onSort: (column: SortColumn) => void;
 }) {
@@ -202,7 +207,7 @@ function RepoResultsPanel({
             <div className={styles.sortPinCol} aria-hidden />
           </div>
           {results.map((repo) => (
-            <PackageCard key={repo.fullName} variant="repo" repo={repo} />
+            <PackageCard key={repo.fullName} variant="repo" repo={repo} resource={repo.resource} />
           ))}
         </div>
       ) : null}

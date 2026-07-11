@@ -4,8 +4,14 @@ import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarCont
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import { BookmarkCheckIcon, BookmarkIcon } from 'lucide-react';
-import { useGithubRepo, useIsRepositoryPinned, usePinRepository, useUnpinRepository } from 'queries/registry';
-import { useParams } from 'react-router-dom';
+import {
+  useGithubRepo,
+  useIsRepositoryPinned,
+  usePinRepository,
+  usePinnedRepositories,
+  useUnpinRepository,
+} from 'queries/registry';
+import { Link, useParams } from 'react-router-dom';
 import { siGithub } from 'simple-icons';
 import { toast } from 'sonner';
 
@@ -39,6 +45,7 @@ export function RegistryRepoPage() {
 
   const { data, isLoading } = useGithubRepo(fullName);
   const isPinned = useIsRepositoryPinned(fullName);
+  const { data: pins = [] } = usePinnedRepositories();
   const pinRepository = usePinRepository();
   const unpinRepository = useUnpinRepository();
 
@@ -56,6 +63,7 @@ export function RegistryRepoPage() {
   }
 
   const pinPending = pinRepository.isPending || unpinRepository.isPending;
+  const resource = pins.find((pin) => pin.fullName === fullName)?.resource;
 
   return (
     <PageLayout
@@ -134,6 +142,19 @@ export function RegistryRepoPage() {
                   <span className={styles.sidebarValue}>{data.license}</span>
                 </div>
               )}
+
+              {resource ? (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
+                  {resource.id ? (
+                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
+                      {resource.id}
+                    </Link>
+                  ) : (
+                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
+                  )}
+                </div>
+              ) : null}
 
               {data.defaultBranch && (
                 <div className={styles.sidebarSection}>

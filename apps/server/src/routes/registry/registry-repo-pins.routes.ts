@@ -4,12 +4,22 @@ import type { PinnedRepository } from '@llaab/schemas';
 
 import { fetchRepoMeta } from './registry-github.routes.js';
 import { readRepoPins, writeRepoPins } from './registry-repo-pins.store.js';
+import {
+  projectPinnedRepositoryResource,
+  readRegistryResourceProjectionIndex,
+  repoProjectionStatus,
+} from './registry-resource-projection.js';
 
 export const listRepoPins = {
   path: '/repo-pins' as const,
   handler: async (c: AppCtx) => {
     const pins = await readRepoPins();
-    return c.json({ pins });
+    const projections = await readRegistryResourceProjectionIndex();
+    const pinsWithResources = pins.map((pin) => ({
+      ...pin,
+      resource: repoProjectionStatus(projections, pin.fullName),
+    }));
+    return c.json({ pins: pinsWithResources });
   },
 };
 
@@ -19,15 +29,18 @@ export const pinRepository = {
     const { fullName } = c.req.valid('json');
     const pins = await readRepoPins();
 
-    if (pins.some((p) => p.fullName === fullName)) {
-      return c.json({ error: 'Already pinned' }, 409);
+    const existing = pins.find((p) => p.fullName === fullName);
+    if (existing) {
+      const resource = await projectPinnedRepositoryResource(existing);
+      return c.json({ error: 'Already pinned', pin: existing, resource }, 409);
     }
 
     try {
       const meta = await fetchRepoMeta(fullName);
       const pin: PinnedRepository = { fullName, pinnedAt: new Date().toISOString(), meta };
       await writeRepoPins([...pins, pin]);
-      return c.json({ pin }, 201);
+      const resource = await projectPinnedRepositoryResource(pin);
+      return c.json({ pin, resource }, 201);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch repository';
       return c.json({ error: message }, 502);

@@ -16,7 +16,9 @@ import type {
   NpmSearchPackage,
   PackageMetaResponse,
   PackageTypesStatus,
+  PackageRegistryResourceProjectionStatus,
   RepoMetaResponse,
+  RepoRegistryResourceProjectionStatus,
 } from '@llaab/schemas';
 import type { MouseEvent, ReactNode } from 'react';
 
@@ -85,18 +87,20 @@ interface LibraryCardProps {
   dependents?: string;
   /** Pinned tab only — omit on Search so npm hits stay undistorted. */
   typesStatus?: PackageTypesStatus;
+  resource?: PackageRegistryResourceProjectionStatus;
 }
 
 interface RepoCardProps {
   variant: 'repo';
   repo: GithubRepoSearchItem | RepoMetaResponse;
+  resource?: RepoRegistryResourceProjectionStatus;
 }
 
 export type PackageCardProps = LibraryCardProps | RepoCardProps;
 
 export function PackageCard(props: PackageCardProps) {
   if (props.variant === 'repo') {
-    return <RepoPackageCard repo={props.repo} />;
+    return <RepoPackageCard repo={props.repo} resource={props.resource} />;
   }
   return (
     <LibraryPackageCard
@@ -104,6 +108,7 @@ export function PackageCard(props: PackageCardProps) {
       weeklyDownloads={props.weeklyDownloads}
       dependents={props.dependents}
       typesStatus={props.typesStatus}
+      resource={props.resource}
     />
   );
 }
@@ -113,6 +118,7 @@ function LibraryPackageCard({
   weeklyDownloads,
   dependents,
   typesStatus,
+  resource,
 }: Omit<LibraryCardProps, 'variant'>) {
   const encodedName = encodeURIComponent(pkg.name);
   const downloads = weeklyDownloads ?? (pkg as PackageMetaResponse).weeklyDownloads;
@@ -157,6 +163,12 @@ function LibraryPackageCard({
           <span>{dependentsLabel}</span>
         </span>
       ),
+    });
+  }
+  if (resource) {
+    metaParts.push({
+      key: 'resource',
+      node: <ProjectionStatus status={resource.status} />,
     });
   }
 
@@ -235,7 +247,13 @@ function LibraryPackageCard({
   );
 }
 
-function RepoPackageCard({ repo }: { repo: GithubRepoSearchItem | RepoMetaResponse }) {
+function RepoPackageCard({
+  repo,
+  resource,
+}: {
+  repo: GithubRepoSearchItem | RepoMetaResponse;
+  resource?: RepoRegistryResourceProjectionStatus;
+}) {
   const isPinned = useIsRepositoryPinned(repo.fullName);
   const pinRepository = usePinRepository();
   const unpinRepository = useUnpinRepository();
@@ -272,6 +290,12 @@ function RepoPackageCard({ repo }: { repo: GithubRepoSearchItem | RepoMetaRespon
     metaParts.push({
       key: 'license',
       node: <span className={styles.metaItem}>{repo.license}</span>,
+    });
+  }
+  if (resource) {
+    metaParts.push({
+      key: 'resource',
+      node: <ProjectionStatus status={resource.status} />,
     });
   }
 
@@ -347,4 +371,15 @@ function RepoPackageCard({ repo }: { repo: GithubRepoSearchItem | RepoMetaRespon
       </div>
     </Link>
   );
+}
+
+function ProjectionStatus({ status }: { status: PackageRegistryResourceProjectionStatus['status'] }) {
+  const label =
+    status === 'linked'
+      ? 'Resource linked'
+      : status === 'needs_sync'
+        ? 'Resource needs sync'
+        : 'Resource missing';
+
+  return <span className={styles.projectionStatus}>{label}</span>;
 }
