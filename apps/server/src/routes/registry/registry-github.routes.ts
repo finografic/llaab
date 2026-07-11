@@ -116,6 +116,24 @@ async function fetchLanguages(owner: string, repo: string): Promise<Record<strin
   return (await res.json()) as Record<string, number>;
 }
 
+async function fetchLatestVersion(owner: string, repo: string): Promise<string | undefined> {
+  const releaseRes = await githubFetch(
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases/latest`,
+  );
+  if (releaseRes.ok) {
+    const release = (await releaseRes.json()) as { tag_name?: string };
+    if (release.tag_name) return release.tag_name;
+  }
+
+  const tagsRes = await githubFetch(
+    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/tags?per_page=1`,
+  );
+  if (!tagsRes.ok) return undefined;
+
+  const tags = (await tagsRes.json()) as Array<{ name?: string }>;
+  return tags[0]?.name;
+}
+
 export async function fetchRepoMeta(fullName: string): Promise<RepoMetaResponse> {
   const [owner, repo] = fullName.split('/');
   if (!owner || !repo) throw new Error('Invalid repository full name');
@@ -166,10 +184,11 @@ export const githubRepo = {
     if (!owner || !repo) return c.json({ error: 'Missing owner/repo' }, 400);
 
     try {
-      const [raw, readmeMd, languages] = await Promise.all([
+      const [raw, readmeMd, languages, latestVersion] = await Promise.all([
         fetchRepoJson(owner, repo),
         fetchReadmeMarkdown(owner, repo),
         fetchLanguages(owner, repo),
+        fetchLatestVersion(owner, repo),
       ]);
 
       const meta = mapRepoMeta(raw);
@@ -179,6 +198,7 @@ export const githubRepo = {
         ...meta,
         readmeHtml,
         languages: toLanguageShares(languages),
+        latestVersion,
         watchers: (raw.subscribers_count as number) ?? (raw.watchers_count as number) ?? 0,
         sizeKb: (raw.size as number) ?? 0,
         createdAt: (raw.created_at as string) ?? '',

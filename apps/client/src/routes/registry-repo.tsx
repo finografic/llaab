@@ -117,81 +117,6 @@ export function RegistryRepoPage() {
 
             <aside className={styles.sidebar}>
               <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Stars</span>
-                <span className={styles.sidebarValue}>{fmtCount(data.stars)}</span>
-              </div>
-
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Forks</span>
-                <span className={styles.sidebarValue}>{fmtCount(data.forks)}</span>
-              </div>
-
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Watchers</span>
-                <span className={styles.sidebarValue}>{fmtCount(data.watchers)}</span>
-              </div>
-
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Open Issues</span>
-                <span className={styles.sidebarValue}>{fmtCount(data.openIssues)}</span>
-              </div>
-
-              {data.license && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>License</span>
-                  <span className={styles.sidebarValue}>{data.license}</span>
-                </div>
-              )}
-
-              {resource ? (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
-                  {resource.id ? (
-                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
-                      {resource.id}
-                    </Link>
-                  ) : (
-                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
-                  )}
-                </div>
-              ) : null}
-
-              {data.defaultBranch && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Default Branch</span>
-                  <span className={styles.sidebarValue}>{data.defaultBranch}</span>
-                </div>
-              )}
-
-              {data.pushedAt && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Updated</span>
-                  <span className={styles.sidebarValue}>{formatDetailDate(data.pushedAt)}</span>
-                </div>
-              )}
-
-              {data.createdAt && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Created</span>
-                  <span className={styles.sidebarValue}>{formatDetailDate(data.createdAt)}</span>
-                </div>
-              )}
-
-              {data.languages.length > 0 && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Languages</span>
-                  <div className={styles.langList}>
-                    {data.languages.slice(0, 8).map((lang) => (
-                      <div key={lang.name} className={styles.langRow}>
-                        <span className={styles.langName}>{lang.name}</span>
-                        <span className={styles.langPercent}>{lang.percent}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className={styles.sidebarSection}>
                 <span className={styles.sidebarLabel}>Repository</span>
                 <a
                   href={data.htmlUrl}
@@ -217,9 +142,64 @@ export function RegistryRepoPage() {
                 </div>
               )}
 
+              {data.latestVersion && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Version</span>
+                  <span className={styles.sidebarValue}>{data.latestVersion}</span>
+                </div>
+              )}
+
+              <div className={styles.sidebarSection}>
+                <span className={styles.sidebarLabel}>Stars</span>
+                <span className={styles.sidebarValue}>{fmtCount(data.stars)}</span>
+              </div>
+
+              <div className={styles.sidebarSection}>
+                <span className={styles.sidebarLabel}>Forks</span>
+                <span className={styles.sidebarValue}>{fmtCount(data.forks)}</span>
+              </div>
+
+              <div className={styles.sidebarSection}>
+                <span className={styles.sidebarLabel}>Watchers</span>
+                <span className={styles.sidebarValue}>{fmtCount(data.watchers)}</span>
+              </div>
+
+              <div className={styles.sidebarSection}>
+                <span className={styles.sidebarLabel}>Open Issues</span>
+                <span className={styles.sidebarValue}>{fmtCount(data.openIssues)}</span>
+              </div>
+
+              {data.pushedAt && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Last updated</span>
+                  <span className={styles.sidebarValue}>{formatDetailDate(data.pushedAt)}</span>
+                </div>
+              )}
+
+              {data.license && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>License</span>
+                  <span className={styles.sidebarValue}>{data.license}</span>
+                </div>
+              )}
+
+              {data.languages.length > 0 && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Languages</span>
+                  <div className={styles.langList}>
+                    {data.languages.slice(0, 8).map((lang) => (
+                      <div key={lang.name} className={styles.langRow}>
+                        <span className={styles.langName}>{lang.name}</span>
+                        <span className={styles.langPercent}>{lang.percent}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {data.topics && data.topics.length > 0 && (
                 <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Topics</span>
+                  <span className={styles.sidebarLabel}>Tags</span>
                   <div className={styles.tags}>
                     {data.topics.map((topic) => (
                       <span key={topic} className={styles.tag}>
@@ -229,6 +209,31 @@ export function RegistryRepoPage() {
                   </div>
                 </div>
               )}
+
+              <div className={styles.sidebarSection}>
+                <span className={styles.sidebarLabel}>Maintainer</span>
+                <a
+                  href={`https://github.com/${encodeURIComponent(data.owner)}`}
+                  className={styles.sidebarLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {data.owner}
+                </a>
+              </div>
+
+              {resource ? (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
+                  {resource.id ? (
+                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
+                      {resource.id}
+                    </Link>
+                  ) : (
+                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
+                  )}
+                </div>
+              ) : null}
             </aside>
           </div>
         )}

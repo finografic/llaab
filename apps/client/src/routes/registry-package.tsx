@@ -169,16 +169,57 @@ export function RegistryPackagePage() {
             {/* ── Right: metadata sidebar ── */}
             <aside className={styles.sidebar}>
               <div className={styles.sidebarSection}>
+                <span className={styles.sidebarLabel}>npm</span>
+                <a
+                  href={`https://npmx.dev/package/${encodeURIComponent(name)}`}
+                  className={styles.sidebarLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  npmx.dev/package/{name}
+                </a>
+                <a
+                  href={data.links.npm}
+                  className={styles.sidebarLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  npmjs.com/package/{name}
+                </a>
+              </div>
+
+              {data.links.repository && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Repository</span>
+                  <a
+                    href={data.links.repository}
+                    className={styles.sidebarLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {data.links.repository.replace('https://github.com/', '')}
+                  </a>
+                </div>
+              )}
+
+              {data.links.homepage && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Homepage</span>
+                  <a
+                    href={data.links.homepage}
+                    className={styles.sidebarLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {data.links.homepage}
+                  </a>
+                </div>
+              )}
+
+              <div className={styles.sidebarSection}>
                 <span className={styles.sidebarLabel}>Version</span>
                 <span className={styles.sidebarValue}>{data.version}</span>
               </div>
-
-              {data.license && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>License</span>
-                  <span className={styles.sidebarValue}>{data.license}</span>
-                </div>
-              )}
 
               {data.weeklyDownloads != null && (
                 <div className={styles.sidebarSection}>
@@ -187,23 +228,17 @@ export function RegistryPackagePage() {
                 </div>
               )}
 
-              {resource ? (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
-                  {resource.id ? (
-                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
-                      {resource.id}
-                    </Link>
-                  ) : (
-                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
-                  )}
-                </div>
-              ) : null}
-
               {data.date && (
                 <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Published</span>
+                  <span className={styles.sidebarLabel}>Last updated</span>
                   <span className={styles.sidebarValue}>{formatDetailDate(data.date)}</span>
+                </div>
+              )}
+
+              {data.license && (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>License</span>
+                  <span className={styles.sidebarValue}>{data.license}</span>
                 </div>
               )}
 
@@ -239,49 +274,9 @@ export function RegistryPackagePage() {
                 </div>
               )}
 
-              {data.links.repository && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Repository</span>
-                  <a
-                    href={data.links.repository}
-                    className={styles.sidebarLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {data.links.repository.replace('https://github.com/', '')}
-                  </a>
-                </div>
-              )}
-
-              {data.links.homepage && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Homepage</span>
-                  <a
-                    href={data.links.homepage}
-                    className={styles.sidebarLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {data.links.homepage}
-                  </a>
-                </div>
-              )}
-
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>npm</span>
-                <a
-                  href={data.links.npm}
-                  className={styles.sidebarLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  npmjs.com/package/{name}
-                </a>
-              </div>
-
               {data.keywords && data.keywords.length > 0 && (
                 <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Keywords</span>
+                  <span className={styles.sidebarLabel}>Tags</span>
                   <div className={styles.tags}>
                     {data.keywords.map((kw) => (
                       <span key={kw} className={styles.tag}>
@@ -302,6 +297,19 @@ export function RegistryPackagePage() {
                   ))}
                 </div>
               )}
+
+              {resource ? (
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
+                  {resource.id ? (
+                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
+                      {resource.id}
+                    </Link>
+                  ) : (
+                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
+                  )}
+                </div>
+              ) : null}
             </aside>
           </div>
         )}

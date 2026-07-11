@@ -58,6 +58,7 @@ export interface RepoLanguageShare {
 export interface RepoDetailResponse extends RepoMetaResponse {
   readmeHtml: string | null;
   languages: RepoLanguageShare[];
+  latestVersion?: string;
   watchers: number;
   sizeKb: number;
   createdAt: string;
