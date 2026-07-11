@@ -14,8 +14,12 @@ This applies to:
   separators, breadcrumbs, scroll areas, dropdowns, tabs, etc.
 - **Icons** — always use `lucide-react`. Never write raw inline `<svg>` for icons that
   Lucide covers. Check `lucide-react` exports before reaching for a custom SVG.
-- **Layout** — use shadcn layout patterns and Tailwind utilities. Avoid custom layout
-  components when Tailwind grid/flex classes suffice.
+- **Layout** — for **multi-column responsive page/section structure** (side-by-side regions,
+  toolbars, form column bands), use `Row` / `Col` / `Container` from `components/ui/grid`
+  (see [`docs/components/grid.md`](../../../docs/components/grid.md)). Use Tailwind `flex` /
+  `gap-*` for micro-alignment (icon rows, chips, inline label+control pairs). Use CSS Grid in
+  CSS modules when named tracks, sticky aside shells, or auto-fit card grids are intentional
+  (`BalancedGrid`, `llm-card-grid`, `PageLayout`).
 
 **Why:** Hand-coded primitives duplicate work, diverge from the design system, and
 accumulate maintenance debt. shadcn + Lucide give consistent tokens, accessibility,
