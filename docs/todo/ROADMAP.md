@@ -261,6 +261,15 @@ with simple full-text search only if it does not conflict with future context as
 
 Reference: [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) §3
 
+### Migrate Tailwind page layouts to `@llaab/ui` Grid
+
+Replace multi-column Tailwind layout (`flex`/`grid`/`grid-cols-*` used as page structure) with
+`Container` / `Row` / `Col` from `components/ui/grid`. Explicit non-goals: shadcn internals,
+micro `flex items-center gap-*`, `BalancedGrid`, resizable sidebars, and true CSS Grid shells.
+Phased inventory → conventions → high-traffic routes → forms → sweep.
+
+Detail: [`docs/todo/TODO_GRID_LAYOUT_MIGRATION.md`](./TODO_GRID_LAYOUT_MIGRATION.md)
+
 ---
 
 ## P3 — Backlog / Ideas

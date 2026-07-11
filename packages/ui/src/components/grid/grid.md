@@ -3,28 +3,25 @@
 📅 Jul 11, 2026
 
 12-column responsive flexbox grid for LLAAB layouts. **No React Context, no provider, no
-runtime JS** — components emit static CSS classes from
-[`packages/ui/src/components/grid/grid.css`](/packages/ui/src/components/grid/grid.css).
+runtime JS** — components emit static CSS classes from [`grid.css`](./grid.css).
 
-Implementation lives in `@llaab/ui`
-([`packages/ui/src/components/grid/`](/packages/ui/src/components/grid/)). Ported from the
-Finografic design system; Ark UI / PandaCSS are **not** used here. Breakpoints match
-**Tailwind CSS defaults**. Pair with shadcn primitives and Tailwind utilities for styling —
-this package only owns column structure and gutters.
+Lives in `@llaab/ui` (`packages/ui/src/components/grid/`). Ported from the Finografic design
+system; Ark UI / PandaCSS are **not** used here. Breakpoints match **Tailwind CSS defaults**.
+Pair with shadcn primitives and Tailwind utilities for styling — this package only owns column
+structure and gutters.
 
-In-package mirror (same topic, next to source):
-[`packages/ui/src/components/grid/grid.md`](/packages/ui/src/components/grid/grid.md).
+App-facing docs (keep in sync): [`docs/components/grid.md`](/docs/components/grid.md).
 
 ---
 
 ## Where it lives
 
-| Piece      | Path                                                                                                            |
-| ---------- | --------------------------------------------------------------------------------------------------------------- |
-| Components | [`packages/ui/src/components/grid/{container,row,col}.tsx`](/packages/ui/src/components/grid/)                  |
-| Styles     | [`packages/ui/src/components/grid/grid.css`](/packages/ui/src/components/grid/grid.css)                         |
-| Barrel     | [`packages/ui/src/components/grid/index.ts`](/packages/ui/src/components/grid/index.ts)                         |
-| CSS wiring | `@import` in [`packages/ui/src/styles/globals.css`](/packages/ui/src/styles/globals.css) (loaded by the client) |
+| Piece      | Path                                                                     |
+| ---------- | ------------------------------------------------------------------------ |
+| Components | `packages/ui/src/components/grid/{container,row,col}.tsx`                |
+| Styles     | `packages/ui/src/components/grid/grid.css`                               |
+| Barrel     | `packages/ui/src/components/grid/index.ts`                               |
+| CSS wiring | `@import` in `packages/ui/src/styles/globals.css` (loaded by the client) |
 
 ---
 
@@ -253,8 +250,7 @@ import { Col, Row } from 'components/ui/grid';
 </Row>
 ```
 
-See [`apps/client/src/routes/registry-search.tsx`](/apps/client/src/routes/registry-search.tsx) and
-[`registry-repos-search.tsx`](/apps/client/src/routes/registry-repos-search.tsx).
+See `apps/client/src/routes/registry-search.tsx` and `registry-repos-search.tsx`.
 
 ### Sidebar + main
 
