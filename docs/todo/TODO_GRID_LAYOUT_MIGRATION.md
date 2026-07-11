@@ -1,6 +1,6 @@
 # TODO — Migrate Tailwind Layouts to `@llaab/ui` Grid
 
-> **Status:** Not started. Large migration — convert page/section Tailwind layout
+> **Status:** Phase 2 in progress. Large migration — convert page/section Tailwind layout
 > (`flex` / `grid` / `grid-cols-*` / responsive column utilities) to
 > `Container` / `Row` / `Col` from `components/ui/grid`. Do **not** treat as a blind
 > find-and-replace: micro-alignment, shadcn internals, and intentional special layouts stay
@@ -62,9 +62,9 @@ These are **out of scope** unless a later phase revisits them with an explicit r
 
 ## Progress
 
-- [ ] Phase 0 — Scope lock + inventory
-- [ ] Phase 1 — Conventions + agent guidance
-- [ ] Phase 2 — High-traffic routes (registry already done; vault detail / home / ingest shells)
+- [x] Phase 0 — Scope lock + inventory
+- [x] Phase 1 — Conventions + agent guidance
+- [ ] Phase 2 — High-traffic routes (inbox + registry detail + terminal done; vault detail / home / ingest shells remain)
 - [ ] Phase 3 — Forms and toolbars
 - [ ] Phase 4 — Remaining client routes and feature components
 - [ ] Phase 5 — Tables / dense UI (selective)
@@ -76,40 +76,73 @@ These are **out of scope** unless a later phase revisits them with an explicit r
 
 Produce a living checklist of **candidate** files before rewriting.
 
-- [ ] Re-run a repo search for Tailwind layout patterns in `apps/client/src` (and note hits in
+- [x] Re-run a repo search for Tailwind layout patterns in `apps/client/src` (and note hits in
       `packages/ui` that are **app feature** code vs primitives):
   - `grid-cols-`, `md:grid-cols`, `lg:grid-cols`
   - `col-span-`
   - multi-column flex patterns used as layout (`md:flex-row`, `justify-between` wrapping large
     regions — judgment call)
-- [ ] Classify each hit: **Convert** / **Keep (micro)** / **Keep (special)** / **Defer**
-- [ ] Record baseline counts in this doc (update the table below when Phase 0 finishes)
+- [x] Classify each hit: **Convert** / **Keep (micro)** / **Keep (special)** / **Defer**
+- [x] Record baseline counts in this doc (update the table below when Phase 0 finishes)
 
-### Seed inventory (starting points — refresh in Phase 0)
+### Baseline counts (Jul 11, 2026)
 
-Already on grid (reference):
+| Pattern                                                      | Count                     | Notes                                                     |
+| ------------------------------------------------------------ | ------------------------- | --------------------------------------------------------- |
+| Tailwind `grid-cols-*` / `md:grid-cols-*` / `lg:grid-cols-*` | **3** hits in **2** files | Page-layout targets converted; remaining are Keep (micro) |
+| CSS `display: grid` in client CSS modules                    | **15** files              | Many are micro/special — see table                        |
+| `col-span-*` Tailwind                                        | **0**                     | —                                                         |
+| `components/ui/grid` imports                                 | **4** files               | Registry + transcripts reference sites                    |
+| `md:flex-row` / `lg:flex-row` as page layout                 | **0**                     | No hits                                                   |
+
+### Inventory (classified)
+
+**Already on grid (reference):**
 
 - [x] `routes/registry-search.tsx` — Add/Search toolbar `Row`/`Col md={6}`
 - [x] `routes/registry-repos-search.tsx` — same
 - [x] `TranscriptsSidebar.tsx` / `TranscriptDetail.tsx` — partial grid usage
 
-Likely convert candidates (page/section layout):
+**Convert — page/section layout (Phases 2–4):**
 
-- [ ] `routes/crons.tsx` — many `grid` / `md:grid-cols-[1fr_2fr]` form and card layouts
-- [ ] `routes/login.tsx` — form field stacks (only convert if multi-column; else keep)
-- [ ] `routes/root.tsx` + `BalancedGrid` — **keep BalancedGrid**; only convert surrounding chrome if needed
-- [ ] `routes/llm.tsx` / `LlmModelInfoList` / `LlmRoutingEditor` — card grids
-- [ ] `routes/hermes.tsx`, `routes/inbox*.tsx`, `InboxCaptureDetail*`
-- [ ] `routes/ingest.tsx` + `IngestForm` outer layout (not the pipeline step chrome)
-- [ ] `routes/source-detail.tsx`, `node-detail.tsx`, `run-detail.tsx`
-- [ ] `components/VaultBrowser/*` content panes (not pierre tree internals)
-- [ ] `components/TerminalPanel.tsx` — only major pane splits, not every flex row
+- [x] `routes/crons.tsx` — risk/script row → `Row`/`Col md={4}`+`md={8}` (Jul 11)
+- [x] `routes/inbox.tsx` + `inbox.module.css` — summary stat cards → `Row`/`Col xs={6}`+`md={3}` (Jul 11)
+- [x] `routes/registry-package.tsx` + `registry-package.module.css` — main+sticky aside → `Row`/`Col` (Jul 11)
+- [x] `routes/registry-repo.tsx` + `registry-repo.module.css` — same (Jul 11)
+- [x] `components/TerminalPanel.tsx` — pane split → `Row`/`Col lg="content"` (Jul 11)
 
-Likely keep (micro / special):
+**Keep (micro) — single-axis stacks, label rows, icon bars:**
 
-- [ ] `NavMenu*`, `AppHeader`, `ExtractionModelCard` compact bars, `IconHeading`
-- [ ] `packages/ui/src/components/{sidebar,dialog,field,button-group,…}.tsx`
-- [ ] CSS module layouts in `layouts/PageLayout`, `AppLayout`
+- [x] `routes/login.tsx` — vertical `flex-col` stacks only
+- [x] `routes/ingest.tsx`, `styles/ingest-page.css`, `forms/IngestForm/**` — single-column form + pipeline micro-flex
+- [x] `routes/source-detail.tsx`, `node-detail.tsx`, `run-detail.tsx` — `meta-grid` / `summary-grid` dt/dd pairs (`page-detail.css`)
+- [x] `components/InboxCaptureDetail/**` — `meta-grid` only
+- [x] `routes/llm.module.css` — `max-content 1fr` label rows
+- [x] `components/RunMonitor/*.module.css`, `RunPipelineCard.module.css` — icon + text rows
+- [x] `components/RegistrySocketScores/*.module.css` — gauge internals
+- [x] `components/ModelMetaCard.module.css` — stat chip auto-fit
+- [x] `components/CronCommandReference.tsx` — vertical `grid gap-2` stack
+- [x] `components/TerminalPanel.tsx` — log line `grid-cols-[5rem_1fr]` timestamp column (micro)
+- [x] `components/NavMenu/NavMenu.tsx` — megamenu content `grid-cols-1/2` (popover chrome)
+- [x] `NavMenu*`, `AppHeader`, `ExtractionModelCard`, `IconHeading` — micro flex
+
+**Keep (special) — intentional non–12-col layouts:**
+
+- [x] `routes/root.tsx` + `BalancedGrid` — even-fill dashboard cards (do not replace)
+- [x] `styles/llm-card-grid.module.css` + `LlmModelInfoList` / `LlmRoutingEditor` — auto-fill `minmax(700px)` tracks
+- [x] `routes/hermes.tsx` + `hermes.module.css` — auto-fit card grids + 3-col callout (not 12-col)
+- [x] `layouts/PageLayout/PageLayout.module.css` — named aside+main CSS Grid + sticky semantics
+- [x] `layouts/AppLayout/**` — app chrome
+- [x] `components/BalancedGrid/**` — dedicated even-fill utility
+- [x] `packages/ui/src/components/{sidebar,dialog,field,button-group,…}.tsx` — upstream primitives
+- [x] `AppSidebarLayout` / `ResizablePanel*` — resize/collapse (no hits to convert)
+
+**Defer — Phase 5 tables / dense UI / fixed-width splits:**
+
+- [ ] `components/InboxCaptureList/InboxCaptureList.module.css` — faux table column grid; convert only if wrapper clarity improves alignment
+- [ ] `dialogs/SourceProfilesDialog/*.module.css` — dialog list 3-col rows
+- [ ] `components/VaultGitPanel/VaultGitPanel.module.css` — minor grid
+- [ ] `tables/**` — outer toolbar layouts only (audit in Phase 5)
 
 ---
 
@@ -117,13 +150,13 @@ Likely keep (micro / special):
 
 Codify rules so later phases stay consistent.
 
-- [ ] Confirm [`docs/components/grid.md`](../components/grid.md) matches implementation (already
+- [x] Confirm [`docs/components/grid.md`](../components/grid.md) matches implementation (already
       rewritten 2026-07-11); fix gaps found during Phase 0
-- [ ] Add a short “when to use `components/ui/grid`” bullet to
+- [x] Add a short “when to use `components/ui/grid`” bullet to
       [`.github/instructions/project/components-shadcn.instructions.md`](../../.github/instructions/project/components-shadcn.instructions.md)
       (or a dedicated project instruction if that file is the wrong home)
-- [ ] Optional: one AGENTS.md / handoff line pointing at the grid docs + this TODO
-- [ ] Define a PR checklist snippet (breakpoint widths, no double gutters, no `ds-*` classes)
+- [x] Optional: one AGENTS.md / handoff line pointing at the grid docs + this TODO
+- [x] Define a PR checklist snippet (breakpoint widths, no double gutters, no `ds-*` classes)
 
 ---
 
@@ -198,11 +231,16 @@ Prefer small PRs:
 
 ---
 
-## Open questions
+## Open questions (decided)
 
-- Should `llm-card-grid.module.css` (`minmax(min(100%, 700px), 1fr)`) stay CSS Grid (likely
-  **yes** — auto-fit track sizing is not a 12-col problem)?
-- Should any `PageLayout` aside+main CSS Grid move to `Row`/`Col`, or stay CSS Grid for sticky
-  aside semantics?
-- Do we want an oxlint custom restriction later (warn on `md:grid-cols-` in `apps/client/src/routes`)?
-  Defer until after Phase 4 so the allowlist is real.
+- **`llm-card-grid.module.css`** — **Keep CSS Grid.** Auto-fill `minmax(700px)` track sizing is not a 12-col problem.
+- **`PageLayout` aside+main** — **Keep CSS Grid** in `PageLayout.module.css` for sticky aside + named tracks. Registry detail pages use their own flex aside — those are **Convert** candidates (Phase 4), not `PageLayout`.
+- **oxlint `md:grid-cols-` restriction** — **Defer** until after Phase 4; allowlist must be real first.
+
+## PR checklist (copy per conversion PR)
+
+- [ ] Breakpoints checked at ~375 / 768 / 1024 / 1280
+- [ ] No double gutters (`Row` gutter + stacked `gap-*` on same row)
+- [ ] No `ds-*` or design-system grid imports
+- [ ] Visual styling stays in CSS modules / Tailwind; only **structure** moved to `Row`/`Col`
+- [ ] Inventory checkbox updated in this doc
