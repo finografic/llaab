@@ -6,3 +6,4 @@ export * from './vault-runs.routes.js';
 export * from './vault-sources.routes.js';
 export * from './vault-transcripts.routes.js';
 export * from './vault-wiki-drafts.routes.js';
+export * from './vault-wiki-candidates.routes.js';

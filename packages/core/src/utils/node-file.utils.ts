@@ -18,6 +18,7 @@ export const NODE_DIR_MAP: Record<NodeType, string> = {
   'source': 'sources',
   'transcript': 'transcripts',
   'wiki-draft': 'nodes/wiki-drafts',
+  'wiki-candidate': 'nodes/wiki-candidates',
 };
 
 const FRONTMATTER_KEY_ORDER = [

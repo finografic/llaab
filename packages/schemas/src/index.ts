@@ -122,6 +122,7 @@ export {
   TranscriptSourceTypeSchema,
 } from './transcript-node.schema.js';
 export { type WikiDraftNode, WikiDraftNodeSchema } from './wiki-draft-node.schema.js';
+export { type WikiCandidateNode, WikiCandidateNodeSchema } from './wiki-candidate-node.schema.js';
 export {
   CreateWikiDraftRequestSchema,
   type WikiCompileInput,

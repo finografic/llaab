@@ -12,6 +12,7 @@ import { RunNodeSchema } from './run-node.schema.js';
 import { SkillNodeSchema } from './skill-node.schema.js';
 import { SourceNodeSchema } from './source-node.schema.js';
 import { TranscriptNodeSchema } from './transcript-node.schema.js';
+import { WikiCandidateNodeSchema } from './wiki-candidate-node.schema.js';
 import { WikiDraftNodeSchema } from './wiki-draft-node.schema.js';
 
 export const nodeSchemaByType: Record<NodeType, ZodType> = {
@@ -26,6 +27,7 @@ export const nodeSchemaByType: Record<NodeType, ZodType> = {
   'source': SourceNodeSchema,
   'transcript': TranscriptNodeSchema,
   'wiki-draft': WikiDraftNodeSchema,
+  'wiki-candidate': WikiCandidateNodeSchema,
 };
 
 /**

@@ -75,6 +75,9 @@ export const vaultRouter = createRouter()
   .patch(routes.editWikiDraft.path, zValidator('json', editWikiDraftBodySchema), routes.editWikiDraft.handler)
   .post(routes.promoteWikiDraft.path, routes.promoteWikiDraft.handler)
   .post(routes.rejectWikiDraft.path, routes.rejectWikiDraft.handler)
+  .post(routes.discoverWikiCandidates.path, routes.discoverWikiCandidates.handler)
+  .get(routes.listWikiCandidates.path, routes.listWikiCandidates.handler)
+  .get(routes.wikiCandidateDetail.path, routes.wikiCandidateDetail.handler)
   .post(routes.regenerateWikiDraft.path, routes.regenerateWikiDraft.handler)
   .post(
     routes.resolveCanonicalIdeaConflict.path,

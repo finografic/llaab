@@ -514,16 +514,16 @@ without compiling or promoting knowledge automatically.
 
 ### Deterministic discovery
 
-- [ ] Add bounded typed reads over canonical ideas only. Exclude candidate-idea volume, extraction
+- [x] Add bounded typed reads over canonical ideas only. Exclude candidate-idea volume, extraction
       run count, duplicate wording, and same-transcript repetition from demand scoring.
 - [ ] Deduplicate evidence by canonical idea and transcript before clustering so multiple models or
       consolidation runs cannot inflate heat.
 - [ ] Pre-cluster with normalized domain/topic signals, title/body/key-claim similarity,
       transcript/source diversity, existing-wiki coverage, and optional embeddings only when an
       established capability exists.
-- [ ] Make the initial eligibility threshold configurable, defaulting to at least three relevant
+- [x] Make the initial eligibility threshold configurable, defaulting to at least three relevant
       canonical ideas across at least two transcripts.
-- [ ] Match existing wikis and subtract already-represented evidence before computing novelty.
+- [x] Match existing wikis and subtract already-represented evidence before computing novelty.
 - [ ] Compute explainable heat and novelty from canonical count, unique transcripts, unique
       sources/authors, source diversity, recency, unrepresented evidence, and graph centrality when
       Phase 6 data is available.
@@ -538,11 +538,11 @@ without compiling or promoting knowledge automatically.
 
 ### Candidate persistence and UX
 
-- [ ] Finalize `WikiCandidateNodeSchema` and add `wiki-candidate` through the vault node registry and
+- [x] Finalize `WikiCandidateNodeSchema` and add `wiki-candidate` through the vault node registry and
       `vault/nodes/wiki-candidates/` storage map.
-- [ ] Persist supporting canonical/transcript/source ids, deterministic signals, thresholds, heat,
+- [x] Persist supporting canonical/transcript/source ids, deterministic signals, thresholds, heat,
       novelty, existing-wiki matches, recommendation, warnings, and model provenance when used.
-- [ ] Add explicit one-shot `POST /api/vault/wiki-candidates/discover` plus paginated candidate
+- [x] Add explicit one-shot `POST /api/vault/wiki-candidates/discover` plus paginated candidate
       list/detail routes. Do not add an always-on worker or scheduler.
 - [ ] If automated scheduling is desired, expose a one-shot cron recipe that an external scheduler
       may call; the recipe must run and exit.
