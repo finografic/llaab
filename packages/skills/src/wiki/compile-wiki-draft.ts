@@ -268,9 +268,13 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         evidence,
         runTrace: {
           stages: [
-            { name: 'resolve-evidence', status: 'completed', output: { evidenceCount: evidence.length } },
+            { name: 'resolve-sources', status: 'completed', output: { transcriptCount: transcripts.length } },
+            { name: 'expand-evidence', status: 'completed', output: { evidenceCount: evidence.length } },
+            { name: 'resolve-topic', status: 'completed', output: { topicKey, operation } },
             { name: 'compile', status: 'completed', output: { operation } },
             { name: 'validate', status: 'completed', output: { qualityScore: quality.score } },
+            { name: 'retry', status: 'completed', output: { attempted: quality.score < 80 } },
+            { name: 'render', status: 'completed', output: { sectionCount: result.sections.length } },
             { name: 'write-draft', status: 'completed', output: { draftId: created.id } },
           ],
           decisions: [{ type: 'accept', reason: 'Wiki draft passed deterministic validation.' }],
