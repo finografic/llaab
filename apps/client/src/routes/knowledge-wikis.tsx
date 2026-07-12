@@ -24,6 +24,14 @@ export function KnowledgeWikisPage() {
               {wiki.title}
             </Link>
             <p className="text-muted-foreground mt-1 text-sm">{wiki.summary}</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {wiki.status} · {wiki.verification_status} · {wiki.source_refs.length} sources ·{' '}
+              {wiki.links.length} links · {wiki.source_canonical_idea_ids.length} ideas · rev {wiki.revision}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Updated {wiki.updated_at}
+              {wiki.reviewed_at ? ` · reviewed ${wiki.reviewed_at}` : ''}
+            </p>
           </article>
         ))}
       </PageList>
