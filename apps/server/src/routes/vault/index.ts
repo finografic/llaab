@@ -71,6 +71,8 @@ export const vaultRouter = createRouter()
   )
   .get(routes.listWikiDrafts.path, routes.listWikiDrafts.handler)
   .get(routes.wikiDraftDetail.path, routes.wikiDraftDetail.handler)
+  .post(routes.promoteWikiDraft.path, routes.promoteWikiDraft.handler)
+  .post(routes.rejectWikiDraft.path, routes.rejectWikiDraft.handler)
   .post(
     routes.resolveCanonicalIdeaConflict.path,
     zValidator('json', resolveCanonicalIdeaConflictBodySchema),
