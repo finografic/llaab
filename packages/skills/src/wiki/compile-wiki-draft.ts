@@ -1,4 +1,10 @@
-import { createNode, readNodeByType } from '@llaab/core';
+import {
+  createNode,
+  getKnowledgeWikiSectionIds,
+  hashKnowledgeWikiPage,
+  readKnowledgeWiki,
+  readNodeByType,
+} from '@llaab/core';
 import { routeLlm } from '@llaab/llm';
 import {
   appendDatetimeFilenameSegment,
@@ -28,10 +34,12 @@ function buildCompilePrompt(
   canonicalIdeas: CanonicalIdeaNode[],
   evidence: ReturnType<typeof buildWikiEvidence>,
   suggestedTitle?: string,
+  existingWiki?: { id: string; revision: number; body: string; summary: string },
 ): string {
   return JSON.stringify({
     transcript: { id: transcript.id, title: transcript.title, sourceUrl: transcript.source_url },
     suggestedTitle,
+    existingWiki,
     canonicalIdeas: canonicalIdeas.map((idea) => ({
       id: idea.id,
       title: idea.title,
@@ -43,11 +51,12 @@ function buildCompilePrompt(
   });
 }
 
-const SYSTEM_PROMPT = `Compile selected canonical ideas into a source-backed seed wiki draft.
+const SYSTEM_PROMPT = `Compile selected canonical ideas into a source-backed wiki draft.
 Return only JSON with operation, topic, summary, sections, links, source_refs, coverage,
 change_summary, unresolved_questions, and contested_claims. Use only supplied ids and URLs.
 Every substantive section needs source_ref_ids and source_canonical_idea_ids. Do not create links
-unless a target wiki id is supplied. Use operation create, no-op, or needs-review; never update.`;
+unless a target wiki id is supplied. Use create for a new topic; use update, no-op, or needs-review
+for a target wiki. Preserve unrelated existing sections byte-for-byte.`;
 
 function validateResult(
   result: WikiCompileResult,
@@ -80,8 +89,9 @@ function validateResult(
   if (result.coverage.represented_canonical_idea_ids.length < canonicalIdeaIds.size) {
     warnings.push('Some selected canonical ideas were omitted from the proposed wiki.');
   }
-  if (result.sections.length === 0 && result.operation === 'create')
-    {throw new Error('Wiki create draft has no sections.');}
+  if (result.sections.length === 0 && result.operation === 'create') {
+    throw new Error('Wiki create draft has no sections.');
+  }
   return { score: warnings.length === 0 ? 100 : 75, warnings };
 }
 
@@ -89,7 +99,6 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
   return runSkill<CompileWikiDraftInput, CompileWikiDraftOutput>(
     'compile-wiki-draft',
     async (_, runNodeId) => {
-      if (input.targetWikiId) throw new Error('Updating an existing wiki is not available in Phase 1.');
       if (input.canonicalIdeaIds.length === 0) throw new Error('Select at least one canonical idea.');
       if (new Set(input.canonicalIdeaIds).size !== input.canonicalIdeaIds.length) {
         throw new Error('Canonical idea selection contains duplicates.');
@@ -112,8 +121,22 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         ...(item.locator ? { locator: item.locator } : {}),
         verification: 'source-backed' as const,
       }));
-      const topicKey = toNodeId(input.suggestedTitle ?? canonicalIdeas[0]?.title ?? transcript.title);
-      const prompt = buildCompilePrompt(transcript, canonicalIdeas, evidence, input.suggestedTitle);
+      const existingWiki = input.targetWikiId ? await readKnowledgeWiki(input.targetWikiId) : undefined;
+      const topicKey =
+        existingWiki?.topic_key ??
+        toNodeId(input.suggestedTitle ?? canonicalIdeas[0]?.title ?? transcript.title);
+      const prompt = buildCompilePrompt(
+        transcript,
+        canonicalIdeas,
+        evidence,
+        input.suggestedTitle,
+        existingWiki && {
+          id: existingWiki.id,
+          revision: existingWiki.revision,
+          body: existingWiki.body,
+          summary: existingWiki.summary,
+        },
+      );
 
       let llm = await routeLlm('wiki-compile', prompt, { system: SYSTEM_PROMPT, bypassCache: true });
       let result = WikiCompileResultSchema.parse(parseJson(llm.text));
@@ -136,10 +159,28 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       }
 
       const operation = WikiOperationSchema.parse(result.operation);
+      if (existingWiki && operation === 'create')
+        {throw new Error('An existing wiki target cannot produce a create draft.');}
+      if (!existingWiki && operation === 'update')
+        {throw new Error('An update draft requires an existing promoted wiki target.');}
+      if (existingWiki && result.topic.topic_key !== existingWiki.topic_key) {
+        throw new Error('An update draft cannot change the promoted wiki topic key.');
+      }
       const draftId = appendDatetimeFilenameSegment(`${topicKey}-wiki-draft`, new Date());
       const body = result.sections
-        .map((section) => `<!-- wiki-section:${section.id} -->\n\n## ${section.heading}\n\n${section.body}`)
+        .map((section) => {
+          const citations = section.source_ref_ids.map((id) => `[^${id}]`).join(' ');
+          return `<!-- wiki-section:${section.id} -->\n\n## ${section.heading}\n\n${section.body}${citations ? ` ${citations}` : ''}`;
+        })
         .join('\n\n');
+      const existingSectionIds = new Set(existingWiki ? getKnowledgeWikiSectionIds(existingWiki.body) : []);
+      const patch = existingWiki
+        ? result.sections.map((section) => ({
+            section_id: section.id,
+            operation: existingSectionIds.has(section.id) ? ('update' as const) : ('add' as const),
+            after: section.body,
+          }))
+        : [];
       const created = await createNode({
         type: 'wiki-draft',
         id: draftId,
@@ -148,6 +189,13 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         tags: canonicalIdeas[0]?.tags.filter((tag) => tag.startsWith('d:')) ?? [],
         extra: {
           topic_key: result.topic.topic_key || topicKey,
+          ...(existingWiki
+            ? {
+                target_wiki_id: existingWiki.id,
+                base_revision: existingWiki.revision,
+                base_content_hash: hashKnowledgeWikiPage(existingWiki),
+              }
+            : {}),
           operation,
           source_canonical_idea_ids: canonicalIdeas.map((idea) => idea.id),
           source_transcript_ids: [transcript.id],
@@ -156,6 +204,7 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
           represented_canonical_idea_ids: result.coverage.represented_canonical_idea_ids,
           omitted_canonical_idea_ids: result.coverage.omitted_canonical_ideas.map((item) => item.id),
           sections: result.sections,
+          patch,
           proposed_links: result.links,
           quality_score: quality.score,
           warning: quality.warnings.join(' ') || undefined,

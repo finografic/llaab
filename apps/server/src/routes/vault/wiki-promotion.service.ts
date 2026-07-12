@@ -1,6 +1,7 @@
 import {
   getKnowledgeWikiPath,
   getNodeFilePath,
+  hashKnowledgeWikiPage,
   listKnowledgeWikis,
   readKnowledgeWiki,
   updateNode,
@@ -9,6 +10,43 @@ import {
 } from '@llaab/core';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
 import type { KnowledgeWikiPage, WikiDraftNode } from '@llaab/schemas';
+
+const SECTION_MARKER = /<!--\s*wiki-section:([a-z0-9]+(?:[-_][a-z0-9]+)*)\s*-->/g;
+
+function sectionsById(body: string): Map<string, string> {
+  const matches = [...body.matchAll(SECTION_MARKER)];
+  return new Map(
+    matches.map((match, index) => [match[1]!, body.slice(match.index!, matches[index + 1]?.index).trim()]),
+  );
+}
+
+function applyDraftSections(currentBody: string, draft: WikiDraftNode): string {
+  const current = sectionsById(currentBody);
+  const proposed = sectionsById(draft.body);
+  if (proposed.size === 0) throw new Error('Update draft contains no stable sections.');
+  const accepted =
+    draft.patch.length === 0
+      ? new Set(proposed.keys())
+      : new Set(
+          draft.patch
+            .filter((patch) => patch.operation === 'add' || patch.operation === 'update')
+            .map((patch) => patch.section_id),
+        );
+  const removed = new Set(
+    draft.patch.filter((patch) => patch.operation === 'remove').map((patch) => patch.section_id),
+  );
+  const output: string[] = [];
+  for (const [id, section] of current) {
+    if (removed.has(id)) continue;
+    output.push(accepted.has(id) && proposed.has(id) ? proposed.get(id)! : section);
+    proposed.delete(id);
+  }
+  for (const id of accepted) {
+    const section = proposed.get(id);
+    if (section) output.push(section);
+  }
+  return output.join('\n\n');
+}
 
 function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): KnowledgeWikiPage {
   return {
@@ -89,5 +127,58 @@ export async function promoteCreateWikiDraft(draft: WikiDraftNode): Promise<{
     }));
   }
 
+  return result;
+}
+
+export async function promoteUpdateWikiDraft(draft: WikiDraftNode): Promise<{
+  path: string;
+  page: KnowledgeWikiPage;
+}> {
+  if (
+    draft.operation !== 'update' ||
+    !draft.target_wiki_id ||
+    !draft.base_revision ||
+    !draft.base_content_hash
+  ) {
+    throw new Error('Wiki draft is missing its update base revision or target.');
+  }
+  if (draft.draft_status !== 'proposed') throw new Error('Only proposed wiki drafts can be promoted.');
+
+  const result = await withKnowledgeWikiLock(draft.target_wiki_id, async () => {
+    const current = await readKnowledgeWiki(draft.target_wiki_id!);
+    if (
+      current.revision !== draft.base_revision ||
+      hashKnowledgeWikiPage(current) !== draft.base_content_hash
+    ) {
+      throw new Error(
+        'The promoted wiki changed after this draft was compiled. Regenerate before promotion.',
+      );
+    }
+    const sourceRefs = [...current.source_refs, ...draft.source_refs].filter(
+      (ref, index, all) => all.findIndex((item) => item.id === ref.id) === index,
+    );
+    const next: KnowledgeWikiPage = {
+      ...current,
+      title: draft.title,
+      summary: draft.change_summary ?? current.summary,
+      body: applyDraftSections(current.body, draft),
+      source_refs: sourceRefs,
+      source_canonical_idea_ids: [
+        ...new Set([...current.source_canonical_idea_ids, ...draft.source_canonical_idea_ids]),
+      ],
+      source_transcript_ids: [...new Set([...current.source_transcript_ids, ...draft.source_transcript_ids])],
+      revision: current.revision + 1,
+      updated_at: formatIsoUtcSeconds(new Date()),
+      reviewed_at: formatIsoUtcSeconds(new Date()),
+    };
+    return writeKnowledgeWiki(next);
+  });
+  await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
+    ...draft,
+    draft_status: 'accepted',
+    promoted_wiki_id: result.page.id,
+    promoted_revision: result.page.revision,
+    reviewed_at: result.page.reviewed_at,
+  }));
   return result;
 }

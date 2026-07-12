@@ -10,6 +10,7 @@ export interface CreateWikiDraftInput {
   transcriptId: string;
   canonicalIdeaIds: string[];
   suggestedTitle?: string;
+  targetWikiId?: string;
 }
 
 export interface CreateWikiDraftResult {
@@ -26,6 +27,7 @@ async function createWikiDraft(input: CreateWikiDraftInput): Promise<CreateWikiD
     json: {
       canonical_idea_ids: input.canonicalIdeaIds,
       ...(input.suggestedTitle ? { suggested_title: input.suggestedTitle } : {}),
+      ...(input.targetWikiId ? { target_wiki_id: input.targetWikiId } : {}),
     },
   });
   const result = (await response.json()) as CreateWikiDraftResult | { error?: string };

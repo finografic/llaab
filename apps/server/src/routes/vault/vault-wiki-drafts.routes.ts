@@ -4,7 +4,7 @@ import { compileWikiDraft } from '@llaab/skills';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { CreateWikiDraftBody, EditWikiDraftBody } from './vault.schema.js';
 
-import { promoteCreateWikiDraft } from './wiki-promotion.service.js';
+import { promoteCreateWikiDraft, promoteUpdateWikiDraft } from './wiki-promotion.service.js';
 
 export const createWikiDraft = {
   path: '/transcripts/:id/wiki-drafts' as const,
@@ -56,8 +56,16 @@ export const promoteWikiDraft = {
     const draftId = c.req.param('id') ?? '';
     try {
       const draft = await readNodeByType('wiki-draft', draftId);
-      const wiki = await promoteCreateWikiDraft(draft);
-      return c.json({ success: true, wiki: wiki.page, path: wiki.path, recovered: wiki.recovered });
+      const wiki =
+        draft.operation === 'create'
+          ? await promoteCreateWikiDraft(draft)
+          : await promoteUpdateWikiDraft(draft);
+      return c.json({
+        success: true,
+        wiki: wiki.page,
+        path: wiki.path,
+        recovered: 'recovered' in wiki && wiki.recovered,
+      });
     } catch (error) {
       return c.json({ error: error instanceof Error ? error.message : 'Wiki promotion failed.' }, 400);
     }

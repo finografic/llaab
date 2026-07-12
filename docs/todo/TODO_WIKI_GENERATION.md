@@ -432,25 +432,25 @@ never an uncontrolled rewrite.
 
 ### Delta compilation
 
-- [ ] For updates, send only existing page metadata, relevant stable sections, new evidence, and a
+- [x] For updates, send only existing page metadata, relevant stable sections, new evidence, and a
       bounded related-wiki summary set. Never send every wiki body or the full vault.
 - [ ] Add deterministic novelty analysis for new supported claims, corrections, contradictions,
       distinctions, mechanisms, stronger support, relevant links, and obsolete-content removal.
 - [ ] Treat wording-only rewrites and already-represented evidence as `no-op`.
-- [ ] Persist `base_revision`, `base_content_hash`, structured section operations, resulting page,
+- [x] Persist `base_revision`, `base_content_hash`, structured section operations, resulting page,
       change summary, and unchanged section ids in the draft.
-- [ ] Preserve untouched sections byte-for-byte where the codec allows and preserve human edits in
+- [x] Preserve untouched sections byte-for-byte where the codec allows and preserve human edits in
       any section outside the accepted patch.
 - [ ] Render a unified patch for review and reuse `@pierre/diffs` in the client; the structured
       section patch remains the application contract, not pixels or model prose.
 
 ### Apply and conflict handling
 
-- [ ] Re-read the promoted file inside the per-wiki lock and compare expected revision/hash before
+- [x] Re-read the promoted file inside the per-wiki lock and compare expected revision/hash before
       applying any update.
-- [ ] Reject stale drafts without changing knowledge, retain them in the vault, and offer
+- [x] Reject stale drafts without changing knowledge, retain them in the vault, and offer
       regeneration/rebase against the current page.
-- [ ] Apply only accepted section operations, revalidate the complete resulting page, increment
+- [x] Apply only accepted section operations, revalidate the complete resulting page, increment
       revision, merge provenance, and update timestamps after the atomic write succeeds.
 - [ ] Handle new evidence that contradicts the page as a contested-claim proposal with both source
       groups; never silently replace the existing claim.

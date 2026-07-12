@@ -23,6 +23,7 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
     () => new Set(canonicalIdeas.map((idea) => idea.id)),
   );
   const [suggestedTitle, setSuggestedTitle] = useState('');
+  const [targetWikiId, setTargetWikiId] = useState('');
   const activeRun = useMemo(
     () =>
       monitor?.active.find(
@@ -53,6 +54,7 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
         transcriptId,
         canonicalIdeaIds: [...selectedIds],
         suggestedTitle: suggestedTitle.trim() || undefined,
+        targetWikiId: targetWikiId.trim() || undefined,
       });
       toast.success('Wiki draft created.');
       navigate(`/vault/wiki-drafts/${result.draftId}`);
@@ -83,6 +85,13 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
           value={suggestedTitle}
           onChange={(event) => setSuggestedTitle(event.target.value)}
           placeholder="Optional wiki title"
+        />
+      </Col>
+      <Col>
+        <Input
+          value={targetWikiId}
+          onChange={(event) => setTargetWikiId(event.target.value)}
+          placeholder="Optional promoted wiki id to update"
         />
       </Col>
       <Col>
