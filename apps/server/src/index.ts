@@ -16,7 +16,7 @@ const LONG_RUNNING_PATHS = [
   /^\/api\/registry\/github\/repo\/[^/]+\/[^/]+$/,
   /^\/api\/registry\/github\/repo\/[^/]+\/[^/]+\/npm$/,
   /^\/api\/registry\/npm\/package\/[^/]+\/stats$/,
-  /^\/terminal$/,
+  /^\/terminal\/ws$/,
 ];
 
 console.log(pc.bold(`@llaab/server`) + pc.gray(` starting on port ${port}…`));
@@ -40,7 +40,7 @@ export default {
       server.timeout(req, 0);
     }
 
-    if (pathname === '/terminal') {
+    if (pathname === '/terminal/ws') {
       const upgraded = server.upgrade(req);
       if (!upgraded) return new Response('WebSocket upgrade failed', { status: 400 });
       return undefined;

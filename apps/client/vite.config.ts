@@ -56,7 +56,7 @@ export default defineConfig(({ mode }) => {
           timeout: API_PROXY_TIMEOUT_MS,
           proxyTimeout: API_PROXY_TIMEOUT_MS,
         },
-        '/terminal': {
+        '/terminal/ws': {
           target: serverUrl,
           changeOrigin: true,
           ws: true,
@@ -74,7 +74,7 @@ export default defineConfig(({ mode }) => {
           timeout: API_PROXY_TIMEOUT_MS,
           proxyTimeout: API_PROXY_TIMEOUT_MS,
         },
-        '/terminal': {
+        '/terminal/ws': {
           target: serverUrl,
           changeOrigin: true,
           ws: true,

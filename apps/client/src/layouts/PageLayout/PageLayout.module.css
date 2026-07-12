@@ -29,3 +29,18 @@
   overflow-y: auto;
   min-width: 0;
 }
+
+.pageLayoutFill {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.mainFill {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+

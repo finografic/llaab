@@ -74,3 +74,15 @@
   padding: 0;
   overflow: hidden;
 }
+
+.pageContentFill {
+  overflow: hidden;
+}
+
+.pageContentFill > * {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+

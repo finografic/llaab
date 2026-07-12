@@ -7,15 +7,22 @@ interface PageLayoutProps {
   hero?: ReactNode;
   aside?: ReactNode;
   asideWidth?: string;
+  fillHeight?: boolean;
   children: ReactNode;
 }
 
-export function PageLayout({ hero, aside, asideWidth = '200px', children }: PageLayoutProps) {
+export function PageLayout({
+  hero,
+  aside,
+  asideWidth = '200px',
+  fillHeight = false,
+  children,
+}: PageLayoutProps) {
   const hasAside = aside != null;
   const bodyStyle = hasAside ? ({ '--aside-w': asideWidth } as CSSProperties) : undefined;
 
   return (
-    <div className={styles.pageLayout}>
+    <div className={cn(styles.pageLayout, fillHeight && styles.pageLayoutFill)}>
       {hero ? <div className={styles.heroZone}>{hero}</div> : null}
 
       <div
@@ -24,7 +31,7 @@ export function PageLayout({ hero, aside, asideWidth = '200px', children }: Page
         data-has-aside={hasAside || undefined}
       >
         {hasAside ? <aside className={styles.aside}>{aside}</aside> : null}
-        <div className={styles.main}>{children}</div>
+        <div className={cn(styles.main, fillHeight && styles.mainFill)}>{children}</div>
       </div>
     </div>
   );

@@ -20,6 +20,7 @@ import { SecondaryActionBarContext } from './SecondaryActionBarContext';
 export interface RouteHandle {
   title?: string;
   fullBleed?: boolean;
+  fillHeight?: boolean;
 }
 
 /** Which panel currently occupies the single right-hand sidebar slot, if any. */
@@ -51,7 +52,7 @@ function leftSidebarReducer(state: LeftSidebarState, action: LeftSidebarAction):
 export function AppLayout() {
   const matches = useMatches();
   const handle = [...matches].toReversed().find((match) => match.handle)?.handle as RouteHandle | undefined;
-  const { fullBleed = false } = handle ?? {};
+  const { fullBleed = false, fillHeight = false } = handle ?? {};
   const leftSidebarPanelRef = usePanelRef();
   const rightSidebarPanelRef = usePanelRef();
   const [leftSidebarState, dispatchLeftSidebar] = useReducer(leftSidebarReducer, {
@@ -154,7 +155,13 @@ export function AppLayout() {
               ) : null
             }
           >
-            <main className={cn(styles.pageContent, fullBleed && styles.pageContentBleed)}>
+            <main
+              className={cn(
+                styles.pageContent,
+                fullBleed && styles.pageContentBleed,
+                fillHeight && styles.pageContentFill,
+              )}
+            >
               <AppLeftSidebarContext.Provider value={leftSidebarValue}>
                 <Outlet />
               </AppLeftSidebarContext.Provider>

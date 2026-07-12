@@ -8,7 +8,16 @@ export function TerminalPage() {
   usePageTitle('Terminal');
 
   return (
-    <PageLayout hero={<PageHero eyebrow="Execute" title="Terminal" />}>
+    <PageLayout
+      fillHeight
+      hero={
+        <PageHero
+          eyebrow="Execute"
+          title="Terminal"
+          description="Typed command bus for orchestration adapters."
+        />
+      }
+    >
       <TerminalPanel />
     </PageLayout>
   );

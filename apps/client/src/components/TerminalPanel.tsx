@@ -1,4 +1,5 @@
 import { cn } from '@llaab/ui/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from 'components/ui/accordion';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
@@ -44,10 +45,13 @@ interface TerminalAction {
 }
 
 interface TerminalActionGroup {
+  id: string;
   label: string;
   icon: typeof TerminalIcon;
   actions: TerminalAction[];
 }
+
+const DEFAULT_ACTION_GROUP_ID = 'vault';
 
 const HISTORY_STORAGE_KEY = 'llaab-terminal-history';
 const COMMAND_PLACEHOLDER = 'Type a command, or choose an action';
@@ -82,6 +86,7 @@ const EXECUTABLE_COMMAND_REFERENCES = [
 
 const COMMAND_ACTION_GROUPS: TerminalActionGroup[] = [
   {
+    id: 'vault',
     label: 'Vault',
     icon: ListTreeIcon,
     actions: [
@@ -93,6 +98,7 @@ const COMMAND_ACTION_GROUPS: TerminalActionGroup[] = [
     ],
   },
   {
+    id: 'ai',
     label: 'AI',
     icon: SparklesIcon,
     actions: [
@@ -101,6 +107,7 @@ const COMMAND_ACTION_GROUPS: TerminalActionGroup[] = [
     ],
   },
   {
+    id: 'agents',
     label: 'Agents',
     icon: BotIcon,
     actions: [
@@ -109,6 +116,7 @@ const COMMAND_ACTION_GROUPS: TerminalActionGroup[] = [
     ],
   },
   {
+    id: 'crons',
     label: 'Crons',
     icon: TimerIcon,
     actions: [
@@ -120,6 +128,7 @@ const COMMAND_ACTION_GROUPS: TerminalActionGroup[] = [
     ],
   },
   {
+    id: 'shell',
     label: 'Shell',
     icon: TerminalIcon,
     actions: [
@@ -134,7 +143,7 @@ const COMMAND_ACTIONS = COMMAND_ACTION_GROUPS.flatMap((group) => group.actions);
 
 function websocketUrl(): string {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.host}/terminal`;
+  return `${protocol}//${window.location.host}/terminal/ws`;
 }
 
 function splitCommand(input: string): string[] {
@@ -322,6 +331,23 @@ function findExecutableReference(text: string, startIndex: number) {
   return nextMatch;
 }
 
+function TerminalActionButton({
+  action,
+  commandClassName,
+  onSelect,
+}: {
+  action: TerminalAction;
+  commandClassName: string;
+  onSelect: (command: string) => void;
+}) {
+  return (
+    <button type="button" className={styles.actionButton} onClick={() => onSelect(action.command)}>
+      <span className={styles.actionLabel}>{action.label}</span>
+      <span className={commandClassName}>{action.command}</span>
+    </button>
+  );
+}
+
 export function TerminalPanel() {
   const [command, setCommand] = useState('');
   const [lines, setLines] = useState<TerminalLine[]>([
@@ -338,6 +364,7 @@ export function TerminalPanel() {
   ]);
   const [connected, setConnected] = useState(false);
   const [outputMode, setOutputMode] = useState<OutputMode>('structured');
+  const [activeGroupId, setActiveGroupId] = useState(DEFAULT_ACTION_GROUP_ID);
   const [history, setHistory] = useState<string[]>(() => {
     try {
       const parsed = JSON.parse(window.localStorage.getItem(HISTORY_STORAGE_KEY) ?? '[]') as unknown;
@@ -353,6 +380,10 @@ export function TerminalPanel() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const recentHistory = useMemo(() => history.slice(0, 5), [history]);
+  const activeGroup = useMemo(
+    () => COMMAND_ACTION_GROUPS.find((group) => group.id === activeGroupId),
+    [activeGroupId],
+  );
   const suggestions = useMemo(
     () => [
       ...new Set([...COMMAND_SUGGESTIONS, ...COMMAND_ACTIONS.map((action) => action.command), ...history]),
@@ -538,135 +569,165 @@ export function TerminalPanel() {
   }
 
   return (
-    <section className="flex min-h-[70vh] flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Terminal</h1>
-          <p className="text-sm text-muted-foreground">Typed command bus for orchestration adapters.</p>
-        </div>
+    <section className={styles.root}>
+      <div className={styles.statusRow}>
         <Badge variant={connected ? 'default' : 'secondary'}>{connected ? 'connected' : 'offline'}</Badge>
       </div>
 
-      <Row className={styles.paneRow} align="stretch" gutterWidth={12}>
-        <Col xs={12} lg="content">
-          <aside className={cn('rounded-md border bg-card p-3', styles.aside)}>
-            <div className="mb-3">
-              <h2 className="text-sm font-medium">Actions</h2>
-              <p className="text-xs text-muted-foreground">Click to paste into Run.</p>
-            </div>
-            <div className="grid gap-3">
-              {COMMAND_ACTION_GROUPS.map((group) => {
-                const Icon = group.icon;
-                return (
-                  <div key={group.label} className="grid gap-1">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-normal text-muted-foreground">
-                      <Icon aria-hidden className="size-3.5" />
-                      {group.label}
-                    </div>
-                    <div className="grid gap-0.5">
-                      {group.actions.map((action) => (
-                        <button
-                          key={action.command}
-                          type="button"
-                          className="min-w-0 rounded py-1 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                          onClick={() => insertCommand(action.command)}
-                        >
-                          <span className="block truncate text-sm">{action.label}</span>
-                          <span className="block truncate font-mono text-xs text-primary">
-                            {action.command}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </aside>
-        </Col>
-
-        <Col xs={12} className={styles.mainCol}>
-          <div className="flex h-full min-w-0 flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-muted-foreground">Output</span>
-              {(['structured', 'raw', 'json'] as const).map((mode) => (
-                <Button
-                  key={mode}
-                  type="button"
-                  variant={outputMode === mode ? 'default' : 'outline'}
-                  size="xs"
-                  onClick={() => setOutputMode(mode)}
-                >
-                  {mode}
-                </Button>
-              ))}
-            </div>
-
-            <ScrollArea className="min-h-[52vh] flex-1 rounded-md border bg-card p-3">
-              <div className="space-y-1 font-mono text-sm">
-                {lines.map((line) => (
-                  <div
-                    key={line.id}
-                    className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 whitespace-pre-wrap"
-                  >
-                    <span className="text-muted-foreground">{line.kind}</span>
-                    {renderLine(line)}
-                  </div>
-                ))}
-                <div ref={bottomRef} />
+      <div className={styles.paneShell}>
+        <Row className={styles.paneRow} align="stretch" gutterWidth={12}>
+          <Col xs={12} lg="content" className={styles.asideCol}>
+            <aside className={cn('rounded-md border bg-card p-3', styles.aside)}>
+              <div className={styles.asideHeader}>
+                <h2 className={styles.asideHeaderTitle}>Actions</h2>
+                <p className={styles.asideHeaderHint}>Click to paste into Run.</p>
               </div>
-            </ScrollArea>
-          </div>
-        </Col>
-      </Row>
+              <Accordion
+                type="single"
+                collapsible
+                value={activeGroupId}
+                onValueChange={setActiveGroupId}
+                className={styles.asideAccordion}
+              >
+                {COMMAND_ACTION_GROUPS.map((group) => {
+                  const Icon = group.icon;
+                  return (
+                    <AccordionItem key={group.id} value={group.id} className={styles.accordionItem}>
+                      <AccordionTrigger className={styles.groupTrigger}>
+                        <Icon aria-hidden className={styles.groupTitleIcon} />
+                        <span>{group.label}</span>
+                      </AccordionTrigger>
+                      <AccordionContent className={styles.groupContent}>
+                        <div className={styles.groupActionList}>
+                          {group.actions.map((action) => (
+                            <TerminalActionButton
+                              key={action.command}
+                              action={action}
+                              commandClassName={styles.actionCommand}
+                              onSelect={insertCommand}
+                            />
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            </aside>
+          </Col>
 
-      {recentHistory.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">Recent</span>
-          {recentHistory.map((item) => (
-            <Button key={item} type="button" variant="ghost" size="xs" onClick={() => insertCommand(item)}>
-              <span className="max-w-[18rem] truncate font-mono">{item}</span>
-            </Button>
-          ))}
-        </div>
-      ) : null}
+          <Col xs={12} className={styles.mainCol}>
+            <div className={styles.terminalColumn}>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground">Output</span>
+                {(['structured', 'raw', 'json'] as const).map((mode) => (
+                  <Button
+                    key={mode}
+                    type="button"
+                    variant={outputMode === mode ? 'default' : 'outline'}
+                    size="xs"
+                    onClick={() => setOutputMode(mode)}
+                  >
+                    {mode}
+                  </Button>
+                ))}
+              </div>
 
-      <form
-        className="flex gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submitCommand();
-        }}
-      >
-        <Input
-          ref={inputRef}
-          aria-label="Terminal command"
-          className="font-mono placeholder:text-muted-foreground/45"
-          list="terminal-command-suggestions"
-          placeholder={COMMAND_PLACEHOLDER}
-          value={command}
-          onChange={(event) => setCommand(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'ArrowUp') {
-              event.preventDefault();
-              recallHistory('older');
-            }
-            if (event.key === 'ArrowDown') {
-              event.preventDefault();
-              recallHistory('newer');
-            }
-          }}
-        />
-        <datalist id="terminal-command-suggestions">
-          {suggestions.map((suggestion) => (
-            <option key={suggestion} value={suggestion} />
-          ))}
-        </datalist>
-        <Button type="submit" disabled={!connected}>
-          <SendIcon aria-hidden />
-          Run
-        </Button>
-      </form>
+              <ScrollArea className={styles.output}>
+                <div className={styles.outputLines}>
+                  {lines.map((line) => (
+                    <div
+                      key={line.id}
+                      className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 whitespace-pre-wrap"
+                    >
+                      <span className="text-muted-foreground">{line.kind}</span>
+                      {renderLine(line)}
+                    </div>
+                  ))}
+                  <div ref={bottomRef} />
+                </div>
+              </ScrollArea>
+
+              {recentHistory.length > 0 ? (
+                <div className={styles.recentRow}>
+                  <span className={styles.recentLabel}>Recent</span>
+                  {recentHistory.map((item) => (
+                    <Button
+                      key={item}
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => insertCommand(item)}
+                    >
+                      <span className="max-w-[18rem] truncate font-mono">{item}</span>
+                    </Button>
+                  ))}
+                </div>
+              ) : null}
+
+              <form
+                className={styles.commandForm}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitCommand();
+                }}
+              >
+                <Input
+                  ref={inputRef}
+                  aria-label="Terminal command"
+                  className={cn('placeholder:text-muted-foreground/45', styles.commandInput)}
+                  list="terminal-command-suggestions"
+                  placeholder={COMMAND_PLACEHOLDER}
+                  value={command}
+                  onChange={(event) => setCommand(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'ArrowUp') {
+                      event.preventDefault();
+                      recallHistory('older');
+                    }
+                    if (event.key === 'ArrowDown') {
+                      event.preventDefault();
+                      recallHistory('newer');
+                    }
+                  }}
+                />
+                <datalist id="terminal-command-suggestions">
+                  {suggestions.map((suggestion) => (
+                    <option key={suggestion} value={suggestion} />
+                  ))}
+                </datalist>
+                <Button type="submit" disabled={!connected}>
+                  <SendIcon aria-hidden />
+                  Run
+                </Button>
+              </form>
+
+              {activeGroup ? (
+                <section className={styles.activeGroupPanel} aria-label={`${activeGroup.label} commands`}>
+                  <h3 className={styles.activeGroupTitle}>
+                    <activeGroup.icon aria-hidden className={styles.activeGroupTitleIcon} />
+                    <span>{activeGroup.label}</span>
+                  </h3>
+                  <div className={styles.activeGroupActions}>
+                    {activeGroup.actions.map((action) => (
+                      <Row key={action.command}>
+                        <Col xs={12}>
+                          <TerminalActionButton
+                            key={action.command}
+                            action={action}
+                            commandClassName={styles.activeActionCommand}
+                            onSelect={insertCommand}
+                          />
+                        </Col>
+                      </Row>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </div>
+          </Col>
+        </Row>
+      </div>
     </section>
   );
 }

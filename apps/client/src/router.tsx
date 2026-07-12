@@ -125,7 +125,7 @@ export const router = createBrowserRouter([
       {
         path: 'terminal',
         element: lazyElement(TerminalPage),
-        handle: { title: 'Terminal' } satisfies RouteHandle,
+        handle: { title: 'Terminal', fillHeight: true } satisfies RouteHandle,
       },
       {
         path: 'hermes',
