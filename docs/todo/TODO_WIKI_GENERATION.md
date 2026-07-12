@@ -277,7 +277,7 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
       evidence expansion or inference begins.
 - [ ] Add `compile-wiki-draft` to stale-run timeout configuration and add its API route to Bun's
       long-running-path allowlist.
-- [ ] Persist stages for source resolution, evidence expansion, topic resolution, compilation,
+- [x] Persist stages for source resolution, evidence expansion, topic resolution, compilation,
       validation, retry, render, and draft write.
 - [ ] Persist entry path, operation, topic/target, selected canonical/transcript/source counts,
       quality, warnings, model/provider, duration/tokens, produced draft id, and terminal decision.
@@ -377,7 +377,7 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
 
 - [x] Add `/vault/wiki-drafts/:id` under `VaultLayout` using `PageDetail` and the established vault
       session boundary.
-- [ ] Display title/summary, operation, rendered article, selected canonical ideas, transcript and
+- [x] Display title/summary, operation, rendered article, selected canonical ideas, transcript and
       source provenance, quality score/warnings, omitted ideas, proposed links, contested claims,
       unresolved questions, section list, and model/run metadata.
 - [x] For create drafts, show the exact target path and a full new-page preview.
@@ -385,7 +385,7 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
       clear terminal states.
 - [x] Add `/knowledge/wikis` and `/knowledge/wikis/:id` outside `VaultLayout` for promoted list and
       detail views.
-- [ ] Show title, summary, lifecycle, verification, source count, linked-page count, represented
+- [x] Show title, summary, lifecycle, verification, source count, linked-page count, represented
       idea count, revision, and last-updated/reviewed timestamps.
 - [x] Add a Knowledge navigation section only after its routes exist and pass client validation;
       keep draft navigation under Vault.
@@ -524,7 +524,7 @@ without compiling or promoting knowledge automatically.
 - [x] Make the initial eligibility threshold configurable, defaulting to at least three relevant
       canonical ideas across at least two transcripts.
 - [x] Match existing wikis and subtract already-represented evidence before computing novelty.
-- [ ] Compute explainable heat and novelty from canonical count, unique transcripts, unique
+- [x] Compute explainable heat and novelty from canonical count, unique transcripts, unique
       sources/authors, source diversity, recency, unrepresented evidence, and graph centrality when
       Phase 6 data is available.
 
@@ -548,7 +548,7 @@ without compiling or promoting knowledge automatically.
       may call; the recipe must run and exit.
 - [ ] Add `/vault/wiki-candidates` queue/detail views showing topic, scores with explanations,
       transcript/source counts, existing match, and create/update recommendation.
-- [ ] Let the user select a candidate and pass its canonical ids into the Phase 1 compiler. Discovery
+- [x] Let the user select a candidate and pass its canonical ids into the Phase 1 compiler. Discovery
       itself does not compile or promote a page.
 - [ ] Test deterministic clusters/scores, threshold configuration, duplicate-run immunity,
       represented-evidence subtraction, model id validation, and one-shot run persistence.
