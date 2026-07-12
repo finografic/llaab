@@ -20,6 +20,7 @@ export const NodeTypeSchema = z.enum([
   'source',
   'decision',
   'run',
+  'wiki-draft',
 ]);
 
 export const NodeStatusSchema = z.enum(['seed', 'growing', 'mature', 'archived']);

@@ -2,6 +2,7 @@ import { readdir } from 'fs/promises';
 import { join } from 'path';
 import type { LabNode, NodeStatus, NodeType } from '@llaab/schemas';
 
+import { getNodeDirectoryPath } from './node-file.utils.js';
 import { readNode } from './read-node.utils.js';
 import { VAULT_ROOT } from './vault-root.js';
 
@@ -39,7 +40,7 @@ export interface ListNodesOptions {
 }
 
 export async function listNodes(options: ListNodesOptions = {}): Promise<LabNode[]> {
-  const files = await scanMarkdownFiles(VAULT_ROOT);
+  const files = await scanMarkdownFiles(options.type ? getNodeDirectoryPath(options.type) : VAULT_ROOT);
   const nodes = await Promise.all(
     files.map(async (filePath) => {
       try {

@@ -1,7 +1,7 @@
 import { deleteNode, getNodeFilePath, listNodes, readNode } from '@llaab/core';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { DeleteRunsPreviewBody } from './vault.schema.js';
-import type { CanonicalIdeaNode, LabNode, RunNode, TranscriptNode } from '@llaab/schemas';
+import type { CanonicalIdeaNode, LabNode, RunNode, TranscriptNode, WikiDraftNode } from '@llaab/schemas';
 
 import { deleteRunQuerySchema } from './vault.schema.js';
 
@@ -14,6 +14,7 @@ interface ProducedNodeDeleteContext {
   remainingRuns: RunNode[];
   transcripts: TranscriptNode[];
   canonicalIdeas: CanonicalIdeaNode[];
+  wikiDrafts: WikiDraftNode[];
 }
 
 function buildProducedNodeDeleteContext(allNodes: LabNode[], deletingRunIds: Set<string>) {
@@ -24,6 +25,7 @@ function buildProducedNodeDeleteContext(allNodes: LabNode[], deletingRunIds: Set
     ),
     transcripts: allNodes.filter((node): node is TranscriptNode => node.type === 'transcript'),
     canonicalIdeas: allNodes.filter((node): node is CanonicalIdeaNode => node.type === 'canonical-idea'),
+    wikiDrafts: allNodes.filter((node): node is WikiDraftNode => node.type === 'wiki-draft'),
   } satisfies ProducedNodeDeleteContext;
 }
 
@@ -35,6 +37,14 @@ function canDeleteProducedNode(node: LabNode, context: ProducedNodeDeleteContext
 function getProducedNodeRetentionReason(node: LabNode, context: ProducedNodeDeleteContext): string | null {
   const referencingRun = context.remainingRuns.find((run) => run.produced_node_ids.includes(node.id));
   if (referencingRun) return `still referenced by run "${referencingRun.title}"`;
+
+  const referencingWikiDraft = context.wikiDrafts.find(
+    (draft) =>
+      draft.source_canonical_idea_ids.includes(node.id) ||
+      draft.source_transcript_ids.includes(node.id) ||
+      draft.source_ids.includes(node.id),
+  );
+  if (referencingWikiDraft) return `referenced by wiki draft "${referencingWikiDraft.title}"`;
 
   if (node.type === 'idea') {
     const referencingIdea = context.canonicalIdeas.find((idea) =>

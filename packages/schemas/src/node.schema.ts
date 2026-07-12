@@ -10,6 +10,7 @@ import { RunNodeSchema } from './run-node.schema.js';
 import { SkillNodeSchema } from './skill-node.schema.js';
 import { SourceNodeSchema } from './source-node.schema.js';
 import { TranscriptNodeSchema } from './transcript-node.schema.js';
+import { WikiDraftNodeSchema } from './wiki-draft-node.schema.js';
 
 export const NodeSchema = z.discriminatedUnion('type', [
   CanonicalIdeaNodeSchema,
@@ -22,6 +23,7 @@ export const NodeSchema = z.discriminatedUnion('type', [
   SourceNodeSchema,
   DecisionNodeSchema,
   RunNodeSchema,
+  WikiDraftNodeSchema,
 ]);
 
 export type LabNode = z.infer<typeof NodeSchema>;

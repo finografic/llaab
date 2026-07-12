@@ -18,6 +18,7 @@ import type {
   IdeaNode,
   RunNode,
   TranscriptNode,
+  WikiDraftNode,
 } from '@llaab/schemas';
 
 // ---------------------------------------------------------------------------
@@ -1129,6 +1130,19 @@ export const discardTranscript = {
       transcript = (await readNode(transcriptPath)) as TranscriptNode;
     } catch {
       return c.json({ error: 'Transcript not found' }, 404);
+    }
+
+    const referencingWikiDrafts = (await listNodes({ type: 'wiki-draft' }))
+      .filter((node): node is WikiDraftNode => node.type === 'wiki-draft')
+      .filter((draft) => draft.source_transcript_ids.includes(id));
+    if (referencingWikiDrafts.length > 0) {
+      return c.json(
+        {
+          error: 'Transcript is referenced by wiki drafts and cannot be discarded.',
+          wikiDraftIds: referencingWikiDrafts.map((draft) => draft.id),
+        },
+        409,
+      );
     }
 
     // Delete idea nodes

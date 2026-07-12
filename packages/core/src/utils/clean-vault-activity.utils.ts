@@ -12,6 +12,9 @@ const TARGET_DIRS = [
   '.tmp',
 ] as const;
 
+// Wiki drafts are reviewable provenance, not disposable recent activity. They remain outside this
+// cleanup set until a dedicated draft lifecycle action exists.
+
 async function listFilesRecursively(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });
   const files: string[] = [];
