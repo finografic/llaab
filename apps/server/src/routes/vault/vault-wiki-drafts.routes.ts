@@ -142,10 +142,21 @@ export const editWikiDraft = {
         return c.json({ error: 'Only proposed wiki drafts can be edited.' }, 409);
       }
       const body = c.req.valid('json');
+      const knownSourceRefIds = new Set(draft.source_refs.map((sourceRef) => sourceRef.id));
+      if (body.sections?.some((section) => section.source_ref_ids.some((id) => !knownSourceRefIds.has(id)))) {
+        return c.json({ error: 'Edited section references an unknown source reference.' }, 400);
+      }
+      const renderedBody = body.sections
+        ?.map((section) => {
+          const citations = section.source_ref_ids.map((sourceRefId) => `[^${sourceRefId}]`).join(' ');
+          return `<!-- wiki-section:${section.id} -->\n\n## ${section.heading}\n\n${section.body}${citations ? ` ${citations}` : ''}`;
+        })
+        .join('\n\n');
       const result = await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
         ...draft,
         ...(body.title ? { title: body.title } : {}),
         ...(body.summary ? { change_summary: body.summary } : {}),
+        ...(body.sections ? { sections: body.sections, body: renderedBody } : {}),
         reviewer_edits: true,
       }));
       return c.json({ success: true, draft: result.node });

@@ -1,6 +1,7 @@
 import {
   CreateWikiDraftRequestSchema,
   WikiResearchRequestSchema,
+  WikiSectionDraftSchema,
   NodeTypeSchema,
   SourceProfileSchema,
   TranscriptCanonicalCoverageSchema,
@@ -155,8 +156,9 @@ export const editWikiDraftBodySchema = z
   .object({
     title: z.string().min(1).optional(),
     summary: z.string().min(1).optional(),
+    sections: z.array(WikiSectionDraftSchema).min(1).optional(),
   })
-  .refine((body) => body.title !== undefined || body.summary !== undefined, {
-    message: 'Provide a title and/or summary to update.',
+  .refine((body) => body.title !== undefined || body.summary !== undefined || body.sections !== undefined, {
+    message: 'Provide a title, summary, and/or sections to update.',
   });
 export type EditWikiDraftBody = z.infer<typeof editWikiDraftBodySchema>;
