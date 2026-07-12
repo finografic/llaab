@@ -1,4 +1,8 @@
-import { listKnowledgeWikis as readKnowledgeWikis, readKnowledgeWiki } from '@llaab/core';
+import {
+  buildKnowledgeWikiGraph,
+  listKnowledgeWikis as readKnowledgeWikis,
+  readKnowledgeWiki,
+} from '@llaab/core';
 import type { AppCtx } from '../../types/app.types.js';
 
 export const listKnowledgeWikis = {
@@ -15,4 +19,9 @@ export const knowledgeWikiDetail = {
       return c.json({ error: 'Knowledge wiki not found.' }, 404);
     }
   },
+};
+
+export const knowledgeWikiGraph = {
+  path: '/wikis/graph' as const,
+  handler: async (c: AppCtx) => c.json({ graph: await buildKnowledgeWikiGraph() }),
 };

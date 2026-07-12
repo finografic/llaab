@@ -63,6 +63,7 @@ export {
   withKnowledgeWikiLock,
   writeKnowledgeWiki,
 } from './utils/knowledge-wiki-file.utils.js';
+export { buildKnowledgeWikiGraph, type KnowledgeWikiGraph } from './utils/knowledge-wiki-graph.utils.js';
 export { MONOREPO_ROOT } from './utils/vault-root.js';
 export { listNodes } from './utils/list-nodes.utils.js';
 export { parseFrontmatter } from './utils/parse-frontmatter.utils.js';

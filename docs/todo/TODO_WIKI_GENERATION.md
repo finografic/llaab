@@ -570,14 +570,14 @@ browsing.
       `contrasts-with`, `example-of`, `supports`, and `supersedes`.
 - [ ] Validate suggested links during draft review and final links during promotion: target exists,
       relation is allowed, edge is unique, and a broad shared domain tag is not sufficient evidence.
-- [ ] Store one authoritative directed edge and derive reverse views at read/index time.
-- [ ] Build graph nodes/edges from validated `knowledge/wikis/*.md`; do not use vault `related`, the
+- [x] Store one authoritative directed edge and derive reverse views at read/index time.
+- [x] Build graph nodes/edges from validated `knowledge/wikis/*.md`; do not use vault `related`, the
       dormant generic relationship schema, or a separate graph database as the source of truth.
-- [ ] Add diagnostics for broken targets, invalid relations, duplicate ids/topic keys, self-links,
+- [x] Add diagnostics for broken targets, invalid relations, duplicate ids/topic keys, self-links,
       duplicate edges, and isolated pages.
 - [ ] Add related-page browsing and link diagnostics to wiki detail before implementing a full graph
       visualization.
-- [ ] Add knowledge graph/search API responses, then an interactive graph view using a proven
+- [x] Add knowledge graph/search API responses, then an interactive graph view using a proven
       library after the index contract is stable.
 - [ ] Keep any SQLite/JSON cache disposable and request-triggered; no watcher or permanent indexing
       process.
