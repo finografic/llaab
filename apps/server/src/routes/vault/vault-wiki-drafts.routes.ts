@@ -3,7 +3,9 @@ import { formatIsoUtcSeconds } from '@llaab/schemas';
 import { compileWikiDraft } from '@llaab/skills';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { CreateWikiDraftBody, EditWikiDraftBody } from './vault.schema.js';
+import type { WikiDraftNode } from '@llaab/schemas';
 
+import { listWikiDraftsQuerySchema } from './vault.schema.js';
 import { promoteCreateWikiDraft, promoteUpdateWikiDraft } from './wiki-promotion.service.js';
 
 export const createWikiDraft = {
@@ -33,8 +35,13 @@ export const createWikiDraft = {
 export const listWikiDrafts = {
   path: '/wiki-drafts' as const,
   handler: async (c: AppCtx) => {
-    const drafts = await listNodes({ type: 'wiki-draft' });
-    return c.json({ drafts });
+    const query = listWikiDraftsQuerySchema.parse(Object.fromEntries(new URL(c.req.url).searchParams));
+    const drafts = (await listNodes({ type: 'wiki-draft' }))
+      .filter((node): node is WikiDraftNode => node.type === 'wiki-draft')
+      .filter((draft) => (query.status ? draft.draft_status === query.status : true))
+      .filter((draft) => (query.topic ? draft.topic_key.includes(query.topic) : true))
+      .filter((draft) => (query.target ? draft.target_wiki_id === query.target : true));
+    return c.json({ drafts: drafts.slice(query.offset, query.offset + query.limit), total: drafts.length });
   },
 };
 

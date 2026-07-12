@@ -140,6 +140,15 @@ export type ResolveCanonicalIdeaConflictBody = z.infer<typeof resolveCanonicalId
 export const createWikiDraftBodySchema = CreateWikiDraftRequestSchema;
 export type CreateWikiDraftBody = z.infer<typeof createWikiDraftBodySchema>;
 
+export const listWikiDraftsQuerySchema = z.object({
+  status: z.enum(['proposed', 'accepted', 'rejected', 'superseded']).optional(),
+  topic: z.string().min(1).optional(),
+  target: z.string().min(1).optional(),
+  offset: z.coerce.number().int().min(0).default(0),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
+export type ListWikiDraftsQuery = z.infer<typeof listWikiDraftsQuerySchema>;
+
 export const wikiResearchBodySchema = WikiResearchRequestSchema;
 
 export const editWikiDraftBodySchema = z
