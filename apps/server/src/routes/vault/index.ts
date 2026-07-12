@@ -79,6 +79,7 @@ export const vaultRouter = createRouter()
   .post(routes.discoverWikiCandidates.path, routes.discoverWikiCandidates.handler)
   .get(routes.listWikiCandidates.path, routes.listWikiCandidates.handler)
   .get(routes.wikiCandidateDetail.path, routes.wikiCandidateDetail.handler)
+  .post(routes.compileWikiCandidate.path, routes.compileWikiCandidate.handler)
   .post(
     routes.requestWikiResearch.path,
     zValidator('json', wikiResearchBodySchema),

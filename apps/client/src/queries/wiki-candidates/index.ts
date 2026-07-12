@@ -31,3 +31,14 @@ export function useDiscoverWikiCandidates() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.wikiCandidates }),
   });
 }
+
+export function useCompileWikiCandidate() {
+  return useMutation({
+    mutationFn: async (id: string): Promise<string> => {
+      const response = await api.vault['wiki-candidates'][':id'].compile.$post({ param: { id } });
+      const body = (await response.json()) as { draftId?: string; error?: string };
+      if (!response.ok || !body.draftId) throw new Error(body.error ?? 'Wiki compilation failed.');
+      return body.draftId;
+    },
+  });
+}

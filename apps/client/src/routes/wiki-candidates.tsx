@@ -3,7 +3,12 @@ import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { SearchIcon } from 'lucide-react';
-import { useDiscoverWikiCandidates, useWikiCandidates } from 'queries/wiki-candidates';
+import {
+  useCompileWikiCandidate,
+  useDiscoverWikiCandidates,
+  useWikiCandidates,
+} from 'queries/wiki-candidates';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { usePageTitle } from 'lib/use-page-title';
@@ -12,6 +17,8 @@ export function WikiCandidatesPage() {
   usePageTitle('Wiki candidates');
   const candidates = useWikiCandidates();
   const discover = useDiscoverWikiCandidates();
+  const compile = useCompileWikiCandidate();
+  const navigate = useNavigate();
 
   async function runDiscovery() {
     try {
@@ -19,6 +26,15 @@ export function WikiCandidatesPage() {
       toast.success('Wiki candidate discovery complete.');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Wiki discovery failed.');
+    }
+  }
+
+  async function compileCandidate(id: string) {
+    try {
+      const draftId = await compile.mutateAsync(id);
+      navigate(`/vault/wiki-drafts/${draftId}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Wiki compilation failed.');
     }
   }
 
@@ -46,6 +62,15 @@ export function WikiCandidatesPage() {
             <p className="mt-2 text-xs text-muted-foreground">
               Heat {candidate.heat_score} · novelty {candidate.novelty_score} · {candidate.recommendation}
             </p>
+            <Button
+              className="mt-3"
+              size="sm"
+              variant="outline"
+              onClick={() => void compileCandidate(candidate.id)}
+              disabled={compile.isPending}
+            >
+              Create draft
+            </Button>
           </Col>
         ))}
       </Row>
