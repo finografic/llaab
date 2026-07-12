@@ -1,7 +1,7 @@
 # TODO — Wiki Compilation and Knowledge Promotion
 
-> **Status:** Phases 0–2 implementation complete (2026-07-13). Phases 3–7 not started; manual
-> acceptance remains tracked below.
+> **Status:** Phases 0–2 implementation complete (2026-07-13). Phases 3–7 are under active
+> implementation; manual acceptance remains tracked below.
 > **Priority:** P2 — planned.
 > **Design authority:** [Wiki Creation Spec](../../.agents/WIKI_CREATION_SPEC.md)
 
@@ -424,9 +424,9 @@ never an uncontrolled rewrite.
 
 - [ ] Resolve existing topics in priority order: exact topic key, alias, normalized title,
       represented canonical-idea overlap, domain/tag overlap, then optional semantic similarity.
-- [ ] Return `create | update | no-op | needs-review` before compilation and persist the reasons and
+- [x] Return `create | update | no-op | needs-review` before compilation and persist the reasons and
       matched candidates.
-- [ ] Never silently create a near-duplicate page. A possible overlap must become `needs-review`
+- [x] Never silently create a near-duplicate page. A possible overlap must become `needs-review`
       with both topic identities and evidence visible.
 - [ ] Let review choose an existing update target or confirm a genuinely distinct topic key.
 
@@ -575,7 +575,7 @@ browsing.
       dormant generic relationship schema, or a separate graph database as the source of truth.
 - [x] Add diagnostics for broken targets, invalid relations, duplicate ids/topic keys, self-links,
       duplicate edges, and isolated pages.
-- [ ] Add related-page browsing and link diagnostics to wiki detail before implementing a full graph
+- [x] Add related-page browsing and link diagnostics to wiki detail before implementing a full graph
       visualization.
 - [x] Add knowledge graph/search API responses, then an interactive graph view using a proven
       library after the index contract is stable.
