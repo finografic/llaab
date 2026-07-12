@@ -1,6 +1,6 @@
 # DONE — Migrate Tailwind Layouts to `@llaab/ui` Grid
 
-> **Completed:** Jul 11, 2026. Browser spot-check pending. Convert page/section Tailwind layout
+> **Completed:** Jul 11, 2026 (browser spot-check verified Jul 12, 2026). Convert page/section Tailwind layout
 > (`flex` / `grid` / `grid-cols-*` / responsive column utilities) to
 > `Container` / `Row` / `Col` from `components/ui/grid`. Do **not** treat as a blind
 > find-and-replace: micro-alignment, shadcn internals, and intentional special layouts stay
@@ -170,7 +170,7 @@ Convert the most visible multi-column page shells first.
 - [x] `/llm` card/layout regions — `llm-card-grid.module.css` kept (auto-fill tracks)
 - [x] `/hermes` and inbox list/detail shells — hermes auto-fit grids kept; inbox summary converted
 - [x] Conversions: `crons.tsx`, `inbox.tsx`, registry detail pages, `TerminalPanel.tsx`
-- [ ] Manual visual check at mobile + desktop — **user browser verification pending**
+- [x] Manual visual check at mobile + desktop — verified Jul 12, 2026
 
 ---
 
@@ -214,8 +214,8 @@ Tables are mostly column definitions, not page grids. Convert only clear layout 
 
 - [x] Final ripgrep: no **Convert**-class `md:grid-cols-*` in app feature routes (allowlist below)
 - [x] Registry + transcript reference call sites unchanged and correct
-- [ ] Spot-check in browser: `/`, `/ingest`, `/registry`, `/registry/repos`, `/vault/transcripts`,
-      `/llm`, `/crons`, `/hermes`, `/vault/inbox` — **user verification pending**
+- [x] Spot-check in browser: `/`, `/ingest`, `/registry`, `/registry/repos`, `/vault/transcripts`,
+      `/llm`, `/crons`, `/hermes`, `/vault/inbox` — verified Jul 12, 2026
 - [x] Rename this file `TODO_` → `DONE_`; move ROADMAP item to Done
 
 ### Allowlist (intentional non–12-col layout)
