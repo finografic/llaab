@@ -128,6 +128,22 @@ export function WikiDraftDetailPage() {
               <pre className="body-pre">{draft.body}</pre>
             </section>
             <section className="section">
+              <h2 className="section__heading">Review details</h2>
+              <p className="text-sm text-muted-foreground">
+                Target:{' '}
+                <span className="font-mono">
+                  knowledge/wikis/{draft.target_wiki_id ?? draft.topic_key}.md
+                </span>
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Canonical ideas: {draft.source_canonical_idea_ids.join(', ') || 'None'}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Run: {draft.run_id ?? 'Unavailable'} · {draft.llm_provider ?? 'unknown'} /{' '}
+                {draft.llm_model ?? 'unknown'}
+              </p>
+            </section>
+            <section className="section">
               <h2 className="section__heading">Provenance</h2>
               <p className="text-sm text-muted-foreground">
                 {draft.source_canonical_idea_ids.length} canonical ideas ·{' '}
@@ -160,6 +176,31 @@ export function WikiDraftDetailPage() {
                 {draft.validation_issues.map((issue) => (
                   <p key={`${issue.code}-${issue.message}`} className="text-sm text-destructive">
                     {issue.message}
+                  </p>
+                ))}
+              </section>
+            ) : null}
+            {draft.proposed_links.length > 0 ||
+            draft.unresolved_questions.length > 0 ||
+            draft.contested_claims.length > 0 ? (
+              <section className="section">
+                <h2 className="section__heading">Open review items</h2>
+                {draft.proposed_links.map((link) => (
+                  <p
+                    key={`${link.relation}-${link.target_wiki_id}`}
+                    className="text-sm text-muted-foreground"
+                  >
+                    Link: {link.relation} → {link.target_wiki_id}
+                  </p>
+                ))}
+                {draft.unresolved_questions.map((question) => (
+                  <p key={question} className="text-sm text-muted-foreground">
+                    Question: {question}
+                  </p>
+                ))}
+                {draft.contested_claims.map((claim) => (
+                  <p key={claim} className="text-sm text-destructive">
+                    Contested: {claim}
                   </p>
                 ))}
               </section>
