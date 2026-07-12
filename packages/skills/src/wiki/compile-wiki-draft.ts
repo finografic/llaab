@@ -30,14 +30,18 @@ function parseJson(text: string): unknown {
 }
 
 function buildCompilePrompt(
-  transcript: TranscriptNode,
+  transcripts: TranscriptNode[],
   canonicalIdeas: CanonicalIdeaNode[],
   evidence: ReturnType<typeof buildWikiEvidence>,
   suggestedTitle?: string,
   existingWiki?: { id: string; revision: number; body: string; summary: string },
 ): string {
   return JSON.stringify({
-    transcript: { id: transcript.id, title: transcript.title, sourceUrl: transcript.source_url },
+    transcripts: transcripts.map((transcript) => ({
+      id: transcript.id,
+      title: transcript.title,
+      sourceUrl: transcript.source_url,
+    })),
     suggestedTitle,
     existingWiki,
     canonicalIdeas: canonicalIdeas.map((idea) => ({
@@ -103,30 +107,38 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       if (new Set(input.canonicalIdeaIds).size !== input.canonicalIdeaIds.length) {
         throw new Error('Canonical idea selection contains duplicates.');
       }
-      const transcript = await readNodeByType('transcript', input.transcriptId);
+      const entryTranscript = await readNodeByType('transcript', input.transcriptId);
       const canonicalIdeas = await Promise.all(
         input.canonicalIdeaIds.map((id) => readNodeByType('canonical-idea', id)),
       );
-      if (canonicalIdeas.some((idea) => idea.transcript_id !== transcript.id)) {
-        throw new Error('Selected canonical ideas must belong to the current transcript.');
-      }
-
-      const evidence = buildWikiEvidence(transcript, canonicalIdeas);
+      const transcriptIds = [...new Set(canonicalIdeas.map((idea) => idea.transcript_id))];
+      const transcripts = await Promise.all(
+        transcriptIds.map((id) =>
+          id === entryTranscript.id ? Promise.resolve(entryTranscript) : readNodeByType('transcript', id),
+        ),
+      );
+      const transcriptById = new Map(transcripts.map((transcript) => [transcript.id, transcript]));
+      const evidence = transcripts.flatMap((transcript) =>
+        buildWikiEvidence(
+          transcript,
+          canonicalIdeas.filter((idea) => idea.transcript_id === transcript.id),
+        ),
+      );
       const sourceRefs = evidence.map((item) => ({
         id: item.id,
         kind: 'transcript' as const,
-        node_id: transcript.id,
-        title: transcript.title,
-        url: transcript.source_url,
+        node_id: item.transcript_id,
+        title: transcriptById.get(item.transcript_id)?.title,
+        url: item.source_url,
         ...(item.locator ? { locator: item.locator } : {}),
         verification: 'source-backed' as const,
       }));
       const existingWiki = input.targetWikiId ? await readKnowledgeWiki(input.targetWikiId) : undefined;
       const topicKey =
         existingWiki?.topic_key ??
-        toNodeId(input.suggestedTitle ?? canonicalIdeas[0]?.title ?? transcript.title);
+        toNodeId(input.suggestedTitle ?? canonicalIdeas[0]?.title ?? entryTranscript.title);
       const prompt = buildCompilePrompt(
-        transcript,
+        transcripts,
         canonicalIdeas,
         evidence,
         input.suggestedTitle,
@@ -159,10 +171,12 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       }
 
       const operation = WikiOperationSchema.parse(result.operation);
-      if (existingWiki && operation === 'create')
-        {throw new Error('An existing wiki target cannot produce a create draft.');}
-      if (!existingWiki && operation === 'update')
-        {throw new Error('An update draft requires an existing promoted wiki target.');}
+      if (existingWiki && operation === 'create') {
+        throw new Error('An existing wiki target cannot produce a create draft.');
+      }
+      if (!existingWiki && operation === 'update') {
+        throw new Error('An update draft requires an existing promoted wiki target.');
+      }
       if (existingWiki && result.topic.topic_key !== existingWiki.topic_key) {
         throw new Error('An update draft cannot change the promoted wiki topic key.');
       }
@@ -198,8 +212,12 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
             : {}),
           operation,
           source_canonical_idea_ids: canonicalIdeas.map((idea) => idea.id),
-          source_transcript_ids: [transcript.id],
-          source_ids: transcript.source_id ? [transcript.source_id] : [],
+          source_transcript_ids: transcriptIds,
+          source_ids: [
+            ...new Set(
+              transcripts.flatMap((transcript) => (transcript.source_id ? [transcript.source_id] : [])),
+            ),
+          ],
           source_refs: sourceRefs,
           represented_canonical_idea_ids: result.coverage.represented_canonical_idea_ids,
           omitted_canonical_idea_ids: result.coverage.omitted_canonical_ideas.map((item) => item.id),
