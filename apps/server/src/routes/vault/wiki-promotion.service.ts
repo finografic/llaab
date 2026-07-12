@@ -48,6 +48,21 @@ function applyDraftSections(currentBody: string, draft: WikiDraftNode): string {
   return output.join('\n\n');
 }
 
+function validateDraftLinks(draft: WikiDraftNode, pages: KnowledgeWikiPage[]): void {
+  const targets = new Set(pages.map((page) => page.id));
+  const seen = new Set<string>();
+  for (const link of draft.proposed_links) {
+    const key = `${link.relation}:${link.target_wiki_id}`;
+    if (link.target_wiki_id === draft.topic_key || link.target_wiki_id === draft.target_wiki_id) {
+      throw new Error('A wiki cannot link to itself.');
+    }
+    if (!targets.has(link.target_wiki_id))
+      {throw new Error(`Wiki link target is not promoted: ${link.target_wiki_id}`);}
+    if (seen.has(key)) throw new Error(`Duplicate wiki link: ${key}`);
+    seen.add(key);
+  }
+}
+
 function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): KnowledgeWikiPage {
   return {
     id: draft.topic_key,
@@ -59,7 +74,7 @@ function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): Knowledge
     body: draft.body,
     status: 'seed',
     tags: draft.tags.filter((tag) => tag.startsWith('d:')),
-    links: [],
+    links: draft.proposed_links,
     source_refs: draft.source_refs,
     source_canonical_idea_ids: draft.source_canonical_idea_ids,
     source_transcript_ids: draft.source_transcript_ids,
@@ -102,6 +117,7 @@ export async function promoteCreateWikiDraft(draft: WikiDraftNode): Promise<{
   const result = await withKnowledgeWikiLock(draft.topic_key, async () => {
     const expected = createPromotedPage(draft, formatIsoUtcSeconds(new Date()));
     const existing = await listKnowledgeWikis();
+    validateDraftLinks(draft, existing);
     const sameId = existing.find((page) => page.id === expected.id);
     const sameTopic = existing.find((page) => page.topic_key === expected.topic_key);
 
@@ -157,11 +173,14 @@ export async function promoteUpdateWikiDraft(draft: WikiDraftNode): Promise<{
     const sourceRefs = [...current.source_refs, ...draft.source_refs].filter(
       (ref, index, all) => all.findIndex((item) => item.id === ref.id) === index,
     );
+    const existing = await listKnowledgeWikis();
+    validateDraftLinks(draft, existing);
     const next: KnowledgeWikiPage = {
       ...current,
       title: draft.title,
       summary: draft.change_summary ?? current.summary,
       body: applyDraftSections(current.body, draft),
+      links: draft.proposed_links.length > 0 ? draft.proposed_links : current.links,
       source_refs: sourceRefs,
       source_canonical_idea_ids: [
         ...new Set([...current.source_canonical_idea_ids, ...draft.source_canonical_idea_ids]),
