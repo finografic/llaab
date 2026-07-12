@@ -47,6 +47,12 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         live: true,
       },
       {
+        label: 'Wiki candidates',
+        description: 'One-shot discovery suggestions awaiting review',
+        href: '/vault/wiki-candidates',
+        live: true,
+      },
+      {
         label: 'Search',
         description: 'Full-text search across vault nodes',
         href: '/vault/search',

@@ -68,6 +68,9 @@ const KnowledgeWikiDetailPage = lazy(() =>
 const WikiDraftDetailPage = lazy(() =>
   import('routes/wiki-draft-detail').then((module) => ({ default: module.WikiDraftDetailPage })),
 );
+const WikiCandidatesPage = lazy(() =>
+  import('routes/wiki-candidates').then((module) => ({ default: module.WikiCandidatesPage })),
+);
 
 function lazyElement(Component: ComponentType): ReactElement {
   return (
@@ -239,6 +242,11 @@ export const router = createBrowserRouter([
             path: 'wiki-drafts/:id',
             element: lazyElement(WikiDraftDetailPage),
             handle: { title: 'Wiki draft' } satisfies RouteHandle,
+          },
+          {
+            path: 'wiki-candidates',
+            element: lazyElement(WikiCandidatesPage),
+            handle: { title: 'Wiki candidates' } satisfies RouteHandle,
           },
         ],
       },
