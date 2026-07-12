@@ -2,6 +2,7 @@ import {
   createNode,
   getKnowledgeWikiSectionIds,
   hashKnowledgeWikiPage,
+  listKnowledgeWikis,
   readKnowledgeWiki,
   readNodeByType,
 } from '@llaab/core';
@@ -99,6 +100,10 @@ function validateResult(
   return { score: warnings.length === 0 ? 100 : 75, warnings };
 }
 
+function normalizedTopic(value: string): string {
+  return toNodeId(value);
+}
+
 export async function compileWikiDraft(input: CompileWikiDraftInput) {
   return runSkill<CompileWikiDraftInput, CompileWikiDraftOutput>(
     'compile-wiki-draft',
@@ -134,6 +139,7 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         verification: 'source-backed' as const,
       }));
       const existingWiki = input.targetWikiId ? await readKnowledgeWiki(input.targetWikiId) : undefined;
+      const promotedWikis = existingWiki ? [] : await listKnowledgeWikis().catch(() => []);
       const topicKey =
         existingWiki?.topic_key ??
         toNodeId(input.suggestedTitle ?? canonicalIdeas[0]?.title ?? entryTranscript.title);
@@ -170,7 +176,16 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         );
       }
 
-      const operation = WikiOperationSchema.parse(result.operation);
+      let operation = WikiOperationSchema.parse(result.operation);
+      const duplicateTopic = !existingWiki
+        ? promotedWikis.find(
+            (wiki) =>
+              wiki.topic_key === result.topic.topic_key ||
+              normalizedTopic(wiki.title) === normalizedTopic(result.topic.title) ||
+              wiki.aliases.some((alias) => normalizedTopic(alias) === normalizedTopic(result.topic.title)),
+          )
+        : undefined;
+      if (duplicateTopic && operation === 'create') operation = 'needs-review';
       if (existingWiki && operation === 'create') {
         throw new Error('An existing wiki target cannot produce a create draft.');
       }
@@ -226,6 +241,12 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
           proposed_links: result.links,
           quality_score: quality.score,
           warning: quality.warnings.join(' ') || undefined,
+          ...(duplicateTopic
+            ? {
+                warning:
+                  `Possible duplicate of promoted wiki ${duplicateTopic.id}. ${quality.warnings.join(' ')}`.trim(),
+              }
+            : {}),
           change_summary: result.change_summary,
           unresolved_questions: result.unresolved_questions,
           contested_claims: result.contested_claims,
