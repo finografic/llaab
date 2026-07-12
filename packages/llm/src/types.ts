@@ -3,6 +3,7 @@ export type TaskType =
   | 'format'
   | 'extract'
   | 'consolidate'
+  | 'wiki-compile'
   | 'code'
   | 'reason'
   | 'reason-plus'

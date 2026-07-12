@@ -13,6 +13,7 @@ export { useIngestYoutube } from './useIngestYoutube';
 export { usePromoteCanonicalIdea } from './usePromoteCanonicalIdea';
 export { useResolveCanonicalIdeaConflict } from './useResolveCanonicalIdeaConflict';
 export { useCleanCanonicalIdeaArtifacts } from './useCleanCanonicalIdeaArtifacts';
+export { useCreateWikiDraft } from './useCreateWikiDraft';
 export type { TranscriptIdea } from './useTranscriptIdeas';
 export type { ConsolidateCanonicalIdeasResult } from './useConsolidateCanonicalIdeas';
 export type { ExtractTranscriptResult } from './useExtractTranscript';
@@ -20,3 +21,4 @@ export type { IngestYoutubeInput, IngestYoutubeResult } from './useIngestYoutube
 export type { PromoteCanonicalIdeaResult } from './usePromoteCanonicalIdea';
 export type { ResolveCanonicalIdeaConflictResult } from './useResolveCanonicalIdeaConflict';
 export type { CleanCanonicalIdeaArtifactsResult } from './useCleanCanonicalIdeaArtifacts';
+export type { CreateWikiDraftInput, CreateWikiDraftResult } from './useCreateWikiDraft';

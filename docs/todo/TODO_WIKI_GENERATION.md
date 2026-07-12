@@ -1,6 +1,6 @@
 # TODO — Wiki Compilation and Knowledge Promotion
 
-> **Status:** Phase 0 complete (2026-07-13). Phases 1–7 not started.
+> **Status:** Phases 0–1 complete (2026-07-13). Phases 2–7 not started.
 > **Priority:** P2 — planned.
 > **Design authority:** [Wiki Creation Spec](../../.agents/WIKI_CREATION_SPEC.md)
 
@@ -96,7 +96,7 @@ Do not implement initially:
 ## Progress
 
 - [x] Phase 0 — contracts, storage boundaries, fixtures, and guardrails (2026-07-13)
-- [ ] Phase 1 — manual single-transcript wiki-draft compilation
+- [x] Phase 1 — manual single-transcript wiki-draft compilation (2026-07-13)
 - [ ] Phase 2 — draft review and promotion of new wiki pages
 - [ ] Phase 3 — safe updates, novelty, and conflict handling
 - [ ] Phase 4 — claim-level evidence locators and citation enrichment

@@ -8,6 +8,7 @@ const DEFAULT_STALE_MS = 30 * 60 * 1000;
 
 const SKILL_STALE_MS: Record<string, number> = {
   'consolidate-canonical-ideas': 30 * 60 * 1000,
+  'compile-wiki-draft': 30 * 60 * 1000,
   'extract-transcript-ideas': 45 * 60 * 1000,
   'ingest-youtube': 90 * 60 * 1000,
 };

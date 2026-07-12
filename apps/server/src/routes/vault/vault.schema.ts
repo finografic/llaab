@@ -1,4 +1,9 @@
-import { NodeTypeSchema, SourceProfileSchema, TranscriptCanonicalCoverageSchema } from '@llaab/schemas';
+import {
+  CreateWikiDraftRequestSchema,
+  NodeTypeSchema,
+  SourceProfileSchema,
+  TranscriptCanonicalCoverageSchema,
+} from '@llaab/schemas';
 import { z } from 'zod';
 
 export const listNodesQuerySchema = z.object({
@@ -130,3 +135,6 @@ export const resolveCanonicalIdeaConflictBodySchema = z.object({
 });
 
 export type ResolveCanonicalIdeaConflictBody = z.infer<typeof resolveCanonicalIdeaConflictBodySchema>;
+
+export const createWikiDraftBodySchema = CreateWikiDraftRequestSchema;
+export type CreateWikiDraftBody = z.infer<typeof createWikiDraftBodySchema>;

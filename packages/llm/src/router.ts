@@ -44,6 +44,7 @@ const DEFAULT_ROUTING: Record<TaskType, TaskRoute> = {
   'format': { tier: 'local-small', model: MODEL_MAP['local-small'], provider: 'ollama' },
   'extract': { tier: 'local-mid', model: MODEL_MAP['local-mid'], provider: 'ollama' },
   'consolidate': { tier: 'local-strong', model: MODEL_MAP['local-strong'], provider: 'ollama' },
+  'wiki-compile': { tier: 'local-strong', model: MODEL_MAP['local-strong'], provider: 'ollama' },
   'code': { tier: 'local-strong', model: MODEL_MAP['local-strong'], provider: 'ollama' },
   'reason': { tier: 'local-strong', model: MODEL_MAP['local-strong'], provider: 'ollama' },
   'reason-plus': { tier: 'remote', model: MODEL_MAP['remote'], provider: 'anthropic' },

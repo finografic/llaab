@@ -17,6 +17,7 @@ import { Button } from 'components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
+import { WikiDraftComposer } from 'components/WikiDraftComposer';
 import { HashIcon, SparklesIcon } from 'lucide-react';
 import { QUERY_KEYS as RUN_KEYS, useRunMonitor } from 'queries/runs';
 import {
@@ -642,6 +643,7 @@ export function TranscriptDetail({
             ) : null}
           </div>
         </h2>
+        <WikiDraftComposer transcriptId={transcript.id} canonicalIdeas={canonicalIdeas} />
         {coverageCounts ? (
           <div className={styles.coverageSummary}>
             <span>{coverageCounts.covered} covered</span>

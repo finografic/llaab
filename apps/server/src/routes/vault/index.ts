@@ -5,6 +5,7 @@ import { requireVaultSession } from '../../middlewares/vault-auth.middleware.js'
 import * as routes from './vault.routes.js';
 import {
   cleanRecentBodySchema,
+  createWikiDraftBodySchema,
   batchUpdateVaultNodesBodySchema,
   codeHighlightBodySchema,
   createNodeBodySchema,
@@ -63,6 +64,13 @@ export const vaultRouter = createRouter()
   .get(routes.transcriptIdeas.path, routes.transcriptIdeas.handler)
   .post(routes.extractTranscript.path, routes.extractTranscript.handler)
   .post(routes.consolidateTranscriptIdeas.path, routes.consolidateTranscriptIdeas.handler)
+  .post(
+    routes.createWikiDraft.path,
+    zValidator('json', createWikiDraftBodySchema),
+    routes.createWikiDraft.handler,
+  )
+  .get(routes.listWikiDrafts.path, routes.listWikiDrafts.handler)
+  .get(routes.wikiDraftDetail.path, routes.wikiDraftDetail.handler)
   .post(
     routes.resolveCanonicalIdeaConflict.path,
     zValidator('json', resolveCanonicalIdeaConflictBodySchema),
