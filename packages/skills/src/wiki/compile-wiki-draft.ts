@@ -67,6 +67,7 @@ function validateResult(
   result: WikiCompileResult,
   canonicalIdeaIds: Set<string>,
   sourceRefIds: Set<string>,
+  allowedLinkTargetIds?: Set<string>,
 ): { score: number; warnings: string[] } {
   const warnings: string[] = [];
   for (const sourceRef of result.source_refs) {
@@ -74,8 +75,10 @@ function validateResult(
       throw new Error(`Wiki output introduced unknown source ref: ${sourceRef.id}`);
     }
   }
-  if (result.links.length > 0) {
-    throw new Error('Wiki create drafts cannot introduce links before promoted wikis exist.');
+  for (const link of result.links) {
+    if (!allowedLinkTargetIds?.has(link.target_wiki_id)) {
+      throw new Error(`Wiki output introduced an unavailable link target: ${link.target_wiki_id}`);
+    }
   }
   for (const section of result.sections) {
     if (section.body.trim() && section.source_ref_ids.length === 0) {
@@ -139,7 +142,7 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         verification: 'source-backed' as const,
       }));
       const existingWiki = input.targetWikiId ? await readKnowledgeWiki(input.targetWikiId) : undefined;
-      const promotedWikis = existingWiki ? [] : await listKnowledgeWikis().catch(() => []);
+      const promotedWikis = await listKnowledgeWikis().catch(() => []);
       const topicKey =
         existingWiki?.topic_key ??
         toNodeId(input.suggestedTitle ?? canonicalIdeas[0]?.title ?? entryTranscript.title);
@@ -162,6 +165,9 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         result,
         new Set(canonicalIdeas.map((idea) => idea.id)),
         new Set(sourceRefs.map((sourceRef) => sourceRef.id)),
+        existingWiki
+          ? new Set(promotedWikis.filter((wiki) => wiki.id !== existingWiki.id).map((wiki) => wiki.id))
+          : undefined,
       );
       if (quality.score < 80) {
         llm = await routeLlm('wiki-compile', prompt, {
@@ -173,6 +179,9 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
           result,
           new Set(canonicalIdeas.map((idea) => idea.id)),
           new Set(sourceRefs.map((ref) => ref.id)),
+          existingWiki
+            ? new Set(promotedWikis.filter((wiki) => wiki.id !== existingWiki.id).map((wiki) => wiki.id))
+            : undefined,
         );
       }
 
