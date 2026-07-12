@@ -55,7 +55,7 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
         suggestedTitle: suggestedTitle.trim() || undefined,
       });
       toast.success('Wiki draft created.');
-      navigate(`/vault/nodes/${result.draftId}`);
+      navigate(`/vault/wiki-drafts/${result.draftId}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Wiki compilation failed.');
     }

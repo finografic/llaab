@@ -138,3 +138,13 @@ export type ResolveCanonicalIdeaConflictBody = z.infer<typeof resolveCanonicalId
 
 export const createWikiDraftBodySchema = CreateWikiDraftRequestSchema;
 export type CreateWikiDraftBody = z.infer<typeof createWikiDraftBodySchema>;
+
+export const editWikiDraftBodySchema = z
+  .object({
+    title: z.string().min(1).optional(),
+    summary: z.string().min(1).optional(),
+  })
+  .refine((body) => body.title !== undefined || body.summary !== undefined, {
+    message: 'Provide a title and/or summary to update.',
+  });
+export type EditWikiDraftBody = z.infer<typeof editWikiDraftBodySchema>;

@@ -6,6 +6,7 @@ import * as routes from './vault.routes.js';
 import {
   cleanRecentBodySchema,
   createWikiDraftBodySchema,
+  editWikiDraftBodySchema,
   batchUpdateVaultNodesBodySchema,
   codeHighlightBodySchema,
   createNodeBodySchema,
@@ -71,8 +72,10 @@ export const vaultRouter = createRouter()
   )
   .get(routes.listWikiDrafts.path, routes.listWikiDrafts.handler)
   .get(routes.wikiDraftDetail.path, routes.wikiDraftDetail.handler)
+  .patch(routes.editWikiDraft.path, zValidator('json', editWikiDraftBodySchema), routes.editWikiDraft.handler)
   .post(routes.promoteWikiDraft.path, routes.promoteWikiDraft.handler)
   .post(routes.rejectWikiDraft.path, routes.rejectWikiDraft.handler)
+  .post(routes.regenerateWikiDraft.path, routes.regenerateWikiDraft.handler)
   .post(
     routes.resolveCanonicalIdeaConflict.path,
     zValidator('json', resolveCanonicalIdeaConflictBodySchema),

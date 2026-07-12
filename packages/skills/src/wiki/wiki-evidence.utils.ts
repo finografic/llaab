@@ -8,6 +8,33 @@ interface TranscriptParagraph {
 
 const TIMESTAMP_MARKER = /^<!--\s*t:([^\s]+)\s*-->\s*$/;
 
+export function timestampToSeconds(locator: string): number | undefined {
+  const parts = locator.split(':').map((part) => Number.parseInt(part, 10));
+  if (parts.length < 2 || parts.length > 3 || parts.some((part) => !Number.isInteger(part) || part < 0))
+    {return undefined;}
+  const [hours, minutes, seconds] = parts.length === 3 ? parts : [0, parts[0]!, parts[1]!];
+  if (minutes! >= 60 || seconds! >= 60) return undefined;
+  return hours! * 3600 + minutes! * 60 + seconds!;
+}
+
+export function youtubeTimestampUrl(
+  sourceUrl: string | undefined,
+  locator: string | undefined,
+): string | undefined {
+  if (!sourceUrl || !locator) return undefined;
+  const seconds = timestampToSeconds(locator);
+  if (seconds === undefined) return undefined;
+  try {
+    const url = new URL(sourceUrl);
+    if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'].includes(url.hostname))
+      {return undefined;}
+    url.searchParams.set('t', String(seconds));
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
 function tokenize(value: string): string[] {
   return value
     .toLocaleLowerCase()
@@ -68,7 +95,7 @@ export function buildWikiEvidence(
       canonical_idea_id: idea.id,
       transcript_id: transcript.id,
       ...(transcript.source_id ? { source_id: transcript.source_id } : {}),
-      source_url: transcript.source_url,
+      source_url: youtubeTimestampUrl(transcript.source_url, paragraph.locator) ?? transcript.source_url,
       title: transcript.title,
       excerpt: paragraph.text,
       ...(paragraph.locator ? { locator: paragraph.locator } : {}),

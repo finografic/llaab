@@ -1,6 +1,7 @@
 # TODO — Wiki Compilation and Knowledge Promotion
 
-> **Status:** Phases 0–1 complete (2026-07-13). Phases 2–7 not started.
+> **Status:** Phases 0–2 implementation complete (2026-07-13). Phases 3–7 not started; manual
+> acceptance remains tracked below.
 > **Priority:** P2 — planned.
 > **Design authority:** [Wiki Creation Spec](../../.agents/WIKI_CREATION_SPEC.md)
 
@@ -329,66 +330,66 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
 
 ### Knowledge repository operations
 
-- [ ] Add a dedicated server route group under `apps/server/src/routes/knowledge/` with
+- [x] Add a dedicated server route group under `apps/server/src/routes/knowledge/` with
       `knowledge.routes.ts`, `knowledge.schema.ts`, and a wiring-only `index.ts`.
-- [ ] Mount the router at `/api/knowledge`; knowledge reads use normal app authentication and do not
+- [x] Mount the router at `/api/knowledge`; knowledge reads use normal app authentication and do not
       depend on `VAULT_ROOT` or the vault session middleware.
-- [ ] Add `GET /api/knowledge/wikis` and `GET /api/knowledge/wikis/:id` with validated pagination,
+- [x] Add `GET /api/knowledge/wikis` and `GET /api/knowledge/wikis/:id` with validated pagination,
       lifecycle, tag, verification, and text filters.
-- [ ] Build a deterministic index from `knowledge/wikis/*.md` for id, topic key, aliases, lifecycle,
+- [x] Build a deterministic index from `knowledge/wikis/*.md` for id, topic key, aliases, lifecycle,
       source counts, represented canonical ideas, and links.
 - [ ] Allow request-time caching only with explicit file-state invalidation; no watcher or
       always-on indexing process. Deleting the cache must be harmless.
-- [ ] Reject duplicate ids/topic keys, malformed pages, unresolved source refs, duplicate sections,
+- [x] Reject duplicate ids/topic keys, malformed pages, unresolved source refs, duplicate sections,
       and links to absent promoted pages before a promotion write.
 
 ### Promotion transaction
 
-- [ ] Add `POST /api/vault/wiki-drafts/:id/promote` behind vault authorization. This is the only V1
+- [x] Add `POST /api/vault/wiki-drafts/:id/promote` behind vault authorization. This is the only V1
       application write into promoted wiki files.
-- [ ] Re-read and revalidate the draft and current knowledge index inside the per-wiki lock; never
+- [x] Re-read and revalidate the draft and current knowledge index inside the per-wiki lock; never
       promote a stale object supplied by the client.
-- [ ] Promote a create draft with revision `1`, `reviewed_at`, lifecycle `seed`, and verification
+- [x] Promote a create draft with revision `1`, `reviewed_at`, lifecycle `seed`, and verification
       `source-backed` unless stronger evidence is already deterministically established.
-- [ ] Write the knowledge file atomically, then mark the draft accepted with promoted wiki id and
+- [x] Write the knowledge file atomically, then mark the draft accepted with promoted wiki id and
       revision. Never mark a draft accepted before the knowledge file exists and validates.
-- [ ] Make cross-repository recovery idempotent: if the knowledge write succeeds but updating the
+- [x] Make cross-repository recovery idempotent: if the knowledge write succeeds but updating the
       vault draft fails, retry must detect the identical promoted page and repair draft metadata
       without creating revision `2` or a duplicate file.
 - [ ] Append promotion/rejection decisions to a durable RunNode or explicit draft review record so
       generation and final human decision are both observable.
-- [ ] Do not invoke `git add`, `git commit`, or `git push`. Promotion intentionally leaves a parent
+- [x] Do not invoke `git add`, `git commit`, or `git push`. Promotion intentionally leaves a parent
       worktree change for the user to review and commit.
 
 ### Draft lifecycle operations
 
-- [ ] Add `POST /api/vault/wiki-drafts/:id/reject`; retain the draft and run history.
-- [ ] Add `POST /api/vault/wiki-drafts/:id/regenerate`; create a new run/draft and mark the old draft
+- [x] Add `POST /api/vault/wiki-drafts/:id/reject`; retain the draft and run history.
+- [x] Add `POST /api/vault/wiki-drafts/:id/regenerate`; create a new run/draft and mark the old draft
       superseded only after the replacement persists.
-- [ ] Add a validated edit operation for proposed drafts. Edit structured sections/title/summary
+- [x] Add a validated edit operation for proposed drafts. Edit structured sections/title/summary
       and regenerate the rendered body so structured content and Markdown cannot silently diverge.
 - [ ] Re-run citation, source-ref, link, section-id, page-size, and quality validation after every
       human draft edit.
-- [ ] Disallow edits or repeated promotion on rejected/superseded/accepted drafts except explicit
+- [x] Disallow edits or repeated promotion on rejected/superseded/accepted drafts except explicit
       regeneration into a new proposed draft.
 
 ### Review and knowledge UX
 
-- [ ] Add `/vault/wiki-drafts/:id` under `VaultLayout` using `PageDetail` and the established vault
+- [x] Add `/vault/wiki-drafts/:id` under `VaultLayout` using `PageDetail` and the established vault
       session boundary.
 - [ ] Display title/summary, operation, rendered article, selected canonical ideas, transcript and
       source provenance, quality score/warnings, omitted ideas, proposed links, contested claims,
       unresolved questions, section list, and model/run metadata.
-- [ ] For create drafts, show the exact target path and a full new-page preview.
-- [ ] Add explicit `Promote`, `Reject`, `Regenerate`, and `Edit Draft` actions with confirmation and
+- [x] For create drafts, show the exact target path and a full new-page preview.
+- [x] Add explicit `Promote`, `Reject`, `Regenerate`, and `Edit Draft` actions with confirmation and
       clear terminal states.
-- [ ] Add `/knowledge/wikis` and `/knowledge/wikis/:id` outside `VaultLayout` for promoted list and
+- [x] Add `/knowledge/wikis` and `/knowledge/wikis/:id` outside `VaultLayout` for promoted list and
       detail views.
 - [ ] Show title, summary, lifecycle, verification, source count, linked-page count, represented
       idea count, revision, and last-updated/reviewed timestamps.
-- [ ] Add a Knowledge navigation section only after its routes exist and pass client validation;
+- [x] Add a Knowledge navigation section only after its routes exist and pass client validation;
       keep draft navigation under Vault.
-- [ ] Use shadcn primitives, Lucide icons, `PageList`/`PageDetail`, and `Row`/`Col` for structural
+- [x] Use shadcn primitives, Lucide icons, `PageList`/`PageDetail`, and `Row`/`Col` for structural
       layout. Keep the review surface dense and operational.
 
 ### Tests and manual proof

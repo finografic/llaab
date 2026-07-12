@@ -59,6 +59,15 @@ const RegistryReposSearchPage = lazy(() =>
 const RegistryRepoPage = lazy(() =>
   import('routes/registry-repo').then((module) => ({ default: module.RegistryRepoPage })),
 );
+const KnowledgeWikisPage = lazy(() =>
+  import('routes/knowledge-wikis').then((module) => ({ default: module.KnowledgeWikisPage })),
+);
+const KnowledgeWikiDetailPage = lazy(() =>
+  import('routes/knowledge-wiki-detail').then((module) => ({ default: module.KnowledgeWikiDetailPage })),
+);
+const WikiDraftDetailPage = lazy(() =>
+  import('routes/wiki-draft-detail').then((module) => ({ default: module.WikiDraftDetailPage })),
+);
 
 function lazyElement(Component: ComponentType): ReactElement {
   return (
@@ -121,6 +130,16 @@ export const router = createBrowserRouter([
         path: 'ingest',
         element: lazyElement(IngestPage),
         handle: { title: 'Ingest' } satisfies RouteHandle,
+      },
+      {
+        path: 'knowledge/wikis',
+        element: lazyElement(KnowledgeWikisPage),
+        handle: { title: 'Knowledge wikis' } satisfies RouteHandle,
+      },
+      {
+        path: 'knowledge/wikis/:id',
+        element: lazyElement(KnowledgeWikiDetailPage),
+        handle: { title: 'Knowledge wiki' } satisfies RouteHandle,
       },
       {
         path: 'terminal',
@@ -215,6 +234,11 @@ export const router = createBrowserRouter([
             path: 'transcripts/:id',
             element: lazyElement(TranscriptDetailPage),
             handle: { title: 'Transcript', fullBleed: true } satisfies RouteHandle,
+          },
+          {
+            path: 'wiki-drafts/:id',
+            element: lazyElement(WikiDraftDetailPage),
+            handle: { title: 'Wiki draft' } satisfies RouteHandle,
           },
         ],
       },

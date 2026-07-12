@@ -1,16 +1,10 @@
-import {
-  getNodeFilePath,
-  listKnowledgeWikis,
-  listNodes,
-  readNodeByType,
-  updateNode,
-  withKnowledgeWikiLock,
-  writeKnowledgeWiki,
-} from '@llaab/core';
+import { getNodeFilePath, listNodes, readNodeByType, updateNode } from '@llaab/core';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
 import { compileWikiDraft } from '@llaab/skills';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
-import type { CreateWikiDraftBody } from './vault.schema.js';
+import type { CreateWikiDraftBody, EditWikiDraftBody } from './vault.schema.js';
+
+import { promoteCreateWikiDraft } from './wiki-promotion.service.js';
 
 export const createWikiDraft = {
   path: '/transcripts/:id/wiki-drafts' as const,
@@ -62,48 +56,8 @@ export const promoteWikiDraft = {
     const draftId = c.req.param('id') ?? '';
     try {
       const draft = await readNodeByType('wiki-draft', draftId);
-      if (draft.draft_status !== 'proposed')
-        {return c.json({ error: 'Only proposed wiki drafts can be promoted.' }, 409);}
-      if (draft.operation !== 'create')
-        {return c.json({ error: 'Only create drafts can be promoted in Phase 2.' }, 409);}
-
-      const wiki = await withKnowledgeWikiLock(draft.topic_key, async () => {
-        const existing = await listKnowledgeWikis();
-        if (existing.some((page) => page.id === draft.topic_key || page.topic_key === draft.topic_key)) {
-          throw new Error('A promoted wiki already represents this topic.');
-        }
-        const now = formatIsoUtcSeconds(new Date());
-        const page = {
-          id: draft.topic_key,
-          type: 'wiki' as const,
-          topic_key: draft.topic_key,
-          title: draft.title,
-          aliases: [],
-          summary: draft.change_summary ?? '',
-          body: draft.body,
-          status: 'seed' as const,
-          tags: draft.tags.filter((tag) => tag.startsWith('d:')),
-          links: [],
-          source_refs: draft.source_refs,
-          source_canonical_idea_ids: draft.source_canonical_idea_ids,
-          source_transcript_ids: draft.source_transcript_ids,
-          revision: 1,
-          created_at: now,
-          updated_at: now,
-          reviewed_at: now,
-          verification_status: 'source-backed' as const,
-        };
-        return writeKnowledgeWiki(page);
-      });
-
-      await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
-        ...draft,
-        draft_status: 'accepted',
-        promoted_wiki_id: wiki.page.id,
-        promoted_revision: wiki.page.revision,
-        reviewed_at: wiki.page.reviewed_at,
-      }));
-      return c.json({ success: true, wiki: wiki.page, path: wiki.path });
+      const wiki = await promoteCreateWikiDraft(draft);
+      return c.json({ success: true, wiki: wiki.page, path: wiki.path, recovered: wiki.recovered });
     } catch (error) {
       return c.json({ error: error instanceof Error ? error.message : 'Wiki promotion failed.' }, 400);
     }
@@ -115,13 +69,69 @@ export const rejectWikiDraft = {
   handler: async (c: AppCtx) => {
     try {
       const draft = await readNodeByType('wiki-draft', c.req.param('id') ?? '');
-      if (draft.draft_status !== 'proposed')
-        {return c.json({ error: 'Only proposed wiki drafts can be rejected.' }, 409);}
+      if (draft.draft_status !== 'proposed') {
+        return c.json({ error: 'Only proposed wiki drafts can be rejected.' }, 409);
+      }
       const reviewedAt = formatIsoUtcSeconds(new Date());
       const result = await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
         ...draft,
         draft_status: 'rejected',
         reviewed_at: reviewedAt,
+      }));
+      return c.json({ success: true, draft: result.node });
+    } catch {
+      return c.json({ error: 'Wiki draft not found.' }, 404);
+    }
+  },
+};
+
+export const regenerateWikiDraft = {
+  path: '/wiki-drafts/:id/regenerate' as const,
+  handler: async (c: AppCtx) => {
+    try {
+      const draft = await readNodeByType('wiki-draft', c.req.param('id') ?? '');
+      if (draft.draft_status !== 'proposed') {
+        return c.json({ error: 'Only proposed wiki drafts can be regenerated.' }, 409);
+      }
+      const transcriptId = draft.source_transcript_ids[0];
+      if (!transcriptId || draft.source_canonical_idea_ids.length === 0) {
+        return c.json({ error: 'Wiki draft does not retain enough lineage to regenerate.' }, 409);
+      }
+      const { record, result } = await compileWikiDraft({
+        transcriptId,
+        canonicalIdeaIds: draft.source_canonical_idea_ids,
+        suggestedTitle: draft.title,
+        entryPath: 'manual',
+      });
+      if (record.status === 'failed') {
+        return c.json({ success: false, error: record.error ?? 'Wiki regeneration failed.' }, 500);
+      }
+      await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
+        ...draft,
+        draft_status: 'superseded',
+        reviewed_at: formatIsoUtcSeconds(new Date()),
+      }));
+      return c.json({ success: true, runId: record.runNodeId, draftId: result.draftId }, 201);
+    } catch {
+      return c.json({ error: 'Wiki draft not found.' }, 404);
+    }
+  },
+};
+
+export const editWikiDraft = {
+  path: '/wiki-drafts/:id' as const,
+  handler: async (c: AppCtxJson<EditWikiDraftBody>) => {
+    try {
+      const draft = await readNodeByType('wiki-draft', c.req.param('id') ?? '');
+      if (draft.draft_status !== 'proposed') {
+        return c.json({ error: 'Only proposed wiki drafts can be edited.' }, 409);
+      }
+      const body = c.req.valid('json');
+      const result = await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
+        ...draft,
+        ...(body.title ? { title: body.title } : {}),
+        ...(body.summary ? { change_summary: body.summary } : {}),
+        reviewer_edits: true,
       }));
       return c.json({ success: true, draft: result.node });
     } catch {

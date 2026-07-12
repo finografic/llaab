@@ -73,6 +73,18 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
     ],
   },
   {
+    id: 'knowledge',
+    label: 'Knowledge',
+    items: [
+      {
+        label: 'Wikis',
+        description: 'Reviewed wiki pages promoted from vault drafts',
+        href: '/knowledge/wikis',
+        live: true,
+      },
+    ],
+  },
+  {
     id: 'pipeline',
     label: 'Pipeline',
     items: [
