@@ -7,7 +7,11 @@ export async function discoverWikiCandidates() {
   return runSkill(
     'discover-wiki-candidates',
     async () => {
-      const [nodes, wikis] = await Promise.all([listNodes({ type: 'canonical-idea' }), listKnowledgeWikis()]);
+      const [nodes, wikis, existingCandidates] = await Promise.all([
+        listNodes({ type: 'canonical-idea' }),
+        listKnowledgeWikis(),
+        listNodes({ type: 'wiki-candidate' }),
+      ]);
       const ideas = nodes.filter((node) => node.type === 'canonical-idea');
       const groups = new Map<string, typeof ideas>();
       for (const idea of ideas) {
@@ -18,12 +22,14 @@ export async function discoverWikiCandidates() {
       for (const [topicKey, ideas] of groups) {
         const transcriptIds = [...new Set(ideas.map((idea) => idea.transcript_id))];
         if (ideas.length < 3 || transcriptIds.length < 2) continue;
+        const candidateId = `${topicKey}-candidate`;
+        if (existingCandidates.some((candidate) => candidate.id === candidateId)) continue;
         const existing = wikis.filter(
           (wiki) => wiki.topic_key === topicKey || wiki.tags.some((tag) => ideas[0]?.tags.includes(tag)),
         );
         const created = await createNode({
           type: 'wiki-candidate',
-          id: `${topicKey}-candidate`,
+          id: candidateId,
           title: topicKey.replace(/-/g, ' '),
           body: 'Deterministically discovered from canonical ideas. Review before compiling a wiki draft.',
           tags: ideas[0]?.tags ?? [],
