@@ -88,19 +88,21 @@ data until reviewed and promoted.
 - reusable prompt specs
 - stable decisions
 
-Promotion is manual for now:
+Wiki promotion is manual and review-gated:
 
-1. Select source material from `vault/`.
-2. Review and consolidate it.
-3. Rewrite it as a stable artifact under the right `knowledge/` folder.
-4. Preserve provenance back to vault node ids, transcript ids, source ids, run ids, or URLs.
-5. Commit the promoted artifact in the parent LLAAB repo.
+1. Select canonical ideas and compile a `wiki-draft` in `vault/nodes/wiki-drafts/`.
+2. Review its article, source references, warnings, and durable RunNode.
+3. Explicitly promote the proposed create draft; LLAAB atomically writes `knowledge/wikis/<id>.md`.
+4. The draft is then marked accepted with the promoted page id and revision; rejected/superseded drafts stay
+   in the vault as provenance.
+5. Review and commit the resulting parent-repository `knowledge/` change separately. Promotion never runs
+   Git commands.
 
 Expected first promotion path:
 
 ```text
-vault transcripts/sources -> extracted ideas -> canonical ideas
-  -> reviewed wiki page or knowledge-graph summary in knowledge/
+vault transcripts/sources -> extracted ideas -> canonical ideas -> wiki draft -> review
+  -> explicit promotion -> knowledge/wikis/ -> parent-repository review and commit
 ```
 
 ## Git Commands

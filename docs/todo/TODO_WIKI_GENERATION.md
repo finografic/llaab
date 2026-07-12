@@ -690,9 +690,9 @@ The initiative can graduate to `DONE_WIKI_GENERATION.md` when:
 
 ## Documentation Follow-Ups
 
-- [ ] Update [Vault and Knowledge Repos](../process/VAULT_KNOWLEDGE_REPOS.md) with the implemented
+- [x] Update [Vault and Knowledge Repos](../process/VAULT_KNOWLEDGE_REPOS.md) with the implemented
       draft/review/promotion behavior after the first vertical slice is stable.
-- [ ] Add an operator-facing wiki workflow guide after Phase 2; keep this TODO as the implementation
+- [x] Add an operator-facing wiki workflow guide after Phase 2; keep this TODO as the implementation
       record rather than duplicating operational instructions here.
 - [ ] Update orchestration/model-routing documentation when `wiki-compile` and `wiki-discover` land.
 - [ ] Update the taxonomy guide only if implementation intentionally changes the existing tag

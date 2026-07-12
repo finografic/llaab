@@ -78,6 +78,15 @@ flowchart TD
 
 The system is intentionally layered:
 
+## Wiki Tasks
+
+`wiki-compile` runs through the normal LLM router and durable skill runner. It compiles selected
+canonical ideas into a vault draft only; review and promotion are separate explicit operations.
+
+`wiki-discover` is a one-shot deterministic candidate task over canonical ideas. It creates reviewable
+vault candidates and never compiles or promotes a wiki automatically. `research-wiki` likewise requires
+an explicit approved request and records a RunNode without bypassing the draft/review workflow.
+
 | Layer           | Primary files                                                              | Responsibility                                      |
 | --------------- | -------------------------------------------------------------------------- | --------------------------------------------------- |
 | Schema          | `packages/schemas/src/*.schema.ts`                                         | Defines valid node and trace shapes.                |
