@@ -31,7 +31,7 @@ describe('promoteCreateWikiDraft', () => {
       related: [],
       created_at: '2026-07-13T00:00:00Z',
       status: 'seed',
-      body: '<!-- wiki-section:overview -->\\n\\n## Overview\\n\\nSource-backed draft.',
+      body: '<!-- wiki-section:overview -->\\n\\n## Overview\\n\\nSource-backed draft.[^context-transcript]',
       topic_key: 'context-management',
       operation: 'create',
       draft_status: 'proposed',

@@ -51,8 +51,9 @@ export function WikiDraftDetailPage() {
       !window.confirm(
         'Regenerate this draft? The current draft will be superseded after replacement succeeds.',
       )
-    )
-      {return;}
+    ) {
+      return;
+    }
     try {
       const replacementId = await regenerate.mutateAsync(draft.id);
       toast.success('Replacement wiki draft created.');
@@ -133,6 +134,24 @@ export function WikiDraftDetailPage() {
                 {draft.source_transcript_ids.length} transcripts · {draft.source_refs.length} source
                 references
               </p>
+              <ul className="mt-2 space-y-1 text-sm">
+                {draft.source_refs.map((ref) => (
+                  <li key={ref.id}>
+                    {ref.url ? (
+                      <a className="underline" href={ref.url} target="_blank" rel="noreferrer">
+                        {ref.title ?? ref.id}
+                        {ref.locator ? ` · ${ref.locator}` : ''}
+                      </a>
+                    ) : (
+                      <span>
+                        {ref.title ?? ref.id}
+                        {ref.locator ? ` · ${ref.locator}` : ''}
+                      </span>
+                    )}
+                    <span className="text-muted-foreground"> · {ref.verification}</span>
+                  </li>
+                ))}
+              </ul>
             </section>
             {draft.warning || draft.validation_issues.length > 0 ? (
               <section className="section">

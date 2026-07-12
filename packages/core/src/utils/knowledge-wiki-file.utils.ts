@@ -109,6 +109,14 @@ export function validateKnowledgeWikiPage(page: KnowledgeWikiPage): KnowledgeWik
       throw new Error(`Knowledge wiki citation does not resolve to a source reference: ${citationId}`);
     }
   }
+  const sectionStarts = [...validatedPage.body.matchAll(WIKI_SECTION_MARKER)];
+  for (const [index, section] of sectionStarts.entries()) {
+    const sectionBody = validatedPage.body.slice(section.index, sectionStarts[index + 1]?.index);
+    if (!WIKI_CITATION.test(sectionBody)) {
+      throw new Error(`Knowledge wiki section lacks a resolvable citation: ${section[1]}`);
+    }
+    WIKI_CITATION.lastIndex = 0;
+  }
 
   return validatedPage;
 }
@@ -143,8 +151,9 @@ export async function writeKnowledgeWiki(
   const validatedPage = validateKnowledgeWikiPage(page);
   const filePath = await resolveSafeWikiPath(validatedPage.id, false);
   const existingStats = await lstat(filePath).catch((error: unknown) => {
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT')
-      {return undefined;}
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
+      return undefined;
+    }
     throw error;
   });
   if (existingStats?.isSymbolicLink()) {

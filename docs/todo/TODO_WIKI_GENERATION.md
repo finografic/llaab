@@ -485,16 +485,16 @@ and deep links without inventing precision.
 
 - [ ] Promote the V1 paragraph scorer into a documented transcript-span resolver with stable
       paragraph locators and confidence.
-- [ ] Map `<!-- t:H:MM:SS -->` markers to YouTube `t=` deep links only when the source URL and
+- [x] Map `<!-- t:H:MM:SS -->` markers to YouTube `t=` deep links only when the source URL and
       locator validate; otherwise keep a transcript-level citation and explicit limitation.
 - [ ] Preserve multiple evidence spans for a claim when independent sources corroborate or contest
       it, while deduplicating overlapping excerpts from the same transcript.
-- [ ] Render stable source-reference identifiers in article Markdown and keep normalized refs in
+- [x] Render stable source-reference identifiers in article Markdown and keep normalized refs in
       frontmatter as the machine source of truth.
 - [ ] Display `source-backed`, `corroborated`, and `contested` accurately. Transcript-derived claims
       default to `source-backed` even when the speaker sounds authoritative.
-- [ ] Add draft/wiki UI affordances to open the source, transcript, and timestamped YouTube location.
-- [ ] Add validator checks for malformed locators, source/URL mismatch, duplicate refs, missing
+- [x] Add draft/wiki UI affordances to open the source, transcript, and timestamped YouTube location.
+- [x] Add validator checks for malformed locators, source/URL mismatch, duplicate refs, missing
       section citations, and model-invented URLs or ids.
 - [ ] Test paragraph ranking, timestamp parsing, deep-link generation, fallback citations,
       multi-source refs, malformed locator rejection, and Markdown round trips.
