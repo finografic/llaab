@@ -8,7 +8,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from 'components/ui/alert-dialog';
+import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
+import { EyeIcon } from 'lucide-react';
 import { useUpdateVaultNode } from 'queries/vault';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -45,22 +47,36 @@ export function InboxCaptureActions({ capture }: InboxCaptureActionsProps) {
 
   return (
     <div className={styles.actions}>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        disabled={updateNode.isPending || reviewState === 'reviewed'}
-        onClick={() => void applyReviewState('reviewed', 'Marked as reviewed')}
-      >
-        Mark reviewed
-      </Button>
+      {reviewState === 'new' || reviewState === 'failed' ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          title="Keep in Vault and remove from Needs attention"
+          disabled={updateNode.isPending}
+          onClick={() =>
+            void applyReviewState(
+              'reviewed',
+              'Marked reviewed — kept in Vault and available under All or Reviewed.',
+            )
+          }
+        >
+          <EyeIcon aria-hidden />
+          Mark reviewed
+        </Button>
+      ) : reviewState === 'reviewed' ? (
+        <Badge variant="outline" className={styles.reviewedBadge}>
+          <EyeIcon aria-hidden />
+          Reviewed · kept in Vault
+        </Badge>
+      ) : null}
       {reviewState === 'archived' ? (
         <Button
           type="button"
           size="sm"
           variant="outline"
           disabled={updateNode.isPending}
-          onClick={() => void applyReviewState('reviewed', 'Unarchived capture')}
+          onClick={() => void applyReviewState('reviewed', 'Unarchived — returned to Reviewed in Vault.')}
         >
           Unarchive
         </Button>
@@ -91,8 +107,9 @@ export function InboxCaptureActions({ capture }: InboxCaptureActionsProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Archive this capture?</AlertDialogTitle>
             <AlertDialogDescription>
-              Archiving clears it from the default inbox attention list. The vault node is kept; you can
-              unarchive later.
+              Archiving is separate from reviewing. It removes the capture from active attention views, but
+              keeps the vault node. It does not promote anything into knowledge, and you can retrieve it using
+              Review: archived.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -100,7 +117,7 @@ export function InboxCaptureActions({ capture }: InboxCaptureActionsProps) {
             <AlertDialogAction
               disabled={updateNode.isPending}
               onClick={() => {
-                void applyReviewState('archived', 'Archived capture').then(() => {
+                void applyReviewState('archived', 'Archived — kept in Vault and not promoted.').then(() => {
                   setConfirmArchive(false);
                   return undefined;
                 });

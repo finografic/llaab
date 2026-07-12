@@ -1,46 +1,137 @@
-.summaryCard {
-  align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+.summaryRow {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.reviewHelp {
+  margin-top: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.reviewHelpText {
   display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.reviewHelpText svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+  margin-top: 0.12rem;
+  color: var(--info-text);
+}
+
+.reviewHelpText strong {
+  color: var(--foreground);
+}
+
+.reviewHelpAction {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.summaryCard {
+  justify-content: flex-start;
+  width: 100%;
   height: 100%;
-  justify-content: space-between;
-  min-height: 3rem;
-  padding: var(--space-3) var(--space-4);
+  min-height: 3.6rem;
+  padding: var(--space-3);
+  text-align: left;
+}
+
+.summaryCard[aria-disabled="true"] {
+  pointer-events: none;
+}
+
+.summaryCard[data-active="true"] {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface));
+}
+
+.summaryCard[data-tone="warning"] > svg {
+  color: var(--warning-text, var(--muted-foreground));
+}
+
+.summaryCard > svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted-foreground);
+}
+
+.summaryValue,
+.summaryLabel {
+  display: block;
 }
 
 .summaryValue {
+  min-width: 1.5rem;
+  justify-content: center;
+  margin-left: auto;
+  padding: 0 0.4rem;
   color: var(--foreground);
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
 .summaryLabel {
   color: var(--muted-foreground);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
 .group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  display: block;
+}
+
+.group + .group {
+  margin-top: var(--space-5);
+}
+
+.groupTrigger {
+  align-items: center;
+  width: auto;
+  margin-bottom: var(--space-3);
+  padding: 0.25rem 0;
+}
+
+.groupTrigger:hover .groupHeading {
+  color: var(--accent);
+}
+
+.groupTrigger > [data-slot="collapsible-trigger-icon"] {
+  margin-top: 0;
 }
 
 .groupHeading {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
   text-transform: capitalize;
+  transition: color 120ms ease;
 }
 
 .groupCount {
+  min-width: 1.5rem;
+  justify-content: center;
   color: var(--muted-foreground);
-  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   font-weight: 500;
+}
+
+.groupContent {
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .reviewHelpAction {
+    justify-content: flex-start;
+    margin-top: var(--space-2);
+  }
 }

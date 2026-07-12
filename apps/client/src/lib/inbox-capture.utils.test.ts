@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { LabNode } from '@llaab/schemas';
 
-import { filterInboxCaptures, parseInboxFiltersFromSearchParams } from './inbox-capture-filters';
+import {
+  filterInboxCaptures,
+  inboxCaptureNeedsAttention,
+  matchesInboxCaptureView,
+  parseInboxFiltersFromSearchParams,
+} from './inbox-capture-filters';
 import { isInboxCaptureNode, parseInboxCapture } from './inbox-capture.utils';
 import { getInboxReviewState, withInboxReviewState } from './inbox-review.utils';
 
@@ -72,11 +77,11 @@ describe('inbox review tags', () => {
 
 describe('inbox filters', () => {
   it('parses URL search params and filters by route kind', () => {
-    const filters = parseInboxFiltersFromSearchParams(
-      new URLSearchParams('kind=todo&attention=needs_attention'),
-    );
+    const filters = parseInboxFiltersFromSearchParams(new URLSearchParams('kind=todo'));
     expect(filters.routeKind).toBe('todo');
-    expect(filters.attention).toBe('needs_attention');
+    expect(
+      parseInboxFiltersFromSearchParams(new URLSearchParams('attention=needs_attention')).attention,
+    ).toBe('needs_attention');
 
     const captures = [
       parseInboxCapture(
@@ -118,5 +123,15 @@ describe('inbox filters', () => {
     const filtered = filterInboxCaptures(captures, { ...filters, routeKind: 'todo' });
     expect(filtered).toHaveLength(1);
     expect(filtered[0]?.node.id).toBe('todo-1');
+    expect(matchesInboxCaptureView(captures[0], 'todos')).toBe(true);
+    expect(matchesInboxCaptureView(captures[1], 'links')).toBe(true);
+    expect(inboxCaptureNeedsAttention(captures[0])).toBe(false);
+  });
+
+  it('preserves a valid saved view and rejects an unknown view', () => {
+    expect(parseInboxFiltersFromSearchParams(new URLSearchParams('view=attachments')).view).toBe(
+      'attachments',
+    );
+    expect(parseInboxFiltersFromSearchParams(new URLSearchParams('view=missing')).view).toBe('all');
   });
 });

@@ -32,6 +32,9 @@ build/
 *.swp
 *.swo
 
+# lean-ctx local state
+.lean-ctx/
+
 # Docs
 docs/drafts/
 

@@ -1,40 +1,124 @@
 .filters {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
 }
 
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: end;
+.viewTabs {
+  width: 100%;
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: var(--space-4);
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  min-width: 9.5rem;
+.viewTab {
+  gap: 0.4rem;
 }
 
-.fieldWide {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  flex: 1 1 16rem;
-  min-width: 14rem;
+.viewCount {
+  min-width: 1.3rem;
+  height: 1.2rem;
+  justify-content: center;
+  padding: 0 0.35rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
 }
 
 .label {
+  display: block;
+  margin-bottom: 0.35rem;
   color: var(--text-muted);
   font-size: 0.75rem;
   font-weight: 500;
 }
 
-.actions {
+.searchWrap {
+  position: relative;
+}
+
+.searchWrap > svg {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 0.7rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--muted-foreground);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.searchInput {
+  padding-left: 2.2rem;
+}
+
+.filterToggle {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
   align-items: center;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.filterToggle:hover {
+  background: var(--muted);
+}
+
+.filterToggle > svg:not([data-slot="collapsible-trigger-icon"]) {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.activeFilterCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  margin-left: auto;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground, var(--background));
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+.advancedFilters {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--surface) 75%, transparent);
+}
+
+.filterCol,
+.resetCol {
+  margin-bottom: var(--space-2);
+}
+
+.filterCol [data-slot="select-trigger"] {
+  width: 100%;
+}
+
+.resetButton {
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .filterToggle {
+    margin-top: var(--space-2);
+  }
+
+  .viewTabs {
+    scrollbar-width: thin;
+  }
 }

@@ -1,21 +1,19 @@
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  display: block;
 }
 
 .row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
-  align-items: center;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface);
   transition:
     border-color 120ms ease,
     background-color 120ms ease;
+}
+
+.row + .row {
+  margin-top: var(--space-2);
 }
 
 .row:hover {
@@ -27,74 +25,326 @@
   border-color: var(--accent);
 }
 
-.rowMain {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.7fr) minmax(0, 0.6fr) auto;
+.row[data-review-state="failed"],
+.row[data-route-kind="raw"],
+.row[data-route-kind="unknown"] {
+  border-left-color: var(--warning-border, var(--border));
+}
+
+.primaryCol,
+.metaCol,
+.actionsCol {
+  min-width: 0;
+  padding: 0 var(--space-2);
+}
+
+.primaryLink {
+  display: flex;
+  align-items: center;
   gap: var(--space-3);
-  align-items: start;
   min-width: 0;
   color: inherit;
   text-decoration: none;
 }
 
+.visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.1rem;
+  height: 3.1rem;
+  flex: 0 0 3.1rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--muted) 60%, transparent);
+  color: var(--muted-foreground);
+}
+
+.visual svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.row[data-route-kind="docs_link"] .visual,
+.row[data-route-kind="docs_attachment"] .visual {
+  color: var(--info-text, var(--accent));
+}
+
+.row[data-route-kind="code_snippet"] .visual,
+.row[data-route-kind="code_link"] .visual,
+.row[data-route-kind="code_attachment"] .visual,
+.row[data-route-kind="command_candidate"] .visual {
+  color: var(--accent);
+}
+
+.row[data-route-kind="todo"] .visual {
+  color: var(--warning-text, var(--accent));
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.content {
+  display: block;
+  min-width: 0;
+}
+
+.title,
+.summary,
+.secondary,
+.commandNotice,
+.malformed {
+  display: block;
+}
+
 .title {
+  overflow: hidden;
   font-weight: 600;
   line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .summary {
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
+  overflow: hidden;
   color: var(--muted-foreground);
   font-size: 0.875rem;
-  line-height: 1.4;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.meta {
+.codeSummary {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.secondary {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandNotice,
+.malformed {
+  margin-top: 0.2rem;
+  color: var(--warning-text, var(--muted-foreground));
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.badges,
+.actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
   align-items: center;
 }
 
-.date {
-  color: var(--muted-foreground);
-  font-size: 0.8125rem;
-  white-space: nowrap;
-  justify-self: end;
+.kindBadge {
+  border: 1px solid transparent;
+  text-transform: capitalize;
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: end;
+.row[data-route-kind="docs_link"] .kindBadge,
+.row[data-route-kind="docs_attachment"] .kindBadge,
+.row[data-route-kind="post_link"] .kindBadge {
+  border-color: color-mix(in oklab, var(--info-text, var(--accent)) 30%, transparent);
+  background: color-mix(in oklab, var(--info-text, var(--accent)) 10%, var(--secondary));
+  color: var(--info-text, var(--accent));
+}
+
+.row[data-route-kind="code_snippet"] .kindBadge,
+.row[data-route-kind="code_link"] .kindBadge,
+.row[data-route-kind="code_attachment"] .kindBadge,
+.row[data-route-kind="command_candidate"] .kindBadge {
+  border-color: color-mix(in oklab, var(--accent) 30%, transparent);
+  background: color-mix(in oklab, var(--accent) 10%, var(--secondary));
+  color: var(--accent);
+}
+
+.row[data-route-kind="image"] .kindBadge,
+.row[data-route-kind="attachment"] .kindBadge {
+  border-color: color-mix(in oklab, var(--consolidation-text, var(--accent)) 30%, transparent);
+  background: color-mix(in oklab, var(--consolidation-text, var(--accent)) 10%, var(--secondary));
+  color: var(--consolidation-text, var(--accent));
+}
+
+.row[data-route-kind="todo"] .kindBadge {
+  border-color: color-mix(in oklab, var(--warning-text, var(--accent)) 30%, transparent);
+  background: color-mix(in oklab, var(--warning-text, var(--accent)) 10%, var(--secondary));
+  color: var(--warning-text, var(--accent));
+}
+
+.row[data-route-kind="raw"] .kindBadge,
+.row[data-route-kind="unknown"] .kindBadge {
+  border-color: color-mix(in oklab, var(--error-text, var(--destructive)) 30%, transparent);
+  background: color-mix(in oklab, var(--error-text, var(--destructive)) 10%, var(--secondary));
+  color: var(--error-text, var(--destructive));
+}
+
+.row[data-route-kind="npm_package"] .kindBadge,
+.row[data-route-kind="github_repo"] .kindBadge,
+.row[data-route-kind="youtube_url"] .kindBadge {
+  border-color: color-mix(in oklab, var(--consolidation-text, var(--accent)) 30%, transparent);
+  background: color-mix(in oklab, var(--consolidation-text, var(--accent)) 10%, var(--secondary));
+  color: var(--consolidation-text, var(--accent));
+}
+
+.stateMeta {
+  display: block;
+}
+
+.reviewBadge {
+  text-transform: capitalize;
+}
+
+.captureTag {
+  --capture-tag-color: var(--muted-foreground);
+
+  border-color: color-mix(in oklab, var(--capture-tag-color) 30%, transparent);
+  background: color-mix(in oklab, var(--capture-tag-color) 10%, transparent);
+  color: var(--capture-tag-color);
+  font-family: var(--font-mono);
+}
+
+.captureTag[data-tag="d:llm"] {
+  --capture-tag-color: var(--info-text);
+}
+
+.captureTag[data-tag="d:automation"],
+.captureTag[data-tag="d:ui"] {
+  --capture-tag-color: var(--consolidation-text);
+}
+
+.captureTag[data-tag="d:ingest"],
+.captureTag[data-tag="d:integration"] {
+  --capture-tag-color: var(--warning-text);
+}
+
+.captureTag[data-tag="d:schema"],
+.captureTag[data-tag="d:meta"] {
+  --capture-tag-color: var(--success-text);
+}
+
+.captureTag[data-tag="d:infra"] {
+  --capture-tag-color: var(--pending-text);
+}
+
+.platformBadge {
+  text-transform: capitalize;
+}
+
+.platformBadge[data-platform="telegram"] {
+  border-color: var(--info-border-dim);
+  color: var(--info-text);
+}
+
+.platformBadge[data-platform="discord"] {
+  border-color: var(--consolidation-border);
+  color: var(--consolidation-text);
+}
+
+.reviewBadge[data-review-state="new"] {
+  color: var(--accent);
+  border-color: var(--accent-border-dim, var(--border));
+}
+
+.reviewBadge[data-review-state="failed"] {
+  color: var(--error-text, var(--destructive));
+}
+
+.reviewBadge[data-review-state="reviewed"] {
+  border-color: var(--info-border-dim);
+  color: var(--info-text);
+}
+
+.reviewBadge[data-review-state="archived"] {
+  color: var(--pending-text);
+}
+
+.reviewBadge[data-review-state="promoted"] {
+  border-color: var(--consolidation-border);
+  color: var(--consolidation-text);
+}
+
+.reviewAction {
+  color: var(--info-text);
+}
+
+.date {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.actionsCol .actions {
+  justify-content: flex-end;
 }
 
 .empty,
 .state {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
   color: var(--muted-foreground);
   font-size: 0.875rem;
+  text-align: center;
 }
 
-.error {
+.errorState {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-4);
+  border: 1px solid var(--destructive);
+  border-radius: var(--radius-md);
   color: var(--error-text, var(--destructive));
-  font-size: 0.875rem;
 }
 
-.malformed {
-  color: var(--warning-text, var(--muted-foreground));
-  font-size: 0.75rem;
+.errorState svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
 }
 
-@media (max-width: 800px) {
-  .rowMain {
-    grid-template-columns: 1fr;
+.errorState p {
+  margin: 0.25rem 0 0;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 1023px) {
+  .metaCol,
+  .actionsCol {
+    margin-top: var(--space-3);
   }
 
-  .date {
-    justify-self: start;
+  .actionsCol .actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 639px) {
+  .row {
+    padding: var(--space-3) var(--space-2);
+  }
+
+  .visual {
+    width: 2.6rem;
+    height: 2.6rem;
+    flex-basis: 2.6rem;
   }
 }

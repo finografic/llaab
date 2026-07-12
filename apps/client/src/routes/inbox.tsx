@@ -11,28 +11,47 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from 'components/ui/alert-dialog';
+import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { Col, Row } from 'components/ui/grid';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
+import {
+  CircleDotIcon,
+  Clock3Icon,
+  EyeIcon,
+  FileQuestionIcon,
+  InfoIcon,
+  PaperclipIcon,
+  TriangleAlertIcon,
+  ZapIcon,
+} from 'lucide-react';
 import { useBatchUpdateVaultNodes, useVaultNodes } from 'queries/vault';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import type { LucideIcon } from 'lucide-react';
 
 import {
   filterInboxCaptures,
   groupInboxCaptures,
+  inboxCaptureNeedsAttention,
   inboxFiltersToSearchParams,
+  INBOX_CAPTURE_VIEWS,
+  matchesInboxCaptureView,
   parseInboxFiltersFromSearchParams,
 } from 'lib/inbox-capture-filters';
+import type {
+  InboxCaptureFilters as InboxCaptureFiltersState,
+  InboxCaptureView,
+} from 'lib/inbox-capture-filters';
 import { INBOX_LIST_TAGS, isInboxCaptureNode, parseInboxCapture } from 'lib/inbox-capture.utils';
+import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
 import { getInboxReviewState, withInboxReviewState } from 'lib/inbox-review.utils';
 import { usePageTitle } from 'lib/use-page-title';
 
 import styles from './inbox.module.css';
-
-const ACTION_BACKED_ROUTE_KINDS = new Set(['youtube_url', 'npm_package', 'github_repo']);
 
 export function InboxPage() {
   usePageTitle('Inbox');
@@ -56,20 +75,47 @@ export function InboxPage() {
   const allCaptures = nodes.filter(isInboxCaptureNode).map(parseInboxCapture);
   const filteredCaptures = filterInboxCaptures(allCaptures, filters);
   const groups = groupInboxCaptures(filteredCaptures, filters.groupBy);
+  const viewCounts = Object.fromEntries(
+    INBOX_CAPTURE_VIEWS.map(({ value }) => [
+      value,
+      allCaptures.filter((capture) => matchesInboxCaptureView(capture, value)).length,
+    ]),
+  ) as Record<InboxCaptureView, number>;
   const statusOptions = [...new Set(allCaptures.map((capture) => capture.node.status))].toSorted();
   const reviewedVisible = filteredCaptures.filter(
     (capture) => getInboxReviewState(capture.node) === 'reviewed',
   );
-  const newVisibleCount = filteredCaptures.filter(
-    (capture) => getInboxReviewState(capture.node) === 'new',
+  const unreviewedCount = allCaptures.filter((capture) => getInboxReviewState(capture.node) === 'new').length;
+  const reviewedCount = allCaptures.filter(
+    (capture) => getInboxReviewState(capture.node) === 'reviewed',
   ).length;
-  const attentionVisibleCount = filteredCaptures.filter(
-    (capture) =>
-      capture.malformed || capture.routeKind === 'raw' || getInboxReviewState(capture.node) === 'failed',
-  ).length;
-  const actionBackedVisibleCount = filteredCaptures.filter((capture) =>
-    ACTION_BACKED_ROUTE_KINDS.has(capture.routeKind),
-  ).length;
+  const newTodayCount = allCaptures.filter((capture) => isToday(capture.receivedAt)).length;
+
+  const updateFilters = (next: InboxCaptureFiltersState) => {
+    setSearchParams(inboxFiltersToSearchParams(next), { replace: true });
+  };
+
+  const applySummaryView = (view: InboxCaptureView) => {
+    updateFilters({
+      ...filters,
+      view,
+      routeKind: 'all',
+      attention: 'all',
+      reviewState: 'all',
+    });
+  };
+
+  const markReviewed = async (capture: ParsedInboxCapture) => {
+    try {
+      await batchUpdate.mutateAsync({
+        ids: [capture.node.id],
+        tags: withInboxReviewState(capture.node.tags, 'reviewed'),
+      });
+      toast.success('Marked reviewed — kept in Vault and available under All or Reviewed.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update capture.');
+    }
+  };
 
   const archiveReviewed = async () => {
     try {
@@ -118,7 +164,8 @@ export function InboxPage() {
                 disabled={batchUpdate.isPending}
                 onClick={() => setConfirmBatchArchive(true)}
               >
-                Archive reviewed ({reviewedVisible.length})
+                Archive reviewed
+                <Badge variant="outline">{reviewedVisible.length}</Badge>
               </Button>
             ) : null
           }
@@ -129,46 +176,96 @@ export function InboxPage() {
         <InboxCaptureFilters
           filters={filters}
           statusOptions={statusOptions}
-          onChange={(next) => {
-            setSearchParams(inboxFiltersToSearchParams(next), { replace: true });
-          }}
+          viewCounts={viewCounts}
+          onChange={updateFilters}
         />
 
-        <Row gutterWidth={12} aria-label="Inbox summary">
-          <Col xs={6} md={3}>
-            <div className={styles.summaryCard}>
-              <span className={styles.summaryValue}>{filteredCaptures.length}</span>
-              <span className={styles.summaryLabel}>Visible</span>
-            </div>
+        <Row gutterWidth={8} align="center" className={styles.reviewHelp}>
+          <Col xs={12} md={9}>
+            <p className={styles.reviewHelpText}>
+              <InfoIcon aria-hidden />
+              <span>
+                <strong>Reviewing completes Inbox triage only.</strong> The capture stays in Vault and All; it
+                leaves Needs attention. Archiving is a separate state. Neither action promotes it to
+                knowledge.
+              </span>
+            </p>
           </Col>
-          <Col xs={6} md={3}>
-            <div className={styles.summaryCard}>
-              <span className={styles.summaryValue}>{newVisibleCount}</span>
-              <span className={styles.summaryLabel}>New</span>
-            </div>
-          </Col>
-          <Col xs={6} md={3}>
-            <div className={styles.summaryCard}>
-              <span className={styles.summaryValue}>{attentionVisibleCount}</span>
-              <span className={styles.summaryLabel}>Attention</span>
-            </div>
-          </Col>
-          <Col xs={6} md={3}>
-            <div className={styles.summaryCard}>
-              <span className={styles.summaryValue}>{actionBackedVisibleCount}</span>
-              <span className={styles.summaryLabel}>Action-backed</span>
-            </div>
+          <Col xs={12} md={3} className={styles.reviewHelpAction}>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() =>
+                updateFilters({
+                  ...filters,
+                  view: 'all',
+                  reviewState: 'reviewed',
+                  attention: 'all',
+                })
+              }
+            >
+              <EyeIcon aria-hidden />
+              View reviewed
+              <Badge variant="outline">{reviewedCount}</Badge>
+            </Button>
           </Col>
         </Row>
 
-        {groups.map((group) => (
-          <section key={group.key} className={styles.group}>
-            {filters.groupBy !== 'none' ? (
-              <h2 className={styles.groupHeading}>
-                {group.label}
-                <span className={styles.groupCount}>{group.captures.length}</span>
-              </h2>
-            ) : null}
+        <Row gutterWidth={8} aria-label="Inbox summary" className={styles.summaryRow}>
+          <Col xs={6} md={4} xl={2}>
+            <SummaryMetric icon={Clock3Icon} value={newTodayCount} label="Captured today" />
+          </Col>
+          <Col xs={6} md={4} xl={2}>
+            <SummaryMetric
+              icon={CircleDotIcon}
+              value={unreviewedCount}
+              label="Unreviewed"
+              active={filters.reviewState === 'new'}
+              onClick={() => updateFilters({ ...filters, view: 'all', reviewState: 'new' })}
+            />
+          </Col>
+          <Col xs={6} md={4} xl={2}>
+            <SummaryMetric
+              icon={TriangleAlertIcon}
+              value={allCaptures.filter(inboxCaptureNeedsAttention).length}
+              label="Needs attention"
+              tone="warning"
+              active={filters.view === 'needs_attention'}
+              onClick={() => applySummaryView('needs_attention')}
+            />
+          </Col>
+          <Col xs={6} md={4} xl={2}>
+            <SummaryMetric
+              icon={ZapIcon}
+              value={viewCounts.action_backed}
+              label="Action-backed"
+              active={filters.view === 'action_backed'}
+              onClick={() => applySummaryView('action_backed')}
+            />
+          </Col>
+          <Col xs={6} md={4} xl={2}>
+            <SummaryMetric
+              icon={FileQuestionIcon}
+              value={viewCounts.raw}
+              label="Raw / unknown"
+              active={filters.view === 'raw'}
+              onClick={() => applySummaryView('raw')}
+            />
+          </Col>
+          <Col xs={6} md={4} xl={2}>
+            <SummaryMetric
+              icon={PaperclipIcon}
+              value={viewCounts.attachments}
+              label="Attachments"
+              active={filters.view === 'attachments'}
+              onClick={() => applySummaryView('attachments')}
+            />
+          </Col>
+        </Row>
+
+        {groups.map((group) => {
+          const list = (
             <InboxCaptureList
               captures={group.captures}
               loading={isLoading}
@@ -178,9 +275,31 @@ export function InboxPage() {
                   ? 'No Hermes inbox captures yet. Drop a link or note in Telegram to see it here.'
                   : 'No captures match the current filters.'
               }
+              reviewPending={batchUpdate.isPending}
+              onMarkReviewed={(capture) => void markReviewed(capture)}
             />
-          </section>
-        ))}
+          );
+
+          if (filters.groupBy === 'none') {
+            return (
+              <section key={group.key} className={styles.group}>
+                {list}
+              </section>
+            );
+          }
+
+          return (
+            <Collapsible key={group.key} defaultOpen className={styles.group}>
+              <CollapsibleTrigger className={styles.groupTrigger}>
+                <span className={styles.groupHeading}>{group.label}</span>
+                <Badge variant="secondary" className={styles.groupCount}>
+                  {group.captures.length}
+                </Badge>
+              </CollapsibleTrigger>
+              <CollapsibleContent className={styles.groupContent}>{list}</CollapsibleContent>
+            </Collapsible>
+          );
+        })}
       </PageList>
 
       <AlertDialog open={confirmBatchArchive} onOpenChange={setConfirmBatchArchive}>
@@ -208,4 +327,43 @@ export function InboxPage() {
       </AlertDialog>
     </PageLayout>
   );
+}
+
+function SummaryMetric({
+  icon: Icon,
+  value,
+  label,
+  active = false,
+  tone = 'default',
+  onClick,
+}: {
+  icon: LucideIcon;
+  value: number;
+  label: string;
+  active?: boolean;
+  tone?: 'default' | 'warning';
+  onClick?: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      className={styles.summaryCard}
+      data-active={active || undefined}
+      data-tone={tone}
+      aria-disabled={!onClick}
+      onClick={onClick}
+    >
+      <Icon aria-hidden />
+      <span className={styles.summaryLabel}>{label}</span>
+      <Badge variant="secondary" className={styles.summaryValue}>
+        {value}
+      </Badge>
+    </Button>
+  );
+}
+
+function isToday(timestamp: string): boolean {
+  const date = new Date(timestamp);
+  return !Number.isNaN(date.getTime()) && date.toDateString() === new Date().toDateString();
 }
