@@ -1,14 +1,15 @@
 import { PageHero } from 'components/PageHero/PageHero';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
-import { useKnowledgeWiki } from 'queries/knowledge';
-import { Navigate, useParams } from 'react-router-dom';
+import { useKnowledgeWiki, useKnowledgeWikiGraph } from 'queries/knowledge';
+import { Link, Navigate, useParams } from 'react-router-dom';
 
 import { usePageTitle } from 'lib/use-page-title';
 
 export function KnowledgeWikiDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: wiki, isLoading, error } = useKnowledgeWiki(id);
+  const { data: graph } = useKnowledgeWikiGraph();
   usePageTitle(wiki?.title ?? 'Knowledge wiki');
 
   if (!id) return <Navigate to="/knowledge/wikis" replace />;
@@ -41,6 +42,27 @@ export function KnowledgeWikiDetailPage() {
                 ))}
               </ul>
             </section>
+            {graph ? (
+              <section className="section">
+                <h2 className="section__heading">Related pages</h2>
+                <ul className="space-y-1 text-sm">
+                  {graph.edges
+                    .filter((edge) => edge.source === wiki.id || edge.target === wiki.id)
+                    .map((edge) => {
+                      const relatedId = edge.source === wiki.id ? edge.target : edge.source;
+                      const related = graph.nodes.find((node) => node.id === relatedId);
+                      return (
+                        <li key={`${edge.source}-${edge.relation}-${edge.target}`}>
+                          <Link className="underline" to={`/knowledge/wikis/${relatedId}`}>
+                            {related?.title ?? relatedId}
+                          </Link>
+                          <span className="text-muted-foreground"> · {edge.relation}</span>
+                        </li>
+                      );
+                    })}
+                </ul>
+              </section>
+            ) : null}
           </>
         ) : null}
       </PageDetail>

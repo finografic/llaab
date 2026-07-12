@@ -35,3 +35,21 @@ export function useKnowledgeWiki(id: string | undefined) {
     },
   });
 }
+
+export interface KnowledgeWikiGraph {
+  nodes: Array<{ id: string; title: string }>;
+  edges: Array<{ source: string; target: string; relation: string }>;
+  diagnostics: string[];
+}
+
+export function useKnowledgeWikiGraph() {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.knowledge.wikis(), 'graph'] as const,
+    queryFn: async (): Promise<KnowledgeWikiGraph> => {
+      const response = await api.knowledge.wikis.graph.$get();
+      const body = (await response.json()) as { graph?: KnowledgeWikiGraph; error?: string };
+      if (!response.ok || !body.graph) throw new Error(body.error ?? 'Failed to load knowledge graph.');
+      return body.graph;
+    },
+  });
+}
