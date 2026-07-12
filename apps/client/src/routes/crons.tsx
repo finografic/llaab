@@ -20,7 +20,7 @@ import { NativeSelect, NativeSelectOption } from 'components/ui/native-select';
 import { Textarea } from 'components/ui/textarea';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
-import { ChevronDownIcon, ChevronRightIcon, EditIcon, PlusIcon, TimerIcon } from 'lucide-react';
+import { EditIcon, PlusIcon, TimerIcon } from 'lucide-react';
 import {
   useCreateCronRecipe,
   useCronRecipes,
@@ -352,11 +352,6 @@ export function CronsPage() {
 
         <Collapsible open={syntaxOpen} onOpenChange={setSyntaxOpen}>
           <CollapsibleTrigger className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
-            {syntaxOpen ? (
-              <ChevronDownIcon size={14} aria-hidden />
-            ) : (
-              <ChevronRightIcon size={14} aria-hidden />
-            )}
             Cron syntax
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -406,11 +401,6 @@ export function CronsPage() {
 
         <Collapsible open={addRecipeOpen} onOpenChange={setAddRecipeOpen}>
           <CollapsibleTrigger className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
-            {addRecipeOpen ? (
-              <ChevronDownIcon size={14} aria-hidden />
-            ) : (
-              <ChevronRightIcon size={14} aria-hidden />
-            )}
             Adding a Cron Recipe
           </CollapsibleTrigger>
           <CollapsibleContent>

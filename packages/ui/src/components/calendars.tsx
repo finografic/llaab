@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from '@llaab/ui/components/sidebar';
-import { CheckIcon, ChevronRightIcon } from 'lucide-react';
+import { CheckIcon } from 'lucide-react';
 import * as React from 'react';
 
 export function Calendars({
@@ -31,10 +31,7 @@ export function Calendars({
                 asChild
                 className="group/label w-full text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
-                <CollapsibleTrigger>
-                  {calendar.name}{' '}
-                  <ChevronRightIcon className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                </CollapsibleTrigger>
+                <CollapsibleTrigger>{calendar.name}</CollapsibleTrigger>
               </SidebarGroupLabel>
               <CollapsibleContent>
                 <SidebarGroupContent>

@@ -17,7 +17,7 @@ import { Button } from 'components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { Col, Row } from 'components/ui/grid';
 import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
-import { ChevronDownIcon, HashIcon, SparklesIcon } from 'lucide-react';
+import { HashIcon, SparklesIcon } from 'lucide-react';
 import { QUERY_KEYS as RUN_KEYS, useRunMonitor } from 'queries/runs';
 import {
   useCleanCanonicalIdeaArtifacts,
@@ -797,7 +797,6 @@ export function TranscriptDetail({
                 Extracted ideas
                 {visibleIdeaCount > 0 ? <span className="section__count">{visibleIdeaCount}</span> : null}
               </span>
-              <ChevronDownIcon className={styles.extractedIdeasChevron} aria-hidden />
             </CollapsibleTrigger>
             <Button
               type="button"

@@ -1,9 +1,10 @@
 'use client';
 
 import { cn } from '@llaab/ui/lib/utils';
-import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
-import { CheckCircle2, ChevronDown, Circle, FileCode, ListTodo, Loader2, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, FileCode, ListTodo, Loader2, XCircle } from 'lucide-react';
 import * as React from 'react';
+
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../collapsible';
 
 type TaskStatus = 'pending' | 'in-progress' | 'completed' | 'error';
 
@@ -81,7 +82,7 @@ function AiTaskList({
 
   return (
     <AiTaskListContext.Provider value={contextValue}>
-      <CollapsiblePrimitive.Root
+      <Collapsible
         data-slot="ai-task-list"
         open={isOpen}
         onOpenChange={handleOpenChange}
@@ -90,9 +91,9 @@ function AiTaskList({
           className,
         )}
       >
-        <CollapsiblePrimitive.Trigger
+        <CollapsibleTrigger
           data-slot="ai-task-list-trigger"
-          className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50"
         >
           <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
             <ListTodo className="size-4 text-muted-foreground" />
@@ -105,15 +106,9 @@ function AiTaskList({
               </span>
             )}
           </div>
-          <ChevronDown
-            className={cn(
-              'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-              isOpen && 'rotate-180',
-            )}
-          />
-        </CollapsiblePrimitive.Trigger>
+        </CollapsibleTrigger>
 
-        <CollapsiblePrimitive.Content
+        <CollapsibleContent
           data-slot="ai-task-list-content"
           className="border-t border-border data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
         >
@@ -126,8 +121,8 @@ function AiTaskList({
                   </AiTaskListItem>
                 ))}
           </div>
-        </CollapsiblePrimitive.Content>
-      </CollapsiblePrimitive.Root>
+        </CollapsibleContent>
+      </Collapsible>
     </AiTaskListContext.Provider>
   );
 }

@@ -1,11 +1,9 @@
 'use client';
 
 import { cn } from '@llaab/ui/lib/utils';
-import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 import {
   AlertCircle,
   CheckCircle2,
-  ChevronDown,
   Circle,
   ExternalLink,
   Image as ImageIcon,
@@ -15,21 +13,9 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../collapsible';
+
 type StepStatus = 'pending' | 'active' | 'complete' | 'warning';
-
-interface AiChainOfThoughtContextValue {
-  isOpen: boolean;
-}
-
-const AiChainOfThoughtContext = React.createContext<AiChainOfThoughtContextValue | null>(null);
-
-function useChainOfThoughtContext() {
-  const context = React.useContext(AiChainOfThoughtContext);
-  if (!context) {
-    throw new Error('AiChainOfThought components must be used within <AiChainOfThought>');
-  }
-  return context;
-}
 
 interface AiChainOfThoughtProps {
   defaultOpen?: boolean;
@@ -61,22 +47,18 @@ function AiChainOfThought({
     [isControlled, onOpenChange],
   );
 
-  const contextValue = React.useMemo(() => ({ isOpen }), [isOpen]);
-
   return (
-    <AiChainOfThoughtContext.Provider value={contextValue}>
-      <CollapsiblePrimitive.Root
-        data-slot="ai-chain-of-thought"
-        open={isOpen}
-        onOpenChange={handleOpenChange}
-        className={cn(
-          'rounded-lg border border-border bg-card text-card-foreground overflow-hidden',
-          className,
-        )}
-      >
-        {children}
-      </CollapsiblePrimitive.Root>
-    </AiChainOfThoughtContext.Provider>
+    <Collapsible
+      data-slot="ai-chain-of-thought"
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      className={cn(
+        'rounded-lg border border-border bg-card text-card-foreground overflow-hidden',
+        className,
+      )}
+    >
+      {children}
+    </Collapsible>
   );
 }
 
@@ -98,13 +80,11 @@ function AiChainOfThoughtHeader({
   children,
   className,
 }: AiChainOfThoughtHeaderProps) {
-  const { isOpen } = useChainOfThoughtContext();
-
   return (
-    <CollapsiblePrimitive.Trigger
+    <CollapsibleTrigger
       data-slot="ai-chain-of-thought-header"
       className={cn(
-        'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50',
         className,
       )}
     >
@@ -122,13 +102,7 @@ function AiChainOfThoughtHeader({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">{children}</div>
-      <ChevronDown
-        className={cn(
-          'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-          isOpen && 'rotate-180',
-        )}
-      />
-    </CollapsiblePrimitive.Trigger>
+    </CollapsibleTrigger>
   );
 }
 
@@ -139,7 +113,7 @@ interface AiChainOfThoughtContentProps {
 
 function AiChainOfThoughtContent({ children, className }: AiChainOfThoughtContentProps) {
   return (
-    <CollapsiblePrimitive.Content
+    <CollapsibleContent
       data-slot="ai-chain-of-thought-content"
       className={cn(
         'border-t border-border data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down',
@@ -147,7 +121,7 @@ function AiChainOfThoughtContent({ children, className }: AiChainOfThoughtConten
       )}
     >
       <div className="p-4 space-y-4">{children}</div>
-    </CollapsiblePrimitive.Content>
+    </CollapsibleContent>
   );
 }
 
