@@ -59,6 +59,7 @@ export function createHermesInboxToolCall(
           raw_text: stringPayload(route, 'raw_text'),
           route_kind: route.kind,
           source,
+          payload: route.payload,
         },
       };
     case 'capture_command_candidate':
@@ -152,6 +153,11 @@ function webLinkReceiptPrefix(route: HermesInboxRoute): string {
 
 function attachmentReceiptPrefix(route: HermesInboxRoute): string {
   if (route.kind === 'code_attachment') {
+    const attachment = route.payload['attachment'];
+    if (isImageAttachment(attachment)) {
+      return '✅ Saved code snippet';
+    }
+
     return '✅ Saved code attachment';
   }
 
@@ -160,6 +166,15 @@ function attachmentReceiptPrefix(route: HermesInboxRoute): string {
   }
 
   return route.kind === 'image' ? '✅ Saved image' : '✅ Saved attachment';
+}
+
+function isImageAttachment(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const attachment = value as Record<string, unknown>;
+  return attachment['kind'] === 'image';
 }
 
 function rawReceiptPrefix(route: HermesInboxRoute): string {

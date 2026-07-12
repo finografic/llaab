@@ -72,7 +72,7 @@ function resolveLang(raw: string | undefined): ShikiLang {
   return LANG_ALIASES[lang] ?? 'text';
 }
 
-async function highlight(code: string, lang: string | undefined): Promise<string> {
+export async function renderCodeToHtml(code: string, lang: string | undefined): Promise<string> {
   const hl = await getHighlighter();
   const safeLang = resolveLang(lang);
   return hl.codeToHtml(code, { lang: safeLang, theme: 'github-dark' });
@@ -93,7 +93,7 @@ export async function renderReadmeToHtml(markdown: string): Promise<string> {
     if (highlightedBlocks.has(key)) return;
     highlightedBlocks.set(key, ''); // reserve key so duplicate fences share one job
     highlightJobs.push(
-      highlight(t.text, t.lang).then((html) => {
+      renderCodeToHtml(t.text, t.lang).then((html) => {
         highlightedBlocks.set(key, html);
       }),
     );

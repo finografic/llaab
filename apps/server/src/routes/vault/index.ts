@@ -6,11 +6,13 @@ import * as routes from './vault.routes.js';
 import {
   cleanRecentBodySchema,
   batchUpdateVaultNodesBodySchema,
+  codeHighlightBodySchema,
   createNodeBodySchema,
   createResourceNodeBodySchema,
   deleteRunQuerySchema,
   deleteRunsPreviewBodySchema,
   listNodesQuerySchema,
+  mediaQuerySchema,
   promoteCanonicalIdeaBodySchema,
   resolveCanonicalIdeaConflictBodySchema,
   updateSourceProfilesBodySchema,
@@ -25,6 +27,8 @@ export const vaultRouter = createRouter()
   .use(requireVaultSession)
   .get(routes.vaultTree.path, routes.vaultTree.handler)
   .post(routes.cleanRecent.path, zValidator('json', cleanRecentBodySchema), routes.cleanRecent.handler)
+  .post(routes.codeHighlight.path, zValidator('json', codeHighlightBodySchema), routes.codeHighlight.handler)
+  .get(routes.media.path, zValidator('query', mediaQuerySchema), routes.media.handler)
   .get(routes.file.path, routes.file.handler)
   .get(routes.listVaultNodes.path, zValidator('query', listNodesQuerySchema), routes.listVaultNodes.handler)
   .post(routes.createVaultNode.path, zValidator('json', createNodeBodySchema), routes.createVaultNode.handler)

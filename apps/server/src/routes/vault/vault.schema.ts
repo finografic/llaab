@@ -50,6 +50,19 @@ export const createResourceNodeBodySchema = z.object({
 
 export type CreateResourceNodeBody = z.infer<typeof createResourceNodeBodySchema>;
 
+export const codeHighlightBodySchema = z.object({
+  code: z.string(),
+  language: z.string().optional(),
+});
+
+export type CodeHighlightBody = z.infer<typeof codeHighlightBodySchema>;
+
+export const mediaQuerySchema = z.object({
+  path: z.string().min(1),
+});
+
+export type MediaQuery = z.infer<typeof mediaQuerySchema>;
+
 export const updateVaultNodeBodySchema = z
   .object({
     tags: z.array(z.string()).optional(),

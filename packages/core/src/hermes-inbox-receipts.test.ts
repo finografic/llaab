@@ -72,6 +72,30 @@ describe('createHermesInboxToolCall', () => {
     });
   });
 
+  it('preserves code image labels in attachment tool calls', () => {
+    const item = {
+      raw_text: 'code: shadcn card screenshot',
+      attachments: [{ kind: 'image' as const, file_name: 'screen.png', mime_type: 'image/png' }],
+      source: { platform: 'telegram' as const },
+    };
+    const route = routeHermesInboxItem(item);
+
+    expect(createHermesInboxToolCall(route, item)).toMatchObject({
+      name: 'vault_capture_attachment',
+      arguments: {
+        route_kind: 'code_attachment',
+        payload: {
+          label: 'shadcn card screenshot',
+          attachment: {
+            kind: 'image',
+            file_name: 'screen.png',
+            mime_type: 'image/png',
+          },
+        },
+      },
+    });
+  });
+
   it('formats image attachment receipts distinctly from other attachments', () => {
     const imageRoute = routeHermesInboxItem({
       attachments: [{ kind: 'image', file_name: 'screen.png', mime_type: 'image/png' }],
@@ -94,6 +118,19 @@ describe('createHermesInboxToolCall', () => {
     expect(createHermesInboxReceipt(docsRoute, { status: 'saved', target_id: 'idea.inbox-docs' })).toEqual({
       status: 'saved',
       text: '✅ Saved docs attachment: idea.inbox-docs',
+    });
+  });
+
+  it('formats code image receipts as code snippets', () => {
+    const codeImageRoute = routeHermesInboxItem({
+      raw_text: 'code: shadcn card screenshot',
+      attachments: [{ kind: 'image', file_name: 'screen.png', mime_type: 'image/png' }],
+      source: { platform: 'telegram' },
+    });
+
+    expect(createHermesInboxReceipt(codeImageRoute, { status: 'saved', target_id: 'idea.code' })).toEqual({
+      status: 'saved',
+      text: '✅ Saved code snippet: idea.code',
     });
   });
 });

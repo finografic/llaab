@@ -1,5 +1,6 @@
 import { InboxCaptureDetail } from 'components/InboxCaptureDetail/InboxCaptureDetail';
 import { PageHero } from 'components/PageHero/PageHero';
+import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarContext';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { useVaultNode } from 'queries/vault';
@@ -14,6 +15,7 @@ export function InboxDetailPage() {
   const { data: node, isLoading, isError, error } = useVaultNode(id);
 
   usePageTitle(node?.title ?? 'Inbox capture');
+  useSecondaryBackAction('/vault/inbox', 'Back to inbox');
 
   if (!id) return <Navigate to="/vault/inbox" replace />;
   if (!isLoading && !node) return <Navigate to="/vault/inbox" replace />;

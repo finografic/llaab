@@ -169,6 +169,7 @@ export function CodeSnippetDetail({ capture }: InboxCaptureRendererProps) {
   return (
     <CaptureSection title="Code snippet">
       {code ? <CodeBlock code={code} language={language} /> : <p>No snippet body.</p>}
+      <AttachmentImageLink capture={capture} />
       <p className={styles.promotePlaceholder}>
         Future: promote useful snippets into references, prompts, or skills.
       </p>
@@ -214,7 +215,7 @@ export function ImageDetail({ capture }: InboxCaptureRendererProps) {
   const fileName = attachmentString(capture, 'file_name') ?? 'image';
   const localPath = attachmentString(capture, 'local_path');
   const mimeType = attachmentString(capture, 'mime_type');
-  const url = attachmentString(capture, 'url');
+  const url = attachmentPreviewUrl(capture);
 
   return (
     <CaptureSection title="Image">
@@ -233,7 +234,7 @@ export function ImageDetail({ capture }: InboxCaptureRendererProps) {
         ]}
       />
       {url ? (
-        <div className={styles.actions}>
+        <div className={styles.imagePreviewWrap}>
           <img src={url} alt={fileName} className={styles.imagePreview} />
           <ExternalLinkButton href={url} label="Open image URL" />
         </div>
@@ -274,6 +275,7 @@ export function AttachmentDetail({
           },
         ]}
       />
+      <AttachmentImagePreview capture={capture} />
       {capture.rawText ? <pre className="body-pre">{capture.rawText}</pre> : null}
       <p className={styles.promotePlaceholder}>
         Avoid assuming Hermes media-cache paths are permanent until a vault assets pipeline exists.
@@ -320,6 +322,53 @@ export function CommandCandidateDetail({ capture }: InboxCaptureRendererProps) {
       </p>
     </CaptureSection>
   );
+}
+
+function AttachmentImageLink({ capture }: InboxCaptureRendererProps) {
+  if (!captureHasImageAttachment(capture)) return null;
+  const url = attachmentPreviewUrl(capture);
+
+  if (!url) return null;
+
+  return (
+    <div className={styles.actions}>
+      <ExternalLinkButton href={url} label="Open source image" />
+    </div>
+  );
+}
+
+function AttachmentImagePreview({ capture }: InboxCaptureRendererProps) {
+  if (!captureHasImageAttachment(capture)) return null;
+  const fileName = attachmentString(capture, 'file_name') ?? 'image';
+  const url = attachmentPreviewUrl(capture);
+
+  if (!url) return null;
+
+  return (
+    <div className={styles.imagePreviewWrap}>
+      <img src={url} alt={fileName} className={styles.imagePreview} />
+      <ExternalLinkButton href={url} label="Open image" />
+    </div>
+  );
+}
+
+function captureHasImageAttachment(capture: ParsedInboxCapture): boolean {
+  const kind = attachmentString(capture, 'kind');
+  const mimeType = attachmentString(capture, 'mime_type');
+  const fileName = attachmentString(capture, 'file_name');
+  return (
+    kind === 'image' ||
+    Boolean(mimeType?.startsWith('image/')) ||
+    Boolean(fileName && /\.(avif|gif|jpe?g|png|webp)$/i.test(fileName))
+  );
+}
+
+function attachmentPreviewUrl(capture: ParsedInboxCapture): string | undefined {
+  const url = attachmentString(capture, 'url');
+  if (url) return url;
+  const localPath = attachmentString(capture, 'local_path');
+  if (!localPath || !captureHasImageAttachment(capture)) return undefined;
+  return `/api/vault/media?path=${encodeURIComponent(localPath)}`;
 }
 
 function attachmentVisualLabel(kind: string, mimeType?: string, fileName?: string): string {

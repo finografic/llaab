@@ -1,8 +1,9 @@
 import { Button } from 'components/ui/button';
-import { Fragment } from 'react';
-import type { ReactNode } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import type { ReactNode } from 'react';
 
+import { api } from 'lib/api';
 import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
 
 import styles from './InboxCaptureDetail.module.css';
@@ -61,13 +62,43 @@ export function ExternalLinkButton({ href, label = 'Open source' }: { href: stri
 
 export function CodeBlock({ code, language }: { code: string; language?: string }) {
   const displayLanguage = normalizeDisplayLanguage(language);
+  const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setHighlightedHtml(null);
+
+    async function highlightCode() {
+      try {
+        const res = await api.vault['code-highlight'].$post({
+          json: { code, language: displayLanguage },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setHighlightedHtml(data.html);
+      } catch {
+        if (!cancelled) setHighlightedHtml(null);
+      }
+    }
+
+    void highlightCode();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [code, displayLanguage]);
+
   return (
     <div className={styles.codeBlock}>
       <div className={styles.codeHeader}>
         <span className="meta-mono">{displayLanguage ?? 'text'}</span>
         <CopyButton text={code} label="Copy code" />
       </div>
-      <pre className={`body-pre ${styles.codePre}`}>{code}</pre>
+      {highlightedHtml ? (
+        <div className={styles.highlightedCode} dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
+      ) : (
+        <pre className={`body-pre ${styles.codePre}`}>{code}</pre>
+      )}
     </div>
   );
 }

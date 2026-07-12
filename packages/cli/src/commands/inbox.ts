@@ -17,6 +17,12 @@ import type {
   HermesInboxToolCall,
 } from '@llaab/schemas';
 
+import {
+  CODE_IMAGE_CONFIDENCE_THRESHOLD,
+  extractCodeFromImage,
+  normalizeCodeLanguage,
+} from './inbox-code-image.js';
+
 const DEFAULT_API_URL = 'http://localhost:8888';
 const MAX_DERIVED_TITLE_LENGTH = 80;
 const INBOX_DEFAULT_TAGS = ['hermes', 'inbox'];
@@ -159,6 +165,10 @@ async function executeInboxToolCall(toolCall: HermesInboxToolCall): Promise<Herm
     case 'vault_capture_todo':
     case 'vault_capture_web_link':
     case 'vault_capture_attachment':
+      if (shouldExtractCodeFromImage(toolCall)) {
+        return executeCodeImageCapture(toolCall);
+      }
+      return executeIdeaCapture(toolCall);
     case 'vault_capture_inbox':
       return executeIdeaCapture(toolCall);
   }
@@ -240,6 +250,68 @@ async function executeIdeaCapture(toolCall: HermesInboxToolCall): Promise<Hermes
   return { status: 'saved', target_id: id };
 }
 
+async function executeCodeImageCapture(toolCall: HermesInboxToolCall): Promise<HermesInboxExecutionResult> {
+  const attachment = recordArg(toolCall, 'attachment') ?? {};
+  const localPath = stringRecordValue(attachment, 'local_path');
+
+  if (!localPath) {
+    return { status: 'failed', error: 'code image attachment is missing local_path' };
+  }
+
+  if (!existsSync(localPath)) {
+    return { status: 'failed', error: `code image attachment not found: ${localPath}` };
+  }
+
+  const description = codeImageDescription(toolCall);
+  const extraction = await extractCodeFromImage({
+    description,
+    imageBase64: readFileSync(localPath).toString('base64'),
+    mimeType: stringRecordValue(attachment, 'mime_type') || 'image/png',
+  });
+
+  if (!extraction.ok) {
+    return { status: 'failed', error: extraction.error };
+  }
+
+  if (!extraction.result.is_code || extraction.result.confidence < CODE_IMAGE_CONFIDENCE_THRESHOLD) {
+    return executeIdeaCapture(toolCall);
+  }
+
+  const language = normalizeCodeLanguage(extraction.result.language);
+  const title = `Code snippet: ${deriveTitle(description || extraction.result.code || 'screenshot')}`;
+  const result = await postJsonViaApi('/api/vault/nodes', {
+    type: 'idea',
+    title,
+    body: formatInboxBody({
+      raw_text: extraction.result.code,
+      route_kind: 'code_snippet',
+      source: recordArg(toolCall, 'source'),
+      payload: {
+        attachment,
+        description,
+        language,
+        extraction: {
+          provider: extraction.provider,
+          model: extraction.model,
+          confidence: extraction.result.confidence,
+        },
+      },
+    }),
+    tags: [...INBOX_DEFAULT_TAGS, 'inbox:code', 'inbox:snippet', 'inbox:image'],
+  });
+
+  if (!result.ok) {
+    if (result.status === 409) {
+      return { status: 'saved', target_label: `${title} (already exists)` };
+    }
+
+    return { status: 'failed', error: result.error };
+  }
+
+  const id = typeof result.data['id'] === 'string' ? result.data['id'] : undefined;
+  return { status: 'saved', target_id: id, target_label: id ?? title };
+}
+
 function buildIdeaCapture(toolCall: HermesInboxToolCall): { title: string; body: string; tags: string[] } {
   switch (toolCall.name) {
     case 'vault_capture_todo': {
@@ -269,13 +341,14 @@ function buildIdeaCapture(toolCall: HermesInboxToolCall): { title: string; body:
       const filename = typeof attachment['file_name'] === 'string' ? attachment['file_name'] : 'attachment';
       const rawText = stringArg(toolCall, 'raw_text');
       const routeKind = stringArg(toolCall, 'route_kind') || 'attachment';
+      const payload = recordArg(toolCall, 'payload');
       return {
         title: attachmentTitle(routeKind, filename),
         body: formatInboxBody({
           raw_text: rawText,
           route_kind: routeKind,
           source: recordArg(toolCall, 'source'),
-          payload: { attachment },
+          payload: payload ?? { attachment },
         }),
         tags: [...INBOX_DEFAULT_TAGS, ...attachmentTags(routeKind)],
       };
@@ -357,6 +430,36 @@ function attachmentTags(routeKind: string): string[] {
   }
 
   return ['inbox:attachment'];
+}
+
+function shouldExtractCodeFromImage(toolCall: HermesInboxToolCall): boolean {
+  if (stringArg(toolCall, 'route_kind') !== 'code_attachment') {
+    return false;
+  }
+
+  const attachment = recordArg(toolCall, 'attachment');
+  if (!attachment || attachment['kind'] !== 'image') {
+    return false;
+  }
+
+  return codeImageDescription(toolCall).length > 0;
+}
+
+function codeImageDescription(toolCall: HermesInboxToolCall): string {
+  const payload = recordArg(toolCall, 'payload');
+  const label = stringRecordValue(payload, 'label');
+  if (label) {
+    return label;
+  }
+
+  return (
+    stringArg(toolCall, 'raw_text')
+      .split(/\r?\n/u)
+      .map((line) => line.trim())
+      .find((line) => /^code:\s*/iu.test(line))
+      ?.replace(/^code:\s*/iu, '')
+      .trim() ?? ''
+  );
 }
 
 function webLinkTitle(routeKind: string, url: string, payload: Record<string, unknown> | undefined): string {
@@ -576,6 +679,11 @@ function stringArg(toolCall: HermesInboxToolCall, key: string): string {
   const value = toolCall.arguments[key];
 
   return typeof value === 'string' ? value : '';
+}
+
+function stringRecordValue(record: Record<string, unknown> | undefined, key: string): string | undefined {
+  const value = record?.[key];
+  return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
 function booleanArg(toolCall: HermesInboxToolCall, key: string): boolean | undefined {
