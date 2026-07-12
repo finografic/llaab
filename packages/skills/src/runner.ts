@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { createNode, deleteNode, getNodeFilePath, updateNode } from '@llaab/core';
 import {
   buildRunNodeId,
@@ -345,7 +346,7 @@ export async function runSkill<TInput, TOutput>(
   const persistFailedRun = options.persistFailedRun ?? true;
   const startTime = new Date();
   const startedAt = formatIsoUtcSeconds(startTime);
-  const runNodeId = buildRunNodeId(name, startTime);
+  const runNodeId = `${buildRunNodeId(name, startTime)}-${randomUUID().slice(0, 8)}`;
 
   await createRunningRunNode({ name, runNodeId, startedAt, rawInput: input });
 
