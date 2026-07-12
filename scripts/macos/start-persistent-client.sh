@@ -24,7 +24,8 @@ mkdir -p "$builds_dir"
 readonly keep_builds=3
 
 run_dev_server() {
-  exec /opt/homebrew/bin/pnpm --filter @llaab/client exec vite
+  cd "$repo_dir/apps/client"
+  exec "$HOME/.nvm/versions/node/v24.16.0/bin/node" node_modules/vite/bin/vite.js
 }
 
 if [[ "$runtime_mode" == "dev" ]]; then
@@ -57,7 +58,8 @@ trim_old_builds() {
 
 run_current_build() {
   export LLAAB_CLIENT_OUT_DIR="$current_link"
-  exec /opt/homebrew/bin/pnpm --filter @llaab/client exec vite preview
+  cd "$repo_dir/apps/client"
+  exec "$HOME/.nvm/versions/node/v24.16.0/bin/node" node_modules/vite/bin/vite.js preview
 }
 
 rm -rf "$staging_dir"

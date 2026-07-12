@@ -16,6 +16,7 @@ label_exists() {
 ensure_client_plist_port() {
   if [[ -f "$client_plist" ]]; then
     /usr/bin/plutil -replace EnvironmentVariables.PORT -string 5050 "$client_plist"
+    /usr/bin/plutil -replace ProcessType -string Standard "$client_plist"
   fi
 }
 

@@ -261,6 +261,14 @@ with simple full-text search only if it does not conflict with future context as
 
 Reference: [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) §3
 
+### Wiki Generation and Knowledge Promotion
+
+Compile selected canonical ideas into reviewable vault drafts, then explicitly promote validated
+topic pages to `knowledge/wikis/`. Start manual-first; discovery, graph browsing, and external
+research follow after the draft/review/update path is stable.
+
+Detail: [`TODO_WIKI_GENERATION.md`](./TODO_WIKI_GENERATION.md)
+
 ---
 
 ## P3 — Backlog / Ideas
