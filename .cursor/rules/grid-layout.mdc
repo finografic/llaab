@@ -1,0 +1,33 @@
+---
+description: Use @llaab/ui Row/Col/Container for all structural layout blocks
+alwaysApply: true
+---
+
+# Grid layout (mandatory)
+
+Use **`Row` / `Col` / `Container`** from `components/ui/grid` for **all structural layout** — page sections, card bodies, form rows, toolbars, and multi-column splits.
+
+**Canonical docs:** [`docs/components/grid.md`](../../docs/components/grid.md)
+
+```tsx
+import { Row, Col, Container } from 'components/ui/grid';
+```
+
+## Do
+
+- Reach for `Row` + `Col` spans (`xs` / `sm` / `md` / `lg` / `xl`) for any block that arranges siblings in columns or rows across breakpoints.
+- Put shadcn cards, forms, and buttons **inside** `Col` cells — grid owns structure; Tailwind/shadcn own styling inside cells.
+
+## Do not
+
+- Do **not** use Tailwind layout utilities for structure: `flex`, `grid`, `grid-cols-*`, `md:flex`, `lg:grid`, `space-x-*` between columns, etc.
+- Do **not** hand-roll Bootstrap-style column math with width/fraction utilities when `Col` spans cover the case.
+
+## Narrow exceptions
+
+- **Micro inline clusters** inside a single control (icon + label, chip row) — `flex items-center gap-*` on one element group only.
+- **App chrome** — `AppLayout`, `AppHeader`, `SecondaryActionBar`, `AppSidebarLayout`, `ResizablePanel*`.
+- **Documented grid shells** — `BalancedGrid`, `llm-card-grid`, `PageLayout` CSS Grid (outer page frame only).
+- **shadcn / `@llaab/ui` primitive internals** and third-party layouts (tables, diff viewers, trees).
+
+Migration reference: [`docs/todo/DONE_GRID_LAYOUT_MIGRATION.md`](../../docs/todo/DONE_GRID_LAYOUT_MIGRATION.md).

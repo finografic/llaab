@@ -241,11 +241,11 @@ detail shows a heartbeat elapsed timer while pending. `ExtractionModelCard` wrap
 local models have no pricing data.
 
 A 12-column flexbox grid (`Container`/`Row`/`Col`, Bootstrap-style, Tailwind-matching breakpoints,
-no Context/runtime JS) lives at `packages/ui/src/components/grid/` (ported from
-`@finografic/design-system`), imported via `components/ui/grid`; CSS auto-included via
-`packages/ui/src/styles/globals.css`. Grid utilities coexist with Tailwind classes, but Tailwind
-font utilities still follow Tailwind names (`text-base`, `text-lg`, etc.); app CSS tokens such as
-`--text-md` do not automatically create a `text-md` utility. Docs: `docs/components/grid.md`.
+no Context/runtime JS) lives at `packages/ui/src/components/grid/`, imported via `components/ui/grid`;
+CSS auto-included via `packages/ui/src/styles/globals.css`. **Agent rule:** use grid for **all**
+structural layout blocks (page, card, row, section splits) — not Tailwind `flex`/`grid`/`grid-cols-*`
+for column structure; narrow exceptions in `docs/components/grid.md` and `.cursor/rules/grid-layout.mdc`.
+Migration done 2026-07-11 (`docs/todo/DONE_GRID_LAYOUT_MIGRATION.md`).
 
 ### `@llaab/server` — Hono + Bun (port 8888)
 

@@ -12,6 +12,16 @@ sticky bars they compose. Page-level content rules live in component/route AGENT
   belongs at the `AppLayout` level so it's consistent across routes.
 - Route `handle: { fullBleed }` controls `AppLayout`'s main padding, not the route component.
 
+## Grid layout (page content)
+
+**Always** use `Row` / `Col` / `Container` from `components/ui/grid` for structural layout inside
+`PageLayout` body content — card rows, form sections, main+sidebar splits, toolbars. Do **not** use
+Tailwind `flex` / `grid` / `grid-cols-*` for multi-column structure.
+
+- Docs: [`docs/components/grid.md`](../../../../docs/components/grid.md)
+- `PageLayout` is the outer page shell (CSS Grid) — put `Row`/`Col` **inside** `<PageLayout>` children.
+- Registry detail pattern: `Row nogutter` + main `Col` + **340px** sidebar `Col`; stack at **900px** via spans.
+
 ## Icon button styling
 
 Two tiers, kept visually distinct so users can tell "navigation" from "contextual action" at a glance:

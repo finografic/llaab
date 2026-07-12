@@ -203,18 +203,34 @@ Class prefix is `grid-*` (not the old design-system `ds-*`).
 
 ---
 
-## Coexistence with Tailwind / shadcn
+## Agent rule — grid first (mandatory)
 
-- **Use this grid** for Bootstrap-style column spans and shared gutters across breakpoints.
-- **Use Tailwind flex/grid** for ad-hoc alignment (`flex`, `items-center`, `gap-*`,
-  `grid grid-cols-*`) when you do not need the 12-column span API.
-- **Style children with shadcn + Tailwind** — put cards, forms, and buttons inside `Col`; do not
-  expect the grid to own visual design tokens.
-- Grid classes are **static** in `grid.css` (outside Tailwind’s utility generation). They are
-  always available; do not rely on Tailwind purge to keep them.
+**All agents must use this grid for structural layout blocks** — page sections, card bodies, form
+rows, toolbars, and multi-column splits. Do **not** substitute Tailwind layout utilities for column
+structure.
+
+| Use grid for                                | Do not use Tailwind for                             |
+| ------------------------------------------- | --------------------------------------------------- |
+| Page sections, card rows, form rows         | `flex` / `grid` / `grid-cols-*` / `md:flex` layout  |
+| Main + sidebar splits (`Col` spans)         | Hand-rolled fraction widths between siblings        |
+| Responsive column stacks across breakpoints | `space-x-*` / `gap-*` as a column gutter substitute |
+
+**Inside `Col` cells:** style with shadcn + Tailwind (typography, colors, padding on the child) — grid
+owns structure only.
+
+**Narrow exceptions:**
+
+- Micro inline clusters inside a **single** control (icon + label) — `flex items-center gap-*`.
+- App chrome (`AppLayout`, `AppHeader`, `SecondaryActionBar`, sidebars, resizable panels).
+- Documented shells: `BalancedGrid`, `llm-card-grid`, `PageLayout` outer frame.
+- shadcn / `@llaab/ui` primitive internals; third-party layouts (tables, diff viewers).
+
+Grid classes are **static** in `grid.css` (outside Tailwind’s utility generation) — always available.
 
 App CSS tokens such as `--text-md` do **not** automatically create a `text-md` utility —
 Tailwind font utilities still use Tailwind names (`text-base`, `text-lg`, …).
+
+Migration reference: [`docs/todo/DONE_GRID_LAYOUT_MIGRATION.md`](../todo/DONE_GRID_LAYOUT_MIGRATION.md).
 
 ---
 
