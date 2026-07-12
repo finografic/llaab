@@ -5,9 +5,24 @@ import {
 } from '@llaab/core';
 import type { AppCtx } from '../../types/app.types.js';
 
+import { listKnowledgeWikisQuerySchema } from './knowledge.schema.js';
+
 export const listKnowledgeWikis = {
   path: '/wikis' as const,
-  handler: async (c: AppCtx) => c.json({ wikis: await readKnowledgeWikis() }),
+  handler: async (c: AppCtx) => {
+    const query = listKnowledgeWikisQuerySchema.parse(Object.fromEntries(new URL(c.req.url).searchParams));
+    const wikis = (await readKnowledgeWikis())
+      .filter((wiki) => (query.lifecycle ? wiki.status === query.lifecycle : true))
+      .filter((wiki) => (query.tag ? wiki.tags.includes(query.tag) : true))
+      .filter((wiki) => (query.verification ? wiki.verification_status === query.verification : true))
+      .filter((wiki) => {
+        if (!query.q) return true;
+        const haystack =
+          `${wiki.title} ${wiki.summary} ${wiki.topic_key} ${wiki.aliases.join(' ')}`.toLowerCase();
+        return haystack.includes(query.q.toLowerCase());
+      });
+    return c.json({ wikis: wikis.slice(query.offset, query.offset + query.limit), total: wikis.length });
+  },
 };
 
 export const knowledgeWikiDetail = {
