@@ -7,12 +7,18 @@ export async function discoverWikiCandidates() {
   return runSkill(
     'discover-wiki-candidates',
     async () => {
-      const [nodes, wikis, existingCandidates] = await Promise.all([
+      const [nodes, transcripts, wikis, existingCandidates] = await Promise.all([
         listNodes({ type: 'canonical-idea' }),
+        listNodes({ type: 'transcript' }),
         listKnowledgeWikis(),
         listNodes({ type: 'wiki-candidate' }),
       ]);
       const ideas = nodes.filter((node) => node.type === 'canonical-idea');
+      const transcriptById = new Map(
+        transcripts
+          .filter((node) => node.type === 'transcript')
+          .map((transcript) => [transcript.id, transcript]),
+      );
       const groups = new Map<string, typeof ideas>();
       for (const idea of ideas) {
         const topic = toNodeId(idea.tags.find((tag) => tag.startsWith('d:'))?.slice(2) ?? idea.title);
@@ -27,6 +33,14 @@ export async function discoverWikiCandidates() {
         const existing = wikis.filter(
           (wiki) => wiki.topic_key === topicKey || wiki.tags.some((tag) => ideas[0]?.tags.includes(tag)),
         );
+        const sourceIds = [
+          ...new Set(
+            transcriptIds.flatMap((transcriptId) => {
+              const sourceId = transcriptById.get(transcriptId)?.source_id;
+              return sourceId ? [sourceId] : [];
+            }),
+          ),
+        ];
         const created = await createNode({
           type: 'wiki-candidate',
           id: candidateId,
@@ -37,9 +51,9 @@ export async function discoverWikiCandidates() {
             topic_key: topicKey,
             source_canonical_idea_ids: ideas.map((idea) => idea.id),
             source_transcript_ids: transcriptIds,
-            source_ids: [],
-            heat_score: Math.min(100, ideas.length * 20 + transcriptIds.length * 20),
-            novelty_score: existing.length === 0 ? 100 : 25,
+            source_ids: sourceIds,
+            heat_score: Math.min(100, ideas.length * 12 + transcriptIds.length * 28 + sourceIds.length * 20),
+            novelty_score: existing.length === 0 ? Math.min(100, 60 + sourceIds.length * 20) : 20,
             recommendation: existing.length === 0 ? 'create' : 'needs-review',
             existing_wiki_ids: existing.map((wiki) => wiki.id),
             warnings: existing.length ? ['Existing promoted wiki may already cover this topic.'] : [],
