@@ -12,6 +12,7 @@ interface PageHeroProps {
   titleAddon?: ReactNode;
   bordered?: boolean;
   description?: ReactNode;
+  descriptionClassName?: string;
   actions?: ReactNode;
   right?: ReactNode;
   meta?: ReactNode;
@@ -24,6 +25,7 @@ export function PageHero({
   titleAddon,
   bordered = true,
   description,
+  descriptionClassName,
   actions,
   right,
   meta,
@@ -53,7 +55,7 @@ export function PageHero({
             ) : null}
           </div>
 
-          {description ? <p className={styles.description}>{description}</p> : null}
+          {description ? <p className={cn(styles.description, descriptionClassName)}>{description}</p> : null}
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { PageHero } from 'components/PageHero/PageHero';
-import { TerminalPanel } from 'components/TerminalPanel';
+import { TerminalPanel } from 'components/TerminalPanel/TerminalPanel';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 
 import { usePageTitle } from 'lib/use-page-title';

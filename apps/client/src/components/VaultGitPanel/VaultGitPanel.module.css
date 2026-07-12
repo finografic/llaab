@@ -96,10 +96,15 @@
 }
 
 .empty {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
-  padding: var(--space-4);
-  color: var(--text-muted);
+  padding: var(--space-3);
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+  text-align: center;
 }
 
 .error {

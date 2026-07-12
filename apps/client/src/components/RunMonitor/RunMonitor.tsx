@@ -177,7 +177,7 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
         ) : null
       }
       footer={footer}
-      defaultOpen={isActive || isFailed}
+      defaultOpen={isActive}
     />
   );
 }
@@ -196,11 +196,11 @@ function MonitorSection({
   return (
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
-        <h3 className={styles.sectionTitle}>{title}</h3>
-        <div className={styles.sectionHeaderMeta}>
-          {action}
-          <span className={styles.count}>{runs.length}</span>
+        <div className={styles.sectionHeading}>
+          <h3 className={styles.sectionTitle}>{title}</h3>
+          <span className="section__count">{runs.length}</span>
         </div>
+        {action ? <div className={styles.sectionHeaderMeta}>{action}</div> : null}
       </div>
       {runs.length > 0 ? (
         runs.map((run) => <MonitorRunCard key={run.id} run={run} />)
@@ -262,7 +262,6 @@ export function RunMonitor({ onClose }: { onClose: () => void }) {
                     dismissAllRuns.mutate();
                   }}
                 >
-                  <XIcon aria-hidden />
                   Dismiss all
                 </Button>
               ) : null

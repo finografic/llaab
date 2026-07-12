@@ -1,5 +1,5 @@
 import { JsonData } from 'components/JsonData/JsonData';
-import { ModelMetaCard } from 'components/ModelMetaCard';
+import { ModelMetaCard } from 'components/ModelMetaCard/ModelMetaCard';
 import { PageHero } from 'components/PageHero/PageHero';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
@@ -24,7 +24,7 @@ const RUN_JSON_LINK_RULES = [
 export function RunDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: node, isLoading } = useVaultNode(id);
-  const run: RunNode | undefined = node?.type === 'run' ? (node) : undefined;
+  const run: RunNode | undefined = node?.type === 'run' ? node : undefined;
 
   usePageTitle(run?.title ?? 'Run');
 

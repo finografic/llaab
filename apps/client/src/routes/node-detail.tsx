@@ -1,4 +1,4 @@
-import { ModelMetaCard } from 'components/ModelMetaCard';
+import { ModelMetaCard } from 'components/ModelMetaCard/ModelMetaCard';
 import { PageHero } from 'components/PageHero/PageHero';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
