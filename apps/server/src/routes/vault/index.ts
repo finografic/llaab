@@ -19,6 +19,7 @@ import {
   resolveCanonicalIdeaConflictBodySchema,
   updateSourceProfilesBodySchema,
   updateVaultNodeBodySchema,
+  wikiResearchBodySchema,
   vaultLoginBodySchema,
 } from './vault.schema.js';
 
@@ -78,6 +79,11 @@ export const vaultRouter = createRouter()
   .post(routes.discoverWikiCandidates.path, routes.discoverWikiCandidates.handler)
   .get(routes.listWikiCandidates.path, routes.listWikiCandidates.handler)
   .get(routes.wikiCandidateDetail.path, routes.wikiCandidateDetail.handler)
+  .post(
+    routes.requestWikiResearch.path,
+    zValidator('json', wikiResearchBodySchema),
+    routes.requestWikiResearch.handler,
+  )
   .post(routes.regenerateWikiDraft.path, routes.regenerateWikiDraft.handler)
   .post(
     routes.resolveCanonicalIdeaConflict.path,

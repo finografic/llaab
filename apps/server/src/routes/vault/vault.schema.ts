@@ -1,5 +1,6 @@
 import {
   CreateWikiDraftRequestSchema,
+  WikiResearchRequestSchema,
   NodeTypeSchema,
   SourceProfileSchema,
   TranscriptCanonicalCoverageSchema,
@@ -138,6 +139,8 @@ export type ResolveCanonicalIdeaConflictBody = z.infer<typeof resolveCanonicalId
 
 export const createWikiDraftBodySchema = CreateWikiDraftRequestSchema;
 export type CreateWikiDraftBody = z.infer<typeof createWikiDraftBodySchema>;
+
+export const wikiResearchBodySchema = WikiResearchRequestSchema;
 
 export const editWikiDraftBodySchema = z
   .object({

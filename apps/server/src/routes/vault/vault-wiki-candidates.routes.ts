@@ -1,6 +1,7 @@
 import { listNodes, readNodeByType } from '@llaab/core';
-import { discoverWikiCandidates as runWikiDiscovery } from '@llaab/skills';
-import type { AppCtx } from '../../types/app.types.js';
+import { discoverWikiCandidates as runWikiDiscovery, researchWiki } from '@llaab/skills';
+import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
+import type { WikiResearchRequest } from '@llaab/schemas';
 
 export const discoverWikiCandidates = {
   path: '/wiki-candidates/discover' as const,
@@ -24,5 +25,14 @@ export const wikiCandidateDetail = {
     } catch {
       return c.json({ error: 'Wiki candidate not found.' }, 404);
     }
+  },
+};
+
+export const requestWikiResearch = {
+  path: '/wiki-research' as const,
+  handler: async (c: AppCtxJson<WikiResearchRequest>) => {
+    const { record, result } = await researchWiki(c.req.valid('json'));
+    if (record.status === 'failed') return c.json({ error: record.error ?? 'Wiki research failed.' }, 500);
+    return c.json({ success: true, runId: record.runNodeId, ...result }, 202);
   },
 };

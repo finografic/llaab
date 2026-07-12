@@ -146,6 +146,19 @@ export const CreateWikiDraftRequestSchema = z.object({
   suggested_title: z.string().min(1).optional(),
 });
 
+export const WikiResearchRequestSchema = z
+  .object({
+    wiki_id: NodeIdSchema.optional(),
+    draft_id: NodeIdSchema.optional(),
+    query: z.string().min(3).max(500),
+    provider: z.enum(['manual']).default('manual'),
+    max_results: z.number().int().min(1).max(10).default(5),
+    approval: z.literal(true),
+  })
+  .refine((request) => request.wiki_id !== undefined || request.draft_id !== undefined, {
+    message: 'Provide a wiki or draft target for research.',
+  });
+
 export const WikiTagSchema = z.string().regex(/^d:[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use a d: domain tag');
 
 export type WikiCompileInput = z.infer<typeof WikiCompileInputSchema>;
@@ -164,3 +177,4 @@ export type WikiSourceRef = z.infer<typeof WikiSourceRefSchema>;
 export type WikiTopicResolution = z.infer<typeof WikiTopicResolutionSchema>;
 export type WikiValidationIssue = z.infer<typeof WikiValidationIssueSchema>;
 export type WikiVerificationStatus = z.infer<typeof WikiVerificationStatusSchema>;
+export type WikiResearchRequest = z.infer<typeof WikiResearchRequestSchema>;

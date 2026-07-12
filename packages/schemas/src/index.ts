@@ -138,6 +138,8 @@ export {
   type WikiLink,
   type WikiLinkRelation,
   WikiLinkRelationSchema,
+  type WikiResearchRequest,
+  WikiResearchRequestSchema,
   WikiLinkSchema,
   type WikiOmittedCanonicalIdea,
   WikiOmittedCanonicalIdeaSchema,

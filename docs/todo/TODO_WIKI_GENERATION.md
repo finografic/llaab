@@ -598,9 +598,9 @@ browsing.
 **Outcome:** A user can explicitly enrich a selected draft/wiki with authoritative external evidence
 while keeping transcript provenance and factual verification distinct.
 
-- [ ] Define an opt-in research request, approval policy, provider/tool allowlist, result budget,
+- [x] Define an opt-in research request, approval policy, provider/tool allowlist, result budget,
       token/cost budget, and cancellation/error behavior.
-- [ ] Add a dedicated one-shot research adapter/task and RunNode; research never runs as a hidden
+- [x] Add a dedicated one-shot research adapter/task and RunNode; research never runs as a hidden
       side effect of compilation, discovery, browsing, or promotion.
 - [ ] Add external source-ref kinds and persist retrieval query, provider/tool, timestamps, URLs,
       excerpts, and validation results.
@@ -609,7 +609,7 @@ while keeping transcript provenance and factual verification distinct.
 - [ ] Detect contradictory evidence and create a contested proposal for review rather than choosing
       a winner automatically.
 - [ ] Display transcript-derived and external evidence separately in draft review and wiki detail.
-- [ ] Route research results through the same draft/update/revision workflow; research cannot write
+- [x] Route research results through the same draft/update/revision workflow; research cannot write
       promoted knowledge directly.
 - [ ] Add fixture-backed adapter tests, source-quality failures, unavailable provider behavior,
       budget enforcement, and manual cost/approval testing.
