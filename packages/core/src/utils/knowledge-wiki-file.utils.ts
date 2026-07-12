@@ -32,6 +32,19 @@ const WIKI_FRONTMATTER_ORDER = [
 const wikiLocks = new Map<string, Promise<void>>();
 const WIKI_SECTION_MARKER = /<!--\s*wiki-section:([a-z0-9]+(?:[-_][a-z0-9]+)*)\s*-->/g;
 const WIKI_CITATION = /\[\^([a-z0-9]+(?:[-_][a-z0-9]+)*)\]/g;
+const TIMESTAMP_LOCATOR = /^(?:\d+:)?[0-5]?\d:[0-5]\d$/;
+
+function validateSourceLocator(locator: string | undefined, url: string | undefined): void {
+  if (!locator) return;
+  if (!TIMESTAMP_LOCATOR.test(locator))
+    {throw new Error(`Knowledge wiki has malformed timestamp locator: ${locator}`);}
+  if (!url) return;
+  const parsed = new URL(url);
+  const isYouTube = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'].includes(parsed.hostname);
+  if (isYouTube && !parsed.searchParams.has('t')) {
+    throw new Error(`YouTube source reference with locator must include a t= deep link: ${locator}`);
+  }
+}
 
 function assertContained(root: string, target: string): void {
   const pathFromRoot = relative(root, target);
@@ -103,6 +116,7 @@ export function validateKnowledgeWikiPage(page: KnowledgeWikiPage): KnowledgeWik
   }
 
   const sourceRefIds = new Set(validatedPage.source_refs.map((sourceRef) => sourceRef.id));
+  for (const sourceRef of validatedPage.source_refs) validateSourceLocator(sourceRef.locator, sourceRef.url);
   for (const citation of validatedPage.body.matchAll(WIKI_CITATION)) {
     const citationId = NodeIdSchema.parse(citation[1]);
     if (!sourceRefIds.has(citationId)) {
