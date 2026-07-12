@@ -28,7 +28,7 @@
     "vision": {
       "tier": "local-mid",
       "provider": "ollama",
-      "model": "gemma4:e4b-it-qat"
+      "model": "gemma4:26b-a4b-it-qat"
     },
     "speech": {
       "tier": "local-mid",
@@ -39,6 +39,11 @@
       "tier": "local-strong",
       "provider": "ollama",
       "model": "gpt-oss:20b"
+    },
+    "reason-plus": {
+      "tier": "remote",
+      "provider": "opencode",
+      "model": "glm-5.2"
     }
   }
 }

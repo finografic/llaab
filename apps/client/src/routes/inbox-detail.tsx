@@ -4,7 +4,7 @@ import { useSecondaryBackAction } from 'layouts/AppLayout/SecondaryActionBarCont
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { useVaultNode } from 'queries/vault';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 
 import { isInboxCaptureNode, parseInboxCapture, routeKindLabel } from 'lib/inbox-capture.utils';
 import { usePageTitle } from 'lib/use-page-title';
@@ -56,10 +56,6 @@ export function InboxDetailPage() {
               <span className={`badge badge--status badge--${node.status}`}>{node.status}</span>
               <span className="meta-sep">·</span>
               <span className="meta-text">{formatDetailDate(capture.receivedAt)}</span>
-              <span className="meta-sep">·</span>
-              <Link to="/vault/inbox" className="meta-link">
-                Back to inbox
-              </Link>
             </>
           }
         />

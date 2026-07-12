@@ -18,7 +18,7 @@ export function VaultFileTree({ tree, selectedPath, onSelect }: VaultFileTreePro
 
   const { model } = useFileTree({
     paths: filePaths,
-    initialExpansion: 'open',
+    initialExpansion: 'closed',
     initialSelectedPaths: selectedPath ? [selectedPath] : undefined,
     unsafeCSS: PIERRE_TREE_UNSAFE_CSS,
   });
