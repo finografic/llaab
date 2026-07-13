@@ -100,7 +100,7 @@ Do not implement initially:
 - [x] Phase 0 — contracts, storage boundaries, fixtures, and guardrails (2026-07-13)
 - [x] Phase 1 — manual single-transcript wiki-draft compilation (2026-07-13)
 - [ ] Phase 2 — draft review and promotion of new wiki pages
-- [ ] Phase 3 — safe updates, novelty, and conflict handling
+- [x] Phase 3 — safe updates, novelty, and conflict handling (2026-07-13)
 - [x] Phase 4 — claim-level evidence locators and citation enrichment (2026-07-13)
 - [ ] Phase 5 — automatic topic discovery and candidate queue
 - [ ] Phase 6 — derived wiki-link graph and browsing
@@ -472,9 +472,9 @@ never an uncontrolled rewrite.
 
 **Exit criteria**
 
-- [ ] Canonical ideas from a second transcript can generate a reviewable update diff.
-- [ ] Identical or non-novel evidence produces `no-op` or a negligible proposal.
-- [ ] Manual edits survive, conflicts remain reviewable, and stale drafts cannot overwrite current
+- [x] Canonical ideas from a second transcript can generate a reviewable update diff.
+- [x] Identical or non-novel evidence produces `no-op` or a negligible proposal.
+- [x] Manual edits survive, conflicts remain reviewable, and stale drafts cannot overwrite current
       knowledge.
 
 ---
