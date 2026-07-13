@@ -62,6 +62,7 @@ change_summary, unresolved_questions, and contested_claims. Use only supplied id
 Every substantive section needs source_ref_ids and source_canonical_idea_ids. Do not create links
 unless a target wiki id is supplied. Use create for a new topic; use update, no-op, or needs-review
 for a target wiki. Preserve unrelated existing sections byte-for-byte.`;
+const MAX_WIKI_DRAFT_BODY_CHARS = 80_000;
 
 function validateResult(
   result: WikiCompileResult,
@@ -193,10 +194,12 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
             : undefined,
         );
       }
-      if (transcriptIds.length < 2)
-        {quality.warnings.push('Single-transcript evidence; independent corroboration is unavailable.');}
-      if (result.contested_claims.length > 0)
-        {quality.warnings.push('Draft contains contested claims requiring explicit review.');}
+      if (transcriptIds.length < 2) {
+        quality.warnings.push('Single-transcript evidence; independent corroboration is unavailable.');
+      }
+      if (result.contested_claims.length > 0) {
+        quality.warnings.push('Draft contains contested claims requiring explicit review.');
+      }
 
       let operation = WikiOperationSchema.parse(result.operation);
       const duplicateTopic = !existingWiki
@@ -224,6 +227,9 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
           return `<!-- wiki-section:${section.id} -->\n\n## ${section.heading}\n\n${section.body}${citations ? ` ${citations}` : ''}`;
         })
         .join('\n\n');
+      if (body.length > MAX_WIKI_DRAFT_BODY_CHARS) {
+        throw new Error(`Wiki draft exceeds ${MAX_WIKI_DRAFT_BODY_CHARS} character limit.`);
+      }
       const existingSectionIds = new Set(existingWiki ? getKnowledgeWikiSectionIds(existingWiki.body) : []);
       const patch = existingWiki
         ? result.sections.map((section) => ({
