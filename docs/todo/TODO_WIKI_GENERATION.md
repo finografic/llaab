@@ -566,7 +566,7 @@ without compiling or promoting knowledge automatically.
 **Outcome:** Promoted wiki frontmatter yields a validated, rebuildable graph with useful related-page
 browsing.
 
-- [ ] Finalize the directed relation vocabulary: `related-to`, `depends-on`, `extends`,
+- [x] Finalize the directed relation vocabulary: `related-to`, `depends-on`, `extends`,
       `contrasts-with`, `example-of`, `supports`, and `supersedes`.
 - [ ] Validate suggested links during draft review and final links during promotion: target exists,
       relation is allowed, edge is unique, and a broad shared domain tag is not sufficient evidence.
