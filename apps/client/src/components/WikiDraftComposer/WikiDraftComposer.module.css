@@ -1,0 +1,11 @@
+/* Consolidation special-case: dim purple instead of accent-green primary. */
+.consolidationCheckbox {
+  border-color: var(--consolidation-border) !important;
+  background: transparent !important;
+}
+
+.consolidationCheckbox:is([data-state='checked'], [data-state='indeterminate'], [data-checked]) {
+  border-color: var(--consolidation-border) !important;
+  background: var(--consolidation-bg) !important;
+  color: var(--consolidation-text) !important;
+}

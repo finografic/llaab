@@ -5,14 +5,20 @@ import { Input } from 'components/ui/input';
 import { FilePenLineIcon } from 'lucide-react';
 import { useRunMonitor } from 'queries/runs';
 import { useCreateWikiDraft } from 'queries/transcripts';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { CanonicalIdeaNode } from '@llaab/schemas';
 
+import styles from './WikiDraftComposer.module.css';
+
 interface WikiDraftComposerProps {
   transcriptId: string;
   canonicalIdeas: CanonicalIdeaNode[];
+}
+
+function ideaIdsKey(ideas: CanonicalIdeaNode[]): string {
+  return ideas.map((idea) => idea.id).join('\0');
 }
 
 export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftComposerProps) {
@@ -24,6 +30,7 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
   );
   const [suggestedTitle, setSuggestedTitle] = useState('');
   const [targetWikiId, setTargetWikiId] = useState('');
+  const canonicalIdsKey = useMemo(() => ideaIdsKey(canonicalIdeas), [canonicalIdeas]);
   const activeRun = useMemo(
     () =>
       monitor?.active.find(
@@ -32,6 +39,12 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
     [monitor, transcriptId],
   );
   const busy = createDraft.isPending || activeRun != null;
+
+  // useState only seeds on mount; after consolidation, ideas arrive while this composer is
+  // already mounted (often with an empty initial set). Reselect whenever the id set changes.
+  useEffect(() => {
+    setSelectedIds(new Set(canonicalIdsKey === '' ? [] : canonicalIdsKey.split('\0')));
+  }, [canonicalIdsKey]);
 
   if (canonicalIdeas.length === 0) return null;
 
@@ -73,6 +86,7 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
         {canonicalIdeas.map((idea) => (
           <label key={idea.id} className="flex cursor-pointer items-start gap-2 py-1 text-sm">
             <Checkbox
+              className={styles.consolidationCheckbox}
               checked={selectedIds.has(idea.id)}
               onCheckedChange={(checked) => toggleIdea(idea.id, checked === true)}
             />

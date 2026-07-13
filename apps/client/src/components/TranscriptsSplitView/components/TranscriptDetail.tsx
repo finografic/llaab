@@ -26,7 +26,7 @@ import {
   usePromoteCanonicalIdea,
 } from 'queries/transcripts';
 import { QUERY_KEYS as VAULT_KEYS } from 'queries/vault';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import type {
@@ -39,6 +39,10 @@ import type {
 import { heartbeatStore, useElapsedMs } from 'lib/heartbeat';
 import { parseConsolidateRunTranscriptId } from 'utils/canonical-idea-conflict.utils';
 import { formatDurationMs } from 'utils/format-date.utils';
+import {
+  formatMediaDurationSeconds,
+  mediaDurationSecondsFromTranscriptBody,
+} from 'utils/format-media-duration.utils';
 
 import { fmtDetailDate, fmtListDateNumeric, splitTags } from '../transcript-split.utils';
 import styles from './TranscriptDetail.module.css';
@@ -116,6 +120,10 @@ export function TranscriptDetail({
   const visibleIdeas = selectedRun?.ideas ?? extractedIdeas;
   const visibleIdeaCount = selectedRun?.ideaIds.length ?? transcript.extracted_idea_ids.length;
   const hasCanonicalIdeas = canonicalIdeas.length > 0;
+  const transcriptDurationLabel = useMemo(() => {
+    const seconds = mediaDurationSecondsFromTranscriptBody(transcript.body);
+    return seconds != null ? formatMediaDurationSeconds(seconds) : null;
+  }, [transcript.body]);
   const ideaTitleById = useMemo(() => {
     const entries = new Map<string, string>();
     for (const idea of extractedIdeas) entries.set(idea.id, idea.title);
@@ -169,6 +177,11 @@ export function TranscriptDetail({
   const canConsolidate = extractionRuns.some((run) => run.ideaIds.length > 0);
   const [consolidateStartedAtMs, setConsolidateStartedAtMs] = useState<number | null>(null);
   const [consolidateDurationMs, setConsolidateDurationMs] = useState<number | null>(null);
+  const [extractedIdeasOpen, setExtractedIdeasOpen] = useState(() => !hasCanonicalIdeas);
+
+  useEffect(() => {
+    setExtractedIdeasOpen(!hasCanonicalIdeas);
+  }, [hasCanonicalIdeas, transcript.id]);
 
   // The mutation's own isPending is local component state, lost when this component remounts
   // (e.g. navigating to another transcript and back — see TranscriptsSplitView's `key`). Cross-
@@ -333,6 +346,10 @@ export function TranscriptDetail({
       { transcriptId: transcript.id, autoRetry },
       {
         onSuccess: (data) => {
+          // Collapse candidate list once consolidation finishes — defaultOpen only applies on mount.
+          if (data.success && data.canonicalIdeaIds.length > 0) {
+            setExtractedIdeasOpen(false);
+          }
           // The global CanonicalIdeaConflictWatcher (mounted in AppLayout) owns the
           // replace/keep-existing prompt so it works regardless of which page triggered
           // consolidation or whether the user has since navigated away. Invalidating here just
@@ -743,15 +760,18 @@ export function TranscriptDetail({
               return (
                 <li key={idea.id} className={styles.canonicalIdeaItem}>
                   <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
-                    <span className={styles.canonicalIdeaHeader}>
-                      <p className={styles.ideaTitle}>{idea.title}</p>
-                      <span className={styles.canonicalIdeaMeta}>
+                    <Row justify="space-between" className={styles.canonicalIdeaMetaRow}>
+                      <Col xs="content" className={styles.canonicalIdeaMeta}>
                         {idea.confidence ? `${idea.confidence} confidence` : 'canonical'}
                         {' · '}
                         {idea.source_candidate_idea_ids.length} source
                         {idea.source_candidate_idea_ids.length === 1 ? '' : 's'}
-                      </span>
-                    </span>
+                      </Col>
+                      <Col xs="content" className={styles.canonicalIdeaDate}>
+                        {fmtListDateNumeric(idea.created_at)}
+                      </Col>
+                    </Row>
+                    <p className={styles.ideaTitle}>{idea.title}</p>
                     {idea.body ? <p className={styles.canonicalIdeaBody}>{idea.body}</p> : null}
                     {idea.key_claims.length > 0 ? (
                       <ul className={styles.keyClaimsList}>
@@ -792,7 +812,7 @@ export function TranscriptDetail({
       </section>
 
       <section className="section">
-        <Collapsible key={transcript.id} defaultOpen={!hasCanonicalIdeas}>
+        <Collapsible open={extractedIdeasOpen} onOpenChange={setExtractedIdeasOpen}>
           <div className={styles.extractedIdeasHeader}>
             <CollapsibleTrigger className={styles.extractedIdeasTrigger}>
               <span className={styles.extractedIdeasHeadingLabel}>
@@ -862,8 +882,21 @@ export function TranscriptDetail({
 
       {transcript.body ? (
         <section className="section">
-          <h2 className="section__heading">Transcript</h2>
-          <pre className={`body-pre ${styles.bodyPre}`}>{transcript.body}</pre>
+          <Collapsible key={`${transcript.id}-body`} defaultOpen={false}>
+            <div className={styles.extractedIdeasHeader}>
+              <CollapsibleTrigger className={styles.extractedIdeasTrigger}>
+                <span className={styles.extractedIdeasHeadingLabel}>
+                  Transcript
+                  {transcriptDurationLabel ? (
+                    <span className="section__count">{transcriptDurationLabel}</span>
+                  ) : null}
+                </span>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className={styles.extractedIdeasContent}>
+              <pre className={`body-pre ${styles.bodyPre}`}>{transcript.body}</pre>
+            </CollapsibleContent>
+          </Collapsible>
         </section>
       ) : null}
 

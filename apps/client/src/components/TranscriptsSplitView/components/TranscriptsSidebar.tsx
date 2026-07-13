@@ -11,9 +11,9 @@ import {
 } from 'components/ui/sidebar';
 import { usePersistedUiState } from 'queries/ui-state';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { TranscriptNode } from '@llaab/schemas';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
 
 import { fmtListDateNumeric } from '../transcript-split.utils';
 import { AuthorFilter } from './AuthorFilter';
@@ -28,6 +28,7 @@ function transcriptAuthor(transcript: TranscriptNode): string | undefined {
 }
 
 export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSidebarProps) {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const { value: selectedAuthors, setValue: setSelectedAuthors } = usePersistedUiState<string[]>(
     'transcripts.authorFilter',
@@ -99,24 +100,58 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                 const hasLatency = transcript.llm_duration_ms != null;
                 const ideaCount = transcript.extracted_idea_ids.length;
                 const isConsolidated = Boolean(transcript.canonical_coverage?.canonical_idea_ids.length);
+                const transcriptHref = `/vault/transcripts/${transcript.id}`;
+                const authorHref = transcript.source_id
+                  ? `/vault/sources/${transcript.source_id}`
+                  : undefined;
+
+                function openTranscript() {
+                  navigate(transcriptHref);
+                }
+
+                function onCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openTranscript();
+                  }
+                }
+
+                function onAuthorClick(event: MouseEvent<HTMLAnchorElement>) {
+                  event.stopPropagation();
+                }
 
                 return (
-                  <Link
+                  <div
                     key={transcript.id}
-                    to={`/vault/transcripts/${transcript.id}`}
+                    role="link"
+                    tabIndex={0}
                     aria-current={isActive ? 'page' : undefined}
+                    aria-label={transcript.title}
+                    onClick={openTranscript}
+                    onKeyDown={onCardKeyDown}
                     className={cn(
-                      'flex w-full leading-tight border-b hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                      isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
+                      'flex w-full cursor-pointer leading-tight border-b hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                      isActive &&
+                        'bg-sidebar-accent text-sidebar-accent-foreground shadow-[inset_4px_0_0_0_var(--accent)]',
                     )}
                   >
                     <Container className="py-2">
                       <Row justify="space-between" className="px-3">
-                        <Col xs={8} className="text-base line-clamp-2 font-medium py-1">
+                        <Col xs={8} className="text-base line-clamp-2 font-medium text-foreground py-1">
                           {transcript.title}
                         </Col>
-                        <Col xs={4} className="text-sm text-foreground text-right py-2">
-                          {subtitle}
+                        <Col xs={4} className="text-sm text-right py-2">
+                          {subtitle && authorHref ? (
+                            <Link
+                              to={authorHref}
+                              onClick={onAuthorClick}
+                              className="text-(--accent) hover:underline"
+                            >
+                              {subtitle}
+                            </Link>
+                          ) : (
+                            <span className="text-foreground">{subtitle}</span>
+                          )}
                         </Col>
 
                         {transcript.summary ? (
@@ -169,7 +204,7 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                         </Col>
                       </Row>
                     </Container>
-                  </Link>
+                  </div>
                 );
               })
             )}

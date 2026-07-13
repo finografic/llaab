@@ -25,7 +25,10 @@ export function AuthorFilter({ authors, selected, onChange }: AuthorFilterProps)
   return (
     <div className="flex items-center gap-1.5">
       <Combobox items={authors} multiple value={selected} onValueChange={onChange}>
-        <ComboboxChips ref={anchorRef} className="flex-1">
+        <ComboboxChips
+          ref={anchorRef}
+          className="min-h-8 flex-1 rounded-md bg-background px-3 py-1 shadow-none dark:bg-background"
+        >
           {selected.map((author) => (
             <ComboboxChip key={author} aria-label={author}>
               {author}
