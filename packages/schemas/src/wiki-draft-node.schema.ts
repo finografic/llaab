@@ -25,6 +25,7 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
   source_refs: z.array(WikiSourceRefSchema).default([]),
   represented_canonical_idea_ids: z.array(NodeIdSchema).default([]),
   omitted_canonical_idea_ids: z.array(NodeIdSchema).default([]),
+  omitted_canonical_ideas: z.array(z.object({ id: NodeIdSchema, reason: z.string().min(1) })).default([]),
   sections: z.array(WikiSectionDraftSchema).default([]),
   patch: z.array(WikiSectionPatchSchema).default([]),
   base_revision: z.number().int().positive().optional(),

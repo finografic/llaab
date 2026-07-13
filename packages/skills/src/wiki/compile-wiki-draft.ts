@@ -94,9 +94,17 @@ function validateResult(
   for (const id of result.coverage.represented_canonical_idea_ids) {
     if (!canonicalIdeaIds.has(id)) throw new Error(`Wiki coverage references unknown canonical idea: ${id}`);
   }
-  if (result.coverage.represented_canonical_idea_ids.length < canonicalIdeaIds.size) {
-    warnings.push('Some selected canonical ideas were omitted from the proposed wiki.');
+  const omittedIds = new Set(result.coverage.omitted_canonical_ideas.map((idea) => idea.id));
+  for (const canonicalIdeaId of canonicalIdeaIds) {
+    if (
+      !result.coverage.represented_canonical_idea_ids.includes(canonicalIdeaId) &&
+      !omittedIds.has(canonicalIdeaId)
+    ) {
+      throw new Error(`Wiki output does not account for selected canonical idea: ${canonicalIdeaId}`);
+    }
   }
+  if (omittedIds.size > 0)
+    {warnings.push('Some selected canonical ideas were explicitly omitted from the proposed wiki.');}
   if (result.sections.length === 0 && result.operation === 'create') {
     throw new Error('Wiki create draft has no sections.');
   }
@@ -245,6 +253,7 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
           source_refs: sourceRefs,
           represented_canonical_idea_ids: result.coverage.represented_canonical_idea_ids,
           omitted_canonical_idea_ids: result.coverage.omitted_canonical_ideas.map((item) => item.id),
+          omitted_canonical_ideas: result.coverage.omitted_canonical_ideas,
           sections: result.sections,
           patch,
           proposed_links: result.links,
