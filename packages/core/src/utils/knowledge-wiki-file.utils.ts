@@ -36,8 +36,9 @@ const TIMESTAMP_LOCATOR = /^(?:\d+:)?[0-5]?\d:[0-5]\d$/;
 
 function validateSourceLocator(locator: string | undefined, url: string | undefined): void {
   if (!locator) return;
-  if (!TIMESTAMP_LOCATOR.test(locator))
-    {throw new Error(`Knowledge wiki has malformed timestamp locator: ${locator}`);}
+  if (!TIMESTAMP_LOCATOR.test(locator)) {
+    throw new Error(`Knowledge wiki has malformed timestamp locator: ${locator}`);
+  }
   if (!url) return;
   const parsed = new URL(url);
   const isYouTube = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'].includes(parsed.hostname);
@@ -116,6 +117,9 @@ export function validateKnowledgeWikiPage(page: KnowledgeWikiPage): KnowledgeWik
   }
 
   const sourceRefIds = new Set(validatedPage.source_refs.map((sourceRef) => sourceRef.id));
+  if (sourceRefIds.size !== validatedPage.source_refs.length) {
+    throw new Error('Knowledge wiki contains duplicate source reference ids.');
+  }
   for (const sourceRef of validatedPage.source_refs) validateSourceLocator(sourceRef.locator, sourceRef.url);
   for (const citation of validatedPage.body.matchAll(WIKI_CITATION)) {
     const citationId = NodeIdSchema.parse(citation[1]);
