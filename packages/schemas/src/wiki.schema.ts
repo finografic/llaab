@@ -26,6 +26,11 @@ export const WikiSourceRefSchema = z.object({
   url: z.url().optional(),
   locator: z.string().min(1).optional(),
   verification: WikiVerificationStatusSchema,
+  retrieval_query: z.string().min(1).optional(),
+  retrieval_provider: z.string().min(1).optional(),
+  retrieved_at: z.string().datetime().optional(),
+  excerpt: z.string().min(1).optional(),
+  validation_notes: z.array(z.string().min(1)).default([]),
 });
 
 export const WikiLinkSchema = z.object({
