@@ -205,6 +205,16 @@ export function WikiDraftDetailPage() {
                 ))}
               </section>
             ) : null}
+            {draft.review_decisions.length > 0 ? (
+              <section className="section">
+                <h2 className="section__heading">Review history</h2>
+                {draft.review_decisions.map((decision) => (
+                  <p key={`${decision.at}-${decision.decision}`} className="text-sm text-muted-foreground">
+                    {decision.at} · {decision.decision} · {decision.reason}
+                  </p>
+                ))}
+              </section>
+            ) : null}
           </>
         ) : null}
       </PageDetail>
