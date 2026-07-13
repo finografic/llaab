@@ -1,7 +1,8 @@
 import { toNodeId } from '@llaab/schemas';
 import type { CanonicalIdeaNode, TranscriptNode, WikiEvidenceItem } from '@llaab/schemas';
 
-interface TranscriptParagraph {
+/** A bounded transcript span with a stable paragraph locator for wiki provenance. */
+export interface TranscriptSpan {
   locator?: string;
   text: string;
 }
@@ -10,8 +11,9 @@ const TIMESTAMP_MARKER = /^<!--\s*t:([^\s]+)\s*-->\s*$/;
 
 export function timestampToSeconds(locator: string): number | undefined {
   const parts = locator.split(':').map((part) => Number.parseInt(part, 10));
-  if (parts.length < 2 || parts.length > 3 || parts.some((part) => !Number.isInteger(part) || part < 0))
-    {return undefined;}
+  if (parts.length < 2 || parts.length > 3 || parts.some((part) => !Number.isInteger(part) || part < 0)) {
+    return undefined;
+  }
   const [hours, minutes, seconds] = parts.length === 3 ? parts : [0, parts[0]!, parts[1]!];
   if (minutes! >= 60 || seconds! >= 60) return undefined;
   return hours! * 3600 + minutes! * 60 + seconds!;
@@ -26,8 +28,9 @@ export function youtubeTimestampUrl(
   if (seconds === undefined) return undefined;
   try {
     const url = new URL(sourceUrl);
-    if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'].includes(url.hostname))
-      {return undefined;}
+    if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'].includes(url.hostname)) {
+      return undefined;
+    }
     url.searchParams.set('t', String(seconds));
     return url.toString();
   } catch {
@@ -42,14 +45,14 @@ function tokenize(value: string): string[] {
     .filter((token) => token.length > 2);
 }
 
-export function parseTranscriptParagraphs(body: string): TranscriptParagraph[] {
-  const paragraphs: TranscriptParagraph[] = [];
+export function resolveTranscriptSpans(body: string): TranscriptSpan[] {
+  const paragraphs: TranscriptSpan[] = [];
   let locator: string | undefined;
   let lines: string[] = [];
 
   function flush(): void {
     const text = lines.join(' ').trim();
-    if (text) paragraphs.push({ locator, text });
+    if (text) paragraphs.push({ locator: locator ?? `p:${paragraphs.length + 1}`, text });
     lines = [];
   }
 
@@ -70,11 +73,13 @@ export function parseTranscriptParagraphs(body: string): TranscriptParagraph[] {
   return paragraphs;
 }
 
+export const parseTranscriptParagraphs = resolveTranscriptSpans;
+
 export function buildWikiEvidence(
   transcript: TranscriptNode,
   canonicalIdeas: CanonicalIdeaNode[],
 ): WikiEvidenceItem[] {
-  const paragraphs = parseTranscriptParagraphs(transcript.body);
+  const paragraphs = resolveTranscriptSpans(transcript.body);
 
   return canonicalIdeas.flatMap((idea) => {
     const terms = new Set(tokenize([idea.title, idea.body, ...idea.key_claims].join(' ')));
@@ -87,7 +92,7 @@ export function buildWikiEvidence(
       .filter((candidate) => candidate.score > 0)
       .sort((left, right) => right.score - left.score || left.index - right.index)
       .slice(0, 2);
-    const selected: Array<{ paragraph: TranscriptParagraph }> =
+    const selected: Array<{ paragraph: TranscriptSpan }> =
       ranked.length > 0 ? ranked : [{ paragraph: { text: transcript.summary ?? transcript.title } }];
 
     return selected.map(({ paragraph }, index) => ({

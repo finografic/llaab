@@ -483,7 +483,7 @@ never an uncontrolled rewrite.
 **Outcome:** Provenance progresses from transcript-level references to reliable bounded excerpts
 and deep links without inventing precision.
 
-- [ ] Promote the V1 paragraph scorer into a documented transcript-span resolver with stable
+- [x] Promote the V1 paragraph scorer into a documented transcript-span resolver with stable
       paragraph locators and confidence.
 - [x] Map `<!-- t:H:MM:SS -->` markers to YouTube `t=` deep links only when the source URL and
       locator validate; otherwise keep a transcript-level citation and explicit limitation.
