@@ -18,6 +18,12 @@ import { toast } from 'sonner';
 
 import { usePageTitle } from 'lib/use-page-title';
 
+import {
+  getWikiDraftReviewActions,
+  knowledgeWikiDetailPath,
+  wikiDraftDetailPath,
+} from './wiki-draft-detail.utils';
+
 export function WikiDraftDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -27,6 +33,7 @@ export function WikiDraftDetailPage() {
   const regenerate = useRegenerateWikiDraft();
   const edit = useEditWikiDraft();
   const resolveTopic = useResolveWikiDraft();
+  const reviewActions = draft ? getWikiDraftReviewActions(draft) : [];
   usePageTitle(draft?.title ?? 'Wiki draft');
 
   if (!id) return <Navigate to="/vault" replace />;
@@ -38,7 +45,7 @@ export function WikiDraftDetailPage() {
       if (action === 'promote') {
         const result = (await promote.mutateAsync(draft.id)) as { wiki?: { id: string } };
         toast.success('Wiki promoted for review in knowledge.');
-        if (result.wiki) navigate(`/knowledge/wikis/${result.wiki.id}`);
+        if (result.wiki) navigate(knowledgeWikiDetailPath(result.wiki.id));
       } else {
         await reject.mutateAsync(draft.id);
         toast.success('Wiki draft rejected.');
@@ -60,7 +67,7 @@ export function WikiDraftDetailPage() {
     try {
       const replacementId = await regenerate.mutateAsync(draft.id);
       toast.success('Replacement wiki draft created.');
-      navigate(`/vault/wiki-drafts/${replacementId}`);
+      navigate(wikiDraftDetailPath(replacementId));
     } catch (actionError) {
       toast.error(actionError instanceof Error ? actionError.message : 'Wiki regeneration failed.');
     }
@@ -93,7 +100,7 @@ export function WikiDraftDetailPage() {
     try {
       const result = await resolveTopic.mutateAsync({ id: draft.id, targetWikiId, distinctTopicKey });
       toast.success(targetWikiId ? 'Replacement update draft created.' : 'Distinct topic confirmed.');
-      if (result.draftId) navigate(`/vault/wiki-drafts/${result.draftId}`);
+      if (result.draftId) navigate(wikiDraftDetailPath(result.draftId));
     } catch (actionError) {
       toast.error(actionError instanceof Error ? actionError.message : 'Wiki topic resolution failed.');
     }
@@ -115,35 +122,43 @@ export function WikiDraftDetailPage() {
                   {draft.operation} · quality {draft.quality_score ?? 'unscored'} · {draft.draft_status}
                 </p>
               </Col>
-              {draft.draft_status === 'proposed' && draft.operation !== 'no-op' ? (
+              {reviewActions.length > 0 ? (
                 <Col className="flex gap-2">
-                  <Button size="sm" onClick={() => void apply('promote')} disabled={promote.isPending}>
-                    <CheckIcon aria-hidden="true" /> Promote
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void apply('reject')}
-                    disabled={reject.isPending}
-                  >
-                    <XIcon aria-hidden="true" /> Reject
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void editDraft()}
-                    disabled={edit.isPending}
-                  >
-                    <PencilIcon aria-hidden="true" /> Edit Draft
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void regenerateDraft()}
-                    disabled={regenerate.isPending}
-                  >
-                    <RotateCcwIcon aria-hidden="true" /> Regenerate
-                  </Button>
+                  {reviewActions.includes('promote') ? (
+                    <Button size="sm" onClick={() => void apply('promote')} disabled={promote.isPending}>
+                      <CheckIcon aria-hidden="true" /> Promote
+                    </Button>
+                  ) : null}
+                  {reviewActions.includes('reject') ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void apply('reject')}
+                      disabled={reject.isPending}
+                    >
+                      <XIcon aria-hidden="true" /> Reject
+                    </Button>
+                  ) : null}
+                  {reviewActions.includes('edit') ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void editDraft()}
+                      disabled={edit.isPending}
+                    >
+                      <PencilIcon aria-hidden="true" /> Edit Draft
+                    </Button>
+                  ) : null}
+                  {reviewActions.includes('regenerate') ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void regenerateDraft()}
+                      disabled={regenerate.isPending}
+                    >
+                      <RotateCcwIcon aria-hidden="true" /> Regenerate
+                    </Button>
+                  ) : null}
                 </Col>
               ) : null}
             </Row>
@@ -184,7 +199,7 @@ export function WikiDraftDetailPage() {
                     {match.wiki_id} · {match.kind} · {match.reason}
                   </p>
                 ))}
-                {draft.draft_status === 'proposed' && draft.operation === 'needs-review' ? (
+                {reviewActions.includes('resolve-topic') ? (
                   <Button
                     className="mt-2"
                     size="sm"

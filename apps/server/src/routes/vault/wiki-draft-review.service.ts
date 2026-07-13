@@ -157,9 +157,6 @@ async function supersedeWikiDraft(draft: WikiDraftNode): Promise<void> {
 }
 
 export async function regenerateWikiDraftReview(draft: WikiDraftNode) {
-  if (draft.draft_status !== 'proposed') {
-    throw new Error('Only proposed wiki drafts can be regenerated.');
-  }
   const transcriptId = requireDraftLineage(draft);
   const compiled = await compileWikiDraft({
     transcriptId,

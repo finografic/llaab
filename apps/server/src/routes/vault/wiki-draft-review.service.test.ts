@@ -3,6 +3,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WikiDraftNodeSchema } from '@llaab/schemas';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as WikiSkills from '@llaab/skills';
+
+const { compileWikiDraft } = vi.hoisted(() => ({ compileWikiDraft: vi.fn() }));
+vi.mock('@llaab/skills', async (importOriginal) => ({
+  ...(await importOriginal<typeof WikiSkills>()),
+  compileWikiDraft,
+}));
 
 describe('wiki draft review service', () => {
   let root: string;
@@ -11,6 +18,7 @@ describe('wiki draft review service', () => {
     root = await mkdtemp(join(tmpdir(), 'llaab-wiki-review-'));
     process.env.LLAAB_VAULT = join(root, 'vault');
     process.env.LLAAB_KNOWLEDGE = join(root, 'knowledge');
+    compileWikiDraft.mockReset();
     vi.resetModules();
   });
 
@@ -37,6 +45,34 @@ describe('wiki draft review service', () => {
       expect.objectContaining({ decision: 'rejected', reason: expect.stringContaining('explicit') }),
     ]);
     await expect(rejectWikiDraftReview(rejected)).rejects.toThrow('Only proposed');
+  });
+
+  it('regenerates terminal drafts into a replacement and supersedes their old review state', async () => {
+    const core = await import('@llaab/core');
+    const { regenerateWikiDraftReview } = await import('./wiki-draft-review.service.js');
+    const created = await core.createNode({
+      type: 'wiki-draft',
+      title: 'Regenerate me',
+      body: '',
+      extra: {
+        topic_key: 'regenerate-me',
+        operation: 'create',
+        draft_status: 'rejected',
+        source_canonical_idea_ids: ['canonical-idea'],
+        source_transcript_ids: ['transcript-id'],
+      },
+    });
+    const rejected = await core.readNodeByType('wiki-draft', created.id);
+    compileWikiDraft.mockResolvedValue({
+      record: { status: 'completed', runNodeId: 'replacement-run' },
+      result: { draftId: 'replacement-draft' },
+    });
+
+    await expect(regenerateWikiDraftReview(rejected)).resolves.toEqual({
+      runId: 'replacement-run',
+      draftId: 'replacement-draft',
+    });
+    expect((await core.readNodeByType('wiki-draft', rejected.id)).draft_status).toBe('superseded');
   });
 
   it('revalidates edited citations and preserves unpatched promoted sections', async () => {

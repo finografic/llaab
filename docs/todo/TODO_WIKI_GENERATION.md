@@ -398,7 +398,7 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
 - [x] Test create promotion, duplicate topic/id rejection, malformed draft rejection, invalid refs,
       accepted/rejected/superseded transitions, concurrent promotion serialization, idempotent
       recovery, and absence of Git command invocation.
-- [ ] Add client tests for review states, action availability, invalidation, and navigation where
+- [x] Add client tests for review states, action availability, invalidation, and navigation where
       local test patterns support them.
 - [ ] Manually generate, review, promote, refresh, and verify one page persists under
       `knowledge/wikis/` while its draft and RunNode remain in `vault/`.
