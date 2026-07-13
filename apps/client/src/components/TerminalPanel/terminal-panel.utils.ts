@@ -32,7 +32,7 @@ export function parseTerminalCommand(input: string, shellSessionId: string): Com
     const [task, ...promptParts] = args;
     if (!task || !isAiRunTask(task)) {
       throw new Error(
-        'Usage: ai.run <route|format|extract|consolidate|code|reason|reason-plus|vision|speech> "prompt"',
+        'Usage: ai.run <route|format|extract|consolidate|wiki-compile|wiki-discover|code|reason|reason-plus|vision|speech> "prompt"',
       );
     }
     const prompt = promptParts.join(' ').trim();
@@ -116,6 +116,8 @@ function isAiRunTask(value: string): value is AiRunTask {
     'format',
     'extract',
     'consolidate',
+    'wiki-compile',
+    'wiki-discover',
     'code',
     'reason',
     'reason-plus',

@@ -10,6 +10,8 @@ const TASKS: TaskType[] = [
   'format',
   'extract',
   'consolidate',
+  'wiki-compile',
+  'wiki-discover',
   'code',
   'reason',
   'reason-plus',

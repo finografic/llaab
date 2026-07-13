@@ -67,14 +67,21 @@ describe('compileWikiDraft', () => {
       extra: { source_url: 'https://example.com/video', source_type: 'youtube' },
     });
     const canonical = await core.createNode({
+      type: 'idea',
+      title: 'Targeted retrieval candidate',
+      body: '',
+      extra: { origin: 'extracted' },
+    });
+    const canonicalIdea = await core.createNode({
       type: 'canonical-idea',
       title: 'Targeted retrieval improves context',
-      extra: { transcript_id: transcript.id, source_candidate_idea_ids: ['candidate-idea'] },
+      extra: { transcript_id: transcript.id, source_candidate_idea_ids: [canonical.id] },
     });
 
     const { record, result } = await compileWikiDraft({
       transcriptId: transcript.id,
-      canonicalIdeaIds: [canonical.id],
+      canonicalIdeaIds: [canonicalIdea.id],
+      suggestedTopicKey: 'targeted-retrieval',
       entryPath: 'manual',
     });
     const draft = await core.readNodeByType('wiki-draft', result.draftId);
@@ -94,6 +101,46 @@ describe('compileWikiDraft', () => {
     });
 
     expect(result.record.status).toBe('failed');
+    expect(routeLlm).not.toHaveBeenCalled();
+  });
+
+  it('rejects mixed-transcript ids from the manual transcript flow before inference', async () => {
+    const core = await import('@llaab/core');
+    const { compileWikiDraft } = await import('./compile-wiki-draft.js');
+    const first = await core.createNode({
+      type: 'transcript',
+      title: 'First transcript',
+      extra: { source_url: 'https://example.com/first', source_type: 'other' },
+    });
+    const second = await core.createNode({
+      type: 'transcript',
+      title: 'Second transcript',
+      extra: { source_url: 'https://example.com/second', source_type: 'other' },
+    });
+    const candidate = await core.createNode({
+      type: 'idea',
+      title: 'Candidate',
+      extra: { origin: 'extracted' },
+    });
+    const firstIdea = await core.createNode({
+      type: 'canonical-idea',
+      title: 'First idea',
+      extra: { transcript_id: first.id, source_candidate_idea_ids: [candidate.id] },
+    });
+    const secondIdea = await core.createNode({
+      type: 'canonical-idea',
+      title: 'Second idea',
+      extra: { transcript_id: second.id, source_candidate_idea_ids: [candidate.id] },
+    });
+
+    const result = await compileWikiDraft({
+      transcriptId: first.id,
+      canonicalIdeaIds: [firstIdea.id, secondIdea.id],
+      entryPath: 'manual',
+    });
+
+    expect(result.record.status).toBe('failed');
+    expect(result.record.error).toContain('route transcript');
     expect(routeLlm).not.toHaveBeenCalled();
   });
 });

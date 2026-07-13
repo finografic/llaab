@@ -1,6 +1,7 @@
 import { PageHero } from 'components/PageHero/PageHero';
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
+import { WikiDraftDiff } from 'components/WikiDraftDiff';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { CheckIcon, PencilIcon, RotateCcwIcon, XIcon } from 'lucide-react';
@@ -150,6 +151,12 @@ export function WikiDraftDetailPage() {
               <h2 className="section__heading">Proposed article</h2>
               <pre className="body-pre">{draft.body}</pre>
             </section>
+            {draft.target_wiki_id && draft.resulting_body ? (
+              <section className="section">
+                <h2 className="section__heading">Proposed update diff</h2>
+                <WikiDraftDiff targetWikiId={draft.target_wiki_id} resultingBody={draft.resulting_body} />
+              </section>
+            ) : null}
             <section className="section">
               <h2 className="section__heading">Review details</h2>
               <p className="text-sm text-muted-foreground">

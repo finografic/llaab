@@ -4,6 +4,7 @@ export type TaskType =
   | 'extract'
   | 'consolidate'
   | 'wiki-compile'
+  | 'wiki-discover'
   | 'code'
   | 'reason'
   | 'reason-plus'

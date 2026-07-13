@@ -24,7 +24,17 @@ type LlmProvider = RoutingEntry['provider'];
 interface LlmStatusResponse {
   availableProviders: LlmProvider[];
   routing: Record<
-    'route' | 'format' | 'extract' | 'consolidate' | 'code' | 'reason' | 'reason-plus' | 'vision' | 'speech',
+    | 'route'
+    | 'format'
+    | 'extract'
+    | 'consolidate'
+    | 'wiki-compile'
+    | 'wiki-discover'
+    | 'code'
+    | 'reason'
+    | 'reason-plus'
+    | 'vision'
+    | 'speech',
     RoutingEntry
   >;
   modelMap: Record<string, string>;

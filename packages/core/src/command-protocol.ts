@@ -9,6 +9,8 @@ export const AiRunCommandSchema = z.object({
     'format',
     'extract',
     'consolidate',
+    'wiki-compile',
+    'wiki-discover',
     'code',
     'reason',
     'reason-plus',

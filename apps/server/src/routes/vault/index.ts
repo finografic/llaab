@@ -2,11 +2,14 @@ import { zValidator } from '@hono/zod-validator';
 
 import { createRouter } from '../../lib/create-app.js';
 import { requireVaultSession } from '../../middlewares/vault-auth.middleware.js';
+import {
+  createWikiDraftBodySchema,
+  editWikiDraftBodySchema,
+  resolveWikiDraftBodySchema,
+} from './vault-wiki-drafts.schema.js';
 import * as routes from './vault.routes.js';
 import {
   cleanRecentBodySchema,
-  createWikiDraftBodySchema,
-  editWikiDraftBodySchema,
   batchUpdateVaultNodesBodySchema,
   codeHighlightBodySchema,
   createNodeBodySchema,
@@ -17,7 +20,6 @@ import {
   mediaQuerySchema,
   promoteCanonicalIdeaBodySchema,
   resolveCanonicalIdeaConflictBodySchema,
-  resolveWikiDraftBodySchema,
   updateSourceProfilesBodySchema,
   updateVaultNodeBodySchema,
   wikiResearchBodySchema,

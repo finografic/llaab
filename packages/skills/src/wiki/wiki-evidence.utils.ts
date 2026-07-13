@@ -7,6 +7,12 @@ export interface TranscriptSpan {
   text: string;
 }
 
+export const WIKI_EVIDENCE_MAX_ITEMS = 24;
+export const WIKI_EVIDENCE_MAX_EXCERPT_CHARS = 1_200;
+export const WIKI_EVIDENCE_MAX_PACKET_CHARS = 16_000;
+export const WIKI_EVIDENCE_MAX_ESTIMATED_TOKENS = 4_000;
+const MAX_SPANS_PER_IDEA = 3;
+
 const TIMESTAMP_MARKER = /^<!--\s*t:([^\s]+)\s*-->\s*$/;
 
 export function timestampToSeconds(locator: string): number | undefined {
@@ -78,11 +84,20 @@ export const parseTranscriptParagraphs = resolveTranscriptSpans;
 export function buildWikiEvidence(
   transcript: TranscriptNode,
   canonicalIdeas: CanonicalIdeaNode[],
+  candidateTitlesByCanonicalId: Map<string, string[]> = new Map(),
 ): WikiEvidenceItem[] {
   const paragraphs = resolveTranscriptSpans(transcript.body);
-
-  return canonicalIdeas.flatMap((idea) => {
-    const terms = new Set(tokenize([idea.title, idea.body, ...idea.key_claims].join(' ')));
+  const evidence = canonicalIdeas.flatMap((idea) => {
+    const terms = new Set(
+      tokenize(
+        [
+          idea.title,
+          idea.body,
+          ...idea.key_claims,
+          ...(candidateTitlesByCanonicalId.get(idea.id) ?? []),
+        ].join(' '),
+      ),
+    );
     const ranked = paragraphs
       .map((paragraph, index) => ({
         paragraph,
@@ -92,19 +107,77 @@ export function buildWikiEvidence(
       .filter((candidate) => candidate.score > 0)
       .sort((left, right) => right.score - left.score || left.index - right.index)
       .slice(0, 2);
-    const selected: Array<{ paragraph: TranscriptSpan }> =
-      ranked.length > 0 ? ranked : [{ paragraph: { text: transcript.summary ?? transcript.title } }];
+    const selectedIndexes = new Set<number>();
+    for (const match of ranked) {
+      selectedIndexes.add(match.index);
+      if (match.index > 0 && tokenize(paragraphs[match.index - 1]!.text).some((token) => terms.has(token))) {
+        selectedIndexes.add(match.index - 1);
+      }
+      if (
+        match.index + 1 < paragraphs.length &&
+        tokenize(paragraphs[match.index + 1]!.text).some((token) => terms.has(token))
+      ) {
+        selectedIndexes.add(match.index + 1);
+      }
+    }
+    const selected: Array<{ paragraph: TranscriptSpan; score: number }> =
+      ranked.length > 0
+        ? [...selectedIndexes]
+            .sort((left, right) => left - right)
+            .slice(0, MAX_SPANS_PER_IDEA)
+            .map((index) => ({
+              paragraph: paragraphs[index]!,
+              score: tokenize(paragraphs[index]!.text).filter((token) => terms.has(token)).length,
+            }))
+        : [{ paragraph: { text: transcript.summary ?? transcript.title }, score: 0 }];
 
-    return selected.map(({ paragraph }, index) => ({
-      id: toNodeId(`${idea.id}-${paragraph.locator ?? 'transcript'}-${index + 1}`),
-      canonical_idea_id: idea.id,
-      transcript_id: transcript.id,
-      ...(transcript.source_id ? { source_id: transcript.source_id } : {}),
-      source_url: youtubeTimestampUrl(transcript.source_url, paragraph.locator) ?? transcript.source_url,
-      title: transcript.title,
-      excerpt: paragraph.text,
-      ...(paragraph.locator ? { locator: paragraph.locator } : {}),
-      confidence: paragraph.locator ? ('high' as const) : ('medium' as const),
-    }));
+    return selected.map(({ paragraph, score }, index) => {
+      const timestampUrl = youtubeTimestampUrl(transcript.source_url, paragraph.locator);
+      const isTimestamp =
+        paragraph.locator !== undefined && timestampToSeconds(paragraph.locator) !== undefined;
+      const resolvedLocator = isTimestamp && !timestampUrl ? undefined : paragraph.locator;
+      return {
+        id: toNodeId(`${idea.id}-${resolvedLocator ?? 'transcript'}-${index + 1}`),
+        canonical_idea_id: idea.id,
+        canonical_idea_ids: [idea.id],
+        transcript_id: transcript.id,
+        ...(transcript.source_id ? { source_id: transcript.source_id } : {}),
+        source_url: timestampUrl ?? transcript.source_url,
+        ...(transcript.author ? { author: transcript.author } : {}),
+        title: transcript.title,
+        excerpt: paragraph.text.slice(0, WIKI_EVIDENCE_MAX_EXCERPT_CHARS),
+        ...(resolvedLocator ? { locator: resolvedLocator } : {}),
+        confidence:
+          score >= 4 && resolvedLocator && !resolvedLocator.startsWith('p:')
+            ? ('high' as const)
+            : score > 0
+              ? ('medium' as const)
+              : ('low' as const),
+      };
+    });
   });
+
+  const merged = new Map<string, WikiEvidenceItem>();
+  for (const item of evidence) {
+    const key = `${item.transcript_id}:${item.locator ?? 'transcript'}:${item.excerpt}`;
+    const existing = merged.get(key);
+    if (existing) {
+      existing.canonical_idea_ids = [
+        ...new Set([...existing.canonical_idea_ids, ...item.canonical_idea_ids]),
+      ];
+      continue;
+    }
+    merged.set(key, item);
+  }
+
+  const bounded: WikiEvidenceItem[] = [];
+  let totalChars = 0;
+  for (const item of merged.values()) {
+    if (bounded.length >= WIKI_EVIDENCE_MAX_ITEMS) break;
+    if (totalChars + item.excerpt.length > WIKI_EVIDENCE_MAX_PACKET_CHARS) break;
+    if (Math.ceil((totalChars + item.excerpt.length) / 4) > WIKI_EVIDENCE_MAX_ESTIMATED_TOKENS) break;
+    bounded.push(item);
+    totalChars += item.excerpt.length;
+  }
+  return bounded;
 }

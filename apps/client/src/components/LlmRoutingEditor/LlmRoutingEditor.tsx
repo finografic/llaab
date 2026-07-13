@@ -24,6 +24,8 @@ type TaskType =
   | 'format'
   | 'extract'
   | 'consolidate'
+  | 'wiki-compile'
+  | 'wiki-discover'
   | 'code'
   | 'reason'
   | 'reason-plus'
@@ -50,6 +52,8 @@ const TASK_LABELS: Record<TaskType, string> = {
   'format': 'Format',
   'extract': 'Extract',
   'consolidate': 'Consolidation',
+  'wiki-compile': 'Wiki compilation',
+  'wiki-discover': 'Wiki discovery',
   'code': 'Code',
   'reason': 'Reason',
   'reason-plus': 'Reason+',
@@ -69,6 +73,8 @@ const TASK_ORDER: TaskType[] = [
   'format',
   'extract',
   'consolidate',
+  'wiki-compile',
+  'wiki-discover',
   'code',
   'reason',
   'reason-plus',

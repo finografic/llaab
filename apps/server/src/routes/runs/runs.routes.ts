@@ -40,6 +40,8 @@ function nodeHref(node: LabNode): string {
       return `/vault/sources/${node.id}`;
     case 'transcript':
       return `/vault/transcripts/${node.id}`;
+    case 'wiki-draft':
+      return `/vault/wiki-drafts/${node.id}`;
     default:
       return `/vault/nodes/${node.id}`;
   }

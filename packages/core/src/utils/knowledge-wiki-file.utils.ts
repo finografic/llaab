@@ -33,16 +33,18 @@ const wikiLocks = new Map<string, Promise<void>>();
 const WIKI_SECTION_MARKER = /<!--\s*wiki-section:([a-z0-9]+(?:[-_][a-z0-9]+)*)\s*-->/g;
 const WIKI_CITATION = /\[\^([a-z0-9]+(?:[-_][a-z0-9]+)*)\]/g;
 const TIMESTAMP_LOCATOR = /^(?:\d+:)?[0-5]?\d:[0-5]\d$/;
+const PARAGRAPH_LOCATOR = /^p:[1-9]\d*$/;
 
 function validateSourceLocator(locator: string | undefined, url: string | undefined): void {
   if (!locator) return;
-  if (!TIMESTAMP_LOCATOR.test(locator)) {
-    throw new Error(`Knowledge wiki has malformed timestamp locator: ${locator}`);
+  const isTimestamp = TIMESTAMP_LOCATOR.test(locator);
+  if (!isTimestamp && !PARAGRAPH_LOCATOR.test(locator)) {
+    throw new Error(`Knowledge wiki has malformed source locator: ${locator}`);
   }
   if (!url) return;
   const parsed = new URL(url);
   const isYouTube = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'].includes(parsed.hostname);
-  if (isYouTube && !parsed.searchParams.has('t')) {
+  if (isTimestamp && isYouTube && !parsed.searchParams.has('t')) {
     throw new Error(`YouTube source reference with locator must include a t= deep link: ${locator}`);
   }
 }

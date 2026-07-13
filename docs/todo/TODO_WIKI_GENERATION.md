@@ -207,119 +207,119 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
 
 ### Compiler ownership and inputs
 
-- [ ] Implement the compiler as purpose-named modules under `packages/skills/src/wiki/` rather than
+- [x] Implement the compiler as purpose-named modules under `packages/skills/src/wiki/` rather than
       adding logic to `vault-transcripts.routes.ts` or an `index.ts`.
-- [ ] Separate source selection, topic resolution, evidence expansion, prompt construction, LLM
+- [x] Separate source selection, topic resolution, evidence expansion, prompt construction, LLM
       parsing, deterministic validation, quality scoring, Markdown rendering, and persistence into
       independently testable modules.
-- [ ] Add a `compileWikiDraft` entry point accepting canonical idea ids, optional target wiki id,
+- [x] Add a `compileWikiDraft` entry point accepting canonical idea ids, optional target wiki id,
       optional suggested title/topic key, and entry path `manual | automatic`.
-- [ ] For the first transcript UI, require selected canonical ideas to belong to the route
+- [x] For the first transcript UI, require selected canonical ideas to belong to the route
       transcript. Keep the compiler contract capable of cross-transcript ids for Phase 3/5.
-- [ ] Reject empty selections, duplicate ids, missing nodes, non-canonical node ids, mixed
+- [x] Reject empty selections, duplicate ids, missing nodes, non-canonical node ids, mixed
       transcript ids in the V1 UI request, and selected evidence that cannot resolve its transcript.
 
 ### Focused evidence expansion
 
-- [ ] Resolve each selected canonical idea directly, then its
+- [x] Resolve each selected canonical idea directly, then its
       `source_candidate_idea_ids`, `transcript_id`, transcript `source_id`, and `SourceNode` when
       present.
-- [ ] Build an evidence query from canonical title/body/key claims plus candidate-idea titles;
+- [x] Build an evidence query from canonical title/body/key claims plus candidate-idea titles;
       candidate `IdeaNode.body` must be treated as optional/usually empty.
-- [ ] Parse transcript bodies into timestamped paragraph records and rank bounded excerpts with a
+- [x] Parse transcript bodies into timestamped paragraph records and rank bounded excerpts with a
       deterministic lexical scorer for V1. Include neighboring paragraphs only within configured
       limits and deduplicate overlap across selected ideas.
-- [ ] Preserve transcript title, author, source URL, source id, paragraph locator, and canonical
+- [x] Preserve transcript title, author, source URL, source id, paragraph locator, and canonical
       lineage in every `WikiEvidenceItem`.
-- [ ] Fall back explicitly to transcript-level provenance when no reliable paragraph match exists;
+- [x] Fall back explicitly to transcript-level provenance when no reliable paragraph match exists;
       do not invent a claim-level locator.
-- [ ] Enforce evidence-packet item, character, and token budgets. Never send unrelated vault nodes,
+- [x] Enforce evidence-packet item, character, and token budgets. Never send unrelated vault nodes,
       full run Markdown, every wiki body, or full transcripts by default.
-- [ ] Add deterministic tests showing relevant paragraphs are selected, unrelated transcript text
+- [x] Add deterministic tests showing relevant paragraphs are selected, unrelated transcript text
       is excluded, timestamp markers survive, and repeated/overlapping excerpts collapse.
 
 ### Topic resolution and compilation
 
-- [ ] Normalize and validate `topic_key` independently from title; titles may evolve without
+- [x] Normalize and validate `topic_key` independently from title; titles may evolve without
       changing topic identity.
-- [ ] For the no-existing-wiki V1 case, resolve `create | no-op | needs-review` deterministically
+- [x] For the no-existing-wiki V1 case, resolve `create | no-op | needs-review` deterministically
       before inference. Full existing-wiki resolution arrives in Phase 3.
-- [ ] Add `wiki-compile` to every exhaustive LLM task surface: `TaskType`, default routing, routing
+- [x] Add `wiki-compile` to every exhaustive LLM task surface: `TaskType`, default routing, routing
       config parsing, server request schemas, CLI route command, `/llm` routing labels, and tests.
-- [ ] Route `wiki-compile` through the existing provider/control layer and record the resolved
+- [x] Route `wiki-compile` through the existing provider/control layer and record the resolved
       provider/model. Do not call a provider directly from the route or client.
-- [ ] Define a compact prompt and Zod output contract for operation, topic identity, aliases,
+- [x] Define a compact prompt and Zod output contract for operation, topic identity, aliases,
       summary, stable sections, links, source refs, coverage, omitted reasons, change summary,
       unresolved questions, and contested claims.
-- [ ] Require structured JSON before rendering Markdown. Strip fences defensively, but reject
+- [x] Require structured JSON before rendering Markdown. Strip fences defensively, but reject
       malformed/truncated output rather than guessing missing fields.
-- [ ] Validate that every model-produced canonical/transcript/source/wiki id and URL belongs to the
+- [x] Validate that every model-produced canonical/transcript/source/wiki id and URL belongs to the
       supplied input or a validated promoted-wiki index.
 
 ### Deterministic quality and retry
 
-- [ ] Validate topic key, selected ids, evidence refs, citation completeness, coverage,
+- [x] Validate topic key, selected ids, evidence refs, citation completeness, coverage,
       section/ref uniqueness, page-size limits, proposed link targets, and operation consistency
       before writing a draft.
 - [x] Require every substantive section to reference at least one source ref and every selected
       canonical idea to be represented or explicitly omitted with a reason.
-- [ ] Compute a 0–100 quality score from evidence coverage, citation completeness, source diversity,
+- [x] Compute a 0–100 quality score from evidence coverage, citation completeness, source diversity,
       topic coherence, duplication avoidance, link validity, novelty, and unresolved conflict.
-- [ ] Emit structured warnings for single-source dominance, low diversity, over-collapse,
+- [x] Emit structured warnings for single-source dominance, low diversity, over-collapse,
       unrelated-category merges, uncited factual detail, duplicate-topic risk, contested claims,
       weak links, and low-novelty rewrites.
-- [ ] Permit one automatic quality-triggered retry with the failed validation feedback. Preserve
+- [x] Permit one automatic quality-triggered retry with the failed validation feedback. Preserve
       both attempts in RunNode stages/decisions and never promote after either attempt.
 
 ### Durable run and draft persistence
 
-- [ ] Run compilation through `runSkill('compile-wiki-draft', ...)` so the RunNode exists before
+- [x] Run compilation through `runSkill('compile-wiki-draft', ...)` so the RunNode exists before
       evidence expansion or inference begins.
-- [ ] Add `compile-wiki-draft` to stale-run timeout configuration and add its API route to Bun's
+- [x] Add `compile-wiki-draft` to stale-run timeout configuration and add its API route to Bun's
       long-running-path allowlist.
 - [x] Persist stages for source resolution, evidence expansion, topic resolution, compilation,
       validation, retry, render, and draft write.
-- [ ] Persist entry path, operation, topic/target, selected canonical/transcript/source counts,
+- [x] Persist entry path, operation, topic/target, selected canonical/transcript/source counts,
       quality, warnings, model/provider, duration/tokens, produced draft id, and terminal decision.
-- [ ] Set `produced_node_ids` to the draft id and add a Run Monitor link to
+- [x] Set `produced_node_ids` to the draft id and add a Run Monitor link to
       `/vault/wiki-drafts/<id>` rather than the generic node detail route.
-- [ ] Persist `create`, `update`, `needs-review`, and useful `no-op` outcomes as reviewable drafts
+- [x] Persist `create`, `update`, `needs-review`, and useful `no-op` outcomes as reviewable drafts
       when they contain a decision/report; always retain the RunNode outcome.
 
 ### Server API
 
-- [ ] Add `vault-wiki-drafts.routes.ts` and `vault-wiki-drafts.schema.ts`; re-export through the
+- [x] Add `vault-wiki-drafts.routes.ts` and `vault-wiki-drafts.schema.ts`; re-export through the
       vault route barrel and wire validation in the vault router.
-- [ ] Add `POST /api/vault/transcripts/:id/wiki-drafts` for the first manual entry flow.
-- [ ] Add targeted `GET /api/vault/wiki-drafts` and
+- [x] Add `POST /api/vault/transcripts/:id/wiki-drafts` for the first manual entry flow.
+- [x] Add targeted `GET /api/vault/wiki-drafts` and
       `GET /api/vault/wiki-drafts/:id` operations with status/topic/target filters and pagination.
-- [ ] Keep handlers thin: validation and HTTP mapping belong in routes; compilation belongs in the
+- [x] Keep handlers thin: validation and HTTP mapping belong in routes; compilation belongs in the
       skill modules.
-- [ ] Return the run id and draft id directly so the client can navigate without re-scanning all
+- [x] Return the run id and draft id directly so the client can navigate without re-scanning all
       vault nodes.
-- [ ] Add route tests for invalid selection, missing lineage, unsafe target, one-source seed draft,
+- [x] Add route tests for invalid selection, missing lineage, unsafe target, one-source seed draft,
       invented ids, missing citations, failed retry, and successful persistence.
 
 ### Transcript client flow
 
-- [ ] Extract a `WikiDraftComposer/` feature component near the transcript detail feature; do not
+- [x] Extract a `WikiDraftComposer/` feature component near the transcript detail feature; do not
       expand the existing large `TranscriptDetail.tsx` with compiler state and form logic.
-- [ ] Add `Create / Update Wiki` beside Canonical Ideas and allow selecting one or more canonical
+- [x] Add `Create / Update Wiki` beside Canonical Ideas and allow selecting one or more canonical
       ideas, entering an optional suggested title, and choosing new-topic creation.
-- [ ] Do not expose heat scores, research options, prompt text, or raw model controls in V1.
-- [ ] Add dedicated `queries/wiki-drafts/` keys/hooks plus targeted invalidation for draft detail,
+- [x] Do not expose heat scores, research options, prompt text, or raw model controls in V1.
+- [x] Add dedicated `queries/wiki-drafts/` keys/hooks plus targeted invalidation for draft detail,
       draft lists, transcript canonical ideas, runs, and the Run Monitor.
-- [ ] Derive in-progress state from the shared Run Monitor using the run skill/input, with the local
+- [x] Derive in-progress state from the shared Run Monitor using the run skill/input, with the local
       mutation used only to initiate the request.
-- [ ] Surface validation warnings, failure, completion, duration, and token progress across route
+- [x] Surface validation warnings, failure, completion, duration, and token progress across route
       navigation/remounts.
 
 **Exit criteria**
 
-- [ ] Selected canonical ideas from one transcript produce a `seed` wiki draft in `vault/` with
+- [x] Selected canonical ideas from one transcript produce a `seed` wiki draft in `vault/` with
       bounded evidence, complete provenance, validation, quality, and model metadata.
-- [ ] No Phase 1 operation writes under `knowledge/` or changes Git state.
-- [ ] The draft has a durable visible RunNode and fixture-backed tests do not require live inference.
+- [x] No Phase 1 operation writes under `knowledge/` or changes Git state.
+- [x] The draft has a durable visible RunNode and fixture-backed tests do not require live inference.
 
 ---
 
@@ -368,7 +368,7 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
       superseded only after the replacement persists.
 - [x] Add a validated edit operation for proposed drafts. Edit structured sections/title/summary
       and regenerate the rendered body so structured content and Markdown cannot silently diverge.
-- [ ] Re-run citation, source-ref, link, section-id, page-size, and quality validation after every
+- [x] Re-run citation, source-ref, link, section-id, page-size, and quality validation after every
       human draft edit.
 - [x] Disallow edits or repeated promotion on rejected/superseded/accepted drafts except explicit
       regeneration into a new proposed draft.
@@ -441,7 +441,7 @@ never an uncontrolled rewrite.
       change summary, and unchanged section ids in the draft.
 - [x] Preserve untouched sections byte-for-byte where the codec allows and preserve human edits in
       any section outside the accepted patch.
-- [ ] Render a unified patch for review and reuse `@pierre/diffs` in the client; the structured
+- [x] Render a unified patch for review and reuse `@pierre/diffs` in the client; the structured
       section patch remains the application contract, not pixels or model prose.
 
 ### Apply and conflict handling

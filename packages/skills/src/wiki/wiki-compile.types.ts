@@ -4,6 +4,7 @@ export interface CompileWikiDraftInput {
   transcriptId: string;
   canonicalIdeaIds: string[];
   suggestedTitle?: string;
+  suggestedTopicKey?: string;
   targetWikiId?: string;
   entryPath: 'manual' | 'automatic';
 }
@@ -13,6 +14,9 @@ export interface CompileWikiDraftOutput {
   operation: WikiCompileResult['operation'];
   qualityScore: number;
   warnings: string[];
+  selectedCanonicalIdeaCount: number;
+  selectedTranscriptCount: number;
+  selectedSourceCount: number;
   producedNodeIds: string[];
   evidence: WikiEvidenceItem[];
   runTrace: {

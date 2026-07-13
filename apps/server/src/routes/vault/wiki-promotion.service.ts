@@ -60,6 +60,9 @@ function validateDraftLinks(draft: WikiDraftNode, pages: KnowledgeWikiPage[]): v
     if (!targets.has(link.target_wiki_id)) {
       throw new Error(`Wiki link target is not promoted: ${link.target_wiki_id}`);
     }
+    if (!link.note) {
+      throw new Error(`Wiki link requires an evidence note: ${link.target_wiki_id}`);
+    }
     if (seen.has(key)) throw new Error(`Duplicate wiki link: ${key}`);
     seen.add(key);
   }

@@ -17,6 +17,7 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
   topic_key: NodeIdSchema,
   target_wiki_id: NodeIdSchema.optional(),
   operation: WikiOperationSchema,
+  entry_path: z.enum(['manual', 'automatic']).default('manual'),
   draft_status: WikiDraftStatusSchema.default('proposed'),
   source_canonical_idea_ids: z.array(NodeIdSchema).default([]),
   source_transcript_ids: z.array(NodeIdSchema).default([]),
@@ -28,12 +29,17 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
   omitted_canonical_ideas: z.array(z.object({ id: NodeIdSchema, reason: z.string().min(1) })).default([]),
   sections: z.array(WikiSectionDraftSchema).default([]),
   patch: z.array(WikiSectionPatchSchema).default([]),
+  resulting_body: z.string().optional(),
+  unchanged_section_ids: z.array(NodeIdSchema).default([]),
   base_revision: z.number().int().positive().optional(),
   base_content_hash: z
     .string()
     .regex(/^[a-f0-9]{64}$/)
     .optional(),
   quality_score: z.number().int().min(0).max(100).optional(),
+  selected_canonical_idea_count: z.number().int().nonnegative().optional(),
+  selected_transcript_count: z.number().int().nonnegative().optional(),
+  selected_source_count: z.number().int().nonnegative().optional(),
   novelty_reason: z.string().min(1).optional(),
   warning: z.string().min(1).optional(),
   validation_issues: z.array(WikiValidationIssueSchema).default([]),

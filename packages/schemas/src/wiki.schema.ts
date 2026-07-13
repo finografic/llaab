@@ -30,7 +30,7 @@ export const WikiSourceRefSchema = z.object({
   retrieval_provider: z.string().min(1).optional(),
   retrieved_at: z.string().datetime().optional(),
   excerpt: z.string().min(1).optional(),
-  validation_notes: z.array(z.string().min(1)).default([]),
+  validation_notes: z.array(z.string().min(1)).optional(),
 });
 
 export const WikiLinkSchema = z.object({
@@ -90,9 +90,11 @@ export const WikiTopicMatchSchema = z.object({
 export const WikiEvidenceItemSchema = z.object({
   id: NodeIdSchema,
   canonical_idea_id: NodeIdSchema,
+  canonical_idea_ids: z.array(NodeIdSchema).default([]),
   transcript_id: NodeIdSchema,
   source_id: NodeIdSchema.optional(),
   source_url: z.url().optional(),
+  author: z.string().min(1).optional(),
   title: z.string().min(1),
   excerpt: z.string().min(1),
   locator: z.string().min(1).optional(),
@@ -161,6 +163,7 @@ export const CreateWikiDraftRequestSchema = z.object({
   canonical_idea_ids: z.array(NodeIdSchema).min(1),
   target_wiki_id: NodeIdSchema.optional(),
   suggested_title: z.string().min(1).optional(),
+  suggested_topic_key: NodeIdSchema.optional(),
 });
 
 export const WikiResearchRequestSchema = z
