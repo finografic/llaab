@@ -43,6 +43,15 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
   promoted_wiki_id: NodeIdSchema.optional(),
   promoted_revision: z.number().int().positive().optional(),
   reviewed_at: TimestampSchema.optional(),
+  review_decisions: z
+    .array(
+      z.object({
+        at: TimestampSchema,
+        decision: z.enum(['promoted', 'rejected']),
+        reason: z.string().min(1),
+      }),
+    )
+    .default([]),
   llm_model: z.string().optional(),
   llm_provider: z.string().optional(),
   llm_duration_ms: z.number().int().nonnegative().optional(),

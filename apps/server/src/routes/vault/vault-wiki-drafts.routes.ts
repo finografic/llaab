@@ -92,6 +92,10 @@ export const rejectWikiDraft = {
         ...draft,
         draft_status: 'rejected',
         reviewed_at: reviewedAt,
+        review_decisions: [
+          ...draft.review_decisions,
+          { at: reviewedAt, decision: 'rejected', reason: 'Rejected by explicit review action.' },
+        ],
       }));
       return c.json({ success: true, draft: result.node });
     } catch {

@@ -56,8 +56,9 @@ function validateDraftLinks(draft: WikiDraftNode, pages: KnowledgeWikiPage[]): v
     if (link.target_wiki_id === draft.topic_key || link.target_wiki_id === draft.target_wiki_id) {
       throw new Error('A wiki cannot link to itself.');
     }
-    if (!targets.has(link.target_wiki_id))
-      {throw new Error(`Wiki link target is not promoted: ${link.target_wiki_id}`);}
+    if (!targets.has(link.target_wiki_id)) {
+      throw new Error(`Wiki link target is not promoted: ${link.target_wiki_id}`);
+    }
     if (seen.has(key)) throw new Error(`Duplicate wiki link: ${key}`);
     seen.add(key);
   }
@@ -140,6 +141,14 @@ export async function promoteCreateWikiDraft(draft: WikiDraftNode): Promise<{
       promoted_wiki_id: result.page.id,
       promoted_revision: result.page.revision,
       reviewed_at: result.page.reviewed_at,
+      review_decisions: [
+        ...draft.review_decisions,
+        {
+          at: result.page.reviewed_at ?? formatIsoUtcSeconds(new Date()),
+          decision: 'promoted',
+          reason: 'Promoted after explicit review.',
+        },
+      ],
     }));
   }
 
@@ -198,6 +207,14 @@ export async function promoteUpdateWikiDraft(draft: WikiDraftNode): Promise<{
     promoted_wiki_id: result.page.id,
     promoted_revision: result.page.revision,
     reviewed_at: result.page.reviewed_at,
+    review_decisions: [
+      ...draft.review_decisions,
+      {
+        at: result.page.reviewed_at ?? formatIsoUtcSeconds(new Date()),
+        decision: 'promoted',
+        reason: 'Update promoted after revision validation.',
+      },
+    ],
   }));
   return result;
 }
