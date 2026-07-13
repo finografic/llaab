@@ -579,7 +579,7 @@ browsing.
       visualization.
 - [x] Add knowledge graph/search API responses, then an interactive graph view using a proven
       library after the index contract is stable.
-- [ ] Keep any SQLite/JSON cache disposable and request-triggered; no watcher or permanent indexing
+- [x] Keep any SQLite/JSON cache disposable and request-triggered; no watcher or permanent indexing
       process.
 - [ ] Optionally export reviewed summaries to `knowledge/knowledge-graphs/`; exports are derived
       artifacts and never the authoritative edge store.
