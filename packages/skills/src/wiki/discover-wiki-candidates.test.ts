@@ -3,6 +3,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { routeLlm } = vi.hoisted(() => ({ routeLlm: vi.fn() }));
+vi.mock('@llaab/llm', () => ({ routeLlm }));
+
 describe('discoverWikiCandidates', () => {
   let root: string;
 
@@ -10,6 +13,7 @@ describe('discoverWikiCandidates', () => {
     root = await mkdtemp(join(tmpdir(), 'llaab-wiki-discovery-'));
     process.env.LLAAB_VAULT = join(root, 'vault');
     process.env.LLAAB_KNOWLEDGE = join(root, 'knowledge');
+    routeLlm.mockReset();
     vi.resetModules();
   });
 
@@ -95,5 +99,53 @@ describe('discoverWikiCandidates', () => {
 
     expect(result.result.candidateCount).toBe(0);
     expect(await core.listNodes({ type: 'wiki-candidate' })).toHaveLength(0);
+  });
+
+  it('persists validated optional model-review provenance without accepting invented ids', async () => {
+    const core = await import('@llaab/core');
+    const { discoverWikiCandidates } = await import('./discover-wiki-candidates.js');
+    const transcripts = await Promise.all(
+      ['first', 'second', 'third'].map((title) =>
+        core.createNode({ type: 'transcript', title, extra: { source_type: 'other' } }),
+      ),
+    );
+    const ideas = await Promise.all(
+      transcripts.map((transcript, index) =>
+        core.createNode({
+          type: 'canonical-idea',
+          title: `Context review ${index}`,
+          tags: ['d:context'],
+          extra: { transcript_id: transcript.id, source_candidate_idea_ids: [] },
+        }),
+      ),
+    );
+    routeLlm.mockImplementation(async (_task, prompt) => {
+      const input = JSON.parse(prompt) as { canonical_ideas: Array<{ id: string }> };
+      return {
+        text: JSON.stringify({
+          title: 'Reviewed context',
+          topic_key: 'context',
+          recommendation: 'create',
+          canonical_idea_ids: input.canonical_ideas.map((idea) => idea.id),
+          existing_wiki_ids: [],
+          warnings: ['Model review accepted deterministic cluster coherence.'],
+        }),
+        model: 'test-model',
+        provider: 'ollama',
+        durationMs: 5,
+      };
+    });
+
+    const result = await discoverWikiCandidates({ modelReview: true });
+    const candidate = (await core.listNodes({ type: 'wiki-candidate' }))[0];
+
+    expect(result.record.status).toBe('completed');
+    expect(routeLlm).toHaveBeenCalledWith('wiki-discover', expect.any(String), expect.any(Object));
+    expect(candidate).toMatchObject({
+      title: 'Reviewed context',
+      llm_model: 'test-model',
+      llm_provider: 'ollama',
+      source_canonical_idea_ids: ideas.map((idea) => idea.id),
+    });
   });
 });

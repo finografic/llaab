@@ -15,6 +15,9 @@ export const WikiCandidateNodeSchema = BaseNodeSchema.extend({
   recommendation: WikiOperationSchema,
   existing_wiki_ids: z.array(NodeIdSchema).default([]),
   warnings: z.array(z.string()).default([]),
+  llm_model: z.string().optional(),
+  llm_provider: z.string().optional(),
+  llm_duration_ms: z.number().int().nonnegative().optional(),
 });
 
 export type WikiCandidateNode = z.infer<typeof WikiCandidateNodeSchema>;

@@ -1,8 +1,8 @@
 # TODO — Wiki Compilation and Knowledge Promotion
 
-> **Status:** Safe checkpoint recorded 2026-07-13. Phases 0–1 are complete; Phase 2 implementation
-> is complete with client/manual acceptance pending; Phase 3 implementation is substantially
-> complete with integration proof pending; Phase 4 is complete; Phases 5–7 remain incomplete.
+> **Status:** Safe stop checkpoint recorded 2026-07-13. Phases 0–1, 3, and 4 are complete.
+> Phase 2 implementation is complete with manual acceptance deferred. Phase 5 implementation is
+> complete with verification deferred. Phase 6 and Phase 7 implementation remain next.
 > **Priority:** P2 — planned.
 > **Design authority:** [Wiki Creation Spec](../../.agents/WIKI_CREATION_SPEC.md)
 
@@ -531,10 +531,10 @@ without compiling or promoting knowledge automatically.
 
 ### Optional model review
 
-- [ ] Add `wiki-discover` to the same exhaustive routing/config/UI/CLI surfaces as `wiki-compile`.
-- [ ] Limit the LLM role to cluster-coherence judgment, stable title/topic-key proposals,
+- [x] Add `wiki-discover` to the same exhaustive routing/config/UI/CLI surfaces as `wiki-compile`.
+- [x] Limit the LLM role to cluster-coherence judgment, stable title/topic-key proposals,
       split/merge recommendations, and likely existing-wiki matches.
-- [ ] Require deterministic cluster inputs and validation; the model cannot be the sole clustering
+- [x] Require deterministic cluster inputs and validation; the model cannot be the sole clustering
       mechanism or introduce supporting ids.
 
 ### Candidate persistence and UX
@@ -689,53 +689,49 @@ The initiative can graduate to `DONE_WIKI_GENERATION.md` when:
       metadata.
 - [ ] External research, if enabled, remains explicit and cannot bypass review/promotion.
 
-## Safe Checkpoint — 2026-07-13
+## Safe Stop Checkpoint — 2026-07-13
 
-This document and its accompanying source changes form a safe, validated checkpoint. The earlier
-Phase 1 foundation is committed as `3dea2c5`; the commit containing this section checkpoints the
-subsequent Phase 2–4 work. No Phase 5 discovery implementation was left partially wired.
+This checkpoint is intentionally safe to pause at. The Phase 1 foundation is committed as
+`3dea2c5`; Phase 2–4 evidence work as `5b4e21f`; the completed Phase 3 work as `cf798f9`; and
+the deterministic Phase 5 foundation as `f8b846c`. The commit containing this section completes
+the bounded optional `wiki-discover` model-review slice.
 
-### Completed at this checkpoint
+### Completed through this stop
 
-- Phase 2 promotion and review services are implemented. Focused server coverage now includes
-  review decisions, edit validation, regeneration/supersession, concurrent create promotion,
-  recovery, invalid citations, duplicate topics, and the no-Git invariant.
-- Phase 3 has deterministic claim-level novelty analysis, lifecycle-aware operation thresholds,
-  contested evidence groups, and preservation of those groups in draft review.
-- Phase 4 is complete: bounded evidence spans, validated timestamp links, stable source refs,
-  deterministic verification semantics, and focused evidence tests are implemented.
-- Focused schema, core, skills, server, and client typechecks/tests passed before this checkpoint.
+- Phase 2 implementation is complete, including client review actions, cache invalidation, and
+  navigation coverage. Manual acceptance remains intentionally unchecked.
+- Phase 3 is complete: safe update promotion preserves manual sections and produces idempotent,
+  reviewable updates.
+- Phase 4 is complete: evidence spans and provenance contracts are implemented and covered.
+- Phase 5 implementation is complete: deterministic bounded clustering and represented-evidence
+  subtraction are authoritative; optional `wiki-discover` review validates every returned ID
+  against those inputs and records model provenance without changing clustering authority.
 
-### Resume here
+### Resume from here
 
-1. Finish the unchecked Phase 3 integration tests and exit-criteria proof. Start with the
-   two-transcript journey: create a seed wiki, make a manual edit, compile a second transcript,
-   review the diff, promote once, and verify the edit and revision are preserved.
-2. Complete Phase 5 deterministic discovery before extending its model role: deduplicate by
-   canonical idea and transcript, implement bounded pre-clustering, then validate `wiki-discover`
-   outputs against deterministic cluster inputs.
-3. Complete Phase 6 link validation and rebuild/export tests.
-4. Implement the remaining Phase 7 external-research adapter behavior and its fixture-backed tests.
-5. Run the cross-cutting integration journey and manual acceptance checklist, then resolve the
-   completion criteria before renaming this document to `DONE_WIKI_GENERATION.md`.
+1. Implement Phase 6: complete draft/promotion link validation, then add the required derived
+   export to `knowledge/knowledge-graphs/`. Keep wiki Markdown as the authoritative edge source.
+2. Implement Phase 7: persist/validate external source refs and retrieval metadata, handle
+   contradictory evidence as reviewable proposals, separate transcript and external evidence in
+   the UI, and add bounded adapter behavior.
+3. Only after those implementation items are done, resume at
+   [`## Cross-Cutting Verification`](#cross-cutting-verification) for the deferred automated and
+   manual verification work. Do not mark manual acceptance boxes complete without actually
+   performing the listed interaction.
 
-### Consolidated remaining verification index
+### Deferred verification index
 
-The original unchecked boxes above remain authoritative; this section is the handoff index for a
-new task.
+The original unchecked boxes remain authoritative; they are intentionally deferred at this stop.
 
-- Phase 2: client review/action/invalidation/navigation tests and the manual create-promotion Git
-  boundary proof.
-- Phase 3: no-op, manual-edit preservation, stale revision/hash, duplicate-topic, rebase,
-  lifecycle, contested-claim, section-operation, idempotency, and two-transcript integration tests.
-- Phase 5: deterministic clustering/scoring, threshold, duplicate-run, represented-evidence,
-  model-id validation, and one-shot persistence tests.
-- Phase 6: complete rebuild, reverse-edge derivation, invalid-link diagnostics, cache deletion,
-  filtering, and reproducible export tests.
-- Phase 7: adapter fixtures, source-quality failure, unavailable-provider behavior, budget
-  enforcement, approval, and cost tests.
-- Cross-cutting: temporary-root repository boundaries, parent/nested Git status assertions,
-  workspace validation, Markdown lint, client layout audit, and the full manual acceptance journey.
+- Phase 2: manual promotion/Git-boundary proof and exit criteria.
+- Phase 5: deterministic cluster/threshold/duplicate-run/represented-evidence/model-ID/one-shot
+  persistence tests and exit criteria.
+- Phase 6: rebuild, reverse edges, invalid diagnostics, cache deletion, filtering, reproducible
+  export, and exit criteria.
+- Phase 7: adapter fixtures, source quality, unavailable provider, budget, approval, cost, and
+  exit criteria.
+- Cross-cutting: temporary roots, repository boundaries, workspace validation, Markdown lint,
+  client-layout audit, manual acceptance journey, completion criteria, and documentation follow-up.
 
 ## Documentation Follow-Ups
 

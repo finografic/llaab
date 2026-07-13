@@ -6,7 +6,9 @@ import type { WikiResearchRequest } from '@llaab/schemas';
 export const discoverWikiCandidates = {
   path: '/wiki-candidates/discover' as const,
   handler: async (c: AppCtx) => {
-    const { record, result } = await runWikiDiscovery();
+    const { record, result } = await runWikiDiscovery({
+      modelReview: c.req.query('model_review') === 'true',
+    });
     if (record.status === 'failed') return c.json({ error: record.error ?? 'Wiki discovery failed.' }, 500);
     return c.json({ success: true, runId: record.runNodeId, ...result }, 201);
   },
@@ -41,8 +43,9 @@ export const compileWikiCandidate = {
         suggestedTitle: candidate.title,
         entryPath: 'automatic',
       });
-      if (record.status === 'failed')
-        {return c.json({ error: record.error ?? 'Wiki compilation failed.' }, 500);}
+      if (record.status === 'failed') {
+        return c.json({ error: record.error ?? 'Wiki compilation failed.' }, 500);
+      }
       return c.json({ success: true, runId: record.runNodeId, ...result }, 201);
     } catch {
       return c.json({ error: 'Wiki candidate not found.' }, 404);
