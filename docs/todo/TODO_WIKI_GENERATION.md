@@ -544,7 +544,7 @@ without compiling or promoting knowledge automatically.
       novelty, existing-wiki matches, recommendation, warnings, and model provenance when used.
 - [x] Add explicit one-shot `POST /api/vault/wiki-candidates/discover` plus paginated candidate
       list/detail routes. Do not add an always-on worker or scheduler.
-- [ ] If automated scheduling is desired, expose a one-shot cron recipe that an external scheduler
+- [x] If automated scheduling is desired, expose a one-shot cron recipe that an external scheduler
       may call; the recipe must run and exit.
 - [x] Add `/vault/wiki-candidates` queue/detail views showing topic, scores with explanations,
       transcript/source counts, existing match, and create/update recommendation.
