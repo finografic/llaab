@@ -191,6 +191,16 @@ export async function promoteUpdateWikiDraft(draft: WikiDraftNode): Promise<{
   ) {
     throw new Error('Wiki draft is missing its update base revision or target.');
   }
+  if (draft.draft_status === 'accepted') {
+    if (draft.promoted_wiki_id !== draft.target_wiki_id || !draft.promoted_revision) {
+      throw new Error('Accepted wiki draft has no matching promoted revision.');
+    }
+    const page = await readKnowledgeWiki(draft.target_wiki_id);
+    if (page.revision !== draft.promoted_revision) {
+      throw new Error('The promoted wiki changed after this draft was accepted.');
+    }
+    return { path: getKnowledgeWikiPath(page.id), page };
+  }
   if (draft.draft_status !== 'proposed') throw new Error('Only proposed wiki drafts can be promoted.');
 
   const result = await withKnowledgeWikiLock(draft.target_wiki_id, async () => {

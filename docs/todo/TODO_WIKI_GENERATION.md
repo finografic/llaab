@@ -464,10 +464,10 @@ never an uncontrolled rewrite.
 
 ### Tests
 
-- [ ] Test identical-evidence no-op, manual edit preservation, stale revision/hash rejection,
+- [x] Test identical-evidence no-op, manual edit preservation, stale revision/hash rejection,
       duplicate-topic review, rebase/regeneration, lifecycle thresholds, contested claims,
       section insertion/update/removal, and idempotent update promotion.
-- [ ] Add a two-transcript integration fixture that creates a seed page, manually edits it, proposes
+- [x] Add a two-transcript integration fixture that creates a seed page, manually edits it, proposes
       an update, preserves the edit, and increments revision exactly once.
 
 **Exit criteria**
