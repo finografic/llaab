@@ -2,7 +2,7 @@ import { getNodeFilePath, listNodes, readNodeByType, updateNode } from '@llaab/c
 import { formatIsoUtcSeconds } from '@llaab/schemas';
 import { compileWikiDraft } from '@llaab/skills';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
-import type { CreateWikiDraftBody, EditWikiDraftBody } from './vault.schema.js';
+import type { CreateWikiDraftBody, EditWikiDraftBody, ResolveWikiDraftBody } from './vault.schema.js';
 import type { WikiDraftNode } from '@llaab/schemas';
 
 import { listWikiDraftsQuerySchema } from './vault.schema.js';
@@ -124,6 +124,56 @@ export const regenerateWikiDraft = {
       });
       if (record.status === 'failed') {
         return c.json({ success: false, error: record.error ?? 'Wiki regeneration failed.' }, 500);
+      }
+      await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
+        ...draft,
+        draft_status: 'superseded',
+        reviewed_at: formatIsoUtcSeconds(new Date()),
+      }));
+      return c.json({ success: true, runId: record.runNodeId, draftId: result.draftId }, 201);
+    } catch {
+      return c.json({ error: 'Wiki draft not found.' }, 404);
+    }
+  },
+};
+
+export const resolveWikiDraft = {
+  path: '/wiki-drafts/:id/resolve-topic' as const,
+  handler: async (c: AppCtxJson<ResolveWikiDraftBody>) => {
+    try {
+      const draft = await readNodeByType('wiki-draft', c.req.param('id') ?? '');
+      if (draft.draft_status !== 'proposed' || draft.operation !== 'needs-review') {
+        return c.json({ error: 'Only proposed ambiguous wiki drafts can resolve a topic.' }, 409);
+      }
+      const body = c.req.valid('json');
+      if (body.distinct_topic_key) {
+        const result = await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
+          ...draft,
+          operation: 'create',
+          topic_key: body.distinct_topic_key ?? draft.topic_key,
+          topic_matches: [],
+          warning: 'Reviewer confirmed this is a distinct topic.',
+          reviewer_edits: true,
+        }));
+        return c.json({ success: true, draft: result.node });
+      }
+      const targetWikiId = body.target_wiki_id;
+      if (!targetWikiId || !draft.topic_matches.some((match) => match.wiki_id === targetWikiId)) {
+        return c.json({ error: 'Select one of the recorded topic-match targets.' }, 400);
+      }
+      const transcriptId = draft.source_transcript_ids[0];
+      if (!transcriptId || draft.source_canonical_idea_ids.length === 0) {
+        return c.json({ error: 'Wiki draft does not retain enough lineage to regenerate.' }, 409);
+      }
+      const { record, result } = await compileWikiDraft({
+        transcriptId,
+        canonicalIdeaIds: draft.source_canonical_idea_ids,
+        suggestedTitle: draft.title,
+        targetWikiId,
+        entryPath: 'manual',
+      });
+      if (record.status === 'failed') {
+        return c.json({ success: false, error: record.error ?? 'Wiki target resolution failed.' }, 500);
       }
       await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
         ...draft,

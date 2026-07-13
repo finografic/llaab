@@ -8,6 +8,7 @@ import {
   useEditWikiDraft,
   usePromoteWikiDraft,
   useRegenerateWikiDraft,
+  useResolveWikiDraft,
   useRejectWikiDraft,
   useWikiDraft,
 } from 'queries/wiki-drafts';
@@ -24,6 +25,7 @@ export function WikiDraftDetailPage() {
   const reject = useRejectWikiDraft();
   const regenerate = useRegenerateWikiDraft();
   const edit = useEditWikiDraft();
+  const resolveTopic = useResolveWikiDraft();
   usePageTitle(draft?.title ?? 'Wiki draft');
 
   if (!id) return <Navigate to="/vault" replace />;
@@ -75,6 +77,27 @@ export function WikiDraftDetailPage() {
     }
   }
 
+  async function resolveDraftTopic() {
+    if (!draft || draft.topic_matches.length === 0) return;
+    const targetWikiId = window
+      .prompt(
+        `Choose an existing target (${draft.topic_matches.map((match) => match.wiki_id).join(', ')}) or leave blank to confirm a distinct topic.`,
+        draft.topic_matches[0]?.wiki_id,
+      )
+      ?.trim();
+    const distinctTopicKey = targetWikiId
+      ? undefined
+      : window.prompt('Distinct topic key', draft.topic_key)?.trim();
+    if (!targetWikiId && !distinctTopicKey) return;
+    try {
+      const result = await resolveTopic.mutateAsync({ id: draft.id, targetWikiId, distinctTopicKey });
+      toast.success(targetWikiId ? 'Replacement update draft created.' : 'Distinct topic confirmed.');
+      if (result.draftId) navigate(`/vault/wiki-drafts/${result.draftId}`);
+    } catch (actionError) {
+      toast.error(actionError instanceof Error ? actionError.message : 'Wiki topic resolution failed.');
+    }
+  }
+
   return (
     <PageLayout hero={<PageHero eyebrow="Vault review" title={draft?.title ?? 'Loading…'} />}>
       <PageDetail gap="lg">
@@ -91,7 +114,7 @@ export function WikiDraftDetailPage() {
                   {draft.operation} · quality {draft.quality_score ?? 'unscored'} · {draft.draft_status}
                 </p>
               </Col>
-              {draft.draft_status === 'proposed' ? (
+              {draft.draft_status === 'proposed' && draft.operation !== 'no-op' ? (
                 <Col className="flex gap-2">
                   <Button size="sm" onClick={() => void apply('promote')} disabled={promote.isPending}>
                     <CheckIcon aria-hidden="true" /> Promote
@@ -142,7 +165,31 @@ export function WikiDraftDetailPage() {
                 Run: {draft.run_id ?? 'Unavailable'} · {draft.llm_provider ?? 'unknown'} /{' '}
                 {draft.llm_model ?? 'unknown'}
               </p>
+              {draft.novelty_reason ? (
+                <p className="mt-1 text-sm text-muted-foreground">Novelty: {draft.novelty_reason}</p>
+              ) : null}
             </section>
+            {draft.topic_matches.length > 0 ? (
+              <section className="section">
+                <h2 className="section__heading">Possible update targets</h2>
+                {draft.topic_matches.map((match) => (
+                  <p key={`${match.wiki_id}-${match.kind}`} className="text-sm text-muted-foreground">
+                    {match.wiki_id} · {match.kind} · {match.reason}
+                  </p>
+                ))}
+                {draft.draft_status === 'proposed' && draft.operation === 'needs-review' ? (
+                  <Button
+                    className="mt-2"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void resolveDraftTopic()}
+                    disabled={resolveTopic.isPending}
+                  >
+                    Resolve topic
+                  </Button>
+                ) : null}
+              </section>
+            ) : null}
             <section className="section">
               <h2 className="section__heading">Provenance</h2>
               <p className="text-sm text-muted-foreground">

@@ -64,6 +64,12 @@ export {
   writeKnowledgeWiki,
 } from './utils/knowledge-wiki-file.utils.js';
 export { buildKnowledgeWikiGraph, type KnowledgeWikiGraph } from './utils/knowledge-wiki-graph.utils.js';
+export { analyzeKnowledgeWikiNovelty } from './utils/analyze-knowledge-wiki-novelty.utils.js';
+export {
+  resolveKnowledgeWikiTopic,
+  type KnowledgeWikiTopicMatch,
+  type KnowledgeWikiTopicResolution,
+} from './utils/resolve-knowledge-wiki-topic.utils.js';
 export { MONOREPO_ROOT } from './utils/vault-root.js';
 export { listNodes } from './utils/list-nodes.utils.js';
 export { parseFrontmatter } from './utils/parse-frontmatter.utils.js';

@@ -70,6 +70,18 @@ export const WikiTopicResolutionSchema = z.object({
   reason: z.string().min(1),
 });
 
+export const WikiTopicMatchSchema = z.object({
+  wiki_id: NodeIdSchema,
+  kind: z.enum([
+    'exact-topic-key',
+    'alias',
+    'normalized-title',
+    'canonical-idea-overlap',
+    'domain-tag-overlap',
+  ]),
+  reason: z.string().min(1),
+});
+
 export const WikiEvidenceItemSchema = z.object({
   id: NodeIdSchema,
   canonical_idea_id: NodeIdSchema,
@@ -175,6 +187,7 @@ export type WikiSectionDraft = z.infer<typeof WikiSectionDraftSchema>;
 export type WikiSectionPatch = z.infer<typeof WikiSectionPatchSchema>;
 export type WikiSourceRef = z.infer<typeof WikiSourceRefSchema>;
 export type WikiTopicResolution = z.infer<typeof WikiTopicResolutionSchema>;
+export type WikiTopicMatch = z.infer<typeof WikiTopicMatchSchema>;
 export type WikiValidationIssue = z.infer<typeof WikiValidationIssueSchema>;
 export type WikiVerificationStatus = z.infer<typeof WikiVerificationStatusSchema>;
 export type WikiResearchRequest = z.infer<typeof WikiResearchRequestSchema>;

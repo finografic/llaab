@@ -422,13 +422,13 @@ never an uncontrolled rewrite.
 
 ### Topic resolution
 
-- [ ] Resolve existing topics in priority order: exact topic key, alias, normalized title,
+- [x] Resolve existing topics in priority order: exact topic key, alias, normalized title,
       represented canonical-idea overlap, domain/tag overlap, then optional semantic similarity.
 - [x] Return `create | update | no-op | needs-review` before compilation and persist the reasons and
       matched candidates.
 - [x] Never silently create a near-duplicate page. A possible overlap must become `needs-review`
       with both topic identities and evidence visible.
-- [ ] Let review choose an existing update target or confirm a genuinely distinct topic key.
+- [x] Let review choose an existing update target or confirm a genuinely distinct topic key.
 
 ### Delta compilation
 
@@ -436,7 +436,7 @@ never an uncontrolled rewrite.
       bounded related-wiki summary set. Never send every wiki body or the full vault.
 - [ ] Add deterministic novelty analysis for new supported claims, corrections, contradictions,
       distinctions, mechanisms, stronger support, relevant links, and obsolete-content removal.
-- [ ] Treat wording-only rewrites and already-represented evidence as `no-op`.
+- [x] Treat wording-only rewrites and already-represented evidence as `no-op`.
 - [x] Persist `base_revision`, `base_content_hash`, structured section operations, resulting page,
       change summary, and unchanged section ids in the draft.
 - [x] Preserve untouched sections byte-for-byte where the codec allows and preserve human edits in

@@ -2,6 +2,7 @@ import {
   CreateWikiDraftRequestSchema,
   WikiResearchRequestSchema,
   WikiSectionDraftSchema,
+  NodeIdSchema,
   NodeTypeSchema,
   SourceProfileSchema,
   TranscriptCanonicalCoverageSchema,
@@ -149,6 +150,16 @@ export const listWikiDraftsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 export type ListWikiDraftsQuery = z.infer<typeof listWikiDraftsQuerySchema>;
+
+export const resolveWikiDraftBodySchema = z
+  .object({
+    target_wiki_id: NodeIdSchema.optional(),
+    distinct_topic_key: NodeIdSchema.optional(),
+  })
+  .refine((body) => (body.target_wiki_id === undefined) !== (body.distinct_topic_key === undefined), {
+    message: 'Choose one existing wiki target or confirm one distinct topic key.',
+  });
+export type ResolveWikiDraftBody = z.infer<typeof resolveWikiDraftBodySchema>;
 
 export const wikiResearchBodySchema = WikiResearchRequestSchema;
 

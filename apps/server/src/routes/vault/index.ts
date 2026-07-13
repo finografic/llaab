@@ -17,6 +17,7 @@ import {
   mediaQuerySchema,
   promoteCanonicalIdeaBodySchema,
   resolveCanonicalIdeaConflictBodySchema,
+  resolveWikiDraftBodySchema,
   updateSourceProfilesBodySchema,
   updateVaultNodeBodySchema,
   wikiResearchBodySchema,
@@ -76,6 +77,11 @@ export const vaultRouter = createRouter()
   .patch(routes.editWikiDraft.path, zValidator('json', editWikiDraftBodySchema), routes.editWikiDraft.handler)
   .post(routes.promoteWikiDraft.path, routes.promoteWikiDraft.handler)
   .post(routes.rejectWikiDraft.path, routes.rejectWikiDraft.handler)
+  .post(
+    routes.resolveWikiDraft.path,
+    zValidator('json', resolveWikiDraftBodySchema),
+    routes.resolveWikiDraft.handler,
+  )
   .post(routes.discoverWikiCandidates.path, routes.discoverWikiCandidates.handler)
   .get(routes.listWikiCandidates.path, routes.listWikiCandidates.handler)
   .get(routes.wikiCandidateDetail.path, routes.wikiCandidateDetail.handler)

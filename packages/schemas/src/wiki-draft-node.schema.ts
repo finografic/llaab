@@ -34,11 +34,27 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
     .regex(/^[a-f0-9]{64}$/)
     .optional(),
   quality_score: z.number().int().min(0).max(100).optional(),
+  novelty_reason: z.string().min(1).optional(),
   warning: z.string().min(1).optional(),
   validation_issues: z.array(WikiValidationIssueSchema).default([]),
   change_summary: z.string().optional(),
   unresolved_questions: z.array(z.string()).default([]),
   contested_claims: z.array(z.string()).default([]),
+  topic_matches: z
+    .array(
+      z.object({
+        wiki_id: NodeIdSchema,
+        kind: z.enum([
+          'exact-topic-key',
+          'alias',
+          'normalized-title',
+          'canonical-idea-overlap',
+          'domain-tag-overlap',
+        ]),
+        reason: z.string().min(1),
+      }),
+    )
+    .default([]),
   run_id: NodeIdSchema.optional(),
   reviewer_edits: z.boolean().default(false),
   promoted_wiki_id: NodeIdSchema.optional(),

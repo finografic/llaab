@@ -1,10 +1,12 @@
 import {
   createNode,
+  analyzeKnowledgeWikiNovelty,
   getKnowledgeWikiSectionIds,
   hashKnowledgeWikiPage,
   listKnowledgeWikis,
   readKnowledgeWiki,
   readNodeByType,
+  resolveKnowledgeWikiTopic,
 } from '@llaab/core';
 import { routeLlm } from '@llaab/llm';
 import {
@@ -113,10 +115,6 @@ function validateResult(
   return { score: warnings.length === 0 ? 100 : 75, warnings };
 }
 
-function normalizedTopic(value: string): string {
-  return toNodeId(value);
-}
-
 export async function compileWikiDraft(input: CompileWikiDraftInput) {
   return runSkill<CompileWikiDraftInput, CompileWikiDraftOutput>(
     'compile-wiki-draft',
@@ -202,15 +200,25 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       }
 
       let operation = WikiOperationSchema.parse(result.operation);
-      const duplicateTopic = !existingWiki
-        ? promotedWikis.find(
-            (wiki) =>
-              wiki.topic_key === result.topic.topic_key ||
-              normalizedTopic(wiki.title) === normalizedTopic(result.topic.title) ||
-              wiki.aliases.some((alias) => normalizedTopic(alias) === normalizedTopic(result.topic.title)),
+      const novelty = existingWiki
+        ? analyzeKnowledgeWikiNovelty(
+            existingWiki,
+            canonicalIdeas.map((idea) => idea.id),
           )
         : undefined;
-      if (duplicateTopic && operation === 'create') operation = 'needs-review';
+      const topicResolution = existingWiki
+        ? { operation: 'update' as const, matches: [] }
+        : resolveKnowledgeWikiTopic(promotedWikis, {
+            topicKey: result.topic.topic_key,
+            title: result.topic.title,
+            canonicalIdeaIds: canonicalIdeas.map((idea) => idea.id),
+            tags: canonicalIdeas.flatMap((idea) => idea.tags),
+          });
+      if (!existingWiki && topicResolution.operation !== 'create') operation = 'needs-review';
+      if (novelty && !novelty.hasNovelEvidence) {
+        operation = 'no-op';
+        quality.warnings.push(novelty.reason);
+      }
       if (existingWiki && operation === 'create') {
         throw new Error('An existing wiki target cannot produce a create draft.');
       }
@@ -231,13 +239,14 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         throw new Error(`Wiki draft exceeds ${MAX_WIKI_DRAFT_BODY_CHARS} character limit.`);
       }
       const existingSectionIds = new Set(existingWiki ? getKnowledgeWikiSectionIds(existingWiki.body) : []);
-      const patch = existingWiki
-        ? result.sections.map((section) => ({
-            section_id: section.id,
-            operation: existingSectionIds.has(section.id) ? ('update' as const) : ('add' as const),
-            after: section.body,
-          }))
-        : [];
+      const patch =
+        existingWiki && operation !== 'no-op'
+          ? result.sections.map((section) => ({
+              section_id: section.id,
+              operation: existingSectionIds.has(section.id) ? ('update' as const) : ('add' as const),
+              after: section.body,
+            }))
+          : [];
       const created = await createNode({
         type: 'wiki-draft',
         id: draftId,
@@ -269,16 +278,18 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
           patch,
           proposed_links: result.links,
           quality_score: quality.score,
+          novelty_reason: novelty?.reason,
           warning: quality.warnings.join(' ') || undefined,
-          ...(duplicateTopic
+          ...(topicResolution.matches.length > 0
             ? {
                 warning:
-                  `Possible duplicate of promoted wiki ${duplicateTopic.id}. ${quality.warnings.join(' ')}`.trim(),
+                  `Possible topic overlap with ${topicResolution.matches.map((match) => match.wiki_id).join(', ')}. ${quality.warnings.join(' ')}`.trim(),
               }
             : {}),
           change_summary: result.change_summary,
           unresolved_questions: result.unresolved_questions,
           contested_claims: result.contested_claims,
+          topic_matches: topicResolution.matches,
           run_id: runNodeId,
           llm_model: llm.model,
           llm_provider: llm.provider,

@@ -68,6 +68,35 @@ export function useRegenerateWikiDraft() {
   });
 }
 
+export function useResolveWikiDraft() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      targetWikiId,
+      distinctTopicKey,
+    }: {
+      id: string;
+      targetWikiId?: string;
+      distinctTopicKey?: string;
+    }) => {
+      const response = await api.vault['wiki-drafts'][':id']['resolve-topic'].$post({
+        param: { id },
+        json: {
+          ...(targetWikiId ? { target_wiki_id: targetWikiId } : {}),
+          ...(distinctTopicKey ? { distinct_topic_key: distinctTopicKey } : {}),
+        },
+      });
+      const body = (await response.json()) as { draftId?: string; error?: string };
+      if (!response.ok) throw new Error(body.error ?? 'Could not resolve wiki topic.');
+      return body;
+    },
+    onSuccess: async (_result, { id }) => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.wikiDrafts.detail(id) });
+    },
+  });
+}
+
 export function useEditWikiDraft() {
   const queryClient = useQueryClient();
   return useMutation({
