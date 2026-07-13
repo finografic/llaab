@@ -103,8 +103,9 @@ function validateResult(
       throw new Error(`Wiki output does not account for selected canonical idea: ${canonicalIdeaId}`);
     }
   }
-  if (omittedIds.size > 0)
-    {warnings.push('Some selected canonical ideas were explicitly omitted from the proposed wiki.');}
+  if (omittedIds.size > 0) {
+    warnings.push('Some selected canonical ideas were explicitly omitted from the proposed wiki.');
+  }
   if (result.sections.length === 0 && result.operation === 'create') {
     throw new Error('Wiki create draft has no sections.');
   }
@@ -192,6 +193,10 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
             : undefined,
         );
       }
+      if (transcriptIds.length < 2)
+        {quality.warnings.push('Single-transcript evidence; independent corroboration is unavailable.');}
+      if (result.contested_claims.length > 0)
+        {quality.warnings.push('Draft contains contested claims requiring explicit review.');}
 
       let operation = WikiOperationSchema.parse(result.operation);
       const duplicateTopic = !existingWiki
