@@ -4,8 +4,10 @@ import { BaseNodeSchema } from './base-node.schema.js';
 import { NodeIdSchema, TimestampSchema } from './primitives.schema.js';
 import {
   WikiDraftStatusSchema,
+  WikiContestedClaimEvidenceSchema,
   WikiLinkSchema,
   WikiOperationSchema,
+  WikiNoveltyAnalysisSchema,
   WikiSectionDraftSchema,
   WikiSectionPatchSchema,
   WikiSourceRefSchema,
@@ -41,11 +43,13 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
   selected_transcript_count: z.number().int().nonnegative().optional(),
   selected_source_count: z.number().int().nonnegative().optional(),
   novelty_reason: z.string().min(1).optional(),
+  novelty_analysis: WikiNoveltyAnalysisSchema.optional(),
   warning: z.string().min(1).optional(),
   validation_issues: z.array(WikiValidationIssueSchema).default([]),
   change_summary: z.string().optional(),
   unresolved_questions: z.array(z.string()).default([]),
   contested_claims: z.array(z.string()).default([]),
+  contested_claim_evidence: z.array(WikiContestedClaimEvidenceSchema).default([]),
   topic_matches: z
     .array(
       z.object({

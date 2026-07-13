@@ -107,4 +107,24 @@ describe('wiki evidence timestamp resolution', () => {
     expect(evidence[0]?.canonical_idea_ids).toHaveLength(ideas.length);
     expect(evidence.length).toBeLessThanOrEqual(WIKI_EVIDENCE_MAX_ITEMS);
   });
+
+  it('preserves independent transcript spans as distinct evidence', () => {
+    const first = buildWikiEvidence(transcript('Targeted retrieval keeps context focused.'), [canonical()]);
+    const secondTranscript = TranscriptNodeSchema.parse({
+      ...transcript('Targeted retrieval reduces irrelevant tokens.'),
+      id: 'second-transcript',
+      source_id: 'second-source',
+      source_url: 'https://www.youtube.com/watch?v=second',
+    });
+    const secondIdea = CanonicalIdeaNodeSchema.parse({
+      ...canonical('second-idea'),
+      transcript_id: secondTranscript.id,
+    });
+    const second = buildWikiEvidence(secondTranscript, [secondIdea]);
+
+    expect([...first, ...second].map((item) => item.transcript_id)).toEqual([
+      'test-transcript',
+      'second-transcript',
+    ]);
+  });
 });

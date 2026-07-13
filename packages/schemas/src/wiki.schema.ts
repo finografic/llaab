@@ -69,6 +69,30 @@ export const WikiQualityResultSchema = z.object({
   issues: z.array(WikiValidationIssueSchema).default([]),
 });
 
+export const WikiNoveltyAnalysisSchema = z.object({
+  has_novel_evidence: z.boolean(),
+  novel_canonical_idea_ids: z.array(NodeIdSchema),
+  represented_canonical_idea_ids: z.array(NodeIdSchema),
+  new_supported_claims: z.array(z.string()),
+  corrections: z.array(z.string()),
+  contradictions: z.array(z.string()),
+  distinctions: z.array(z.string()),
+  mechanisms: z.array(z.string()),
+  stronger_support: z.array(z.string()),
+  relevant_links: z.array(z.string()),
+  obsolete_content: z.array(z.string()),
+  meaningful_score: z.number().int().nonnegative(),
+  threshold_met: z.boolean(),
+  recommended_operation: WikiOperationSchema,
+  reason: z.string().min(1),
+});
+
+export const WikiContestedClaimEvidenceSchema = z.object({
+  claim: z.string().min(1),
+  existing_source_ref_ids: z.array(NodeIdSchema),
+  incoming_source_ref_ids: z.array(NodeIdSchema),
+});
+
 export const WikiTopicResolutionSchema = z.object({
   operation: WikiOperationSchema,
   target_wiki_id: NodeIdSchema.optional(),
@@ -189,6 +213,8 @@ export type WikiLifecycleStatus = z.infer<typeof WikiLifecycleStatusSchema>;
 export type WikiLink = z.infer<typeof WikiLinkSchema>;
 export type WikiLinkRelation = z.infer<typeof WikiLinkRelationSchema>;
 export type WikiOmittedCanonicalIdea = z.infer<typeof WikiOmittedCanonicalIdeaSchema>;
+export type WikiNoveltyAnalysis = z.infer<typeof WikiNoveltyAnalysisSchema>;
+export type WikiContestedClaimEvidence = z.infer<typeof WikiContestedClaimEvidenceSchema>;
 export type WikiOperation = z.infer<typeof WikiOperationSchema>;
 export type WikiQualityResult = z.infer<typeof WikiQualityResultSchema>;
 export type WikiSectionDraft = z.infer<typeof WikiSectionDraftSchema>;

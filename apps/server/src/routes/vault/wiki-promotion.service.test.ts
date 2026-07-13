@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WikiDraftNodeSchema } from '@llaab/schemas';
@@ -61,12 +61,66 @@ describe('promoteCreateWikiDraft', () => {
       ),
     });
     const stored = await core.readNodeByType('wiki-draft', created.id);
-    const result = await promoteCreateWikiDraft(stored);
-    const retry = await promoteCreateWikiDraft({ ...stored, draft_status: 'proposed' });
+    const [result, retry] = await Promise.all([
+      promoteCreateWikiDraft(stored),
+      promoteCreateWikiDraft({ ...stored, draft_status: 'proposed' }),
+    ]);
 
     expect(result.page.revision).toBe(1);
-    expect(retry.recovered).toBe(true);
+    expect([result.recovered, retry.recovered].sort()).toEqual([false, true]);
     expect(await core.listKnowledgeWikis()).toHaveLength(1);
+    expect((await core.readNodeByType('wiki-draft', stored.id)).draft_status).toBe('accepted');
+  });
+
+  it('rejects a conflicting duplicate topic and malformed citation refs', async () => {
+    const core = await import('@llaab/core');
+    const { promoteCreateWikiDraft } = await import('./wiki-promotion.service.js');
+    await core.writeKnowledgeWiki({
+      id: 'context-management',
+      type: 'wiki',
+      topic_key: 'context-management',
+      title: 'Existing context page',
+      aliases: [],
+      summary: 'Existing',
+      body: '<!-- wiki-section:overview -->\n\n## Overview\n\nExisting.[^existing-ref]',
+      status: 'seed',
+      tags: ['d:llm'],
+      links: [],
+      source_refs: [{ id: 'existing-ref', kind: 'transcript', verification: 'source-backed' }],
+      source_canonical_idea_ids: [],
+      source_transcript_ids: [],
+      revision: 1,
+      created_at: '2026-07-13T00:00:00Z',
+      updated_at: '2026-07-13T00:00:00Z',
+      verification_status: 'source-backed',
+    });
+    const duplicate = WikiDraftNodeSchema.parse({
+      id: 'duplicate-draft',
+      type: 'wiki-draft',
+      title: 'Different generated page',
+      tags: ['d:llm'],
+      related: [],
+      created_at: '2026-07-13T00:00:00Z',
+      status: 'seed',
+      body: '<!-- wiki-section:overview -->\n\n## Overview\n\nDifferent.[^different-ref]',
+      topic_key: 'context-management',
+      operation: 'create',
+      source_refs: [{ id: 'different-ref', kind: 'transcript', verification: 'source-backed' }],
+    });
+    await expect(promoteCreateWikiDraft(duplicate)).rejects.toThrow('already represents this topic');
+
+    const malformed = WikiDraftNodeSchema.parse({
+      ...duplicate,
+      id: 'malformed-draft',
+      topic_key: 'malformed-page',
+      body: '<!-- wiki-section:overview -->\n\n## Overview\n\nMissing ref.[^invented-ref]',
+    });
+    await expect(promoteCreateWikiDraft(malformed)).rejects.toThrow('unknown citation');
+  });
+
+  it('contains no Git command integration', async () => {
+    const source = await readFile(new URL('./wiki-promotion.service.ts', import.meta.url), 'utf8');
+    expect(source).not.toMatch(/child_process|\bgit\s+(?:add|commit|push|status)\b/);
   });
 
   it('rejects a stale update draft without changing promoted knowledge', async () => {

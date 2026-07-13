@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   analyzeKnowledgeWikiNovelty,
   createNode,
@@ -195,7 +196,12 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       const novelty = existingWiki
         ? analyzeKnowledgeWikiNovelty(
             existingWiki,
-            canonicalIdeas.map((idea) => idea.id),
+            canonicalIdeas.map((idea) => ({
+              id: idea.id,
+              body: idea.body,
+              keyClaims: idea.key_claims,
+            })),
+            Math.max(sourceIds.length, transcriptIds.length),
           )
         : undefined;
       if (!existingWiki && topicResolution.operation !== 'create') operation = 'needs-review';
@@ -206,8 +212,11 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         quality.warnings.push(message);
         quality.score = Math.max(0, quality.score - 5);
       }
-      if (novelty && !novelty.hasNovelEvidence) {
-        operation = 'no-op';
+      if (novelty) {
+        operation = novelty.recommended_operation;
+        if (result.operation === 'needs-review') operation = 'needs-review';
+      }
+      if (novelty && !novelty.has_novel_evidence) {
         quality.warnings.push(novelty.reason);
         quality.issues.push({ code: 'low-novelty', message: novelty.reason });
         quality.score = Math.max(0, quality.score - 10);
@@ -230,7 +239,7 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       const body = renderWikiDraftBody(result);
       const patch = buildWikiSectionPatch(existingWiki, result, operation);
       const resultingBody = buildWikiResultingBody(existingWiki?.body, body, patch);
-      const draftId = appendDatetimeFilenameSegment(`${topicKey}-wiki-draft`, new Date());
+      const draftId = `${appendDatetimeFilenameSegment(`${topicKey}-wiki-draft`, new Date())}-${randomUUID().slice(0, 8)}`;
       const topicWarning = topicResolution.matches.length
         ? `Possible topic overlap with ${topicResolution.matches.map((match) => match.wiki_id).join(', ')}.`
         : undefined;
@@ -238,6 +247,12 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         quality.issues.push({ code: 'duplicate-topic-risk', message: topicWarning });
         quality.score = Math.max(0, quality.score - 10);
       }
+      const contestedClaims = [...new Set([...(novelty?.contradictions ?? []), ...result.contested_claims])];
+      const contestedClaimEvidence = contestedClaims.map((claim) => ({
+        claim,
+        existing_source_ref_ids: existingWiki?.source_refs.map((ref) => ref.id) ?? [],
+        incoming_source_ref_ids: evidence.map((item) => item.id),
+      }));
       const created = await createNode({
         type: 'wiki-draft',
         id: draftId,
@@ -275,10 +290,12 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
           quality_score: quality.score,
           validation_issues: quality.issues,
           novelty_reason: novelty?.reason,
+          novelty_analysis: novelty,
           warning: [topicWarning, ...quality.warnings].filter(Boolean).join(' ') || undefined,
           change_summary: result.change_summary,
           unresolved_questions: result.unresolved_questions,
-          contested_claims: result.contested_claims,
+          contested_claims: contestedClaims,
+          contested_claim_evidence: contestedClaimEvidence,
           topic_matches: topicResolution.matches,
           run_id: runNodeId,
           llm_model: llm.model,

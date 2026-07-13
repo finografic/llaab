@@ -26,17 +26,57 @@ const wiki = {
 
 describe('analyzeKnowledgeWikiNovelty', () => {
   it('returns a deterministic no-op signal for fully represented evidence', () => {
-    expect(analyzeKnowledgeWikiNovelty(wiki, ['idea-one'])).toMatchObject({
-      hasNovelEvidence: false,
-      novelCanonicalIdeaIds: [],
+    expect(
+      analyzeKnowledgeWikiNovelty(wiki, [{ id: 'idea-one', body: 'Text', keyClaims: ['Text'] }]),
+    ).toMatchObject({
+      has_novel_evidence: false,
+      novel_canonical_idea_ids: [],
+      recommended_operation: 'no-op',
     });
   });
 
-  it('reports only canonical ideas not already represented', () => {
-    expect(analyzeKnowledgeWikiNovelty(wiki, ['idea-one', 'idea-two'])).toMatchObject({
-      hasNovelEvidence: true,
-      novelCanonicalIdeaIds: ['idea-two'],
-      representedCanonicalIdeaIds: ['idea-one'],
+  it('classifies meaningful mechanisms and new supported claims', () => {
+    expect(
+      analyzeKnowledgeWikiNovelty(wiki, [
+        {
+          id: 'idea-two',
+          body: 'Retrieval improves context because it removes irrelevant tokens.',
+          keyClaims: ['Retrieval improves context because it removes irrelevant tokens.'],
+        },
+      ]),
+    ).toMatchObject({
+      has_novel_evidence: true,
+      novel_canonical_idea_ids: ['idea-two'],
+      mechanisms: ['Retrieval improves context because it removes irrelevant tokens.'],
+      recommended_operation: 'update',
     });
+  });
+
+  it('routes contradictory evidence to explicit review with lifecycle-aware thresholds', () => {
+    const growing = {
+      ...wiki,
+      status: 'growing' as const,
+      body: '## Overview\n\nRetrieval improves context quality.',
+    };
+    const analysis = analyzeKnowledgeWikiNovelty(growing, [
+      {
+        id: 'idea-two',
+        body: 'Retrieval does not improve context quality.',
+        keyClaims: ['Retrieval does not improve context quality.'],
+      },
+    ]);
+
+    expect(analysis.contradictions).toHaveLength(1);
+    expect(analysis.recommended_operation).toBe('needs-review');
+  });
+
+  it('requires substantial diverse evidence for a mature page', () => {
+    const mature = { ...wiki, status: 'mature' as const };
+    const analysis = analyzeKnowledgeWikiNovelty(mature, [
+      { id: 'idea-two', body: 'A small extra detail.', keyClaims: ['A small extra detail.'] },
+    ]);
+
+    expect(analysis.threshold_met).toBe(false);
+    expect(analysis.recommended_operation).toBe('no-op');
   });
 });

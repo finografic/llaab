@@ -125,6 +125,16 @@ describe('wiki draft routes', () => {
     expect(draft.quality_score).toBeLessThan(100);
     expect(draft.validation_issues.map((issue) => issue.code)).toContain('single-source');
     expect(run.produced_node_ids).toEqual([draft.id]);
+
+    const { app } = await import('../../app.js');
+    const regenerateResponse = await app.request(`/api/vault/wiki-drafts/${draft.id}/regenerate`, {
+      method: 'POST',
+    });
+    const regenerated = (await regenerateResponse.json()) as { draftId: string };
+    expect(regenerateResponse.status).toBe(201);
+    expect(regenerated.draftId).not.toBe(draft.id);
+    expect((await core.readNodeByType('wiki-draft', draft.id)).draft_status).toBe('superseded');
+    expect((await core.readNodeByType('wiki-draft', regenerated.draftId)).draft_status).toBe('proposed');
   });
 
   it('retries once and returns a failed route response when citations remain invalid', async () => {

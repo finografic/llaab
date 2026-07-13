@@ -257,6 +257,19 @@ export function WikiDraftDetailPage() {
                     Contested: {claim}
                   </p>
                 ))}
+                {draft.contested_claim_evidence.map((item) => (
+                  <Row key={item.claim} className="mt-2 rounded-md border border-border p-2">
+                    <Col>
+                      <p className="text-sm font-semibold">{item.claim}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Existing evidence: {item.existing_source_ref_ids.join(', ') || 'None'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Incoming evidence: {item.incoming_source_ref_ids.join(', ') || 'None'}
+                      </p>
+                    </Col>
+                  </Row>
+                ))}
               </section>
             ) : null}
             {draft.review_decisions.length > 0 ? (

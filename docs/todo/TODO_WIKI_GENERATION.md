@@ -1,7 +1,8 @@
 # TODO — Wiki Compilation and Knowledge Promotion
 
-> **Status:** Phases 0–2 implementation complete (2026-07-13). Phases 3–7 are under active
-> implementation; manual acceptance remains tracked below.
+> **Status:** Safe checkpoint recorded 2026-07-13. Phases 0–1 are complete; Phase 2 implementation
+> is complete with client/manual acceptance pending; Phase 3 implementation is substantially
+> complete with integration proof pending; Phase 4 is complete; Phases 5–7 remain incomplete.
 > **Priority:** P2 — planned.
 > **Design authority:** [Wiki Creation Spec](../../.agents/WIKI_CREATION_SPEC.md)
 
@@ -100,7 +101,7 @@ Do not implement initially:
 - [x] Phase 1 — manual single-transcript wiki-draft compilation (2026-07-13)
 - [ ] Phase 2 — draft review and promotion of new wiki pages
 - [ ] Phase 3 — safe updates, novelty, and conflict handling
-- [ ] Phase 4 — claim-level evidence locators and citation enrichment
+- [x] Phase 4 — claim-level evidence locators and citation enrichment (2026-07-13)
 - [ ] Phase 5 — automatic topic discovery and candidate queue
 - [ ] Phase 6 — derived wiki-link graph and browsing
 - [ ] Phase 7 — external research and verification adapters
@@ -338,7 +339,7 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
       lifecycle, tag, verification, and text filters.
 - [x] Build a deterministic index from `knowledge/wikis/*.md` for id, topic key, aliases, lifecycle,
       source counts, represented canonical ideas, and links.
-- [ ] Allow request-time caching only with explicit file-state invalidation; no watcher or
+- [x] Allow request-time caching only with explicit file-state invalidation; no watcher or
       always-on indexing process. Deleting the cache must be harmless.
 - [x] Reject duplicate ids/topic keys, malformed pages, unresolved source refs, duplicate sections,
       and links to absent promoted pages before a promotion write.
@@ -356,7 +357,7 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
 - [x] Make cross-repository recovery idempotent: if the knowledge write succeeds but updating the
       vault draft fails, retry must detect the identical promoted page and repair draft metadata
       without creating revision `2` or a duplicate file.
-- [ ] Append promotion/rejection decisions to a durable RunNode or explicit draft review record so
+- [x] Append promotion/rejection decisions to a durable RunNode or explicit draft review record so
       generation and final human decision are both observable.
 - [x] Do not invoke `git add`, `git commit`, or `git push`. Promotion intentionally leaves a parent
       worktree change for the user to review and commit.
@@ -394,7 +395,7 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
 
 ### Tests and manual proof
 
-- [ ] Test create promotion, duplicate topic/id rejection, malformed draft rejection, invalid refs,
+- [x] Test create promotion, duplicate topic/id rejection, malformed draft rejection, invalid refs,
       accepted/rejected/superseded transitions, concurrent promotion serialization, idempotent
       recovery, and absence of Git command invocation.
 - [ ] Add client tests for review states, action availability, invalidation, and navigation where
@@ -434,7 +435,7 @@ never an uncontrolled rewrite.
 
 - [x] For updates, send only existing page metadata, relevant stable sections, new evidence, and a
       bounded related-wiki summary set. Never send every wiki body or the full vault.
-- [ ] Add deterministic novelty analysis for new supported claims, corrections, contradictions,
+- [x] Add deterministic novelty analysis for new supported claims, corrections, contradictions,
       distinctions, mechanisms, stronger support, relevant links, and obsolete-content removal.
 - [x] Treat wording-only rewrites and already-represented evidence as `no-op`.
 - [x] Persist `base_revision`, `base_content_hash`, structured section operations, resulting page,
@@ -452,9 +453,9 @@ never an uncontrolled rewrite.
       regeneration/rebase against the current page.
 - [x] Apply only accepted section operations, revalidate the complete resulting page, increment
       revision, merge provenance, and update timestamps after the atomic write succeeds.
-- [ ] Handle new evidence that contradicts the page as a contested-claim proposal with both source
+- [x] Handle new evidence that contradicts the page as a contested-claim proposal with both source
       groups; never silently replace the existing claim.
-- [ ] Apply lifecycle-aware novelty thresholds: useful additions for `seed`, meaningful new
+- [x] Apply lifecycle-aware novelty thresholds: useful additions for `seed`, meaningful new
       claims/distinctions for `growing`, and substantial corrections/evidence/improvements for
       `mature`.
 - [x] Define deterministic lifecycle promotion signals using coverage, independent source
@@ -487,23 +488,23 @@ and deep links without inventing precision.
       paragraph locators and confidence.
 - [x] Map `<!-- t:H:MM:SS -->` markers to YouTube `t=` deep links only when the source URL and
       locator validate; otherwise keep a transcript-level citation and explicit limitation.
-- [ ] Preserve multiple evidence spans for a claim when independent sources corroborate or contest
+- [x] Preserve multiple evidence spans for a claim when independent sources corroborate or contest
       it, while deduplicating overlapping excerpts from the same transcript.
 - [x] Render stable source-reference identifiers in article Markdown and keep normalized refs in
       frontmatter as the machine source of truth.
-- [ ] Display `source-backed`, `corroborated`, and `contested` accurately. Transcript-derived claims
+- [x] Display `source-backed`, `corroborated`, and `contested` accurately. Transcript-derived claims
       default to `source-backed` even when the speaker sounds authoritative.
 - [x] Add draft/wiki UI affordances to open the source, transcript, and timestamped YouTube location.
 - [x] Add validator checks for malformed locators, source/URL mismatch, duplicate refs, missing
       section citations, and model-invented URLs or ids.
-- [ ] Test paragraph ranking, timestamp parsing, deep-link generation, fallback citations,
+- [x] Test paragraph ranking, timestamp parsing, deep-link generation, fallback citations,
       multi-source refs, malformed locator rejection, and Markdown round trips.
 
 **Exit criteria**
 
-- [ ] Each substantive section exposes resolvable evidence at the best precision the source data
+- [x] Each substantive section exposes resolvable evidence at the best precision the source data
       supports.
-- [ ] The UI never presents transcript provenance as independent factual verification.
+- [x] The UI never presents transcript provenance as independent factual verification.
 
 ---
 
@@ -687,6 +688,54 @@ The initiative can graduate to `DONE_WIKI_GENERATION.md` when:
 - [ ] Every compilation, retry, review, rejection, and promotion decision is visible in durable
       metadata.
 - [ ] External research, if enabled, remains explicit and cannot bypass review/promotion.
+
+## Safe Checkpoint — 2026-07-13
+
+This document and its accompanying source changes form a safe, validated checkpoint. The earlier
+Phase 1 foundation is committed as `3dea2c5`; the commit containing this section checkpoints the
+subsequent Phase 2–4 work. No Phase 5 discovery implementation was left partially wired.
+
+### Completed at this checkpoint
+
+- Phase 2 promotion and review services are implemented. Focused server coverage now includes
+  review decisions, edit validation, regeneration/supersession, concurrent create promotion,
+  recovery, invalid citations, duplicate topics, and the no-Git invariant.
+- Phase 3 has deterministic claim-level novelty analysis, lifecycle-aware operation thresholds,
+  contested evidence groups, and preservation of those groups in draft review.
+- Phase 4 is complete: bounded evidence spans, validated timestamp links, stable source refs,
+  deterministic verification semantics, and focused evidence tests are implemented.
+- Focused schema, core, skills, server, and client typechecks/tests passed before this checkpoint.
+
+### Resume here
+
+1. Finish the unchecked Phase 3 integration tests and exit-criteria proof. Start with the
+   two-transcript journey: create a seed wiki, make a manual edit, compile a second transcript,
+   review the diff, promote once, and verify the edit and revision are preserved.
+2. Complete Phase 5 deterministic discovery before extending its model role: deduplicate by
+   canonical idea and transcript, implement bounded pre-clustering, then validate `wiki-discover`
+   outputs against deterministic cluster inputs.
+3. Complete Phase 6 link validation and rebuild/export tests.
+4. Implement the remaining Phase 7 external-research adapter behavior and its fixture-backed tests.
+5. Run the cross-cutting integration journey and manual acceptance checklist, then resolve the
+   completion criteria before renaming this document to `DONE_WIKI_GENERATION.md`.
+
+### Consolidated remaining verification index
+
+The original unchecked boxes above remain authoritative; this section is the handoff index for a
+new task.
+
+- Phase 2: client review/action/invalidation/navigation tests and the manual create-promotion Git
+  boundary proof.
+- Phase 3: no-op, manual-edit preservation, stale revision/hash, duplicate-topic, rebase,
+  lifecycle, contested-claim, section-operation, idempotency, and two-transcript integration tests.
+- Phase 5: deterministic clustering/scoring, threshold, duplicate-run, represented-evidence,
+  model-id validation, and one-shot persistence tests.
+- Phase 6: complete rebuild, reverse-edge derivation, invalid-link diagnostics, cache deletion,
+  filtering, and reproducible export tests.
+- Phase 7: adapter fixtures, source-quality failure, unavailable-provider behavior, budget
+  enforcement, approval, and cost tests.
+- Cross-cutting: temporary-root repository boundaries, parent/nested Git status assertions,
+  workspace validation, Markdown lint, client layout audit, and the full manual acceptance journey.
 
 ## Documentation Follow-Ups
 

@@ -14,6 +14,25 @@ import type { KnowledgeWikiPage, WikiDraftNode } from '@llaab/schemas';
 
 const SECTION_MARKER = /<!--\s*wiki-section:([a-z0-9]+(?:[-_][a-z0-9]+)*)\s*-->/g;
 
+function verificationForDraft(
+  draft: WikiDraftNode,
+  current?: KnowledgeWikiPage,
+): KnowledgeWikiPage['verification_status'] {
+  if (draft.contested_claim_evidence.length > 0 || draft.contested_claims.length > 0) return 'contested';
+  const hasValidatedExternal = draft.source_refs.some(
+    (ref) =>
+      ref.kind === 'external' && ref.verification === 'corroborated' && ref.validation_notes?.length === 0,
+  );
+  if (
+    hasValidatedExternal ||
+    draft.source_ids.length >= 2 ||
+    current?.verification_status === 'corroborated'
+  ) {
+    return 'corroborated';
+  }
+  return 'source-backed';
+}
+
 function sectionsById(body: string): Map<string, string> {
   const matches = [...body.matchAll(SECTION_MARKER)];
   return new Map(
@@ -87,7 +106,7 @@ function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): Knowledge
     created_at: reviewedAt,
     updated_at: reviewedAt,
     reviewed_at: reviewedAt,
-    verification_status: 'source-backed',
+    verification_status: verificationForDraft(draft),
   };
   return { ...page, status: determineKnowledgeWikiLifecycle(page) };
 }
@@ -200,6 +219,7 @@ export async function promoteUpdateWikiDraft(draft: WikiDraftNode): Promise<{
         ...new Set([...current.source_canonical_idea_ids, ...draft.source_canonical_idea_ids]),
       ],
       source_transcript_ids: [...new Set([...current.source_transcript_ids, ...draft.source_transcript_ids])],
+      verification_status: verificationForDraft(draft, current),
       revision: current.revision + 1,
       updated_at: formatIsoUtcSeconds(new Date()),
       reviewed_at: formatIsoUtcSeconds(new Date()),
