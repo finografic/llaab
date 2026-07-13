@@ -1,7 +1,7 @@
 import { createNode, listKnowledgeWikis, listNodes } from '@llaab/core';
-import { toNodeId } from '@llaab/schemas';
 
 import { runSkill } from '../runner.js';
+import { clusterCanonicalIdeasForWikiDiscovery } from './wiki-discovery.utils.js';
 
 export async function discoverWikiCandidates() {
   return runSkill(
@@ -19,13 +19,17 @@ export async function discoverWikiCandidates() {
           .filter((node) => node.type === 'transcript')
           .map((transcript) => [transcript.id, transcript]),
       );
-      const groups = new Map<string, typeof ideas>();
-      for (const idea of ideas) {
-        const topic = toNodeId(idea.tags.find((tag) => tag.startsWith('d:'))?.slice(2) ?? idea.title);
-        groups.set(topic, [...(groups.get(topic) ?? []), idea]);
-      }
       const producedNodeIds: string[] = [];
-      for (const [topicKey, ideas] of groups) {
+      for (const { topicKey, ideas: clusteredIdeas } of clusterCanonicalIdeasForWikiDiscovery(ideas)) {
+        const representedIdeaIds = new Set(
+          wikis
+            .filter(
+              (wiki) =>
+                wiki.topic_key === topicKey || wiki.tags.some((tag) => clusteredIdeas[0]?.tags.includes(tag)),
+            )
+            .flatMap((wiki) => wiki.source_canonical_idea_ids),
+        );
+        const ideas = clusteredIdeas.filter((idea) => !representedIdeaIds.has(idea.id));
         const transcriptIds = [...new Set(ideas.map((idea) => idea.transcript_id))];
         if (ideas.length < 3 || transcriptIds.length < 2) continue;
         const candidateId = `${topicKey}-candidate`;

@@ -517,9 +517,9 @@ without compiling or promoting knowledge automatically.
 
 - [x] Add bounded typed reads over canonical ideas only. Exclude candidate-idea volume, extraction
       run count, duplicate wording, and same-transcript repetition from demand scoring.
-- [ ] Deduplicate evidence by canonical idea and transcript before clustering so multiple models or
+- [x] Deduplicate evidence by canonical idea and transcript before clustering so multiple models or
       consolidation runs cannot inflate heat.
-- [ ] Pre-cluster with normalized domain/topic signals, title/body/key-claim similarity,
+- [x] Pre-cluster with normalized domain/topic signals, title/body/key-claim similarity,
       transcript/source diversity, existing-wiki coverage, and optional embeddings only when an
       established capability exists.
 - [x] Make the initial eligibility threshold configurable, defaulting to at least three relevant
