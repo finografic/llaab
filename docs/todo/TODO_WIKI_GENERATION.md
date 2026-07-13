@@ -457,7 +457,7 @@ never an uncontrolled rewrite.
 - [ ] Apply lifecycle-aware novelty thresholds: useful additions for `seed`, meaningful new
       claims/distinctions for `growing`, and substantial corrections/evidence/improvements for
       `mature`.
-- [ ] Define deterministic lifecycle promotion signals using coverage, independent source
+- [x] Define deterministic lifecycle promotion signals using coverage, independent source
       diversity, structure, and unresolved conflict. Lifecycle must not advance from repeated runs
       or manual title changes.
 

@@ -1,5 +1,6 @@
 import {
   getKnowledgeWikiPath,
+  determineKnowledgeWikiLifecycle,
   getNodeFilePath,
   hashKnowledgeWikiPage,
   listKnowledgeWikis,
@@ -65,7 +66,7 @@ function validateDraftLinks(draft: WikiDraftNode, pages: KnowledgeWikiPage[]): v
 }
 
 function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): KnowledgeWikiPage {
-  return {
+  const page: KnowledgeWikiPage = {
     id: draft.topic_key,
     type: 'wiki',
     topic_key: draft.topic_key,
@@ -85,6 +86,7 @@ function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): Knowledge
     reviewed_at: reviewedAt,
     verification_status: 'source-backed',
   };
+  return { ...page, status: determineKnowledgeWikiLifecycle(page) };
 }
 
 function isEquivalentPromotion(page: KnowledgeWikiPage, expected: KnowledgeWikiPage): boolean {
@@ -95,7 +97,7 @@ function isEquivalentPromotion(page: KnowledgeWikiPage, expected: KnowledgeWikiP
     page.summary === expected.summary &&
     page.body === expected.body &&
     page.revision === 1 &&
-    page.status === 'seed' &&
+    page.status === expected.status &&
     page.verification_status === 'source-backed' &&
     JSON.stringify(page.tags) === JSON.stringify(expected.tags) &&
     JSON.stringify(page.links) === JSON.stringify(expected.links) &&
@@ -199,7 +201,7 @@ export async function promoteUpdateWikiDraft(draft: WikiDraftNode): Promise<{
       updated_at: formatIsoUtcSeconds(new Date()),
       reviewed_at: formatIsoUtcSeconds(new Date()),
     };
-    return writeKnowledgeWiki(next);
+    return writeKnowledgeWiki({ ...next, status: determineKnowledgeWikiLifecycle(next) });
   });
   await updateNode(getNodeFilePath('wiki-draft', draft.id), () => ({
     ...draft,
