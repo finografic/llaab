@@ -5,6 +5,7 @@ import { api } from 'lib/api';
 
 export const QUERY_KEYS = {
   wikiCandidates: ['wiki-candidates'] as const,
+  wikiCandidate: (id: string) => [...QUERY_KEYS.wikiCandidates, id] as const,
 };
 
 export function useWikiCandidates() {
@@ -15,6 +16,19 @@ export function useWikiCandidates() {
       const body = (await response.json()) as { candidates?: WikiCandidateNode[]; error?: string };
       if (!response.ok) throw new Error(body.error ?? 'Failed to load wiki candidates.');
       return body.candidates ?? [];
+    },
+  });
+}
+
+export function useWikiCandidate(id: string | undefined) {
+  return useQuery({
+    queryKey: QUERY_KEYS.wikiCandidate(id ?? ''),
+    enabled: id !== undefined,
+    queryFn: async (): Promise<WikiCandidateNode> => {
+      const response = await api.vault['wiki-candidates'][':id'].$get({ param: { id: id ?? '' } });
+      const body = (await response.json()) as { candidate?: WikiCandidateNode; error?: string };
+      if (!response.ok || !body.candidate) throw new Error(body.error ?? 'Wiki candidate not found.');
+      return body.candidate;
     },
   });
 }

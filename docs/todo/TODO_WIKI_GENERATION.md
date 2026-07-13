@@ -546,7 +546,7 @@ without compiling or promoting knowledge automatically.
       list/detail routes. Do not add an always-on worker or scheduler.
 - [ ] If automated scheduling is desired, expose a one-shot cron recipe that an external scheduler
       may call; the recipe must run and exit.
-- [ ] Add `/vault/wiki-candidates` queue/detail views showing topic, scores with explanations,
+- [x] Add `/vault/wiki-candidates` queue/detail views showing topic, scores with explanations,
       transcript/source counts, existing match, and create/update recommendation.
 - [x] Let the user select a candidate and pass its canonical ids into the Phase 1 compiler. Discovery
       itself does not compile or promote a page.

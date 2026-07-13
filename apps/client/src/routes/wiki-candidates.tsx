@@ -8,7 +8,7 @@ import {
   useDiscoverWikiCandidates,
   useWikiCandidates,
 } from 'queries/wiki-candidates';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { usePageTitle } from 'lib/use-page-title';
@@ -62,6 +62,13 @@ export function WikiCandidatesPage() {
             <p className="mt-2 text-xs text-muted-foreground">
               Heat {candidate.heat_score} · novelty {candidate.novelty_score} · {candidate.recommendation}
             </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {candidate.source_transcript_ids.length} transcripts · {candidate.source_ids.length} sources ·{' '}
+              {candidate.existing_wiki_ids.length} existing matches
+            </p>
+            <Button asChild className="mt-3" size="sm" variant="ghost">
+              <Link to={`/vault/wiki-candidates/${candidate.id}`}>Review evidence</Link>
+            </Button>
             <Button
               className="mt-3"
               size="sm"

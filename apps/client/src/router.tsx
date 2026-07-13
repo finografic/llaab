@@ -71,6 +71,9 @@ const WikiDraftDetailPage = lazy(() =>
 const WikiCandidatesPage = lazy(() =>
   import('routes/wiki-candidates').then((module) => ({ default: module.WikiCandidatesPage })),
 );
+const WikiCandidateDetailPage = lazy(() =>
+  import('routes/wiki-candidate-detail').then((module) => ({ default: module.WikiCandidateDetailPage })),
+);
 
 function lazyElement(Component: ComponentType): ReactElement {
   return (
@@ -247,6 +250,11 @@ export const router = createBrowserRouter([
             path: 'wiki-candidates',
             element: lazyElement(WikiCandidatesPage),
             handle: { title: 'Wiki candidates' } satisfies RouteHandle,
+          },
+          {
+            path: 'wiki-candidates/:id',
+            element: lazyElement(WikiCandidateDetailPage),
+            handle: { title: 'Wiki candidate' } satisfies RouteHandle,
           },
         ],
       },
