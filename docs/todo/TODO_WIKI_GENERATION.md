@@ -261,7 +261,7 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
 - [ ] Validate topic key, selected ids, evidence refs, citation completeness, coverage,
       section/ref uniqueness, page-size limits, proposed link targets, and operation consistency
       before writing a draft.
-- [ ] Require every substantive section to reference at least one source ref and every selected
+- [x] Require every substantive section to reference at least one source ref and every selected
       canonical idea to be represented or explicitly omitted with a reason.
 - [ ] Compute a 0–100 quality score from evidence coverage, citation completeness, source diversity,
       topic coherence, duplication avoidance, link validity, novelty, and unresolved conflict.
