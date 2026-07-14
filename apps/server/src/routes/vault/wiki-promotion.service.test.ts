@@ -1,8 +1,12 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 import { WikiDraftNodeSchema } from '@llaab/schemas';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const execFileAsync = promisify(execFile);
 
 describe('promoteCreateWikiDraft', () => {
   let tempDir: string;
@@ -121,6 +125,62 @@ describe('promoteCreateWikiDraft', () => {
   it('contains no Git command integration', async () => {
     const source = await readFile(new URL('./wiki-promotion.service.ts', import.meta.url), 'utf8');
     expect(source).not.toMatch(/child_process|\bgit\s+(?:add|commit|push|status)\b/);
+  });
+
+  it('leaves parent knowledge and nested vault changes visible for explicit review', async () => {
+    await mkdir(process.env.LLAAB_VAULT!, { recursive: true });
+    await execFileAsync('git', ['init'], { cwd: tempDir });
+    await execFileAsync('git', ['init'], { cwd: process.env.LLAAB_VAULT! });
+    const core = await import('@llaab/core');
+    const { promoteCreateWikiDraft } = await import('./wiki-promotion.service.js');
+    const draft = WikiDraftNodeSchema.parse({
+      id: 'repo-boundary-draft',
+      type: 'wiki-draft',
+      title: 'Repo boundary draft',
+      tags: ['d:llm'],
+      related: [],
+      created_at: '2026-07-13T00:00:00Z',
+      status: 'seed',
+      body: '<!-- wiki-section:overview -->\\n\\n## Overview\\n\\nBoundary.[^boundary-ref]',
+      topic_key: 'repo-boundary',
+      operation: 'create',
+      draft_status: 'proposed',
+      source_refs: [{ id: 'boundary-ref', kind: 'transcript', verification: 'source-backed' }],
+    });
+    const created = await core.createNode({
+      type: 'wiki-draft',
+      id: draft.id,
+      title: draft.title,
+      body: draft.body,
+      tags: draft.tags,
+      extra: Object.fromEntries(
+        Object.entries(draft).filter(
+          ([key]) =>
+            !['id', 'type', 'title', 'body', 'tags', 'related', 'created_at', 'status'].includes(key),
+        ),
+      ),
+    });
+
+    const beforeParent = await execFileAsync('git', ['status', '--short', '--untracked-files=all'], {
+      cwd: tempDir,
+    });
+    const beforeVault = await execFileAsync('git', ['status', '--short', '--untracked-files=all'], {
+      cwd: process.env.LLAAB_VAULT!,
+    });
+
+    await promoteCreateWikiDraft(await core.readNodeByType('wiki-draft', created.id));
+
+    const afterParent = await execFileAsync('git', ['status', '--short', '--untracked-files=all'], {
+      cwd: tempDir,
+    });
+    const afterVault = await execFileAsync('git', ['status', '--short', '--untracked-files=all'], {
+      cwd: process.env.LLAAB_VAULT!,
+    });
+
+    expect(beforeParent.stdout).not.toContain('knowledge/wikis/repo-boundary.md');
+    expect(afterParent.stdout).toContain('knowledge/wikis/repo-boundary.md');
+    expect(beforeVault.stdout).toContain('nodes/wiki-drafts/repo-boundary-draft.md');
+    expect(afterVault.stdout).toContain('nodes/wiki-drafts/repo-boundary-draft.md');
   });
 
   it('rejects promotion when proposed links are not promoted or evidence-backed', async () => {

@@ -53,8 +53,41 @@ describe('discoverWikiCandidates', () => {
     const candidates = await core.listNodes({ type: 'wiki-candidate' });
 
     expect(firstRun.result.candidateCount).toBe(1);
+    expect((await core.readNodeByType('run', firstRun.record.runNodeId)).produced_node_ids).toEqual([
+      'context-candidate',
+    ]);
     expect(secondRun.result.candidateCount).toBe(0);
     expect(candidates).toHaveLength(1);
+  });
+
+  it('honors explicit discovery thresholds for bounded one-shot runs', async () => {
+    const core = await import('@llaab/core');
+    const { discoverWikiCandidates } = await import('./discover-wiki-candidates.js');
+    const first = await core.createNode({
+      type: 'transcript',
+      title: 'First',
+      extra: { source_type: 'other' },
+    });
+    const second = await core.createNode({
+      type: 'transcript',
+      title: 'Second',
+      extra: { source_type: 'other' },
+    });
+    for (const [index, transcriptId] of [first.id, second.id].entries()) {
+      await core.createNode({
+        type: 'canonical-idea',
+        title: `Threshold idea ${index}`,
+        tags: ['d:threshold'],
+        extra: { transcript_id: transcriptId, source_candidate_idea_ids: [`threshold-${index}`] },
+      });
+    }
+
+    const defaultResult = await discoverWikiCandidates();
+    const configuredResult = await discoverWikiCandidates({ minCanonicalIdeas: 2, minTranscripts: 2 });
+
+    expect(defaultResult.result.candidateCount).toBe(0);
+    expect(configuredResult.result.candidateCount).toBe(1);
+    expect((await core.listNodes({ type: 'wiki-candidate' }))[0]?.id).toBe('threshold-candidate');
   });
 
   it('subtracts canonical ideas already represented by promoted knowledge', async () => {

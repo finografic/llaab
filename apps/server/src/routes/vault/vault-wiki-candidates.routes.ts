@@ -6,7 +6,19 @@ import type { WikiResearchRequest } from '@llaab/schemas';
 export const discoverWikiCandidates = {
   path: '/wiki-candidates/discover' as const,
   handler: async (c: AppCtx) => {
+    const minCanonicalIdeas = Number(c.req.query('min_canonical_ideas') ?? 3);
+    const minTranscripts = Number(c.req.query('min_transcripts') ?? 2);
+    if (
+      !Number.isInteger(minCanonicalIdeas) ||
+      minCanonicalIdeas < 1 ||
+      !Number.isInteger(minTranscripts) ||
+      minTranscripts < 1
+    ) {
+      return c.json({ error: 'Discovery thresholds must be positive integers.' }, 400);
+    }
     const { record, result } = await runWikiDiscovery({
+      minCanonicalIdeas,
+      minTranscripts,
       modelReview: c.req.query('model_review') === 'true',
     });
     if (record.status === 'failed') return c.json({ error: record.error ?? 'Wiki discovery failed.' }, 500);

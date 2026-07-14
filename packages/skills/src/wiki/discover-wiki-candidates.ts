@@ -48,7 +48,17 @@ function parseDiscoveryReview(text: string): WikiDiscoveryReview {
   };
 }
 
-export async function discoverWikiCandidates({ modelReview = false }: { modelReview?: boolean } = {}) {
+interface DiscoverWikiCandidatesOptions {
+  minCanonicalIdeas?: number;
+  minTranscripts?: number;
+  modelReview?: boolean;
+}
+
+export async function discoverWikiCandidates({
+  minCanonicalIdeas = 3,
+  minTranscripts = 2,
+  modelReview = false,
+}: DiscoverWikiCandidatesOptions = {}) {
   return runSkill(
     'discover-wiki-candidates',
     async () => {
@@ -76,7 +86,7 @@ export async function discoverWikiCandidates({ modelReview = false }: { modelRev
         );
         const ideas = clusteredIdeas.filter((idea) => !representedIdeaIds.has(idea.id));
         const transcriptIds = [...new Set(ideas.map((idea) => idea.transcript_id))];
-        if (ideas.length < 3 || transcriptIds.length < 2) continue;
+        if (ideas.length < minCanonicalIdeas || transcriptIds.length < minTranscripts) continue;
         const candidateId = `${topicKey}-candidate`;
         if (existingCandidates.some((candidate) => candidate.id === candidateId)) continue;
         const existing = wikis.filter(

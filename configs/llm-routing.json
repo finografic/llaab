@@ -20,6 +20,16 @@
       "provider": "opencode",
       "model": "glm-5.2"
     },
+    "wiki-compile": {
+      "tier": "remote",
+      "provider": "opencode",
+      "model": "glm-5.2"
+    },
+    "wiki-discover": {
+      "tier": "remote",
+      "provider": "opencode",
+      "model": "glm-5.2"
+    },
     "reason": {
       "tier": "local-strong",
       "provider": "ollama",

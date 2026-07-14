@@ -170,6 +170,11 @@ uses these options so two providers can expose similarly named models without am
 `streamLlm(...)`, which dispatch by the saved provider id. A bare `model` override still uses the
 task's saved provider.
 
+Wiki tasks are first-class LLM routes. `wiki-compile` is called by the one-shot wiki draft
+compiler; `wiki-discover` is called only when optional model review is explicitly requested for
+deterministic wiki-candidate clusters. Both tasks appear in `configs/llm-routing.json` and are
+editable through `/llm`.
+
 Current LM Studio integration is intentionally a thin OpenAI-compatible inference adapter. Do not
 install `@lmstudio/sdk` until a concrete adapter/agent feature needs model lifecycle management,
 embeddings, or LM Studio tool-use flows.

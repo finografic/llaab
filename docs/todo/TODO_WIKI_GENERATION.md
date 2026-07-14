@@ -1,8 +1,7 @@
 # TODO — Wiki Compilation and Knowledge Promotion
 
-> **Status:** Safe stop checkpoint recorded 2026-07-13. Phases 0–1, 3, and 4 are complete.
-> Phase 2 implementation is complete with manual acceptance deferred. Phase 5 implementation is
-> complete with verification deferred. Phase 6 and Phase 7 implementation remain next.
+> **Status:** Cross-cutting verification resumed 2026-07-15. Phases 0–1 and 3–7 are
+> implementation-complete; Phase 2 implementation is complete with manual acceptance deferred.
 > **Priority:** P2 — planned.
 > **Design authority:** [Wiki Creation Spec](../../.agents/WIKI_CREATION_SPEC.md)
 
@@ -102,7 +101,7 @@ Do not implement initially:
 - [ ] Phase 2 — draft review and promotion of new wiki pages
 - [x] Phase 3 — safe updates, novelty, and conflict handling (2026-07-13)
 - [x] Phase 4 — claim-level evidence locators and citation enrichment (2026-07-13)
-- [ ] Phase 5 — automatic topic discovery and candidate queue
+- [x] Phase 5 — automatic topic discovery and candidate queue (2026-07-15)
 - [x] Phase 6 — derived wiki-link graph and browsing (2026-07-14)
 - [x] Phase 7 — external research and verification adapters (2026-07-14)
 
@@ -551,14 +550,14 @@ without compiling or promoting knowledge automatically.
       transcript/source counts, existing match, and create/update recommendation.
 - [x] Let the user select a candidate and pass its canonical ids into the Phase 1 compiler. Discovery
       itself does not compile or promote a page.
-- [ ] Test deterministic clusters/scores, threshold configuration, duplicate-run immunity,
+- [x] Test deterministic clusters/scores, threshold configuration, duplicate-run immunity,
       represented-evidence subtraction, model id validation, and one-shot run persistence.
 
 **Exit criteria**
 
-- [ ] Discovery creates reviewable vault candidates only.
-- [ ] Heat measures evidence diversity and unmet knowledge demand, not extraction noise.
-- [ ] A candidate enters the existing compiler only through an explicit user action.
+- [x] Discovery creates reviewable vault candidates only.
+- [x] Heat measures evidence diversity and unmet knowledge demand, not extraction noise.
+- [x] A candidate enters the existing compiler only through an explicit user action.
 
 ---
 
@@ -624,24 +623,24 @@ while keeping transcript provenance and factual verification distinct.
 
 ## Cross-Cutting Verification
 
-- [ ] Keep route modules thin and schema-validated; no implementation logic in `index.ts` files.
-- [ ] Keep compilation, evidence, resolution, quality, storage, promotion, and graph modules
+- [x] Keep route modules thin and schema-validated; no implementation logic in `index.ts` files.
+- [x] Keep compilation, evidence, resolution, quality, storage, promotion, and graph modules
       independently testable with deterministic fixtures.
-- [ ] Add focused tests in `@llaab/schemas`, `@llaab/core`, `@llaab/skills`, server routes, and
+- [x] Add focused tests in `@llaab/schemas`, `@llaab/core`, `@llaab/skills`, server routes, and
       client features as each phase introduces contracts.
-- [ ] Use temporary `LLAAB_VAULT` and `LLAAB_KNOWLEDGE` roots in storage/route tests; never write
+- [x] Use temporary `LLAAB_VAULT` and `LLAAB_KNOWLEDGE` roots in storage/route tests; never write
       fixtures into the live repositories.
-- [ ] Assert parent and nested-vault Git status before/after promotion and conflict integration tests.
+- [x] Assert parent and nested-vault Git status before/after promotion and conflict integration tests.
 - [ ] Add an integration journey covering draft creation, review, create promotion, manual edit,
       update draft, stale rejection, regeneration/rebase, accepted update, and no-op rerun.
-- [ ] Run the smallest relevant package tests/typechecks during each phase and one workspace-level
+- [x] Run the smallest relevant package tests/typechecks during each phase and one workspace-level
       validation pass at the vertical-slice boundary.
-- [ ] After changes under `apps/server/**`, server-consumed packages, or startup-read environment
+- [x] After changes under `apps/server/**`, server-consumed packages, or startup-read environment
       values, run `mkdir -p "$HOME/Library/Logs/llaab" && ./scripts/macos/dev-refresh.sh` before
       browser verification.
-- [ ] Run `node_modules/.bin/md-lint docs/todo/TODO_WIKI_GENERATION.md` after plan updates and lint
+- [x] Run `node_modules/.bin/md-lint docs/todo/TODO_WIKI_GENERATION.md` after plan updates and lint
       new operator/process documentation as it lands.
-- [ ] Verify all structural client layout uses `Row`/`Col`/`Container`, shadcn primitives are reused,
+- [x] Verify all structural client layout uses `Row`/`Col`/`Container`, shadcn primitives are reused,
       and no custom icon duplicates Lucide.
 
 ## Manual Acceptance Journey
@@ -725,8 +724,8 @@ checkpoint after this section completes Phase 7 external research adapters.
 The original unchecked boxes remain authoritative; they are intentionally deferred at this stop.
 
 - Phase 2: manual promotion/Git-boundary proof and exit criteria.
-- Phase 5: deterministic cluster/threshold/duplicate-run/represented-evidence/model-ID/one-shot
-  persistence tests and exit criteria.
+- Phase 5: complete; rerun discovery focused tests if candidate thresholds or model-review code
+  changes.
 - Phase 6: complete; rerun its focused core/server checks if graph/link code changes.
 - Phase 7: complete; rerun schema/skills/server/client checks if research-adapter or evidence UI
   code changes.
@@ -739,8 +738,8 @@ The original unchecked boxes remain authoritative; they are intentionally deferr
       draft/review/promotion behavior after the first vertical slice is stable.
 - [x] Add an operator-facing wiki workflow guide after Phase 2; keep this TODO as the implementation
       record rather than duplicating operational instructions here.
-- [ ] Update orchestration/model-routing documentation when `wiki-compile` and `wiki-discover` land.
-- [ ] Update the taxonomy guide only if implementation intentionally changes the existing tag
+- [x] Update orchestration/model-routing documentation when `wiki-compile` and `wiki-discover` land.
+- [x] Update the taxonomy guide only if implementation intentionally changes the existing tag
       contract.
 - [ ] Update `ROADMAP.md` priority/link only when the initiative moves tiers; update
       `NEXT_STEPS.md` when a phase becomes active or leaves manual validation work.

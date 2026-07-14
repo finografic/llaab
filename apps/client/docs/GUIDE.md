@@ -88,6 +88,10 @@ The provider prefix is muted in the select label. Saving a task route persists b
 `model`; server-side `routeLlm(...)` dispatches to the selected provider. LM Studio uses
 `LLAAB_LMSTUDIO_BASE_URL` when set, otherwise `http://localhost:1234/v1`.
 
+Wiki generation uses the same persisted task-routing surface. `wiki-compile` powers explicit
+draft compilation, while `wiki-discover` is limited to optional review of deterministic candidate
+clusters; both are editable from `/llm` and default to the configured remote OpenCode route.
+
 ## Vault auth
 
 - Login: `POST /api/vault/auth/login` → httpOnly `vault_key` cookie (server only).
