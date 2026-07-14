@@ -104,7 +104,7 @@ Do not implement initially:
 - [x] Phase 4 — claim-level evidence locators and citation enrichment (2026-07-13)
 - [ ] Phase 5 — automatic topic discovery and candidate queue
 - [x] Phase 6 — derived wiki-link graph and browsing (2026-07-14)
-- [ ] Phase 7 — external research and verification adapters
+- [x] Phase 7 — external research and verification adapters (2026-07-14)
 
 ---
 
@@ -603,21 +603,21 @@ while keeping transcript provenance and factual verification distinct.
       token/cost budget, and cancellation/error behavior.
 - [x] Add a dedicated one-shot research adapter/task and RunNode; research never runs as a hidden
       side effect of compilation, discovery, browsing, or promotion.
-- [ ] Add external source-ref kinds and persist retrieval query, provider/tool, timestamps, URLs,
+- [x] Add external source-ref kinds and persist retrieval query, provider/tool, timestamps, URLs,
       excerpts, and validation results.
-- [ ] Require authoritative-source retrieval, URL/citation validation, and explicit attribution
+- [x] Require authoritative-source retrieval, URL/citation validation, and explicit attribution
       before a claim or page may become `corroborated`.
-- [ ] Detect contradictory evidence and create a contested proposal for review rather than choosing
+- [x] Detect contradictory evidence and create a contested proposal for review rather than choosing
       a winner automatically.
-- [ ] Display transcript-derived and external evidence separately in draft review and wiki detail.
+- [x] Display transcript-derived and external evidence separately in draft review and wiki detail.
 - [x] Route research results through the same draft/update/revision workflow; research cannot write
       promoted knowledge directly.
-- [ ] Add fixture-backed adapter tests, source-quality failures, unavailable provider behavior,
+- [x] Add fixture-backed adapter tests, source-quality failures, unavailable provider behavior,
       budget enforcement, and manual cost/approval testing.
 
 **Exit criteria**
 
-- [ ] External research is explicit, bounded, traceable, source-validated, reviewable, and unable to
+- [x] External research is explicit, bounded, traceable, source-validated, reviewable, and unable to
       change a promoted wiki without normal promotion.
 
 ---
@@ -693,9 +693,9 @@ The initiative can graduate to `DONE_WIKI_GENERATION.md` when:
 
 This checkpoint is intentionally safe to pause at. The Phase 1 foundation is committed as
 `3dea2c5`; Phase 2–4 evidence work as `5b4e21f`; the completed Phase 3 work as `cf798f9`; the
-deterministic Phase 5 foundation as `f8b846c`; and the bounded optional `wiki-discover`
-model-review slice as `41c6851`. The next checkpoint after this section completes Phase 6 link
-validation and derived graph export.
+deterministic Phase 5 foundation as `f8b846c`; the bounded optional `wiki-discover` model-review
+slice as `41c6851`; and Phase 6 link validation/derived graph export as `a182e97`. The next
+checkpoint after this section completes Phase 7 external research adapters.
 
 ### Completed through this stop
 
@@ -710,16 +710,15 @@ validation and derived graph export.
 - Phase 6 is complete: draft review and promotion reject unresolved, duplicate, self, and
   domain-tag-only wiki links; graph reads derive reverse edges; and the explicit one-shot graph
   export writes reproducible derived data to `knowledge/knowledge-graphs/`.
+- Phase 7 is complete: explicit manual research results persist external source-ref retrieval
+  metadata into reviewable wiki drafts, keep transcript and external evidence visually separated,
+  and downgrade non-authoritative or contradictory evidence into review-blocking draft issues.
 
 ### Resume from here
 
-1. Implement Phase 7: persist/validate external source refs and retrieval metadata, handle
-   contradictory evidence as reviewable proposals, separate transcript and external evidence in
-   the UI, and add bounded adapter behavior.
-2. Only after those implementation items are done, resume at
-   [`## Cross-Cutting Verification`](#cross-cutting-verification) for the deferred automated and
-   manual verification work. Do not mark manual acceptance boxes complete without actually
-   performing the listed interaction.
+1. Resume at [`## Cross-Cutting Verification`](#cross-cutting-verification) for the deferred
+   automated and manual verification work. Do not mark manual acceptance boxes complete without
+   actually performing the listed interaction.
 
 ### Deferred verification index
 
@@ -729,8 +728,8 @@ The original unchecked boxes remain authoritative; they are intentionally deferr
 - Phase 5: deterministic cluster/threshold/duplicate-run/represented-evidence/model-ID/one-shot
   persistence tests and exit criteria.
 - Phase 6: complete; rerun its focused core/server checks if graph/link code changes.
-- Phase 7: adapter fixtures, source quality, unavailable provider, budget, approval, cost, and
-  exit criteria.
+- Phase 7: complete; rerun schema/skills/server/client checks if research-adapter or evidence UI
+  code changes.
 - Cross-cutting: temporary roots, repository boundaries, workspace validation, Markdown lint,
   client-layout audit, manual acceptance journey, completion criteria, and documentation follow-up.
 

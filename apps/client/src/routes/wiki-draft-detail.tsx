@@ -34,6 +34,8 @@ export function WikiDraftDetailPage() {
   const edit = useEditWikiDraft();
   const resolveTopic = useResolveWikiDraft();
   const reviewActions = draft ? getWikiDraftReviewActions(draft) : [];
+  const transcriptSourceRefs = draft?.source_refs.filter((ref) => ref.kind !== 'external') ?? [];
+  const externalSourceRefs = draft?.source_refs.filter((ref) => ref.kind === 'external') ?? [];
   usePageTitle(draft?.title ?? 'Wiki draft');
 
   if (!id) return <Navigate to="/vault" replace />;
@@ -213,14 +215,14 @@ export function WikiDraftDetailPage() {
               </section>
             ) : null}
             <section className="section">
-              <h2 className="section__heading">Provenance</h2>
+              <h2 className="section__heading">Transcript provenance</h2>
               <p className="text-sm text-muted-foreground">
                 {draft.source_canonical_idea_ids.length} canonical ideas ·{' '}
-                {draft.source_transcript_ids.length} transcripts · {draft.source_refs.length} source
+                {draft.source_transcript_ids.length} transcripts · {transcriptSourceRefs.length} transcript
                 references
               </p>
               <ul className="mt-2 space-y-1 text-sm">
-                {draft.source_refs.map((ref) => (
+                {transcriptSourceRefs.map((ref) => (
                   <li key={ref.id}>
                     {ref.url ? (
                       <a className="underline" href={ref.url} target="_blank" rel="noreferrer">
@@ -238,6 +240,34 @@ export function WikiDraftDetailPage() {
                 ))}
               </ul>
             </section>
+            {externalSourceRefs.length > 0 ? (
+              <section className="section">
+                <h2 className="section__heading">External evidence</h2>
+                <ul className="space-y-2 text-sm">
+                  {externalSourceRefs.map((ref) => (
+                    <li key={ref.id}>
+                      <p>
+                        {ref.url ? (
+                          <a className="underline" href={ref.url} target="_blank" rel="noreferrer">
+                            {ref.title ?? ref.id}
+                          </a>
+                        ) : (
+                          <span>{ref.title ?? ref.id}</span>
+                        )}
+                        <span className="text-muted-foreground"> · {ref.verification}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {ref.retrieval_provider ?? 'unknown'} · {ref.retrieval_query ?? 'no query'}
+                      </p>
+                      {ref.excerpt ? <p className="mt-1 text-sm">{ref.excerpt}</p> : null}
+                      {ref.validation_notes?.length ? (
+                        <p className="mt-1 text-xs text-destructive">{ref.validation_notes.join(' ')}</p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
             {draft.warning || draft.validation_issues.length > 0 ? (
               <section className="section">
                 <h2 className="section__heading">Review warnings</h2>

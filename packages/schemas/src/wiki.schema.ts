@@ -18,20 +18,38 @@ export const WikiLinkRelationSchema = z.enum([
 
 export const WikiSourceRefKindSchema = z.enum(['canonical-idea', 'transcript', 'source', 'external']);
 
-export const WikiSourceRefSchema = z.object({
-  id: NodeIdSchema,
-  kind: WikiSourceRefKindSchema,
-  node_id: NodeIdSchema.optional(),
-  title: z.string().min(1).optional(),
-  url: z.url().optional(),
-  locator: z.string().min(1).optional(),
-  verification: WikiVerificationStatusSchema,
-  retrieval_query: z.string().min(1).optional(),
-  retrieval_provider: z.string().min(1).optional(),
-  retrieved_at: z.string().datetime().optional(),
-  excerpt: z.string().min(1).optional(),
-  validation_notes: z.array(z.string().min(1)).optional(),
-});
+export const WikiSourceRefSchema = z
+  .object({
+    id: NodeIdSchema,
+    kind: WikiSourceRefKindSchema,
+    node_id: NodeIdSchema.optional(),
+    title: z.string().min(1).optional(),
+    url: z.url().optional(),
+    locator: z.string().min(1).optional(),
+    verification: WikiVerificationStatusSchema,
+    retrieval_query: z.string().min(1).optional(),
+    retrieval_provider: z.string().min(1).optional(),
+    retrieved_at: z.string().datetime().optional(),
+    excerpt: z.string().min(1).optional(),
+    validation_notes: z.array(z.string().min(1)).optional(),
+  })
+  .superRefine((sourceRef, ctx) => {
+    if (sourceRef.kind !== 'external') return;
+    for (const field of [
+      'url',
+      'retrieval_query',
+      'retrieval_provider',
+      'retrieved_at',
+      'excerpt',
+    ] as const) {
+      if (sourceRef[field]) continue;
+      ctx.addIssue({
+        code: 'custom',
+        path: [field],
+        message: `External source references require ${field}.`,
+      });
+    }
+  });
 
 export const WikiLinkSchema = z.object({
   target_wiki_id: NodeIdSchema,
@@ -198,9 +216,25 @@ export const WikiResearchRequestSchema = z
     provider: z.enum(['manual']).default('manual'),
     max_results: z.number().int().min(1).max(10).default(5),
     approval: z.literal(true),
+    results: z
+      .array(
+        z.object({
+          title: z.string().min(1),
+          url: z.url(),
+          excerpt: z.string().min(1),
+          authoritative: z.boolean(),
+          validation_notes: z.array(z.string().min(1)).default([]),
+          supports_claim: z.string().min(1).optional(),
+          contradicts_claim: z.string().min(1).optional(),
+        }),
+      )
+      .default([]),
   })
   .refine((request) => request.wiki_id !== undefined || request.draft_id !== undefined, {
     message: 'Provide a wiki or draft target for research.',
+  })
+  .refine((request) => request.results.length <= request.max_results, {
+    message: 'Research results exceed the approved result budget.',
   });
 
 export const WikiTagSchema = z.string().regex(/^d:[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use a d: domain tag');

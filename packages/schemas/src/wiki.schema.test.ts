@@ -8,7 +8,7 @@ import {
   createWikiFixtureTranscript,
   wikiCompileScenarioFixtures,
 } from './wiki.fixtures.js';
-import { WikiCompileResultSchema, WikiLinkSchema } from './wiki.schema.js';
+import { WikiCompileResultSchema, WikiLinkSchema, WikiSourceRefSchema } from './wiki.schema.js';
 
 const createdAt = '2026-07-13T00:00:00Z';
 
@@ -91,5 +91,29 @@ describe('wiki schemas', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('requires retrieval metadata for external wiki source refs', () => {
+    expect(
+      WikiSourceRefSchema.safeParse({
+        id: 'external-context',
+        kind: 'external',
+        title: 'External context source',
+        url: 'https://example.com/context',
+        retrieval_query: 'context management',
+        retrieval_provider: 'manual',
+        retrieved_at: createdAt,
+        excerpt: 'External evidence.',
+        verification: 'corroborated',
+        validation_notes: [],
+      }).success,
+    ).toBe(true);
+    expect(
+      WikiSourceRefSchema.safeParse({
+        id: 'external-context',
+        kind: 'external',
+        verification: 'corroborated',
+      }).success,
+    ).toBe(false);
   });
 });

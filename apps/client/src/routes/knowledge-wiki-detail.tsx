@@ -10,6 +10,8 @@ export function KnowledgeWikiDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: wiki, isLoading, error } = useKnowledgeWiki(id);
   const { data: graph } = useKnowledgeWikiGraph();
+  const transcriptSourceRefs = wiki?.source_refs.filter((ref) => ref.kind !== 'external') ?? [];
+  const externalSourceRefs = wiki?.source_refs.filter((ref) => ref.kind === 'external') ?? [];
   usePageTitle(wiki?.title ?? 'Knowledge wiki');
 
   if (!id) return <Navigate to="/knowledge/wikis" replace />;
@@ -22,9 +24,9 @@ export function KnowledgeWikiDetailPage() {
           <>
             <pre className="body-pre">{wiki.body}</pre>
             <section className="section">
-              <h2 className="section__heading">Sources</h2>
+              <h2 className="section__heading">Transcript sources</h2>
               <ul className="space-y-1 text-sm">
-                {wiki.source_refs.map((ref) => (
+                {transcriptSourceRefs.map((ref) => (
                   <li key={ref.id}>
                     {ref.url ? (
                       <a className="underline" href={ref.url} target="_blank" rel="noreferrer">
@@ -42,6 +44,34 @@ export function KnowledgeWikiDetailPage() {
                 ))}
               </ul>
             </section>
+            {externalSourceRefs.length > 0 ? (
+              <section className="section">
+                <h2 className="section__heading">External evidence</h2>
+                <ul className="space-y-2 text-sm">
+                  {externalSourceRefs.map((ref) => (
+                    <li key={ref.id}>
+                      <p>
+                        {ref.url ? (
+                          <a className="underline" href={ref.url} target="_blank" rel="noreferrer">
+                            {ref.title ?? ref.id}
+                          </a>
+                        ) : (
+                          <span>{ref.title ?? ref.id}</span>
+                        )}
+                        <span className="text-muted-foreground"> · {ref.verification}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {ref.retrieval_provider ?? 'unknown'} · {ref.retrieval_query ?? 'no query'}
+                      </p>
+                      {ref.excerpt ? <p className="mt-1 text-sm">{ref.excerpt}</p> : null}
+                      {ref.validation_notes?.length ? (
+                        <p className="mt-1 text-xs text-destructive">{ref.validation_notes.join(' ')}</p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
             {graph ? (
               <section className="section">
                 <h2 className="section__heading">Related pages</h2>
