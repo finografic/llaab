@@ -1,4 +1,5 @@
 import {
+  assertValidKnowledgeWikiLinks,
   getKnowledgeWikiSectionIds,
   getNodeFilePath,
   listKnowledgeWikis,
@@ -46,17 +47,8 @@ function validateEditedSections(draft: WikiDraftNode, sections: WikiSectionDraft
 }
 
 async function validateProposedLinks(draft: WikiDraftNode): Promise<void> {
-  const promotedIds = new Set((await listKnowledgeWikis()).map((wiki) => wiki.id));
-  const seen = new Set<string>();
-  for (const link of draft.proposed_links) {
-    const key = `${link.relation}:${link.target_wiki_id}`;
-    if (!promotedIds.has(link.target_wiki_id)) {
-      throw new Error(`Draft link target is not promoted: ${link.target_wiki_id}`);
-    }
-    if (!link.note) throw new Error(`Draft link requires an evidence note: ${link.target_wiki_id}`);
-    if (seen.has(key)) throw new Error(`Duplicate draft link: ${key}`);
-    seen.add(key);
-  }
+  const promotedIds = (await listKnowledgeWikis()).map((wiki) => wiki.id);
+  assertValidKnowledgeWikiLinks(draft.target_wiki_id ?? draft.topic_key, draft.proposed_links, promotedIds);
 }
 
 async function buildEditedPatch(

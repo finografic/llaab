@@ -123,6 +123,27 @@ describe('promoteCreateWikiDraft', () => {
     expect(source).not.toMatch(/child_process|\bgit\s+(?:add|commit|push|status)\b/);
   });
 
+  it('rejects promotion when proposed links are not promoted or evidence-backed', async () => {
+    const { promoteCreateWikiDraft } = await import('./wiki-promotion.service.js');
+    const draft = WikiDraftNodeSchema.parse({
+      id: 'linked-draft',
+      type: 'wiki-draft',
+      title: 'Linked draft',
+      tags: ['d:llm'],
+      related: [],
+      created_at: '2026-07-13T00:00:00Z',
+      status: 'seed',
+      body: '<!-- wiki-section:overview -->\\n\\n## Overview\\n\\nLinked.[^linked-ref]',
+      topic_key: 'linked-page',
+      operation: 'create',
+      draft_status: 'proposed',
+      proposed_links: [{ target_wiki_id: 'missing-page', relation: 'related-to', note: 'd:llm' }],
+      source_refs: [{ id: 'linked-ref', kind: 'transcript', verification: 'source-backed' }],
+    });
+
+    await expect(promoteCreateWikiDraft(draft)).rejects.toThrow('Broken link: linked-page -> missing-page');
+  });
+
   it('applies a second-transcript update without replacing manual sections and retries idempotently', async () => {
     const core = await import('@llaab/core');
     const { promoteUpdateWikiDraft } = await import('./wiki-promotion.service.js');

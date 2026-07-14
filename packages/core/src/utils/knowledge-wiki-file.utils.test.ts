@@ -32,7 +32,9 @@ describe('knowledge wiki storage', () => {
       body: '<!-- wiki-section:overview -->\n\n## Overview\n\nUnicode proof: café.',
       status: 'seed' as const,
       tags: ['d:llm'],
-      links: [{ target_wiki_id: 'retrieval', relation: 'related-to' as const }],
+      links: [
+        { target_wiki_id: 'retrieval', relation: 'related-to' as const, note: 'Shared retrieval workflow.' },
+      ],
       source_refs: [
         {
           id: 'context-transcript',

@@ -1,5 +1,6 @@
 import {
   buildKnowledgeWikiGraph,
+  exportKnowledgeWikiGraph,
   listKnowledgeWikis as readKnowledgeWikis,
   readKnowledgeWiki,
 } from '@llaab/core';
@@ -38,5 +39,16 @@ export const knowledgeWikiDetail = {
 
 export const knowledgeWikiGraph = {
   path: '/wikis/graph' as const,
-  handler: async (c: AppCtx) => c.json({ graph: await buildKnowledgeWikiGraph() }),
+  handler: async (c: AppCtx) => {
+    const query = listKnowledgeWikisQuerySchema.parse(Object.fromEntries(new URL(c.req.url).searchParams));
+    return c.json({ graph: await buildKnowledgeWikiGraph(query) });
+  },
+};
+
+export const exportKnowledgeWikiGraphRoute = {
+  path: '/wikis/graph/export' as const,
+  handler: async (c: AppCtx) => {
+    const query = listKnowledgeWikisQuerySchema.parse(Object.fromEntries(new URL(c.req.url).searchParams));
+    return c.json(await exportKnowledgeWikiGraph(query), 201);
+  },
 };

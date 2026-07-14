@@ -39,6 +39,7 @@ export function useKnowledgeWiki(id: string | undefined) {
 export interface KnowledgeWikiGraph {
   nodes: Array<{ id: string; title: string }>;
   edges: Array<{ source: string; target: string; relation: string }>;
+  reverse_edges: Array<{ source: string; target: string; relation: string }>;
   diagnostics: string[];
 }
 

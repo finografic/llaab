@@ -1,4 +1,5 @@
 import {
+  assertValidKnowledgeWikiLinks,
   getKnowledgeWikiPath,
   determineKnowledgeWikiLifecycle,
   getNodeFilePath,
@@ -69,22 +70,11 @@ function applyDraftSections(currentBody: string, draft: WikiDraftNode): string {
 }
 
 function validateDraftLinks(draft: WikiDraftNode, pages: KnowledgeWikiPage[]): void {
-  const targets = new Set(pages.map((page) => page.id));
-  const seen = new Set<string>();
-  for (const link of draft.proposed_links) {
-    const key = `${link.relation}:${link.target_wiki_id}`;
-    if (link.target_wiki_id === draft.topic_key || link.target_wiki_id === draft.target_wiki_id) {
-      throw new Error('A wiki cannot link to itself.');
-    }
-    if (!targets.has(link.target_wiki_id)) {
-      throw new Error(`Wiki link target is not promoted: ${link.target_wiki_id}`);
-    }
-    if (!link.note) {
-      throw new Error(`Wiki link requires an evidence note: ${link.target_wiki_id}`);
-    }
-    if (seen.has(key)) throw new Error(`Duplicate wiki link: ${key}`);
-    seen.add(key);
-  }
+  assertValidKnowledgeWikiLinks(
+    draft.target_wiki_id ?? draft.topic_key,
+    draft.proposed_links,
+    pages.map((page) => page.id),
+  );
 }
 
 function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): KnowledgeWikiPage {

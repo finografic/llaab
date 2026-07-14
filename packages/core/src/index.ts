@@ -63,7 +63,13 @@ export {
   withKnowledgeWikiLock,
   writeKnowledgeWiki,
 } from './utils/knowledge-wiki-file.utils.js';
-export { buildKnowledgeWikiGraph, type KnowledgeWikiGraph } from './utils/knowledge-wiki-graph.utils.js';
+export {
+  assertValidKnowledgeWikiLinks,
+  buildKnowledgeWikiGraph,
+  buildKnowledgeWikiGraphFromPages,
+  exportKnowledgeWikiGraph,
+  type KnowledgeWikiGraph,
+} from './utils/knowledge-wiki-graph.utils.js';
 export { analyzeKnowledgeWikiNovelty } from './utils/analyze-knowledge-wiki-novelty.utils.js';
 export { determineKnowledgeWikiLifecycle } from './utils/determine-knowledge-wiki-lifecycle.utils.js';
 export {

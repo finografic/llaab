@@ -103,7 +103,7 @@ Do not implement initially:
 - [x] Phase 3 — safe updates, novelty, and conflict handling (2026-07-13)
 - [x] Phase 4 — claim-level evidence locators and citation enrichment (2026-07-13)
 - [ ] Phase 5 — automatic topic discovery and candidate queue
-- [ ] Phase 6 — derived wiki-link graph and browsing
+- [x] Phase 6 — derived wiki-link graph and browsing (2026-07-14)
 - [ ] Phase 7 — external research and verification adapters
 
 ---
@@ -569,7 +569,7 @@ browsing.
 
 - [x] Finalize the directed relation vocabulary: `related-to`, `depends-on`, `extends`,
       `contrasts-with`, `example-of`, `supports`, and `supersedes`.
-- [ ] Validate suggested links during draft review and final links during promotion: target exists,
+- [x] Validate suggested links during draft review and final links during promotion: target exists,
       relation is allowed, edge is unique, and a broad shared domain tag is not sufficient evidence.
 - [x] Store one authoritative directed edge and derive reverse views at read/index time.
 - [x] Build graph nodes/edges from validated `knowledge/wikis/*.md`; do not use vault `related`, the
@@ -582,15 +582,15 @@ browsing.
       library after the index contract is stable.
 - [x] Keep any SQLite/JSON cache disposable and request-triggered; no watcher or permanent indexing
       process.
-- [ ] Optionally export reviewed summaries to `knowledge/knowledge-graphs/`; exports are derived
+- [x] Optionally export reviewed summaries to `knowledge/knowledge-graphs/`; exports are derived
       artifacts and never the authoritative edge store.
-- [ ] Test complete rebuild, reverse derivation, invalid-link diagnostics, cache deletion, graph
+- [x] Test complete rebuild, reverse derivation, invalid-link diagnostics, cache deletion, graph
       filtering, and reproducible exports.
 
 **Exit criteria**
 
-- [ ] Every displayed edge resolves to a promoted wiki page.
-- [ ] Deleting all derived graph/index data and rebuilding from wiki files reproduces the graph.
+- [x] Every displayed edge resolves to a promoted wiki page.
+- [x] Deleting all derived graph/index data and rebuilding from wiki files reproduces the graph.
 
 ---
 
@@ -692,9 +692,10 @@ The initiative can graduate to `DONE_WIKI_GENERATION.md` when:
 ## Safe Stop Checkpoint — 2026-07-13
 
 This checkpoint is intentionally safe to pause at. The Phase 1 foundation is committed as
-`3dea2c5`; Phase 2–4 evidence work as `5b4e21f`; the completed Phase 3 work as `cf798f9`; and
-the deterministic Phase 5 foundation as `f8b846c`. The commit containing this section completes
-the bounded optional `wiki-discover` model-review slice.
+`3dea2c5`; Phase 2–4 evidence work as `5b4e21f`; the completed Phase 3 work as `cf798f9`; the
+deterministic Phase 5 foundation as `f8b846c`; and the bounded optional `wiki-discover`
+model-review slice as `41c6851`. The next checkpoint after this section completes Phase 6 link
+validation and derived graph export.
 
 ### Completed through this stop
 
@@ -706,15 +707,16 @@ the bounded optional `wiki-discover` model-review slice.
 - Phase 5 implementation is complete: deterministic bounded clustering and represented-evidence
   subtraction are authoritative; optional `wiki-discover` review validates every returned ID
   against those inputs and records model provenance without changing clustering authority.
+- Phase 6 is complete: draft review and promotion reject unresolved, duplicate, self, and
+  domain-tag-only wiki links; graph reads derive reverse edges; and the explicit one-shot graph
+  export writes reproducible derived data to `knowledge/knowledge-graphs/`.
 
 ### Resume from here
 
-1. Implement Phase 6: complete draft/promotion link validation, then add the required derived
-   export to `knowledge/knowledge-graphs/`. Keep wiki Markdown as the authoritative edge source.
-2. Implement Phase 7: persist/validate external source refs and retrieval metadata, handle
+1. Implement Phase 7: persist/validate external source refs and retrieval metadata, handle
    contradictory evidence as reviewable proposals, separate transcript and external evidence in
    the UI, and add bounded adapter behavior.
-3. Only after those implementation items are done, resume at
+2. Only after those implementation items are done, resume at
    [`## Cross-Cutting Verification`](#cross-cutting-verification) for the deferred automated and
    manual verification work. Do not mark manual acceptance boxes complete without actually
    performing the listed interaction.
@@ -726,8 +728,7 @@ The original unchecked boxes remain authoritative; they are intentionally deferr
 - Phase 2: manual promotion/Git-boundary proof and exit criteria.
 - Phase 5: deterministic cluster/threshold/duplicate-run/represented-evidence/model-ID/one-shot
   persistence tests and exit criteria.
-- Phase 6: rebuild, reverse edges, invalid diagnostics, cache deletion, filtering, reproducible
-  export, and exit criteria.
+- Phase 6: complete; rerun its focused core/server checks if graph/link code changes.
 - Phase 7: adapter fixtures, source quality, unavailable provider, budget, approval, cost, and
   exit criteria.
 - Cross-cutting: temporary roots, repository boundaries, workspace validation, Markdown lint,
