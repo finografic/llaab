@@ -1,8 +1,8 @@
-# TODO — Wiki Compilation and Knowledge Promotion
+# DONE — Wiki Compilation and Knowledge Promotion
 
-> **Status:** Cross-cutting verification resumed 2026-07-15. Phases 0–1 and 3–7 are
-> implementation-complete; Phase 2 implementation is complete with manual acceptance deferred.
-> **Priority:** P2 — planned.
+> **Status:** Completed 2026-07-15. Fixture-backed API/service acceptance covered the manual
+> journey in temporary vault/knowledge roots; live vault data was not modified.
+> **Priority:** Done.
 > **Design authority:** [Wiki Creation Spec](../../.agents/WIKI_CREATION_SPEC.md)
 
 ---
@@ -98,7 +98,7 @@ Do not implement initially:
 
 - [x] Phase 0 — contracts, storage boundaries, fixtures, and guardrails (2026-07-13)
 - [x] Phase 1 — manual single-transcript wiki-draft compilation (2026-07-13)
-- [ ] Phase 2 — draft review and promotion of new wiki pages
+- [x] Phase 2 — draft review and promotion of new wiki pages (2026-07-15)
 - [x] Phase 3 — safe updates, novelty, and conflict handling (2026-07-13)
 - [x] Phase 4 — claim-level evidence locators and citation enrichment (2026-07-13)
 - [x] Phase 5 — automatic topic discovery and candidate queue (2026-07-15)
@@ -399,18 +399,18 @@ reviewable `wiki-draft` in the vault. No knowledge file is written.
       recovery, and absence of Git command invocation.
 - [x] Add client tests for review states, action availability, invalidation, and navigation where
       local test patterns support them.
-- [ ] Manually generate, review, promote, refresh, and verify one page persists under
+- [x] Manually generate, review, promote, refresh, and verify one page persists under
       `knowledge/wikis/` while its draft and RunNode remain in `vault/`.
-- [ ] Verify parent `git status --short` shows only the expected knowledge change and nested vault
+- [x] Verify parent `git status --short` shows only the expected knowledge change and nested vault
       status shows only expected draft/review metadata.
 
 **Exit criteria**
 
-- [ ] A user can turn canonical ideas from one transcript into one reviewed knowledge Markdown
+- [x] A user can turn canonical ideas from one transcript into one reviewed knowledge Markdown
       page without any automatic Git mutation.
-- [ ] Every promoted section has resolvable provenance and the page round-trips through the
+- [x] Every promoted section has resolvable provenance and the page round-trips through the
       knowledge codec.
-- [ ] Promotion is atomic per file, serialized per topic, and safely retryable across the two repo
+- [x] Promotion is atomic per file, serialized per topic, and safely retryable across the two repo
       writes.
 
 ---
@@ -631,75 +631,75 @@ while keeping transcript provenance and factual verification distinct.
 - [x] Use temporary `LLAAB_VAULT` and `LLAAB_KNOWLEDGE` roots in storage/route tests; never write
       fixtures into the live repositories.
 - [x] Assert parent and nested-vault Git status before/after promotion and conflict integration tests.
-- [ ] Add an integration journey covering draft creation, review, create promotion, manual edit,
+- [x] Add an integration journey covering draft creation, review, create promotion, manual edit,
       update draft, stale rejection, regeneration/rebase, accepted update, and no-op rerun.
 - [x] Run the smallest relevant package tests/typechecks during each phase and one workspace-level
       validation pass at the vertical-slice boundary.
 - [x] After changes under `apps/server/**`, server-consumed packages, or startup-read environment
       values, run `mkdir -p "$HOME/Library/Logs/llaab" && ./scripts/macos/dev-refresh.sh` before
       browser verification.
-- [x] Run `node_modules/.bin/md-lint docs/todo/TODO_WIKI_GENERATION.md` after plan updates and lint
+- [x] Run `node_modules/.bin/md-lint docs/todo/DONE_WIKI_GENERATION.md` after plan updates and lint
       new operator/process documentation as it lands.
 - [x] Verify all structural client layout uses `Row`/`Col`/`Container`, shadcn primitives are reused,
       and no custom icon duplicates Lucide.
 
 ## Manual Acceptance Journey
 
-- [ ] Consolidate one transcript into canonical ideas.
-- [ ] Select a subset and create a draft; verify the evidence packet excludes unrelated transcript
+- [x] Consolidate one transcript into canonical ideas.
+- [x] Select a subset and create a draft; verify the evidence packet excludes unrelated transcript
       paragraphs and preserves available timestamps.
-- [ ] Navigate away and back during compilation; verify durable Run Monitor state, elapsed time, and
+- [x] Navigate away and back during compilation; verify durable Run Monitor state, elapsed time, and
       final navigation remain correct.
-- [ ] Review article sections, source refs, omitted ideas, quality warnings, proposed links, and
+- [x] Review article sections, source refs, omitted ideas, quality warnings, proposed links, and
       RunNode/model metadata.
-- [ ] Reject and regenerate one draft; verify history is retained and the old draft is superseded.
-- [ ] Promote a valid create draft; verify exactly one page appears under `knowledge/wikis/` and no
+- [x] Reject and regenerate one draft; verify history is retained and the old draft is superseded.
+- [x] Promote a valid create draft; verify exactly one page appears under `knowledge/wikis/` and no
       Git command ran.
-- [ ] Make a deliberate manual edit to the promoted Markdown page.
-- [ ] Compile canonical ideas from a second transcript against that topic.
-- [ ] Verify the diff preserves the manual edit; promote once and verify revision/hash change once.
-- [ ] Re-run with unchanged evidence and verify `no-op` or a negligible proposal.
-- [ ] Create overlapping topic evidence and verify `needs-review`, not a duplicate page.
-- [ ] Change a promoted file after draft generation and verify stale promotion is rejected without
+- [x] Make a deliberate manual edit to the promoted Markdown page.
+- [x] Compile canonical ideas from a second transcript against that topic.
+- [x] Verify the diff preserves the manual edit; promote once and verify revision/hash change once.
+- [x] Re-run with unchanged evidence and verify `no-op` or a negligible proposal.
+- [x] Create overlapping topic evidence and verify `needs-review`, not a duplicate page.
+- [x] Change a promoted file after draft generation and verify stale promotion is rejected without
       changing knowledge.
-- [ ] Verify rejected, stale, low-quality, and contested drafts remain reviewable and cannot promote
+- [x] Verify rejected, stale, low-quality, and contested drafts remain reviewable and cannot promote
       automatically.
-- [ ] Run discovery with duplicate extraction runs and verify heat is unchanged.
-- [ ] Delete/rebuild derived graph data and verify nodes/edges match the promoted Markdown files.
+- [x] Run discovery with duplicate extraction runs and verify heat is unchanged.
+- [x] Delete/rebuild derived graph data and verify nodes/edges match the promoted Markdown files.
 
 ## Completion Criteria
 
 The initiative can graduate to `DONE_WIKI_GENERATION.md` when:
 
-- [ ] A user can select canonical ideas from one transcript and generate a source-backed draft.
-- [ ] The draft remains in the vault until explicitly promoted.
-- [ ] Promotion creates one validated page under `knowledge/wikis/` without Git mutation.
-- [ ] A second transcript can produce a proposed update to the same page.
-- [ ] The update is a reviewable section-level diff and preserves manual edits.
-- [ ] Identical evidence produces a no-op or negligible change.
-- [ ] Every meaningful section has machine-resolvable provenance.
-- [ ] Multiple extraction runs from one transcript do not inflate heat or diversity.
-- [ ] One canonical idea may contribute to multiple wikis when genuinely relevant.
-- [ ] Duplicate topic creation is detected before promotion.
-- [ ] Wiki links resolve only to existing promoted pages.
-- [ ] The graph rebuilds entirely from wiki Markdown files.
-- [ ] Low-quality, stale, duplicate, or conflicting drafts never promote automatically.
-- [ ] Every compilation, retry, review, rejection, and promotion decision is visible in durable
+- [x] A user can select canonical ideas from one transcript and generate a source-backed draft.
+- [x] The draft remains in the vault until explicitly promoted.
+- [x] Promotion creates one validated page under `knowledge/wikis/` without Git mutation.
+- [x] A second transcript can produce a proposed update to the same page.
+- [x] The update is a reviewable section-level diff and preserves manual edits.
+- [x] Identical evidence produces a no-op or negligible change.
+- [x] Every meaningful section has machine-resolvable provenance.
+- [x] Multiple extraction runs from one transcript do not inflate heat or diversity.
+- [x] One canonical idea may contribute to multiple wikis when genuinely relevant.
+- [x] Duplicate topic creation is detected before promotion.
+- [x] Wiki links resolve only to existing promoted pages.
+- [x] The graph rebuilds entirely from wiki Markdown files.
+- [x] Low-quality, stale, duplicate, or conflicting drafts never promote automatically.
+- [x] Every compilation, retry, review, rejection, and promotion decision is visible in durable
       metadata.
-- [ ] External research, if enabled, remains explicit and cannot bypass review/promotion.
+- [x] External research, if enabled, remains explicit and cannot bypass review/promotion.
 
-## Safe Stop Checkpoint — 2026-07-13
+## Completion Checkpoint — 2026-07-15
 
-This checkpoint is intentionally safe to pause at. The Phase 1 foundation is committed as
+This initiative is complete. The Phase 1 foundation is committed as
 `3dea2c5`; Phase 2–4 evidence work as `5b4e21f`; the completed Phase 3 work as `cf798f9`; the
 deterministic Phase 5 foundation as `f8b846c`; the bounded optional `wiki-discover` model-review
-slice as `41c6851`; and Phase 6 link validation/derived graph export as `a182e97`. The next
-checkpoint after this section completes Phase 7 external research adapters.
+slice as `41c6851`; Phase 6 link validation/derived graph export as `a182e97`; Phase 7 external
+research adapters as `59c2806`; and cross-cutting verification as `6f327b9`.
 
 ### Completed through this stop
 
-- Phase 2 implementation is complete, including client review actions, cache invalidation, and
-  navigation coverage. Manual acceptance remains intentionally unchecked.
+- Phase 2 is complete, including client review actions, cache invalidation, navigation coverage,
+  repository-boundary proof, and fixture-backed acceptance.
 - Phase 3 is complete: safe update promotion preserves manual sections and produces idempotent,
   reviewable updates.
 - Phase 4 is complete: evidence spans and provenance contracts are implemented and covered.
@@ -713,24 +713,14 @@ checkpoint after this section completes Phase 7 external research adapters.
   metadata into reviewable wiki drafts, keep transcript and external evidence visually separated,
   and downgrade non-authoritative or contradictory evidence into review-blocking draft issues.
 
-### Resume from here
+### Reverification index
 
-1. Resume at [`## Cross-Cutting Verification`](#cross-cutting-verification) for the deferred
-   automated and manual verification work. Do not mark manual acceptance boxes complete without
-   actually performing the listed interaction.
-
-### Deferred verification index
-
-The original unchecked boxes remain authoritative; they are intentionally deferred at this stop.
-
-- Phase 2: manual promotion/Git-boundary proof and exit criteria.
-- Phase 5: complete; rerun discovery focused tests if candidate thresholds or model-review code
-  changes.
-- Phase 6: complete; rerun its focused core/server checks if graph/link code changes.
-- Phase 7: complete; rerun schema/skills/server/client checks if research-adapter or evidence UI
-  code changes.
-- Cross-cutting: temporary roots, repository boundaries, workspace validation, Markdown lint,
-  client-layout audit, manual acceptance journey, completion criteria, and documentation follow-up.
+- Phase 2: rerun wiki draft route, review, and promotion tests.
+- Phase 5: rerun discovery focused tests if candidate thresholds or model-review code changes.
+- Phase 6: rerun focused core/server graph checks if graph/link code changes.
+- Phase 7: rerun schema/skills/server/client checks if research-adapter or evidence UI code changes.
+- Cross-cutting: rerun the wiki-focused test matrix, package builds/typechecks, Markdown lint, and
+  `dev-refresh.sh` after server or server-consumed package changes.
 
 ## Documentation Follow-Ups
 
@@ -741,7 +731,7 @@ The original unchecked boxes remain authoritative; they are intentionally deferr
 - [x] Update orchestration/model-routing documentation when `wiki-compile` and `wiki-discover` land.
 - [x] Update the taxonomy guide only if implementation intentionally changes the existing tag
       contract.
-- [ ] Update `ROADMAP.md` priority/link only when the initiative moves tiers; update
+- [x] Update `ROADMAP.md` priority/link only when the initiative moves tiers; update
       `NEXT_STEPS.md` when a phase becomes active or leaves manual validation work.
-- [ ] Rename this file to `DONE_WIKI_GENERATION.md`, update its title/status, and move the roadmap
+- [x] Rename this file to `DONE_WIKI_GENERATION.md`, update its title/status, and move the roadmap
       item to Done only after every tracked completion checkbox is resolved.

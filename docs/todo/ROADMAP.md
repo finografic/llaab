@@ -261,16 +261,6 @@ with simple full-text search only if it does not conflict with future context as
 
 Reference: [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) §3
 
-### Wiki Generation and Knowledge Promotion
-
-Compile selected canonical ideas into reviewable vault drafts, then explicitly promote validated
-topic pages to `knowledge/wikis/`. Start manual-first; discovery, graph browsing, and external
-research follow after the draft/review/update path is stable.
-
-Detail: [`TODO_WIKI_GENERATION.md`](./TODO_WIKI_GENERATION.md)
-
----
-
 ## P3 — Backlog / Ideas
 
 ### Candidate / Promotion States for LLM-Created Nodes
@@ -366,6 +356,15 @@ Completed 2026-07-11. Multi-column page/section layouts now use `Row`/`Col` from
 flex patterns remain documented exceptions.
 
 Detail: [`docs/todo/DONE_GRID_LAYOUT_MIGRATION.md`](./DONE_GRID_LAYOUT_MIGRATION.md)
+
+### Wiki Generation and Knowledge Promotion
+
+Completed 2026-07-15. Selected canonical ideas now compile into reviewable vault wiki drafts,
+explicit promotion writes validated pages under `knowledge/wikis/`, updates preserve manual edits,
+discovery creates bounded review candidates, graph exports rebuild from wiki Markdown, and external
+research remains explicit review-only evidence.
+
+Detail: [`docs/todo/DONE_WIKI_GENERATION.md`](./DONE_WIKI_GENERATION.md)
 
 ### Install and validate `@finografic/ai-harness` in the transcript extraction path
 
