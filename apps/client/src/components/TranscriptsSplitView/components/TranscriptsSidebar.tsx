@@ -22,7 +22,6 @@ export interface TranscriptsSidebarProps {
   transcripts: TranscriptNode[];
   selectedId?: string;
 }
-
 function transcriptAuthor(transcript: TranscriptNode): string | undefined {
   return transcript.author ?? transcript.source_type;
 }
@@ -164,13 +163,7 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
 
                         <Col
                           xs={6}
-                          className="my-1 self-center text-left text-xs font-mono text-muted-foreground"
-                        >
-                          {fmtListDateNumeric(transcript.created_at)}
-                        </Col>
-                        <Col
-                          xs={6}
-                          className="my-1 flex items-center justify-end gap-1 self-center text-xs font-mono text-muted-foreground"
+                          className="my-1 flex items-center justify-start gap-1 self-center text-xs font-mono text-muted-foreground"
                         >
                           {isConsolidated ? (
                             <BadgeCheckIcon
@@ -188,6 +181,12 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                           >
                             {ideaCount} ideas
                           </span>
+                        </Col>
+                        <Col
+                          xs={6}
+                          className="my-1 self-center text-right text-xs font-mono text-muted-foreground"
+                        >
+                          {fmtListDateNumeric(transcript.created_at)}
                         </Col>
                         <Col xs={12} className="flex items-center justify-end pt-2">
                           {hasLatency ? (

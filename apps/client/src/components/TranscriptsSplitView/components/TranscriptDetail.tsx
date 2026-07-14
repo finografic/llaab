@@ -1,6 +1,7 @@
 import { BrushCleaningIcon, TimerIcon } from '@llaab/icons';
 import { scoreConsolidationQuality } from '@llaab/schemas';
 import { useQueryClient } from '@tanstack/react-query';
+import { DeleteExtractedIdeaAction } from 'components/DeleteExtractedIdeaAction/DeleteExtractedIdeaAction';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { CONSOLIDATION_SKILL_ID } from 'components/RunPipelineCard/RunPipelineCard';
 import {
@@ -845,29 +846,36 @@ export function TranscriptDetail({
                   const ideaTags = splitTags(idea.tags);
                   return (
                     <li key={idea.id} className={styles.ideaItem}>
-                      <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
-                        <p className={styles.ideaTitle}>{idea.title}</p>
-                        <div className="tags">
-                          {ideaTags.domain.length > 0 ? (
-                            <span className={`${styles.ideaTags} idea-tags--domain`}>
-                              {ideaTags.domain.map((tag) => (
-                                <span key={tag} className="tag tag--sm" data-tag={tag}>
-                                  {tag}
+                      <Row className={styles.ideaRow} align="flex-start" wrap="nowrap" nogutter>
+                        <Col className={styles.ideaMain}>
+                          <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
+                            <p className={styles.ideaTitle}>{idea.title}</p>
+                            <div className="tags">
+                              {ideaTags.domain.length > 0 ? (
+                                <span className={`${styles.ideaTags} idea-tags--domain`}>
+                                  {ideaTags.domain.map((tag) => (
+                                    <span key={tag} className="tag tag--sm" data-tag={tag}>
+                                      {tag}
+                                    </span>
+                                  ))}
                                 </span>
-                              ))}
-                            </span>
-                          ) : null}
-                          {ideaTags.generated.length > 0 ? (
-                            <span className={`${styles.ideaTags} idea-tags--topic`}>
-                              {ideaTags.generated.map((tag) => (
-                                <span key={tag} className="tag tag--sm" data-tag={tag}>
-                                  {tag}
+                              ) : null}
+                              {ideaTags.generated.length > 0 ? (
+                                <span className={`${styles.ideaTags} idea-tags--topic`}>
+                                  {ideaTags.generated.map((tag) => (
+                                    <span key={tag} className="tag tag--sm" data-tag={tag}>
+                                      {tag}
+                                    </span>
+                                  ))}
                                 </span>
-                              ))}
-                            </span>
-                          ) : null}
-                        </div>
-                      </Link>
+                              ) : null}
+                            </div>
+                          </Link>
+                        </Col>
+                        <Col xs="content" className={styles.ideaActions}>
+                          <DeleteExtractedIdeaAction idea={idea} />
+                        </Col>
+                      </Row>
                     </li>
                   );
                 })}

@@ -242,6 +242,22 @@
   background: var(--surface-raised);
 }
 
+.ideaRow {
+  width: 100%;
+}
+
+/* Bare Col defaults to 100% width — fill remaining space so tag pills aren't squeezed. */
+.ideaMain {
+  flex: 1 1 0% !important;
+  max-width: none !important;
+  min-width: 0;
+}
+
+.ideaActions {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+}
+
 .canonicalIdeaItem {
   border: none;
   border-radius: 0 var(--radius) var(--radius) 0;

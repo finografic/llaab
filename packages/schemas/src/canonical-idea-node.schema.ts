@@ -8,7 +8,8 @@ export const CanonicalIdeaConfidenceSchema = z.enum(['low', 'medium', 'high']);
 export const CanonicalIdeaNodeSchema = BaseNodeSchema.extend({
   type: z.literal('canonical-idea'),
   transcript_id: NodeIdSchema,
-  source_candidate_idea_ids: z.array(NodeIdSchema).min(1),
+  /** May be empty after source candidate ideas are deleted; consolidate still writes ≥1. */
+  source_candidate_idea_ids: z.array(NodeIdSchema).default([]),
   confidence: CanonicalIdeaConfidenceSchema.optional(),
   key_claims: z.array(z.string()).default([]),
   coverage_notes: z.string().optional(),
