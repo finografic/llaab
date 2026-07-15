@@ -12,9 +12,9 @@
 
 `llaab` — Learning Loop & Agent Automation Base. Turborepo + pnpm monorepo. Two-process
 architecture: `apps/server` (Hono + Bun, business logic) + `apps/client` (Vite + React Router SPA, UI).
-Core pipeline: ingest YouTube → transcript → extracted ideas → canonical ideas → run traces, all
-stored as markdown vault nodes. Executable/generated skills are future work, not current ingest
-output.
+Core pipeline: ingest YouTube → transcript → extracted ideas → canonical ideas → wiki drafts →
+reviewed `knowledge/wikis/` pages, with run traces stored as markdown vault nodes.
+Executable/generated skills are future work, not current ingest output.
 
 ## Architecture
 
@@ -173,10 +173,15 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 | `/icons`                       | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
 | `/vault`                       | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
 | `/vault/transcripts/:id`       | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                       |
+| `/vault/wiki-drafts/:id`       | Review generated wiki draft, inspect evidence/diff, edit/regenerate/reject/promote explicitly                                                         |
+| `/vault/wiki-candidates`       | Review automatically discovered wiki topic candidates                                                                                                 |
+| `/vault/wiki-candidates/:id`   | Inspect candidate evidence and compile a candidate into a normal wiki draft                                                                           |
 | `/vault/nodes`                 | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                                                                    |
 | `/vault/nodes/:id`             | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                                                                          |
 | `/vault/sources/:id`           | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                        |
 | `/vault/runs/:id`              | Detail: summary grid, stages table, decisions list, error block                                                                                       |
+| `/knowledge/wikis`             | Browse promoted source-backed wiki pages from `knowledge/wikis/`                                                                                      |
+| `/knowledge/wikis/:id`         | Read promoted wiki page with source refs and derived graph links                                                                                      |
 | `/registry`                    | Packages list — shared Add/Search toolbar; Pinned \| Search results tabs; `PackageCard` list (Title / Last Publish / Downloads)                       |
 | `/registry/package/:name`      | Package detail — readme + aligned metadata aside; SecondaryActionBar back to `/registry`                                                              |
 | `/registry/pinned`             | Redirects into `/registry` Pinned tab                                                                                                                 |
@@ -268,6 +273,16 @@ continues processing.
 | `GET /api/vault/transcripts/:id/ideas`                             | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`                                                                                                                                     |
 | `POST /api/vault/transcripts/:id/extract`                          | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }`                                                                                                                               |
 | `POST /api/vault/transcripts/:id/consolidate`                      | Single-pass canonical idea generation with quality validation from extracted candidate ideas; `RunNode`-backed (`runSkill`); returns `conflict: true` instead of overwriting coverage if a set already exists |
+| `POST /api/vault/transcripts/:id/wiki-drafts`                      | Compiles selected canonical ideas into a reviewable vault `wiki-draft`; never writes promoted knowledge directly                                                                                              |
+| `GET/PATCH /api/vault/wiki-drafts/:id`                             | Reads or edits a wiki draft before review/promotion                                                                                                                                                           |
+| `POST /api/vault/wiki-drafts/:id/promote`                          | Explicitly promotes an accepted create/update draft into `knowledge/wikis/` without Git mutation                                                                                                              |
+| `POST /api/vault/wiki-drafts/:id/reject`                           | Rejects a draft while keeping vault provenance                                                                                                                                                                |
+| `POST /api/vault/wiki-drafts/:id/regenerate`                       | Recompiles from the same selected evidence and supersedes the previous draft                                                                                                                                  |
+| `POST /api/vault/wiki-candidates/discover`                         | One-shot deterministic wiki-topic discovery over canonical ideas; creates reviewable candidates only                                                                                                          |
+| `GET/POST /api/vault/wiki-candidates/:id/compile`                  | Reads candidate evidence or compiles one candidate into a normal wiki draft                                                                                                                                   |
+| `POST /api/vault/wiki-research`                                    | Records explicitly approved manual research evidence for a wiki/draft; cannot bypass review/promotion                                                                                                         |
+| `GET /api/knowledge/wikis`, `/:id`                                 | Lists and reads promoted wiki Markdown from `knowledge/wikis/`                                                                                                                                                |
+| `GET/POST /api/knowledge/wikis/graph/export`                       | Derives the wiki graph from promoted Markdown and optionally exports it under `knowledge/knowledge-graphs/`                                                                                                   |
 | `POST /api/vault/transcripts/:id/canonical-ideas/resolve-conflict` | Resolves canonical idea conflicts with keep `existing` or `incoming`; deletes the losing set's files, writes coverage if incoming wins                                                                        |
 | `POST /api/vault/transcripts/:id/canonical-ideas/clean`            | Deletes every canonical-idea file + consolidate run for that transcript (incl. orphans) and clears coverage                                                                                                   |
 | `GET /api/runs`, `/:id`                                            | Run list + detail with full stage/decision trace                                                                                                                                                              |
@@ -350,20 +365,30 @@ _different_, not-yet-started item.
 
 Task routing (all env-configurable via `LLAAB_*_MODEL` vars):
 
-| Task        | Tier         | Default model         |
-| ----------- | ------------ | --------------------- |
-| format      | local-small  | llama3.2:3b           |
-| extract     | local-mid    | llama3:latest         |
-| consolidate | local-strong | gemma4:26b-a4b-it-qat |
-| code        | local-mid    | llama3:latest         |
-| reason      | remote       | claude-sonnet-4-6     |
+| Task          | Tier         | Provider | Default model         |
+| ------------- | ------------ | -------- | --------------------- |
+| format        | local-small  | ollama   | gemma4:e4b-it-qat     |
+| extract       | remote       | opencode | glm-5.2               |
+| consolidate   | remote       | opencode | glm-5.2               |
+| wiki-compile  | remote       | opencode | glm-5.2               |
+| wiki-discover | remote       | opencode | glm-5.2               |
+| code          | local-strong | ollama   | gpt-oss:20b           |
+| reason        | local-strong | ollama   | gemma4:26b-a4b-it-qat |
 
 Canonical consolidation uses extracted idea nodes only, not the full transcript body. It runs a
 single pass through `routeLlm("consolidate", ...)`, validates quality deterministically (with
 optional auto-retry), persists `CanonicalIdeaNode` files with `key_claims` / `coverage_notes`, and
 writes `TranscriptNode.canonical_coverage` metadata (including `quality_score`) so the transcript
-UI can show coverage and score after reload. Default model: `gemma4:26b-a4b-it-qat` on the
-`consolidate` task route.
+UI can show coverage and score after reload. Current routing sends `consolidate` through OpenCode
+Go `glm-5.2`.
+
+Wiki compilation uses selected canonical ideas plus a bounded evidence packet, not full-vault or
+full-transcript prompt dumps. `wiki-compile` creates `wiki-draft` vault nodes only; review,
+regeneration, rejection, and promotion are separate explicit operations. Promotion writes validated
+Markdown under `knowledge/wikis/` but never runs Git commands. Discovery (`wiki-discover`) is a
+one-shot candidate queue; research (`research-wiki`) is approval-gated and can add external
+source-ref metadata only through the same draft/review path. Full operator/architecture reference:
+`docs/process/WIKI_WORKFLOW.md`.
 
 `getLlmStatus()` exported from `@llaab/llm` returns the live routing map (respects env overrides).
 Ollama provider uses `chat` API (not `generate`) for proper system/user separation. LM Studio is
@@ -401,6 +426,11 @@ string field like `input_summary` became unparseable garbage. Regression tests i
 | `SkillNode`      | Executable knowledge; inputs/outputs/tools, lineage                                     |
 | `SourceNode`     | Person/channel/repo origin; `platforms`, linked `profiles`, `follow` flag               |
 | `RunNode`        | Execution trace; `stages`, `decisions`, LLM trace, `produced_node_ids`                  |
+| `WikiDraftNode`  | Reviewable wiki create/update/no-op/needs-review proposal stored in the vault           |
+
+Promoted wiki pages are not vault nodes. They are validated Markdown files under `knowledge/wikis/`
+with source refs, stable section markers, revision/hash checks, and typed wiki links. Derived graph
+data is disposable and rebuilds from those promoted files.
 
 Run persistence compacts large duplicated text fields (`body`, `plainText`, `text`, `transcript`)
 inside summaries and stage payloads. Existing June 13 ingest run files were migrated. Run deletion
@@ -462,6 +492,8 @@ YAML `profiles` object-array parsing so all source nodes load for runs author li
 
 Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
+Wiki generation is implemented; the completion record is `docs/todo/DONE_WIKI_GENERATION.md` and
+the ongoing feature reference is `docs/process/WIKI_WORKFLOW.md`.
 Hermes setup and follow-ups: `docs/todo/TODO_HERMES_LAYER.md`,
 `docs/todo/DONE_HERMES_DROPBOX.md`, and `docs/todo/TODO_INBOX_VIEWS.md`. Vault/knowledge split plan:
 `docs/todo/TODO_VAULT_KNOWLEDGE_SPLIT.md`; current shape is source/docs/`knowledge/` in the parent
