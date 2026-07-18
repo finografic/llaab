@@ -94,6 +94,88 @@ describe('compileWikiDraft', () => {
     expect(result.producedNodeIds).toEqual([draft.id]);
   });
 
+  it('keeps the model-generated title while normalizing model-created ids', async () => {
+    routeLlm.mockImplementation(async (_task, prompt) => {
+      const input = JSON.parse(prompt) as {
+        evidence: Array<{ id: string }>;
+        canonicalIdeas: Array<{ id: string }>;
+      };
+      return {
+        text: JSON.stringify({
+          operation: 'create',
+          topic: {
+            topic_key: 'Runtime TypeScript Tooling and AI Engineering Tradeoffs',
+            title: 'Runtime TypeScript Tooling and AI Engineering Tradeoffs',
+            aliases: [],
+          },
+          sections: [
+            {
+              id: 'Runtime Tooling / AI Tradeoffs',
+              heading: 'Runtime Tooling and AI Tradeoffs',
+              body: 'Modern TypeScript tooling changes runtime and AI engineering practice.',
+              source_ref_ids: ['ref-transcript'],
+              source_canonical_idea_ids: [input.canonicalIdeas[0]?.id],
+            },
+          ],
+          links: [],
+          source_refs: [
+            {
+              id: 'ref-transcript',
+              kind: 'transcript',
+              verification: 'source-backed',
+            },
+          ],
+          coverage: {
+            represented_canonical_idea_ids: [],
+            omitted_canonical_ideas: [],
+          },
+          change_summary: 'Creates a focused tooling wiki.',
+          unresolved_questions: [],
+          contested_claims: [],
+        }),
+        model: 'test-model',
+        provider: 'ollama',
+        durationMs: 10,
+      };
+    });
+
+    const core = await import('@llaab/core');
+    const { compileWikiDraft } = await import('./compile-wiki-draft.js');
+    const transcript = await core.createNode({
+      type: 'transcript',
+      id: 'typescript-7-rc-a-bun-like-dx-for-node-js-and-k8s-in-the-browser-news-ep-72',
+      title: 'Typescript FM | Ep 72',
+      body: '<!-- t:0:42 -->\n\nTypeScript runtime tooling is changing developer experience.',
+      extra: { source_url: 'https://example.com/video', source_type: 'youtube' },
+    });
+    const candidate = await core.createNode({
+      type: 'idea',
+      title: 'Runtime tooling candidate',
+      body: '',
+      extra: { origin: 'extracted' },
+    });
+    const canonicalIdea = await core.createNode({
+      type: 'canonical-idea',
+      id: 'canonical-typescript-7-rc-a-bun-like-dx-for-node-js-and-k8s-in-the-browser-news-ep-72-1-2026-07-13T04-59-16',
+      title: 'Runtime TypeScript tooling changes developer experience',
+      extra: { transcript_id: transcript.id, source_candidate_idea_ids: [candidate.id] },
+    });
+
+    const { record, result } = await compileWikiDraft({
+      transcriptId: transcript.id,
+      canonicalIdeaIds: [canonicalIdea.id],
+      suggestedTitle: 'Typescript FM | Ep 72',
+      entryPath: 'manual',
+    });
+    const draft = await core.readNodeByType('wiki-draft', result.draftId);
+
+    expect(record.status).toBe('completed');
+    expect(draft.title).toBe('Runtime TypeScript Tooling and AI Engineering Tradeoffs');
+    expect(draft.topic_key).toBe('runtime-typescript-tooling-and-ai-engineering-tradeoffs');
+    expect(draft.sections[0]?.id).toBe('runtime-tooling-ai-tradeoffs');
+    expect(draft.omitted_canonical_idea_ids).toEqual([canonicalIdea.id]);
+  });
+
   it('rejects duplicate selected canonical ids before inference', async () => {
     const { compileWikiDraft } = await import('./compile-wiki-draft.js');
     const result = await compileWikiDraft({

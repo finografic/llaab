@@ -9,6 +9,7 @@ import { markdownWithFrontmatter } from './markdown-frontmatter.utils.js';
 import { parseFrontmatter } from './parse-frontmatter.utils.js';
 
 const WIKI_DIR = 'wikis';
+const WIKI_DOC_FILENAMES = new Set(['README.md']);
 const WIKI_FRONTMATTER_ORDER = [
   'id',
   'type',
@@ -158,7 +159,7 @@ export async function listKnowledgeWikis(): Promise<KnowledgeWikiPage[]> {
   const symlink = entries.find((entry) => entry.isSymbolicLink());
   if (symlink) throw new Error(`Knowledge wiki directory cannot contain symbolic links: ${symlink.name}`);
   const wikiIds = entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md') && !WIKI_DOC_FILENAMES.has(entry.name))
     .map((entry) => entry.name.slice(0, -'.md'.length))
     .sort();
 

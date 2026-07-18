@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -29,7 +29,7 @@ describe('knowledge wiki storage', () => {
       title: 'Context Management',
       aliases: ['Agent context'],
       summary: 'A source-backed topic-level synthesis.',
-      body: '<!-- wiki-section:overview -->\n\n## Overview\n\nUnicode proof: café.',
+      body: '<!-- wiki-section:overview -->\n\n## Overview\n\nUnicode proof: café.[^context-transcript]',
       status: 'seed' as const,
       tags: ['d:llm'],
       links: [
@@ -115,6 +115,18 @@ describe('knowledge wiki storage', () => {
     page.body = '<!-- wiki-section:overview -->\n\n## Overview\n\nUnsupported claim.[^missing-source]';
 
     await expect(core.writeKnowledgeWiki(page)).rejects.toThrow('citation does not resolve');
+  });
+
+  it('ignores documentation files in the promoted wiki directory', async () => {
+    const core = await import('@llaab/core');
+    await mkdir(join(process.env.LLAAB_KNOWLEDGE ?? '', 'wikis'), { recursive: true });
+    await writeFile(
+      join(process.env.LLAAB_KNOWLEDGE ?? '', 'wikis', 'README.md'),
+      '# Knowledge wikis\n',
+      'utf-8',
+    );
+
+    await expect(core.listKnowledgeWikis()).resolves.toEqual([]);
   });
 
   it('reads a known vault node directly by type', async () => {

@@ -1,7 +1,6 @@
 import { Button } from 'components/ui/button';
 import { Checkbox } from 'components/ui/checkbox';
 import { Col, Row } from 'components/ui/grid';
-import { Input } from 'components/ui/input';
 import { FilePenLineIcon } from 'lucide-react';
 import { useRunMonitor } from 'queries/runs';
 import { useCreateWikiDraft } from 'queries/transcripts';
@@ -28,8 +27,6 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(canonicalIdeas.map((idea) => idea.id)),
   );
-  const [suggestedTitle, setSuggestedTitle] = useState('');
-  const [targetWikiId, setTargetWikiId] = useState('');
   const canonicalIdsKey = useMemo(() => ideaIdsKey(canonicalIdeas), [canonicalIdeas]);
   const activeRun = useMemo(
     () =>
@@ -66,8 +63,6 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
       const result = await createDraft.mutateAsync({
         transcriptId,
         canonicalIdeaIds: [...selectedIds],
-        suggestedTitle: suggestedTitle.trim() || undefined,
-        targetWikiId: targetWikiId.trim() || undefined,
       });
       toast.success('Wiki draft created.');
       navigate(`/vault/wiki-drafts/${result.draftId}`);
@@ -95,18 +90,9 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
         ))}
       </Col>
       <Col>
-        <Input
-          value={suggestedTitle}
-          onChange={(event) => setSuggestedTitle(event.target.value)}
-          placeholder="Optional wiki title"
-        />
-      </Col>
-      <Col>
-        <Input
-          value={targetWikiId}
-          onChange={(event) => setTargetWikiId(event.target.value)}
-          placeholder="Optional promoted wiki id to update"
-        />
+        <p className="text-xs text-muted-foreground">
+          The model will choose the draft title and topic id. You can edit the draft title after creation.
+        </p>
       </Col>
       <Col>
         <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void submit()}>

@@ -5,7 +5,8 @@ Return only JSON with operation, topic, summary, sections, links, source_refs, c
 change_summary, unresolved_questions, and contested_claims. Use only supplied ids and URLs.
 Every substantive section needs source_ref_ids and source_canonical_idea_ids. Do not create links
 unless a target wiki id is supplied. Use create for a new topic; use update, no-op, or needs-review
-for a target wiki. Preserve unrelated existing sections byte-for-byte.`;
+for a target wiki. Generate a concise wiki title from the selected evidence; treat any suggested title
+as a hint, not the final title. Preserve unrelated existing sections byte-for-byte.`;
 
 export function parseWikiCompileJson(text: string): unknown {
   const stripped = text
@@ -37,7 +38,7 @@ export function buildWikiCompilePrompt(input: {
       sourceId: transcript.source_id,
       sourceUrl: transcript.source_url,
     })),
-    suggestedTitle: input.suggestedTitle,
+    suggestedTitleHint: input.suggestedTitle,
     suggestedTopicKey: input.suggestedTopicKey,
     existingWiki: input.existingWiki
       ? {

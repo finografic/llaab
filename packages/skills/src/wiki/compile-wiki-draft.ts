@@ -80,6 +80,7 @@ async function compileAttempt(input: {
   prompt: string;
   system: string;
   canonicalIdeaIds: Set<string>;
+  sourceRefs: WikiSourceRef[];
   allowedSourceRefs: Map<string, { node_id?: string; url?: string; locator?: string }>;
   allowedLinkTargetIds: Set<string>;
   expectedTopicKey?: string;
@@ -90,7 +91,11 @@ async function compileAttempt(input: {
     system: input.system,
     bypassCache: true,
   });
-  const result = WikiCompileResultSchema.parse(parseWikiCompileJson(llm.text));
+  const result = reconcileWikiSourceRefs(
+    WikiCompileResultSchema.parse(normalizeWikiCompileJson(parseWikiCompileJson(llm.text))),
+    input.sourceRefs,
+  );
+  reconcileWikiCoverage(result, input.canonicalIdeaIds);
   const quality = validateWikiCompileResult({
     result,
     canonicalIdeaIds: input.canonicalIdeaIds,
@@ -101,6 +106,148 @@ async function compileAttempt(input: {
     sourceCount: input.sourceCount,
   });
   return { result, llm, quality };
+}
+
+function normalizeModelNodeId(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  return NodeIdSchema.safeParse(value).success ? value : toNodeId(value);
+}
+
+function deriveModelSummary(draft: {
+  topic?: { title?: unknown };
+  sections?: Array<{ body?: unknown; heading?: unknown }>;
+}): string {
+  const firstSection = draft.sections?.find(
+    (section) => typeof section.body === 'string' && section.body.trim(),
+  );
+  if (firstSection && typeof firstSection.body === 'string') {
+    return firstSection.body.trim().replace(/\s+/g, ' ').slice(0, 240);
+  }
+  const firstHeading = draft.sections?.find(
+    (section) => typeof section.heading === 'string' && section.heading.trim(),
+  );
+  if (firstHeading && typeof firstHeading.heading === 'string') return firstHeading.heading.trim();
+  return typeof draft.topic?.title === 'string' && draft.topic.title.trim()
+    ? draft.topic.title.trim()
+    : 'Generated wiki draft.';
+}
+
+function reconcileWikiSourceRefs(result: WikiCompileResult, sourceRefs: WikiSourceRef[]): WikiCompileResult {
+  const allowedIds = new Set(sourceRefs.map((sourceRef) => sourceRef.id));
+  const fallbackSourceRefId = sourceRefs[0]?.id;
+  const replacementByModelId = new Map<string, string>();
+
+  result.source_refs.forEach((sourceRef, index) => {
+    if (allowedIds.has(sourceRef.id)) return;
+    const replacement = sourceRefs[index]?.id ?? fallbackSourceRefId;
+    if (replacement) replacementByModelId.set(sourceRef.id, replacement);
+  });
+
+  result.source_refs = sourceRefs;
+  result.sections = result.sections.map((section) => {
+    const sourceRefIds = section.source_ref_ids
+      .map((id) => replacementByModelId.get(id) ?? id)
+      .filter((id) => allowedIds.has(id));
+    return {
+      ...section,
+      source_ref_ids:
+        sourceRefIds.length > 0 || !section.body.trim() || !fallbackSourceRefId
+          ? sourceRefIds
+          : [fallbackSourceRefId],
+    };
+  });
+
+  return result;
+}
+
+function reconcileWikiCoverage(result: WikiCompileResult, canonicalIdeaIds: Set<string>): void {
+  const represented = new Set(result.coverage.represented_canonical_idea_ids);
+  const omitted = new Set(result.coverage.omitted_canonical_ideas.map((idea) => idea.id));
+  for (const canonicalIdeaId of canonicalIdeaIds) {
+    if (represented.has(canonicalIdeaId) || omitted.has(canonicalIdeaId)) continue;
+    result.coverage.omitted_canonical_ideas.push({
+      id: canonicalIdeaId,
+      reason: 'The model output did not explicitly account for this selected canonical idea.',
+    });
+  }
+}
+
+function normalizeWikiCompileJson(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || !('topic' in value)) return value;
+  const draft = value as {
+    topic?: { topic_key?: unknown; title?: unknown };
+    summary?: unknown;
+    sections?: Array<{
+      id?: unknown;
+      heading?: unknown;
+      source_ref_ids?: unknown;
+      source_canonical_idea_ids?: unknown;
+    }>;
+    links?: Array<{ target_wiki_id?: unknown }>;
+    source_refs?: Array<{ id?: unknown; node_id?: unknown }>;
+    coverage?: {
+      represented_canonical_idea_ids?: unknown;
+      omitted_canonical_ideas?: Array<{ id?: unknown }>;
+    };
+    change_summary?: unknown;
+  };
+  if (draft.topic && typeof draft.topic === 'object') {
+    if (typeof draft.topic.topic_key === 'string') {
+      draft.topic.topic_key = normalizeModelNodeId(draft.topic.topic_key);
+    } else if (typeof draft.topic.title === 'string') {
+      draft.topic.topic_key = toNodeId(draft.topic.title);
+    }
+  }
+  if (Array.isArray(draft.sections)) {
+    for (const section of draft.sections) {
+      if (!section || typeof section !== 'object') continue;
+      if (typeof section.id === 'string') {
+        section.id = normalizeModelNodeId(section.id);
+      } else if (typeof section.heading === 'string') {
+        section.id = toNodeId(section.heading);
+      }
+      if (Array.isArray(section.source_ref_ids)) {
+        section.source_ref_ids = section.source_ref_ids.map(normalizeModelNodeId);
+      }
+      if (Array.isArray(section.source_canonical_idea_ids)) {
+        section.source_canonical_idea_ids = section.source_canonical_idea_ids.map(normalizeModelNodeId);
+      }
+    }
+  }
+  if (Array.isArray(draft.links)) {
+    for (const link of draft.links) {
+      if (link && typeof link === 'object') {
+        link.target_wiki_id = normalizeModelNodeId(link.target_wiki_id);
+      }
+    }
+  }
+  if (Array.isArray(draft.source_refs)) {
+    for (const sourceRef of draft.source_refs) {
+      if (!sourceRef || typeof sourceRef !== 'object') continue;
+      sourceRef.id = normalizeModelNodeId(sourceRef.id);
+      sourceRef.node_id = normalizeModelNodeId(sourceRef.node_id);
+    }
+  }
+  if (draft.coverage && typeof draft.coverage === 'object') {
+    if (Array.isArray(draft.coverage.represented_canonical_idea_ids)) {
+      draft.coverage.represented_canonical_idea_ids =
+        draft.coverage.represented_canonical_idea_ids.map(normalizeModelNodeId);
+    }
+    if (Array.isArray(draft.coverage.omitted_canonical_ideas)) {
+      for (const omitted of draft.coverage.omitted_canonical_ideas) {
+        if (omitted && typeof omitted === 'object') {
+          omitted.id = normalizeModelNodeId(omitted.id);
+        }
+      }
+    }
+  }
+  if (typeof draft.summary !== 'string' || !draft.summary.trim()) {
+    draft.summary = deriveModelSummary(draft);
+  }
+  if (typeof draft.change_summary !== 'string' || !draft.change_summary.trim()) {
+    draft.change_summary = 'Compiled wiki draft from selected canonical ideas.';
+  }
+  return draft;
 }
 
 export async function compileWikiDraft(input: CompileWikiDraftInput) {
@@ -162,11 +309,12 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       const validationInput = {
         prompt,
         canonicalIdeaIds: new Set(canonicalIdeas.map((idea) => idea.id)),
+        sourceRefs,
         allowedSourceRefs: new Map(sourceRefs.map((ref) => [ref.id, ref])),
         allowedLinkTargetIds: new Set(
           promotedWikis.filter((wiki) => wiki.id !== existingWiki?.id).map((wiki) => wiki.id),
         ),
-        expectedTopicKey: topicKey,
+        expectedTopicKey: existingWiki?.topic_key ?? input.suggestedTopicKey,
         hasExistingWiki: existingWiki !== undefined,
         sourceCount: Math.max(sourceIds.length, transcriptIds.length),
       };
