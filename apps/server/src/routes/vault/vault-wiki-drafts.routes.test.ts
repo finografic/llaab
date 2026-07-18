@@ -6,7 +6,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const routeLlm = vi.fn();
 vi.mock('@llaab/llm', () => ({ routeLlm }));
 
-function validModelOutput(prompt: string) {
+interface RouteTestWikiCompileOutput {
+  operation: 'create';
+  topic: { topic_key: string; title: string; aliases: string[] };
+  summary: string;
+  sections: Array<{
+    id: string;
+    heading: string;
+    body: string;
+    source_ref_ids: string[];
+    source_canonical_idea_ids: string[];
+  }>;
+  links: Array<{ target_wiki_id: string; relation: 'related-to'; note: string }>;
+  source_refs: Array<{ id: string; kind: 'transcript'; verification: 'source-backed' }>;
+  coverage: {
+    represented_canonical_idea_ids: string[];
+    omitted_canonical_ideas: Array<{ id: string; reason: string }>;
+  };
+  change_summary: string;
+  unresolved_questions: string[];
+  contested_claims: string[];
+}
+
+function validModelOutput(prompt: string): RouteTestWikiCompileOutput {
   const input = JSON.parse(prompt) as {
     suggestedTopicKey: string;
     evidence: Array<{ id: string }>;
@@ -34,7 +56,7 @@ function validModelOutput(prompt: string) {
     change_summary: 'Creates a route-tested seed page.',
     unresolved_questions: [],
     contested_claims: [],
-  };
+  } satisfies RouteTestWikiCompileOutput;
 }
 
 describe('wiki draft routes', () => {
@@ -137,11 +159,57 @@ describe('wiki draft routes', () => {
     expect((await core.readNodeByType('wiki-draft', regenerated.draftId)).draft_status).toBe('proposed');
   });
 
-  it('retries once and returns a failed route response when citations remain invalid', async () => {
+  it('creates multiple focused drafts when selected ideas do not share a topic cluster', async () => {
+    const { core, transcript } = await createLineage();
+    const candidate = await core.createNode({
+      type: 'idea',
+      title: 'Extra candidate',
+      extra: { origin: 'extracted' },
+    });
+    const tooling = await core.createNode({
+      type: 'canonical-idea',
+      title: 'JS toolchain modernization via Rust rewrites',
+      extra: { transcript_id: transcript.id, source_candidate_idea_ids: [candidate.id] },
+    });
+    const security = await core.createNode({
+      type: 'canonical-idea',
+      title: 'Supply chain security faces prompt injection threats',
+      extra: { transcript_id: transcript.id, source_candidate_idea_ids: [candidate.id] },
+    });
+    const maintenance = await core.createNode({
+      type: 'canonical-idea',
+      title: 'Home maintenance decisions require proper insurance timing',
+      extra: { transcript_id: transcript.id, source_candidate_idea_ids: [candidate.id] },
+    });
+    routeLlm.mockImplementation(async (_task, prompt) => ({
+      text: JSON.stringify(validModelOutput(prompt)),
+      model: 'test-model',
+      provider: 'ollama',
+      durationMs: 5,
+    }));
+
+    const response = await postDraft(transcript.id, {
+      canonical_idea_ids: [tooling.id, security.id, maintenance.id],
+    });
+    const body = (await response.json()) as { draftId: string; draftIds: string[]; draftCount: number };
+
+    expect(response.status).toBe(201);
+    expect(body.draftCount).toBe(3);
+    expect(body.draftIds).toHaveLength(3);
+    expect(body.draftId).toBe(body.draftIds[0]);
+    expect(routeLlm).toHaveBeenCalledTimes(3);
+    await expect(core.readNodeByType('wiki-draft', body.draftIds[0]!)).resolves.toMatchObject({
+      type: 'wiki-draft',
+    });
+  });
+
+  it('retries once and returns a failed route response when links remain invalid', async () => {
     const { transcript, canonical } = await createLineage();
     routeLlm.mockImplementation(async (_task, prompt) => {
       const output = validModelOutput(prompt);
-      output.sections[0]!.source_ref_ids = [];
+      output.links = [
+        { target_wiki_id: 'unavailable-wiki', relation: 'related-to', note: 'Unsupported link.' },
+      ];
       return {
         text: JSON.stringify(output),
         model: 'test-model',

@@ -64,7 +64,9 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
         transcriptId,
         canonicalIdeaIds: [...selectedIds],
       });
-      toast.success('Wiki draft created.');
+      toast.success(
+        result.draftCount === 1 ? 'Wiki draft created.' : `${result.draftCount} wiki drafts created.`,
+      );
       navigate(`/vault/wiki-drafts/${result.draftId}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Wiki compilation failed.');
@@ -91,13 +93,14 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
       </Col>
       <Col>
         <p className="text-xs text-muted-foreground">
-          The model will choose the draft title and topic id. You can edit the draft title after creation.
+          The model will choose draft titles and topic ids. Broad selections may create multiple focused
+          drafts.
         </p>
       </Col>
       <Col>
         <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void submit()}>
           <FilePenLineIcon aria-hidden="true" />
-          {busy ? 'Creating wiki draft…' : 'Create Wiki Draft'}
+          {busy ? 'Creating wiki draft…' : 'Create Wiki Draft(s)'}
         </Button>
       </Col>
     </Row>

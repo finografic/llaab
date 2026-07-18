@@ -16,7 +16,10 @@ export interface CreateWikiDraftInput {
 export interface CreateWikiDraftResult {
   success: true;
   draftId: string;
+  draftIds: string[];
+  draftCount: number;
   runId: string;
+  runIds: string[];
   qualityScore: number;
   warnings: string[];
 }
