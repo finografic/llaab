@@ -2,6 +2,11 @@ import type { TtsPlayerSection } from './tts-player.types';
 
 const TIMESTAMP_MARKER_PATTERN = /<!--\s*t:[\d:.]+\s*-->/g;
 const TRANSCRIPT_TIME_LINE_PATTERN = /^<--\s*t:[\d:.]+\s*-->$/gm;
+const TRANSCRIPT_TIME_LINE_ONLY_PATTERN = /^<--\s*t:[\d:.]+\s*-->$/;
+const TRANSCRIPT_HEADING_PATTERN = /^#{1,6}\s+transcript\s*$/i;
+const TRANSCRIPT_HEADER_LINK_LINE_PATTERN = /^\[\*{0,2}https?:\/\/[^\]]+\*{0,2}\]\([^)]+\)$/i;
+const TRANSCRIPT_METADATA_LINE_PATTERN =
+  /^(?:[-*]\s*)?(?:\*\*)?(?:author|uploaded|ingested|source|url|video|channel|duration|published)(?:\*\*)?\s*:/i;
 const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\([^)]+\)/g;
 const MARKDOWN_EMPHASIS_PATTERN = /[*_`#>]+/g;
 const WHITESPACE_PATTERN = /\s+/g;
@@ -24,8 +29,43 @@ export function normalizeTtsText(text: string) {
     .trim();
 }
 
+function shouldDropTranscriptMetadataLine(line: string, hasReachedTranscriptHeading: boolean) {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  if (TRANSCRIPT_TIME_LINE_ONLY_PATTERN.test(trimmed)) return true;
+  if (TRANSCRIPT_METADATA_LINE_PATTERN.test(trimmed)) return true;
+  if (!hasReachedTranscriptHeading && TRANSCRIPT_HEADER_LINK_LINE_PATTERN.test(trimmed)) return true;
+  return !hasReachedTranscriptHeading && trimmed.startsWith('#');
+}
+
+export function stripTtsMetadataLines(text: string) {
+  const lines: string[] = [];
+  let hasReachedTranscriptHeading = false;
+
+  for (const line of text.split(/\r?\n/)) {
+    if (TRANSCRIPT_HEADING_PATTERN.test(line.trim())) {
+      hasReachedTranscriptHeading = true;
+      continue;
+    }
+
+    if (shouldDropTranscriptMetadataLine(line, hasReachedTranscriptHeading)) continue;
+    lines.push(line);
+  }
+
+  return lines.join('\n').trim();
+}
+
 export function splitTtsSentences(text: string) {
   return (text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [text]).map((sentence) => sentence.trim()).filter(Boolean);
+}
+
+/**
+ * Swap clause/sentence-final `.` for TTS prosody inside a playable chunk.
+ * Playback chunks are sentences; blank lines still define skippable sections.
+ */
+export function applyTtsFullStopChar(text: string, fullStopChar?: string) {
+  if (fullStopChar == null) return text;
+  return text.replace(/\.+(?=\s|$)/gu, fullStopChar);
 }
 
 function splitLongText(text: string, maxChars = MAX_SECTION_CHARS) {
@@ -51,12 +91,13 @@ function splitLongText(text: string, maxChars = MAX_SECTION_CHARS) {
 }
 
 export function createTtsSectionsFromText(text: string): TtsPlayerSection[] {
-  const paragraphs = text
+  const audioText = stripTtsMetadataLines(text);
+  const paragraphs = audioText
     .split(/\n{2,}/)
     .map(normalizeTtsText)
     .filter(Boolean);
 
-  const source = paragraphs.length > 0 ? paragraphs : [normalizeTtsText(text)].filter(Boolean);
+  const source = paragraphs.length > 0 ? paragraphs : [normalizeTtsText(audioText)].filter(Boolean);
   return source.flatMap((paragraph, paragraphIndex) =>
     splitLongText(paragraph).map((chunk, chunkIndex) => ({
       id: `section-${paragraphIndex}-${chunkIndex}`,

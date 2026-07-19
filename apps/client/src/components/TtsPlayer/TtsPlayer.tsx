@@ -1,13 +1,24 @@
 import { Button } from 'components/ui/button';
 import { PauseIcon, PlayIcon, SkipBackIcon, SkipForwardIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { TtsPlaybackStatus, TtsPlayerProps, TtsPlayerSection } from './tts-player.types';
+import type {
+  TtsDevice,
+  TtsDtype,
+  TtsPlaybackStatus,
+  TtsPlayerProps,
+  TtsPlayerSection,
+} from './tts-player.types';
 
 import { createTtsSectionsFromText, formatTtsTime, normalizeTtsText } from './tts-player.utils';
 import styles from './TtsPlayer.module.css';
 
 const DEFAULT_VOICE = 'bm_daniel';
 const DEFAULT_SPEED = 1;
+const DEFAULT_SENTENCE_PAUSE_MS = 0;
+const DEFAULT_PARAGRAPH_PAUSE_MS = 0;
+/** Best quality + speed on Apple Silicon / modern GPUs. */
+const DEFAULT_DTYPE: TtsDtype = 'fp32';
+const DEFAULT_DEVICE: TtsDevice = 'webgpu';
 
 function getPlayableSections(text?: string, sections?: TtsPlayerSection[]) {
   const sourceSections = sections?.length ? sections : text ? createTtsSectionsFromText(text) : [];
@@ -23,7 +34,13 @@ function getPlayableSections(text?: string, sections?: TtsPlayerSection[]) {
 type TtsWorkerMessage =
   | { type: 'progress'; runId: number; message: string }
   | { type: 'section'; runId: number; sectionIndex: number }
-  | { type: 'audio'; runId: number; buffer: ArrayBuffer }
+  | {
+      type: 'audio';
+      runId: number;
+      sectionIndex: number;
+      isLastInSection: boolean;
+      buffer: ArrayBuffer;
+    }
   | { type: 'done'; runId: number }
   | { type: 'error'; runId: number; message: string };
 
@@ -33,8 +50,13 @@ export function TtsPlayer({
   variant = 'full',
   voice = DEFAULT_VOICE,
   speed = DEFAULT_SPEED,
+  fullStopChar,
+  sentencePauseMs = DEFAULT_SENTENCE_PAUSE_MS,
+  paragraphPauseMs = DEFAULT_PARAGRAPH_PAUSE_MS,
   estimatedDurationSeconds,
   className,
+  dtype = DEFAULT_DTYPE,
+  device = DEFAULT_DEVICE,
 }: TtsPlayerProps) {
   const playableSections = useMemo(() => getPlayableSections(text, sections), [sections, text]);
   const [status, setStatus] = useState<TtsPlaybackStatus>('idle');
@@ -54,6 +76,8 @@ export function TtsPlayer({
   const isFull = variant === 'full';
   const isPlaying = status === 'playing' || status === 'loading';
   const elapsedSeconds = completedAudioSeconds + currentAudioSeconds;
+  const safeSentencePauseMs = Math.max(0, sentencePauseMs);
+  const safeParagraphPauseMs = Math.max(0, paragraphPauseMs);
   const remainingSeconds =
     estimatedDurationSeconds != null ? Math.max(0, estimatedDurationSeconds - elapsedSeconds) : null;
   const progress =
@@ -83,7 +107,7 @@ export function TtsPlayer({
     workerRef.current?.terminate();
     workerRef.current = null;
     clearCurrentAudio();
-  }, [playableSections]);
+  }, [playableSections, dtype, device]);
 
   function getWorker() {
     workerRef.current ??= new Worker(new URL('./tts-player.worker.ts', import.meta.url), {
@@ -116,10 +140,9 @@ export function TtsPlayer({
     return audioContextRef.current;
   }
 
-  async function playAudioBuffer(arrayBuffer: ArrayBuffer, runId: number) {
+  async function playDecodedBuffer(buffer: AudioBuffer, runId: number) {
     clearCurrentAudio();
     const context = await getAudioContext();
-    const buffer = await context.decodeAudioData(arrayBuffer);
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.connect(context.destination);
@@ -148,6 +171,11 @@ export function TtsPlayer({
         reject(err);
       }
     });
+  }
+
+  async function waitForPause(delayMs: number, runId: number) {
+    if (delayMs <= 0 || playbackRunRef.current !== runId) return;
+    await new Promise<void>((resolve) => window.setTimeout(resolve, delayMs));
   }
 
   async function startPlayback(startIndex = sectionIndex) {
@@ -179,11 +207,23 @@ export function TtsPlayer({
         }
 
         if (message.type === 'audio') {
+          // Decode immediately so the next buffer is ready while the current one plays.
+          const decodePromise = getAudioContext().then((context) =>
+            context.decodeAudioData(message.buffer.slice(0)),
+          );
+
           playbackQueueRef.current = playbackQueueRef.current.then(async () => {
+            if (message.runId !== playbackRunRef.current) return undefined;
+            const decoded = await decodePromise;
             if (message.runId !== playbackRunRef.current) return undefined;
             setStatus('playing');
             setError('');
-            await playAudioBuffer(message.buffer, message.runId);
+            await playDecodedBuffer(decoded, message.runId);
+            const pauseMs =
+              message.isLastInSection && message.sectionIndex < playableSections.length - 1
+                ? safeParagraphPauseMs
+                : safeSentencePauseMs;
+            await waitForPause(pauseMs, message.runId);
             return undefined;
           });
           return;
@@ -217,6 +257,9 @@ export function TtsPlayer({
           startIndex,
           voice,
           speed,
+          fullStopChar,
+          dtype,
+          device,
         },
         { transfer: [] },
       );

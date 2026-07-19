@@ -887,7 +887,7 @@ export function TranscriptDetail({
               </ul>
             ) : null}
             {visibleIdeaCount > 0 && visibleIdeas.length === 0 ? (
-              <p className={styles.emptyNote}>Ideas listed in IDs but nodes not found in vault.</p>
+              <p className={styles.emptyNote}>Ideas listed in IDys but nodes not found in vault.</p>
             ) : null}
           </CollapsibleContent>
         </Collapsible>
@@ -906,9 +906,14 @@ export function TranscriptDetail({
                 </span>
               </CollapsibleTrigger>
               <TtsPlayer
-                variant="full"
+                variant="minimal"
                 text={transcript.body}
                 estimatedDurationSeconds={transcriptDurationSeconds ?? undefined}
+                sentencePauseMs={0}
+                paragraphPauseMs={0}
+                fullStopChar="."
+                dtype="fp32"
+                device="webgpu"
               />
             </div>
             <CollapsibleContent className={styles.extractedIdeasContent}>

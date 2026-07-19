@@ -1,8 +1,8 @@
-import { KokoroTTS, TextSplitterStream } from 'kokoro-js';
-import type { TtsPlayerSection } from './tts-player.types';
+import { KokoroTTS } from 'kokoro-js';
+import type { TtsDevice, TtsDtype, TtsPlayerSection } from './tts-player.types';
 import type { GenerateOptions, KokoroTTS as KokoroTTSInstance } from 'kokoro-js';
 
-import { splitTtsSentences } from './tts-player.utils';
+import { applyTtsFullStopChar, splitTtsSentences } from './tts-player.utils';
 
 const KOKORO_MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 
@@ -13,6 +13,9 @@ interface StartMessage {
   startIndex: number;
   voice: GenerateOptions['voice'];
   speed: number;
+  fullStopChar?: string;
+  dtype: TtsDtype;
+  device: TtsDevice;
 }
 
 interface CancelMessage {
@@ -22,7 +25,15 @@ interface CancelMessage {
 
 type WorkerInputMessage = StartMessage | CancelMessage;
 
+interface ChunkQueueItem {
+  sectionIndex: number;
+  isLastInSection: boolean;
+  text: string;
+}
+
 let ttsPromise: Promise<KokoroTTSInstance> | null = null;
+let loadedDtype: TtsDtype | null = null;
+let loadedDevice: TtsDevice | null = null;
 let activeRunId = 0;
 
 function formatKokoroProgress(progress: unknown) {
@@ -37,14 +48,40 @@ function postProgress(runId: number, message: string) {
   if (activeRunId === runId) postMessage({ type: 'progress', runId, message });
 }
 
-async function getTts(runId: number) {
+async function getTts(runId: number, dtype: TtsDtype, device: TtsDevice) {
+  if (ttsPromise && (loadedDtype !== dtype || loadedDevice !== device)) {
+    ttsPromise = null;
+    loadedDtype = null;
+    loadedDevice = null;
+  }
+
   ttsPromise ??= KokoroTTS.from_pretrained(KOKORO_MODEL_ID, {
-    dtype: 'q8',
-    device: 'wasm',
+    dtype,
+    device,
     progress_callback: (progress) => postProgress(runId, formatKokoroProgress(progress)),
+  }).then((tts) => {
+    loadedDtype = dtype;
+    loadedDevice = device;
+    return tts;
   });
 
   return await ttsPromise;
+}
+
+function createChunkQueue(message: StartMessage) {
+  // Sentence-sized chunks keep time-to-first-audio low; the main thread plays while
+  // this worker synthesizes ahead. fullStopChar only changes prosody inside each chunk.
+  return message.sections.slice(message.startIndex).flatMap((section, offset) => {
+    const sectionIndex = message.startIndex + offset;
+    const sentences = splitTtsSentences(section.text);
+    return sentences.map(
+      (sentence, sentenceIndex): ChunkQueueItem => ({
+        sectionIndex,
+        isLastInSection: sentenceIndex === sentences.length - 1,
+        text: applyTtsFullStopChar(sentence, message.fullStopChar),
+      }),
+    );
+  });
 }
 
 async function startPlayback(message: StartMessage) {
@@ -52,28 +89,35 @@ async function startPlayback(message: StartMessage) {
   postProgress(message.runId, 'Loading Kokoro model...');
 
   try {
-    const tts = await getTts(message.runId);
+    const tts = await getTts(message.runId, message.dtype, message.device);
+    const chunkQueue = createChunkQueue(message);
 
-    for (let index = message.startIndex; index < message.sections.length; index += 1) {
+    let activeSectionIndex: number | null = null;
+    for (const item of chunkQueue) {
       if (activeRunId !== message.runId) return;
 
-      const section = message.sections[index];
-      if (!section) break;
-
-      postMessage({ type: 'section', runId: message.runId, sectionIndex: index });
-      postProgress(message.runId, `Preparing ${section.label ?? `section ${index + 1}`}...`);
-
-      const splitter = new TextSplitterStream();
-      const stream = tts.stream(splitter, { voice: message.voice, speed: message.speed });
-      for (const sentence of splitTtsSentences(section.text)) splitter.push(`${sentence} `);
-      splitter.close();
-
-      for await (const { audio } of stream) {
-        if (activeRunId !== message.runId) return;
-
-        const buffer = await audio.toBlob().arrayBuffer();
-        postMessage({ type: 'audio', runId: message.runId, buffer }, { transfer: [buffer] });
+      const section = message.sections[item.sectionIndex];
+      if (item.sectionIndex !== activeSectionIndex) {
+        activeSectionIndex = item.sectionIndex;
+        postMessage({ type: 'section', runId: message.runId, sectionIndex: item.sectionIndex });
       }
+      postProgress(message.runId, `Preparing ${section?.label ?? `section ${item.sectionIndex + 1}`}...`);
+
+      // Post as soon as ready so the UI can play chunk N while we synthesize N+1.
+      const audio = await tts.generate(item.text, { voice: message.voice, speed: message.speed });
+      if (activeRunId !== message.runId) return;
+
+      const buffer = await audio.toBlob().arrayBuffer();
+      postMessage(
+        {
+          type: 'audio',
+          runId: message.runId,
+          sectionIndex: item.sectionIndex,
+          isLastInSection: item.isLastInSection,
+          buffer,
+        },
+        { transfer: [buffer] },
+      );
     }
 
     if (activeRunId === message.runId) postMessage({ type: 'done', runId: message.runId });

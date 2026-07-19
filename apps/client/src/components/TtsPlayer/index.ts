@@ -1,2 +1,8 @@
 export { TtsPlayer } from './TtsPlayer';
-export type { TtsPlayerProps, TtsPlayerSection, TtsPlayerVariant } from './tts-player.types';
+export type {
+  TtsDevice,
+  TtsDtype,
+  TtsPlayerProps,
+  TtsPlayerSection,
+  TtsPlayerVariant,
+} from './tts-player.types';
