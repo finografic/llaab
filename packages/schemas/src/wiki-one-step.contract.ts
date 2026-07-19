@@ -193,6 +193,67 @@ export function isWikiOneStepOverallSuccess(branches: WikiOneStepBranchResult[])
   );
 }
 
+/** User-facing branch counts — never includes draft/candidate ids. */
+export function summarizeWikiOneStepBranches(branches: Array<{ outcome: WikiOneStepBranchOutcome }>): string {
+  const counts = {
+    created: 0,
+    updated: 0,
+    represented: 0,
+    skipped: 0,
+    failed: 0,
+  };
+  for (const branch of branches) {
+    switch (branch.outcome) {
+      case 'promoted-create':
+        counts.created += 1;
+        break;
+      case 'promoted-update':
+        counts.updated += 1;
+        break;
+      case 'existing-no-op':
+        counts.represented += 1;
+        break;
+      case 'skipped':
+        counts.skipped += 1;
+        break;
+      case 'failed':
+        counts.failed += 1;
+        break;
+      default: {
+        const exhaustive: never = branch.outcome;
+        void exhaustive;
+        break;
+      }
+    }
+  }
+
+  const parts: string[] = [];
+  if (counts.created > 0) parts.push(`${counts.created} created`);
+  if (counts.updated > 0) parts.push(`${counts.updated} updated`);
+  if (counts.represented > 0) parts.push(`${counts.represented} already represented`);
+  if (counts.skipped > 0) parts.push(`${counts.skipped} skipped`);
+  if (counts.failed > 0) parts.push(`${counts.failed} failed`);
+  return parts.join(' · ');
+}
+
+export function formatWikiOneStepSuccessMessage(input: {
+  wikiCount: number;
+  branches: Array<{ outcome: WikiOneStepBranchOutcome }>;
+}): string {
+  const branchSummary = input.branches.length > 0 ? summarizeWikiOneStepBranches(input.branches) : undefined;
+  if (input.wikiCount <= 1) {
+    return branchSummary ? `Wiki published (${branchSummary}).` : 'Wiki published.';
+  }
+  return branchSummary
+    ? `${input.wikiCount} focused wikis published (${branchSummary}).`
+    : `${input.wikiCount} focused wikis published.`;
+}
+
+/** Normal success must never deep-link users into draft/candidate review routes. */
+export function isForbiddenWikiCreationPath(path: string): boolean {
+  return /\/vault\/wiki-(?:drafts|candidates)\//.test(path);
+}
+
 const FORBIDDEN_DRAFT_PROMOTION_UX =
   /(?:open|review|inspect).{0,40}(?:draft|wiki-draft).{0,40}promot|promot.{0,40}(?:draft|wiki-draft)|\/vault\/wiki-drafts\//i;
 

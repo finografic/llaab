@@ -1,6 +1,6 @@
 # TODO — One-Step Topic-Oriented Wiki Generation
 
-> **Status:** In progress — Phases 0–5 complete.
+> **Status:** In progress — Phases 0–6 complete.
 > 📅 Jul 19, 2026.
 
 > **Priority:** P1 — refine the shipped wiki-generation path before treating transcript-wide
@@ -128,7 +128,7 @@ The correction separates three model-facing responsibilities while preserving on
 - [x] Phase 3 — compile each discovered topic coherently
 - [x] Phase 4 — resolve links and auto-promote in one orchestration run
 - [x] Phase 5 — correct quality, source diversity, and verification semantics
-- [ ] Phase 6 — preserve the one-action UI and post-creation controls
+- [x] Phase 6 — preserve the one-action UI and post-creation controls
 - [ ] Phase 7 — migrate safely, validate end to end, and update documentation
 
 ---
@@ -496,49 +496,49 @@ after pages exist.
 
 ### Transcript creation action
 
-- [ ] Keep one button labeled `Create Wiki(s)` in the canonical-ideas area.
-- [ ] Keep canonical-idea checkboxes as optional input selection; do not add a separate discovery
+- [x] Keep one button labeled `Create Wiki(s)` in the canonical-ideas area.
+- [x] Keep canonical-idea checkboxes as optional input selection; do not add a separate discovery
       action, proposal screen, mode picker, title field, topic-key field, target-wiki chooser, draft
       review, or promote action.
-- [ ] Explain in one short line that the system may create or update one or more focused wiki pages.
-- [ ] Derive pending state from the parent orchestration RunNode so navigation/remount preserves
+- [x] Explain in one short line that the system may create or update one or more focused wiki pages.
+- [x] Derive pending state from the parent orchestration RunNode so navigation/remount preserves
       progress through every internal stage.
-- [ ] Keep elapsed time, success/error alerts, and targeted query invalidation from the current
+- [x] Keep elapsed time, success/error alerts, and targeted query invalidation from the current
       composer.
-- [ ] Show meaningful internal stage labels in the existing Run Monitor if useful, but never render
+- [x] Show meaningful internal stage labels in the existing Run Monitor if useful, but never render
       them as user tasks.
 
 ### Creation result
 
-- [ ] For one resulting page, navigate directly to the rendered promoted wiki.
-- [ ] For multiple resulting pages, show a compact generated-pages list while rendering/navigating
+- [x] For one resulting page, navigate directly to the rendered promoted wiki.
+- [x] For multiple resulting pages, show a compact generated-pages list while rendering/navigating
       to the first page; opening siblings is optional browsing, not completion work.
-- [ ] Report counts of created, updated, already represented, skipped, and failed topics.
-- [ ] Keep internal draft/candidate ids out of the normal success message. Expose them only in
+- [x] Report counts of created, updated, already represented, skipped, and failed topics.
+- [x] Keep internal draft/candidate ids out of the normal success message. Expose them only in
       diagnostics/Run Monitor links.
-- [ ] Never route normal successful creation to `/vault/wiki-drafts/*` or
+- [x] Never route normal successful creation to `/vault/wiki-drafts/*` or
       `/vault/wiki-candidates/*`.
 
 ### Post-creation correction
 
-- [ ] Preserve confirmed full-wiki deletion and inbound link cleanup.
-- [ ] Define/retain a confirmed demote/unpublish action that removes a page from canonical promoted
+- [x] Preserve confirmed full-wiki deletion and inbound link cleanup.
+- [x] Define/retain a confirmed demote/unpublish action that removes a page from canonical promoted
       knowledge while retaining its internal audit/source lineage. Demotion is a correction after
       creation, never a required step before or after generation.
-- [ ] Preserve confirmed section deletion with the invariant that a wiki retains at least one
+- [x] Preserve confirmed section deletion with the invariant that a wiki retains at least one
       sourced section.
-- [ ] Preserve section regeneration where the new proposal-scoped internal draft retains enough
+- [x] Preserve section regeneration where the new proposal-scoped internal draft retains enough
       source lineage. Regeneration remains one post-creation action and auto-promotes the validated
       replacement section.
-- [ ] If a legacy or migrated page lacks sufficient lineage for regeneration, disable the action
+- [x] If a legacy or migrated page lacks sufficient lineage for regeneration, disable the action
       with a precise explanation instead of introducing a draft/promotion workflow.
-- [ ] Ensure delete/demote/regenerate update only directly affected wiki, graph, and query families.
+- [x] Ensure delete/demote/regenerate update only directly affected wiki, graph, and query families.
 
 **Exit criteria**
 
-- [ ] Wiki creation has one user-visible action from transcript/canonical ideas to promoted pages.
-- [ ] No proposal, draft, review, or promotion action appears in the normal creation path.
-- [ ] Delete, demote/unpublish, section delete, and supported section regeneration remain explicit
+- [x] Wiki creation has one user-visible action from transcript/canonical ideas to promoted pages.
+- [x] No proposal, draft, review, or promotion action appears in the normal creation path.
+- [x] Delete, demote/unpublish, section delete, and supported section regeneration remain explicit
       post-creation corrections.
 
 ---

@@ -1,5 +1,6 @@
 import { computeWikiEvidenceMetrics, formatWikiEvidenceMetricsSummary } from '@llaab/schemas';
 import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
+import { DemoteKnowledgeWikiAction } from 'components/DemoteKnowledgeWikiAction/DemoteKnowledgeWikiAction';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import {
@@ -33,7 +34,7 @@ import {
   useKnowledgeWikiGraph,
   useRegenerateKnowledgeWikiSection,
 } from 'queries/knowledge';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { KnowledgeWikiPage } from '@llaab/schemas';
@@ -64,6 +65,13 @@ export function KnowledgeWikiDetailPage() {
   const deleteSection = useDeleteKnowledgeWikiSection();
   const [deleteSectionId, setDeleteSectionId] = useState<string | null>(null);
   const wiki = data?.wiki;
+  const regenerationBySection = useMemo(() => {
+    const map = new Map<string, { available: boolean; reason?: string }>();
+    for (const item of data?.sectionRegeneration ?? []) {
+      map.set(item.sectionId, item);
+    }
+    return map;
+  }, [data?.sectionRegeneration]);
   const transcriptSourceRefs = wiki?.source_refs.filter((ref) => ref.kind !== 'external') ?? [];
   const externalSourceRefs = wiki?.source_refs.filter((ref) => ref.kind === 'external') ?? [];
   const evidenceMetrics =
@@ -112,11 +120,18 @@ export function KnowledgeWikiDetailPage() {
           title={wiki?.title ?? 'Loading…'}
           right={
             wiki ? (
-              <DeleteKnowledgeWikiAction
-                wiki={wiki}
-                variant="button"
-                onDeleted={() => navigate('/knowledge/wikis')}
-              />
+              <Row gutterWidth={8} align="center">
+                <Col xs="content">
+                  <DemoteKnowledgeWikiAction wiki={wiki} onDemoted={() => navigate('/knowledge/wikis')} />
+                </Col>
+                <Col xs="content">
+                  <DeleteKnowledgeWikiAction
+                    wiki={wiki}
+                    variant="button"
+                    onDeleted={() => navigate('/knowledge/wikis')}
+                  />
+                </Col>
+              </Row>
             ) : null
           }
         />
@@ -257,22 +272,32 @@ export function KnowledgeWikiDetailPage() {
                     />
                     <Row justify="flex-end" align="center" className={styles.sectionActions}>
                       <Col xs="content">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon-sm"
-                          title="Regenerate this section"
-                          aria-label={`Regenerate ${section.heading}`}
-                          disabled={regenerateSection.isPending || deleteSection.isPending}
-                          onClick={() => void regenerate(section.id)}
-                        >
-                          {regenerateSection.isPending &&
-                          regenerateSection.variables?.sectionId === section.id ? (
-                            <LoaderCircleIcon className="animate-spin" />
-                          ) : (
-                            <RefreshCwIcon />
-                          )}
-                        </Button>
+                        {(() => {
+                          const regeneration = regenerationBySection.get(section.id);
+                          const canRegenerate = regeneration?.available !== false;
+                          const disabledReason =
+                            regeneration && !regeneration.available ? regeneration.reason : undefined;
+                          return (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon-sm"
+                              title={disabledReason ?? 'Regenerate this section (auto-promotes replacement)'}
+                              aria-label={`Regenerate ${section.heading}`}
+                              disabled={
+                                !canRegenerate || regenerateSection.isPending || deleteSection.isPending
+                              }
+                              onClick={() => void regenerate(section.id)}
+                            >
+                              {regenerateSection.isPending &&
+                              regenerateSection.variables?.sectionId === section.id ? (
+                                <LoaderCircleIcon className="animate-spin" />
+                              ) : (
+                                <RefreshCwIcon />
+                              )}
+                            </Button>
+                          );
+                        })()}
                       </Col>
                       <Col xs="content">
                         <Button
@@ -281,7 +306,11 @@ export function KnowledgeWikiDetailPage() {
                           size="icon-sm"
                           title="Remove this section"
                           aria-label={`Remove ${section.heading}`}
-                          disabled={regenerateSection.isPending || deleteSection.isPending}
+                          disabled={
+                            regenerateSection.isPending ||
+                            deleteSection.isPending ||
+                            data.sections.length <= 1
+                          }
                           onClick={() => setDeleteSectionId(section.id)}
                         >
                           <Trash2Icon />

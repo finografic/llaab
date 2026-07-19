@@ -8,8 +8,10 @@ import type { AppCtx } from '../../types/app.types.js';
 
 import { renderWikiBodyToHtml, renderWikiSectionsToHtml } from '../../lib/wiki-body-renderer.js';
 import { deleteKnowledgeWikiAndReferences } from './knowledge-wiki-delete.service.js';
+import { demoteKnowledgeWiki } from './knowledge-wiki-demote.service.js';
 import {
   deleteKnowledgeWikiSection,
+  getKnowledgeWikiSectionRegenerationStatuses,
   regenerateKnowledgeWikiSection,
 } from './knowledge-wiki-review.service.js';
 import { listKnowledgeWikisQuerySchema } from './knowledge.schema.js';
@@ -36,14 +38,33 @@ export const knowledgeWikiDetail = {
   path: '/wikis/:id' as const,
   handler: async (c: AppCtx) => {
     try {
-      const wiki = await readKnowledgeWiki(c.req.param('id') ?? '');
-      const [bodyHtml, sections] = await Promise.all([
+      const wikiId = c.req.param('id') ?? '';
+      const wiki = await readKnowledgeWiki(wikiId);
+      const [bodyHtml, sections, sectionRegeneration] = await Promise.all([
         renderWikiBodyToHtml(wiki.body, wiki.source_refs),
         renderWikiSectionsToHtml(wiki.body, wiki.source_refs),
+        getKnowledgeWikiSectionRegenerationStatuses(wikiId),
       ]);
-      return c.json({ wiki, bodyHtml, sections });
+      return c.json({ wiki, bodyHtml, sections, sectionRegeneration });
     } catch {
       return c.json({ error: 'Knowledge wiki not found.' }, 404);
+    }
+  },
+};
+
+export const demoteKnowledgeWikiRoute = {
+  path: '/wikis/:id/demote' as const,
+  handler: async (c: AppCtx) => {
+    try {
+      return c.json({
+        success: true,
+        ...(await demoteKnowledgeWiki(c.req.param('id') ?? '')),
+      });
+    } catch (error) {
+      return c.json(
+        { error: error instanceof Error ? error.message : 'Knowledge wiki demotion failed.' },
+        400,
+      );
     }
   },
 };

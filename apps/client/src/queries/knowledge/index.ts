@@ -29,12 +29,16 @@ export function useKnowledgeWiki(id: string | undefined) {
     enabled: id != null,
     queryFn: async (): Promise<KnowledgeWikiDetail> => {
       const response = await api.knowledge.wikis[':id'].$get({ param: { id: id ?? '' } });
-      const body = (await response.json()) as Partial<KnowledgeWikiDetail> & { error?: string };
+      const body = (await response.json()) as Partial<KnowledgeWikiDetail> & {
+        error?: string;
+        sectionRegeneration?: WikiSectionRegenerationStatus[];
+      };
       if (!response.ok || !body.wiki) throw new Error(body.error ?? 'Failed to load knowledge wiki.');
       return {
         wiki: body.wiki,
         bodyHtml: body.bodyHtml ?? '',
         sections: body.sections ?? [],
+        sectionRegeneration: body.sectionRegeneration ?? [],
       };
     },
   });
@@ -53,8 +57,35 @@ export function useDeleteKnowledgeWiki() {
       return { scrubbedReferences: body.scrubbedReferences ?? [] };
     },
     onSuccess: (_result, wikiId) => {
-       queryClient.removeQueries({ queryKey: QUERY_KEYS.knowledge.wiki(wikiId) });
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.knowledge.wiki(wikiId) });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.knowledge.wikis() });
+      void queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.knowledge.wikis(), 'graph'] });
+    },
+  });
+}
+
+export function useDemoteKnowledgeWiki() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      wikiId: string,
+    ): Promise<{ scrubbedReferences: Array<{ wikiId: string }>; retainedDraftIds: string[] }> => {
+      const response = await api.knowledge.wikis[':id'].demote.$post({ param: { id: wikiId } });
+      const body = (await response.json()) as {
+        error?: string;
+        scrubbedReferences?: Array<{ wikiId: string }>;
+        retainedDraftIds?: string[];
+      };
+      if (!response.ok) throw new Error(body.error ?? 'Failed to unpublish knowledge wiki.');
+      return {
+        scrubbedReferences: body.scrubbedReferences ?? [],
+        retainedDraftIds: body.retainedDraftIds ?? [],
+      };
+    },
+    onSuccess: (_result, wikiId) => {
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.knowledge.wiki(wikiId) });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.knowledge.wikis() });
+      void queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.knowledge.wikis(), 'graph'] });
     },
   });
 }
@@ -65,10 +96,17 @@ export interface RenderedWikiSection {
   html: string;
 }
 
+export interface WikiSectionRegenerationStatus {
+  sectionId: string;
+  available: boolean;
+  reason?: string;
+}
+
 export interface KnowledgeWikiDetail {
   wiki: KnowledgeWikiPage;
   bodyHtml: string;
   sections: RenderedWikiSection[];
+  sectionRegeneration?: WikiSectionRegenerationStatus[];
 }
 
 function useWikiSectionMutation(kind: 'regenerate' | 'delete') {
@@ -87,6 +125,7 @@ function useWikiSectionMutation(kind: 'regenerate' | 'delete') {
     onSuccess: (_result, input) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.knowledge.wiki(input.wikiId) });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.knowledge.wikis() });
+      void queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.knowledge.wikis(), 'graph'] });
     },
   });
 }

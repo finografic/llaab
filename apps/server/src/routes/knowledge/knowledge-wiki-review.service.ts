@@ -42,15 +42,56 @@ export async function deleteKnowledgeWikiSection(
   });
 }
 
-async function findAcceptedSourceDraft(wikiId: string, sectionId: string): Promise<WikiDraftNode> {
+async function findAcceptedSourceDraft(
+  wikiId: string,
+  sectionId: string,
+): Promise<WikiDraftNode | undefined> {
   const drafts = (await listNodes({ type: 'wiki-draft' }))
     .filter((node): node is WikiDraftNode => node.type === 'wiki-draft')
     .filter((draft) => draft.draft_status === 'accepted' && draft.promoted_wiki_id === wikiId)
     .sort((left, right) => (right.reviewed_at ?? '').localeCompare(left.reviewed_at ?? ''));
-  const draft =
-    drafts.find((candidate) => candidate.sections.some((section) => section.id === sectionId)) ?? drafts[0];
-  if (!draft) throw new Error('No accepted source draft was found for this wiki.');
-  return draft;
+  return (
+    drafts.find((candidate) => candidate.sections.some((section) => section.id === sectionId)) ?? drafts[0]
+  );
+}
+
+export interface WikiSectionRegenerationStatus {
+  sectionId: string;
+  available: boolean;
+  reason?: string;
+}
+
+/** Report whether each section retains enough lineage for post-creation regeneration. */
+export async function getKnowledgeWikiSectionRegenerationStatuses(
+  wikiId: string,
+): Promise<WikiSectionRegenerationStatus[]> {
+  const current = await readKnowledgeWiki(wikiId);
+  const sectionIds = getKnowledgeWikiSectionIds(current.body);
+  return Promise.all(
+    sectionIds.map(async (sectionId) => {
+      const sourceDraft = await findAcceptedSourceDraft(wikiId, sectionId);
+      if (!sourceDraft) {
+        return {
+          sectionId,
+          available: false,
+          reason: 'No accepted source draft was found for this wiki.',
+        };
+      }
+      const sourceSection = sourceDraft.sections.find((section) => section.id === sectionId);
+      const canonicalIdeaIds = sourceSection?.source_canonical_idea_ids.length
+        ? sourceSection.source_canonical_idea_ids
+        : sourceDraft.source_canonical_idea_ids;
+      const transcriptId = sourceDraft.source_transcript_ids[0];
+      if (!transcriptId || canonicalIdeaIds.length === 0) {
+        return {
+          sectionId,
+          available: false,
+          reason: 'This section does not retain enough source lineage to regenerate.',
+        };
+      }
+      return { sectionId, available: true };
+    }),
+  );
 }
 
 export async function regenerateKnowledgeWikiSection(
@@ -62,6 +103,9 @@ export async function regenerateKnowledgeWikiSection(
     throw new Error('Wiki section not found.');
   }
   const sourceDraft = await findAcceptedSourceDraft(wikiId, sectionId);
+  if (!sourceDraft) {
+    throw new Error('No accepted source draft was found for this wiki.');
+  }
   const sourceSection = sourceDraft.sections.find((section) => section.id === sectionId);
   const canonicalIdeaIds = sourceSection?.source_canonical_idea_ids.length
     ? sourceSection.source_canonical_idea_ids

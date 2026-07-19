@@ -8,8 +8,11 @@ import {
   CreateTranscriptWikisRequestSchema,
   CreateTranscriptWikisResponseSchema,
   evaluateWikiAutoPromotionPolicy,
+  formatWikiOneStepSuccessMessage,
+  isForbiddenWikiCreationPath,
   isWikiOneStepOverallSuccess,
   shouldAttemptInternalCorrection,
+  summarizeWikiOneStepBranches,
   WIKI_ONE_STEP_INTERNAL_STAGES,
   WIKI_ONE_STEP_USER_ACTION,
 } from './wiki-one-step.contract.js';
@@ -195,6 +198,26 @@ describe('wiki one-step contract', () => {
         qualityDimensions: coherenceFailedDimensions,
       }).reasons.join(' '),
     ).toMatch(/topic_coherence/);
+  });
+
+  it('summarizes branch outcomes for the one-action success message', () => {
+    expect(
+      summarizeWikiOneStepBranches([
+        { outcome: 'promoted-create' },
+        { outcome: 'promoted-update' },
+        { outcome: 'existing-no-op' },
+        { outcome: 'skipped' },
+        { outcome: 'failed' },
+      ]),
+    ).toBe('1 created · 1 updated · 1 already represented · 1 skipped · 1 failed');
+    expect(
+      formatWikiOneStepSuccessMessage({
+        wikiCount: 2,
+        branches: [{ outcome: 'promoted-create' }, { outcome: 'existing-no-op' }],
+      }),
+    ).toBe('2 focused wikis published (1 created · 1 already represented).');
+    expect(isForbiddenWikiCreationPath('/knowledge/wikis/agent-isolation')).toBe(false);
+    expect(isForbiddenWikiCreationPath('/vault/wiki-drafts/draft-a')).toBe(true);
   });
 
   it('bounds internal correction and forbids draft-promotion UX copy', () => {

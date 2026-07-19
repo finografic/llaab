@@ -11,6 +11,11 @@ import type { CanonicalIdeaNode } from '@llaab/schemas';
 
 import { formatElapsed, heartbeatStore, useElapsedMs } from 'lib/heartbeat';
 
+import {
+  formatWikiCreationSuccessMessage,
+  isActiveWikiCreationRun,
+  isForbiddenWikiCreationPath,
+} from './wiki-draft-composer.utils';
 import styles from './WikiDraftComposer.module.css';
 
 interface WikiDraftComposerProps {
@@ -39,9 +44,8 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
   const canonicalIdsKey = useMemo(() => ideaIdsKey(canonicalIdeas), [canonicalIdeas]);
   const activeRun = useMemo(
     () =>
-      monitor?.active.find(
-        (run) => run.skill_id === 'compile-wiki-draft' && run.raw_input_summary?.includes(transcriptId),
-      ),
+      monitor?.active.find((run) => isActiveWikiCreationRun(run, transcriptId)) ??
+      monitor?.recent.find((run) => isActiveWikiCreationRun(run, transcriptId)),
     [monitor, transcriptId],
   );
   const busy = createDraft.isPending || activeRun != null;
@@ -77,17 +81,24 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
         transcriptId,
         canonicalIdeaIds: [...selectedIds],
       });
+      if (!result.wikiId) {
+        throw new Error('Wiki creation did not return a promoted page.');
+      }
+      const destination = `/knowledge/wikis/${result.wikiId}`;
+      if (isForbiddenWikiCreationPath(destination)) {
+        throw new Error('Refusing to route successful creation through draft review.');
+      }
       setCreationAlert({
         status: 'success',
-        message: result.wikiCount === 1 ? 'Wiki created.' : `${result.wikiCount} focused wikis created.`,
+        message: formatWikiCreationSuccessMessage(result),
       });
-      navigate(`/knowledge/wikis/${result.wikiId}`, {
+      navigate(destination, {
         state: { generatedWikis: result.wikis },
       });
     } catch (error) {
       setCreationAlert({
         status: 'error',
-        message: error instanceof Error ? error.message : 'Wiki compilation failed.',
+        message: error instanceof Error ? error.message : 'Wiki creation failed.',
       });
     } finally {
       setStartedAt(null);
@@ -97,8 +108,11 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
   return (
     <Row className="mt-3 rounded-md border border-border p-3">
       <Col>
-        <p className="text-sm font-semibold">Create wiki</p>
-        <p className="text-xs text-muted-foreground">Choose the canonical ideas to synthesize.</p>
+        <p className="text-sm font-semibold">Create Wiki(s)</p>
+        <p className="text-xs text-muted-foreground">
+          Optionally narrow the canonical ideas; the system may create or update one or more focused wiki
+          pages automatically.
+        </p>
       </Col>
       <Col>
         {canonicalIdeas.map((idea) => (
@@ -113,18 +127,13 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
         ))}
       </Col>
       <Col>
-        <p className="text-xs text-muted-foreground">
-          The model will choose titles and topic ids. Broad selections may create multiple focused wikis.
-        </p>
-      </Col>
-      <Col>
         <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void submit()}>
           {busy ? (
             <LoaderCircleIcon className="animate-spin" aria-hidden="true" />
           ) : (
             <FilePenLineIcon aria-hidden="true" />
           )}
-          {busy ? `Creating… ${formatElapsed(Math.max(0, Math.floor(elapsedMs / 1000)))}` : 'Create Wiki'}
+          {busy ? `Creating… ${formatElapsed(Math.max(0, Math.floor(elapsedMs / 1000)))}` : 'Create Wiki(s)'}
         </Button>
       </Col>
       {creationAlert ? (
@@ -136,7 +145,7 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
             }
           >
             <AlertTitle>
-              {creationAlert.status === 'success' ? 'Wiki created' : 'Wiki creation failed'}
+              {creationAlert.status === 'success' ? 'Wikis published' : 'Wiki creation failed'}
             </AlertTitle>
             <AlertDescription>{creationAlert.message}</AlertDescription>
             <Button

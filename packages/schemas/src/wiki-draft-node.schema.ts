@@ -90,7 +90,7 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
     .array(
       z.object({
         at: TimestampSchema,
-        decision: z.enum(['promoted', 'rejected']),
+        decision: z.enum(['promoted', 'rejected', 'demoted']),
         reason: z.string().min(1),
       }),
     )

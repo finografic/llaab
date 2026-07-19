@@ -10,8 +10,6 @@ import { QUERY_KEYS } from './index';
 export interface CreateWikiDraftInput {
   transcriptId: string;
   canonicalIdeaIds: string[];
-  suggestedTitle?: string;
-  targetWikiId?: string;
 }
 
 export interface CreateWikiDraftResult {
@@ -27,7 +25,7 @@ export interface CreateWikiDraftResult {
   wikiIds: string[];
   wikiCount: number;
   wikis: KnowledgeWikiPage[];
-  branches?: Array<{
+  branches: Array<{
     outcome: 'promoted-create' | 'promoted-update' | 'existing-no-op' | 'skipped' | 'failed';
     proposal_id?: string;
     draft_id?: string;
@@ -43,17 +41,16 @@ async function createWikiDraft(input: CreateWikiDraftInput): Promise<CreateWikiD
     param: { id: input.transcriptId },
     json: {
       canonical_idea_ids: input.canonicalIdeaIds,
-      ...(input.suggestedTitle ? { suggested_title: input.suggestedTitle } : {}),
-      ...(input.targetWikiId ? { target_wiki_id: input.targetWikiId } : {}),
     },
   });
   const result = (await response.json()) as CreateWikiDraftResult | { error?: string };
   if (!response.ok || !('success' in result) || !result.success) {
-    throw new Error(
-      'error' in result ? (result.error ?? 'Wiki compilation failed.') : 'Wiki compilation failed.',
-    );
+    throw new Error('error' in result ? (result.error ?? 'Wiki creation failed.') : 'Wiki creation failed.');
   }
-  return result;
+  return {
+    ...result,
+    branches: result.branches ?? [],
+  };
 }
 
 export function useCreateWikiDraft() {
@@ -70,6 +67,7 @@ export function useCreateWikiDraft() {
       void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.nodes('wiki-draft') });
       void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.node(input.transcriptId) });
       void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.monitor() });
+      void queryClient.invalidateQueries({ queryKey: ['knowledge', 'wikis'] });
     },
   });
 }

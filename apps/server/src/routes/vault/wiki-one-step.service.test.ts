@@ -4,8 +4,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as WikiSkills from '@llaab/skills';
 
-const { compileWikiDraftsForTranscript } = vi.hoisted(() => ({
-  compileWikiDraftsForTranscript: vi.fn(),
+const { executeTranscriptWikiCompile } = vi.hoisted(() => ({
+  executeTranscriptWikiCompile: vi.fn(),
 }));
 const { autoPromoteWikiDrafts } = vi.hoisted(() => ({
   autoPromoteWikiDrafts: vi.fn(),
@@ -15,7 +15,7 @@ const { linkWikiTopics } = vi.hoisted(() => ({
 }));
 
 vi.mock('./wiki-draft-generation.service.js', () => ({
-  compileWikiDraftsForTranscript,
+  executeTranscriptWikiCompile,
 }));
 vi.mock('./wiki-auto-promotion.service.js', () => ({
   autoPromoteWikiDrafts,
@@ -35,7 +35,7 @@ describe('createTranscriptWikis', () => {
     root = await mkdtemp(join(tmpdir(), 'llaab-wiki-one-step-'));
     process.env.LLAAB_VAULT = join(root, 'vault');
     process.env.LLAAB_KNOWLEDGE = join(root, 'knowledge');
-    compileWikiDraftsForTranscript.mockReset();
+    executeTranscriptWikiCompile.mockReset();
     autoPromoteWikiDrafts.mockReset();
     linkWikiTopics.mockReset();
     vi.resetModules();
@@ -67,8 +67,7 @@ describe('createTranscriptWikis', () => {
     });
     const draft = await core.readNodeByType('wiki-draft', created.id);
 
-    compileWikiDraftsForTranscript.mockResolvedValue({
-      parentRunId: 'parent-run',
+    executeTranscriptWikiCompile.mockResolvedValue({
       discoveryBatchId: 'batch-1',
       compiled: [
         {

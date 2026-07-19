@@ -152,6 +152,18 @@ const STEP_TITLE_BY_STATUS: Record<string, Record<StepStatus, string>> = {
     complete: 'Canonical ideas consolidated',
     warning: 'Consolidation failed',
   },
+  'compile-transcript-wikis': {
+    pending: 'Wiki creation pending',
+    active: 'Creating wiki pages',
+    complete: 'Wiki pages published',
+    warning: 'Wiki creation failed',
+  },
+  'compile-wiki-draft': {
+    pending: 'Wiki topic pending',
+    active: 'Compiling wiki topic',
+    complete: 'Wiki topic compiled',
+    warning: 'Wiki topic failed',
+  },
 };
 
 export function buildMonitorPipelineSteps(run: RunMonitorItem): RunPipelineStepData[] {
