@@ -6,9 +6,16 @@ import { KNOWLEDGE_ROOT } from './knowledge-root.js';
 import { listKnowledgeWikis } from './knowledge-wiki-file.utils.js';
 
 export interface KnowledgeWikiGraph {
-  nodes: Array<{ id: string; title: string }>;
-  edges: Array<{ source: string; target: string; relation: string }>;
-  reverse_edges: Array<{ source: string; target: string; relation: string }>;
+  nodes: Array<{ id: string; title: string; tags: string[] }>;
+  edges: Array<{
+    source: string;
+    target: string;
+    relation: string;
+    inferred?: 'shared-tags' | 'shared-transcript';
+    shared_tags?: string[];
+    shared_transcript_ids?: string[];
+  }>;
+  reverse_edges: KnowledgeWikiGraph['edges'];
   diagnostics: string[];
 }
 
@@ -64,13 +71,38 @@ export function buildKnowledgeWikiGraphFromPages(pages: KnowledgeWikiPage[]): Kn
       const edgeKey = linkKey(page.id, link);
       validateLinkEvidenceNote(page.id, link, diagnostics);
       if (link.target_wiki_id === page.id) diagnostics.push(`Self link: ${page.id}`);
-      else if (!ids.has(link.target_wiki_id))
-        {diagnostics.push(`Broken link: ${page.id} -> ${link.target_wiki_id}`);}
-      else if (seen.has(edgeKey)) diagnostics.push(`Duplicate link: ${edgeKey}`);
+      else if (!ids.has(link.target_wiki_id)) {
+        diagnostics.push(`Broken link: ${page.id} -> ${link.target_wiki_id}`);
+      } else if (seen.has(edgeKey)) diagnostics.push(`Duplicate link: ${edgeKey}`);
       else {
         seen.add(edgeKey);
         edges.push({ source: page.id, target: link.target_wiki_id, relation: link.relation });
       }
+    }
+  }
+  for (const [index, page] of pages.entries()) {
+    for (const target of pages.slice(index + 1)) {
+      const sharedTags = page.tags.filter((tag) => target.tags.includes(tag));
+      const sharedTranscriptIds = page.source_transcript_ids.filter((id) =>
+        target.source_transcript_ids.includes(id),
+      );
+      const hasTopicTag = sharedTags.some((tag) => !tag.startsWith('d:'));
+      const alreadyLinked = edges.some(
+        (edge) =>
+          (edge.source === page.id && edge.target === target.id) ||
+          (edge.source === target.id && edge.target === page.id),
+      );
+      if (alreadyLinked || (!hasTopicTag && sharedTags.length < 2 && sharedTranscriptIds.length === 0)) {
+        continue;
+      }
+      edges.push({
+        source: page.id,
+        target: target.id,
+        relation: 'related-to',
+        inferred: hasTopicTag || sharedTags.length >= 2 ? 'shared-tags' : 'shared-transcript',
+        ...(sharedTags.length > 0 ? { shared_tags: sharedTags.sort() } : {}),
+        ...(sharedTranscriptIds.length > 0 ? { shared_transcript_ids: sharedTranscriptIds.sort() } : {}),
+      });
     }
   }
   edges.sort((left, right) =>
@@ -80,11 +112,11 @@ export function buildKnowledgeWikiGraphFromPages(pages: KnowledgeWikiPage[]): Kn
   );
   return {
     nodes: pages
-      .map((page) => ({ id: page.id, title: page.title }))
+      .map((page) => ({ id: page.id, title: page.title, tags: page.tags }))
       .sort((left, right) => left.id.localeCompare(right.id)),
     edges,
     reverse_edges: edges
-      .map((edge) => ({ source: edge.target, target: edge.source, relation: edge.relation }))
+      .map((edge) => ({ ...edge, source: edge.target, target: edge.source }))
       .sort((left, right) =>
         `${left.source}:${left.relation}:${left.target}`.localeCompare(
           `${right.source}:${right.relation}:${right.target}`,

@@ -2,7 +2,7 @@
 
 This is the operator and architecture reference for LLAAB wiki generation.
 
-Wikis are reviewed, source-backed topic pages promoted into `knowledge/wikis/`. They are compiled
+Wikis are source-backed topic pages published into `knowledge/wikis/`. They are compiled
 from canonical ideas, not directly from full vault context, and every write path preserves the
 vault/knowledge repository boundary.
 
@@ -13,8 +13,8 @@ transcript
   -> extracted IdeaNode candidates
   -> consolidated CanonicalIdeaNode ingredients
   -> focused evidence packet
-  -> wiki-draft node in vault/
-  -> human review and explicit promotion
+  -> internal wiki-draft audit node in vault/
+  -> automatic topic resolution and promotion
   -> knowledge/wikis/<wiki-id>.md in the parent repo
   -> derived graph/export in knowledge/knowledge-graphs/
 ```
@@ -28,38 +28,44 @@ The important boundary:
 
 ## Core concepts
 
-| Concept        | Storage                             | Purpose                                                              |
-| -------------- | ----------------------------------- | -------------------------------------------------------------------- |
-| Candidate idea | `vault/nodes/ideas/`                | Raw extracted detail from a transcript run.                          |
-| Canonical idea | `vault/nodes/canonical-ideas/`      | Deduplicated source ingredient selected for one or more wiki topics. |
-| Wiki draft     | `vault/nodes/wiki-drafts/`          | Reviewable proposed wiki create/update/no-op/needs-review result.    |
-| Knowledge wiki | `knowledge/wikis/<id>.md`           | Promoted topic page and source of truth for wiki content.            |
-| Wiki graph     | Derived from `knowledge/wikis/*.md` | Disposable relationship view; can be rebuilt/exported from Markdown. |
+| Concept        | Storage                             | Purpose                                                                  |
+| -------------- | ----------------------------------- | ------------------------------------------------------------------------ |
+| Candidate idea | `vault/nodes/ideas/`                | Raw extracted detail from a transcript run.                              |
+| Canonical idea | `vault/nodes/canonical-ideas/`      | Deduplicated source ingredient selected for one or more wiki topics.     |
+| Wiki draft     | `vault/nodes/wiki-drafts/`          | Internal create/update/no-op/needs-review audit and regeneration source. |
+| Knowledge wiki | `knowledge/wikis/<id>.md`           | Promoted topic page and source of truth for wiki content.                |
+| Wiki graph     | Derived from `knowledge/wikis/*.md` | Disposable relationship view; can be rebuilt/exported from Markdown.     |
 
-Canonical ideas remain vault data. They become durable knowledge only through a promoted wiki page or
-another explicit promotion path.
+Canonical ideas remain vault data. The transcript composer promotes their compiled wiki pages in the
+same request while retaining the draft and RunNode as private provenance.
 
 ## Operator path
 
 1. Open a transcript with consolidated canonical ideas at `/vault/transcripts/:id`.
 2. Select canonical ideas in the wiki composer.
-3. Create a wiki draft.
-4. Review:
-   - generated sections and summary
-   - source references and citation links
-   - quality warnings and validation issues
-   - proposed wiki links
-   - RunNode/model metadata
-   - create/update diff when targeting an existing wiki
-5. Choose one explicit action:
-   - **Edit Draft** to manually adjust the draft body before review.
-   - **Regenerate** to recompile from the same selected evidence.
-   - **Reject** to keep the audit trail without promotion.
-   - **Promote** to write/update `knowledge/wikis/<id>.md`.
-6. Inspect the parent worktree and commit `knowledge/` changes only when the promoted artifact is ready.
+3. Click **Create Wiki** once. The server groups broad selections into focused topics, compiles each
+   topic, retains its vault draft, resolves new-topic ambiguity deterministically, and writes the
+   promoted page.
+4. The client opens the first promoted page and links every sibling page created by the request.
+5. Review the prominent quality, lifecycle, verification, revision, source, topic, and relationship
+   metadata on the promoted page.
+6. Regenerate or remove individual sections directly on the promoted page. Each accepted change writes
+   a new revision; the vault draft history remains intact.
+7. Inspect the parent worktree and commit `knowledge/` changes only when ready.
 
-Nothing promotes automatically. Low-quality, stale, duplicate, conflicting, or unresolved-link drafts
-stay reviewable in the vault and cannot silently become knowledge.
+The older draft-review routes remain available for audit and specialist recovery flows, but normal
+transcript-to-wiki creation has no intermediate promotion step. Promotion still never runs Git commands.
+
+## Review surface design rule
+
+Wiki review state must be visually explicit rather than encoded in a muted metadata sentence:
+
+- show quality, lifecycle, verification, revision, source counts, provider, and model in labeled cards
+- use color-coded badges for score/state and visible topic badges for every persisted tag
+- render Markdown as readable article HTML; never expose raw section markers in the primary reader
+- keep section actions adjacent to the section they affect, with icon labels/tooltips and destructive
+  confirmation
+- show all pages created by a multi-topic request and all explicit or inferred related-topic links
 
 ## Compile and update behavior
 
@@ -79,8 +85,9 @@ Draft operations:
 - `create` — proposed new wiki page.
 - `update` — proposed section-level change against an existing wiki.
 - `no-op` — selected evidence is already represented or below the meaningful-change threshold.
-- `needs-review` — duplicate topic, conflict, contested claim, bad link, low quality, or other issue
-  requires human decision before promotion.
+- `needs-review` — an internal compiler result recording topic ambiguity or quality concerns. The normal
+  transcript composer publishes it under a collision-safe distinct topic id and exposes the concerns in
+  the promoted review surface.
 
 Update drafts carry `base_revision` and `base_content_hash`. Promotion rejects stale drafts if the
 promoted page changed after draft creation, so manual edits to wiki Markdown are first-class and must
@@ -130,7 +137,8 @@ Promoted wiki Markdown under `knowledge/wikis/` is the content source of truth.
 
 The Markdown codec preserves:
 
-- wiki id, topic key, lifecycle status, verification status, revision, aliases, tags
+- wiki id, topic key, lifecycle status, verification status, quality, generation metadata, revision,
+  aliases, domain tags, and semantic topic tags
 - source refs and source canonical idea ids
 - stable section markers such as `<!-- wiki-section:overview -->`
 - validated wiki links and relation vocabulary
@@ -152,7 +160,9 @@ Wiki links use a fixed relation vocabulary:
 - `supersedes`
 
 Draft review and promotion reject unresolved links, self-links, duplicate links, and domain-tag-only
-links. The graph is request-built from promoted Markdown and is disposable:
+links. The graph combines explicit model-proposed links with deterministic `related-to` edges inferred
+from shared semantic tags, multiple shared domain tags, or a shared source transcript. It is request-built
+from promoted Markdown and is disposable:
 
 - `/api/knowledge/wikis/graph` returns the current derived graph.
 - `/api/knowledge/wikis/graph/export` writes a reproducible export under
@@ -162,14 +172,14 @@ There is no watcher, background index, or external graph database in the current
 
 ## Browser surfaces
 
-| Route                        | Purpose                                                        |
-| ---------------------------- | -------------------------------------------------------------- |
-| `/vault/transcripts/:id`     | Select canonical ideas and create a wiki draft.                |
-| `/vault/wiki-drafts/:id`     | Review, edit, regenerate, reject, resolve, or promote a draft. |
-| `/vault/wiki-candidates`     | Review discovered candidate topics.                            |
-| `/vault/wiki-candidates/:id` | Inspect candidate evidence and compile it into a draft.        |
-| `/knowledge/wikis`           | Browse promoted wiki pages.                                    |
-| `/knowledge/wikis/:id`       | Read one promoted wiki page with source refs and graph links.  |
+| Route                        | Purpose                                                            |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `/vault/transcripts/:id`     | Select canonical ideas and create/publish focused wikis once.      |
+| `/vault/wiki-drafts/:id`     | Inspect the retained internal audit draft or recover manually.     |
+| `/vault/wiki-candidates`     | Review discovered candidate topics.                                |
+| `/vault/wiki-candidates/:id` | Inspect candidate evidence and compile it into a draft.            |
+| `/knowledge/wikis`           | Browse promoted wiki pages.                                        |
+| `/knowledge/wikis/:id`       | Review rendered content, status, tags, links, and refine sections. |
 
 ## API surfaces
 
@@ -193,6 +203,8 @@ Knowledge endpoints:
 
 - `GET /api/knowledge/wikis`
 - `GET /api/knowledge/wikis/:id`
+- `POST /api/knowledge/wikis/:id/sections/:sectionId/regenerate`
+- `DELETE /api/knowledge/wikis/:id/sections/:sectionId`
 - `GET /api/knowledge/wikis/graph`
 - `POST /api/knowledge/wikis/graph/export`
 

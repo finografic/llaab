@@ -45,7 +45,7 @@ describe('compileWikiDraft', () => {
             },
           ],
           links: [],
-          source_refs: [{ id: input.evidence[0]?.id, kind: 'transcript', verification: 'source-backed' }],
+          source_refs: input.evidence.map((item) => item.id),
           coverage: {
             represented_canonical_idea_ids: [input.canonicalIdeas[0]?.id],
             omitted_canonical_ideas: [],
@@ -173,7 +173,82 @@ describe('compileWikiDraft', () => {
     expect(draft.title).toBe('Runtime TypeScript Tooling and AI Engineering Tradeoffs');
     expect(draft.topic_key).toBe('runtime-typescript-tooling-and-ai-engineering-tradeoffs');
     expect(draft.sections[0]?.id).toBe('runtime-tooling-ai-tradeoffs');
-    expect(draft.omitted_canonical_idea_ids).toEqual([canonicalIdea.id]);
+    expect(draft.represented_canonical_idea_ids).toEqual([canonicalIdea.id]);
+    expect(draft.omitted_canonical_idea_ids).toEqual([]);
+  });
+
+  it('normalizes common model aliases before validating a larger draft response', async () => {
+    routeLlm.mockImplementation(async (_task, prompt) => {
+      const input = JSON.parse(prompt) as {
+        evidence: Array<{ id: string }>;
+        canonicalIdeas: Array<{ id: string }>;
+      };
+      return {
+        text: JSON.stringify({
+          operation: 'create',
+          topic: { topic_key: 'Second Brain Architecture', title: 'Second Brain Architecture' },
+          sections: [
+            {
+              title: 'Capture and retrieval',
+              content: 'Capture quality determines later retrieval quality.',
+              source_refs: [input.evidence[0]?.id],
+              canonical_idea_ids: [input.canonicalIdeas[0]?.id],
+            },
+            {
+              name: 'Progressive maturity',
+              text: 'Second brains become more structured over time.',
+              source_ref_ids: [input.evidence[0]?.id],
+              source_canonical_idea_ids: [input.canonicalIdeas[0]?.id],
+            },
+          ],
+          links: [{ relation: 'associated_with' }],
+          source_refs: [{ id: input.evidence[0]?.id, kind: 'transcript', verification: 'source-backed' }],
+          coverage: {
+            represented_canonical_idea_ids: [],
+            omitted_canonical_ideas: [input.canonicalIdeas[0]?.id],
+          },
+          unresolved_questions: [],
+          contested_claims: [],
+        }),
+        model: 'test-model',
+        provider: 'ollama',
+        durationMs: 10,
+      };
+    });
+
+    const core = await import('@llaab/core');
+    const { compileWikiDraft } = await import('./compile-wiki-draft.js');
+    const transcript = await core.createNode({
+      type: 'transcript',
+      title: 'Second brain architecture',
+      body: '<!-- t:0:42 -->\n\nCapture quality determines later retrieval quality.',
+      extra: { source_url: 'https://example.com/second-brain', source_type: 'youtube' },
+    });
+    const candidate = await core.createNode({
+      type: 'idea',
+      title: 'Capture quality candidate',
+      extra: { origin: 'extracted' },
+    });
+    const canonicalIdea = await core.createNode({
+      type: 'canonical-idea',
+      title: 'Capture quality determines retrieval quality',
+      extra: { transcript_id: transcript.id, source_candidate_idea_ids: [candidate.id] },
+    });
+
+    const { record, result } = await compileWikiDraft({
+      transcriptId: transcript.id,
+      canonicalIdeaIds: [canonicalIdea.id],
+      entryPath: 'manual',
+    });
+    const draft = await core.readNodeByType('wiki-draft', result.draftId);
+
+    expect(record.status).toBe('completed');
+    expect(draft.sections).toEqual([
+      expect.objectContaining({ id: 'capture-and-retrieval', heading: 'Capture and retrieval' }),
+      expect.objectContaining({ id: 'progressive-maturity', heading: 'Progressive maturity' }),
+    ]);
+    expect(draft.proposed_links).toEqual([]);
+    expect(draft.represented_canonical_idea_ids).toEqual([canonicalIdea.id]);
   });
 
   it('rejects duplicate selected canonical ids before inference', async () => {

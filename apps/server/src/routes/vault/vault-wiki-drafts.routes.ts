@@ -6,7 +6,9 @@ import type {
   ResolveWikiDraftBody,
 } from './vault-wiki-drafts.schema.js';
 
+import { renderWikiBodyToHtml } from '../../lib/wiki-body-renderer.js';
 import { listWikiDraftsQuerySchema } from './vault-wiki-drafts.schema.js';
+import { autoPromoteWikiDrafts } from './wiki-auto-promotion.service.js';
 import { compileWikiDraftsForTranscript } from './wiki-draft-generation.service.js';
 import {
   applyWikiDraftEdit,
@@ -42,6 +44,8 @@ export const createWikiDraft = {
     }
 
     const draftIds = results.map(({ result }) => result.draftId);
+    const wikis = await autoPromoteWikiDrafts(draftIds);
+    const wikiIds = wikis.map((wiki) => wiki.id);
     const warnings = results.flatMap(({ result }) => result.warnings);
     if (results.length === 1) {
       const [{ record, result }] = results;
@@ -52,6 +56,10 @@ export const createWikiDraft = {
           runIds: [record.runNodeId],
           draftIds,
           draftCount: 1,
+          wikiId: wikiIds[0]!,
+          wikiIds,
+          wikiCount: wikiIds.length,
+          wikis,
           ...result,
         },
         201,
@@ -66,6 +74,10 @@ export const createWikiDraft = {
         draftId: draftIds[0]!,
         draftIds,
         draftCount: draftIds.length,
+        wikiId: wikiIds[0]!,
+        wikiIds,
+        wikiCount: wikiIds.length,
+        wikis,
         qualityScore: Math.min(...results.map(({ result }) => result.qualityScore)),
         warnings,
         selectedCanonicalIdeaCount: results.reduce(
@@ -94,7 +106,8 @@ export const wikiDraftDetail = {
   handler: async (c: AppCtx) => {
     try {
       const draft = await readNodeByType('wiki-draft', c.req.param('id') ?? '');
-      return c.json({ draft });
+      const bodyHtml = await renderWikiBodyToHtml(draft.body, draft.source_refs);
+      return c.json({ draft, bodyHtml });
     } catch {
       return c.json({ error: 'Wiki draft not found.' }, 404);
     }

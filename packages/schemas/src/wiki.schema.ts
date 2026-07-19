@@ -237,7 +237,9 @@ export const WikiResearchRequestSchema = z
     message: 'Research results exceed the approved result budget.',
   });
 
-export const WikiTagSchema = z.string().regex(/^d:[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use a d: domain tag');
+export const WikiTagSchema = z
+  .string()
+  .regex(/^(?:d:)?[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use a normalized topic or d: domain tag');
 
 export type WikiCompileInput = z.infer<typeof WikiCompileInputSchema>;
 export type WikiCompileResult = z.infer<typeof WikiCompileResultSchema>;

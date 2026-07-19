@@ -1,3 +1,4 @@
+export type { WikiDraftDetailResponse } from './wiki-drafts.queries';
 export {
   invalidateWikiDraftCaches,
   QUERY_KEYS,

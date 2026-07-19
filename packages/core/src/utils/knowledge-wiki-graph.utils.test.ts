@@ -204,4 +204,37 @@ describe('buildKnowledgeWikiGraph', () => {
     expect(graph.edges).toEqual([{ source: 'beta', target: 'alpha', relation: 'extends' }]);
     expect(graph.diagnostics).toEqual([]);
   });
+
+  it('derives related-topic edges from shared semantic tags', async () => {
+    const core = await import('@llaab/core');
+    const base = {
+      type: 'wiki' as const,
+      aliases: [],
+      summary: 'Shared topic',
+      body: '',
+      status: 'seed' as const,
+      links: [],
+      source_refs: [],
+      source_canonical_idea_ids: [],
+      source_transcript_ids: [],
+      revision: 1,
+      created_at: '2026-07-13T00:00:00Z',
+      updated_at: '2026-07-13T00:00:00Z',
+      verification_status: 'source-backed' as const,
+    };
+    const graph = core.buildKnowledgeWikiGraphFromPages([
+      { ...base, id: 'alpha', topic_key: 'alpha', title: 'Alpha', tags: ['typescript', 'd:infra'] },
+      { ...base, id: 'beta', topic_key: 'beta', title: 'Beta', tags: ['typescript', 'd:llm'] },
+    ]);
+
+    expect(graph.edges).toEqual([
+      {
+        source: 'alpha',
+        target: 'beta',
+        relation: 'related-to',
+        inferred: 'shared-tags',
+        shared_tags: ['typescript'],
+      },
+    ]);
+  });
 });

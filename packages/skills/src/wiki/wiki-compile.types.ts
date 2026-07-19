@@ -7,6 +7,7 @@ export interface CompileWikiDraftInput {
   suggestedTopicKey?: string;
   targetWikiId?: string;
   entryPath: 'manual' | 'automatic';
+  forceUpdate?: boolean;
 }
 
 export interface CompileWikiDraftOutput {

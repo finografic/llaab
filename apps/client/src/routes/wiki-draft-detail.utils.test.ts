@@ -2,8 +2,13 @@ import { WikiDraftNodeSchema } from '@llaab/schemas';
 import { describe, expect, it } from 'vitest';
 
 import {
+  dedupeWarningMessages,
   getWikiDraftReviewActions,
   knowledgeWikiDetailPath,
+  sourceRefInternalPath,
+  vaultNodeDetailPath,
+  vaultRunDetailPath,
+  vaultTranscriptDetailPath,
   wikiDraftDetailPath,
 } from './wiki-draft-detail.utils';
 
@@ -47,5 +52,57 @@ describe('wiki draft review actions', () => {
   it('uses stable knowledge and vault routes after review actions', () => {
     expect(knowledgeWikiDetailPath('context-management')).toBe('/knowledge/wikis/context-management');
     expect(wikiDraftDetailPath('draft-1')).toBe('/vault/wiki-drafts/draft-1');
+    expect(vaultNodeDetailPath('canonical-1')).toBe('/vault/nodes/canonical-1');
+    expect(vaultTranscriptDetailPath('ep-72')).toBe('/vault/transcripts/ep-72');
+    expect(vaultRunDetailPath('run-1')).toBe('/vault/runs/run-1');
+  });
+
+  it('prefers internal node paths for non-external source refs', () => {
+    expect(
+      sourceRefInternalPath({
+        id: 'ref-1',
+        kind: 'transcript',
+        node_id: 'ep-72',
+        verification: 'source-backed',
+        url: 'https://example.com',
+      }),
+    ).toBe('/vault/transcripts/ep-72');
+    expect(
+      sourceRefInternalPath({
+        id: 'canonical-1',
+        kind: 'canonical-idea',
+        verification: 'source-backed',
+      }),
+    ).toBe('/vault/nodes/canonical-1');
+    expect(
+      sourceRefInternalPath({
+        id: 'ext-1',
+        kind: 'external',
+        verification: 'source-backed',
+        url: 'https://example.com',
+        retrieval_query: 'q',
+        retrieval_provider: 'web',
+        retrieved_at: '2026-07-13T00:00:00.000Z',
+        excerpt: 'excerpt',
+      }),
+    ).toBeNull();
+  });
+
+  it('dedupes warning blob against validation issue messages', () => {
+    expect(
+      dedupeWarningMessages(
+        'Possible topic overlap with foo. Independent source corroboration is unavailable. Contested claims require review.',
+        [
+          { message: 'Independent source corroboration is unavailable.' },
+          { message: 'Contested claims require review.' },
+          { message: 'The draft has unresolved questions.' },
+        ],
+      ),
+    ).toEqual([
+      'Independent source corroboration is unavailable.',
+      'Contested claims require review.',
+      'The draft has unresolved questions.',
+      'Possible topic overlap with foo.',
+    ]);
   });
 });

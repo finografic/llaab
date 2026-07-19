@@ -22,15 +22,24 @@ export async function invalidateWikiDraftCaches(queryClient: QueryClient, id: st
   ]);
 }
 
+export interface WikiDraftDetailResponse {
+  draft: WikiDraftNode;
+  bodyHtml?: string;
+}
+
 export function useWikiDraft(id: string | undefined) {
   return useQuery({
     queryKey: QUERY_KEYS.wikiDrafts.detail(id ?? ''),
     enabled: id != null,
-    queryFn: async (): Promise<WikiDraftNode> => {
+    queryFn: async (): Promise<WikiDraftDetailResponse> => {
       const response = await api.vault['wiki-drafts'][':id'].$get({ param: { id: id ?? '' } });
-      const body = (await response.json()) as { draft?: WikiDraftNode; error?: string };
+      const body = (await response.json()) as {
+        draft?: WikiDraftNode;
+        bodyHtml?: string;
+        error?: string;
+      };
       if (!response.ok || !body.draft) throw new Error(body.error ?? 'Wiki draft not found.');
-      return body.draft;
+      return { draft: body.draft, bodyHtml: body.bodyHtml };
     },
   });
 }

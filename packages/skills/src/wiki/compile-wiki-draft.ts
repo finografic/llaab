@@ -14,6 +14,7 @@ import {
   toNodeId,
   WikiCompileResultSchema,
   WikiOperationSchema,
+  WikiTagSchema,
 } from '@llaab/schemas';
 import type { CompileWikiDraftInput, CompileWikiDraftOutput } from './wiki-compile.types.js';
 import type { KnowledgeWikiPage, WikiCompileResult, WikiSourceRef } from '@llaab/schemas';
@@ -47,11 +48,20 @@ function selectRelatedWikis(
   target: KnowledgeWikiPage | undefined,
   tags: string[],
 ): KnowledgeWikiPage[] {
-  const domains = new Set(tags.filter((tag) => tag.startsWith('d:')));
+  const selectedTags = new Set(tags);
   return wikis
     .filter((wiki) => wiki.id !== target?.id)
-    .filter((wiki) => wiki.tags.some((tag) => domains.has(tag)))
+    .map((wiki) => ({ wiki, shared: wiki.tags.filter((tag) => selectedTags.has(tag)).length }))
+    .filter(({ shared }) => shared > 0)
+    .sort((left, right) => right.shared - left.shared || left.wiki.id.localeCompare(right.wiki.id))
+    .map(({ wiki }) => wiki)
     .slice(0, MAX_RELATED_WIKIS);
+}
+
+function selectedWikiTags(canonicalIdeas: KnowledgeWikiPage[] | Array<{ tags: string[] }>): string[] {
+  return [...new Set(canonicalIdeas.flatMap((idea) => idea.tags))].filter(
+    (tag) => WikiTagSchema.safeParse(tag).success,
+  );
 }
 
 function buildSourceRefs(
@@ -92,7 +102,9 @@ async function compileAttempt(input: {
     bypassCache: true,
   });
   const result = reconcileWikiSourceRefs(
-    WikiCompileResultSchema.parse(normalizeWikiCompileJson(parseWikiCompileJson(llm.text))),
+    WikiCompileResultSchema.parse(
+      normalizeWikiCompileJson(parseWikiCompileJson(llm.text), input.canonicalIdeaIds, input.sourceRefs),
+    ),
     input.sourceRefs,
   );
   reconcileWikiCoverage(result, input.canonicalIdeaIds);
@@ -111,6 +123,36 @@ async function compileAttempt(input: {
 function normalizeModelNodeId(value: unknown): unknown {
   if (typeof value !== 'string') return value;
   return NodeIdSchema.safeParse(value).success ? value : toNodeId(value);
+}
+
+const WIKI_LINK_RELATIONS = new Set([
+  'related-to',
+  'depends-on',
+  'extends',
+  'contrasts-with',
+  'example-of',
+  'supports',
+  'supersedes',
+]);
+
+function normalizeWikiLinkRelation(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase().replace(/[ _]+/g, '-');
+  if (WIKI_LINK_RELATIONS.has(normalized)) return normalized;
+  const aliases: Record<string, string> = {
+    'related': 'related-to',
+    'relates-to': 'related-to',
+    'dependency': 'depends-on',
+    'depends': 'depends-on',
+    'contrast': 'contrasts-with',
+    'contrasts': 'contrasts-with',
+    'example': 'example-of',
+    'supports': 'supports',
+    'support': 'supports',
+    'supersedes': 'supersedes',
+    'extends': 'extends',
+  };
+  return aliases[normalized];
 }
 
 function deriveModelSummary(draft: {
@@ -172,7 +214,11 @@ function reconcileWikiCoverage(result: WikiCompileResult, canonicalIdeaIds: Set<
   }
 }
 
-function normalizeWikiCompileJson(value: unknown): unknown {
+function normalizeWikiCompileJson(
+  value: unknown,
+  canonicalIdeaIds: Set<string>,
+  sourceRefs: WikiSourceRef[],
+): unknown {
   if (!value || typeof value !== 'object' || !('topic' in value)) return value;
   const draft = value as {
     topic?: { topic_key?: unknown; title?: unknown };
@@ -180,15 +226,25 @@ function normalizeWikiCompileJson(value: unknown): unknown {
     sections?: Array<{
       id?: unknown;
       heading?: unknown;
+      title?: unknown;
+      name?: unknown;
+      body?: unknown;
+      content?: unknown;
+      text?: unknown;
       source_ref_ids?: unknown;
+      source_refs?: unknown;
       source_canonical_idea_ids?: unknown;
+      canonical_idea_ids?: unknown;
     }>;
-    links?: Array<{ target_wiki_id?: unknown }>;
+    links?: Array<{
+      target_wiki_id?: unknown;
+      target_id?: unknown;
+      wiki_id?: unknown;
+      target?: unknown;
+      relation?: unknown;
+    }>;
     source_refs?: Array<{ id?: unknown; node_id?: unknown }>;
-    coverage?: {
-      represented_canonical_idea_ids?: unknown;
-      omitted_canonical_ideas?: Array<{ id?: unknown }>;
-    };
+    coverage?: unknown;
     change_summary?: unknown;
   };
   if (draft.topic && typeof draft.topic === 'object') {
@@ -199,13 +255,23 @@ function normalizeWikiCompileJson(value: unknown): unknown {
     }
   }
   if (Array.isArray(draft.sections)) {
-    for (const section of draft.sections) {
+    const sectionIds = new Set<string>();
+    for (const [index, section] of draft.sections.entries()) {
       if (!section || typeof section !== 'object') continue;
-      if (typeof section.id === 'string') {
-        section.id = normalizeModelNodeId(section.id);
-      } else if (typeof section.heading === 'string') {
-        section.id = toNodeId(section.heading);
-      }
+      const headingCandidate = [section.heading, section.title, section.name, section.id].find(
+        (candidate): candidate is string => typeof candidate === 'string' && Boolean(candidate.trim()),
+      );
+      section.heading = headingCandidate?.trim() ?? `Section ${index + 1}`;
+      const bodyCandidate = [section.body, section.content, section.text].find(
+        (candidate): candidate is string => typeof candidate === 'string',
+      );
+      section.body = bodyCandidate ?? '';
+      const normalizedId = normalizeModelNodeId(section.id ?? section.heading);
+      const baseId = typeof normalizedId === 'string' ? normalizedId : `section-${index + 1}`;
+      section.id = sectionIds.has(baseId) ? toNodeId(`${baseId}-${index + 1}`) : baseId;
+      sectionIds.add(section.id as string);
+      section.source_ref_ids ??= section.source_refs;
+      section.source_canonical_idea_ids ??= section.canonical_idea_ids;
       if (Array.isArray(section.source_ref_ids)) {
         section.source_ref_ids = section.source_ref_ids.map(normalizeModelNodeId);
       }
@@ -215,31 +281,85 @@ function normalizeWikiCompileJson(value: unknown): unknown {
     }
   }
   if (Array.isArray(draft.links)) {
-    for (const link of draft.links) {
-      if (link && typeof link === 'object') {
-        link.target_wiki_id = normalizeModelNodeId(link.target_wiki_id);
-      }
-    }
+    draft.links = draft.links.flatMap((link) => {
+      if (!link || typeof link !== 'object') return [];
+      const targetWikiId = normalizeModelNodeId(
+        link.target_wiki_id ?? link.target_id ?? link.wiki_id ?? link.target,
+      );
+      const relation = normalizeWikiLinkRelation(link.relation);
+      if (typeof targetWikiId !== 'string' || !relation) return [];
+      return [{ ...link, target_wiki_id: targetWikiId, relation }];
+    });
   }
-  if (Array.isArray(draft.source_refs)) {
-    for (const sourceRef of draft.source_refs) {
-      if (!sourceRef || typeof sourceRef !== 'object') continue;
-      sourceRef.id = normalizeModelNodeId(sourceRef.id);
-      sourceRef.node_id = normalizeModelNodeId(sourceRef.node_id);
-    }
+  // Reference metadata is deterministic evidence, not model-authored content. Replacing it here
+  // also accepts model shorthand such as a top-level array of reference ids.
+  draft.source_refs = sourceRefs;
+  const sectionCanonicalIdeaIds =
+    draft.sections
+      ?.flatMap((section) =>
+        Array.isArray(section.source_canonical_idea_ids) ? section.source_canonical_idea_ids : [],
+      )
+      .filter((id): id is string => typeof id === 'string' && canonicalIdeaIds.has(id)) ?? [];
+  if (!draft.coverage || typeof draft.coverage !== 'object' || Array.isArray(draft.coverage)) {
+    draft.coverage = {
+      represented_canonical_idea_ids: sectionCanonicalIdeaIds,
+      omitted_canonical_ideas: [],
+    };
   }
   if (draft.coverage && typeof draft.coverage === 'object') {
-    if (Array.isArray(draft.coverage.represented_canonical_idea_ids)) {
-      draft.coverage.represented_canonical_idea_ids =
-        draft.coverage.represented_canonical_idea_ids.map(normalizeModelNodeId);
-    }
-    if (Array.isArray(draft.coverage.omitted_canonical_ideas)) {
-      for (const omitted of draft.coverage.omitted_canonical_ideas) {
-        if (omitted && typeof omitted === 'object') {
-          omitted.id = normalizeModelNodeId(omitted.id);
-        }
-      }
-    }
+    const coverage = draft.coverage as {
+      represented_canonical_idea_ids?: unknown;
+      omitted_canonical_ideas?: unknown;
+    };
+    const representedCanonicalIdeaIds = new Set([
+      ...sectionCanonicalIdeaIds,
+      ...(Array.isArray(coverage.represented_canonical_idea_ids)
+        ? coverage.represented_canonical_idea_ids
+            .map(normalizeModelNodeId)
+            .filter((id): id is string => typeof id === 'string' && canonicalIdeaIds.has(id))
+        : []),
+    ]);
+    const remainingCanonicalIdeaIds = new Set(
+      [...canonicalIdeaIds].filter((id) => !representedCanonicalIdeaIds.has(id)),
+    );
+    const omittedCanonicalIdeas = Array.isArray(coverage.omitted_canonical_ideas)
+      ? coverage.omitted_canonical_ideas.flatMap((omitted) => {
+          if (typeof omitted === 'string') {
+            const normalizedId = normalizeModelNodeId(omitted);
+            const id =
+              typeof normalizedId === 'string' && remainingCanonicalIdeaIds.has(normalizedId)
+                ? normalizedId
+                : remainingCanonicalIdeaIds.values().next().value;
+            if (!id) return [];
+            remainingCanonicalIdeaIds.delete(id);
+            return [
+              {
+                id,
+                reason:
+                  id === normalizedId ? 'The model marked this selected canonical idea as omitted.' : omitted,
+              },
+            ];
+          }
+          if (!omitted || typeof omitted !== 'object') return [];
+          const item = omitted as { id?: unknown; reason?: unknown };
+          const normalizedId = normalizeModelNodeId(item.id);
+          if (typeof normalizedId !== 'string' || !remainingCanonicalIdeaIds.has(normalizedId)) {
+            return [];
+          }
+          remainingCanonicalIdeaIds.delete(normalizedId);
+          return [
+            {
+              id: normalizedId,
+              reason:
+                typeof item.reason === 'string' && item.reason.trim()
+                  ? item.reason.trim()
+                  : 'The model marked this selected canonical idea as omitted.',
+            },
+          ];
+        })
+      : [];
+    coverage.represented_canonical_idea_ids = [...representedCanonicalIdeaIds];
+    coverage.omitted_canonical_ideas = omittedCanonicalIdeas;
   }
   if (typeof draft.summary !== 'string' || !draft.summary.trim()) {
     draft.summary = deriveModelSummary(draft);
@@ -341,17 +461,19 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
 
       const { result, llm, quality } = attempt;
       let operation = WikiOperationSchema.parse(result.operation);
-      const novelty = existingWiki
-        ? analyzeKnowledgeWikiNovelty(
-            existingWiki,
-            canonicalIdeas.map((idea) => ({
-              id: idea.id,
-              body: idea.body,
-              keyClaims: idea.key_claims,
-            })),
-            Math.max(sourceIds.length, transcriptIds.length),
-          )
-        : undefined;
+      if (existingWiki && input.forceUpdate) operation = 'update';
+      const novelty =
+        existingWiki && !input.forceUpdate
+          ? analyzeKnowledgeWikiNovelty(
+              existingWiki,
+              canonicalIdeas.map((idea) => ({
+                id: idea.id,
+                body: idea.body,
+                keyClaims: idea.key_claims,
+              })),
+              Math.max(sourceIds.length, transcriptIds.length),
+            )
+          : undefined;
       if (!existingWiki && topicResolution.operation !== 'create') operation = 'needs-review';
       if (representedWiki) {
         operation = 'no-op';
@@ -406,7 +528,7 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         id: draftId,
         title: result.topic.title,
         body,
-        tags: [...new Set(canonicalIdeas.flatMap((idea) => idea.tags.filter((tag) => tag.startsWith('d:'))))],
+        tags: selectedWikiTags(canonicalIdeas),
         extra: {
           topic_key: result.topic.topic_key || topicKey,
           entry_path: input.entryPath,

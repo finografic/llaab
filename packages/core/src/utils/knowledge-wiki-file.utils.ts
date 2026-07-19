@@ -28,6 +28,10 @@ const WIKI_FRONTMATTER_ORDER = [
   'updated_at',
   'reviewed_at',
   'verification_status',
+  'quality_score',
+  'generation_provider',
+  'generation_model',
+  'generation_duration_ms',
 ];
 
 const wikiLocks = new Map<string, Promise<void>>();

@@ -12,8 +12,9 @@
 
 `llaab` — Learning Loop & Agent Automation Base. Turborepo + pnpm monorepo. Two-process
 architecture: `apps/server` (Hono + Bun, business logic) + `apps/client` (Vite + React Router SPA, UI).
-Core pipeline: ingest YouTube → transcript → extracted ideas → canonical ideas → wiki drafts →
-reviewed `knowledge/wikis/` pages, with run traces stored as markdown vault nodes.
+Core pipeline: ingest YouTube → transcript → extracted ideas → canonical ideas → one-click wiki creation
+with internal audit drafts → promoted `knowledge/wikis/` pages, with run traces stored as Markdown vault
+nodes.
 Executable/generated skills are future work, not current ingest output.
 
 ## Architecture
@@ -172,8 +173,8 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 | `/hermes`                      | Hermes / MCP dashboard: Discord gateway notes, scoped vault tools, guardrails, cost-routing follow-up                                                 |
 | `/icons`                       | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
 | `/vault`                       | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
-| `/vault/transcripts/:id`       | Detail: source metadata, extraction runs, canonical ideas/coverage, extracted ideas, Re-extract                                                       |
-| `/vault/wiki-drafts/:id`       | Review generated wiki draft, inspect evidence/diff, edit/regenerate/reject/promote explicitly                                                         |
+| `/vault/transcripts/:id`       | Detail: source metadata, ideas, one-click focused wiki generation, and Re-extract                                                                     |
+| `/vault/wiki-drafts/:id`       | Internal audit/recovery view for generated drafts, evidence, diffs, and manual actions                                                                |
 | `/vault/wiki-candidates`       | Review automatically discovered wiki topic candidates                                                                                                 |
 | `/vault/wiki-candidates/:id`   | Inspect candidate evidence and compile a candidate into a normal wiki draft                                                                           |
 | `/vault/nodes`                 | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                                                                    |
@@ -181,7 +182,7 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 | `/vault/sources/:id`           | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                        |
 | `/vault/runs/:id`              | Detail: summary grid, stages table, decisions list, error block                                                                                       |
 | `/knowledge/wikis`             | Browse promoted source-backed wiki pages from `knowledge/wikis/`                                                                                      |
-| `/knowledge/wikis/:id`         | Read promoted wiki page with source refs and derived graph links                                                                                      |
+| `/knowledge/wikis/:id`         | Rendered promoted page with status cards, tags, source refs, graph links, and section regenerate/delete                                               |
 | `/registry`                    | Packages list — shared Add/Search toolbar; Pinned \| Search results tabs; `PackageCard` list (Title / Last Publish / Downloads)                       |
 | `/registry/package/:name`      | Package detail — readme + aligned metadata aside; SecondaryActionBar back to `/registry`                                                              |
 | `/registry/pinned`             | Redirects into `/registry` Pinned tab                                                                                                                 |
@@ -273,7 +274,7 @@ continues processing.
 | `GET /api/vault/transcripts/:id/ideas`                             | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`                                                                                                                                     |
 | `POST /api/vault/transcripts/:id/extract`                          | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }`                                                                                                                               |
 | `POST /api/vault/transcripts/:id/consolidate`                      | Single-pass canonical idea generation with quality validation from extracted candidate ideas; `RunNode`-backed (`runSkill`); returns `conflict: true` instead of overwriting coverage if a set already exists |
-| `POST /api/vault/transcripts/:id/wiki-drafts`                      | Compiles selected canonical ideas into a reviewable vault `wiki-draft`; never writes promoted knowledge directly                                                                                              |
+| `POST /api/vault/transcripts/:id/wiki-drafts`                      | Groups selected ideas, compiles internal audit drafts, automatically promotes focused knowledge wikis, and returns every promoted id                                                                          |
 | `GET/PATCH /api/vault/wiki-drafts/:id`                             | Reads or edits a wiki draft before review/promotion                                                                                                                                                           |
 | `POST /api/vault/wiki-drafts/:id/promote`                          | Explicitly promotes an accepted create/update draft into `knowledge/wikis/` without Git mutation                                                                                                              |
 | `POST /api/vault/wiki-drafts/:id/reject`                           | Rejects a draft while keeping vault provenance                                                                                                                                                                |
@@ -281,7 +282,8 @@ continues processing.
 | `POST /api/vault/wiki-candidates/discover`                         | One-shot deterministic wiki-topic discovery over canonical ideas; creates reviewable candidates only                                                                                                          |
 | `GET/POST /api/vault/wiki-candidates/:id/compile`                  | Reads candidate evidence or compiles one candidate into a normal wiki draft                                                                                                                                   |
 | `POST /api/vault/wiki-research`                                    | Records explicitly approved manual research evidence for a wiki/draft; cannot bypass review/promotion                                                                                                         |
-| `GET /api/knowledge/wikis`, `/:id`                                 | Lists and reads promoted wiki Markdown from `knowledge/wikis/`                                                                                                                                                |
+| `GET /api/knowledge/wikis`, `/:id`                                 | Lists wikis and reads promoted Markdown plus rendered section HTML                                                                                                                                            |
+| `POST/DELETE /api/knowledge/wikis/:id/sections/:sectionId/*`       | Regenerates one source-backed section or removes one section while retaining at least one and incrementing the wiki revision                                                                                  |
 | `GET/POST /api/knowledge/wikis/graph/export`                       | Derives the wiki graph from promoted Markdown and optionally exports it under `knowledge/knowledge-graphs/`                                                                                                   |
 | `POST /api/vault/transcripts/:id/canonical-ideas/resolve-conflict` | Resolves canonical idea conflicts with keep `existing` or `incoming`; deletes the losing set's files, writes coverage if incoming wins                                                                        |
 | `POST /api/vault/transcripts/:id/canonical-ideas/clean`            | Deletes every canonical-idea file + consolidate run for that transcript (incl. orphans) and clears coverage                                                                                                   |

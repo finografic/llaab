@@ -87,7 +87,7 @@ function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): Knowledge
     summary: draft.change_summary ?? '',
     body: draft.body,
     status: 'seed',
-    tags: draft.tags.filter((tag) => tag.startsWith('d:')),
+    tags: draft.tags,
     links: draft.proposed_links,
     source_refs: draft.source_refs,
     source_canonical_idea_ids: draft.source_canonical_idea_ids,
@@ -97,6 +97,10 @@ function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): Knowledge
     updated_at: reviewedAt,
     reviewed_at: reviewedAt,
     verification_status: verificationForDraft(draft),
+    quality_score: draft.quality_score,
+    generation_provider: draft.llm_provider,
+    generation_model: draft.llm_model,
+    generation_duration_ms: draft.llm_duration_ms,
   };
   return { ...page, status: determineKnowledgeWikiLifecycle(page) };
 }
@@ -119,7 +123,10 @@ function isEquivalentPromotion(page: KnowledgeWikiPage, expected: KnowledgeWikiP
   );
 }
 
-export async function promoteCreateWikiDraft(draft: WikiDraftNode): Promise<{
+export async function promoteCreateWikiDraft(
+  draft: WikiDraftNode,
+  options: { decisionReason?: string } = {},
+): Promise<{
   path: string;
   page: KnowledgeWikiPage;
   recovered: boolean;
@@ -160,7 +167,7 @@ export async function promoteCreateWikiDraft(draft: WikiDraftNode): Promise<{
         {
           at: result.page.reviewed_at ?? formatIsoUtcSeconds(new Date()),
           decision: 'promoted',
-          reason: 'Promoted after explicit review.',
+          reason: options.decisionReason ?? 'Promoted after explicit review.',
         },
       ],
     }));
@@ -169,7 +176,10 @@ export async function promoteCreateWikiDraft(draft: WikiDraftNode): Promise<{
   return result;
 }
 
-export async function promoteUpdateWikiDraft(draft: WikiDraftNode): Promise<{
+export async function promoteUpdateWikiDraft(
+  draft: WikiDraftNode,
+  options: { decisionReason?: string } = {},
+): Promise<{
   path: string;
   page: KnowledgeWikiPage;
 }> {
@@ -220,6 +230,11 @@ export async function promoteUpdateWikiDraft(draft: WikiDraftNode): Promise<{
       ],
       source_transcript_ids: [...new Set([...current.source_transcript_ids, ...draft.source_transcript_ids])],
       verification_status: verificationForDraft(draft, current),
+      tags: [...new Set([...current.tags, ...draft.tags])],
+      quality_score: draft.quality_score,
+      generation_provider: draft.llm_provider,
+      generation_model: draft.llm_model,
+      generation_duration_ms: draft.llm_duration_ms,
       revision: current.revision + 1,
       updated_at: formatIsoUtcSeconds(new Date()),
       reviewed_at: formatIsoUtcSeconds(new Date()),
@@ -237,7 +252,7 @@ export async function promoteUpdateWikiDraft(draft: WikiDraftNode): Promise<{
       {
         at: result.page.reviewed_at ?? formatIsoUtcSeconds(new Date()),
         decision: 'promoted',
-        reason: 'Update promoted after revision validation.',
+        reason: options.decisionReason ?? 'Update promoted after revision validation.',
       },
     ],
   }));

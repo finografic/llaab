@@ -112,6 +112,8 @@ export async function renderReadmeToHtml(markdown: string): Promise<string> {
   return sanitizeHtml(raw, {
     allowedTags: sanitizeHtml.defaults.allowedTags.concat([
       'span',
+      'sup',
+      'sub',
       'details',
       'summary',
       'picture',
@@ -120,7 +122,7 @@ export async function renderReadmeToHtml(markdown: string): Promise<string> {
     allowedAttributes: {
       ...sanitizeHtml.defaults.allowedAttributes,
       '*': ['class', 'style', 'id', 'tabindex'],
-      'a': ['href', 'name', 'target', 'rel'],
+      'a': ['href', 'name', 'target', 'rel', 'title'],
       'img': ['src', 'alt', 'width', 'height', 'loading'],
       'td': ['align'],
       'th': ['align'],

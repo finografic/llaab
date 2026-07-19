@@ -1,5 +1,6 @@
 import { PageHero } from 'components/PageHero/PageHero';
 import { Button } from 'components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { Col, Row } from 'components/ui/grid';
 import { WikiDraftDiff } from 'components/WikiDraftDiff';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
@@ -13,21 +14,65 @@ import {
   useRejectWikiDraft,
   useWikiDraft,
 } from 'queries/wiki-drafts';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import type { MouseEvent, ReactNode } from 'react';
 
 import { usePageTitle } from 'lib/use-page-title';
 
+import styles from './wiki-draft-detail.module.css';
 import {
+  dedupeWarningMessages,
   getWikiDraftReviewActions,
   knowledgeWikiDetailPath,
+  sourceRefInternalPath,
+  vaultNodeDetailPath,
+  vaultRunDetailPath,
+  vaultTranscriptDetailPath,
   wikiDraftDetailPath,
 } from './wiki-draft-detail.utils';
+
+function ReviewSection({
+  title,
+  defaultOpen,
+  children,
+}: {
+  title: string;
+  defaultOpen: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Collapsible defaultOpen={defaultOpen} className={`section ${styles.collapsible}`}>
+      <CollapsibleTrigger className={styles.sectionTrigger}>
+        <span className={styles.sectionTriggerLabel}>{title}</span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className={styles.collapsibleContent}>{children}</CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function handleInternalMarkdownClick(
+  event: MouseEvent<HTMLDivElement>,
+  navigate: ReturnType<typeof useNavigate>,
+) {
+  const { target, metaKey, ctrlKey, shiftKey, altKey } = event;
+  if (!(target instanceof Element)) return;
+  const anchor = target.closest('a');
+  if (!(anchor instanceof HTMLAnchorElement)) return;
+  const { target: linkTarget } = anchor;
+  if (linkTarget === '_blank' || metaKey || ctrlKey || shiftKey || altKey) return;
+  const href = anchor.getAttribute('href');
+  if (!href || !href.startsWith('/') || href.startsWith('//')) return;
+  event.preventDefault();
+  navigate(href);
+}
 
 export function WikiDraftDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: draft, isLoading, error } = useWikiDraft(id);
+  const { data, isLoading, error } = useWikiDraft(id);
+  const draft = data?.draft;
+  const bodyHtml = data?.bodyHtml;
   const promote = usePromoteWikiDraft();
   const reject = useRejectWikiDraft();
   const regenerate = useRegenerateWikiDraft();
@@ -36,6 +81,7 @@ export function WikiDraftDetailPage() {
   const reviewActions = draft ? getWikiDraftReviewActions(draft) : [];
   const transcriptSourceRefs = draft?.source_refs.filter((ref) => ref.kind !== 'external') ?? [];
   const externalSourceRefs = draft?.source_refs.filter((ref) => ref.kind === 'external') ?? [];
+  const warningMessages = draft ? dedupeWarningMessages(draft.warning, draft.validation_issues) : [];
   usePageTitle(draft?.title ?? 'Wiki draft');
 
   if (!id) return <Navigate to="/vault" replace />;
@@ -166,7 +212,17 @@ export function WikiDraftDetailPage() {
             </Row>
             <section className="section">
               <h2 className="section__heading">Proposed article</h2>
-              <pre className="body-pre">{draft.body}</pre>
+              {bodyHtml ? (
+                <div className={styles.article}>
+                  <div
+                    className={styles.readmeContent}
+                    dangerouslySetInnerHTML={{ __html: bodyHtml }}
+                    onClick={(event) => handleInternalMarkdownClick(event, navigate)}
+                  />
+                </div>
+              ) : (
+                <pre className="body-pre">{draft.body}</pre>
+              )}
             </section>
             {draft.target_wiki_id && draft.resulting_body ? (
               <section className="section">
@@ -174,31 +230,56 @@ export function WikiDraftDetailPage() {
                 <WikiDraftDiff targetWikiId={draft.target_wiki_id} resultingBody={draft.resulting_body} />
               </section>
             ) : null}
-            <section className="section">
-              <h2 className="section__heading">Review details</h2>
+            <ReviewSection title="Review details" defaultOpen>
               <p className="text-sm text-muted-foreground">
                 Target:{' '}
-                <span className="font-mono">
-                  knowledge/wikis/{draft.target_wiki_id ?? draft.topic_key}.md
-                </span>
+                {draft.target_wiki_id ? (
+                  <Link
+                    className={`meta-link ${styles.monoLink}`}
+                    to={knowledgeWikiDetailPath(draft.target_wiki_id)}
+                  >
+                    knowledge/wikis/{draft.target_wiki_id}.md
+                  </Link>
+                ) : (
+                  <span className="font-mono">knowledge/wikis/{draft.topic_key}.md</span>
+                )}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Canonical ideas: {draft.source_canonical_idea_ids.join(', ') || 'None'}
+                Canonical ideas:{' '}
+                {draft.source_canonical_idea_ids.length > 0
+                  ? draft.source_canonical_idea_ids.map((ideaId, index) => (
+                      <span key={ideaId}>
+                        {index > 0 ? ', ' : null}
+                        <Link className={`meta-link ${styles.monoLink}`} to={vaultNodeDetailPath(ideaId)}>
+                          {ideaId}
+                        </Link>
+                      </span>
+                    ))
+                  : 'None'}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Run: {draft.run_id ?? 'Unavailable'} · {draft.llm_provider ?? 'unknown'} /{' '}
-                {draft.llm_model ?? 'unknown'}
+                Run:{' '}
+                {draft.run_id ? (
+                  <Link className={`meta-link ${styles.monoLink}`} to={vaultRunDetailPath(draft.run_id)}>
+                    {draft.run_id}
+                  </Link>
+                ) : (
+                  'Unavailable'
+                )}{' '}
+                · {draft.llm_provider ?? 'unknown'} / {draft.llm_model ?? 'unknown'}
               </p>
               {draft.novelty_reason ? (
                 <p className="mt-1 text-sm text-muted-foreground">Novelty: {draft.novelty_reason}</p>
               ) : null}
-            </section>
+            </ReviewSection>
             {draft.topic_matches.length > 0 ? (
-              <section className="section">
-                <h2 className="section__heading">Possible update targets</h2>
+              <ReviewSection title="Possible update targets" defaultOpen>
                 {draft.topic_matches.map((match) => (
                   <p key={`${match.wiki_id}-${match.kind}`} className="text-sm text-muted-foreground">
-                    {match.wiki_id} · {match.kind} · {match.reason}
+                    <Link className="meta-link" to={knowledgeWikiDetailPath(match.wiki_id)}>
+                      {match.wiki_id}
+                    </Link>{' '}
+                    · {match.kind} · {match.reason}
                   </p>
                 ))}
                 {reviewActions.includes('resolve-topic') ? (
@@ -212,34 +293,56 @@ export function WikiDraftDetailPage() {
                     Resolve topic
                   </Button>
                 ) : null}
-              </section>
+              </ReviewSection>
             ) : null}
-            <section className="section">
-              <h2 className="section__heading">Transcript provenance</h2>
+            <ReviewSection title="Transcript provenance" defaultOpen={false}>
               <p className="text-sm text-muted-foreground">
                 {draft.source_canonical_idea_ids.length} canonical ideas ·{' '}
                 {draft.source_transcript_ids.length} transcripts · {transcriptSourceRefs.length} transcript
                 references
               </p>
+              {draft.source_transcript_ids.length > 0 ? (
+                <ul className="mt-2 space-y-1 text-sm">
+                  {draft.source_transcript_ids.map((transcriptId) => (
+                    <li key={transcriptId}>
+                      <Link className="meta-link" to={vaultTranscriptDetailPath(transcriptId)}>
+                        {transcriptId}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               <ul className="mt-2 space-y-1 text-sm">
-                {transcriptSourceRefs.map((ref) => (
-                  <li key={ref.id}>
-                    {ref.url ? (
-                      <a className="underline" href={ref.url} target="_blank" rel="noreferrer">
-                        {ref.title ?? ref.id}
-                        {ref.locator ? ` · ${ref.locator}` : ''}
-                      </a>
-                    ) : (
-                      <span>
-                        {ref.title ?? ref.id}
-                        {ref.locator ? ` · ${ref.locator}` : ''}
-                      </span>
-                    )}
-                    <span className="text-muted-foreground"> · {ref.verification}</span>
-                  </li>
-                ))}
+                {transcriptSourceRefs.map((ref) => {
+                  const internal = sourceRefInternalPath(ref);
+                  const label = `${ref.title ?? ref.id}${ref.locator ? ` · ${ref.locator}` : ''}`;
+                  return (
+                    <li key={ref.id}>
+                      {internal ? (
+                        <Link className="meta-link" to={internal}>
+                          {label}
+                        </Link>
+                      ) : ref.url ? (
+                        <a className="meta-link" href={ref.url} target="_blank" rel="noreferrer">
+                          {label}
+                        </a>
+                      ) : (
+                        <span>{label}</span>
+                      )}
+                      {ref.url && internal ? (
+                        <>
+                          {' '}
+                          <a className="meta-link text-xs" href={ref.url} target="_blank" rel="noreferrer">
+                            source
+                          </a>
+                        </>
+                      ) : null}
+                      <span className="text-muted-foreground"> · {ref.verification}</span>
+                    </li>
+                  );
+                })}
               </ul>
-            </section>
+            </ReviewSection>
             {externalSourceRefs.length > 0 ? (
               <section className="section">
                 <h2 className="section__heading">External evidence</h2>
@@ -248,7 +351,7 @@ export function WikiDraftDetailPage() {
                     <li key={ref.id}>
                       <p>
                         {ref.url ? (
-                          <a className="underline" href={ref.url} target="_blank" rel="noreferrer">
+                          <a className="meta-link" href={ref.url} target="_blank" rel="noreferrer">
                             {ref.title ?? ref.id}
                           </a>
                         ) : (
@@ -261,35 +364,39 @@ export function WikiDraftDetailPage() {
                       </p>
                       {ref.excerpt ? <p className="mt-1 text-sm">{ref.excerpt}</p> : null}
                       {ref.validation_notes?.length ? (
-                        <p className="mt-1 text-xs text-destructive">{ref.validation_notes.join(' ')}</p>
+                        <p className={`mt-1 text-xs ${styles.warningItem}`}>
+                          {ref.validation_notes.join(' ')}
+                        </p>
                       ) : null}
                     </li>
                   ))}
                 </ul>
               </section>
             ) : null}
-            {draft.warning || draft.validation_issues.length > 0 ? (
-              <section className="section">
-                <h2 className="section__heading">Review warnings</h2>
-                <p className="text-sm text-destructive">{draft.warning}</p>
-                {draft.validation_issues.map((issue) => (
-                  <p key={`${issue.code}-${issue.message}`} className="text-sm text-destructive">
-                    {issue.message}
-                  </p>
-                ))}
-              </section>
+            {warningMessages.length > 0 ? (
+              <ReviewSection title="Review warnings" defaultOpen={false}>
+                <ul className={styles.warningList}>
+                  {warningMessages.map((message) => (
+                    <li key={message} className={styles.warningItem}>
+                      {message}
+                    </li>
+                  ))}
+                </ul>
+              </ReviewSection>
             ) : null}
             {draft.proposed_links.length > 0 ||
             draft.unresolved_questions.length > 0 ||
             draft.contested_claims.length > 0 ? (
-              <section className="section">
-                <h2 className="section__heading">Open review items</h2>
+              <ReviewSection title="Open review items" defaultOpen={false}>
                 {draft.proposed_links.map((link) => (
                   <p
                     key={`${link.relation}-${link.target_wiki_id}`}
                     className="text-sm text-muted-foreground"
                   >
-                    Link: {link.relation} → {link.target_wiki_id}
+                    Link: {link.relation} →{' '}
+                    <Link className="meta-link" to={knowledgeWikiDetailPath(link.target_wiki_id)}>
+                      {link.target_wiki_id}
+                    </Link>
                   </p>
                 ))}
                 {draft.unresolved_questions.map((question) => (
@@ -298,7 +405,7 @@ export function WikiDraftDetailPage() {
                   </p>
                 ))}
                 {draft.contested_claims.map((claim) => (
-                  <p key={claim} className="text-sm text-destructive">
+                  <p key={claim} className={styles.warningItem}>
                     Contested: {claim}
                   </p>
                 ))}
@@ -307,15 +414,21 @@ export function WikiDraftDetailPage() {
                     <Col>
                       <p className="text-sm font-semibold">{item.claim}</p>
                       <p className="text-xs text-muted-foreground">
-                        Existing evidence: {item.existing_source_ref_ids.join(', ') || 'None'}
+                        Existing evidence:{' '}
+                        {item.existing_source_ref_ids.length > 0
+                          ? item.existing_source_ref_ids.join(', ')
+                          : 'None'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Incoming evidence: {item.incoming_source_ref_ids.join(', ') || 'None'}
+                        Incoming evidence:{' '}
+                        {item.incoming_source_ref_ids.length > 0
+                          ? item.incoming_source_ref_ids.join(', ')
+                          : 'None'}
                       </p>
                     </Col>
                   </Row>
                 ))}
-              </section>
+              </ReviewSection>
             ) : null}
             {draft.review_decisions.length > 0 ? (
               <section className="section">

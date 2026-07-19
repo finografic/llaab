@@ -119,7 +119,7 @@ describe('promoteCreateWikiDraft', () => {
       topic_key: 'malformed-page',
       body: '<!-- wiki-section:overview -->\n\n## Overview\n\nMissing ref.[^invented-ref]',
     });
-    await expect(promoteCreateWikiDraft(malformed)).rejects.toThrow('unknown citation');
+    await expect(promoteCreateWikiDraft(malformed)).rejects.toThrow('does not resolve to a source reference');
   });
 
   it('contains no Git command integration', async () => {
@@ -179,8 +179,8 @@ describe('promoteCreateWikiDraft', () => {
 
     expect(beforeParent.stdout).not.toContain('knowledge/wikis/repo-boundary.md');
     expect(afterParent.stdout).toContain('knowledge/wikis/repo-boundary.md');
-    expect(beforeVault.stdout).toContain('nodes/wiki-drafts/repo-boundary-draft.md');
-    expect(afterVault.stdout).toContain('nodes/wiki-drafts/repo-boundary-draft.md');
+    expect(beforeVault.stdout).toContain('nodes/wiki-drafts/wiki-draft.repo-boundary-draft.md');
+    expect(afterVault.stdout).toContain('nodes/wiki-drafts/wiki-draft.repo-boundary-draft.md');
   });
 
   it('rejects promotion when proposed links are not promoted or evidence-backed', async () => {

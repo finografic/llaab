@@ -19,7 +19,7 @@ export function WikiDraftDiff({ targetWikiId, resultingBody }: WikiDraftDiffProp
         ? createTwoFilesPatch(
             `${targetWikiId}.md`,
             `${targetWikiId}.md`,
-            current.data.body,
+            current.data.wiki.body,
             resultingBody,
             'promoted',
             'proposed',

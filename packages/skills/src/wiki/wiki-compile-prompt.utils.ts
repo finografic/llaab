@@ -6,7 +6,18 @@ change_summary, unresolved_questions, and contested_claims. Use only supplied id
 Every substantive section needs source_ref_ids and source_canonical_idea_ids. Do not create links
 unless a target wiki id is supplied. Use create for a new topic; use update, no-op, or needs-review
 for a target wiki. Generate a concise wiki title from the selected evidence; treat any suggested title
-as a hint, not the final title. Preserve unrelated existing sections byte-for-byte.`;
+as a hint, not the final title. Preserve unrelated existing sections byte-for-byte.
+
+Use this exact shape:
+{"operation":"create","topic":{"topic_key":"lowercase-node-id","title":"Title","aliases":[]},
+"summary":"Summary","sections":[{"id":"lowercase-section-id","heading":"Heading","body":"Body",
+"source_ref_ids":["supplied-evidence-id"],"source_canonical_idea_ids":["supplied-canonical-id"]}],
+"links":[{"target_wiki_id":"supplied-related-wiki-id","relation":"related-to","note":"Reason"}],
+"source_refs":[],"coverage":{"represented_canonical_idea_ids":["supplied-canonical-id"],
+"omitted_canonical_ideas":[]},"change_summary":"Change","unresolved_questions":[],
+"contested_claims":[]}.
+Allowed link relations: related-to, depends-on, extends, contrasts-with, example-of, supports,
+supersedes. Omit links when no supplied related or target wiki id applies.`;
 
 export function parseWikiCompileJson(text: string): unknown {
   const stripped = text

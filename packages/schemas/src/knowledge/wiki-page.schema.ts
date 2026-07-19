@@ -28,6 +28,10 @@ export const KnowledgeWikiPageSchema = z.object({
   updated_at: TimestampSchema,
   reviewed_at: TimestampSchema.optional(),
   verification_status: WikiVerificationStatusSchema,
+  quality_score: z.number().int().min(0).max(100).optional(),
+  generation_provider: z.string().min(1).optional(),
+  generation_model: z.string().min(1).optional(),
+  generation_duration_ms: z.number().int().nonnegative().optional(),
 });
 
 export type KnowledgeWikiPage = z.infer<typeof KnowledgeWikiPageSchema>;

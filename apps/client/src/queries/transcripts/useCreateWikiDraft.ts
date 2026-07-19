@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS as RUN_KEYS } from 'queries/runs';
 import { QUERY_KEYS as VAULT_KEYS } from 'queries/vault';
+import type { KnowledgeWikiPage } from '@llaab/schemas';
 
 import { api } from 'lib/api';
 
@@ -22,6 +23,10 @@ export interface CreateWikiDraftResult {
   runIds: string[];
   qualityScore: number;
   warnings: string[];
+  wikiId: string;
+  wikiIds: string[];
+  wikiCount: number;
+  wikis: KnowledgeWikiPage[];
 }
 
 async function createWikiDraft(input: CreateWikiDraftInput): Promise<CreateWikiDraftResult> {
@@ -49,6 +54,7 @@ export function useCreateWikiDraft() {
     mutationFn: createWikiDraft,
     onMutate: () => {
       void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.monitor() });
+      void queryClient.invalidateQueries({ queryKey: ['knowledge', 'wikis'] });
     },
     onSettled: (_result, _error, input) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.transcripts.all });
