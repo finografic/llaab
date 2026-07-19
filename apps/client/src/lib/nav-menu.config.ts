@@ -47,8 +47,8 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         live: true,
       },
       {
-        label: 'Wiki candidates',
-        description: 'One-shot discovery suggestions awaiting review',
+        label: 'Wiki candidates (diagnostic)',
+        description: 'Internal discovery audit — not the normal Create Wiki(s) path',
         href: '/vault/wiki-candidates',
         live: true,
       },

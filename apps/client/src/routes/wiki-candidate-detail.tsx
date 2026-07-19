@@ -1,3 +1,4 @@
+import { DiagnosticWikiSurfaceBanner } from 'components/DiagnosticWikiSurfaceBanner/DiagnosticWikiSurfaceBanner';
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
@@ -24,6 +25,7 @@ export function WikiCandidateDetailPage() {
   return (
     <PageLayout>
       <PageDetail gap="lg">
+        <DiagnosticWikiSurfaceBanner surface="candidate" />
         {candidate.isLoading ? <p className="text-sm text-muted-foreground">Loading candidate…</p> : null}
         {candidate.data ? (
           <>
@@ -52,7 +54,7 @@ export function WikiCandidateDetailPage() {
               <p key={warning}>{warning}</p>
             ))}
             <Button onClick={() => void compileCandidate()} disabled={compile.isPending}>
-              Create review draft
+              Compile diagnostic draft
             </Button>
           </>
         ) : null}

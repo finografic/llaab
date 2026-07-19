@@ -12,9 +12,9 @@
 
 `llaab` — Learning Loop & Agent Automation Base. Turborepo + pnpm monorepo. Two-process
 architecture: `apps/server` (Hono + Bun, business logic) + `apps/client` (Vite + React Router SPA, UI).
-Core pipeline: ingest YouTube → transcript → extracted ideas → canonical ideas → one-click wiki creation
-with internal audit drafts → promoted `knowledge/wikis/` pages, with run traces stored as Markdown vault
-nodes.
+Core pipeline: ingest YouTube → transcript → extracted ideas → canonical ideas → one-step
+`Create Wiki(s)` (internal discover/compile/link/auto-promote) → promoted `knowledge/wikis/` pages,
+with vault drafts and RunNode traces retained as provenance only.
 Executable/generated skills are future work, not current ingest output.
 
 ## Architecture
@@ -173,16 +173,16 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 | `/hermes`                      | Hermes / MCP dashboard: Discord gateway notes, scoped vault tools, guardrails, cost-routing follow-up                                                 |
 | `/icons`                       | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
 | `/vault`                       | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
-| `/vault/transcripts/:id`       | Detail: source metadata, ideas, one-click focused wiki generation, and Re-extract                                                                     |
-| `/vault/wiki-drafts/:id`       | Internal audit/recovery view for generated drafts, evidence, diffs, and manual actions                                                                |
-| `/vault/wiki-candidates`       | Review automatically discovered wiki topic candidates                                                                                                 |
-| `/vault/wiki-candidates/:id`   | Inspect candidate evidence and compile a candidate into a normal wiki draft                                                                           |
+| `/vault/transcripts/:id`       | Detail: source metadata, ideas, one-step Create Wiki(s), and Re-extract                                                                               |
+| `/vault/wiki-drafts/:id`       | Diagnostic/recovery audit draft (not required for creation)                                                                                           |
+| `/vault/wiki-candidates`       | Diagnostic discovery queue (not the normal Create Wiki(s) path)                                                                                       |
+| `/vault/wiki-candidates/:id`   | Diagnostic candidate evidence / compile into a recovery draft                                                                                         |
 | `/vault/nodes`                 | PageLayout + NodesFileList; nodes by type (idea/resource/prompt/skill/instruction)                                                                    |
 | `/vault/nodes/:id`             | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                                                                          |
 | `/vault/sources/:id`           | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                        |
 | `/vault/runs/:id`              | Detail: summary grid, stages table, decisions list, error block                                                                                       |
 | `/knowledge/wikis`             | Browse promoted source-backed wiki pages from `knowledge/wikis/`, with confirmed wiki deletion                                                        |
-| `/knowledge/wikis/:id`         | Rendered promoted page with status cards, tags, source refs, graph links, article deletion, and section regenerate/delete                             |
+| `/knowledge/wikis/:id`         | Rendered promoted page with evidence metrics, unpublish/delete, and section regenerate/delete                                                         |
 | `/registry`                    | Packages list — shared Add/Search toolbar; Pinned \| Search results tabs; `PackageCard` list (Title / Last Publish / Downloads)                       |
 | `/registry/package/:name`      | Package detail — readme + aligned metadata aside; SecondaryActionBar back to `/registry`                                                              |
 | `/registry/pinned`             | Redirects into `/registry` Pinned tab                                                                                                                 |
@@ -274,15 +274,16 @@ continues processing.
 | `GET /api/vault/transcripts/:id/ideas`                             | Returns `{ ideas: {id, title}[] }` from transcript's `extracted_idea_ids`                                                                                                                                     |
 | `POST /api/vault/transcripts/:id/extract`                          | Run LLM extraction on a saved transcript; returns `{ success, ideaIds, ideas }`                                                                                                                               |
 | `POST /api/vault/transcripts/:id/consolidate`                      | Single-pass canonical idea generation with quality validation from extracted candidate ideas; `RunNode`-backed (`runSkill`); returns `conflict: true` instead of overwriting coverage if a set already exists |
-| `POST /api/vault/transcripts/:id/wiki-drafts`                      | Groups selected ideas, compiles internal audit drafts, automatically promotes focused knowledge wikis, and returns every promoted id                                                                          |
-| `GET/PATCH /api/vault/wiki-drafts/:id`                             | Reads or edits a wiki draft before review/promotion                                                                                                                                                           |
-| `POST /api/vault/wiki-drafts/:id/promote`                          | Explicitly promotes an accepted create/update draft into `knowledge/wikis/` without Git mutation                                                                                                              |
+| `POST /api/vault/transcripts/:id/wiki-drafts`                      | One-step Create Wiki(s): discover → compile → link → auto-promote; returns promoted pages and branch outcomes                                                                                                 |
+| `GET/PATCH /api/vault/wiki-drafts/:id`                             | Diagnostic draft read/edit for recovery                                                                                                                                                                       |
+| `POST /api/vault/wiki-drafts/:id/promote`                          | Recovery promotion of a draft into `knowledge/wikis/` without Git mutation                                                                                                                                    |
 | `POST /api/vault/wiki-drafts/:id/reject`                           | Rejects a draft while keeping vault provenance                                                                                                                                                                |
 | `POST /api/vault/wiki-drafts/:id/regenerate`                       | Recompiles from the same selected evidence and supersedes the previous draft                                                                                                                                  |
-| `POST /api/vault/wiki-candidates/discover`                         | One-shot deterministic wiki-topic discovery over canonical ideas; creates reviewable candidates only                                                                                                          |
-| `GET/POST /api/vault/wiki-candidates/:id/compile`                  | Reads candidate evidence or compiles one candidate into a normal wiki draft                                                                                                                                   |
-| `POST /api/vault/wiki-research`                                    | Records explicitly approved manual research evidence for a wiki/draft; cannot bypass review/promotion                                                                                                         |
+| `POST /api/vault/wiki-candidates/discover`                         | Diagnostic one-shot discovery; creates vault candidates only                                                                                                                                                  |
+| `GET/POST /api/vault/wiki-candidates/:id/compile`                  | Diagnostic compile of one candidate into a recovery draft                                                                                                                                                     |
+| `POST /api/vault/wiki-research`                                    | Records explicitly approved manual research evidence for a wiki/draft                                                                                                                                         |
 | `GET /api/knowledge/wikis`, `/:id`                                 | Lists wikis and reads promoted Markdown plus rendered section HTML                                                                                                                                            |
+| `POST /api/knowledge/wikis/:id/demote`                             | Unpublishes a promoted wiki while retaining vault draft lineage                                                                                                                                               |
 | `DELETE /api/knowledge/wikis/:id`                                  | Deletes one promoted wiki file and scrubs inbound typed links from remaining promoted wiki files                                                                                                              |
 | `POST/DELETE /api/knowledge/wikis/:id/sections/:sectionId/*`       | Regenerates one source-backed section or removes one section while retaining at least one and incrementing the wiki revision                                                                                  |
 | `GET/POST /api/knowledge/wikis/graph/export`                       | Derives the wiki graph from promoted Markdown and optionally exports it under `knowledge/knowledge-graphs/`                                                                                                   |
@@ -385,13 +386,12 @@ writes `TranscriptNode.canonical_coverage` metadata (including `quality_score`) 
 UI can show coverage and score after reload. Current routing sends `consolidate` through OpenCode
 Go `glm-5.2`.
 
-Wiki compilation uses selected canonical ideas plus a bounded evidence packet, not full-vault or
-full-transcript prompt dumps. `wiki-compile` creates `wiki-draft` vault nodes only; review,
-regeneration, rejection, and promotion are separate explicit operations. Promotion writes validated
-Markdown under `knowledge/wikis/` but never runs Git commands. Discovery (`wiki-discover`) is a
-one-shot candidate queue; research (`research-wiki`) is approval-gated and can add external
-source-ref metadata only through the same draft/review path. Full operator/architecture reference:
-`docs/process/WIKI_WORKFLOW.md`.
+Wiki creation is one visible action (`Create Wiki(s)`): internal discover → compile → link →
+auto-promote into `knowledge/wikis/`. Vault drafts remain audit/regeneration lineage; candidate and
+draft UIs are diagnostic/recovery only. Compilation uses a bounded per-topic evidence packet, not
+full-vault dumps. Promotion never runs Git. Research (`research-wiki`) stays approval-gated.
+Unpublish demotes a page while preserving vault draft lineage. Detail:
+`docs/todo/DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md` and `docs/process/WIKI_WORKFLOW.md`.
 
 `getLlmStatus()` exported from `@llaab/llm` returns the live routing map (respects env overrides).
 Ollama provider uses `chat` API (not `generate`) for proper system/user separation. LM Studio is

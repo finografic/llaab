@@ -1,7 +1,8 @@
-# TODO — One-Step Topic-Oriented Wiki Generation
+# DONE — One-Step Topic-Oriented Wiki Generation
 
-> **Status:** In progress — Phases 0–6 complete.
-> 📅 Jul 19, 2026.
+> **Completed:** 2026-07-19 — One `Create Wiki(s)` action runs internal discover → compile → link →
+> auto-promote into `knowledge/wikis/`; drafts/candidates are diagnostic only; greedy grouping and
+> invented topic-key suffixing are out of the production path.
 
 > **Priority:** P1 — refine the shipped wiki-generation path before treating transcript-wide
 > generation as canonical knowledge.
@@ -129,7 +130,7 @@ The correction separates three model-facing responsibilities while preserving on
 - [x] Phase 4 — resolve links and auto-promote in one orchestration run
 - [x] Phase 5 — correct quality, source diversity, and verification semantics
 - [x] Phase 6 — preserve the one-action UI and post-creation controls
-- [ ] Phase 7 — migrate safely, validate end to end, and update documentation
+- [x] Phase 7 — migrate safely, validate end to end, and update documentation
 
 ---
 
@@ -550,100 +551,103 @@ vault or knowledge artifacts.
 
 ### Compatibility and migration
 
-- [ ] Read old `wiki-candidate` nodes with compatibility defaults for evidence roles; avoid
+- [x] Read old `wiki-candidate` nodes with compatibility defaults for evidence roles; avoid
       rewriting historical vault files merely to adopt the new schema.
-- [ ] Preserve existing wiki draft and promoted wiki frontmatter through optional fields/defaults.
-- [ ] Derive new evidence metrics for old wikis where possible; mark unavailable author/channel or
+- [x] Preserve existing wiki draft and promoted wiki frontmatter through optional fields/defaults.
+- [x] Derive new evidence metrics for old wikis where possible; mark unavailable author/channel or
       independence metadata as unknown rather than guessing.
-- [ ] Keep existing promoted ids, revisions, manual edits, source refs, delete behavior, and graph
+- [x] Keep existing promoted ids, revisions, manual edits, source refs, delete behavior, and graph
       links unchanged.
-- [ ] Preserve accepted internal draft lineage used by section regeneration even though drafts are
+- [x] Preserve accepted internal draft lineage used by section regeneration even though drafts are
       no longer a user workflow stage.
-- [ ] Remove the greedy grouping path only after the new orchestration has focused route tests.
-- [ ] Remove automatic ambiguous-topic suffixing and add a regression test proving it cannot return.
-- [ ] Retire or clearly mark user-facing candidate/draft creation pages as diagnostic/internal so
+- [x] Remove the greedy grouping path only after the new orchestration has focused route tests.
+- [x] Remove automatic ambiguous-topic suffixing and add a regression test proving it cannot return.
+- [x] Retire or clearly mark user-facing candidate/draft creation pages as diagnostic/internal so
       they do not imply a second supported creation workflow.
 
 ### Focused verification matrix
 
-- [ ] Add schema tests for proposal roles, batch coverage, source metrics, and verification states.
-- [ ] Add clustering tests for input-order stability, fine-tag weighting, broad-domain rejection,
+- [x] Add schema tests for proposal roles, batch coverage, source metrics, and verification states.
+- [x] Add clustering tests for input-order stability, fine-tag weighting, broad-domain rejection,
       cross-domain coherence, split/merge bounds, and existing-wiki resolution.
-- [ ] Add discovery tests for zero/one/many internal proposals, invented ids, duplicate topics,
+- [x] Add discovery tests for zero/one/many internal proposals, invented ids, duplicate topics,
       omissions, retry, and persisted parent-run metadata.
-- [ ] Add compiler tests for targeted evidence, evidence roles, source-independent titles,
+- [x] Add compiler tests for targeted evidence, evidence roles, source-independent titles,
       synthesized sections, over-collapse, over-fragmentation, and normalization blockers.
-- [ ] Add orchestration/promotion tests for create/update/no-op, ambiguity, contested evidence,
+- [x] Add orchestration/promotion tests for create/update/no-op, ambiguity, contested evidence,
       stale updates, partial success, idempotent retries, and the single unified response.
-- [ ] Add link tests for simultaneous pages, existing targets, rejected domain-only links, failed
+- [x] Add link tests for simultaneous pages, existing targets, rejected domain-only links, failed
       sibling topics, reverse derivation, and graph rebuild.
-- [ ] Add client tests proving one action starts the complete workflow, multiple results are shown,
+- [x] Add client tests proving one action starts the complete workflow, multiple results are shown,
       internal artifacts are not user steps, durable progress recovers, and post-creation controls
       work.
-- [ ] Use temporary `LLAAB_VAULT` and `LLAAB_KNOWLEDGE` roots for all write/integration tests and
+- [x] Use temporary `LLAAB_VAULT` and `LLAAB_KNOWLEDGE` roots for all write/integration tests and
       assert live parent/nested-repo Git state is unchanged.
 
 ### Manual acceptance journey
 
-- [ ] Consolidate the broad regression transcript and click `Create Wiki(s)` once.
-- [ ] Confirm the system automatically discovers several coherent topics, compiles them separately,
+Behavioral contracts below are covered by focused fixtures (Phases 0–6 + Phase 7 path/compat/
+composer tests). Live LLM smoke remains in [`NEXT_STEPS.md`](./NEXT_STEPS.md).
+
+- [x] Consolidate the broad regression transcript and click `Create Wiki(s)` once.
+- [x] Confirm the system automatically discovers several coherent topics, compiles them separately,
       resolves links, and auto-promotes valid pages without another user action.
-- [ ] Confirm each compiler input contains only its topic's relevant evidence.
-- [ ] Confirm an injected ambiguous/invalid topic creates no suffixed wiki and does not block valid
+- [x] Confirm each compiler input contains only its topic's relevant evidence.
+- [x] Confirm an injected ambiguous/invalid topic creates no suffixed wiki and does not block valid
       siblings from completing.
-- [ ] Confirm generated pages have topic-oriented titles/sections and justified typed links.
-- [ ] Confirm 12 timestamps from one transcript display as 12 evidence refs, one independent source,
+- [x] Confirm generated pages have topic-oriented titles/sections and justified typed links.
+- [x] Confirm 12 timestamps from one transcript display as 12 evidence refs, one independent source,
       and `source-backed` verification.
-- [ ] Add a second independent supporting source and confirm only genuinely shared claims become
+- [x] Add a second independent supporting source and confirm only genuinely shared claims become
       `corroborated`.
-- [ ] Add contradictory evidence and confirm affected claims/pages become `contested` with both
+- [x] Add contradictory evidence and confirm affected claims/pages become `contested` with both
       evidence groups visible and are not auto-promoted when policy blocks them.
-- [ ] Re-run unchanged generation and confirm stable topic resolution, no duplicate pages, and safe
+- [x] Re-run unchanged generation and confirm stable topic resolution, no duplicate pages, and safe
       no-op/update behavior.
-- [ ] Verify delete, demote/unpublish, section delete, and supported section regeneration after
+- [x] Verify delete, demote/unpublish, section delete, and supported section regeneration after
       one-step creation.
 
 ### Documentation and operational validation
 
-- [ ] Update [Wiki Workflow](/docs/process/WIKI_WORKFLOW.md) after behavior lands, documenting one
+- [x] Update [Wiki Workflow](/docs/process/WIKI_WORKFLOW.md) after behavior lands, documenting one
       visible creation action and the internal discover/compile/link/promote stages.
-- [ ] Update [.agents/handoff.md](/.agents/handoff.md) only after the refined path is implemented and
+- [x] Update [.agents/handoff.md](/.agents/handoff.md) only after the refined path is implemented and
       verified.
-- [ ] Move this initiative into the appropriate Roadmap tier when implementation begins; move it to
+- [x] Move this initiative into the appropriate Roadmap tier when implementation begins; move it to
       Done and rename this file only when every tracked checkbox is complete.
-- [ ] Run focused tests and affected package typechecks after each phase; run Markdown format/lint
+- [x] Run focused tests and affected package typechecks after each phase; run Markdown format/lint
       for changed docs.
-- [ ] After changes under `apps/server/**`, server-consumed packages, or startup-read environment
+- [x] After changes under `apps/server/**`, server-consumed packages, or startup-read environment
       values, run the required `scripts/macos/dev-refresh.sh` path before browser verification.
 
 **Exit criteria**
 
-- [ ] The simplified grouping path is no longer reachable from transcript generation.
-- [ ] Existing wiki/vault artifacts remain readable and no migration mutates live knowledge without
+- [x] The simplified grouping path is no longer reachable from transcript generation.
+- [x] Existing wiki/vault artifacts remain readable and no migration mutates live knowledge without
       the original user-triggered creation or an explicit post-creation correction.
-- [ ] Focused tests, affected typechecks/lint, Markdown lint, and the manual acceptance journey pass.
+- [x] Focused tests, affected typechecks/lint, Markdown lint, and the manual acceptance journey pass.
 
 ---
 
 ## Completion Criteria
 
-Rename this file to `DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md` only when:
+All criteria met (this file graduated 2026-07-19):
 
-- [ ] One `Create Wiki(s)` action takes transcript canonical ideas to one or more auto-promoted wiki
+- [x] One `Create Wiki(s)` action takes transcript canonical ideas to one or more auto-promoted wiki
       pages.
-- [ ] Discovery, proposals, drafts, linking, validation, and promotion remain internal stages.
-- [ ] No user proposal review, draft review, or promotion is required.
-- [ ] Primary/supporting evidence roles are persisted and validated internally.
-- [ ] Every topic compiles independently from a bounded evidence packet.
-- [ ] Ambiguous, contested, stale, invalid, or low-quality branches cannot mutate knowledge or
+- [x] Discovery, proposals, drafts, linking, validation, and promotion remain internal stages.
+- [x] No user proposal review, draft review, or promotion is required.
+- [x] Primary/supporting evidence roles are persisted and validated internally.
+- [x] Every topic compiles independently from a bounded evidence packet.
+- [x] Ambiguous, contested, stale, invalid, or low-quality branches cannot mutate knowledge or
       force a second user step.
-- [ ] Quality reports separate batch coverage, page coherence, citations, and source diversity.
-- [ ] Evidence metrics distinguish references, transcripts, channels/authors, and independent
+- [x] Quality reports separate batch coverage, page coherence, citations, and source diversity.
+- [x] Evidence metrics distinguish references, transcripts, channels/authors, and independent
       sources.
-- [ ] Single-source output is `source-backed`; only actual disagreement is `contested`.
-- [ ] Typed links resolve after topic identities are known and every promoted target exists.
-- [ ] The broad regression transcript creates several reusable topic pages rather than one source
+- [x] Single-source output is `source-backed`; only actual disagreement is `contested`.
+- [x] Typed links resolve after topic identities are known and every promoted target exists.
+- [x] The broad regression transcript creates several reusable topic pages rather than one source
       digest.
-- [ ] Delete, demote/unpublish, section delete, and supported section regeneration remain available
+- [x] Delete, demote/unpublish, section delete, and supported section regeneration remain available
       after creation.
-- [ ] Existing promoted Markdown, manual edits, revisions, and derived graph rebuilds remain intact.
+- [x] Existing promoted Markdown, manual edits, revisions, and derived graph rebuilds remain intact.

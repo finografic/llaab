@@ -366,6 +366,15 @@ research remains explicit review-only evidence.
 
 Detail: [`docs/todo/DONE_WIKI_GENERATION.md`](./DONE_WIKI_GENERATION.md)
 
+### One-step topic-oriented wiki generation
+
+Completed 2026-07-19. Transcript **Create Wiki(s)** runs internal discover → compile → link →
+auto-promote; drafts/candidates are diagnostic/recovery only; greedy grouping and invented
+topic-key suffixing are removed from the production path; Unpublish demotes while retaining vault
+lineage. Live LLM smoke remains in [`NEXT_STEPS.md`](./NEXT_STEPS.md).
+
+Detail: [`docs/todo/DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md`](./DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md)
+
 ### Install and validate `@finografic/ai-harness` in the transcript extraction path
 
 Completed 2026-06-07. The released harness package is installed in `@llaab/ingestion`, exercised

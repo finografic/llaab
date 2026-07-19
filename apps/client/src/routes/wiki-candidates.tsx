@@ -1,3 +1,4 @@
+import { DiagnosticWikiSurfaceBanner } from 'components/DiagnosticWikiSurfaceBanner/DiagnosticWikiSurfaceBanner';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Button } from 'components/ui/button';
 import { Col, Row } from 'components/ui/grid';
@@ -14,7 +15,7 @@ import { toast } from 'sonner';
 import { usePageTitle } from 'lib/use-page-title';
 
 export function WikiCandidatesPage() {
-  usePageTitle('Wiki candidates');
+  usePageTitle('Wiki candidates (diagnostic)');
   const candidates = useWikiCandidates();
   const discover = useDiscoverWikiCandidates();
   const compile = useCompileWikiCandidate();
@@ -23,7 +24,7 @@ export function WikiCandidatesPage() {
   async function runDiscovery() {
     try {
       await discover.mutateAsync();
-      toast.success('Wiki candidate discovery complete.');
+      toast.success('Diagnostic wiki candidate discovery complete.');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Wiki discovery failed.');
     }
@@ -42,7 +43,7 @@ export function WikiCandidatesPage() {
     <PageLayout
       hero={
         <PageHero
-          eyebrow="Vault"
+          eyebrow="Vault · Diagnostic"
           title="Wiki candidates"
           right={
             <Button onClick={() => void runDiscovery()} disabled={discover.isPending}>
@@ -52,6 +53,7 @@ export function WikiCandidatesPage() {
         />
       }
     >
+      <DiagnosticWikiSurfaceBanner surface="candidate" />
       <Row className="gap-3">
         {candidates.isLoading ? <p className="text-sm text-muted-foreground">Loading candidates…</p> : null}
         {candidates.error ? <p className="text-sm text-destructive">{candidates.error.message}</p> : null}
@@ -76,7 +78,7 @@ export function WikiCandidatesPage() {
               onClick={() => void compileCandidate(candidate.id)}
               disabled={compile.isPending}
             >
-              Create draft
+              Compile diagnostic draft
             </Button>
           </Col>
         ))}

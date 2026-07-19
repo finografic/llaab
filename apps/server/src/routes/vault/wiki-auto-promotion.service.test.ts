@@ -65,7 +65,9 @@ describe('autoPromoteWikiDrafts', () => {
         outcome: 'skipped',
       }),
     ]);
-    expect(await core.listKnowledgeWikis()).toHaveLength(1);
+    const wikis = await core.listKnowledgeWikis();
+    expect(wikis).toHaveLength(1);
+    expect(wikis.some((wiki) => /-\d+$/.test(wiki.id))).toBe(false);
     expect((await core.readNodeByType('wiki-draft', created.id)).draft_status).toBe('proposed');
     expect((await core.readNodeByType('wiki-draft', created.id)).topic_key).toBe('context-management');
   });

@@ -1,3 +1,4 @@
+import { DiagnosticWikiSurfaceBanner } from 'components/DiagnosticWikiSurfaceBanner/DiagnosticWikiSurfaceBanner';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Button } from 'components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
@@ -92,7 +93,7 @@ export function WikiDraftDetailPage() {
     try {
       if (action === 'promote') {
         const result = (await promote.mutateAsync(draft.id)) as { wiki?: { id: string } };
-        toast.success('Wiki promoted for review in knowledge.');
+        toast.success('Recovery promotion wrote the knowledge wiki.');
         if (result.wiki) navigate(knowledgeWikiDetailPath(result.wiki.id));
       } else {
         await reject.mutateAsync(draft.id);
@@ -155,8 +156,9 @@ export function WikiDraftDetailPage() {
   }
 
   return (
-    <PageLayout hero={<PageHero eyebrow="Vault review" title={draft?.title ?? 'Loading…'} />}>
+    <PageLayout hero={<PageHero eyebrow="Vault · Diagnostic" title={draft?.title ?? 'Loading…'} />}>
       <PageDetail gap="lg">
+        <DiagnosticWikiSurfaceBanner surface="draft" />
         {isLoading ? <p className="text-sm text-muted-foreground">Loading wiki draft…</p> : null}
         {error ? <p className="text-sm text-destructive">{error.message}</p> : null}
         {draft ? (

@@ -1,4 +1,3 @@
-import { readNodeByType } from '@llaab/core';
 import {
   appendProducedNodeIds,
   appendRunEvent,
@@ -93,8 +92,8 @@ function shouldJoinGroup(group: WikiDraftIdeaGroup, domains: Set<string>, tokens
 }
 
 /**
- * Legacy greedy grouping heuristic retained for Phase 0 characterization baselines.
- * Transcript wiki creation uses discoverTranscriptWikiTopics instead.
+ * Legacy greedy grouping heuristic — characterization baselines only.
+ * Not reachable from transcript Create Wiki(s); production uses discoverTranscriptWikiTopics.
  */
 export function groupCanonicalIdeasByHeuristic(
   ideas: CanonicalIdeaNode[],
@@ -119,17 +118,6 @@ export function groupCanonicalIdeasByHeuristic(
   }
 
   return groups.map((group) => group.canonicalIdeaIds);
-}
-
-/** @deprecated Recovery/characterization only — normal path uses Phase 2 discovery. */
-export async function groupCanonicalIdeasForWikiDrafts(input: {
-  canonicalIdeaIds: string[];
-  forceSingleDraft: boolean;
-}): Promise<string[][]> {
-  if (input.forceSingleDraft || input.canonicalIdeaIds.length <= 1) return [input.canonicalIdeaIds];
-
-  const ideas = await Promise.all(input.canonicalIdeaIds.map((id) => readNodeByType('canonical-idea', id)));
-  return groupCanonicalIdeasByHeuristic(ideas, { forceSingleDraft: input.forceSingleDraft });
 }
 
 export type TranscriptWikiCompileBranch =

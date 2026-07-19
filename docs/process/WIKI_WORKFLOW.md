@@ -9,15 +9,15 @@ vault/knowledge repository boundary.
 ## Mental model
 
 ```text
-transcript
-  -> extracted IdeaNode candidates
-  -> consolidated CanonicalIdeaNode ingredients
-  -> focused evidence packet
-  -> internal wiki-draft audit node in vault/
-  -> automatic topic resolution and promotion
-  -> knowledge/wikis/<wiki-id>.md in the parent repo
+transcript + selected CanonicalIdeaNode ingredients
+  -> [Create Wiki(s)]  (one visible action)
+  -> internal discover / validate / compile / link / auto-promote
+  -> one or more promoted knowledge/wikis/<wiki-id>.md pages
   -> derived graph/export in knowledge/knowledge-graphs/
 ```
+
+Internal vault artifacts (`wiki-draft`, optional `wiki-candidate`, `RunNode` traces) remain for
+provenance, regeneration, and diagnostic recovery. They are not required user workflow stages.
 
 The important boundary:
 
@@ -28,51 +28,68 @@ The important boundary:
 
 ## Core concepts
 
-| Concept        | Storage                             | Purpose                                                                  |
-| -------------- | ----------------------------------- | ------------------------------------------------------------------------ |
-| Candidate idea | `vault/nodes/ideas/`                | Raw extracted detail from a transcript run.                              |
-| Canonical idea | `vault/nodes/canonical-ideas/`      | Deduplicated source ingredient selected for one or more wiki topics.     |
-| Wiki draft     | `vault/nodes/wiki-drafts/`          | Internal create/update/no-op/needs-review audit and regeneration source. |
-| Knowledge wiki | `knowledge/wikis/<id>.md`           | Promoted topic page and source of truth for wiki content.                |
-| Wiki graph     | Derived from `knowledge/wikis/*.md` | Disposable relationship view; can be rebuilt/exported from Markdown.     |
-
-Canonical ideas remain vault data. The transcript composer promotes their compiled wiki pages in the
-same request while retaining the draft and RunNode as private provenance.
+| Concept        | Storage                             | Purpose                                                              |
+| -------------- | ----------------------------------- | -------------------------------------------------------------------- |
+| Candidate idea | `vault/nodes/ideas/`                | Raw extracted detail from a transcript run.                          |
+| Canonical idea | `vault/nodes/canonical-ideas/`      | Deduplicated source ingredient selected for one or more wiki topics. |
+| Wiki draft     | `vault/nodes/wiki-drafts/`          | Internal create/update/no-op audit and regeneration source.          |
+| Knowledge wiki | `knowledge/wikis/<id>.md`           | Promoted topic page and source of truth for wiki content.            |
+| Wiki graph     | Derived from `knowledge/wikis/*.md` | Disposable relationship view; can be rebuilt/exported from Markdown. |
 
 ## Operator path
 
 1. Open a transcript with consolidated canonical ideas at `/vault/transcripts/:id`.
-2. Select canonical ideas in the wiki composer.
-3. Click **Create Wiki** once. The server groups broad selections into focused topics, compiles each
-   topic, retains its vault draft, resolves new-topic ambiguity deterministically, and writes the
-   promoted page.
+2. Optionally narrow the selected canonical ideas in the wiki composer.
+3. Click **Create Wiki(s)** once. The server discovers coherent topics, compiles each from a bounded
+   evidence packet, resolves typed links after identities are known, and auto-promotes valid
+   creates/updates under one parent `compile-transcript-wikis` run.
 4. The client opens the first promoted page and links every sibling page created by the request.
-5. Review the prominent quality, lifecycle, verification, revision, source, topic, and relationship
-   metadata on the promoted page.
-6. Regenerate or remove individual sections directly on the promoted page. Each accepted change writes
-   a new revision; the vault draft history remains intact.
+   Success copy reports created / updated / already represented / skipped / failed counts — not draft
+   ids.
+5. Review quality, lifecycle, verification, evidence metrics (refs vs independent sources), tags, and
+   relationships on the promoted page.
+6. Post-creation corrections (never required creation steps):
+   - **Unpublish** — remove from canonical knowledge while retaining vault draft lineage.
+   - **Delete** — remove the promoted file and scrub inbound wiki links.
+   - **Regenerate / remove section** — revise one section in place when lineage allows; a wiki always
+     keeps at least one sourced section.
 7. Inspect the parent worktree and commit `knowledge/` changes only when ready.
 
-The older draft-review routes remain available for audit and specialist recovery flows, but normal
-transcript-to-wiki creation has no intermediate promotion step. Promotion still never runs Git commands.
+Ambiguous, contested, stale, invalid, or low-quality branches skip or fail without inventing a
+suffixed topic key and without asking the user to complete a draft/promotion workflow.
+
+Diagnostic/recovery routes (`/vault/wiki-drafts/*`, `/vault/wiki-candidates/*`) remain available for
+audit and specialist recovery. They are labeled as diagnostic and are not the normal creation path.
 
 ## Review surface design rule
 
 Wiki review state must be visually explicit rather than encoded in a muted metadata sentence:
 
-- show quality, lifecycle, verification, revision, source counts, provider, and model in labeled cards
-- use color-coded badges for score/state and visible topic badges for every persisted tag
+- show quality, lifecycle, verification, revision, evidence metrics, provider, and model in labeled cards
+- never label citation-ref count as “sources” when refs share one transcript/channel
+- keep lifecycle (`seed/growing/mature`) separate from verification and generation quality
 - render Markdown as readable article HTML; never expose raw section markers in the primary reader
 - keep section actions adjacent to the section they affect, with icon labels/tooltips and destructive
   confirmation
 - show all pages created by a multi-topic request and all explicit or inferred related-topic links
+
+## Internal pipeline stages
+
+Under one parent RunNode (`compile-transcript-wikis`):
+
+1. **discover** — cluster selected ideas into coherent topic proposals with primary/supporting roles.
+2. **validate-proposals** — omit/skip unsafe or ambiguous branches; never invent `topic-2` keys.
+3. **compile** — per-proposal `wiki-compile` with bounded evidence and quality dimensions.
+4. **link** — `wiki-link` after all topic identities are known; reject domain-only / self links.
+5. **auto-promote** — policy gates create/update/no-op; contested/low-quality branches do not mutate
+   knowledge.
 
 ## Compile and update behavior
 
 `wiki-compile` is a one-shot skill routed through the normal LLM router and durable run lifecycle.
 The compiler receives a bounded evidence packet:
 
-- selected canonical idea ids
+- selected canonical idea ids (primary/supporting roles when present)
 - supporting candidate/transcript/source evidence
 - source locators from transcript timestamp markers where available
 - existing target wiki metadata for updates
@@ -85,9 +102,8 @@ Draft operations:
 - `create` — proposed new wiki page.
 - `update` — proposed section-level change against an existing wiki.
 - `no-op` — selected evidence is already represented or below the meaningful-change threshold.
-- `needs-review` — an internal compiler result recording topic ambiguity or quality concerns. The normal
-  transcript composer publishes it under a collision-safe distinct topic id and exposes the concerns in
-  the promoted review surface.
+- `needs-review` — internal diagnostic only; auto-promotion skips these and never invents a distinct
+  suffixed topic to bypass the gate.
 
 Update drafts carry `base_revision` and `base_content_hash`. Promotion rejects stale drafts if the
 promoted page changed after draft creation, so manual edits to wiki Markdown are first-class and must
@@ -97,39 +113,34 @@ survive later compiler runs.
 
 Every meaningful section is tied to `source_refs`.
 
-Source-ref kinds:
+Evidence metrics (Phase 1+) distinguish:
 
-- `canonical-idea` — the durable concept ingredient.
-- `transcript` — source-backed transcript evidence with optional timestamp locator.
-- `source` — originating channel/person/repo/source node.
-- `external` — manually approved research result with URL, query/provider, retrieval time, excerpt,
-  and validation notes.
+- evidence-reference count
+- unique canonical ideas
+- unique transcripts
+- unique source nodes / author-channels
+- independent-source count
 
-Transcript evidence is source-backed; it does not prove objective truth. External research is explicit,
-budgeted, approval-gated, and review-blocking when non-authoritative or contradictory.
+Twelve timestamp refs in one transcript remain one independent source and typically `source-backed`.
+`corroborated` requires claim-level independent support or a validated authoritative external.
+`contested` requires explicit opposing evidence groups — low diversity alone is a warning, not a
+contradiction.
 
 ## Discovery and research
 
-Discovery is separate from compilation.
+Transcript **Create Wiki(s)** runs discovery internally as part of the one-step pipeline.
 
-- `wiki-discover` deterministically clusters canonical ideas into bounded candidate topics.
-- Optional model review may validate the deterministic candidates, but it cannot expand authority beyond
-  represented evidence.
-- Discovery writes reviewable vault candidates only.
-- Compiling a candidate still creates a normal wiki draft.
+Standalone discovery (`POST /api/vault/wiki-candidates/discover`) remains a diagnostic one-shot that
+writes vault candidates only. Compiling a candidate creates a normal wiki draft for recovery tooling;
+it is not the preferred operator path.
 
 Research is also explicit:
 
 - `research-wiki` accepts an approved manual result packet for an existing wiki or draft.
 - It records retrieval metadata and external source refs.
-- It can create a research-backed draft, but it cannot bypass review or promotion.
+- It cannot bypass auto-promotion policy or invent contested corroboration.
 
 LLAAB does not schedule discovery or research itself. External cron/launchd may call one-shot endpoints.
-
-```sh
-curl -fsS -X POST http://127.0.0.1:8888/api/vault/wiki-candidates/discover \
-  -H "X-API-Key: $LLAAB_API_KEY"
-```
 
 ## Promoted wiki files
 
@@ -137,15 +148,15 @@ Promoted wiki Markdown under `knowledge/wikis/` is the content source of truth.
 
 The Markdown codec preserves:
 
-- wiki id, topic key, lifecycle status, verification status, quality, generation metadata, revision,
-  aliases, domain tags, and semantic topic tags
+- wiki id, topic key, lifecycle status, verification status, quality, optional evidence metrics /
+  quality dimensions, generation metadata, revision, aliases, domain tags, and semantic topic tags
 - source refs and source canonical idea ids
 - stable section markers such as `<!-- wiki-section:overview -->`
 - validated wiki links and relation vocabulary
 - manual sections/edits across later update drafts
 
-The core wiki helpers read/write through explicit knowledge roots, lock concurrent writes per wiki id,
-hash rendered content for stale-draft checks, and keep vault nodes separate from promoted files.
+Legacy pages without `evidence_metrics` remain readable; the UI derives conservative metrics from
+`source_refs` without inventing author/channel diversity.
 
 ## Graph and links
 
@@ -159,65 +170,55 @@ Wiki links use a fixed relation vocabulary:
 - `supports`
 - `supersedes`
 
-Draft review and promotion reject unresolved links, self-links, duplicate links, and domain-tag-only
-links. The graph combines explicit model-proposed links with deterministic `related-to` edges inferred
-from shared semantic tags, multiple shared domain tags, or a shared source transcript. It is request-built
-from promoted Markdown and is disposable:
-
-- `/api/knowledge/wikis/graph` returns the current derived graph.
-- `/api/knowledge/wikis/graph/export` writes a reproducible export under
-  `knowledge/knowledge-graphs/`.
-
-There is no watcher, background index, or external graph database in the current architecture.
+Link enrichment rejects unresolved links, self-links, duplicate links, and domain-tag-only notes.
+The graph combines explicit model-proposed links with deterministic `related-to` edges inferred
+from shared semantic tags, multiple shared domain tags, or a shared source transcript. It is
+request-built from promoted Markdown and is disposable.
 
 ## Browser surfaces
 
-| Route                        | Purpose                                                            |
-| ---------------------------- | ------------------------------------------------------------------ |
-| `/vault/transcripts/:id`     | Select canonical ideas and create/publish focused wikis once.      |
-| `/vault/wiki-drafts/:id`     | Inspect the retained internal audit draft or recover manually.     |
-| `/vault/wiki-candidates`     | Review discovered candidate topics.                                |
-| `/vault/wiki-candidates/:id` | Inspect candidate evidence and compile it into a draft.            |
-| `/knowledge/wikis`           | Browse promoted wiki pages.                                        |
-| `/knowledge/wikis/:id`       | Review rendered content, status, tags, links, and refine sections. |
+| Route                        | Purpose                                                          |
+| ---------------------------- | ---------------------------------------------------------------- |
+| `/vault/transcripts/:id`     | **Normal path:** Create Wiki(s) from canonical ideas.            |
+| `/knowledge/wikis`           | Browse promoted wiki pages.                                      |
+| `/knowledge/wikis/:id`       | Review content; unpublish/delete; regenerate or remove sections. |
+| `/vault/wiki-drafts/:id`     | Diagnostic/recovery audit draft (not a required creation step).  |
+| `/vault/wiki-candidates`     | Diagnostic discovery queue (not the normal creation path).       |
+| `/vault/wiki-candidates/:id` | Diagnostic candidate evidence / compile into a draft.            |
 
 ## API surfaces
 
-Vault/review endpoints:
+Normal creation:
 
-- `POST /api/vault/transcripts/:id/wiki-drafts`
-- `GET /api/vault/wiki-drafts`
-- `GET /api/vault/wiki-drafts/:id`
-- `PATCH /api/vault/wiki-drafts/:id`
-- `POST /api/vault/wiki-drafts/:id/promote`
-- `POST /api/vault/wiki-drafts/:id/reject`
-- `POST /api/vault/wiki-drafts/:id/resolve`
-- `POST /api/vault/wiki-drafts/:id/regenerate`
+- `POST /api/vault/transcripts/:id/wiki-drafts` — one-step create (discover → compile → link → promote)
+
+Diagnostic/recovery vault endpoints:
+
+- `GET /api/vault/wiki-drafts`, `GET/PATCH /api/vault/wiki-drafts/:id`
+- `POST /api/vault/wiki-drafts/:id/promote|reject|resolve|regenerate`
 - `POST /api/vault/wiki-candidates/discover`
-- `GET /api/vault/wiki-candidates`
-- `GET /api/vault/wiki-candidates/:id`
+- `GET /api/vault/wiki-candidates`, `GET /api/vault/wiki-candidates/:id`
 - `POST /api/vault/wiki-candidates/:id/compile`
 - `POST /api/vault/wiki-research`
 
 Knowledge endpoints:
 
-- `GET /api/knowledge/wikis`
-- `GET /api/knowledge/wikis/:id`
-- `POST /api/knowledge/wikis/:id/sections/:sectionId/regenerate`
-- `DELETE /api/knowledge/wikis/:id/sections/:sectionId`
-- `GET /api/knowledge/wikis/graph`
-- `POST /api/knowledge/wikis/graph/export`
+- `GET /api/knowledge/wikis`, `GET /api/knowledge/wikis/:id`
+- `POST /api/knowledge/wikis/:id/demote`
+- `DELETE /api/knowledge/wikis/:id`
+- `POST/DELETE /api/knowledge/wikis/:id/sections/:sectionId/*`
+- `GET /api/knowledge/wikis/graph`, `POST /api/knowledge/wikis/graph/export`
 
 ## Implementation map
 
-| Layer            | Main responsibility                                                                           |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| `@llaab/schemas` | Wiki draft node, compile/result contracts, source refs, links, lifecycle/verification states. |
-| `@llaab/core`    | Knowledge root helpers, wiki Markdown codec, hashing, link validation, graph build/export.    |
-| `@llaab/llm`     | `wiki-compile`, `wiki-discover`, and `research-wiki` task routing.                            |
-| `@llaab/skills`  | One-shot `compileWikiDraft`, discovery, evidence selection, research draft creation.          |
-| `apps/server`    | Thin Hono routes, review decisions, promotion coordination, stale/dedupe validation.          |
-| `apps/client`    | Composer, draft review UI, candidate review UI, promoted wiki browser and graph links.        |
+| Layer            | Main responsibility                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------ |
+| `@llaab/schemas` | Proposal/evidence/quality/verification/one-step contracts.                                 |
+| `@llaab/core`    | Knowledge root helpers, wiki Markdown codec, hashing, link validation, graph build/export. |
+| `@llaab/llm`     | `wiki-compile`, `wiki-discover`, `wiki-link`, and `research-wiki` task routing.            |
+| `@llaab/skills`  | Discovery, compile, link, evidence selection, research draft creation.                     |
+| `apps/server`    | Thin Hono routes; one-step orchestration; auto-promotion; demote/delete/section review.    |
+| `apps/client`    | Create Wiki(s) composer; promoted wiki browser; diagnostic draft/candidate surfaces.       |
 
 ## Extension rules
 
@@ -226,6 +227,5 @@ Knowledge endpoints:
 - Do not add background workers, file watchers, polling loops, or scheduler ownership.
 - Do not let models write directly to `knowledge/`.
 - Do not add automatic Git commands to draft creation, promotion, discovery, graph export, or research.
+- Do not invent suffixed topic keys to bypass ambiguity.
 - Treat promoted Markdown as authoritative; rebuild derived search/graph data from files.
-- Preserve manual wiki edits through section ids, base hashes, and reviewed deltas.
-- Use temporary `LLAAB_VAULT` and `LLAAB_KNOWLEDGE` roots in tests.

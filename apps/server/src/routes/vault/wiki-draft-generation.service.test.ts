@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 
 import { groupCanonicalIdeasByHeuristic } from './wiki-draft-generation.service.js';
 
-describe('wiki draft generation characterization (current path)', () => {
+describe('legacy greedy grouping characterization (not production)', () => {
   it('over-collapses the broad Hermes fixture into fewer than the refined multi-topic range', () => {
     const fixture = createBroadHermesFixture();
     const groups = groupCanonicalIdeasByHeuristic(fixture.canonicalIdeas);
