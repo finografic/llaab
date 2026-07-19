@@ -8,14 +8,14 @@
   padding-right: 24px;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1024px) {
   .readmeColumn {
     flex: 1 1 0 !important;
     max-width: calc(100% - 340px) !important;
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .readmeColumn {
     padding-right: 0;
   }
@@ -103,10 +103,20 @@
   margin-top: 0.5em;
 }
 
-.readmeContent h1 { font-size: var(--text-2xl); }
-.readmeContent h2 { font-size: var(--text-xl); border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.3em; }
-.readmeContent h3 { font-size: var(--text-lg); }
-.readmeContent h4 { font-size: var(--text-base); }
+.readmeContent h1 {
+  font-size: var(--text-2xl);
+}
+.readmeContent h2 {
+  font-size: var(--text-xl);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.3em;
+}
+.readmeContent h3 {
+  font-size: var(--text-lg);
+}
+.readmeContent h4 {
+  font-size: var(--text-base);
+}
 
 /* shiki wraps blocks in <pre class="shiki"> */
 .readmeContent :global(.shiki) {
@@ -400,7 +410,10 @@
   background: var(--surface);
   color: var(--text-muted);
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
 }
 
 .pinButton:hover {
@@ -426,6 +439,3 @@
   color: var(--text-faint);
   padding: 40px 0;
 }
-
-
-

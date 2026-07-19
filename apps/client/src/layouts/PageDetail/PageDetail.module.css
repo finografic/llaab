@@ -9,6 +9,10 @@
   max-width: var(--content-narrow-max);
 }
 
+.wide {
+  max-width: var(--content-wide-max);
+}
+
 .gapLg {
   gap: var(--space-8);
 }

@@ -10,7 +10,7 @@
 }
 
 .wide {
-  max-width: var(--content-max);
+  max-width: var(--content-wide-max);
 }
 
 .full {

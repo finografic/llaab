@@ -217,7 +217,7 @@
   background: var(--surface-raised);
 }
 
-@media (max-width: 800px) {
+@media (max-width: 767px) {
   .body {
     flex-wrap: wrap;
   }

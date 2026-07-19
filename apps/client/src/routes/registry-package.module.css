@@ -8,14 +8,14 @@
   padding-right: 24px;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1024px) {
   .readmeColumn {
     flex: 1 1 0 !important;
     max-width: calc(100% - 340px) !important;
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .readmeColumn {
     padding-right: 0;
   }
@@ -426,4 +426,3 @@
   color: var(--text-faint);
   padding: 40px 0;
 }
-

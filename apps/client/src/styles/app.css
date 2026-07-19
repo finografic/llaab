@@ -99,8 +99,9 @@
   --secondary-actions-h: 40px;
   --footer-h: 40px;
   --content-area-h: calc(100dvh - var(--header-h) - var(--secondary-actions-h) - var(--footer-h));
-  --content-max: 1200px;
-  --content-narrow-max: 820px;
+  --content-narrow-max: 768px;
+  --content-max: 1280px;
+  --content-wide-max: 1536px;
   --page-list-max: var(--content-max);
   --page-detail-max: var(--content-max);
   --page-dashboard-max: var(--content-max);

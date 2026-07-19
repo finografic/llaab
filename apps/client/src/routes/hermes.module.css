@@ -161,7 +161,7 @@
   margin-top: 2px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .callout {
     grid-template-columns: auto minmax(0, 1fr);
   }

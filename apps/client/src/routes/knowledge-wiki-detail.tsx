@@ -144,7 +144,7 @@ export function KnowledgeWikiDetailPage() {
         />
       }
     >
-      <PageDetail variant="narrow">
+      <PageDetail>
         {isLoading ? <p className="text-muted-foreground text-sm">Loading wiki…</p> : null}
         {error ? <p className="text-destructive text-sm">{error.message}</p> : null}
         {wiki ? (

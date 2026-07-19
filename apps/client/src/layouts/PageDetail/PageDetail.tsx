@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import styles from './PageDetail.module.css';
 
 interface PageDetailProps {
-  variant?: 'narrow' | 'default';
+  variant?: 'narrow' | 'default' | 'wide';
   gap?: 'md' | 'lg';
   children: ReactNode;
 }
@@ -12,7 +12,12 @@ interface PageDetailProps {
 export function PageDetail({ variant = 'default', gap = 'md', children }: PageDetailProps) {
   return (
     <div
-      className={cn(styles.pageDetail, variant === 'narrow' && styles.narrow, gap === 'lg' && styles.gapLg)}
+      className={cn(
+        styles.pageDetail,
+        variant === 'narrow' && styles.narrow,
+        variant === 'wide' && styles.wide,
+        gap === 'lg' && styles.gapLg,
+      )}
       data-variant={variant}
       data-gap={gap}
     >
