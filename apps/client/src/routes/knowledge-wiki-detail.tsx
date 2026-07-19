@@ -2,6 +2,7 @@ import { computeWikiEvidenceMetrics, formatWikiEvidenceMetricsSummary } from '@l
 import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
 import { DemoteKnowledgeWikiAction } from 'components/DemoteKnowledgeWikiAction/DemoteKnowledgeWikiAction';
 import { PageHero } from 'components/PageHero/PageHero';
+import { TtsPlayer } from 'components/TtsPlayer';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import {
   AlertDialog,
@@ -151,12 +152,14 @@ export function KnowledgeWikiDetailPage() {
                       ? 'Wiki created and published'
                       : `${generatedWikis.length} focused wikis created and published`}
                   </AlertTitle>
-                  <AlertDescription className={styles.createdLinks}>
-                    {generatedWikis.map((created) => (
-                      <Link key={created.id} to={`/knowledge/wikis/${created.id}`}>
-                        {created.title}
-                      </Link>
-                    ))}
+                  <AlertDescription>
+                    <ul className={styles.createdLinks}>
+                      {generatedWikis.map((created) => (
+                        <li key={created.id}>
+                          <Link to={`/knowledge/wikis/${created.id}`}>{created.title}</Link>
+                        </li>
+                      ))}
+                    </ul>
                   </AlertDescription>
                 </Alert>
               </Col>
@@ -264,6 +267,11 @@ export function KnowledgeWikiDetailPage() {
 
             <Col xs={12}>
               <section className={styles.article} aria-label="Wiki article">
+                <Row justify="flex-end" align="center" className={styles.articleToolbar}>
+                  <Col xs="content">
+                    <TtsPlayer variant="minimal" text={`# ${wiki.title}\n\n${wiki.body}`} />
+                  </Col>
+                </Row>
                 {data.sections.map((section) => (
                   <section key={section.id} className={styles.wikiSection}>
                     <div

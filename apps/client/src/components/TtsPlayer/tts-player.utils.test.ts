@@ -66,4 +66,28 @@ Second paragraph.`);
       'Third?',
     ]);
   });
+
+  it('keeps wiki section headings and strips section markers plus footnotes', () => {
+    const sections = createTtsSectionsFromText(`# Reducing system prompt bloat
+
+<!-- wiki-section:overview -->
+
+## How tool definitions inflate the system prompt
+
+Agent frameworks include every tool definition.[^canonical-ref-1]
+
+<!-- wiki-section:audit -->
+
+## Auditing the real token payload
+
+Use a proxy to inspect tokens.[^canonical-ref-2]`);
+
+    expect(sections.map((section) => section.text)).toEqual([
+      'Reducing system prompt bloat',
+      'How tool definitions inflate the system prompt',
+      'Agent frameworks include every tool definition.',
+      'Auditing the real token payload',
+      'Use a proxy to inspect tokens.',
+    ]);
+  });
 });

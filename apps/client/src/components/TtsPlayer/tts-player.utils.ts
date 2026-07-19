@@ -1,6 +1,6 @@
 import type { TtsPlayerSection } from './tts-player.types';
 
-const TIMESTAMP_MARKER_PATTERN = /<!--\s*t:[\d:.]+\s*-->/g;
+const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 const TRANSCRIPT_TIME_LINE_PATTERN = /^<--\s*t:[\d:.]+\s*-->$/gm;
 const TRANSCRIPT_TIME_LINE_ONLY_PATTERN = /^<--\s*t:[\d:.]+\s*-->$/;
 const TRANSCRIPT_HEADING_PATTERN = /^#{1,6}\s+transcript\s*$/i;
@@ -10,6 +10,7 @@ const TRANSCRIPT_HEADER_LINK_LINE_PATTERN = /^\[\*{0,2}https?:\/\/[^\]]+\*{0,2}\
 const TRANSCRIPT_METADATA_LINE_PATTERN =
   /^(?:[-*]\s*)?(?:\*\*)?(?:author|uploaded|ingested|source|url|video|channel|duration|published)(?:\*\*)?\s*:/i;
 const MARKDOWN_LINK_PATTERN = /\[([^\]]+)\]\([^)]+\)/g;
+const MARKDOWN_FOOTNOTE_REF_PATTERN = /\[\^[^\]]+\]/g;
 const MARKDOWN_EMPHASIS_PATTERN = /[*_`#>]+/g;
 const WHITESPACE_PATTERN = /\s+/g;
 const MAX_SECTION_CHARS = 1_200;
@@ -23,8 +24,9 @@ export function formatTtsTime(seconds: number) {
 
 export function normalizeTtsText(text: string) {
   return text
-    .replace(TIMESTAMP_MARKER_PATTERN, ' ')
+    .replace(HTML_COMMENT_PATTERN, ' ')
     .replace(TRANSCRIPT_TIME_LINE_PATTERN, ' ')
+    .replace(MARKDOWN_FOOTNOTE_REF_PATTERN, ' ')
     .replace(MARKDOWN_LINK_PATTERN, '$1')
     .replace(MARKDOWN_EMPHASIS_PATTERN, '')
     .replace(WHITESPACE_PATTERN, ' ')
@@ -36,28 +38,36 @@ function isDocumentTitleHeading(line: string) {
   return DOCUMENT_TITLE_HEADING_PATTERN.test(trimmed) && !trimmed.startsWith('##');
 }
 
-function shouldDropTranscriptMetadataLine(line: string, hasReachedTranscriptHeading: boolean) {
+function shouldDropTranscriptMetadataLine(
+  line: string,
+  hasReachedTranscriptHeading: boolean,
+  isTranscriptDoc: boolean,
+) {
   const trimmed = line.trim();
   if (!trimmed) return false;
   if (TRANSCRIPT_TIME_LINE_ONLY_PATTERN.test(trimmed)) return true;
   if (TRANSCRIPT_METADATA_LINE_PATTERN.test(trimmed)) return true;
   if (!hasReachedTranscriptHeading && TRANSCRIPT_HEADER_LINK_LINE_PATTERN.test(trimmed)) return true;
-  // Keep the H1 title; drop other pre-transcript headings (## Transcript is handled separately).
-  if (!hasReachedTranscriptHeading && trimmed.startsWith('#')) return !isDocumentTitleHeading(trimmed);
+  // Transcript docs only: keep H1, drop other pre-## Transcript headings. Wiki ## sections stay.
+  if (isTranscriptDoc && !hasReachedTranscriptHeading && trimmed.startsWith('#')) {
+    return !isDocumentTitleHeading(trimmed);
+  }
   return false;
 }
 
 export function stripTtsMetadataLines(text: string) {
+  const rawLines = text.split(/\r?\n/);
+  const isTranscriptDoc = rawLines.some((line) => TRANSCRIPT_HEADING_PATTERN.test(line.trim()));
   const lines: string[] = [];
   let hasReachedTranscriptHeading = false;
 
-  for (const line of text.split(/\r?\n/)) {
+  for (const line of rawLines) {
     if (TRANSCRIPT_HEADING_PATTERN.test(line.trim())) {
       hasReachedTranscriptHeading = true;
       continue;
     }
 
-    if (shouldDropTranscriptMetadataLine(line, hasReachedTranscriptHeading)) continue;
+    if (shouldDropTranscriptMetadataLine(line, hasReachedTranscriptHeading, isTranscriptDoc)) continue;
     lines.push(line);
   }
 
