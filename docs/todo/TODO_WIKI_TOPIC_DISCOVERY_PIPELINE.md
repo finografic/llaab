@@ -1,6 +1,6 @@
 # TODO — One-Step Topic-Oriented Wiki Generation
 
-> **Status:** In progress — Phases 0–4 complete.
+> **Status:** In progress — Phases 0–5 complete.
 > 📅 Jul 19, 2026.
 
 > **Priority:** P1 — refine the shipped wiki-generation path before treating transcript-wide
@@ -127,7 +127,7 @@ The correction separates three model-facing responsibilities while preserving on
 - [x] Phase 2 — build internal transcript-scoped topic discovery
 - [x] Phase 3 — compile each discovered topic coherently
 - [x] Phase 4 — resolve links and auto-promote in one orchestration run
-- [ ] Phase 5 — correct quality, source diversity, and verification semantics
+- [x] Phase 5 — correct quality, source diversity, and verification semantics
 - [ ] Phase 6 — preserve the one-action UI and post-creation controls
 - [ ] Phase 7 — migrate safely, validate end to end, and update documentation
 
@@ -450,42 +450,42 @@ confusing citation count with independent support.
 
 ### Quality dimensions
 
-- [ ] Split quality into named dimensions: topic coherence, primary-evidence coverage, citation
+- [x] Split quality into named dimensions: topic coherence, primary-evidence coverage, citation
       completeness, source diversity, duplication avoidance, update novelty, and link validity.
-- [ ] Report per-page coverage and batch coverage separately. A page is not penalized for correctly
+- [x] Report per-page coverage and batch coverage separately. A page is not penalized for correctly
       excluding ideas assigned to sibling topics.
-- [ ] Add coherence checks for unrelated sections, source-shaped titles, headings that merely mirror
+- [x] Add coherence checks for unrelated sections, source-shaped titles, headings that merely mirror
       idea titles, and unexplained domain breadth.
-- [ ] Detect over-collapse by claim/topic diversity rather than only section count.
-- [ ] Detect over-fragmentation when sibling topics or sections repeat the same primary claims.
-- [ ] Treat fine-tag/semantic alignment as positive evidence; broad domain overlap alone contributes
+- [x] Detect over-collapse by claim/topic diversity rather than only section count.
+- [x] Detect over-fragmentation when sibling topics or sections repeat the same primary claims.
+- [x] Treat fine-tag/semantic alignment as positive evidence; broad domain overlap alone contributes
       no coherence score.
-- [ ] Use Phase 1 evidence metrics instead of `Math.max(sourceIds, transcriptIds)`.
-- [ ] Require promotion thresholds per dimension so a high coverage score cannot hide poor topic
+- [x] Use Phase 1 evidence metrics instead of `Math.max(sourceIds, transcriptIds)`.
+- [x] Require promotion thresholds per dimension so a high coverage score cannot hide poor topic
       coherence.
 
 ### Verification correction
 
-- [ ] Calculate verification after claims and source groups are known through the centralized
+- [x] Calculate verification after claims and source groups are known through the centralized
       verifier.
-- [ ] Require explicit contradictory claim/evidence pairs before assigning `contested`.
-- [ ] Keep one-transcript output `source-backed` even when it has many timestamp citations.
-- [ ] Show low source diversity as a warning and lifecycle input, not as a contradiction.
-- [ ] Promote to `corroborated` only for the supported claims/pages that satisfy independence rules.
+- [x] Require explicit contradictory claim/evidence pairs before assigning `contested`.
+- [x] Keep one-transcript output `source-backed` even when it has many timestamp citations.
+- [x] Show low source diversity as a warning and lifecycle input, not as a contradiction.
+- [x] Promote to `corroborated` only for the supported claims/pages that satisfy independence rules.
 
 ### Display metrics
 
-- [ ] Display evidence-reference count, canonical-idea count, transcript count, source/channel
+- [x] Display evidence-reference count, canonical-idea count, transcript count, source/channel
       count, and independent-source count separately on promoted wiki pages.
-- [ ] Label counts precisely; never show “12 sources” when the data represents 12 timestamp refs in
+- [x] Label counts precisely; never show “12 sources” when the data represents 12 timestamp refs in
       one transcript.
-- [ ] Keep lifecycle (`seed/growing/mature`) separate from verification and generation quality.
+- [x] Keep lifecycle (`seed/growing/mature`) separate from verification and generation quality.
 
 **Exit criteria**
 
-- [ ] Quality output explains which dimension failed and blocks unsafe promotion deterministically.
-- [ ] Twelve refs from one transcript display as one independent source and `source-backed`.
-- [ ] Source-backed, corroborated, and contested fixtures produce distinct correct states.
+- [x] Quality output explains which dimension failed and blocks unsafe promotion deterministically.
+- [x] Twelve refs from one transcript display as one independent source and `source-backed`.
+- [x] Source-backed, corroborated, and contested fixtures produce distinct correct states.
 
 ---
 

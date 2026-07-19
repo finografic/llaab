@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import { NodeIdSchema, TimestampSchema } from '../primitives.schema.js';
+import { WikiEvidenceMetricsSchema } from '../wiki-evidence-metrics.js';
+import { WikiQualityReportSchema } from '../wiki-quality-dimensions.js';
 import {
   WikiLifecycleStatusSchema,
   WikiLinkSchema,
@@ -29,6 +31,8 @@ export const KnowledgeWikiPageSchema = z.object({
   reviewed_at: TimestampSchema.optional(),
   verification_status: WikiVerificationStatusSchema,
   quality_score: z.number().int().min(0).max(100).optional(),
+  evidence_metrics: WikiEvidenceMetricsSchema.optional(),
+  quality_dimensions: WikiQualityReportSchema.optional(),
   generation_provider: z.string().min(1).optional(),
   generation_model: z.string().min(1).optional(),
   generation_duration_ms: z.number().int().nonnegative().optional(),

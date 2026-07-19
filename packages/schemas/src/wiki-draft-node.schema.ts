@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { BaseNodeSchema } from './base-node.schema.js';
 import { NodeIdSchema, TimestampSchema } from './primitives.schema.js';
 import { WikiEvidenceMetricsSchema } from './wiki-evidence-metrics.js';
+import { WikiQualityReportSchema } from './wiki-quality-dimensions.js';
 import {
   WikiDraftStatusSchema,
   WikiContestedClaimEvidenceSchema,
@@ -50,6 +51,7 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
     .regex(/^[a-f0-9]{64}$/)
     .optional(),
   quality_score: z.number().int().min(0).max(100).optional(),
+  quality_dimensions: WikiQualityReportSchema.optional(),
   selected_canonical_idea_count: z.number().int().nonnegative().optional(),
   selected_transcript_count: z.number().int().nonnegative().optional(),
   /** @deprecated Prefer `evidence_metrics.unique_source_node_count`. */

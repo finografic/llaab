@@ -1,3 +1,4 @@
+import { computeWikiEvidenceMetrics, formatWikiEvidenceMetricsSummary } from '@llaab/schemas';
 import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
@@ -65,6 +66,20 @@ export function KnowledgeWikiDetailPage() {
   const wiki = data?.wiki;
   const transcriptSourceRefs = wiki?.source_refs.filter((ref) => ref.kind !== 'external') ?? [];
   const externalSourceRefs = wiki?.source_refs.filter((ref) => ref.kind === 'external') ?? [];
+  const evidenceMetrics =
+    wiki?.evidence_metrics ??
+    (wiki
+      ? computeWikiEvidenceMetrics(
+          wiki.source_refs.map((ref) => ({
+            id: ref.id,
+            transcript_id: ref.kind === 'transcript' ? ref.node_id : undefined,
+            source_id: ref.kind === 'source' ? ref.node_id : undefined,
+            kind: ref.kind,
+            url: ref.url,
+            canonical_idea_ids: ref.kind === 'canonical-idea' && ref.node_id ? [ref.node_id] : [],
+          })),
+        )
+      : undefined);
   usePageTitle(wiki?.title ?? 'Knowledge wiki');
 
   if (!id) return <Navigate to="/knowledge/wikis" replace />;
@@ -147,7 +162,11 @@ export function KnowledgeWikiDetailPage() {
                     </CardHeader>
                     <CardContent className={styles.metricValue}>
                       {wiki.quality_score ?? 'Not scored'}
-                      <span>source-backed generation score</span>
+                      <span>
+                        {wiki.quality_dimensions?.blocking_dimensions.length
+                          ? `blocked: ${wiki.quality_dimensions.blocking_dimensions.join(', ')}`
+                          : 'generation quality score'}
+                      </span>
                     </CardContent>
                   </Card>
                 </Col>
@@ -157,11 +176,11 @@ export function KnowledgeWikiDetailPage() {
                       <CardTitle className={styles.metricLabel}>
                         <ActivityIcon /> Lifecycle
                       </CardTitle>
-                      <Badge variant="secondary">Published</Badge>
+                      <Badge variant="secondary">{wiki.status}</Badge>
                     </CardHeader>
                     <CardContent className={styles.metricValue}>
                       {wiki.status}
-                      <span>knowledge maturity</span>
+                      <span>knowledge maturity (separate from verification)</span>
                     </CardContent>
                   </Card>
                 </Col>
@@ -174,7 +193,13 @@ export function KnowledgeWikiDetailPage() {
                     </CardHeader>
                     <CardContent className={styles.metricValue}>
                       {wiki.verification_status}
-                      <span>{wiki.source_refs.length} source references</span>
+                      <span>
+                        {evidenceMetrics
+                          ? `${evidenceMetrics.independent_source_count} independent source${
+                              evidenceMetrics.independent_source_count === 1 ? '' : 's'
+                            }`
+                          : 'no evidence metrics'}
+                      </span>
                     </CardContent>
                   </Card>
                 </Col>
@@ -195,6 +220,19 @@ export function KnowledgeWikiDetailPage() {
                 </Col>
               </Row>
             </Col>
+
+            {evidenceMetrics ? (
+              <Col xs={12}>
+                <section className={styles.summaryCard} aria-label="Evidence metrics">
+                  <p className="text-sm text-muted-foreground">
+                    {formatWikiEvidenceMetricsSummary(evidenceMetrics)}
+                    {evidenceMetrics.unique_source_node_count > 0
+                      ? ` · ${evidenceMetrics.unique_source_node_count} source nodes`
+                      : ''}
+                  </p>
+                </section>
+              </Col>
+            ) : null}
 
             <Col xs={12}>
               <section className={styles.summaryCard}>

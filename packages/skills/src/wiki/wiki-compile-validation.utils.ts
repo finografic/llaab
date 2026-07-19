@@ -1,7 +1,10 @@
 import { getKnowledgeWikiSectionIds } from '@llaab/core';
+import { evaluateWikiQualityDimensions } from '@llaab/schemas';
 import type {
   KnowledgeWikiPage,
   WikiCompileResult,
+  WikiEvidenceMetrics,
+  WikiQualityReport,
   WikiSectionPatch,
   WikiValidationIssue,
 } from '@llaab/schemas';
@@ -13,6 +16,7 @@ export interface WikiCompileQuality {
   score: number;
   warnings: string[];
   issues: WikiValidationIssue[];
+  dimensions?: WikiQualityReport;
 }
 
 function duplicateIds(ids: string[]): string[] {
@@ -26,12 +30,17 @@ export function validateWikiCompileResult(input: {
   allowedLinkTargetIds: Set<string>;
   expectedTopicKey?: string;
   hasExistingWiki: boolean;
+  /** Independent source count from Phase 1 evidence metrics — not citation-ref count. */
   sourceCount: number;
+  evidenceMetrics?: WikiEvidenceMetrics;
+  primaryCanonicalIdeaIds?: Set<string>;
   /** Primary idea titles for mechanical heading / synthesis checks. */
   primaryIdeaTitles?: string[];
   transcriptTitle?: string;
   channelOrAuthor?: string;
   coherenceIssues?: WikiValidationIssue[];
+  fineTagAlignment?: number;
+  operationHint?: WikiCompileResult['operation'];
 }): WikiCompileQuality {
   const { result } = input;
   const warnings: string[] = [];
@@ -118,15 +127,21 @@ export function validateWikiCompileResult(input: {
     addIssue('omitted-ideas', 'Some selected canonical ideas were explicitly omitted.');
   }
   if (input.sourceCount < 2) addIssue('single-source', 'Independent source corroboration is unavailable.');
-  if (result.contested_claims.length > 0) addIssue('contested-claims', 'Contested claims require review.');
+  // Contested claim strings without opposing evidence groups are warnings, not verification state.
+  if (result.contested_claims.length > 0) {
+    addIssue(
+      'contested-claims',
+      'Contested claims noted; opposing evidence groups required for contested verification.',
+    );
+  }
   if (result.unresolved_questions.length > 0) {
     addIssue('unresolved-questions', 'The draft has unresolved questions.');
   }
-  if (result.sections.length === 1 && input.canonicalIdeaIds.size > 2) {
-    addIssue('over-collapse', 'Several ideas were collapsed into one section.');
-  }
 
   for (const issue of input.coherenceIssues ?? []) {
+    if (issues.some((existing) => existing.code === issue.code && existing.message === issue.message)) {
+      continue;
+    }
     addIssue(issue.code, issue.message);
   }
 
@@ -141,8 +156,32 @@ export function validateWikiCompileResult(input: {
   }
 
   warnings.push(...issues.map((issue) => issue.message));
-  const score = Math.max(0, 100 - issues.length * 10 - omittedIds.size * 5);
-  return { score, warnings, issues };
+
+  const primaryIds = input.primaryCanonicalIdeaIds ?? input.canonicalIdeaIds;
+  const representedPrimary = result.coverage.represented_canonical_idea_ids.filter((id) =>
+    primaryIds.has(id),
+  ).length;
+  const omittedPrimary = result.coverage.omitted_canonical_ideas.filter((idea) =>
+    primaryIds.has(idea.id),
+  ).length;
+  const dimensions = input.evidenceMetrics
+    ? evaluateWikiQualityDimensions({
+        issues,
+        evidenceMetrics: input.evidenceMetrics,
+        pageCoverage: {
+          primary_total: primaryIds.size,
+          represented_primary: representedPrimary,
+          omitted_primary: omittedPrimary,
+          excluded_for_siblings: Math.max(0, input.canonicalIdeaIds.size - primaryIds.size),
+        },
+        operation: input.operationHint ?? result.operation,
+        fineTagAlignment: input.fineTagAlignment,
+        hasValidLinks: result.links.every((link) => Boolean(link.note?.trim())),
+      })
+    : undefined;
+
+  const score = dimensions?.overall_score ?? Math.max(0, 100 - issues.length * 10 - omittedIds.size * 5);
+  return { score, warnings, issues, dimensions };
 }
 
 export function renderWikiDraftBody(result: WikiCompileResult): string {

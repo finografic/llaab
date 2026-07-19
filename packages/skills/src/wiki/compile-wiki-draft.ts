@@ -11,6 +11,7 @@ import { routeLlm } from '@llaab/llm';
 import {
   appendDatetimeFilenameSegment,
   computeWikiEvidenceMetrics,
+  evaluateWikiQualityDimensions,
   NodeIdSchema,
   toNodeId,
   WikiCompileResultSchema,
@@ -22,13 +23,16 @@ import type {
   CanonicalIdeaNode,
   KnowledgeWikiPage,
   WikiCompileResult,
+  WikiEvidenceMetrics,
   WikiEvidenceRole,
+  WikiQualityReport,
   WikiSourceRef,
 } from '@llaab/schemas';
 
 import { runSkill } from '../runner.js';
 import {
   evaluateWikiCompileCoherence,
+  fineTagAlignmentScore,
   hasTerminalCoherenceFailure,
   isFixableWikiCompileFailure,
 } from './wiki-compile-coherence.utils.js';
@@ -108,7 +112,10 @@ async function compileAttempt(input: {
   expectedTopicKey?: string;
   hasExistingWiki: boolean;
   sourceCount: number;
+  evidenceMetrics: WikiEvidenceMetrics;
+  primaryCanonicalIdeaIds: Set<string>;
   primaryIdeaTitles: string[];
+  fineTagAlignment: number;
   transcriptTitle?: string;
   channelOrAuthor?: string;
 }): Promise<CompileAttempt> {
@@ -137,10 +144,14 @@ async function compileAttempt(input: {
     expectedTopicKey: input.expectedTopicKey,
     hasExistingWiki: input.hasExistingWiki,
     sourceCount: input.sourceCount,
+    evidenceMetrics: input.evidenceMetrics,
+    primaryCanonicalIdeaIds: input.primaryCanonicalIdeaIds,
     primaryIdeaTitles: input.primaryIdeaTitles,
     transcriptTitle: input.transcriptTitle,
     channelOrAuthor: input.channelOrAuthor,
     coherenceIssues,
+    fineTagAlignment: input.fineTagAlignment,
+    operationHint: result.operation,
   });
   return {
     result,
@@ -568,12 +579,15 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         ),
         expectedTopicKey: existingWiki?.topic_key ?? input.suggestedTopicKey ?? input.proposal?.topic_key,
         hasExistingWiki: existingWiki !== undefined,
-        sourceCount: Math.max(
-          evidenceMetrics.independent_source_count,
-          evidenceMetrics.unique_source_node_count,
-          evidenceMetrics.unique_transcript_count,
+        sourceCount: evidenceMetrics.independent_source_count,
+        evidenceMetrics,
+        primaryCanonicalIdeaIds: new Set(
+          (primaryCanonicalIdeas.length > 0 ? primaryCanonicalIdeas : compileIdeas).map((idea) => idea.id),
         ),
         primaryIdeaTitles,
+        fineTagAlignment: fineTagAlignmentScore(
+          (primaryCanonicalIdeas.length > 0 ? primaryCanonicalIdeas : compileIdeas).map((idea) => idea.tags),
+        ),
         transcriptTitle: entryTranscript.title,
         channelOrAuthor: entryTranscript.author,
       };
@@ -614,11 +628,7 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
                 body: idea.body,
                 keyClaims: idea.key_claims,
               })),
-              Math.max(
-                evidenceMetrics.independent_source_count,
-                evidenceMetrics.unique_source_node_count,
-                evidenceMetrics.unique_transcript_count,
-              ),
+              evidenceMetrics.independent_source_count,
             )
           : undefined;
       if (!existingWiki && topicResolution.operation !== 'create') operation = 'needs-review';
@@ -666,11 +676,41 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         quality.score = Math.max(0, quality.score - 10);
       }
       const contestedClaims = [...new Set([...(novelty?.contradictions ?? []), ...result.contested_claims])];
-      const contestedClaimEvidence = contestedClaims.map((claim) => ({
-        claim,
-        existing_source_ref_ids: existingWiki?.source_refs.map((ref) => ref.id) ?? [],
-        incoming_source_ref_ids: evidence.map((item) => item.id),
-      }));
+      // Opposing evidence groups only for novelty-detected contradictions — model claim strings
+      // alone must not force `contested` verification.
+      const existingRefIds = existingWiki?.source_refs.map((ref) => ref.id) ?? [];
+      const incomingRefIds = evidence.map((item) => item.id);
+      const contestedClaimEvidence =
+        existingRefIds.length > 0 && incomingRefIds.length > 0
+          ? (novelty?.contradictions ?? []).map((claim) => ({
+              claim,
+              existing_source_ref_ids: existingRefIds,
+              incoming_source_ref_ids: incomingRefIds,
+            }))
+          : [];
+      const primaryIds = validationInput.primaryCanonicalIdeaIds;
+      const representedPrimary = result.coverage.represented_canonical_idea_ids.filter((id) =>
+        primaryIds.has(id),
+      ).length;
+      const omittedPrimary = result.coverage.omitted_canonical_ideas.filter((idea) =>
+        primaryIds.has(idea.id),
+      ).length;
+      const qualityDimensions: WikiQualityReport = evaluateWikiQualityDimensions({
+        issues: quality.issues,
+        evidenceMetrics,
+        pageCoverage: {
+          primary_total: primaryIds.size,
+          represented_primary: representedPrimary,
+          omitted_primary: omittedPrimary,
+          excluded_for_siblings: Math.max(0, validationInput.canonicalIdeaIds.size - primaryIds.size),
+        },
+        operation,
+        fineTagAlignment: validationInput.fineTagAlignment,
+        hasNovelEvidence: novelty?.has_novel_evidence,
+        hasValidLinks: result.links.every((link) => Boolean(link.note?.trim())),
+      });
+      quality.score = qualityDimensions.overall_score;
+      quality.dimensions = qualityDimensions;
       const created = await createNode({
         type: 'wiki-draft',
         id: draftId,
@@ -716,7 +756,8 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
             .filter((item) => item.operation === 'unchanged')
             .map((item) => item.section_id),
           proposed_links: result.links,
-          quality_score: quality.score,
+          quality_score: qualityDimensions.overall_score,
+          quality_dimensions: qualityDimensions,
           validation_issues: quality.issues,
           novelty_reason: novelty?.reason,
           novelty_analysis: novelty,

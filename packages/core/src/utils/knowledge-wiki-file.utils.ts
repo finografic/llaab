@@ -29,6 +29,8 @@ const WIKI_FRONTMATTER_ORDER = [
   'reviewed_at',
   'verification_status',
   'quality_score',
+  'evidence_metrics',
+  'quality_dimensions',
   'generation_provider',
   'generation_model',
   'generation_duration_ms',

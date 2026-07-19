@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { WikiEvidenceMetrics } from './wiki-evidence-metrics.js';
+import type { WikiQualityReport } from './wiki-quality-dimensions.js';
 import type {
   WikiContestedClaimEvidence,
   WikiOperation,
@@ -81,6 +82,8 @@ export interface EvaluateWikiAutoPromotionPolicyInput {
   sourceRefs?: WikiSourceRef[];
   contestedClaimEvidence?: WikiContestedClaimEvidence[];
   evidenceMetrics?: WikiEvidenceMetrics;
+  /** When present, per-dimension thresholds gate promotion (coverage cannot mask coherence). */
+  qualityDimensions?: WikiQualityReport;
 }
 
 export interface EvaluateWikiAutoPromotionPolicyResult {
@@ -123,7 +126,13 @@ export function evaluateWikiAutoPromotionPolicy(
     return { allow: false, outcome: 'skipped', reasons };
   }
 
-  if (!input.coherencePassed) {
+  if (input.qualityDimensions) {
+    if (!input.qualityDimensions.passed) {
+      const failed = input.qualityDimensions.blocking_dimensions.join(', ') || 'unknown';
+      reasons.push(`Quality dimension gate failed: ${failed}.`);
+      return { allow: false, outcome: 'failed', reasons };
+    }
+  } else if (!input.coherencePassed) {
     reasons.push('Topic coherence gate failed.');
     return { allow: false, outcome: 'failed', reasons };
   }
@@ -143,8 +152,9 @@ export function evaluateWikiAutoPromotionPolicy(
     return { allow: false, outcome: 'failed', reasons };
   }
 
-  if (input.qualityScore < threshold) {
-    reasons.push(`Quality score ${input.qualityScore} is below threshold ${threshold}.`);
+  const effectiveQualityScore = input.qualityDimensions?.overall_score ?? input.qualityScore;
+  if (effectiveQualityScore < threshold) {
+    reasons.push(`Quality score ${effectiveQualityScore} is below threshold ${threshold}.`);
     return { allow: false, outcome: 'failed', reasons };
   }
 

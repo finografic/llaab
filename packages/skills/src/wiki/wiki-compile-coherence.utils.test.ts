@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   evaluateWikiCompileCoherence,
+  fineTagAlignmentScore,
   hasMechanicalIdeaHeadings,
+  hasOverCollapsedByClaimDiversity,
+  hasRepeatedPrimaryClaims,
   hasTerminalCoherenceFailure,
   isFixableWikiCompileFailure,
   isSourceShapedWikiTitle,
@@ -78,5 +81,50 @@ describe('wiki compile coherence', () => {
     expect(issues.map((issue) => issue.code)).toEqual(
       expect.arrayContaining(['source-shaped-title', 'mechanical-idea-headings']),
     );
+  });
+
+  it('detects over-collapse by claim diversity rather than section count alone', () => {
+    expect(
+      hasOverCollapsedByClaimDiversity({
+        sectionCount: 1,
+        primaryIdeaTitles: [
+          'Agent Isolation Boundaries',
+          'Proactive Automation Scheduling',
+          'Voice Interaction Surfaces',
+        ],
+      }),
+    ).toBe(true);
+
+    expect(
+      hasOverCollapsedByClaimDiversity({
+        sectionCount: 1,
+        primaryIdeaTitles: ['Isolation Boundaries', 'Process Isolation', 'Runtime Isolation'],
+      }),
+    ).toBe(false);
+  });
+
+  it('scores fine-tag alignment and ignores domain-only overlap', () => {
+    expect(
+      fineTagAlignmentScore([
+        ['d:agents', 't:isolation'],
+        ['d:agents', 't:isolation'],
+      ]),
+    ).toBe(1);
+    expect(fineTagAlignmentScore([['d:agents'], ['d:agents', 'd:ops']])).toBe(0);
+  });
+
+  it('detects repeated primary claims across sibling sections', () => {
+    expect(
+      hasRepeatedPrimaryClaims([
+        {
+          heading: 'Isolation',
+          body: 'Agents need separate memory and process isolation for safety.',
+        },
+        {
+          heading: 'Boundaries',
+          body: 'Agents need separate memory and process isolation for safety.',
+        },
+      ]),
+    ).toBe(true);
   });
 });

@@ -13,6 +13,7 @@ import {
   WIKI_ONE_STEP_INTERNAL_STAGES,
   WIKI_ONE_STEP_USER_ACTION,
 } from './wiki-one-step.contract.js';
+import { evaluateWikiQualityDimensions } from './wiki-quality-dimensions.js';
 import {
   assertCrossCuttingIdeaRoles,
   assertRefinedBroadHermesExpectation,
@@ -144,6 +145,56 @@ describe('wiki one-step contract', () => {
         baseRevisionMatches: false,
       }).allow,
     ).toBe(false);
+
+    const coherenceFailedDimensions = evaluateWikiQualityDimensions({
+      issues: [
+        {
+          code: 'mechanical-idea-headings',
+          message: 'Sections mechanically mirror canonical idea titles instead of synthesizing the topic.',
+        },
+      ],
+      evidenceMetrics: computeWikiEvidenceMetrics([
+        {
+          id: 'ref-1',
+          transcript_id: 'transcript-1',
+          author: 'Hermes',
+          kind: 'transcript',
+          canonical_idea_ids: ['idea-a', 'idea-b'],
+        },
+      ]),
+      pageCoverage: {
+        primary_total: 2,
+        represented_primary: 2,
+        omitted_primary: 0,
+        excluded_for_siblings: 0,
+      },
+      operation: 'create',
+      hasValidLinks: true,
+    });
+    expect(
+      evaluateWikiAutoPromotionPolicy({
+        operation: 'create',
+        verificationStatus: 'source-backed',
+        qualityScore: 95,
+        coherencePassed: true,
+        evidenceGatesPassed: true,
+        hasValidLinks: true,
+        hasValidSourceRefs: true,
+        qualityDimensions: coherenceFailedDimensions,
+      }),
+    ).toMatchObject({ allow: false, outcome: 'failed' });
+    expect(
+      evaluateWikiAutoPromotionPolicy({
+        operation: 'create',
+        verificationStatus: 'source-backed',
+        qualityScore: 95,
+        coherencePassed: true,
+        evidenceGatesPassed: true,
+        hasValidLinks: true,
+        hasValidSourceRefs: true,
+        qualityDimensions: coherenceFailedDimensions,
+      }).reasons.join(' '),
+    ).toMatch(/topic_coherence/);
   });
 
   it('bounds internal correction and forbids draft-promotion UX copy', () => {

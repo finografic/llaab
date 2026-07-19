@@ -1,3 +1,4 @@
+import { formatWikiEvidenceMetricsSummary } from '@llaab/schemas';
 import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Col, Row } from 'components/ui/grid';
@@ -20,29 +21,36 @@ export function KnowledgeWikisPage() {
         {!isLoading && !error && wikis.length === 0 ? (
           <p className="text-muted-foreground text-sm">No promoted wikis yet.</p>
         ) : null}
-        {wikis.map((wiki) => (
-          <article key={wiki.id} className="border-border rounded-md border p-4">
-            <Row justify="space-between" align="flex-start" gutterWidth={12}>
-              <Col>
-                <Link to={`/knowledge/wikis/${wiki.id}`} className="text-base font-semibold underline">
-                  {wiki.title}
-                </Link>
-              </Col>
-              <Col xs="content">
-                <DeleteKnowledgeWikiAction wiki={wiki} />
-              </Col>
-            </Row>
-            <p className="text-muted-foreground mt-1 text-sm">{wiki.summary}</p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {wiki.status} · {wiki.verification_status} · {wiki.source_refs.length} sources ·{' '}
-              {wiki.links.length} links · {wiki.source_canonical_idea_ids.length} ideas · rev {wiki.revision}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Updated {wiki.updated_at}
-              {wiki.reviewed_at ? ` · reviewed ${wiki.reviewed_at}` : ''}
-            </p>
-          </article>
-        ))}
+        {wikis.map((wiki) => {
+          const metricsLabel = wiki.evidence_metrics
+            ? formatWikiEvidenceMetricsSummary(wiki.evidence_metrics)
+            : `${wiki.source_refs.length} evidence refs · ${wiki.source_canonical_idea_ids.length} ideas · ${wiki.source_transcript_ids.length} transcripts`;
+          return (
+            <article key={wiki.id} className="border-border rounded-md border p-4">
+              <Row justify="space-between" align="flex-start" gutterWidth={12}>
+                <Col>
+                  <Link to={`/knowledge/wikis/${wiki.id}`} className="text-base font-semibold underline">
+                    {wiki.title}
+                  </Link>
+                </Col>
+                <Col xs="content">
+                  <DeleteKnowledgeWikiAction wiki={wiki} />
+                </Col>
+              </Row>
+              <p className="text-muted-foreground mt-1 text-sm">{wiki.summary}</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Lifecycle {wiki.status} · Verification {wiki.verification_status}
+                {wiki.quality_score != null ? ` · Quality ${wiki.quality_score}%` : ''} · {wiki.links.length}{' '}
+                links · rev {wiki.revision}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{metricsLabel}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Updated {wiki.updated_at}
+                {wiki.reviewed_at ? ` · reviewed ${wiki.reviewed_at}` : ''}
+              </p>
+            </article>
+          );
+        })}
       </PageList>
     </PageLayout>
   );

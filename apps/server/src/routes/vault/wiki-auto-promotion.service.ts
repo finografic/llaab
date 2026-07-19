@@ -55,20 +55,24 @@ function draftHasValidLinks(draft: WikiDraftNode): boolean {
 }
 
 function policyInputForDraft(draft: WikiDraftNode): Parameters<typeof evaluateWikiAutoPromotionPolicy>[0] {
-  const coherenceFailed = draft.validation_issues.some((issue) =>
-    ['mechanical-idea-headings', 'source-shaped-title', 'over-fragmentation'].includes(issue.code),
-  );
+  const coherenceFailed =
+    draft.quality_dimensions != null
+      ? draft.quality_dimensions.blocking_dimensions.includes('topic_coherence')
+      : draft.validation_issues.some((issue) =>
+          ['mechanical-idea-headings', 'source-shaped-title', 'over-fragmentation', 'over-collapse'].includes(
+            issue.code,
+          ),
+        );
   const evidenceGatesPassed =
     draft.source_refs.length > 0 &&
-    (draft.primary_canonical_idea_ids.length > 0 || draft.source_canonical_idea_ids.length > 0);
+    (draft.primary_canonical_idea_ids.length > 0 || draft.source_canonical_idea_ids.length > 0) &&
+    (draft.evidence_metrics?.evidence_ref_count ?? draft.source_refs.length) > 0;
 
   return {
     operation: draft.operation,
-    verificationStatus:
-      draft.contested_claims.length > 0 || draft.contested_claim_evidence.length > 0
-        ? 'contested'
-        : 'source-backed',
-    qualityScore: draft.quality_score ?? 0,
+    // Verification is recalculated from evidence groups — claim strings alone are not contested.
+    verificationStatus: 'source-backed',
+    qualityScore: draft.quality_dimensions?.overall_score ?? draft.quality_score ?? 0,
     qualityThreshold: DEFAULT_WIKI_AUTO_PROMOTION_QUALITY_THRESHOLD,
     coherencePassed: !coherenceFailed,
     evidenceGatesPassed,
@@ -82,6 +86,7 @@ function policyInputForDraft(draft: WikiDraftNode): Parameters<typeof evaluateWi
     sourceRefs: draft.source_refs,
     contestedClaimEvidence: draft.contested_claim_evidence,
     evidenceMetrics: draft.evidence_metrics,
+    qualityDimensions: draft.quality_dimensions,
   };
 }
 

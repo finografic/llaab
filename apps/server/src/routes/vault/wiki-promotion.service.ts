@@ -109,6 +109,8 @@ function createPromotedPage(draft: WikiDraftNode, reviewedAt: string): Knowledge
     reviewed_at: reviewedAt,
     verification_status: verificationForDraft(draft),
     quality_score: draft.quality_score,
+    evidence_metrics: draft.evidence_metrics,
+    quality_dimensions: draft.quality_dimensions,
     generation_provider: draft.llm_provider,
     generation_model: draft.llm_model,
     generation_duration_ms: draft.llm_duration_ms,
@@ -243,6 +245,19 @@ export async function promoteUpdateWikiDraft(
       verification_status: verificationForDraft(draft, current),
       tags: [...new Set([...current.tags, ...draft.tags])],
       quality_score: draft.quality_score,
+      evidence_metrics:
+        draft.evidence_metrics ??
+        computeWikiEvidenceMetrics(
+          sourceRefs.map((ref) => ({
+            id: ref.id,
+            transcript_id: ref.kind === 'transcript' ? ref.node_id : undefined,
+            source_id: ref.kind === 'source' ? ref.node_id : undefined,
+            kind: ref.kind,
+            url: ref.url,
+            canonical_idea_ids: ref.kind === 'canonical-idea' && ref.node_id ? [ref.node_id] : [],
+          })),
+        ),
+      quality_dimensions: draft.quality_dimensions ?? current.quality_dimensions,
       generation_provider: draft.llm_provider,
       generation_model: draft.llm_model,
       generation_duration_ms: draft.llm_duration_ms,

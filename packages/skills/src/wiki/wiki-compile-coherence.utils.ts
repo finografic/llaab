@@ -95,6 +95,69 @@ export function hasOverFragmentedSections(input: {
   return input.primaryIdeaCount >= 2 && input.sectionCount > input.primaryIdeaCount + 1;
 }
 
+/**
+ * Over-collapse by claim/topic diversity: many diverse primary ideas forced into one section.
+ * Section count alone is insufficient — low title diversity is allowed to share a section.
+ */
+export function hasOverCollapsedByClaimDiversity(input: {
+  sectionCount: number;
+  primaryIdeaTitles: string[];
+}): boolean {
+  if (input.sectionCount !== 1 || input.primaryIdeaTitles.length <= 2) return false;
+  const tokens = input.primaryIdeaTitles.map(tokenizeComparable);
+  let diversePairs = 0;
+  let pairs = 0;
+  for (let i = 0; i < tokens.length; i += 1) {
+    for (let j = i + 1; j < tokens.length; j += 1) {
+      pairs += 1;
+      if (jaccard(tokens[i]!, tokens[j]!) < 0.2) diversePairs += 1;
+    }
+  }
+  return pairs > 0 && diversePairs / pairs >= 0.5;
+}
+
+/** Sibling sections that nearly repeat the same primary claim wording. */
+export function hasRepeatedPrimaryClaims(sections: Array<{ heading: string; body: string }>): boolean {
+  if (sections.length < 2) return false;
+  const bodies = sections
+    .map((section) => tokenizeComparable(`${section.heading} ${section.body.slice(0, 280)}`))
+    .filter((tokens) => tokens.size >= 4);
+  for (let i = 0; i < bodies.length; i += 1) {
+    for (let j = i + 1; j < bodies.length; j += 1) {
+      if (jaccard(bodies[i]!, bodies[j]!) >= 0.72) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Fine-tag overlap among primary ideas (`t:` tags). Domain tags (`d:`) alone never score.
+ * Returns 0–1 alignment ratio.
+ */
+export function fineTagAlignmentScore(ideaTagSets: string[][]): number {
+  if (ideaTagSets.length < 2) return 0;
+  const fineSets = ideaTagSets.map((tags) => new Set(tags.filter((tag) => tag.startsWith('t:'))));
+  // Broad domain overlap alone contributes no coherence score.
+  if (fineSets.every((set) => set.size === 0)) return 0;
+
+  let sharedPairs = 0;
+  let pairs = 0;
+  for (let i = 0; i < fineSets.length; i += 1) {
+    for (let j = i + 1; j < fineSets.length; j += 1) {
+      pairs += 1;
+      const left = fineSets[i]!;
+      const right = fineSets[j]!;
+      for (const tag of left) {
+        if (right.has(tag)) {
+          sharedPairs += 1;
+          break;
+        }
+      }
+    }
+  }
+  return pairs === 0 ? 0 : sharedPairs / pairs;
+}
+
 export function evaluateWikiCompileCoherence(input: {
   result: WikiCompileResult;
   primaryIdeaTitles: string[];
@@ -135,6 +198,23 @@ export function evaluateWikiCompileCoherence(input: {
       message: 'Too many sections for the primary evidence set; synthesis is missing.',
     });
   }
+  if (
+    hasOverCollapsedByClaimDiversity({
+      sectionCount: input.result.sections.length,
+      primaryIdeaTitles: input.primaryIdeaTitles,
+    })
+  ) {
+    issues.push({
+      code: 'over-collapse',
+      message: 'Diverse primary claims were collapsed into a single section without topic separation.',
+    });
+  }
+  if (hasRepeatedPrimaryClaims(input.result.sections)) {
+    issues.push({
+      code: 'repeated-primary-claims',
+      message: 'Sibling sections repeat the same primary claims; topics should be merged or differentiated.',
+    });
+  }
   return issues;
 }
 
@@ -153,6 +233,7 @@ const TERMINAL_COHERENCE_CODES = new Set([
   'mechanical-idea-headings',
   'source-shaped-title',
   'over-fragmentation',
+  'over-collapse',
 ]);
 
 export function isFixableWikiCompileFailure(errorMessage: string): boolean {

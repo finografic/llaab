@@ -76,10 +76,11 @@ export function determineWikiVerificationStatus(
   }
 
   // Contested claim strings without opposing evidence groups are warnings, not verification state.
+  // Independent-source count alone is insufficient — require claim-level support or
+  // a validated authoritative external. Low diversity remains a quality warning.
   if (
     hasValidatedAuthoritativeExternal(input.sourceRefs) ||
-    hasIndependentClaimCorroboration(input.materialClaims) ||
-    (input.evidenceMetrics?.independent_source_count ?? 0) >= 2
+    hasIndependentClaimCorroboration(input.materialClaims)
   ) {
     return 'corroborated';
   }

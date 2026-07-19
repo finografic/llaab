@@ -9,7 +9,10 @@ export { compileWikiDraft } from './wiki/compile-wiki-draft.js';
 export { linkWikiTopics } from './wiki/link-wiki-topics.js';
 export {
   evaluateWikiCompileCoherence,
+  fineTagAlignmentScore,
   hasMechanicalIdeaHeadings,
+  hasOverCollapsedByClaimDiversity,
+  hasRepeatedPrimaryClaims,
   hasTerminalCoherenceFailure,
   isFixableWikiCompileFailure,
   isSourceShapedWikiTitle,

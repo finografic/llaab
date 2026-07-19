@@ -150,6 +150,23 @@ export {
   type WikiMaterialClaimSupport,
 } from './wiki-verification.js';
 export {
+  DEFAULT_WIKI_QUALITY_DIMENSION_THRESHOLDS,
+  evaluateWikiQualityDimensions,
+  formatWikiEvidenceMetricsSummary,
+  type EvaluateWikiQualityDimensionsInput,
+  type WikiBatchCoverage,
+  WikiBatchCoverageSchema,
+  type WikiPageCoverage,
+  WikiPageCoverageSchema,
+  type WikiQualityDimension,
+  WikiQualityDimensionSchema,
+  type WikiQualityDimensionScore,
+  WikiQualityDimensionScoreSchema,
+  type WikiQualityReport,
+  WikiQualityReportSchema,
+  WIKI_QUALITY_DIMENSIONS,
+} from './wiki-quality-dimensions.js';
+export {
   assertNoForbiddenDraftPromotionUx,
   containsForbiddenDraftPromotionUx,
   CreateTranscriptWikisRequestSchema,

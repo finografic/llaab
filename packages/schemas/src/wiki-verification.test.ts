@@ -73,7 +73,7 @@ describe('wiki verification semantics', () => {
     ).toBe('contested');
   });
 
-  it('requires independent sources or validated external evidence for corroborated', () => {
+  it('requires claim-level independent support or validated external evidence for corroborated', () => {
     expect(
       determineWikiVerificationStatus({
         sourceRefs: [
@@ -99,6 +99,7 @@ describe('wiki verification semantics', () => {
       }),
     ).toBe('corroborated');
 
+    // Two independent origins without material claim support stay source-backed.
     expect(
       determineWikiVerificationStatus({
         sourceRefs: [transcriptRef('ref-1'), transcriptRef('ref-2', 'transcript-2')],
@@ -118,6 +119,34 @@ describe('wiki verification semantics', () => {
             kind: 'transcript',
           },
         ]),
+      }),
+    ).toBe('source-backed');
+
+    expect(
+      determineWikiVerificationStatus({
+        sourceRefs: [transcriptRef('ref-1'), transcriptRef('ref-2', 'transcript-2')],
+        evidenceMetrics: computeWikiEvidenceMetrics([
+          {
+            id: 'ref-1',
+            transcript_id: 'transcript-1',
+            author: 'Author A',
+            source_id: 'source-a',
+            kind: 'transcript',
+          },
+          {
+            id: 'ref-2',
+            transcript_id: 'transcript-2',
+            author: 'Author B',
+            source_id: 'source-b',
+            kind: 'transcript',
+          },
+        ]),
+        materialClaims: [
+          {
+            claim: 'Agent isolation requires separate memory boundaries.',
+            supporting_origin_ids: ['author-channel:author a', 'author-channel:author b'],
+          },
+        ],
       }),
     ).toBe('corroborated');
   });
