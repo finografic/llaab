@@ -68,6 +68,7 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
           'alias',
           'normalized-title',
           'canonical-idea-overlap',
+          'fine-tag-overlap',
           'domain-tag-overlap',
         ]),
         reason: z.string().min(1),

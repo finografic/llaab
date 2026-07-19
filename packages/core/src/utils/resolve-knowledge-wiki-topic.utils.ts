@@ -6,6 +6,7 @@ export type KnowledgeWikiTopicMatchKind =
   | 'alias'
   | 'normalized-title'
   | 'canonical-idea-overlap'
+  | 'fine-tag-overlap'
   | 'domain-tag-overlap';
 
 export interface KnowledgeWikiTopicMatch {
@@ -37,6 +38,7 @@ function matchForKind(
 ): KnowledgeWikiTopicMatch[] {
   const canonicalIdeaIds = new Set(input.canonicalIdeaIds);
   const domainTags = new Set(input.tags.filter((tag) => tag.startsWith('d:')));
+  const fineTags = new Set(input.tags.filter((tag) => !tag.startsWith('d:')));
   const normalizedTitle = normalize(input.title);
 
   return wikis.flatMap<KnowledgeWikiTopicMatch>((wiki) => {
@@ -55,6 +57,13 @@ function matchForKind(
     ) {
       return [{ wiki_id: wiki.id, kind, reason: 'Represents at least one selected canonical idea.' }];
     }
+    if (kind === 'fine-tag-overlap') {
+      const overlap = wiki.tags.filter((tag) => !tag.startsWith('d:') && fineTags.has(tag)).length;
+      if (overlap >= 2) {
+        return [{ wiki_id: wiki.id, kind, reason: 'Shares multiple fine content tags.' }];
+      }
+      return [];
+    }
     if (kind === 'domain-tag-overlap' && wiki.tags.some((tag) => domainTags.has(tag))) {
       return [{ wiki_id: wiki.id, kind, reason: 'Shares a selected domain tag.' }];
     }
@@ -71,6 +80,7 @@ export function resolveKnowledgeWikiTopic(
     'alias',
     'normalized-title',
     'canonical-idea-overlap',
+    'fine-tag-overlap',
     'domain-tag-overlap',
   ] as const) {
     const matches = matchForKind(kind, wikis, input);

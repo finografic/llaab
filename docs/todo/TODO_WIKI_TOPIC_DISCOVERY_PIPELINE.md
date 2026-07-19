@@ -1,6 +1,6 @@
 # TODO — One-Step Topic-Oriented Wiki Generation
 
-> **Status:** In progress — Phase 0 and Phase 1 complete.
+> **Status:** In progress — Phases 0–2 complete.
 > 📅 Jul 19, 2026.
 
 > **Priority:** P1 — refine the shipped wiki-generation path before treating transcript-wide
@@ -124,7 +124,7 @@ The correction separates three model-facing responsibilities while preserving on
 
 - [x] Phase 0 — lock the one-step contract and regression fixtures
 - [x] Phase 1 — add internal proposal, evidence-role, and diversity schemas
-- [ ] Phase 2 — build internal transcript-scoped topic discovery
+- [x] Phase 2 — build internal transcript-scoped topic discovery
 - [ ] Phase 3 — compile each discovered topic coherently
 - [ ] Phase 4 — resolve links and auto-promote in one orchestration run
 - [ ] Phase 5 — correct quality, source diversity, and verification semantics
@@ -275,60 +275,60 @@ is compiled, without exposing a proposal screen.
 
 ### Deterministic candidate graph
 
-- [ ] Replace the greedy first-match grouping algorithm with an order-independent similarity graph
+- [x] Replace the greedy first-match grouping algorithm with an order-independent similarity graph
       or equivalent deterministic clustering stage.
-- [ ] Normalize and weight fine content-tag overlap more strongly than domain overlap.
-- [ ] Include title/body/key-claim similarity and meaningful noun phrases; remove broad project
+- [x] Normalize and weight fine content-tag overlap more strongly than domain overlap.
+- [x] Include title/body/key-claim similarity and meaningful noun phrases; remove broad project
       terms and domain labels from topic-key derivation.
-- [ ] Use `d:*` domains as compatibility constraints or down-ranking signals. Permit justified
+- [x] Use `d:*` domains as compatibility constraints or down-ranking signals. Permit justified
       cross-domain topics and prohibit one-page-per-domain behavior.
-- [ ] Include existing-wiki coverage before proposal creation so represented evidence becomes an
+- [x] Include existing-wiki coverage before proposal creation so represented evidence becomes an
       update/no-op rather than a duplicate create.
-- [ ] Make optional embeddings a replaceable similarity input, not a required runtime service.
-- [ ] Ensure clustering is deterministic for the same ideas regardless of input order.
-- [ ] Bound discovery by the request's canonical idea ids and compact existing-wiki summaries; do
+- [x] Make optional embeddings a replaceable similarity input, not a required runtime service.
+- [x] Ensure clustering is deterministic for the same ideas regardless of input order.
+- [x] Bound discovery by the request's canonical idea ids and compact existing-wiki summaries; do
       not scan or prompt with unrelated vault content.
 
 ### `wiki-discover` model stage
 
-- [ ] Replace the current one-cluster/one-review response with the shared zero-to-many proposal
+- [x] Replace the current one-cluster/one-review response with the shared zero-to-many proposal
       bundle contract.
-- [ ] Permit the model to split broad deterministic components, merge adjacent compatible
+- [x] Permit the model to split broad deterministic components, merge adjacent compatible
       components, omit non-wiki material with reasons, and assign primary/supporting roles.
-- [ ] Supply canonical idea titles, bodies/key claims, fine tags, domains, and compact existing-wiki
+- [x] Supply canonical idea titles, bodies/key claims, fine tags, domains, and compact existing-wiki
       matches. Do not supply full transcripts at discovery time.
-- [ ] Require source-independent titles unless the topic is specifically the named product,
+- [x] Require source-independent titles unless the topic is specifically the named product,
       person, project, or source.
-- [ ] Require a rationale explaining why primary ideas form one reusable article and why supporting
+- [x] Require a rationale explaining why primary ideas form one reusable article and why supporting
       ideas belong only as context/evidence.
-- [ ] Validate every returned id and existing-wiki target against deterministic inputs.
-- [ ] Reject output that collapses broad ideas into one source-shaped topic or mechanically returns
+- [x] Validate every returned id and existing-wiki target against deterministic inputs.
+- [x] Reject output that collapses broad ideas into one source-shaped topic or mechanically returns
       one topic per domain.
-- [ ] Permit one bounded retry for malformed or invalid proposals; record both attempts in the
+- [x] Permit one bounded retry for malformed or invalid proposals; record both attempts in the
       parent `RunNode`.
 
 ### Automatic topic resolution
 
-- [ ] Run exact topic key, alias, normalized title, canonical-idea overlap, fine-tag similarity,
+- [x] Run exact topic key, alias, normalized title, canonical-idea overlap, fine-tag similarity,
       and semantic matching against the current wiki index for every proposal.
-- [ ] Resolve `create`, `update`, and `no-op` automatically where confidence is sufficient.
-- [ ] For an ambiguous match, run one bounded resolution pass using only the competing wiki
+- [x] Resolve `create`, `update`, and `no-op` automatically where confidence is sufficient.
+- [x] For an ambiguous match, run one bounded resolution pass using only the competing wiki
       summaries and proposal evidence.
-- [ ] If ambiguity remains, mark that internal branch skipped/failed with a durable reason. Do not
+- [x] If ambiguity remains, mark that internal branch skipped/failed with a durable reason. Do not
       create a suffixed topic and do not request user review.
-- [ ] Make repeated discovery idempotent by a stable input/content hash while retaining historical
+- [x] Make repeated discovery idempotent by a stable input/content hash while retaining historical
       run traces when source evidence or the wiki index changes.
-- [ ] Keep global cross-transcript discovery only as an internal/operator capability using the same
+- [x] Keep global cross-transcript discovery only as an internal/operator capability using the same
       contract; it must not create a second end-user creation workflow.
 
 **Exit criteria**
 
-- [ ] The broad regression transcript produces several coherent internal proposals and not one
+- [x] The broad regression transcript produces several coherent internal proposals and not one
       source digest.
-- [ ] A focused transcript still produces one proposal; already-covered material resolves to an
+- [x] A focused transcript still produces one proposal; already-covered material resolves to an
       existing page or safe update.
-- [ ] Proposal output is input-order stable and every selected idea is accounted for.
-- [ ] No proposal or candidate review is required from the user.
+- [x] Proposal output is input-order stable and every selected idea is accounted for.
+- [x] No proposal or candidate review is required from the user.
 
 ---
 

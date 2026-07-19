@@ -75,7 +75,9 @@ export async function discoverWikiCandidates({
           .map((transcript) => [transcript.id, transcript]),
       );
       const producedNodeIds: string[] = [];
-      for (const { topicKey, ideas: clusteredIdeas } of clusterCanonicalIdeasForWikiDiscovery(ideas)) {
+      for (const cluster of clusterCanonicalIdeasForWikiDiscovery(ideas)) {
+        const { topicKey, primaryIdeaIds, supportingIdeaIds } = cluster;
+        const clusteredIdeas = cluster.ideas;
         const representedIdeaIds = new Set(
           wikis
             .filter(
@@ -84,13 +86,16 @@ export async function discoverWikiCandidates({
             )
             .flatMap((wiki) => wiki.source_canonical_idea_ids),
         );
-        const ideas = clusteredIdeas.filter((idea) => !representedIdeaIds.has(idea.id));
-        const transcriptIds = [...new Set(ideas.map((idea) => idea.transcript_id))];
-        if (ideas.length < minCanonicalIdeas || transcriptIds.length < minTranscripts) continue;
+        const uncoveredPrimary = clusteredIdeas.filter(
+          (idea) => primaryIdeaIds.includes(idea.id) && !representedIdeaIds.has(idea.id),
+        );
+        const transcriptIds = [...new Set(uncoveredPrimary.map((idea) => idea.transcript_id))];
+        if (uncoveredPrimary.length < minCanonicalIdeas || transcriptIds.length < minTranscripts) continue;
         const candidateId = `${topicKey}-candidate`;
         if (existingCandidates.some((candidate) => candidate.id === candidateId)) continue;
         const existing = wikis.filter(
-          (wiki) => wiki.topic_key === topicKey || wiki.tags.some((tag) => ideas[0]?.tags.includes(tag)),
+          (wiki) =>
+            wiki.topic_key === topicKey || wiki.tags.some((tag) => uncoveredPrimary[0]?.tags.includes(tag)),
         );
         const sourceIds = [
           ...new Set(
@@ -100,16 +105,21 @@ export async function discoverWikiCandidates({
             }),
           ),
         ];
+        const primaryIds = uncoveredPrimary.map((idea) => idea.id);
+        const supportingIds = supportingIdeaIds.filter((id) => !representedIdeaIds.has(id));
         const deterministicRecommendation = existing.length === 0 ? 'create' : 'needs-review';
         const review = modelReview
           ? await routeLlm(
               'wiki-discover',
               JSON.stringify({
                 topic_key: topicKey,
-                canonical_ideas: ideas.map((idea) => ({
+                primary_canonical_idea_ids: primaryIds,
+                supporting_canonical_idea_ids: supportingIds,
+                canonical_ideas: uncoveredPrimary.map((idea) => ({
                   id: idea.id,
                   title: idea.title,
                   key_claims: idea.key_claims,
+                  tags: idea.tags,
                 })),
                 existing_wikis: existing.map((wiki) => ({
                   id: wiki.id,
@@ -119,14 +129,14 @@ export async function discoverWikiCandidates({
               }),
               {
                 system:
-                  'Judge this deterministic wiki cluster only. Return JSON with title, topic_key, recommendation, canonical_idea_ids, existing_wiki_ids, and warnings. Do not add ids.',
+                  'Judge this deterministic wiki cluster only. Return JSON with title, topic_key, recommendation, canonical_idea_ids, existing_wiki_ids, and warnings. Do not add ids. Prefer primary_canonical_idea_ids when present.',
                 bypassCache: true,
               },
             )
           : undefined;
         const reviewResult = review ? parseDiscoveryReview(review.text) : undefined;
         if (reviewResult) {
-          const allowedIdeaIds = new Set(ideas.map((idea) => idea.id));
+          const allowedIdeaIds = new Set(primaryIds);
           const allowedWikiIds = new Set(existing.map((wiki) => wiki.id));
           if (
             reviewResult.canonical_idea_ids.some((id) => !allowedIdeaIds.has(id)) ||
@@ -142,15 +152,20 @@ export async function discoverWikiCandidates({
         const created = await createNode({
           type: 'wiki-candidate',
           id: candidateId,
-          title: reviewResult?.title ?? topicKey.replace(/-/g, ' '),
-          body: 'Deterministically discovered from canonical ideas. Review before compiling a wiki draft.',
-          tags: ideas[0]?.tags ?? [],
+          title: reviewResult?.title ?? cluster.titleHint,
+          body: 'Deterministically discovered from canonical ideas. Operator/recovery path — not the transcript Create Wiki(s) workflow.',
+          tags: uncoveredPrimary[0]?.tags ?? [],
           extra: {
             topic_key: topicKey,
-            source_canonical_idea_ids: reviewResult?.canonical_idea_ids ?? ideas.map((idea) => idea.id),
+            source_canonical_idea_ids: reviewResult?.canonical_idea_ids ?? primaryIds,
+            primary_canonical_idea_ids: reviewResult?.canonical_idea_ids ?? primaryIds,
+            supporting_canonical_idea_ids: supportingIds,
             source_transcript_ids: transcriptIds,
             source_ids: sourceIds,
-            heat_score: Math.min(100, ideas.length * 12 + transcriptIds.length * 28 + sourceIds.length * 20),
+            heat_score: Math.min(
+              100,
+              uncoveredPrimary.length * 12 + transcriptIds.length * 28 + sourceIds.length * 20,
+            ),
             novelty_score: existing.length === 0 ? Math.min(100, 60 + sourceIds.length * 20) : 20,
             recommendation: reviewResult?.recommendation ?? deterministicRecommendation,
             existing_wiki_ids: reviewResult?.existing_wiki_ids ?? existing.map((wiki) => wiki.id),

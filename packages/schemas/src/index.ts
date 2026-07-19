@@ -193,6 +193,14 @@ export {
   WIKI_TOPIC_DISCOVERY_FIXTURE_TIMESTAMP,
 } from './wiki-topic-discovery.fixtures.js';
 export {
+  createKnowledgeWikiFixture,
+  createWikiFixtureCanonicalIdea,
+  createWikiFixtureDraft,
+  createWikiFixtureTranscript,
+  wikiCompileScenarioFixtures,
+  WIKI_FIXTURE_TIMESTAMP,
+} from './wiki.fixtures.js';
+export {
   CreateWikiDraftRequestSchema,
   type WikiCompileInput,
   WikiCompileInputSchema,

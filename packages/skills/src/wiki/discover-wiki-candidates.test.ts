@@ -6,6 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const { routeLlm } = vi.hoisted(() => ({ routeLlm: vi.fn() }));
 vi.mock('@llaab/llm', () => ({ routeLlm }));
 
+function transcriptExtra(sourceId: string) {
+  return {
+    source_type: 'other' as const,
+    source_id: sourceId,
+    source_url: `https://example.com/${sourceId}`,
+  };
+}
+
 describe('discoverWikiCandidates', () => {
   let root: string;
 
@@ -29,18 +37,18 @@ describe('discoverWikiCandidates', () => {
     const first = await core.createNode({
       type: 'transcript',
       title: 'First',
-      extra: { source_type: 'youtube', source_id: 'source-a', source_url: 'https://example.com/first' },
+      extra: transcriptExtra('source-a'),
     });
     const second = await core.createNode({
       type: 'transcript',
       title: 'Second',
-      extra: { source_type: 'youtube', source_id: 'source-b', source_url: 'https://example.com/second' },
+      extra: transcriptExtra('source-b'),
     });
     for (const [index, transcriptId] of [first.id, second.id, second.id].entries()) {
       await core.createNode({
         type: 'canonical-idea',
         title: `Context idea ${index}`,
-        tags: ['d:context'],
+        tags: ['d:context', 'retrieval', 'working-memory'],
         extra: { transcript_id: transcriptId, source_candidate_idea_ids: [`candidate-${index}`] },
       });
     }
@@ -54,7 +62,7 @@ describe('discoverWikiCandidates', () => {
 
     expect(firstRun.result.candidateCount).toBe(1);
     expect((await core.readNodeByType('run', firstRun.record.runNodeId)).produced_node_ids).toEqual([
-      'context-candidate',
+      'retrieval-working-memory-candidate',
     ]);
     expect(secondRun.result.candidateCount).toBe(0);
     expect(candidates).toHaveLength(1);
@@ -66,18 +74,18 @@ describe('discoverWikiCandidates', () => {
     const first = await core.createNode({
       type: 'transcript',
       title: 'First',
-      extra: { source_type: 'other' },
+      extra: transcriptExtra('threshold-a'),
     });
     const second = await core.createNode({
       type: 'transcript',
       title: 'Second',
-      extra: { source_type: 'other' },
+      extra: transcriptExtra('threshold-b'),
     });
     for (const [index, transcriptId] of [first.id, second.id].entries()) {
       await core.createNode({
         type: 'canonical-idea',
         title: `Threshold idea ${index}`,
-        tags: ['d:threshold'],
+        tags: ['d:threshold', 'gate', 'bounds'],
         extra: { transcript_id: transcriptId, source_candidate_idea_ids: [`threshold-${index}`] },
       });
     }
@@ -87,7 +95,7 @@ describe('discoverWikiCandidates', () => {
 
     expect(defaultResult.result.candidateCount).toBe(0);
     expect(configuredResult.result.candidateCount).toBe(1);
-    expect((await core.listNodes({ type: 'wiki-candidate' }))[0]?.id).toBe('threshold-candidate');
+    expect((await core.listNodes({ type: 'wiki-candidate' }))[0]?.id).toBe('bounds-gate-candidate');
   });
 
   it('subtracts canonical ideas already represented by promoted knowledge', async () => {
@@ -95,7 +103,7 @@ describe('discoverWikiCandidates', () => {
     const { discoverWikiCandidates } = await import('./discover-wiki-candidates.js');
     const transcripts = await Promise.all(
       ['first', 'second', 'third'].map((title) =>
-        core.createNode({ type: 'transcript', title, extra: { source_type: 'other' } }),
+        core.createNode({ type: 'transcript', title, extra: transcriptExtra(title) }),
       ),
     );
     const ideas = await Promise.all(
@@ -103,7 +111,7 @@ describe('discoverWikiCandidates', () => {
         core.createNode({
           type: 'canonical-idea',
           title: `Context discovery ${index}`,
-          tags: ['d:context'],
+          tags: ['d:context', 'retrieval', 'working-memory'],
           extra: { transcript_id: transcript.id, source_candidate_idea_ids: [] },
         }),
       ),
@@ -111,13 +119,13 @@ describe('discoverWikiCandidates', () => {
     await core.writeKnowledgeWiki({
       id: 'context',
       type: 'wiki',
-      topic_key: 'context',
+      topic_key: 'retrieval-working-memory',
       title: 'Context',
       aliases: [],
       summary: 'Already represented.',
       body: '<!-- wiki-section:overview -->\n\n## Overview\n\nKnown.[^source-ref]',
       status: 'seed',
-      tags: ['d:context'],
+      tags: ['d:context', 'retrieval', 'working-memory'],
       links: [],
       source_refs: [{ id: 'source-ref', kind: 'transcript', verification: 'source-backed' }],
       source_canonical_idea_ids: ideas.map((idea) => idea.id),
@@ -139,7 +147,7 @@ describe('discoverWikiCandidates', () => {
     const { discoverWikiCandidates } = await import('./discover-wiki-candidates.js');
     const transcripts = await Promise.all(
       ['first', 'second', 'third'].map((title) =>
-        core.createNode({ type: 'transcript', title, extra: { source_type: 'other' } }),
+        core.createNode({ type: 'transcript', title, extra: transcriptExtra(title) }),
       ),
     );
     const ideas = await Promise.all(
@@ -147,7 +155,7 @@ describe('discoverWikiCandidates', () => {
         core.createNode({
           type: 'canonical-idea',
           title: `Context review ${index}`,
-          tags: ['d:context'],
+          tags: ['d:context', 'retrieval', 'working-memory'],
           extra: { transcript_id: transcript.id, source_candidate_idea_ids: [] },
         }),
       ),
@@ -157,7 +165,7 @@ describe('discoverWikiCandidates', () => {
       return {
         text: JSON.stringify({
           title: 'Reviewed context',
-          topic_key: 'context',
+          topic_key: 'retrieval-working-memory',
           recommendation: 'create',
           canonical_idea_ids: input.canonical_ideas.map((idea) => idea.id),
           existing_wiki_ids: [],
@@ -179,6 +187,7 @@ describe('discoverWikiCandidates', () => {
       llm_model: 'test-model',
       llm_provider: 'ollama',
       source_canonical_idea_ids: ideas.map((idea) => idea.id),
+      primary_canonical_idea_ids: ideas.map((idea) => idea.id),
     });
   });
 });

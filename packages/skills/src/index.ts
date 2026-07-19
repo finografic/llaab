@@ -7,6 +7,18 @@ export {
 export { ingestYouTube, type IngestYouTubeInput, type IngestYouTubeOutput } from './ingest-youtube.js';
 export { compileWikiDraft } from './wiki/compile-wiki-draft.js';
 export { discoverWikiCandidates } from './wiki/discover-wiki-candidates.js';
+export {
+  discoverTranscriptWikiTopics,
+  hashDiscoverySelection,
+  type DiscoverTranscriptWikiTopicsInput,
+  type DiscoverTranscriptWikiTopicsOutput,
+} from './wiki/discover-transcript-wiki-topics.js';
+export {
+  clusterCanonicalIdeasForWikiDiscovery,
+  computeCanonicalIdeaSimilarity,
+  buildDiscoveryContentHash,
+} from './wiki/wiki-discovery.utils.js';
+export { resolveWikiTopicProposal } from './wiki/wiki-discovery-resolution.utils.js';
 export { researchWiki } from './wiki/research-wiki.js';
 export type { CompileWikiDraftInput, CompileWikiDraftOutput } from './wiki/wiki-compile.types.js';
 export { buildWikiResultingBody } from './wiki/wiki-compile-validation.utils.js';

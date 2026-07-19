@@ -1,5 +1,5 @@
 import { readNodeByType } from '@llaab/core';
-import { compileWikiDraft } from '@llaab/skills';
+import { compileWikiDraft, discoverTranscriptWikiTopics } from '@llaab/skills';
 import type { CreateWikiDraftBody } from './vault-wiki-drafts.schema.js';
 import type { CanonicalIdeaNode } from '@llaab/schemas';
 
@@ -87,8 +87,8 @@ function shouldJoinGroup(group: WikiDraftIdeaGroup, domains: Set<string>, tokens
 }
 
 /**
- * Current greedy grouping heuristic (characterization baseline).
- * Phase 2 replaces this with order-independent discovery proposals.
+ * Legacy greedy grouping heuristic retained for Phase 0 characterization baselines.
+ * Transcript wiki creation uses discoverTranscriptWikiTopics instead.
  */
 export function groupCanonicalIdeasByHeuristic(
   ideas: CanonicalIdeaNode[],
@@ -133,22 +133,68 @@ export async function compileWikiDraftsForTranscript(input: {
     input.body.target_wiki_id !== undefined ||
     input.body.suggested_topic_key !== undefined ||
     input.body.suggested_title !== undefined;
-  const groups = await groupCanonicalIdeasForWikiDrafts({
-    canonicalIdeaIds: input.body.canonical_idea_ids,
-    forceSingleDraft,
-  });
-  const results: Array<Awaited<ReturnType<typeof compileWikiDraft>>> = [];
 
-  for (const canonicalIdeaIds of groups) {
+  // Explicit target/title/topic-key requests keep a single compile path for recovery tooling.
+  if (forceSingleDraft) {
+    return [
+      await compileWikiDraft({
+        transcriptId: input.transcriptId,
+        canonicalIdeaIds: input.body.canonical_idea_ids,
+        suggestedTitle: input.body.suggested_title,
+        suggestedTopicKey: input.body.suggested_topic_key,
+        targetWikiId: input.body.target_wiki_id,
+        entryPath: 'manual',
+      }),
+    ];
+  }
+
+  const discovery = await discoverTranscriptWikiTopics({
+    transcriptId: input.transcriptId,
+    canonicalIdeaIds: input.body.canonical_idea_ids,
+    modelReview: false,
+  });
+
+  const results: Array<Awaited<ReturnType<typeof compileWikiDraft>>> = [];
+  for (const proposal of discovery.result.proposals) {
+    if (proposal.operation === 'needs-review') continue;
+    const canonicalIdeaIds = [
+      ...new Set([...proposal.primary_canonical_idea_ids, ...proposal.supporting_canonical_idea_ids]),
+    ];
     results.push(
       await compileWikiDraft({
         transcriptId: input.transcriptId,
         canonicalIdeaIds,
-        suggestedTitle: groups.length === 1 ? input.body.suggested_title : undefined,
-        suggestedTopicKey: groups.length === 1 ? input.body.suggested_topic_key : undefined,
-        targetWikiId: groups.length === 1 ? input.body.target_wiki_id : undefined,
+        primaryCanonicalIdeaIds: proposal.primary_canonical_idea_ids,
+        supportingCanonicalIdeaIds: proposal.supporting_canonical_idea_ids,
+        proposal: {
+          id: proposal.id,
+          discovery_batch_id: proposal.discovery_batch_id,
+          topic_key: proposal.topic_key,
+          title: proposal.title,
+          rationale: proposal.rationale,
+          primary_canonical_idea_ids: proposal.primary_canonical_idea_ids,
+          supporting_canonical_idea_ids: proposal.supporting_canonical_idea_ids,
+          domains: proposal.domains,
+          tags: proposal.tags,
+          operation: proposal.operation,
+          existing_wiki_id: proposal.existing_wiki_id,
+          coherence_score: proposal.coherence_score,
+          warnings: proposal.warnings,
+        },
+        discoveryBatchId: discovery.result.discovery_batch_id,
+        suggestedTitle: proposal.title,
+        suggestedTopicKey: proposal.topic_key,
+        targetWikiId: proposal.existing_wiki_id,
         entryPath: 'manual',
+        forceUpdate: proposal.operation === 'update',
       }),
+    );
+  }
+
+  if (results.length === 0) {
+    throw new Error(
+      discovery.skipped[0]?.reason ??
+        'Topic discovery produced no compileable wiki proposals for the selected ideas.',
     );
   }
 
