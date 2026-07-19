@@ -27,6 +27,11 @@ export function validateWikiCompileResult(input: {
   expectedTopicKey?: string;
   hasExistingWiki: boolean;
   sourceCount: number;
+  /** Primary idea titles for mechanical heading / synthesis checks. */
+  primaryIdeaTitles?: string[];
+  transcriptTitle?: string;
+  channelOrAuthor?: string;
+  coherenceIssues?: WikiValidationIssue[];
 }): WikiCompileQuality {
   const { result } = input;
   const warnings: string[] = [];
@@ -66,16 +71,18 @@ export function validateWikiCompileResult(input: {
     }
   }
   const duplicateLinks = duplicateIds(result.links.map((link) => `${link.relation}:${link.target_wiki_id}`));
-  if (duplicateLinks.length > 0)
-    {throw new Error(`Wiki output contains duplicate links: ${duplicateLinks[0]}`);}
+  if (duplicateLinks.length > 0) {
+    throw new Error(`Wiki output contains duplicate links: ${duplicateLinks[0]}`);
+  }
 
   for (const section of result.sections) {
     if (section.body.trim() && section.source_ref_ids.length === 0) {
       throw new Error(`Wiki section "${section.id}" has no source references.`);
     }
     for (const id of section.source_ref_ids) {
-      if (!input.allowedSourceRefs.has(id))
-        {throw new Error(`Wiki section references unknown source ref: ${id}`);}
+      if (!input.allowedSourceRefs.has(id)) {
+        throw new Error(`Wiki section references unknown source ref: ${id}`);
+      }
     }
     for (const id of section.source_canonical_idea_ids) {
       if (!input.canonicalIdeaIds.has(id)) {
@@ -107,14 +114,30 @@ export function validateWikiCompileResult(input: {
     throw new Error('An update draft requires an existing promoted wiki target.');
   }
 
-  if (omittedIds.size > 0)
-    {addIssue('omitted-ideas', 'Some selected canonical ideas were explicitly omitted.');}
+  if (omittedIds.size > 0) {
+    addIssue('omitted-ideas', 'Some selected canonical ideas were explicitly omitted.');
+  }
   if (input.sourceCount < 2) addIssue('single-source', 'Independent source corroboration is unavailable.');
   if (result.contested_claims.length > 0) addIssue('contested-claims', 'Contested claims require review.');
-  if (result.unresolved_questions.length > 0)
-    {addIssue('unresolved-questions', 'The draft has unresolved questions.');}
+  if (result.unresolved_questions.length > 0) {
+    addIssue('unresolved-questions', 'The draft has unresolved questions.');
+  }
   if (result.sections.length === 1 && input.canonicalIdeaIds.size > 2) {
     addIssue('over-collapse', 'Several ideas were collapsed into one section.');
+  }
+
+  for (const issue of input.coherenceIssues ?? []) {
+    addIssue(issue.code, issue.message);
+  }
+
+  for (const section of result.sections) {
+    if (!section.body.trim()) continue;
+    if (section.source_canonical_idea_ids.length === 0) {
+      addIssue(
+        'missing-section-idea-roles',
+        `Section "${section.id}" must cite primary/supporting canonical idea ids.`,
+      );
+    }
   }
 
   warnings.push(...issues.map((issue) => issue.message));

@@ -1,4 +1,4 @@
-import { readNodeByType } from '@llaab/core';
+import { readKnowledgeWiki, readNodeByType } from '@llaab/core';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type {
   CreateWikiDraftBody,
@@ -24,96 +24,133 @@ export const createWikiDraft = {
   handler: async (c: AppCtxJson<CreateWikiDraftBody>) => {
     const { id: transcriptId } = c.req.param() as { id: string };
     const body = c.req.valid('json');
-    const results = await compileWikiDraftsForTranscript({
-      transcriptId,
-      body,
-    });
-    const failed = results.find(({ record }) => record.status === 'failed');
 
-    if (failed) {
+    let orchestration: Awaited<ReturnType<typeof compileWikiDraftsForTranscript>>;
+    try {
+      orchestration = await compileWikiDraftsForTranscript({
+        transcriptId,
+        body,
+      });
+    } catch (error) {
       return c.json(
         {
           success: false,
-          error: failed.record.error ?? 'Wiki compilation failed.',
-          runId: failed.record.runNodeId,
-          runIds: results.map(({ record }) => record.runNodeId),
-          draftIds: results.flatMap(({ result }) => result?.draftId ?? []),
+          error: error instanceof Error ? error.message : 'Wiki compilation failed.',
         },
         500,
       );
     }
 
-    const draftIds = results.map(({ result }) => result.draftId);
-    const wikis = await autoPromoteWikiDrafts(draftIds);
+    const { parentRunId, branches, compiled } = orchestration;
+    const promoteableDraftIds = compiled
+      .filter(({ result }) => result && !result.coherenceFailed)
+      .map(({ result }) => result.draftId);
+    const wikis = promoteableDraftIds.length > 0 ? await autoPromoteWikiDrafts(promoteableDraftIds) : [];
+
+    for (const branch of branches) {
+      if (branch.kind !== 'no-op') continue;
+      try {
+        const existing = await readKnowledgeWiki(branch.existingWikiId);
+        if (!wikis.some((wiki) => wiki.id === existing.id)) wikis.push(existing);
+      } catch {
+        // Existing wiki missing — surface as warning below.
+      }
+    }
+
     const wikiIds = wikis.map((wiki) => wiki.id);
-    const warnings = results.flatMap(({ result }) => result.warnings);
-    if (results.length === 1) {
-      const [{ record, result }] = results;
+    const draftIds = compiled.flatMap(({ result }) => (result?.draftId ? [result.draftId] : []));
+    const runIds = [parentRunId, ...compiled.map(({ record }) => record.runNodeId)];
+    const warnings = [
+      ...compiled.flatMap(({ result }) => result?.warnings ?? []),
+      ...branches.flatMap((branch) => {
+        if (branch.kind === 'failed') return [`Failed topic: ${branch.reason}`];
+        if (branch.kind === 'skipped') return [`Skipped topic: ${branch.reason}`];
+        if (branch.kind === 'compiled' && branch.coherenceFailed) {
+          return ['Coherence gate failed; draft retained for audit and was not auto-promoted.'];
+        }
+        return [];
+      }),
+    ];
+
+    const hasPromotedOrExisting = wikiIds.length > 0;
+    if (!hasPromotedOrExisting) {
       return c.json(
         {
-          success: true,
-          runId: record.runNodeId,
-          runIds: [record.runNodeId],
+          success: false,
+          error: warnings[0] ?? 'Wiki compilation produced no promotable pages.',
+          runId: parentRunId,
+          runIds,
           draftIds,
-          draftCount: 1,
-          wikiId: wikiIds[0]!,
-          wikiIds,
-          wikiCount: wikiIds.length,
-          wikis,
-          ...result,
+          branches,
         },
-        201,
+        500,
       );
     }
+
+    const evidenceMetrics = compiled.reduce(
+      (acc, { result }) => {
+        if (!result) return acc;
+        return {
+          evidence_ref_count: acc.evidence_ref_count + result.evidenceMetrics.evidence_ref_count,
+          unique_canonical_idea_count:
+            acc.unique_canonical_idea_count + result.evidenceMetrics.unique_canonical_idea_count,
+          unique_transcript_count: Math.max(
+            acc.unique_transcript_count,
+            result.evidenceMetrics.unique_transcript_count,
+          ),
+          unique_source_node_count: Math.max(
+            acc.unique_source_node_count,
+            result.evidenceMetrics.unique_source_node_count,
+          ),
+          unique_author_channel_count: Math.max(
+            acc.unique_author_channel_count,
+            result.evidenceMetrics.unique_author_channel_count,
+          ),
+          independent_source_count: Math.max(
+            acc.independent_source_count,
+            result.evidenceMetrics.independent_source_count,
+          ),
+          unknown_source_identity_count:
+            acc.unknown_source_identity_count + result.evidenceMetrics.unknown_source_identity_count,
+        };
+      },
+      {
+        evidence_ref_count: 0,
+        unique_canonical_idea_count: 0,
+        unique_transcript_count: 0,
+        unique_source_node_count: 0,
+        unique_author_channel_count: 0,
+        independent_source_count: 0,
+        unknown_source_identity_count: 0,
+      },
+    );
 
     return c.json(
       {
         success: true,
-        runId: results[0]!.record.runNodeId,
-        runIds: results.map(({ record }) => record.runNodeId),
-        draftId: draftIds[0]!,
+        runId: parentRunId,
+        runIds,
+        draftId: draftIds[0],
         draftIds,
         draftCount: draftIds.length,
         wikiId: wikiIds[0]!,
         wikiIds,
         wikiCount: wikiIds.length,
         wikis,
-        qualityScore: Math.min(...results.map(({ result }) => result.qualityScore)),
+        qualityScore:
+          compiled.length > 0 ? Math.min(...compiled.map(({ result }) => result?.qualityScore ?? 0)) : 100,
         warnings,
-        selectedCanonicalIdeaCount: results.reduce(
-          (total, { result }) => total + result.selectedCanonicalIdeaCount,
+        branches,
+        selectedCanonicalIdeaCount: compiled.reduce(
+          (total, { result }) => total + (result?.selectedCanonicalIdeaCount ?? 0),
           0,
         ),
-        selectedTranscriptCount: Math.max(...results.map(({ result }) => result.selectedTranscriptCount)),
-        selectedSourceCount: Math.max(
-          ...results.map(({ result }) => result.evidenceMetrics.unique_source_node_count),
+        selectedTranscriptCount: Math.max(
+          0,
+          ...compiled.map(({ result }) => result?.selectedTranscriptCount ?? 0),
         ),
-        evidenceMetrics: {
-          evidence_ref_count: results.reduce(
-            (total, { result }) => total + result.evidenceMetrics.evidence_ref_count,
-            0,
-          ),
-          unique_canonical_idea_count: results.reduce(
-            (total, { result }) => total + result.evidenceMetrics.unique_canonical_idea_count,
-            0,
-          ),
-          unique_transcript_count: Math.max(
-            ...results.map(({ result }) => result.evidenceMetrics.unique_transcript_count),
-          ),
-          unique_source_node_count: Math.max(
-            ...results.map(({ result }) => result.evidenceMetrics.unique_source_node_count),
-          ),
-          unique_author_channel_count: Math.max(
-            ...results.map(({ result }) => result.evidenceMetrics.unique_author_channel_count),
-          ),
-          independent_source_count: Math.max(
-            ...results.map(({ result }) => result.evidenceMetrics.independent_source_count),
-          ),
-          unknown_source_identity_count: results.reduce(
-            (total, { result }) => total + result.evidenceMetrics.unknown_source_identity_count,
-            0,
-          ),
-        },
+        selectedSourceCount: evidenceMetrics.unique_source_node_count,
+        evidenceMetrics,
         producedNodeIds: draftIds,
       },
       201,

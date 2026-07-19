@@ -6,6 +6,14 @@ export {
 } from './extract-transcript-ideas.js';
 export { ingestYouTube, type IngestYouTubeInput, type IngestYouTubeOutput } from './ingest-youtube.js';
 export { compileWikiDraft } from './wiki/compile-wiki-draft.js';
+export {
+  evaluateWikiCompileCoherence,
+  hasMechanicalIdeaHeadings,
+  hasTerminalCoherenceFailure,
+  isFixableWikiCompileFailure,
+  isSourceShapedWikiTitle,
+} from './wiki/wiki-compile-coherence.utils.js';
+export type { CompileWikiDraftInput, CompileWikiDraftOutput } from './wiki/wiki-compile.types.js';
 export { discoverWikiCandidates } from './wiki/discover-wiki-candidates.js';
 export {
   discoverTranscriptWikiTopics,
@@ -20,7 +28,6 @@ export {
 } from './wiki/wiki-discovery.utils.js';
 export { resolveWikiTopicProposal } from './wiki/wiki-discovery-resolution.utils.js';
 export { researchWiki } from './wiki/research-wiki.js';
-export type { CompileWikiDraftInput, CompileWikiDraftOutput } from './wiki/wiki-compile.types.js';
 export { buildWikiResultingBody } from './wiki/wiki-compile-validation.utils.js';
 export {
   appendProducedNodeIds,

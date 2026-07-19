@@ -30,6 +30,8 @@ export interface CompileWikiDraftInput {
     | 'warnings'
   >;
   discoveryBatchId?: string;
+  /** Parent Create Wiki(s) / orchestration run id for lineage. */
+  parentRunId?: string;
   suggestedTitle?: string;
   suggestedTopicKey?: string;
   targetWikiId?: string;
@@ -49,6 +51,10 @@ export interface CompileWikiDraftOutput {
   evidenceMetrics: WikiEvidenceMetrics;
   producedNodeIds: string[];
   evidence: WikiEvidenceItem[];
+  /** Harmless schema-drift fixes applied before validation. */
+  normalizationActions: string[];
+  /** True when mechanical/source-shaped coherence gates failed. */
+  coherenceFailed: boolean;
   runTrace: {
     stages: Array<{ name: string; status: 'completed' | 'failed'; output?: unknown; error?: string }>;
     decisions: Array<{ type: 'accept' | 'retry' | 'reject'; reason: string }>;

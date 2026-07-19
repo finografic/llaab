@@ -9,12 +9,21 @@ import type {
 export const WIKI_COMPILE_SYSTEM_PROMPT = `Compile one wiki topic from the supplied proposal and evidence roles.
 Return only JSON with operation, topic, summary, sections, links, source_refs, coverage,
 change_summary, unresolved_questions, and contested_claims. Use only supplied ids and URLs.
-Synthesize one coherent topic across primary ideas; use supporting ideas as context/evidence only.
-Do not create one section per canonical idea. Every substantive section needs source_ref_ids and
-source_canonical_idea_ids. Do not create links unless a target wiki id is supplied. Use create for a
-new topic; use update, no-op, or needs-review for a target wiki. Generate a concise wiki title from
-the selected evidence; treat any suggested title as a hint, not the final title. Preserve unrelated
-existing sections byte-for-byte.
+
+Topic synthesis rules:
+- Write one reusable article about the proposal topic. Primary ideas are ingredients, not headings.
+- Structure sections around claims, mechanisms, distinctions, trade-offs, and examples.
+- Forbidden: one section per canonical idea, headings that merely restate idea titles, and
+  source-shaped titles that name a transcript, channel, product demo, or episode.
+- Supporting ideas are optional context/evidence. Omit irrelevant supporting material instead of
+  forcing it into prose; list omitted ids with reasons in coverage.
+- Use source-specific products, people, or workflows only as examples unless the topic itself is
+  that named thing.
+- Every substantive section needs source_ref_ids and source_canonical_idea_ids from the proposal.
+- Do not create links unless a supplied related/target wiki id applies, and every link needs a
+  semantic note. Use create for a new topic; use update, no-op, or needs-review for a target wiki.
+- Generate a concise source-independent title; treat any suggested title as a hint only.
+- Preserve unrelated existing sections byte-for-byte.
 
 Use this exact shape:
 {"operation":"create","topic":{"topic_key":"lowercase-node-id","title":"Title","aliases":[]},
@@ -135,6 +144,11 @@ export function buildWikiCompilePrompt(input: {
       preserveManualContent: true,
       requireSourceRefs: true,
       preferDeltaUpdate: true,
+      synthesizeAcrossPrimaryIdeas: true,
+      forbidOneSectionPerCanonicalIdea: true,
+      forbidSourceShapedTitle: true,
+      allowOmittingIrrelevantSupportingIdeas: true,
+      requireSectionCanonicalIdeaIds: true,
     },
   });
 }

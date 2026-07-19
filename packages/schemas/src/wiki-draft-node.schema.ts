@@ -29,6 +29,10 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
   discovery_batch_id: NodeIdSchema.optional(),
   proposal_id: NodeIdSchema.optional(),
   proposal_rationale: z.string().min(1).optional(),
+  /** Parent Create Wiki(s) orchestration run id. */
+  parent_run_id: NodeIdSchema.optional(),
+  /** Harmless schema-drift normalization steps applied during compile. */
+  normalization_actions: z.array(z.string().min(1)).default([]),
   source_transcript_ids: z.array(NodeIdSchema).default([]),
   source_ids: z.array(NodeIdSchema).default([]),
   proposed_links: z.array(WikiLinkSchema).default([]),

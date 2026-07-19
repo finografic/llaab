@@ -1,5 +1,11 @@
 import { readNodeByType } from '@llaab/core';
-import { compileWikiDraft, discoverTranscriptWikiTopics } from '@llaab/skills';
+import {
+  appendProducedNodeIds,
+  appendRunEvent,
+  compileWikiDraft,
+  discoverTranscriptWikiTopics,
+  runSkill,
+} from '@llaab/skills';
 import type { CreateWikiDraftBody } from './vault-wiki-drafts.schema.js';
 import type { CanonicalIdeaNode } from '@llaab/schemas';
 
@@ -115,6 +121,7 @@ export function groupCanonicalIdeasByHeuristic(
   return groups.map((group) => group.canonicalIdeaIds);
 }
 
+/** @deprecated Recovery/characterization only — normal path uses Phase 2 discovery. */
 export async function groupCanonicalIdeasForWikiDrafts(input: {
   canonicalIdeaIds: string[];
   forceSingleDraft: boolean;
@@ -125,78 +132,283 @@ export async function groupCanonicalIdeasForWikiDrafts(input: {
   return groupCanonicalIdeasByHeuristic(ideas, { forceSingleDraft: input.forceSingleDraft });
 }
 
+export type TranscriptWikiCompileBranch =
+  | {
+      kind: 'compiled';
+      proposalId?: string;
+      draftId: string;
+      runId: string;
+      coherenceFailed: boolean;
+      warnings: string[];
+    }
+  | {
+      kind: 'no-op';
+      proposalId?: string;
+      existingWikiId: string;
+      reason: string;
+    }
+  | {
+      kind: 'skipped';
+      proposalId?: string;
+      reason: string;
+      primaryCanonicalIdeaIds: string[];
+    }
+  | {
+      kind: 'failed';
+      proposalId?: string;
+      reason: string;
+      runId?: string;
+    };
+
+export type CompiledWikiDraftResult = Awaited<ReturnType<typeof compileWikiDraft>>;
+
+export interface CompileWikiDraftsForTranscriptResult {
+  parentRunId: string;
+  discoveryBatchId?: string;
+  branches: TranscriptWikiCompileBranch[];
+  /** Successful compile skill results (includes coherence-failed audit drafts). */
+  compiled: CompiledWikiDraftResult[];
+}
+
+async function compileOneProposal(input: {
+  transcriptId: string;
+  parentRunId: string;
+  discoveryBatchId?: string;
+  proposal?: Parameters<typeof compileWikiDraft>[0]['proposal'];
+  canonicalIdeaIds: string[];
+  primaryCanonicalIdeaIds?: string[];
+  supportingCanonicalIdeaIds?: string[];
+  suggestedTitle?: string;
+  suggestedTopicKey?: string;
+  targetWikiId?: string;
+  forceUpdate?: boolean;
+}): Promise<CompiledWikiDraftResult> {
+  return compileWikiDraft({
+    transcriptId: input.transcriptId,
+    canonicalIdeaIds: input.canonicalIdeaIds,
+    primaryCanonicalIdeaIds: input.primaryCanonicalIdeaIds,
+    supportingCanonicalIdeaIds: input.supportingCanonicalIdeaIds,
+    proposal: input.proposal,
+    discoveryBatchId: input.discoveryBatchId,
+    parentRunId: input.parentRunId,
+    suggestedTitle: input.suggestedTitle,
+    suggestedTopicKey: input.suggestedTopicKey,
+    targetWikiId: input.targetWikiId,
+    entryPath: 'manual',
+    forceUpdate: input.forceUpdate,
+  });
+}
+
 export async function compileWikiDraftsForTranscript(input: {
   transcriptId: string;
   body: CreateWikiDraftBody;
-}) {
-  const forceSingleDraft =
-    input.body.target_wiki_id !== undefined ||
-    input.body.suggested_topic_key !== undefined ||
-    input.body.suggested_title !== undefined;
+}): Promise<CompileWikiDraftsForTranscriptResult> {
+  const { record, result } = await runSkill(
+    'compile-transcript-wikis',
+    async (_, parentRunId) => {
+      const forceSingleDraft =
+        input.body.target_wiki_id !== undefined ||
+        input.body.suggested_topic_key !== undefined ||
+        input.body.suggested_title !== undefined;
 
-  // Explicit target/title/topic-key requests keep a single compile path for recovery tooling.
-  if (forceSingleDraft) {
-    return [
-      await compileWikiDraft({
+      const branches: TranscriptWikiCompileBranch[] = [];
+      const compiled: CompiledWikiDraftResult[] = [];
+
+      // Explicit target/title/topic-key requests keep a single compile path for recovery tooling.
+      if (forceSingleDraft) {
+        await appendRunEvent(parentRunId, {
+          level: 'info',
+          message: 'Compiling recovery single-topic wiki draft.',
+        });
+        const one = await compileOneProposal({
+          transcriptId: input.transcriptId,
+          parentRunId,
+          canonicalIdeaIds: input.body.canonical_idea_ids,
+          suggestedTitle: input.body.suggested_title,
+          suggestedTopicKey: input.body.suggested_topic_key,
+          targetWikiId: input.body.target_wiki_id,
+        });
+        if (one.record.status === 'failed' || !one.result?.draftId) {
+          branches.push({
+            kind: 'failed',
+            reason: one.record.error ?? 'Wiki compilation failed.',
+            runId: one.record.runNodeId,
+          });
+        } else {
+          compiled.push(one);
+          branches.push({
+            kind: 'compiled',
+            draftId: one.result.draftId,
+            runId: one.record.runNodeId,
+            coherenceFailed: one.result.coherenceFailed,
+            warnings: one.result.warnings,
+          });
+          await appendProducedNodeIds(parentRunId, [one.result.draftId]);
+        }
+        return { discoveryBatchId: undefined as string | undefined, branches, compiled };
+      }
+
+      await appendRunEvent(parentRunId, {
+        level: 'info',
+        message: 'Discovering coherent wiki topics for selected canonical ideas.',
+      });
+      const discovery = await discoverTranscriptWikiTopics({
         transcriptId: input.transcriptId,
         canonicalIdeaIds: input.body.canonical_idea_ids,
-        suggestedTitle: input.body.suggested_title,
-        suggestedTopicKey: input.body.suggested_topic_key,
-        targetWikiId: input.body.target_wiki_id,
-        entryPath: 'manual',
-      }),
-    ];
-  }
+        modelReview: false,
+      });
+      await appendRunEvent(parentRunId, {
+        level: 'info',
+        message: `Discovery produced ${discovery.result.proposals.length} proposal(s); skipped ${discovery.skipped.length}.`,
+      });
 
-  const discovery = await discoverTranscriptWikiTopics({
-    transcriptId: input.transcriptId,
-    canonicalIdeaIds: input.body.canonical_idea_ids,
-    modelReview: false,
-  });
+      for (const skipped of discovery.skipped) {
+        branches.push({
+          kind: 'skipped',
+          reason: skipped.reason,
+          primaryCanonicalIdeaIds: skipped.primaryCanonicalIdeaIds,
+        });
+      }
 
-  const results: Array<Awaited<ReturnType<typeof compileWikiDraft>>> = [];
-  for (const proposal of discovery.result.proposals) {
-    if (proposal.operation === 'needs-review') continue;
-    const canonicalIdeaIds = [
-      ...new Set([...proposal.primary_canonical_idea_ids, ...proposal.supporting_canonical_idea_ids]),
-    ];
-    results.push(
-      await compileWikiDraft({
-        transcriptId: input.transcriptId,
-        canonicalIdeaIds,
-        primaryCanonicalIdeaIds: proposal.primary_canonical_idea_ids,
-        supportingCanonicalIdeaIds: proposal.supporting_canonical_idea_ids,
-        proposal: {
-          id: proposal.id,
-          discovery_batch_id: proposal.discovery_batch_id,
-          topic_key: proposal.topic_key,
-          title: proposal.title,
-          rationale: proposal.rationale,
-          primary_canonical_idea_ids: proposal.primary_canonical_idea_ids,
-          supporting_canonical_idea_ids: proposal.supporting_canonical_idea_ids,
-          domains: proposal.domains,
-          tags: proposal.tags,
-          operation: proposal.operation,
-          existing_wiki_id: proposal.existing_wiki_id,
-          coherence_score: proposal.coherence_score,
-          warnings: proposal.warnings,
-        },
+      for (const proposal of discovery.result.proposals) {
+        if (proposal.operation === 'needs-review') {
+          branches.push({
+            kind: 'skipped',
+            proposalId: proposal.id,
+            reason: proposal.warnings[0] ?? 'Proposal requires review and was skipped.',
+            primaryCanonicalIdeaIds: proposal.primary_canonical_idea_ids,
+          });
+          continue;
+        }
+
+        if (proposal.operation === 'no-op') {
+          if (!proposal.existing_wiki_id) {
+            branches.push({
+              kind: 'failed',
+              proposalId: proposal.id,
+              reason: 'no-op proposal missing existing_wiki_id.',
+            });
+            continue;
+          }
+          branches.push({
+            kind: 'no-op',
+            proposalId: proposal.id,
+            existingWikiId: proposal.existing_wiki_id,
+            reason: proposal.warnings[0] ?? 'Existing wiki already represents this evidence.',
+          });
+          await appendRunEvent(parentRunId, {
+            level: 'info',
+            message: `Skipped rewrite for no-op topic ${proposal.topic_key} → ${proposal.existing_wiki_id}.`,
+          });
+          continue;
+        }
+
+        const canonicalIdeaIds = [
+          ...new Set([...proposal.primary_canonical_idea_ids, ...proposal.supporting_canonical_idea_ids]),
+        ];
+
+        try {
+          await appendRunEvent(parentRunId, {
+            level: 'info',
+            message: `Compiling proposal ${proposal.topic_key} (${proposal.operation}).`,
+          });
+          const one = await compileOneProposal({
+            transcriptId: input.transcriptId,
+            parentRunId,
+            discoveryBatchId: discovery.result.discovery_batch_id,
+            proposal: {
+              id: proposal.id,
+              discovery_batch_id: proposal.discovery_batch_id,
+              topic_key: proposal.topic_key,
+              title: proposal.title,
+              rationale: proposal.rationale,
+              primary_canonical_idea_ids: proposal.primary_canonical_idea_ids,
+              supporting_canonical_idea_ids: proposal.supporting_canonical_idea_ids,
+              domains: proposal.domains,
+              tags: proposal.tags,
+              operation: proposal.operation,
+              existing_wiki_id: proposal.existing_wiki_id,
+              coherence_score: proposal.coherence_score,
+              warnings: proposal.warnings,
+            },
+            canonicalIdeaIds,
+            primaryCanonicalIdeaIds: proposal.primary_canonical_idea_ids,
+            supportingCanonicalIdeaIds: proposal.supporting_canonical_idea_ids,
+            suggestedTitle: proposal.title,
+            suggestedTopicKey: proposal.topic_key,
+            targetWikiId: proposal.existing_wiki_id,
+            forceUpdate: proposal.operation === 'update',
+          });
+
+          if (one.record.status === 'failed' || !one.result?.draftId) {
+            branches.push({
+              kind: 'failed',
+              proposalId: proposal.id,
+              reason: one.record.error ?? 'Wiki compilation failed.',
+              runId: one.record.runNodeId,
+            });
+            await appendRunEvent(parentRunId, {
+              level: 'warning',
+              message: `Proposal ${proposal.topic_key} failed: ${one.record.error ?? 'unknown error'}`,
+            });
+            continue;
+          }
+
+          compiled.push(one);
+          branches.push({
+            kind: 'compiled',
+            proposalId: proposal.id,
+            draftId: one.result.draftId,
+            runId: one.record.runNodeId,
+            coherenceFailed: one.result.coherenceFailed,
+            warnings: one.result.warnings,
+          });
+          await appendProducedNodeIds(parentRunId, [one.result.draftId]);
+        } catch (error) {
+          const reason = error instanceof Error ? error.message : String(error);
+          branches.push({
+            kind: 'failed',
+            proposalId: proposal.id,
+            reason,
+          });
+          await appendRunEvent(parentRunId, {
+            level: 'warning',
+            message: `Proposal ${proposal.topic_key} failed: ${reason}`,
+          });
+        }
+      }
+
+      const hasSuccess = compiled.length > 0 || branches.some((branch) => branch.kind === 'no-op');
+      if (!hasSuccess) {
+        throw new Error(
+          branches.find((branch) => branch.kind === 'failed' || branch.kind === 'skipped')?.reason ??
+            'Topic discovery produced no compileable wiki proposals for the selected ideas.',
+        );
+      }
+
+      return {
         discoveryBatchId: discovery.result.discovery_batch_id,
-        suggestedTitle: proposal.title,
-        suggestedTopicKey: proposal.topic_key,
-        targetWikiId: proposal.existing_wiki_id,
-        entryPath: 'manual',
-        forceUpdate: proposal.operation === 'update',
-      }),
-    );
+        branches,
+        compiled,
+      };
+    },
+    {
+      transcriptId: input.transcriptId,
+      canonicalIdeaIds: input.body.canonical_idea_ids,
+      suggestedTitle: input.body.suggested_title,
+      suggestedTopicKey: input.body.suggested_topic_key,
+      targetWikiId: input.body.target_wiki_id,
+    },
+  );
+
+  if (record.status === 'failed' || !result) {
+    throw new Error(record.error ?? 'Transcript wiki compilation failed.');
   }
 
-  if (results.length === 0) {
-    throw new Error(
-      discovery.skipped[0]?.reason ??
-        'Topic discovery produced no compileable wiki proposals for the selected ideas.',
-    );
-  }
-
-  return results;
+  return {
+    parentRunId: record.runNodeId,
+    discoveryBatchId: result.discoveryBatchId,
+    branches: result.branches,
+    compiled: result.compiled,
+  };
 }

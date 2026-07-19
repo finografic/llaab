@@ -1,6 +1,6 @@
 # TODO — One-Step Topic-Oriented Wiki Generation
 
-> **Status:** In progress — Phases 0–2 complete.
+> **Status:** In progress — Phases 0–3 complete.
 > 📅 Jul 19, 2026.
 
 > **Priority:** P1 — refine the shipped wiki-generation path before treating transcript-wide
@@ -125,7 +125,7 @@ The correction separates three model-facing responsibilities while preserving on
 - [x] Phase 0 — lock the one-step contract and regression fixtures
 - [x] Phase 1 — add internal proposal, evidence-role, and diversity schemas
 - [x] Phase 2 — build internal transcript-scoped topic discovery
-- [ ] Phase 3 — compile each discovered topic coherently
+- [x] Phase 3 — compile each discovered topic coherently
 - [ ] Phase 4 — resolve links and auto-promote in one orchestration run
 - [ ] Phase 5 — correct quality, source diversity, and verification semantics
 - [ ] Phase 6 — preserve the one-action UI and post-creation controls
@@ -339,48 +339,48 @@ formatted list of canonical ideas.
 
 ### Orchestration and evidence bounds
 
-- [ ] Replace `groupCanonicalIdeasForWikiDrafts()` with internally resolved Phase 2 proposals.
-- [ ] Compile proposals sequentially or with bounded concurrency through existing one-shot
+- [x] Replace `groupCanonicalIdeasForWikiDrafts()` with internally resolved Phase 2 proposals.
+- [x] Compile proposals sequentially or with bounded concurrency through existing one-shot
       `runSkill` behavior; add no background worker.
-- [ ] Give every compile run the parent user-action run id, discovery batch id, and proposal id.
-- [ ] Use only the proposal's primary/supporting ideas, targeted transcript excerpts, target wiki
+- [x] Give every compile run the parent user-action run id, discovery batch id, and proposal id.
+- [x] Use only the proposal's primary/supporting ideas, targeted transcript excerpts, target wiki
       for updates, and compact related-wiki candidates in each compile call.
-- [ ] Never send every transcript idea to every compiler merely because topics share a source.
-- [ ] Preserve partial results internally: a failed topic does not erase successful sibling pages.
-- [ ] Persist a `wiki-draft` audit artifact before promotion so provenance, retry, section
+- [x] Never send every transcript idea to every compiler merely because topics share a source.
+- [x] Preserve partial results internally: a failed topic does not erase successful sibling pages.
+- [x] Persist a `wiki-draft` audit artifact before promotion so provenance, retry, section
       regeneration, and failure diagnosis remain durable. Do not expose it as a user step.
 
 ### Prompt behavior
 
-- [ ] Add the complete topic proposal, rationale, and primary/supporting roles to the compile prompt.
-- [ ] Instruct the compiler to synthesize one coherent topic and use source-specific products,
+- [x] Add the complete topic proposal, rationale, and primary/supporting roles to the compile prompt.
+- [x] Instruct the compiler to synthesize one coherent topic and use source-specific products,
       people, or workflows as examples unless they define the topic itself.
-- [ ] Explicitly prohibit automatic one-section-per-canonical-idea structure.
-- [ ] Let structure emerge from claims, mechanisms, distinctions, trade-offs, and examples while
+- [x] Explicitly prohibit automatic one-section-per-canonical-idea structure.
+- [x] Let structure emerge from claims, mechanisms, distinctions, trade-offs, and examples while
       retaining stable section ids and per-section provenance.
-- [ ] Require every substantive section to identify its primary/supporting canonical ideas and
+- [x] Require every substantive section to identify its primary/supporting canonical ideas and
       resolvable source refs.
-- [ ] Permit irrelevant supporting material to be omitted instead of forced into prose.
-- [ ] Keep titles/topic ids model-generated but validate source independence, distinctness within
+- [x] Permit irrelevant supporting material to be omitted instead of forced into prose.
+- [x] Keep titles/topic ids model-generated but validate source independence, distinctness within
       the batch, and collision with existing identities.
 
 ### Compilation failure handling
 
-- [ ] Keep normalization for harmless schema drift and record `normalization_actions` on the
+- [x] Keep normalization for harmless schema drift and record `normalization_actions` on the
       internal draft/run.
-- [ ] Reject output when normalization would invent topic identity, section evidence, claims, or
+- [x] Reject output when normalization would invent topic identity, section evidence, claims, or
       other semantic content.
-- [ ] Retry once only for concrete fixable validation failures; do not retry a fundamentally
+- [x] Retry once only for concrete fixable validation failures; do not retry a fundamentally
       incoherent proposal as JSON formatting.
-- [ ] Convert terminal proposal failures into structured skipped/failed branch results. Do not send
+- [x] Convert terminal proposal failures into structured skipped/failed branch results. Do not send
       the user into a draft review flow.
 
 **Exit criteria**
 
-- [ ] Every proposal produces at most one compile run result and one topic-oriented internal draft.
-- [ ] No compiler receives unrelated sibling-topic ideas.
-- [ ] Regression pages have source-independent titles and synthesized sections.
-- [ ] Canonical idea titles do not mechanically become article headings.
+- [x] Every proposal produces at most one compile run result and one topic-oriented internal draft.
+- [x] No compiler receives unrelated sibling-topic ideas.
+- [x] Regression pages have source-independent titles and synthesized sections.
+- [x] Canonical idea titles do not mechanically become article headings.
 
 ---
 

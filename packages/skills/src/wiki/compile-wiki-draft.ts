@@ -28,6 +28,11 @@ import type {
 
 import { runSkill } from '../runner.js';
 import {
+  evaluateWikiCompileCoherence,
+  hasTerminalCoherenceFailure,
+  isFixableWikiCompileFailure,
+} from './wiki-compile-coherence.utils.js';
+import {
   buildWikiCompilePrompt,
   parseWikiCompileJson,
   WIKI_COMPILE_SYSTEM_PROMPT,
@@ -45,9 +50,9 @@ interface CompileAttempt {
   result: WikiCompileResult;
   llm: Awaited<ReturnType<typeof routeLlm>>;
   quality: ReturnType<typeof validateWikiCompileResult>;
+  normalizationActions: string[];
 }
 
-const QUALITY_RETRY_THRESHOLD = 80;
 const MAX_RELATED_WIKIS = 8;
 
 function selectRelatedWikis(
@@ -103,18 +108,27 @@ async function compileAttempt(input: {
   expectedTopicKey?: string;
   hasExistingWiki: boolean;
   sourceCount: number;
+  primaryIdeaTitles: string[];
+  transcriptTitle?: string;
+  channelOrAuthor?: string;
 }): Promise<CompileAttempt> {
   const llm = await routeLlm('wiki-compile', input.prompt, {
     system: input.system,
     bypassCache: true,
   });
-  const result = reconcileWikiSourceRefs(
-    WikiCompileResultSchema.parse(
-      normalizeWikiCompileJson(parseWikiCompileJson(llm.text), input.canonicalIdeaIds, input.sourceRefs),
-    ),
+  const normalized = normalizeWikiCompileJson(
+    parseWikiCompileJson(llm.text),
+    input.canonicalIdeaIds,
     input.sourceRefs,
   );
-  reconcileWikiCoverage(result, input.canonicalIdeaIds);
+  const result = reconcileWikiSourceRefs(WikiCompileResultSchema.parse(normalized.value), input.sourceRefs);
+  const coverageActions = reconcileWikiCoverage(result, input.canonicalIdeaIds);
+  const coherenceIssues = evaluateWikiCompileCoherence({
+    result,
+    primaryIdeaTitles: input.primaryIdeaTitles,
+    transcriptTitle: input.transcriptTitle,
+    channelOrAuthor: input.channelOrAuthor,
+  });
   const quality = validateWikiCompileResult({
     result,
     canonicalIdeaIds: input.canonicalIdeaIds,
@@ -123,8 +137,17 @@ async function compileAttempt(input: {
     expectedTopicKey: input.expectedTopicKey,
     hasExistingWiki: input.hasExistingWiki,
     sourceCount: input.sourceCount,
+    primaryIdeaTitles: input.primaryIdeaTitles,
+    transcriptTitle: input.transcriptTitle,
+    channelOrAuthor: input.channelOrAuthor,
+    coherenceIssues,
   });
-  return { result, llm, quality };
+  return {
+    result,
+    llm,
+    quality,
+    normalizationActions: [...normalized.actions, ...coverageActions],
+  };
 }
 
 function normalizeModelNodeId(value: unknown): unknown {
@@ -209,7 +232,8 @@ function reconcileWikiSourceRefs(result: WikiCompileResult, sourceRefs: WikiSour
   return result;
 }
 
-function reconcileWikiCoverage(result: WikiCompileResult, canonicalIdeaIds: Set<string>): void {
+function reconcileWikiCoverage(result: WikiCompileResult, canonicalIdeaIds: Set<string>): string[] {
+  const actions: string[] = [];
   const represented = new Set(result.coverage.represented_canonical_idea_ids);
   const omitted = new Set(result.coverage.omitted_canonical_ideas.map((idea) => idea.id));
   for (const canonicalIdeaId of canonicalIdeaIds) {
@@ -218,15 +242,18 @@ function reconcileWikiCoverage(result: WikiCompileResult, canonicalIdeaIds: Set<
       id: canonicalIdeaId,
       reason: 'The model output did not explicitly account for this selected canonical idea.',
     });
+    actions.push(`filled-omission:${canonicalIdeaId}`);
   }
+  return actions;
 }
 
 function normalizeWikiCompileJson(
   value: unknown,
   canonicalIdeaIds: Set<string>,
   sourceRefs: WikiSourceRef[],
-): unknown {
-  if (!value || typeof value !== 'object' || !('topic' in value)) return value;
+): { value: unknown; actions: string[] } {
+  const actions: string[] = [];
+  if (!value || typeof value !== 'object' || !('topic' in value)) return { value, actions };
   const draft = value as {
     topic?: { topic_key?: unknown; title?: unknown };
     summary?: unknown;
@@ -256,9 +283,12 @@ function normalizeWikiCompileJson(
   };
   if (draft.topic && typeof draft.topic === 'object') {
     if (typeof draft.topic.topic_key === 'string') {
+      const before = draft.topic.topic_key;
       draft.topic.topic_key = normalizeModelNodeId(draft.topic.topic_key);
+      if (draft.topic.topic_key !== before) actions.push('normalized-topic-key');
     } else if (typeof draft.topic.title === 'string') {
       draft.topic.topic_key = toNodeId(draft.topic.title);
+      actions.push('derived-topic-key-from-title');
     }
   }
   if (Array.isArray(draft.sections)) {
@@ -268,15 +298,25 @@ function normalizeWikiCompileJson(
       const headingCandidate = [section.heading, section.title, section.name, section.id].find(
         (candidate): candidate is string => typeof candidate === 'string' && Boolean(candidate.trim()),
       );
+      if (!section.heading && headingCandidate) actions.push(`aliased-section-heading:${index}`);
       section.heading = headingCandidate?.trim() ?? `Section ${index + 1}`;
       const bodyCandidate = [section.body, section.content, section.text].find(
         (candidate): candidate is string => typeof candidate === 'string',
       );
+      if (section.body === undefined && bodyCandidate !== undefined) {
+        actions.push(`aliased-section-body:${index}`);
+      }
       section.body = bodyCandidate ?? '';
       const normalizedId = normalizeModelNodeId(section.id ?? section.heading);
       const baseId = typeof normalizedId === 'string' ? normalizedId : `section-${index + 1}`;
       section.id = sectionIds.has(baseId) ? toNodeId(`${baseId}-${index + 1}`) : baseId;
       sectionIds.add(section.id as string);
+      if (section.source_ref_ids === undefined && section.source_refs !== undefined) {
+        actions.push(`aliased-section-source-refs:${index}`);
+      }
+      if (section.source_canonical_idea_ids === undefined && section.canonical_idea_ids !== undefined) {
+        actions.push(`aliased-section-canonical-idea-ids:${index}`);
+      }
       section.source_ref_ids ??= section.source_refs;
       section.source_canonical_idea_ids ??= section.canonical_idea_ids;
       if (Array.isArray(section.source_ref_ids)) {
@@ -288,6 +328,7 @@ function normalizeWikiCompileJson(
     }
   }
   if (Array.isArray(draft.links)) {
+    const beforeCount = draft.links.length;
     draft.links = draft.links.flatMap((link) => {
       if (!link || typeof link !== 'object') return [];
       const targetWikiId = normalizeModelNodeId(
@@ -297,10 +338,12 @@ function normalizeWikiCompileJson(
       if (typeof targetWikiId !== 'string' || !relation) return [];
       return [{ ...link, target_wiki_id: targetWikiId, relation }];
     });
+    if (draft.links.length !== beforeCount) actions.push('normalized-link-aliases');
   }
   // Reference metadata is deterministic evidence, not model-authored content. Replacing it here
   // also accepts model shorthand such as a top-level array of reference ids.
   draft.source_refs = sourceRefs;
+  actions.push('replaced-source-refs-from-evidence');
   const sectionCanonicalIdeaIds =
     draft.sections
       ?.flatMap((section) =>
@@ -312,6 +355,7 @@ function normalizeWikiCompileJson(
       represented_canonical_idea_ids: sectionCanonicalIdeaIds,
       omitted_canonical_ideas: [],
     };
+    actions.push('derived-coverage-from-sections');
   }
   if (draft.coverage && typeof draft.coverage === 'object') {
     const coverage = draft.coverage as {
@@ -370,11 +414,13 @@ function normalizeWikiCompileJson(
   }
   if (typeof draft.summary !== 'string' || !draft.summary.trim()) {
     draft.summary = deriveModelSummary(draft);
+    actions.push('derived-summary');
   }
   if (typeof draft.change_summary !== 'string' || !draft.change_summary.trim()) {
     draft.change_summary = 'Compiled wiki draft from selected canonical ideas.';
+    actions.push('derived-change-summary');
   }
-  return draft;
+  return { value: draft, actions };
 }
 
 function resolveEvidenceRoles(input: {
@@ -509,6 +555,9 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         relatedWikis,
         preResolvedOperation,
       });
+      const primaryIdeaTitles = (primaryCanonicalIdeas.length > 0 ? primaryCanonicalIdeas : compileIdeas).map(
+        (idea) => idea.title,
+      );
       const validationInput = {
         prompt,
         canonicalIdeaIds: new Set(compileIdeas.map((idea) => idea.id)),
@@ -524,6 +573,9 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
           evidenceMetrics.unique_source_node_count,
           evidenceMetrics.unique_transcript_count,
         ),
+        primaryIdeaTitles,
+        transcriptTitle: entryTranscript.title,
+        channelOrAuthor: entryTranscript.author,
       };
 
       let retryAttempted = false;
@@ -537,16 +589,20 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       } catch (error) {
         firstFailure = error instanceof Error ? error.message : String(error);
       }
-      if (!attempt || attempt.quality.score < QUALITY_RETRY_THRESHOLD) {
+      // Retry once only for concrete fixable validation/parse failures — not coherence failures.
+      if (!attempt && firstFailure && isFixableWikiCompileFailure(firstFailure)) {
         retryAttempted = true;
-        firstFailure ??= attempt?.quality.warnings.join(' ') || 'Quality score was below threshold.';
         attempt = await compileAttempt({
           ...validationInput,
           system: `${WIKI_COMPILE_SYSTEM_PROMPT}\nFix invalid output or validation issues: ${firstFailure}`,
         });
       }
+      if (!attempt) {
+        throw new Error(firstFailure ?? 'Wiki compilation failed without a usable model result.');
+      }
 
-      const { result, llm, quality } = attempt;
+      const { result, llm, quality, normalizationActions } = attempt;
+      const coherenceFailed = hasTerminalCoherenceFailure(quality.issues);
       let operation = WikiOperationSchema.parse(result.operation);
       if (existingWiki && input.forceUpdate) operation = 'update';
       const novelty =
@@ -582,10 +638,11 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         quality.issues.push({ code: 'low-novelty', message: novelty.reason });
         quality.score = Math.max(0, quality.score - 10);
       }
+      // Discovery-justified cross-domain topics are allowed; only flag ad-hoc multi-domain merges.
       const selectedDomains = new Set(
         compileIdeas.flatMap((idea) => idea.tags.filter((tag) => tag.startsWith('d:'))),
       );
-      if (selectedDomains.size > 1) {
+      if (selectedDomains.size > 1 && !input.proposal) {
         const message = 'Selected ideas span multiple domain categories and require merge review.';
         quality.issues.push({ code: 'unrelated-category-merge', message });
         quality.warnings.push(message);
@@ -640,6 +697,8 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
           discovery_batch_id: input.proposal?.discovery_batch_id ?? input.discoveryBatchId,
           proposal_id: input.proposal?.id,
           proposal_rationale: input.proposal?.rationale,
+          parent_run_id: input.parentRunId,
+          normalization_actions: normalizationActions,
           source_transcript_ids: transcriptIds,
           source_ids: sourceIds,
           selected_canonical_idea_count: compileIdeas.length,
@@ -687,22 +746,43 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         evidenceMetrics,
         producedNodeIds: [created.id],
         evidence,
+        normalizationActions,
+        coherenceFailed,
         runTrace: {
           stages: [
             { name: 'resolve-sources', status: 'completed', output: { transcriptCount: transcripts.length } },
             { name: 'expand-evidence', status: 'completed', output: { evidenceCount: evidence.length } },
             { name: 'resolve-topic', status: 'completed', output: { topicKey, operation } },
-            { name: 'compile', status: 'completed', output: { attempts: retryAttempted ? 2 : 1 } },
-            { name: 'validate', status: 'completed', output: { qualityScore: quality.score } },
+            {
+              name: 'compile',
+              status: 'completed',
+              output: {
+                attempts: retryAttempted ? 2 : 1,
+                parentRunId: input.parentRunId,
+                proposalId: input.proposal?.id,
+                discoveryBatchId: input.proposal?.discovery_batch_id ?? input.discoveryBatchId,
+              },
+            },
+            {
+              name: 'validate',
+              status: coherenceFailed ? 'failed' : 'completed',
+              output: { qualityScore: quality.score, coherenceFailed },
+            },
             { name: 'retry', status: 'completed', output: { attempted: retryAttempted, firstFailure } },
+            { name: 'normalize', status: 'completed', output: { actions: normalizationActions } },
             { name: 'render', status: 'completed', output: { sectionCount: result.sections.length } },
             { name: 'write-draft', status: 'completed', output: { draftId: created.id } },
           ],
           decisions: [
             ...(retryAttempted
-              ? [{ type: 'retry' as const, reason: firstFailure ?? 'Quality score required one retry.' }]
+              ? [{ type: 'retry' as const, reason: firstFailure ?? 'Fixable validation required one retry.' }]
               : []),
-            { type: 'accept', reason: 'Wiki draft passed deterministic validation.' },
+            coherenceFailed
+              ? {
+                  type: 'reject' as const,
+                  reason: 'Topic coherence gates failed; draft retained for audit only.',
+                }
+              : { type: 'accept' as const, reason: 'Wiki draft passed deterministic validation.' },
           ],
           llm: {
             model: llm.model,
