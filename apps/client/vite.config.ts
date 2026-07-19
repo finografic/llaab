@@ -89,5 +89,8 @@ export default defineConfig(({ mode }) => {
       outDir,
       emptyOutDir: true,
     },
+    worker: {
+      format: 'es',
+    },
   };
 });

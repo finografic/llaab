@@ -2,51 +2,12 @@ import { Button } from 'components/ui/button';
 import { PauseIcon, PlayIcon, SkipBackIcon, SkipForwardIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TtsPlaybackStatus, TtsPlayerProps, TtsPlayerSection } from './tts-player.types';
-import type { KokoroTTS } from 'kokoro-js';
 
-import {
-  createTtsSectionsFromText,
-  formatTtsTime,
-  normalizeTtsText,
-  splitTtsSentences,
-} from './tts-player.utils';
+import { createTtsSectionsFromText, formatTtsTime, normalizeTtsText } from './tts-player.utils';
 import styles from './TtsPlayer.module.css';
 
-const KOKORO_MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 const DEFAULT_VOICE = 'bm_daniel';
 const DEFAULT_SPEED = 1;
-
-let ttsPromise: Promise<KokoroTTS> | null = null;
-const progressListeners = new Set<(message: string) => void>();
-
-function formatKokoroProgress(progress: unknown) {
-  if (!progress || typeof progress !== 'object') return 'Loading Kokoro model...';
-  const data = progress as { file?: string; progress?: number; status?: string };
-  const percent = typeof data.progress === 'number' ? ` ${Math.round(data.progress)}%` : '';
-  const file = data.file ? ` ${data.file}` : '';
-  return `${data.status ?? 'Loading'}${percent}${file}`.trim();
-}
-
-function notifyKokoroProgress(progress: unknown) {
-  const message = formatKokoroProgress(progress);
-  for (const listener of progressListeners) listener(message);
-}
-
-async function getTts(onProgress: (message: string) => void) {
-  progressListeners.add(onProgress);
-  try {
-    ttsPromise ??= import('kokoro-js').then(({ KokoroTTS }) =>
-      KokoroTTS.from_pretrained(KOKORO_MODEL_ID, {
-        dtype: 'q8',
-        device: 'wasm',
-        progress_callback: notifyKokoroProgress,
-      }),
-    );
-    return await ttsPromise;
-  } finally {
-    progressListeners.delete(onProgress);
-  }
-}
 
 function getPlayableSections(text?: string, sections?: TtsPlayerSection[]) {
   const sourceSections = sections?.length ? sections : text ? createTtsSectionsFromText(text) : [];
@@ -58,6 +19,13 @@ function getPlayableSections(text?: string, sections?: TtsPlayerSection[]) {
     }))
     .filter((section) => section.text.length > 0);
 }
+
+type TtsWorkerMessage =
+  | { type: 'progress'; runId: number; message: string }
+  | { type: 'section'; runId: number; sectionIndex: number }
+  | { type: 'audio'; runId: number; buffer: ArrayBuffer }
+  | { type: 'done'; runId: number }
+  | { type: 'error'; runId: number; message: string };
 
 export function TtsPlayer({
   text,
@@ -74,12 +42,13 @@ export function TtsPlayer({
   const [completedAudioSeconds, setCompletedAudioSeconds] = useState(0);
   const [currentAudioSeconds, setCurrentAudioSeconds] = useState(0);
   const [error, setError] = useState('');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const progressTimerRef = useRef<number | null>(null);
   const playbackRunRef = useRef(0);
+  const workerRef = useRef<Worker | null>(null);
+  const workerMessageCleanupRef = useRef<() => void>(() => {});
+  const playbackQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const hasSections = playableSections.length > 0;
   const isFull = variant === 'full';
@@ -95,6 +64,9 @@ export function TtsPlayer({
   useEffect(() => {
     return () => {
       playbackRunRef.current += 1;
+      workerMessageCleanupRef.current();
+      workerRef.current?.postMessage({ type: 'cancel', runId: playbackRunRef.current });
+      workerRef.current?.terminate();
       clearCurrentAudio();
       void audioContextRef.current?.close();
     };
@@ -107,8 +79,18 @@ export function TtsPlayer({
     setCurrentAudioSeconds(0);
     setError('');
     playbackRunRef.current += 1;
+    workerMessageCleanupRef.current();
+    workerRef.current?.terminate();
+    workerRef.current = null;
     clearCurrentAudio();
   }, [playableSections]);
+
+  function getWorker() {
+    workerRef.current ??= new Worker(new URL('./tts-player.worker.ts', import.meta.url), {
+      type: 'module',
+    });
+    return workerRef.current;
+  }
 
   function clearProgressTimer() {
     if (progressTimerRef.current != null) {
@@ -126,12 +108,6 @@ export function TtsPlayer({
       // Already stopped.
     }
     sourceRef.current = null;
-    audioRef.current?.pause();
-    audioRef.current = null;
-    if (objectUrlRef.current) {
-      URL.revokeObjectURL(objectUrlRef.current);
-      objectUrlRef.current = null;
-    }
   }
 
   async function getAudioContext() {
@@ -140,10 +116,10 @@ export function TtsPlayer({
     return audioContextRef.current;
   }
 
-  async function playAudioBlob(blob: Blob, runId: number) {
+  async function playAudioBuffer(arrayBuffer: ArrayBuffer, runId: number) {
     clearCurrentAudio();
     const context = await getAudioContext();
-    const buffer = await context.decodeAudioData(await blob.arrayBuffer());
+    const buffer = await context.decodeAudioData(arrayBuffer);
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.connect(context.destination);
@@ -179,42 +155,71 @@ export function TtsPlayer({
     const runId = playbackRunRef.current + 1;
     playbackRunRef.current = runId;
     setStatus('loading');
-    setError('');
     setError('Loading Kokoro model...');
     setCurrentAudioSeconds(0);
+    playbackQueueRef.current = Promise.resolve();
 
     try {
-      const context = await getAudioContext();
-      const { TextSplitterStream } = await import('kokoro-js');
-      const tts = await getTts(setError);
-      for (let index = startIndex; index < playableSections.length; index += 1) {
-        if (playbackRunRef.current !== runId) return;
-        setSectionIndex(index);
+      await getAudioContext();
+      const worker = getWorker();
 
-        const section = playableSections[index];
-        if (!section) break;
+      workerMessageCleanupRef.current();
+      const handleWorkerMessage = (event: MessageEvent<TtsWorkerMessage>) => {
+        const message = event.data;
+        if (message.runId !== playbackRunRef.current) return;
 
-        setError(`Preparing ${section.label ?? `section ${index + 1}`}...`);
-        const splitter = new TextSplitterStream();
-        const stream = tts.stream(splitter, { voice, speed });
-        for (const sentence of splitTtsSentences(section.text)) splitter.push(`${sentence} `);
-        splitter.close();
-
-        for await (const { audio } of stream) {
-          if (playbackRunRef.current !== runId) return;
-          if (context.state !== 'running') await context.resume();
-          setStatus('playing');
-          setError('');
-          await playAudioBlob(audio.toBlob(), runId);
+        if (message.type === 'progress') {
+          setError(message.message);
+          return;
         }
-      }
 
-      if (playbackRunRef.current === runId) {
-        setStatus('idle');
-        setSectionIndex(0);
-        setCompletedAudioSeconds(0);
-        setCurrentAudioSeconds(0);
-      }
+        if (message.type === 'section') {
+          setSectionIndex(message.sectionIndex);
+          return;
+        }
+
+        if (message.type === 'audio') {
+          playbackQueueRef.current = playbackQueueRef.current.then(async () => {
+            if (message.runId !== playbackRunRef.current) return undefined;
+            setStatus('playing');
+            setError('');
+            await playAudioBuffer(message.buffer, message.runId);
+            return undefined;
+          });
+          return;
+        }
+
+        if (message.type === 'done') {
+          playbackQueueRef.current = playbackQueueRef.current.then(() => {
+            workerMessageCleanupRef.current();
+            if (message.runId !== playbackRunRef.current) return undefined;
+            setStatus('idle');
+            setSectionIndex(0);
+            setCompletedAudioSeconds(0);
+            setCurrentAudioSeconds(0);
+            return undefined;
+          });
+          return;
+        }
+
+        workerMessageCleanupRef.current();
+        setStatus('error');
+        setError(message.message);
+      };
+      worker.addEventListener('message', handleWorkerMessage);
+      workerMessageCleanupRef.current = () => worker.removeEventListener('message', handleWorkerMessage);
+
+      worker.postMessage(
+        {
+          type: 'start',
+          runId,
+          sections: playableSections,
+          startIndex,
+          voice,
+          speed,
+        },
+        { transfer: [] },
+      );
     } catch (err) {
       if (playbackRunRef.current !== runId) return;
       setStatus('error');
@@ -224,7 +229,12 @@ export function TtsPlayer({
 
   function handlePlayPause() {
     if (status === 'loading') {
+      const runId = playbackRunRef.current;
       playbackRunRef.current += 1;
+      workerMessageCleanupRef.current();
+      workerRef.current?.postMessage({ type: 'cancel', runId }, { transfer: [] });
+      workerRef.current?.terminate();
+      workerRef.current = null;
       clearCurrentAudio();
       setStatus('idle');
       setError('');
@@ -250,7 +260,12 @@ export function TtsPlayer({
     const nextIndex = Math.min(Math.max(sectionIndex + delta, 0), playableSections.length - 1);
     if (nextIndex === sectionIndex) return;
 
+    const runId = playbackRunRef.current;
     playbackRunRef.current += 1;
+    workerMessageCleanupRef.current();
+    workerRef.current?.postMessage({ type: 'cancel', runId }, { transfer: [] });
+    workerRef.current?.terminate();
+    workerRef.current = null;
     clearCurrentAudio();
     setCompletedAudioSeconds(0);
     setCurrentAudioSeconds(0);
@@ -316,7 +331,9 @@ export function TtsPlayer({
             </span>
           </div>
           {status === 'loading' || status === 'error' ? (
-            <span className={styles.status}>{status === 'loading' ? 'Preparing audio…' : error}</span>
+            <span className={styles.status}>
+              {status === 'loading' ? error || 'Preparing audio…' : error}
+            </span>
           ) : null}
         </>
       ) : null}
