@@ -1,0 +1,85 @@
+.player {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--text-muted);
+}
+
+.compact {
+  flex-shrink: 0;
+}
+
+.full {
+  width: min(100%, 420px);
+  flex: 1 1 320px;
+}
+
+.controlButton {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.controlButton:hover:not(:disabled),
+.controlButton:focus-visible:not(:disabled) {
+  color: var(--accent);
+  background: var(--surface-raised);
+}
+
+.controlButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.timelineGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.time {
+  width: 4.5ch;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.time:first-child {
+  text-align: left;
+}
+
+.timeline {
+  position: relative;
+  height: 4px;
+  min-width: 96px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--border);
+}
+
+.progress {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--tts-progress, 0%);
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.status {
+  max-width: 18ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}

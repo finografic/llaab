@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { DeleteExtractedIdeaAction } from 'components/DeleteExtractedIdeaAction/DeleteExtractedIdeaAction';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { CONSOLIDATION_SKILL_ID } from 'components/RunPipelineCard/RunPipelineCard';
+import { TtsPlayer } from 'components/TtsPlayer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -125,6 +126,10 @@ export function TranscriptDetail({
     const seconds = mediaDurationSecondsFromTranscriptBody(transcript.body);
     return seconds != null ? formatMediaDurationSeconds(seconds) : null;
   }, [transcript.body]);
+  const transcriptDurationSeconds = useMemo(
+    () => mediaDurationSecondsFromTranscriptBody(transcript.body),
+    [transcript.body],
+  );
   const ideaTitleById = useMemo(() => {
     const entries = new Map<string, string>();
     for (const idea of extractedIdeas) entries.set(idea.id, idea.title);
@@ -900,6 +905,11 @@ export function TranscriptDetail({
                   ) : null}
                 </span>
               </CollapsibleTrigger>
+              <TtsPlayer
+                variant="full"
+                text={transcript.body}
+                estimatedDurationSeconds={transcriptDurationSeconds ?? undefined}
+              />
             </div>
             <CollapsibleContent className={styles.extractedIdeasContent}>
               <pre className={`body-pre ${styles.bodyPre}`}>{transcript.body}</pre>

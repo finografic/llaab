@@ -9,3 +9,5 @@ allowBuilds:
   esbuild: true
   sharp: true
   msw: false
+  onnxruntime-node: false
+  protobufjs: true
