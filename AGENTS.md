@@ -65,6 +65,66 @@ vault/                         = drafts, captures, generated candidates, traces
 
 ---
 
+## Agent execution efficiency
+
+Prefer the smallest complete implementation and validation loop appropriate to the task.
+
+For localized feature work, target one orientation pass, one coherent edit pass, and one focused validation pass. Additional loops must be justified by a concrete failure or newly discovered dependency.
+
+Avoid side quests. Do not broaden the task into adjacent refactors, repository cleanup, environment repair, architectural generalization, or unrelated warning resolution unless required to complete or validate the requested change.
+
+### Before editing
+
+- Perform one focused orientation pass over the owning route, service, storage primitive, client query/mutation, and directly affected UI.
+- Read applicable repository instructions before implementing so project conventions are not discovered during final linting.
+- Do not broadly inspect adjacent subsystems unless the initial pass reveals a concrete dependency.
+- Once the owning surfaces are identified, begin implementation rather than continuing exploratory reads.
+
+### Implementation scope
+
+- Keep route handlers thin and place domain behaviour in the existing owning service layer.
+- Reuse established repository patterns before introducing new abstractions.
+- Do not generalize a one-use component or helper unless reuse is immediate, obvious, and materially reduces duplication.
+- Avoid unrelated refactors, cleanup, generated-file changes, or environment repairs.
+- Preserve unrelated uncommitted files and existing warnings.
+
+### Validation scope
+
+Use progressive validation, stopping once the changed behaviour is sufficiently proven:
+
+1. Run the narrowest relevant test or test file.
+2. Run typechecks for directly affected packages/apps.
+3. Run formatting or lint checks only for touched files when supported.
+4. Run broader builds or repository-wide checks only when:
+   - the change affects shared public exports;
+   - a focused check cannot establish correctness;
+   - a failure specifically requires the broader command; or
+   - the user explicitly requests full validation.
+
+Do not rebuild dependent packages merely because checked-in or local `dist` output is stale unless the affected consumer actually resolves through that output. Prefer source-level validation when the workspace supports it.
+
+Do not restart or refresh running applications unless required to verify runtime behaviour. Report that a restart may be needed instead of performing unrelated environment management.
+
+### Tool loops and progress updates
+
+- Resolve routine feature work in as few useful tool loops as possible.
+- Batch related searches and file reads.
+- Batch coherent edits where confidence is high.
+- Avoid repeating equivalent commands through different wrappers unless the first result is genuinely insufficient.
+- Give progress updates only at meaningful phase boundaries:
+  - orientation complete;
+  - implementation complete;
+  - validation result or blocker.
+- Do not narrate every search, file read, command, or minor implementation decision.
+
+### Existing failures
+
+- Distinguish failures caused by the current change from pre-existing warnings or failures.
+- Do not fix unrelated failures unless they block validation of the requested work.
+- Clearly report unrelated failures in the final summary.
+
+---
+
 ## Roadmap and Planning Docs
 
 - Check `ROADMAP.md` before proposing new initiatives.
@@ -75,6 +135,14 @@ vault/                         = drafts, captures, generated candidates, traces
 ---
 
 ## Rules — Project-Specific
+
+## LLAAB-specific implementation conventions
+
+- Structural horizontal and vertical layouts must use the local `Row` and `Col` components rather than ad hoc Tailwind flex containers.
+- Server route modules should contain request parsing and response mapping only; domain workflows belong in a named service file.
+- When a shared workspace package is consumed through generated `dist`, rebuild only that affected package, not the wider workspace.
+- Query mutations must invalidate only the directly affected query families unless graph-wide data has changed.
+- Destructive knowledge actions require explicit confirmation and must preserve referential integrity.
 
 Project-specific rules live in `.github/instructions/project/**/*.instructions.md`.
 

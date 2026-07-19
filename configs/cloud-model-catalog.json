@@ -1,31 +1,31 @@
 {
   "opencode": {
     "source": "api",
-    "fetchedAt": "2026-07-11T13:24:44.324Z",
+    "fetchedAt": "2026-07-18T06:33:33.082Z",
     "models": [
       {
         "name": "qwen3.7-plus",
         "provider": "opencode",
         "owned_by": "opencode",
-        "created": 1783776285
+        "created": 1784356414
       },
       {
         "name": "mimo-v2.5",
         "provider": "opencode",
         "owned_by": "opencode",
-        "created": 1783776285
+        "created": 1784356414
       },
       {
         "name": "glm-5.2",
         "provider": "opencode",
         "owned_by": "opencode",
-        "created": 1783776285
+        "created": 1784356414
       }
     ]
   },
   "anthropic": {
     "source": "config",
-    "fetchedAt": "2026-07-11T13:24:45.387Z",
+    "fetchedAt": "2026-07-18T06:33:34.082Z",
     "models": [
       {
         "name": "claude-sonnet-4-6",
