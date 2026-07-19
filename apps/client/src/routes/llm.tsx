@@ -30,6 +30,7 @@ interface LlmStatusResponse {
     | 'consolidate'
     | 'wiki-compile'
     | 'wiki-discover'
+    | 'wiki-link'
     | 'code'
     | 'reason'
     | 'reason-plus'

@@ -26,6 +26,7 @@ type TaskType =
   | 'consolidate'
   | 'wiki-compile'
   | 'wiki-discover'
+  | 'wiki-link'
   | 'code'
   | 'reason'
   | 'reason-plus'
@@ -54,6 +55,7 @@ const TASK_LABELS: Record<TaskType, string> = {
   'consolidate': 'Consolidation',
   'wiki-compile': 'Wiki compilation',
   'wiki-discover': 'Wiki discovery',
+  'wiki-link': 'Wiki linking',
   'code': 'Code',
   'reason': 'Reason',
   'reason-plus': 'Reason+',
@@ -75,6 +77,7 @@ const TASK_ORDER: TaskType[] = [
   'consolidate',
   'wiki-compile',
   'wiki-discover',
+  'wiki-link',
   'code',
   'reason',
   'reason-plus',

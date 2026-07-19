@@ -19,9 +19,7 @@ describe('autoPromoteWikiDrafts', () => {
     await rm(root, { force: true, recursive: true });
   });
 
-  // Characterization of the current (to-be-removed) path: needs-review → suffixed create.
-  // Refined one-step policy forbids this; see wiki-one-step.contract + generation characterization.
-  it('publishes an ambiguous draft as a distinct topic without a review step', async () => {
+  it('does not invent a suffixed topic for needs-review drafts', async () => {
     const core = await import('@llaab/core');
     await core.writeKnowledgeWiki({
       id: 'context-management',
@@ -58,11 +56,46 @@ describe('autoPromoteWikiDrafts', () => {
     });
 
     const { autoPromoteWikiDrafts } = await import('./wiki-auto-promotion.service.js');
-    const [page] = await autoPromoteWikiDrafts([created.id]);
+    const result = await autoPromoteWikiDrafts([created.id]);
 
-    expect(page?.id).toBe('context-management-2');
-    expect(page?.tags).toEqual(['context-management', 'd:llm']);
-    expect(page?.quality_score).toBe(84);
+    expect(result.pages).toHaveLength(0);
+    expect(result.branches).toEqual([
+      expect.objectContaining({
+        draftId: created.id,
+        outcome: 'skipped',
+      }),
+    ]);
+    expect(await core.listKnowledgeWikis()).toHaveLength(1);
+    expect((await core.readNodeByType('wiki-draft', created.id)).draft_status).toBe('proposed');
+    expect((await core.readNodeByType('wiki-draft', created.id)).topic_key).toBe('context-management');
+  });
+
+  it('auto-promotes a valid create draft', async () => {
+    const core = await import('@llaab/core');
+    const created = await core.createNode({
+      type: 'wiki-draft',
+      title: 'Isolation Boundaries',
+      body: '<!-- wiki-section:overview -->\n\n## Overview\n\nIsolation limits blast radius.[^ref-1]',
+      tags: ['isolation', 'd:agents'],
+      extra: {
+        topic_key: 'isolation-boundaries',
+        operation: 'create',
+        source_canonical_idea_ids: ['idea-isolation'],
+        primary_canonical_idea_ids: ['idea-isolation'],
+        source_transcript_ids: ['transcript-1'],
+        source_refs: [
+          { id: 'ref-1', kind: 'transcript', node_id: 'transcript-1', verification: 'source-backed' },
+        ],
+        quality_score: 88,
+      },
+    });
+
+    const { autoPromoteWikiDrafts } = await import('./wiki-auto-promotion.service.js');
+    const result = await autoPromoteWikiDrafts([created.id]);
+
+    expect(result.pages).toHaveLength(1);
+    expect(result.pages[0]?.id).toBe('isolation-boundaries');
+    expect(result.branches[0]?.outcome).toBe('promoted-create');
     expect((await core.readNodeByType('wiki-draft', created.id)).draft_status).toBe('accepted');
   });
 });

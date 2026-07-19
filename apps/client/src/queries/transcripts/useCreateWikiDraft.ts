@@ -27,6 +27,15 @@ export interface CreateWikiDraftResult {
   wikiIds: string[];
   wikiCount: number;
   wikis: KnowledgeWikiPage[];
+  branches?: Array<{
+    outcome: 'promoted-create' | 'promoted-update' | 'existing-no-op' | 'skipped' | 'failed';
+    proposal_id?: string;
+    draft_id?: string;
+    wiki_id?: string;
+    run_id?: string;
+    warnings?: string[];
+    reason?: string;
+  }>;
 }
 
 async function createWikiDraft(input: CreateWikiDraftInput): Promise<CreateWikiDraftResult> {

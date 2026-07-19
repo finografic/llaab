@@ -30,6 +30,11 @@
       "provider": "opencode",
       "model": "glm-5.2"
     },
+    "wiki-link": {
+      "tier": "remote",
+      "provider": "opencode",
+      "model": "glm-5.2"
+    },
     "reason": {
       "tier": "local-strong",
       "provider": "ollama",

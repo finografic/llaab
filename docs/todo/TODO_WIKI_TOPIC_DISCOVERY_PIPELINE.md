@@ -1,6 +1,6 @@
 # TODO — One-Step Topic-Oriented Wiki Generation
 
-> **Status:** In progress — Phases 0–3 complete.
+> **Status:** In progress — Phases 0–4 complete.
 > 📅 Jul 19, 2026.
 
 > **Priority:** P1 — refine the shipped wiki-generation path before treating transcript-wide
@@ -126,7 +126,7 @@ The correction separates three model-facing responsibilities while preserving on
 - [x] Phase 1 — add internal proposal, evidence-role, and diversity schemas
 - [x] Phase 2 — build internal transcript-scoped topic discovery
 - [x] Phase 3 — compile each discovered topic coherently
-- [ ] Phase 4 — resolve links and auto-promote in one orchestration run
+- [x] Phase 4 — resolve links and auto-promote in one orchestration run
 - [ ] Phase 5 — correct quality, source diversity, and verification semantics
 - [ ] Phase 6 — preserve the one-action UI and post-creation controls
 - [ ] Phase 7 — migrate safely, validate end to end, and update documentation
@@ -391,55 +391,55 @@ completes.
 
 ### `wiki-link` stage
 
-- [ ] Add `wiki-link` to the LLM task/routing contract and verify the live route in
+- [x] Add `wiki-link` to the LLM task/routing contract and verify the live route in
       [LLM routing configuration](/configs/llm-routing.json).
-- [ ] Run link suggestion after all topic identities and compile results are validated, using
+- [x] Run link suggestion after all topic identities and compile results are validated, using
       compact summaries of successful new/update pages and candidate existing wikis.
-- [ ] Accept temporary proposal keys and existing wiki ids as targets; resolve temporary keys to
+- [x] Accept temporary proposal keys and existing wiki ids as targets; resolve temporary keys to
       final promoted ids before writing Markdown.
-- [ ] Return controlled relations only: `related-to`, `depends-on`, `supports`,
+- [x] Return controlled relations only: `related-to`, `depends-on`, `supports`,
       `contrasts-with`, `extends`, and `example-of`; retain `supersedes` only for explicit lifecycle
       use.
-- [ ] Require a concise semantic rationale for every link.
-- [ ] Reject links based only on shared `d:*` domains or generic tag overlap.
-- [ ] Validate targets, self-links, duplicate directed edges, relation values, and rationales.
-- [ ] Treat link inference as optional enrichment: if it fails, promote otherwise valid articles
+- [x] Require a concise semantic rationale for every link.
+- [x] Reject links based only on shared `d:*` domains or generic tag overlap.
+- [x] Validate targets, self-links, duplicate directed edges, relation values, and rationales.
+- [x] Treat link inference as optional enrichment: if it fails, promote otherwise valid articles
       without the invalid links and record a warning.
 
 ### Promotion policy
 
-- [ ] Remove `prepareAmbiguousDraft()` behavior. Never turn `needs-review` into `create` or invent a
+- [x] Remove `prepareAmbiguousDraft()` behavior. Never turn `needs-review` into `create` or invent a
       suffixed topic key.
-- [ ] Auto-promote every valid `create` and `update` result within the same orchestration request.
-- [ ] Resolve a confident `no-op` to the existing promoted wiki and include it in the returned page
+- [x] Auto-promote every valid `create` and `update` result within the same orchestration request.
+- [x] Resolve a confident `no-op` to the existing promoted wiki and include it in the returned page
       set without rewriting it.
-- [ ] Require exact represented-evidence/topic resolution for `no-op`; broad subset coincidence is
+- [x] Require exact represented-evidence/topic resolution for `no-op`; broad subset coincidence is
       insufficient.
-- [ ] Preserve update base revision/hash checks, manual section edits, atomic writes, and per-wiki
+- [x] Preserve update base revision/hash checks, manual section edits, atomic writes, and per-wiki
       locks from the completed pipeline.
-- [ ] Mark internal drafts accepted automatically only after their corresponding knowledge write
+- [x] Mark internal drafts accepted automatically only after their corresponding knowledge write
       succeeds.
-- [ ] Keep failed, ambiguous, stale, contested, or low-quality internal artifacts for audit; they
+- [x] Keep failed, ambiguous, stale, contested, or low-quality internal artifacts for audit; they
       are not user promotion tasks and never mutate knowledge.
 
 ### Unified response and navigation
 
-- [ ] Return one ordered result per internal topic with operation, run id, internal draft id,
+- [x] Return one ordered result per internal topic with operation, run id, internal draft id,
       promoted/existing wiki id, warnings, and terminal status.
-- [ ] Return every resulting `KnowledgeWikiPage`, not only the first id.
-- [ ] Treat one valid page as normal success and multiple valid pages as normal multi-page success.
-- [ ] Navigate to the single page when only one resulted. For multiple pages, show the first
+- [x] Return every resulting `KnowledgeWikiPage`, not only the first id.
+- [x] Treat one valid page as normal success and multiple valid pages as normal multi-page success.
+- [x] Navigate to the single page when only one resulted. For multiple pages, show the first
       rendered page plus a generated-pages list/links, or a read-only result surface requiring no
       further action.
-- [ ] Surface partial skips/failures as diagnostics alongside successful pages. Do not require the
+- [x] Surface partial skips/failures as diagnostics alongside successful pages. Do not require the
       user to resolve them to complete the creation flow.
 
 **Exit criteria**
 
-- [ ] One click executes discovery, compilation, linking, and promotion to completion.
-- [ ] Every valid topic becomes a promoted page without user promotion.
-- [ ] `needs-review`, contested, stale, invalid, or low-quality output cannot mutate knowledge.
-- [ ] Partial success is durable and understandable without another workflow step.
+- [x] One click executes discovery, compilation, linking, and promotion to completion.
+- [x] Every valid topic becomes a promoted page without user promotion.
+- [x] `needs-review`, contested, stale, invalid, or low-quality output cannot mutate knowledge.
+- [x] Partial success is durable and understandable without another workflow step.
 
 ---
 
