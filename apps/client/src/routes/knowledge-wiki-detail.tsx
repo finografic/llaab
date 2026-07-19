@@ -1,4 +1,4 @@
-import { computeWikiEvidenceMetrics, formatWikiEvidenceMetricsSummary } from '@llaab/schemas';
+import { computeWikiEvidenceMetrics } from '@llaab/schemas';
 import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
 import { DemoteKnowledgeWikiAction } from 'components/DemoteKnowledgeWikiAction/DemoteKnowledgeWikiAction';
 import { PageHero } from 'components/PageHero/PageHero';
@@ -23,8 +23,10 @@ import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import {
   ActivityIcon,
   BookCheckIcon,
+  BookOpenIcon,
   FileTextIcon,
   LoaderCircleIcon,
+  NetworkIcon,
   RefreshCwIcon,
   SparklesIcon,
   Trash2Icon,
@@ -53,6 +55,10 @@ function qualityTone(score: number | undefined): string {
   if (score >= 80) return styles.good;
   if (score >= 60) return styles.warning;
   return styles.danger;
+}
+
+function pluralizeMetricLabel(count: number, singular: string, plural = `${singular}s`): string {
+  return count === 1 ? singular : plural;
 }
 
 export function KnowledgeWikiDetailPage() {
@@ -241,13 +247,87 @@ export function KnowledgeWikiDetailPage() {
 
             {evidenceMetrics ? (
               <Col xs={12}>
-                <section className={styles.summaryCard} aria-label="Evidence metrics">
-                  <p className="text-sm text-muted-foreground">
-                    {formatWikiEvidenceMetricsSummary(evidenceMetrics)}
-                    {evidenceMetrics.unique_source_node_count > 0
-                      ? ` · ${evidenceMetrics.unique_source_node_count} source nodes`
-                      : ''}
-                  </p>
+                <section aria-label="Evidence metrics">
+                  <Row gutterWidth={12} className={styles.evidenceMetricsRow}>
+                    <Col xs={12} md={6}>
+                      <Card className={styles.evidenceMetricCard}>
+                        <CardHeader className={styles.metricHeader}>
+                          <CardTitle className={styles.metricLabel}>
+                            <BookOpenIcon /> Knowledge Basis
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <Row nogutter>
+                            <Col xs={12} className={styles.evidenceStatList}>
+                              <div className={styles.evidenceStat}>
+                                <strong>{evidenceMetrics.unique_canonical_idea_count}</strong>
+                                <span>
+                                  {pluralizeMetricLabel(evidenceMetrics.unique_canonical_idea_count, 'Idea')}
+                                </span>
+                              </div>
+                              <div className={styles.evidenceStat}>
+                                <strong>{evidenceMetrics.evidence_ref_count}</strong>
+                                <span>
+                                  {pluralizeMetricLabel(evidenceMetrics.evidence_ref_count, 'Evidence ref')}
+                                </span>
+                              </div>
+                              <div className={styles.evidenceStat}>
+                                <strong>{evidenceMetrics.unique_transcript_count}</strong>
+                                <span>
+                                  {pluralizeMetricLabel(
+                                    evidenceMetrics.unique_transcript_count,
+                                    'Transcript',
+                                  )}
+                                </span>
+                              </div>
+                            </Col>
+                          </Row>
+                        </CardContent>
+                      </Card>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Card className={styles.evidenceMetricCard}>
+                        <CardHeader className={styles.metricHeader}>
+                          <CardTitle className={styles.metricLabel}>
+                            <NetworkIcon /> Source Diversity
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <Row nogutter>
+                            <Col xs={12} className={styles.evidenceStatList}>
+                              <div className={styles.evidenceStat}>
+                                <strong>{evidenceMetrics.independent_source_count}</strong>
+                                <span>
+                                  {pluralizeMetricLabel(
+                                    evidenceMetrics.independent_source_count,
+                                    'Independent source',
+                                  )}
+                                </span>
+                              </div>
+                              <div className={styles.evidenceStat}>
+                                <strong>{evidenceMetrics.unique_author_channel_count}</strong>
+                                <span>
+                                  {pluralizeMetricLabel(
+                                    evidenceMetrics.unique_author_channel_count,
+                                    'Channel',
+                                  )}
+                                </span>
+                              </div>
+                              <div className={styles.evidenceStat}>
+                                <strong>{evidenceMetrics.unique_source_node_count}</strong>
+                                <span>
+                                  {pluralizeMetricLabel(
+                                    evidenceMetrics.unique_source_node_count,
+                                    'Source record',
+                                  )}
+                                </span>
+                              </div>
+                            </Col>
+                          </Row>
+                        </CardContent>
+                      </Card>
+                    </Col>
+                  </Row>
                 </section>
               </Col>
             ) : null}

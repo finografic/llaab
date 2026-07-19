@@ -367,11 +367,13 @@ export function TtsPlayer({
                 style={{ '--tts-progress': `${progress}%` } as React.CSSProperties}
               />
             </div>
-            <span className={styles.time}>
-              {remainingSeconds != null ? `-${formatTtsTime(remainingSeconds)}` : '--:--'}
-            </span>
+            {estimatedDurationSeconds ? (
+              <span className={styles.time}>
+                {remainingSeconds != null ? `-${formatTtsTime(remainingSeconds)}` : '--:--'}
+              </span>
+            ) : null}
           </div>
-          {status === 'loading' || status === 'error' ? (
+          {estimatedDurationSeconds && (status === 'loading' || status === 'error') ? (
             <span className={styles.status}>
               {status === 'loading' ? error || 'Preparing audio…' : error}
             </span>

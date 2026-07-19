@@ -19,7 +19,7 @@
 }
 
 .createdLinks li::before {
-  content: '•';
+  content: "•";
   flex-shrink: 0;
   color: var(--accent);
 }
@@ -42,6 +42,12 @@
 
 .metricsRow {
   margin-bottom: var(--space-4);
+}
+
+@media (max-width: 1023px) {
+  .metricsRow {
+    row-gap: var(--space-3);
+  }
 }
 
 .metricCard {
@@ -87,6 +93,38 @@
   font-size: var(--text-xs);
   font-weight: 400;
   text-transform: none;
+}
+
+.evidenceMetricsRow {
+  margin-bottom: var(--space-5);
+  row-gap: var(--space-3);
+}
+
+.evidenceMetricCard {
+  height: 100%;
+  background: var(--surface);
+}
+
+.evidenceStatList > .evidenceStat + .evidenceStat {
+  margin-top: var(--space-2);
+}
+
+.evidenceStat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.evidenceStat strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.evidenceStat span {
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .good {
@@ -194,4 +232,3 @@
   padding: 0;
   list-style: none;
 }
-
