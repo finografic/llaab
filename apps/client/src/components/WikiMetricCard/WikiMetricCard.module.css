@@ -1,0 +1,100 @@
+.defaultCard,
+.compactCard {
+  height: 100%;
+  background: var(--surface);
+}
+
+.defaultCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.compactCard {
+  min-height: 0;
+  gap: 0;
+  padding-block: 0;
+  background: transparent;
+  box-shadow: none;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
+}
+
+.compactCard :global([data-slot='card-header']) {
+  padding-block: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-bottom: var(--space-1);
+}
+
+.compactCard .header {
+  padding-bottom: 0;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.compactCard .label {
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  gap: var(--space-1);
+}
+
+.label svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.compactCard .label svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.value {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-2xl);
+  font-weight: 650;
+  text-transform: capitalize;
+  line-height: 1.15;
+}
+
+.value span {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  text-transform: none;
+}
+
+.good {
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+
+.warning {
+  color: var(--warning-text);
+  border-color: var(--warning-border-dim);
+}
+
+.danger {
+  color: var(--error-text);
+  border-color: var(--error-border-dim);
+}
+
+.neutral {
+  color: var(--text-muted);
+}
