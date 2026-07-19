@@ -85,7 +85,35 @@ export const createWikiDraft = {
           0,
         ),
         selectedTranscriptCount: Math.max(...results.map(({ result }) => result.selectedTranscriptCount)),
-        selectedSourceCount: Math.max(...results.map(({ result }) => result.selectedSourceCount)),
+        selectedSourceCount: Math.max(
+          ...results.map(({ result }) => result.evidenceMetrics.unique_source_node_count),
+        ),
+        evidenceMetrics: {
+          evidence_ref_count: results.reduce(
+            (total, { result }) => total + result.evidenceMetrics.evidence_ref_count,
+            0,
+          ),
+          unique_canonical_idea_count: results.reduce(
+            (total, { result }) => total + result.evidenceMetrics.unique_canonical_idea_count,
+            0,
+          ),
+          unique_transcript_count: Math.max(
+            ...results.map(({ result }) => result.evidenceMetrics.unique_transcript_count),
+          ),
+          unique_source_node_count: Math.max(
+            ...results.map(({ result }) => result.evidenceMetrics.unique_source_node_count),
+          ),
+          unique_author_channel_count: Math.max(
+            ...results.map(({ result }) => result.evidenceMetrics.unique_author_channel_count),
+          ),
+          independent_source_count: Math.max(
+            ...results.map(({ result }) => result.evidenceMetrics.independent_source_count),
+          ),
+          unknown_source_identity_count: results.reduce(
+            (total, { result }) => total + result.evidenceMetrics.unknown_source_identity_count,
+            0,
+          ),
+        },
         producedNodeIds: draftIds,
       },
       201,

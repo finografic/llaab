@@ -10,7 +10,11 @@ import {
   withKnowledgeWikiLock,
   writeKnowledgeWiki,
 } from '@llaab/core';
-import { formatIsoUtcSeconds } from '@llaab/schemas';
+import {
+  computeWikiEvidenceMetrics,
+  determineWikiVerificationStatus,
+  formatIsoUtcSeconds,
+} from '@llaab/schemas';
 import type { KnowledgeWikiPage, WikiDraftNode } from '@llaab/schemas';
 
 const SECTION_MARKER = /<!--\s*wiki-section:([a-z0-9]+(?:[-_][a-z0-9]+)*)\s*-->/g;
@@ -19,19 +23,26 @@ function verificationForDraft(
   draft: WikiDraftNode,
   current?: KnowledgeWikiPage,
 ): KnowledgeWikiPage['verification_status'] {
-  if (draft.contested_claim_evidence.length > 0 || draft.contested_claims.length > 0) return 'contested';
-  const hasValidatedExternal = draft.source_refs.some(
-    (ref) =>
-      ref.kind === 'external' && ref.verification === 'corroborated' && ref.validation_notes?.length === 0,
-  );
-  if (
-    hasValidatedExternal ||
-    draft.source_ids.length >= 2 ||
-    current?.verification_status === 'corroborated'
-  ) {
-    return 'corroborated';
-  }
-  return 'source-backed';
+  const evidenceMetrics =
+    draft.evidence_metrics ??
+    computeWikiEvidenceMetrics(
+      draft.source_refs.map((ref) => ({
+        id: ref.id,
+        transcript_id: ref.kind === 'transcript' ? ref.node_id : undefined,
+        source_id: ref.kind === 'source' ? ref.node_id : undefined,
+        kind: ref.kind,
+        url: ref.url,
+        canonical_idea_ids: ref.kind === 'canonical-idea' && ref.node_id ? [ref.node_id] : [],
+      })),
+    );
+
+  return determineWikiVerificationStatus({
+    sourceRefs: draft.source_refs,
+    contestedClaims: draft.contested_claims,
+    contestedClaimEvidence: draft.contested_claim_evidence,
+    evidenceMetrics,
+    currentVerificationStatus: current?.verification_status,
+  });
 }
 
 function sectionsById(body: string): Map<string, string> {

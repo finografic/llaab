@@ -1,6 +1,6 @@
 # TODO — One-Step Topic-Oriented Wiki Generation
 
-> **Status:** Not started.
+> **Status:** In progress — Phase 1 complete.
 > 📅 Jul 19, 2026.
 
 > **Priority:** P1 — refine the shipped wiki-generation path before treating transcript-wide
@@ -123,7 +123,7 @@ The correction separates three model-facing responsibilities while preserving on
 ## Progress
 
 - [ ] Phase 0 — lock the one-step contract and regression fixtures
-- [ ] Phase 1 — add internal proposal, evidence-role, and diversity schemas
+- [x] Phase 1 — add internal proposal, evidence-role, and diversity schemas
 - [ ] Phase 2 — build internal transcript-scoped topic discovery
 - [ ] Phase 3 — compile each discovered topic coherently
 - [ ] Phase 4 — resolve links and auto-promote in one orchestration run
@@ -202,69 +202,69 @@ contract without exposing a proposal-review workflow.
 
 ### Topic proposal result
 
-- [ ] Add a shared `WikiTopicProposalSchema` with:
+- [x] Add a shared `WikiTopicProposalSchema` with:
       `topic_key`, `title`, `rationale`, `primary_canonical_idea_ids`,
       `supporting_canonical_idea_ids`, `domains`, `tags`, `operation`, optional
       `existing_wiki_id`, match reasons, coherence score, warnings, and model provenance.
-- [ ] Add a shared `WikiDiscoveryResultSchema` containing a proposal array plus batch coverage:
+- [x] Add a shared `WikiDiscoveryResultSchema` containing a proposal array plus batch coverage:
       primary-assigned ids, supporting-used ids, and omitted ideas with reasons.
-- [ ] Add a discovery batch/run id to every internal proposal so compilation, promotion, and section
+- [x] Add a discovery batch/run id to every internal proposal so compilation, promotion, and section
       regeneration can trace back to one user action.
-- [ ] Extend `WikiCandidateNodeSchema` or introduce an internal proposal record with backward-
+- [x] Extend `WikiCandidateNodeSchema` or introduce an internal proposal record with backward-
       compatible defaults. Do not rewrite historical vault files.
-- [ ] Require at least one primary idea per proposal; primary and supporting sets within a proposal
+- [x] Require at least one primary idea per proposal; primary and supporting sets within a proposal
       must be disjoint.
-- [ ] Require each selected idea to be primary in at most one proposal by default. Supporting use
+- [x] Require each selected idea to be primary in at most one proposal by default. Supporting use
       may repeat when the rationale explains the role.
-- [ ] Reject proposal bundles containing invented ids, duplicate topic keys, duplicate normalized
+- [x] Reject proposal bundles containing invented ids, duplicate topic keys, duplicate normalized
       titles, empty rationales, unresolved existing-wiki ids, or unaccounted selected ideas.
-- [ ] Treat proposal count guidance as a model hint and quality signal, never a schema quota.
+- [x] Treat proposal count guidance as a model hint and quality signal, never a schema quota.
 
 ### Compiler input
 
-- [ ] Extend `CompileWikiDraftInput` and the prompt payload with one internally validated proposal
+- [x] Extend `CompileWikiDraftInput` and the prompt payload with one internally validated proposal
       and separate primary/supporting canonical-idea arrays.
-- [ ] Retain flattened source ids for promoted compatibility while persisting evidence roles on the
+- [x] Retain flattened source ids for promoted compatibility while persisting evidence roles on the
       internal draft for audit and section regeneration.
-- [ ] Build evidence only for the current proposal and record which idea roles caused each excerpt
+- [x] Build evidence only for the current proposal and record which idea roles caused each excerpt
       to be selected.
-- [ ] Keep candidate related-wiki summaries separate from link decisions; shared tags may select
+- [x] Keep candidate related-wiki summaries separate from link decisions; shared tags may select
       comparison candidates but may not create an edge.
 
 ### Evidence and source metrics
 
-- [ ] Add `WikiEvidenceMetricsSchema` with separate counts for evidence refs, unique canonical
+- [x] Add `WikiEvidenceMetricsSchema` with separate counts for evidence refs, unique canonical
       ideas, unique transcripts, unique source nodes, unique authors/channels, and independent
       sources.
-- [ ] Define a conservative source-origin identity helper. Multiple excerpts/timestamps from one
+- [x] Define a conservative source-origin identity helper. Multiple excerpts/timestamps from one
       transcript count once; multiple transcripts from one author/channel do not automatically
       establish independent corroboration.
-- [ ] Preserve missing source identity as unknown. Missing metadata must not create synthetic
+- [x] Preserve missing source identity as unknown. Missing metadata must not create synthetic
       diversity.
-- [ ] Persist stable historical metrics on internal drafts/promoted pages where needed; derive
+- [x] Persist stable historical metrics on internal drafts/promoted pages where needed; derive
       display-only counts from source refs when persistence would duplicate truth.
-- [ ] Migrate `selected_source_count` consumers to the explicit metrics contract before deprecating
+- [x] Migrate `selected_source_count` consumers to the explicit metrics contract before deprecating
       the ambiguous field.
 
 ### Verification semantics
 
-- [ ] Centralize `source-backed`, `corroborated`, and `contested` calculation in one purpose-named
+- [x] Centralize `source-backed`, `corroborated`, and `contested` calculation in one purpose-named
       verifier.
-- [ ] Set `source-backed` when claims resolve to supplied evidence without independent
+- [x] Set `source-backed` when claims resolve to supplied evidence without independent
       corroboration or contradiction.
-- [ ] Set `corroborated` only when the same material claim is supported by at least two independent
+- [x] Set `corroborated` only when the same material claim is supported by at least two independent
       sources or a validated authoritative external source.
-- [ ] Set `contested` only when normalized claims have explicit opposing evidence groups.
-- [ ] Keep low diversity, unresolved questions, ambiguity, and weak citations as separate issues;
+- [x] Set `contested` only when normalized claims have explicit opposing evidence groups.
+- [x] Keep low diversity, unresolved questions, ambiguity, and weak citations as separate issues;
       none alone implies `contested`.
 
 **Exit criteria**
 
-- [ ] Shared Zod schemas round-trip persisted proposal/draft fixtures and reject invalid roles or
+- [x] Shared Zod schemas round-trip persisted proposal/draft fixtures and reject invalid roles or
       coverage.
-- [ ] Twelve timestamps from one transcript report 12 evidence refs, one transcript, one
+- [x] Twelve timestamps from one transcript report 12 evidence refs, one transcript, one
       author/channel, and one independent source.
-- [ ] Single-source non-conflicting material validates as `source-backed`.
+- [x] Single-source non-conflicting material validates as `source-backed`.
 
 ---
 

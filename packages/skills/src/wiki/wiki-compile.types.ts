@@ -1,8 +1,35 @@
-import type { WikiCompileResult, WikiEvidenceItem } from '@llaab/schemas';
+import type {
+  WikiCompileResult,
+  WikiEvidenceItem,
+  WikiEvidenceMetrics,
+  WikiOperation,
+  WikiTopicProposal,
+} from '@llaab/schemas';
 
 export interface CompileWikiDraftInput {
   transcriptId: string;
+  /** Flattened idea ids (primary ∪ supporting) for source resolution compatibility. */
   canonicalIdeaIds: string[];
+  primaryCanonicalIdeaIds?: string[];
+  supportingCanonicalIdeaIds?: string[];
+  /** Internally validated discovery proposal for one compile invocation. */
+  proposal?: Pick<
+    WikiTopicProposal,
+    | 'id'
+    | 'discovery_batch_id'
+    | 'topic_key'
+    | 'title'
+    | 'rationale'
+    | 'primary_canonical_idea_ids'
+    | 'supporting_canonical_idea_ids'
+    | 'domains'
+    | 'tags'
+    | 'operation'
+    | 'existing_wiki_id'
+    | 'coherence_score'
+    | 'warnings'
+  >;
+  discoveryBatchId?: string;
   suggestedTitle?: string;
   suggestedTopicKey?: string;
   targetWikiId?: string;
@@ -17,7 +44,9 @@ export interface CompileWikiDraftOutput {
   warnings: string[];
   selectedCanonicalIdeaCount: number;
   selectedTranscriptCount: number;
+  /** @deprecated Prefer `evidenceMetrics.unique_source_node_count`. */
   selectedSourceCount: number;
+  evidenceMetrics: WikiEvidenceMetrics;
   producedNodeIds: string[];
   evidence: WikiEvidenceItem[];
   runTrace: {
@@ -33,3 +62,8 @@ export interface CompileWikiDraftOutput {
     };
   };
 }
+
+export type CompileWikiDraftProposalOperation = Extract<
+  WikiOperation,
+  'create' | 'update' | 'no-op' | 'needs-review'
+>;

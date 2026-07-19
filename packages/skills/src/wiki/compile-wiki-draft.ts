@@ -10,6 +10,7 @@ import {
 import { routeLlm } from '@llaab/llm';
 import {
   appendDatetimeFilenameSegment,
+  computeWikiEvidenceMetrics,
   NodeIdSchema,
   toNodeId,
   WikiCompileResultSchema,
@@ -17,7 +18,13 @@ import {
   WikiTagSchema,
 } from '@llaab/schemas';
 import type { CompileWikiDraftInput, CompileWikiDraftOutput } from './wiki-compile.types.js';
-import type { KnowledgeWikiPage, WikiCompileResult, WikiSourceRef } from '@llaab/schemas';
+import type {
+  CanonicalIdeaNode,
+  KnowledgeWikiPage,
+  WikiCompileResult,
+  WikiEvidenceRole,
+  WikiSourceRef,
+} from '@llaab/schemas';
 
 import { runSkill } from '../runner.js';
 import {
@@ -370,32 +377,92 @@ function normalizeWikiCompileJson(
   return draft;
 }
 
+function resolveEvidenceRoles(input: {
+  canonicalIdeas: CanonicalIdeaNode[];
+  primaryCanonicalIdeaIds?: string[];
+  supportingCanonicalIdeaIds?: string[];
+  proposal?: CompileWikiDraftInput['proposal'];
+}): {
+  primaryCanonicalIdeas: CanonicalIdeaNode[];
+  supportingCanonicalIdeas: CanonicalIdeaNode[];
+  evidenceRoleByCanonicalId: Map<string, WikiEvidenceRole>;
+} {
+  const byId = new Map(input.canonicalIdeas.map((idea) => [idea.id, idea]));
+  const primaryIds =
+    input.proposal?.primary_canonical_idea_ids ??
+    input.primaryCanonicalIdeaIds ??
+    input.canonicalIdeas.map((idea) => idea.id);
+  const supportingIds =
+    input.proposal?.supporting_canonical_idea_ids ?? input.supportingCanonicalIdeaIds ?? [];
+  const primaryCanonicalIdeas = primaryIds
+    .map((id) => byId.get(id))
+    .filter((idea): idea is CanonicalIdeaNode => idea !== undefined);
+  const supportingCanonicalIdeas = supportingIds
+    .map((id) => byId.get(id))
+    .filter((idea): idea is CanonicalIdeaNode => idea !== undefined);
+  const evidenceRoleByCanonicalId = new Map<string, WikiEvidenceRole>();
+  for (const id of primaryIds) evidenceRoleByCanonicalId.set(id, 'primary');
+  for (const id of supportingIds) {
+    if (evidenceRoleByCanonicalId.has(id)) continue;
+    evidenceRoleByCanonicalId.set(id, 'supporting');
+  }
+  return { primaryCanonicalIdeas, supportingCanonicalIdeas, evidenceRoleByCanonicalId };
+}
+
 export async function compileWikiDraft(input: CompileWikiDraftInput) {
   return runSkill<CompileWikiDraftInput, CompileWikiDraftOutput>(
     'compile-wiki-draft',
     async (_, runNodeId) => {
       const selection = await resolveWikiSourceSelection(input);
       const { entryTranscript, canonicalIdeas, transcripts } = selection;
-      const transcriptIds = [...new Set(canonicalIdeas.map((idea) => idea.transcript_id))];
+      const { primaryCanonicalIdeas, supportingCanonicalIdeas, evidenceRoleByCanonicalId } =
+        resolveEvidenceRoles({
+          canonicalIdeas,
+          primaryCanonicalIdeaIds: input.primaryCanonicalIdeaIds,
+          supportingCanonicalIdeaIds: input.supportingCanonicalIdeaIds,
+          proposal: input.proposal,
+        });
+      const compileIdeas =
+        primaryCanonicalIdeas.length > 0
+          ? [...primaryCanonicalIdeas, ...supportingCanonicalIdeas].filter(
+              (idea, index, all) => all.findIndex((candidate) => candidate.id === idea.id) === index,
+            )
+          : canonicalIdeas;
+      const transcriptIds = [...new Set(compileIdeas.map((idea) => idea.transcript_id))];
       const sourceIds = [...new Set(transcripts.flatMap((transcript) => transcript.source_id ?? []))];
       const promotedWikis = await listKnowledgeWikis();
-      const existingWiki = input.targetWikiId ? await readKnowledgeWiki(input.targetWikiId) : undefined;
+      const existingWiki =
+        input.targetWikiId || input.proposal?.existing_wiki_id
+          ? await readKnowledgeWiki(input.targetWikiId ?? input.proposal!.existing_wiki_id!)
+          : undefined;
       const suggestedTopicKey = input.suggestedTopicKey
         ? NodeIdSchema.parse(input.suggestedTopicKey)
-        : toNodeId(input.suggestedTitle ?? canonicalIdeas[0]?.title ?? entryTranscript.title);
+        : input.proposal?.topic_key
+          ? NodeIdSchema.parse(input.proposal.topic_key)
+          : toNodeId(
+              input.suggestedTitle ??
+                input.proposal?.title ??
+                primaryCanonicalIdeas[0]?.title ??
+                canonicalIdeas[0]?.title ??
+                entryTranscript.title,
+            );
       const topicKey = existingWiki?.topic_key ?? suggestedTopicKey;
       const topicResolution = existingWiki
         ? { operation: 'update' as const, matches: [] }
         : resolveKnowledgeWikiTopic(promotedWikis, {
             topicKey,
-            title: input.suggestedTitle ?? canonicalIdeas[0]!.title,
-            canonicalIdeaIds: canonicalIdeas.map((idea) => idea.id),
-            tags: canonicalIdeas.flatMap((idea) => idea.tags),
+            title:
+              input.suggestedTitle ??
+              input.proposal?.title ??
+              primaryCanonicalIdeas[0]?.title ??
+              canonicalIdeas[0]!.title,
+            canonicalIdeaIds: compileIdeas.map((idea) => idea.id),
+            tags: compileIdeas.flatMap((idea) => idea.tags),
           });
       const representedWiki = existingWiki
         ? undefined
         : promotedWikis.find((wiki) =>
-            canonicalIdeas.every((idea) => wiki.source_canonical_idea_ids.includes(idea.id)),
+            primaryCanonicalIdeas.every((idea) => wiki.source_canonical_idea_ids.includes(idea.id)),
           );
       const preResolvedOperation = existingWiki
         ? ('update' as const)
@@ -405,22 +472,38 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       const relatedWikis = selectRelatedWikis(
         promotedWikis,
         existingWiki,
-        canonicalIdeas.flatMap((idea) => idea.tags),
+        compileIdeas.flatMap((idea) => idea.tags),
       );
       const evidence = transcripts.flatMap((transcript) =>
         buildWikiEvidence(
           transcript,
-          canonicalIdeas.filter((idea) => idea.transcript_id === transcript.id),
+          compileIdeas.filter((idea) => idea.transcript_id === transcript.id),
           selection.candidateTitlesByCanonicalId,
+          evidenceRoleByCanonicalId,
         ),
       );
       if (evidence.length === 0) throw new Error('Selected canonical ideas produced no bounded evidence.');
+      const evidenceMetrics = computeWikiEvidenceMetrics(
+        evidence.map((item) => ({
+          id: item.id,
+          transcript_id: item.transcript_id,
+          source_id: item.source_id,
+          author: item.author,
+          channel: item.channel,
+          canonical_idea_ids: item.canonical_idea_ids,
+          kind: 'transcript',
+          url: item.source_url,
+        })),
+      );
       const sourceRefs = buildSourceRefs(evidence, existingWiki);
       const prompt = buildWikiCompilePrompt({
         transcripts,
-        canonicalIdeas,
+        canonicalIdeas: compileIdeas,
+        primaryCanonicalIdeas: primaryCanonicalIdeas.length > 0 ? primaryCanonicalIdeas : compileIdeas,
+        supportingCanonicalIdeas,
         evidence,
-        suggestedTitle: input.suggestedTitle,
+        proposal: input.proposal,
+        suggestedTitle: input.suggestedTitle ?? input.proposal?.title,
         suggestedTopicKey: topicKey,
         existingWiki,
         relatedWikis,
@@ -428,15 +511,19 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       });
       const validationInput = {
         prompt,
-        canonicalIdeaIds: new Set(canonicalIdeas.map((idea) => idea.id)),
+        canonicalIdeaIds: new Set(compileIdeas.map((idea) => idea.id)),
         sourceRefs,
         allowedSourceRefs: new Map(sourceRefs.map((ref) => [ref.id, ref])),
         allowedLinkTargetIds: new Set(
           promotedWikis.filter((wiki) => wiki.id !== existingWiki?.id).map((wiki) => wiki.id),
         ),
-        expectedTopicKey: existingWiki?.topic_key ?? input.suggestedTopicKey,
+        expectedTopicKey: existingWiki?.topic_key ?? input.suggestedTopicKey ?? input.proposal?.topic_key,
         hasExistingWiki: existingWiki !== undefined,
-        sourceCount: Math.max(sourceIds.length, transcriptIds.length),
+        sourceCount: Math.max(
+          evidenceMetrics.independent_source_count,
+          evidenceMetrics.unique_source_node_count,
+          evidenceMetrics.unique_transcript_count,
+        ),
       };
 
       let retryAttempted = false;
@@ -466,12 +553,16 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         existingWiki && !input.forceUpdate
           ? analyzeKnowledgeWikiNovelty(
               existingWiki,
-              canonicalIdeas.map((idea) => ({
+              compileIdeas.map((idea) => ({
                 id: idea.id,
                 body: idea.body,
                 keyClaims: idea.key_claims,
               })),
-              Math.max(sourceIds.length, transcriptIds.length),
+              Math.max(
+                evidenceMetrics.independent_source_count,
+                evidenceMetrics.unique_source_node_count,
+                evidenceMetrics.unique_transcript_count,
+              ),
             )
           : undefined;
       if (!existingWiki && topicResolution.operation !== 'create') operation = 'needs-review';
@@ -492,7 +583,7 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         quality.score = Math.max(0, quality.score - 10);
       }
       const selectedDomains = new Set(
-        canonicalIdeas.flatMap((idea) => idea.tags.filter((tag) => tag.startsWith('d:'))),
+        compileIdeas.flatMap((idea) => idea.tags.filter((tag) => tag.startsWith('d:'))),
       );
       if (selectedDomains.size > 1) {
         const message = 'Selected ideas span multiple domain categories and require merge review.';
@@ -528,7 +619,7 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         id: draftId,
         title: result.topic.title,
         body,
-        tags: selectedWikiTags(canonicalIdeas),
+        tags: selectedWikiTags(compileIdeas),
         extra: {
           topic_key: result.topic.topic_key || topicKey,
           entry_path: input.entryPath,
@@ -540,12 +631,21 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
               }
             : {}),
           operation,
-          source_canonical_idea_ids: canonicalIdeas.map((idea) => idea.id),
+          source_canonical_idea_ids: compileIdeas.map((idea) => idea.id),
+          primary_canonical_idea_ids: (primaryCanonicalIdeas.length > 0
+            ? primaryCanonicalIdeas
+            : compileIdeas
+          ).map((idea) => idea.id),
+          supporting_canonical_idea_ids: supportingCanonicalIdeas.map((idea) => idea.id),
+          discovery_batch_id: input.proposal?.discovery_batch_id ?? input.discoveryBatchId,
+          proposal_id: input.proposal?.id,
+          proposal_rationale: input.proposal?.rationale,
           source_transcript_ids: transcriptIds,
           source_ids: sourceIds,
-          selected_canonical_idea_count: canonicalIdeas.length,
+          selected_canonical_idea_count: compileIdeas.length,
           selected_transcript_count: transcriptIds.length,
-          selected_source_count: sourceIds.length,
+          selected_source_count: evidenceMetrics.unique_source_node_count,
+          evidence_metrics: evidenceMetrics,
           source_refs: sourceRefs,
           represented_canonical_idea_ids: result.coverage.represented_canonical_idea_ids,
           omitted_canonical_idea_ids: result.coverage.omitted_canonical_ideas.map((item) => item.id),
@@ -581,9 +681,10 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
         operation,
         qualityScore: quality.score,
         warnings: [topicWarning, ...quality.warnings].filter((value): value is string => Boolean(value)),
-        selectedCanonicalIdeaCount: canonicalIdeas.length,
+        selectedCanonicalIdeaCount: compileIdeas.length,
         selectedTranscriptCount: transcriptIds.length,
-        selectedSourceCount: sourceIds.length,
+        selectedSourceCount: evidenceMetrics.unique_source_node_count,
+        evidenceMetrics,
         producedNodeIds: [created.id],
         evidence,
         runTrace: {

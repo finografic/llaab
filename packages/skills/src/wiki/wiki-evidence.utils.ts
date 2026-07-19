@@ -1,5 +1,5 @@
 import { toNodeId } from '@llaab/schemas';
-import type { CanonicalIdeaNode, TranscriptNode, WikiEvidenceItem } from '@llaab/schemas';
+import type { CanonicalIdeaNode, TranscriptNode, WikiEvidenceItem, WikiEvidenceRole } from '@llaab/schemas';
 
 /** A bounded transcript span with a stable paragraph locator for wiki provenance. */
 export interface TranscriptSpan {
@@ -85,9 +85,11 @@ export function buildWikiEvidence(
   transcript: TranscriptNode,
   canonicalIdeas: CanonicalIdeaNode[],
   candidateTitlesByCanonicalId: Map<string, string[]> = new Map(),
+  evidenceRoleByCanonicalId: Map<string, WikiEvidenceRole> = new Map(),
 ): WikiEvidenceItem[] {
   const paragraphs = resolveTranscriptSpans(transcript.body);
   const evidence = canonicalIdeas.flatMap((idea) => {
+    const evidenceRole = evidenceRoleByCanonicalId.get(idea.id);
     const terms = new Set(
       tokenize(
         [
@@ -144,6 +146,7 @@ export function buildWikiEvidence(
         ...(transcript.source_id ? { source_id: transcript.source_id } : {}),
         source_url: timestampUrl ?? transcript.source_url,
         ...(transcript.author ? { author: transcript.author } : {}),
+        ...(transcript.author ? { channel: transcript.author } : {}),
         title: transcript.title,
         excerpt: paragraph.text.slice(0, WIKI_EVIDENCE_MAX_EXCERPT_CHARS),
         ...(resolvedLocator ? { locator: resolvedLocator } : {}),
@@ -153,6 +156,7 @@ export function buildWikiEvidence(
             : score > 0
               ? ('medium' as const)
               : ('low' as const),
+        ...(evidenceRole ? { evidence_role: evidenceRole } : {}),
       };
     });
   });
@@ -165,6 +169,11 @@ export function buildWikiEvidence(
       existing.canonical_idea_ids = [
         ...new Set([...existing.canonical_idea_ids, ...item.canonical_idea_ids]),
       ];
+      if (existing.evidence_role !== 'primary' && item.evidence_role === 'primary') {
+        existing.evidence_role = 'primary';
+      } else if (!existing.evidence_role && item.evidence_role) {
+        existing.evidence_role = item.evidence_role;
+      }
       continue;
     }
     merged.set(key, item);

@@ -6,6 +6,9 @@ export const WikiOperationSchema = z.enum(['create', 'update', 'no-op', 'needs-r
 export const WikiDraftStatusSchema = z.enum(['proposed', 'accepted', 'rejected', 'superseded']);
 export const WikiVerificationStatusSchema = z.enum(['source-backed', 'corroborated', 'contested']);
 export const WikiLifecycleStatusSchema = z.enum(['seed', 'growing', 'mature']);
+export const WikiTagSchema = z
+  .string()
+  .regex(/^(?:d:)?[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use a normalized topic or d: domain tag');
 export const WikiLinkRelationSchema = z.enum([
   'related-to',
   'depends-on',
@@ -129,6 +132,8 @@ export const WikiTopicMatchSchema = z.object({
   reason: z.string().min(1),
 });
 
+export const WikiEvidenceRoleSchema = z.enum(['primary', 'supporting']);
+
 export const WikiEvidenceItemSchema = z.object({
   id: NodeIdSchema,
   canonical_idea_id: NodeIdSchema,
@@ -137,10 +142,13 @@ export const WikiEvidenceItemSchema = z.object({
   source_id: NodeIdSchema.optional(),
   source_url: z.url().optional(),
   author: z.string().min(1).optional(),
+  channel: z.string().min(1).optional(),
   title: z.string().min(1),
   excerpt: z.string().min(1),
   locator: z.string().min(1).optional(),
   confidence: z.enum(['low', 'medium', 'high']),
+  /** Role of the canonical idea(s) that caused this excerpt to be selected. */
+  evidence_role: WikiEvidenceRoleSchema.optional(),
 });
 
 export const WikiCompileTopicSchema = z.object({
@@ -158,10 +166,30 @@ export const WikiCanonicalIdeaPayloadSchema = z.object({
   tags: z.array(z.string()).default([]),
 });
 
+export const WikiCompileProposalPayloadSchema = z.object({
+  id: NodeIdSchema,
+  discovery_batch_id: NodeIdSchema,
+  topic_key: NodeIdSchema,
+  title: z.string().min(1),
+  rationale: z.string().min(1),
+  primary_canonical_idea_ids: z.array(NodeIdSchema).min(1),
+  supporting_canonical_idea_ids: z.array(NodeIdSchema).default([]),
+  domains: z.array(WikiTagSchema).default([]),
+  tags: z.array(WikiTagSchema).default([]),
+  operation: WikiOperationSchema,
+  existing_wiki_id: NodeIdSchema.optional(),
+  coherence_score: z.number().min(0).max(100).optional(),
+  warnings: z.array(z.string()).default([]),
+});
+
 export const WikiCompileInputSchema = z.object({
   operation: z.enum(['create', 'update']),
   topic: WikiCompileTopicSchema,
+  /** Flattened selected ideas for promoted-path compatibility. */
   selected_canonical_ideas: z.array(WikiCanonicalIdeaPayloadSchema).min(1),
+  primary_canonical_ideas: z.array(WikiCanonicalIdeaPayloadSchema).default([]),
+  supporting_canonical_ideas: z.array(WikiCanonicalIdeaPayloadSchema).default([]),
+  proposal: WikiCompileProposalPayloadSchema.optional(),
   evidence: z.array(WikiEvidenceItemSchema).min(1),
   existing_wiki_id: NodeIdSchema.optional(),
   related_wikis: z
@@ -237,14 +265,12 @@ export const WikiResearchRequestSchema = z
     message: 'Research results exceed the approved result budget.',
   });
 
-export const WikiTagSchema = z
-  .string()
-  .regex(/^(?:d:)?[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use a normalized topic or d: domain tag');
-
 export type WikiCompileInput = z.infer<typeof WikiCompileInputSchema>;
+export type WikiCompileProposalPayload = z.infer<typeof WikiCompileProposalPayloadSchema>;
 export type WikiCompileResult = z.infer<typeof WikiCompileResultSchema>;
 export type WikiDraftStatus = z.infer<typeof WikiDraftStatusSchema>;
 export type WikiEvidenceItem = z.infer<typeof WikiEvidenceItemSchema>;
+export type WikiEvidenceRole = z.infer<typeof WikiEvidenceRoleSchema>;
 export type WikiLifecycleStatus = z.infer<typeof WikiLifecycleStatusSchema>;
 export type WikiLink = z.infer<typeof WikiLinkSchema>;
 export type WikiLinkRelation = z.infer<typeof WikiLinkRelationSchema>;

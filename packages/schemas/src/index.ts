@@ -124,9 +124,37 @@ export {
 export { type WikiDraftNode, WikiDraftNodeSchema } from './wiki-draft-node.schema.js';
 export { type WikiCandidateNode, WikiCandidateNodeSchema } from './wiki-candidate-node.schema.js';
 export {
+  type WikiDiscoveryCoverage,
+  WikiDiscoveryCoverageSchema,
+  type WikiDiscoveryResult,
+  WikiDiscoveryResultSchema,
+  type WikiTopicProposal,
+  WikiTopicProposalSchema,
+  normalizeWikiTitleForComparison,
+  type ValidateWikiDiscoveryResultOptions,
+  type ValidateWikiDiscoveryResultOutput,
+  validateWikiDiscoveryResult,
+} from './wiki-discovery.schema.js';
+export {
+  computeWikiEvidenceMetrics,
+  resolveWikiSourceOriginIdentity,
+  type WikiEvidenceMetricInput,
+  type WikiEvidenceMetrics,
+  WikiEvidenceMetricsSchema,
+  type WikiSourceOriginIdentity,
+  type WikiSourceOriginKind,
+} from './wiki-evidence-metrics.js';
+export {
+  determineWikiVerificationStatus,
+  type DetermineWikiVerificationInput,
+  type WikiMaterialClaimSupport,
+} from './wiki-verification.js';
+export {
   CreateWikiDraftRequestSchema,
   type WikiCompileInput,
   WikiCompileInputSchema,
+  type WikiCompileProposalPayload,
+  WikiCompileProposalPayloadSchema,
   type WikiCompileResult,
   WikiCompileResultSchema,
   type WikiDraftStatus,
@@ -135,6 +163,8 @@ export {
   WikiContestedClaimEvidenceSchema,
   type WikiEvidenceItem,
   WikiEvidenceItemSchema,
+  type WikiEvidenceRole,
+  WikiEvidenceRoleSchema,
   type WikiLifecycleStatus,
   WikiLifecycleStatusSchema,
   type WikiLink,
@@ -159,6 +189,8 @@ export {
   WikiSourceRefKindSchema,
   WikiSourceRefSchema,
   WikiTagSchema,
+  type WikiTopicMatch,
+  WikiTopicMatchSchema,
   type WikiTopicResolution,
   WikiTopicResolutionSchema,
   type WikiValidationIssue,

@@ -32,8 +32,12 @@ function validModelOutput(prompt: string): RouteTestWikiCompileOutput {
   const input = JSON.parse(prompt) as {
     suggestedTopicKey: string;
     evidence: Array<{ id: string }>;
-    canonicalIdeas: Array<{ id: string }>;
+    canonicalIdeas?: Array<{ id: string }>;
+    primaryCanonicalIdeas?: Array<{ id: string }>;
+    selectedCanonicalIdeas?: Array<{ id: string }>;
   };
+  const canonicalIdeas =
+    input.primaryCanonicalIdeas ?? input.selectedCanonicalIdeas ?? input.canonicalIdeas ?? [];
   return {
     operation: 'create',
     topic: { topic_key: input.suggestedTopicKey, title: 'Route Test Wiki', aliases: [] },
@@ -44,13 +48,13 @@ function validModelOutput(prompt: string): RouteTestWikiCompileOutput {
         heading: 'Overview',
         body: 'Source-backed route test.',
         source_ref_ids: [input.evidence[0]!.id],
-        source_canonical_idea_ids: [input.canonicalIdeas[0]!.id],
+        source_canonical_idea_ids: [canonicalIdeas[0]!.id],
       },
     ],
     links: [],
     source_refs: [{ id: input.evidence[0]!.id, kind: 'transcript', verification: 'source-backed' }],
     coverage: {
-      represented_canonical_idea_ids: [input.canonicalIdeas[0]!.id],
+      represented_canonical_idea_ids: [canonicalIdeas[0]!.id],
       omitted_canonical_ideas: [],
     },
     change_summary: 'Creates a route-tested seed page.',

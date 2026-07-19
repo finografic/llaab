@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { BaseNodeSchema } from './base-node.schema.js';
 import { NodeIdSchema, TimestampSchema } from './primitives.schema.js';
+import { WikiEvidenceMetricsSchema } from './wiki-evidence-metrics.js';
 import {
   WikiDraftStatusSchema,
   WikiContestedClaimEvidenceSchema,
@@ -22,6 +23,12 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
   entry_path: z.enum(['manual', 'automatic']).default('manual'),
   draft_status: WikiDraftStatusSchema.default('proposed'),
   source_canonical_idea_ids: z.array(NodeIdSchema).default([]),
+  /** Empty means fall back to `source_canonical_idea_ids` for legacy drafts. */
+  primary_canonical_idea_ids: z.array(NodeIdSchema).default([]),
+  supporting_canonical_idea_ids: z.array(NodeIdSchema).default([]),
+  discovery_batch_id: NodeIdSchema.optional(),
+  proposal_id: NodeIdSchema.optional(),
+  proposal_rationale: z.string().min(1).optional(),
   source_transcript_ids: z.array(NodeIdSchema).default([]),
   source_ids: z.array(NodeIdSchema).default([]),
   proposed_links: z.array(WikiLinkSchema).default([]),
@@ -41,7 +48,9 @@ export const WikiDraftNodeSchema = BaseNodeSchema.extend({
   quality_score: z.number().int().min(0).max(100).optional(),
   selected_canonical_idea_count: z.number().int().nonnegative().optional(),
   selected_transcript_count: z.number().int().nonnegative().optional(),
+  /** @deprecated Prefer `evidence_metrics.unique_source_node_count`. */
   selected_source_count: z.number().int().nonnegative().optional(),
+  evidence_metrics: WikiEvidenceMetricsSchema.optional(),
   novelty_reason: z.string().min(1).optional(),
   novelty_analysis: WikiNoveltyAnalysisSchema.optional(),
   warning: z.string().min(1).optional(),
