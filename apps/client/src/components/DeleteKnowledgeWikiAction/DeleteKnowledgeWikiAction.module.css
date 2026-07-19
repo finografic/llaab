@@ -1,0 +1,22 @@
+.deleteButton {
+  color: var(--error-text);
+  opacity: 0.55;
+}
+
+.deleteButton:hover {
+  color: var(--error-text);
+  background: var(--error-bg);
+  opacity: 1;
+}
+
+.wikiTitle {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--text);
+  font-weight: 650;
+}
+
+.error {
+  color: var(--error-text);
+  font-size: var(--text-sm);
+}

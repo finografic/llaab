@@ -157,6 +157,13 @@ export async function readKnowledgeWiki(id: string): Promise<KnowledgeWikiPage> 
   return validateKnowledgeWikiPage(KnowledgeWikiPageSchema.parse({ ...frontmatter, body }));
 }
 
+export async function deleteKnowledgeWiki(id: string): Promise<{ path: string; id: string }> {
+  const wikiId = NodeIdSchema.parse(id);
+  const filePath = await resolveSafeWikiPath(wikiId, true);
+  await unlink(filePath);
+  return { path: filePath, id: wikiId };
+}
+
 export async function listKnowledgeWikis(): Promise<KnowledgeWikiPage[]> {
   const wikiDirectory = await ensureKnowledgeWikiDirectory();
   const entries = await readdir(wikiDirectory, { withFileTypes: true });

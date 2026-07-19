@@ -181,8 +181,8 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 | `/vault/nodes/:id`             | Detail: breadcrumb, title/type/status/date, tags, body, type-specific fields                                                                          |
 | `/vault/sources/:id`           | Detail: kind/follow/url/profiles, add linked GitHub profile, transcripts table with idea count                                                        |
 | `/vault/runs/:id`              | Detail: summary grid, stages table, decisions list, error block                                                                                       |
-| `/knowledge/wikis`             | Browse promoted source-backed wiki pages from `knowledge/wikis/`                                                                                      |
-| `/knowledge/wikis/:id`         | Rendered promoted page with status cards, tags, source refs, graph links, and section regenerate/delete                                               |
+| `/knowledge/wikis`             | Browse promoted source-backed wiki pages from `knowledge/wikis/`, with confirmed wiki deletion                                                        |
+| `/knowledge/wikis/:id`         | Rendered promoted page with status cards, tags, source refs, graph links, article deletion, and section regenerate/delete                             |
 | `/registry`                    | Packages list — shared Add/Search toolbar; Pinned \| Search results tabs; `PackageCard` list (Title / Last Publish / Downloads)                       |
 | `/registry/package/:name`      | Package detail — readme + aligned metadata aside; SecondaryActionBar back to `/registry`                                                              |
 | `/registry/pinned`             | Redirects into `/registry` Pinned tab                                                                                                                 |
@@ -283,6 +283,7 @@ continues processing.
 | `GET/POST /api/vault/wiki-candidates/:id/compile`                  | Reads candidate evidence or compiles one candidate into a normal wiki draft                                                                                                                                   |
 | `POST /api/vault/wiki-research`                                    | Records explicitly approved manual research evidence for a wiki/draft; cannot bypass review/promotion                                                                                                         |
 | `GET /api/knowledge/wikis`, `/:id`                                 | Lists wikis and reads promoted Markdown plus rendered section HTML                                                                                                                                            |
+| `DELETE /api/knowledge/wikis/:id`                                  | Deletes one promoted wiki file and scrubs inbound typed links from remaining promoted wiki files                                                                                                              |
 | `POST/DELETE /api/knowledge/wikis/:id/sections/:sectionId/*`       | Regenerates one source-backed section or removes one section while retaining at least one and incrementing the wiki revision                                                                                  |
 | `GET/POST /api/knowledge/wikis/graph/export`                       | Derives the wiki graph from promoted Markdown and optionally exports it under `knowledge/knowledge-graphs/`                                                                                                   |
 | `POST /api/vault/transcripts/:id/canonical-ideas/resolve-conflict` | Resolves canonical idea conflicts with keep `existing` or `incoming`; deletes the losing set's files, writes coverage if incoming wins                                                                        |
@@ -432,7 +433,9 @@ string field like `input_summary` became unparseable garbage. Regression tests i
 
 Promoted wiki pages are not vault nodes. They are validated Markdown files under `knowledge/wikis/`
 with source refs, stable section markers, revision/hash checks, and typed wiki links. Derived graph
-data is disposable and rebuilds from those promoted files.
+data is disposable and rebuilds from those promoted files. Promoted wiki deletion removes the wiki
+Markdown file and rewrites remaining promoted wiki files to remove inbound typed links to the
+deleted page; vault transcripts, canonical ideas, and historical drafts remain intact.
 
 Run persistence compacts large duplicated text fields (`body`, `plainText`, `text`, `transcript`)
 inside summaries and stage payloads. Existing June 13 ingest run files were migrated. Run deletion

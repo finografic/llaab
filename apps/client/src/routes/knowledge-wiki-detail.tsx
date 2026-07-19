@@ -1,3 +1,4 @@
+import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import {
@@ -32,7 +33,7 @@ import {
   useRegenerateKnowledgeWikiSection,
 } from 'queries/knowledge';
 import { useState } from 'react';
-import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { KnowledgeWikiPage } from '@llaab/schemas';
 
@@ -54,6 +55,7 @@ function qualityTone(score: number | undefined): string {
 export function KnowledgeWikiDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const generatedWikis = (location.state as CreatedWikiLocationState | null)?.generatedWikis ?? [];
   const { data, isLoading, error } = useKnowledgeWiki(id);
   const { data: graph } = useKnowledgeWikiGraph();
@@ -88,7 +90,23 @@ export function KnowledgeWikiDetailPage() {
   }
 
   return (
-    <PageLayout hero={<PageHero eyebrow="Knowledge" title={wiki?.title ?? 'Loading…'} />}>
+    <PageLayout
+      hero={
+        <PageHero
+          eyebrow="Knowledge"
+          title={wiki?.title ?? 'Loading…'}
+          right={
+            wiki ? (
+              <DeleteKnowledgeWikiAction
+                wiki={wiki}
+                variant="button"
+                onDeleted={() => navigate('/knowledge/wikis')}
+              />
+            ) : null
+          }
+        />
+      }
+    >
       <PageDetail variant="narrow">
         {isLoading ? <p className="text-muted-foreground text-sm">Loading wiki…</p> : null}
         {error ? <p className="text-destructive text-sm">{error.message}</p> : null}

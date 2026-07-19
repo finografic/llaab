@@ -6,5 +6,6 @@ export const knowledgeRouter = createRouter()
   .get(routes.knowledgeWikiGraph.path, routes.knowledgeWikiGraph.handler)
   .post(routes.exportKnowledgeWikiGraphRoute.path, routes.exportKnowledgeWikiGraphRoute.handler)
   .get(routes.knowledgeWikiDetail.path, routes.knowledgeWikiDetail.handler)
+  .delete(routes.deleteKnowledgeWikiRoute.path, routes.deleteKnowledgeWikiRoute.handler)
   .post(routes.regenerateWikiSection.path, routes.regenerateWikiSection.handler)
   .delete(routes.deleteWikiSection.path, routes.deleteWikiSection.handler);

@@ -40,6 +40,25 @@ export function useKnowledgeWiki(id: string | undefined) {
   });
 }
 
+export function useDeleteKnowledgeWiki() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (wikiId: string): Promise<{ scrubbedReferences: Array<{ wikiId: string }> }> => {
+      const response = await api.knowledge.wikis[':id'].$delete({ param: { id: wikiId } });
+      const body = (await response.json()) as {
+        error?: string;
+        scrubbedReferences?: Array<{ wikiId: string }>;
+      };
+      if (!response.ok) throw new Error(body.error ?? 'Failed to delete knowledge wiki.');
+      return { scrubbedReferences: body.scrubbedReferences ?? [] };
+    },
+    onSuccess: (_result, wikiId) => {
+       queryClient.removeQueries({ queryKey: QUERY_KEYS.knowledge.wiki(wikiId) });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.knowledge.wikis() });
+    },
+  });
+}
+
 export interface RenderedWikiSection {
   id: string;
   heading: string;

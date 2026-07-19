@@ -1,4 +1,6 @@
+import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
 import { PageHero } from 'components/PageHero/PageHero';
+import { Col, Row } from 'components/ui/grid';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import { useKnowledgeWikis } from 'queries/knowledge';
@@ -20,9 +22,16 @@ export function KnowledgeWikisPage() {
         ) : null}
         {wikis.map((wiki) => (
           <article key={wiki.id} className="border-border rounded-md border p-4">
-            <Link to={`/knowledge/wikis/${wiki.id}`} className="text-base font-semibold underline">
-              {wiki.title}
-            </Link>
+            <Row justify="space-between" align="flex-start" gutterWidth={12}>
+              <Col>
+                <Link to={`/knowledge/wikis/${wiki.id}`} className="text-base font-semibold underline">
+                  {wiki.title}
+                </Link>
+              </Col>
+              <Col xs="content">
+                <DeleteKnowledgeWikiAction wiki={wiki} />
+              </Col>
+            </Row>
             <p className="text-muted-foreground mt-1 text-sm">{wiki.summary}</p>
             <p className="mt-2 text-xs text-muted-foreground">
               {wiki.status} · {wiki.verification_status} · {wiki.source_refs.length} sources ·{' '}

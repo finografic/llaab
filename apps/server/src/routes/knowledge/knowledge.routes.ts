@@ -7,6 +7,7 @@ import {
 import type { AppCtx } from '../../types/app.types.js';
 
 import { renderWikiBodyToHtml, renderWikiSectionsToHtml } from '../../lib/wiki-body-renderer.js';
+import { deleteKnowledgeWikiAndReferences } from './knowledge-wiki-delete.service.js';
 import {
   deleteKnowledgeWikiSection,
   regenerateKnowledgeWikiSection,
@@ -43,6 +44,23 @@ export const knowledgeWikiDetail = {
       return c.json({ wiki, bodyHtml, sections });
     } catch {
       return c.json({ error: 'Knowledge wiki not found.' }, 404);
+    }
+  },
+};
+
+export const deleteKnowledgeWikiRoute = {
+  path: '/wikis/:id' as const,
+  handler: async (c: AppCtx) => {
+    try {
+      return c.json({
+        success: true,
+        ...(await deleteKnowledgeWikiAndReferences(c.req.param('id') ?? '')),
+      });
+    } catch (error) {
+      return c.json(
+        { error: error instanceof Error ? error.message : 'Knowledge wiki deletion failed.' },
+        400,
+      );
     }
   },
 };

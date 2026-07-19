@@ -52,6 +52,7 @@ export { createNode } from './utils/create-node.utils.js';
 export { getNodeDirectoryPath, getNodeFilePath, VAULT_ROOT } from './utils/node-file.utils.js';
 export { KNOWLEDGE_ROOT } from './utils/knowledge-root.js';
 export {
+  deleteKnowledgeWiki,
   getKnowledgeWikiPath,
   getKnowledgeWikiSectionIds,
   hashKnowledgeWikiPage,
