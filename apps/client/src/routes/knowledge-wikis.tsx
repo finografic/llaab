@@ -57,15 +57,24 @@ function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
               </Link>
             </Col>
 
-            <Col xs={12} md={6}>
+            <Col xs={12} md={6} className={styles.summaryCol}>
               <p className={styles.summary}>{wiki.summary}</p>
               <p className={styles.dates}>
                 Updated {wiki.updated_at}
                 {wiki.reviewed_at ? ` · reviewed ${wiki.reviewed_at}` : ''}
               </p>
+              {wiki.tags.length > 0 ? (
+                <div className={styles.tagList} aria-label="Wiki topics">
+                  {wiki.tags.map((tag) => (
+                    <span key={tag} className="tag tag--sm" data-tag={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </Col>
 
-            <Col xs={12} md={6}>
+            <Col xs={12} md={6} className={styles.metricsSideCol}>
               <div className={styles.metricsCol}>
                 <Row gutterWidth={8} className={styles.metricsGrid}>
                   <Col xs={6}>
@@ -177,18 +186,6 @@ function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
                 </Row>
               </div>
             </Col>
-
-            {wiki.tags.length > 0 ? (
-              <Col xs={12}>
-                <div className={styles.tagList} aria-label="Wiki topics">
-                  {wiki.tags.map((tag) => (
-                    <span key={tag} className="tag tag--sm" data-tag={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </Col>
-            ) : null}
           </Row>
         </Col>
 

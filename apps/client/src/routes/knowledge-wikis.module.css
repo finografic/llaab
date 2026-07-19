@@ -28,6 +28,19 @@
   line-height: 1.35;
 }
 
+/* ≤1280: Col md={6} → 50:50. >1280: exact 60:40. */
+@media (min-width: 1281px) {
+  .summaryCol {
+    flex: 0 0 60% !important;
+    max-width: 60% !important;
+  }
+
+  .metricsSideCol {
+    flex: 0 0 40% !important;
+    max-width: 40% !important;
+  }
+}
+
 .summary {
   margin: 0;
   color: var(--text-muted);
@@ -122,6 +135,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  margin-top: var(--space-3);
 }
 
 .deleteCol {
