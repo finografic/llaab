@@ -51,13 +51,10 @@ function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
       <Row gutterWidth={12} align="stretch">
         <Col className={styles.contentCol}>
           <Row gutterWidth={16} className={styles.bodyRow}>
-            <Col xs={12}>
+            <Col xs={12} md={6} className={styles.summaryCol}>
               <Link to={`/knowledge/wikis/${wiki.id}`} className={styles.title}>
                 {wiki.title}
               </Link>
-            </Col>
-
-            <Col xs={12} md={6} className={styles.summaryCol}>
               <p className={styles.summary}>{wiki.summary}</p>
               <p className={styles.dates}>
                 Updated {wiki.updated_at}
