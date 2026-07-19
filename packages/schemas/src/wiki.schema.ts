@@ -229,6 +229,10 @@ export const WikiCompileResultSchema = z.object({
   contested_claims: z.array(z.string()).default([]),
 });
 
+/**
+ * Legacy/recovery draft request. Normal one-step transcript creation uses
+ * `CreateTranscriptWikisRequestSchema` (selected idea ids only — no title/topic fields).
+ */
 export const CreateWikiDraftRequestSchema = z.object({
   canonical_idea_ids: z.array(NodeIdSchema).min(1),
   target_wiki_id: NodeIdSchema.optional(),

@@ -1,6 +1,6 @@
 # TODO — One-Step Topic-Oriented Wiki Generation
 
-> **Status:** In progress — Phase 1 complete.
+> **Status:** In progress — Phase 0 and Phase 1 complete.
 > 📅 Jul 19, 2026.
 
 > **Priority:** P1 — refine the shipped wiki-generation path before treating transcript-wide
@@ -122,7 +122,7 @@ The correction separates three model-facing responsibilities while preserving on
 
 ## Progress
 
-- [ ] Phase 0 — lock the one-step contract and regression fixtures
+- [x] Phase 0 — lock the one-step contract and regression fixtures
 - [x] Phase 1 — add internal proposal, evidence-role, and diversity schemas
 - [ ] Phase 2 — build internal transcript-scoped topic discovery
 - [ ] Phase 3 — compile each discovered topic coherently
@@ -140,58 +140,58 @@ behavior changes.
 
 ### One-step invariants
 
-- [ ] Define one public transcript operation, for example
+- [x] Define one public transcript operation, for example
       `POST /api/vault/transcripts/:id/wikis`, accepting the selected canonical idea ids and
       returning all resulting promoted wiki pages.
-- [ ] Keep `Create Wiki(s)` as the only normal user action. Checkbox selection is input context,
+- [x] Keep `Create Wiki(s)` as the only normal user action. Checkbox selection is input context,
       not a separate discovery/approval workflow.
-- [ ] Specify the internal stages as implementation details that may be persisted in RunNode events
+- [x] Specify the internal stages as implementation details that may be persisted in RunNode events
       but are never required user decisions.
-- [ ] Define branch outcomes: `promoted-create`, `promoted-update`, `existing-no-op`, `skipped`, and
+- [x] Define branch outcomes: `promoted-create`, `promoted-update`, `existing-no-op`, `skipped`, and
       `failed`.
-- [ ] Define overall success as at least one promoted or confidently matched existing wiki. Return
+- [x] Define overall success as at least one promoted or confidently matched existing wiki. Return
       structured partial results when sibling topics are skipped/failed.
-- [ ] Define a deterministic auto-promotion policy function. It must require a resolved operation,
+- [x] Define a deterministic auto-promotion policy function. It must require a resolved operation,
       passing topic/coherence/evidence gates, valid links/source refs, and a current base revision for
       updates.
-- [ ] Define bounded internal correction: malformed output, low coherence, or ambiguous topic
+- [x] Define bounded internal correction: malformed output, low coherence, or ambiguous topic
       resolution may retry/re-resolve automatically, but the process must terminate without user
       review.
-- [ ] Prohibit any normal-flow response that instructs the user to open a draft and promote it.
+- [x] Prohibit any normal-flow response that instructs the user to open a draft and promote it.
 
 ### Regression corpus
 
-- [ ] Add a fixture representing the broad multi-agent/Hermes transcript described in the
+- [x] Add a fixture representing the broad multi-agent/Hermes transcript described in the
       refinement brief, including fine tags, multiple `d:*` domains, key claims, timestamps, and a
       single source/channel identity.
-- [ ] Define expected topic families without requiring one exact count. Assert that the result
+- [x] Define expected topic families without requiring one exact count. Assert that the result
       contains multiple coherent topics, with an acceptable range such as 5–6, and never one
       transcript-shaped mega-page.
-- [ ] Include plausible families for isolation/architecture, proactive automation, interaction
+- [x] Include plausible families for isolation/architecture, proactive automation, interaction
       surfaces, self-improvement, context/memory, and least-privilege security.
-- [ ] Assert that a cross-cutting idea can be primary in one topic and supporting in another without
+- [x] Assert that a cross-cutting idea can be primary in one topic and supporting in another without
       creating a second canonical-idea node.
-- [ ] Add a genuinely single-topic transcript fixture that should produce exactly one wiki.
-- [ ] Add an already-covered fixture that returns the existing wiki or a safe update, not a duplicate.
-- [ ] Add an ambiguous-overlap fixture that must never become an auto-suffixed create topic.
-- [ ] Add actual contradictory evidence and non-contradictory single-source fixtures so
+- [x] Add a genuinely single-topic transcript fixture that should produce exactly one wiki.
+- [x] Add an already-covered fixture that returns the existing wiki or a safe update, not a duplicate.
+- [x] Add an ambiguous-overlap fixture that must never become an auto-suffixed create topic.
+- [x] Add actual contradictory evidence and non-contradictory single-source fixtures so
       `contested` semantics are independent from source diversity.
 
 ### Baseline characterization
 
-- [ ] Add characterization tests for the current grouping service, discovery skill, transcript
+- [x] Add characterization tests for the current grouping service, discovery skill, transcript
       route, auto-promotion policy, and section-regeneration lineage.
-- [ ] Capture a structured baseline for topic count, titles, idea assignments, per-page coherence,
+- [x] Capture a structured baseline for topic count, titles, idea assignments, per-page coherence,
       source metrics, verification state, promoted outputs, and internal audit artifacts.
-- [ ] Preserve existing successful update, revision/hash, citation, delete, section correction, and
+- [x] Preserve existing successful update, revision/hash, citation, delete, section correction, and
       graph tests as non-regression gates.
 
 **Exit criteria**
 
-- [ ] Tests reproduce the oversized source-shaped result under the old path and enforce the refined
+- [x] Tests reproduce the oversized source-shaped result under the old path and enforce the refined
       one-step result contract.
-- [ ] Auto-promotion and bounded-failure rules are deterministic assertions.
-- [ ] No test writes into the live vault or `knowledge/wikis/`.
+- [x] Auto-promotion and bounded-failure rules are deterministic assertions.
+- [x] No test writes into the live vault or `knowledge/wikis/`.
 
 ---
 

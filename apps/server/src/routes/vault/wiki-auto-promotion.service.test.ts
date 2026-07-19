@@ -19,6 +19,8 @@ describe('autoPromoteWikiDrafts', () => {
     await rm(root, { force: true, recursive: true });
   });
 
+  // Characterization of the current (to-be-removed) path: needs-review → suffixed create.
+  // Refined one-step policy forbids this; see wiki-one-step.contract + generation characterization.
   it('publishes an ambiguous draft as a distinct topic without a review step', async () => {
     const core = await import('@llaab/core');
     await core.writeKnowledgeWiki({

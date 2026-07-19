@@ -86,15 +86,19 @@ function shouldJoinGroup(group: WikiDraftIdeaGroup, domains: Set<string>, tokens
   return sharedTokens >= 1 && hasOverlap(group.domains, domains);
 }
 
-export async function groupCanonicalIdeasForWikiDrafts(input: {
-  canonicalIdeaIds: string[];
-  forceSingleDraft: boolean;
-}): Promise<string[][]> {
-  if (input.forceSingleDraft || input.canonicalIdeaIds.length <= 1) return [input.canonicalIdeaIds];
+/**
+ * Current greedy grouping heuristic (characterization baseline).
+ * Phase 2 replaces this with order-independent discovery proposals.
+ */
+export function groupCanonicalIdeasByHeuristic(
+  ideas: CanonicalIdeaNode[],
+  options: { forceSingleDraft: boolean } = { forceSingleDraft: false },
+): string[][] {
+  if (options.forceSingleDraft || ideas.length <= 1) {
+    return [ideas.map((idea) => idea.id)];
+  }
 
-  const ideas = await Promise.all(input.canonicalIdeaIds.map((id) => readNodeByType('canonical-idea', id)));
   const groups: WikiDraftIdeaGroup[] = [];
-
   for (const idea of ideas) {
     const domains = canonicalIdeaDomains(idea);
     const tokens = canonicalIdeaTokens(idea);
@@ -109,6 +113,16 @@ export async function groupCanonicalIdeasForWikiDrafts(input: {
   }
 
   return groups.map((group) => group.canonicalIdeaIds);
+}
+
+export async function groupCanonicalIdeasForWikiDrafts(input: {
+  canonicalIdeaIds: string[];
+  forceSingleDraft: boolean;
+}): Promise<string[][]> {
+  if (input.forceSingleDraft || input.canonicalIdeaIds.length <= 1) return [input.canonicalIdeaIds];
+
+  const ideas = await Promise.all(input.canonicalIdeaIds.map((id) => readNodeByType('canonical-idea', id)));
+  return groupCanonicalIdeasByHeuristic(ideas, { forceSingleDraft: input.forceSingleDraft });
 }
 
 export async function compileWikiDraftsForTranscript(input: {
