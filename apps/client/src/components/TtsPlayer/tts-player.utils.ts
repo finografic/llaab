@@ -24,10 +24,14 @@ export function normalizeTtsText(text: string) {
     .trim();
 }
 
+export function splitTtsSentences(text: string) {
+  return (text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [text]).map((sentence) => sentence.trim()).filter(Boolean);
+}
+
 function splitLongText(text: string, maxChars = MAX_SECTION_CHARS) {
   if (text.length <= maxChars) return [text];
 
-  const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [text];
+  const sentences = splitTtsSentences(text);
   const chunks: string[] = [];
   let current = '';
 

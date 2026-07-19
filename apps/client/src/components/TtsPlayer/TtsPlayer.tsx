@@ -4,7 +4,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TtsPlaybackStatus, TtsPlayerProps, TtsPlayerSection } from './tts-player.types';
 import type { KokoroTTS } from 'kokoro-js';
 
-import { createTtsSectionsFromText, formatTtsTime, normalizeTtsText } from './tts-player.utils';
+import {
+  createTtsSectionsFromText,
+  formatTtsTime,
+  normalizeTtsText,
+  splitTtsSentences,
+} from './tts-player.utils';
 import styles from './TtsPlayer.module.css';
 
 const KOKORO_MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
@@ -12,15 +17,35 @@ const DEFAULT_VOICE = 'bm_daniel';
 const DEFAULT_SPEED = 1;
 
 let ttsPromise: Promise<KokoroTTS> | null = null;
+const progressListeners = new Set<(message: string) => void>();
 
-function getTts() {
-  ttsPromise ??= import('kokoro-js').then(({ KokoroTTS }) =>
-    KokoroTTS.from_pretrained(KOKORO_MODEL_ID, {
-      dtype: 'q8',
-      device: 'wasm',
-    }),
-  );
-  return ttsPromise;
+function formatKokoroProgress(progress: unknown) {
+  if (!progress || typeof progress !== 'object') return 'Loading Kokoro model...';
+  const data = progress as { file?: string; progress?: number; status?: string };
+  const percent = typeof data.progress === 'number' ? ` ${Math.round(data.progress)}%` : '';
+  const file = data.file ? ` ${data.file}` : '';
+  return `${data.status ?? 'Loading'}${percent}${file}`.trim();
+}
+
+function notifyKokoroProgress(progress: unknown) {
+  const message = formatKokoroProgress(progress);
+  for (const listener of progressListeners) listener(message);
+}
+
+async function getTts(onProgress: (message: string) => void) {
+  progressListeners.add(onProgress);
+  try {
+    ttsPromise ??= import('kokoro-js').then(({ KokoroTTS }) =>
+      KokoroTTS.from_pretrained(KOKORO_MODEL_ID, {
+        dtype: 'q8',
+        device: 'wasm',
+        progress_callback: notifyKokoroProgress,
+      }),
+    );
+    return await ttsPromise;
+  } finally {
+    progressListeners.delete(onProgress);
+  }
 }
 
 function getPlayableSections(text?: string, sections?: TtsPlayerSection[]) {
@@ -51,6 +76,9 @@ export function TtsPlayer({
   const [error, setError] = useState('');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const progressTimerRef = useRef<number | null>(null);
   const playbackRunRef = useRef(0);
 
   const hasSections = playableSections.length > 0;
@@ -67,8 +95,8 @@ export function TtsPlayer({
   useEffect(() => {
     return () => {
       playbackRunRef.current += 1;
-      audioRef.current?.pause();
-      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      clearCurrentAudio();
+      void audioContextRef.current?.close();
     };
   }, []);
 
@@ -79,10 +107,25 @@ export function TtsPlayer({
     setCurrentAudioSeconds(0);
     setError('');
     playbackRunRef.current += 1;
-    audioRef.current?.pause();
+    clearCurrentAudio();
   }, [playableSections]);
 
+  function clearProgressTimer() {
+    if (progressTimerRef.current != null) {
+      window.clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+  }
+
   function clearCurrentAudio() {
+    clearProgressTimer();
+    sourceRef.current?.disconnect();
+    try {
+      sourceRef.current?.stop();
+    } catch {
+      // Already stopped.
+    }
+    sourceRef.current = null;
     audioRef.current?.pause();
     audioRef.current = null;
     if (objectUrlRef.current) {
@@ -91,27 +134,43 @@ export function TtsPlayer({
     }
   }
 
+  async function getAudioContext() {
+    audioContextRef.current ??= new AudioContext();
+    if (audioContextRef.current.state !== 'running') await audioContextRef.current.resume();
+    return audioContextRef.current;
+  }
+
   async function playAudioBlob(blob: Blob, runId: number) {
     clearCurrentAudio();
-    const objectUrl = URL.createObjectURL(blob);
-    objectUrlRef.current = objectUrl;
-    const audio = new Audio(objectUrl);
-    audioRef.current = audio;
+    const context = await getAudioContext();
+    const buffer = await context.decodeAudioData(await blob.arrayBuffer());
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(context.destination);
+    sourceRef.current = source;
 
     await new Promise<void>((resolve, reject) => {
-      audio.addEventListener('timeupdate', () => {
-        if (playbackRunRef.current === runId) setCurrentAudioSeconds(audio.currentTime);
-      });
-      audio.addEventListener('ended', () => {
+      const startedAt = context.currentTime;
+      progressTimerRef.current = window.setInterval(() => {
+        if (playbackRunRef.current === runId && context.state === 'running') {
+          setCurrentAudioSeconds(Math.min(buffer.duration, context.currentTime - startedAt));
+        }
+      }, 200);
+
+      source.addEventListener('ended', () => {
+        clearProgressTimer();
         if (playbackRunRef.current === runId) {
-          const duration = Number.isFinite(audio.duration) ? audio.duration : audio.currentTime;
-          setCompletedAudioSeconds((value) => value + duration);
+          setCompletedAudioSeconds((value) => value + buffer.duration);
           setCurrentAudioSeconds(0);
         }
         resolve();
       });
-      audio.addEventListener('error', () => reject(new Error('Audio playback failed.')));
-      audio.play().catch(reject);
+
+      try {
+        source.start();
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 
@@ -121,10 +180,13 @@ export function TtsPlayer({
     playbackRunRef.current = runId;
     setStatus('loading');
     setError('');
+    setError('Loading Kokoro model...');
     setCurrentAudioSeconds(0);
 
     try {
-      const tts = await getTts();
+      const context = await getAudioContext();
+      const { TextSplitterStream } = await import('kokoro-js');
+      const tts = await getTts(setError);
       for (let index = startIndex; index < playableSections.length; index += 1) {
         if (playbackRunRef.current !== runId) return;
         setSectionIndex(index);
@@ -132,9 +194,17 @@ export function TtsPlayer({
         const section = playableSections[index];
         if (!section) break;
 
-        for await (const { audio } of tts.stream(section.text, { voice, speed })) {
+        setError(`Preparing ${section.label ?? `section ${index + 1}`}...`);
+        const splitter = new TextSplitterStream();
+        const stream = tts.stream(splitter, { voice, speed });
+        for (const sentence of splitTtsSentences(section.text)) splitter.push(`${sentence} `);
+        splitter.close();
+
+        for await (const { audio } of stream) {
           if (playbackRunRef.current !== runId) return;
+          if (context.state !== 'running') await context.resume();
           setStatus('playing');
+          setError('');
           await playAudioBlob(audio.toBlob(), runId);
         }
       }
@@ -153,14 +223,22 @@ export function TtsPlayer({
   }
 
   function handlePlayPause() {
+    if (status === 'loading') {
+      playbackRunRef.current += 1;
+      clearCurrentAudio();
+      setStatus('idle');
+      setError('');
+      return;
+    }
+
     if (status === 'playing') {
-      audioRef.current?.pause();
+      void audioContextRef.current?.suspend();
       setStatus('paused');
       return;
     }
 
     if (status === 'paused') {
-      void audioRef.current?.play();
+      void audioContextRef.current?.resume();
       setStatus('playing');
       return;
     }
@@ -200,7 +278,7 @@ export function TtsPlayer({
         variant="ghost"
         size="icon"
         className={styles.controlButton}
-        disabled={!hasSections || status === 'loading'}
+        disabled={!hasSections}
         aria-label={isPlaying ? 'Pause text-to-speech' : 'Play text-to-speech'}
         onClick={handlePlayPause}
       >

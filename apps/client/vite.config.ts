@@ -23,6 +23,10 @@ export default defineConfig(({ mode }) => {
     resolve: {
       dedupe: ['react', 'react-dom'],
       alias: [
+        {
+          find: /^kokoro-js$/,
+          replacement: path.resolve(clientRoot, 'node_modules/kokoro-js/dist/kokoro.web.js'),
+        },
         { find: '@llaab/ui', replacement: path.resolve(repoRoot, 'packages/ui/src') },
         { find: /^utils\/(.*)/, replacement: `${path.resolve(clientRoot, 'src/utils')}/$1` },
         { find: 'utils', replacement: path.resolve(repoRoot, 'packages/ui/src/lib/utils.ts') },
