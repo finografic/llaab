@@ -4,6 +4,8 @@ const TIMESTAMP_MARKER_PATTERN = /<!--\s*t:[\d:.]+\s*-->/g;
 const TRANSCRIPT_TIME_LINE_PATTERN = /^<--\s*t:[\d:.]+\s*-->$/gm;
 const TRANSCRIPT_TIME_LINE_ONLY_PATTERN = /^<--\s*t:[\d:.]+\s*-->$/;
 const TRANSCRIPT_HEADING_PATTERN = /^#{1,6}\s+transcript\s*$/i;
+/** Document title: exactly one leading `#` (not `##` / `###`). */
+const DOCUMENT_TITLE_HEADING_PATTERN = /^#\s+\S/;
 const TRANSCRIPT_HEADER_LINK_LINE_PATTERN = /^\[\*{0,2}https?:\/\/[^\]]+\*{0,2}\]\([^)]+\)$/i;
 const TRANSCRIPT_METADATA_LINE_PATTERN =
   /^(?:[-*]\s*)?(?:\*\*)?(?:author|uploaded|ingested|source|url|video|channel|duration|published)(?:\*\*)?\s*:/i;
@@ -29,13 +31,20 @@ export function normalizeTtsText(text: string) {
     .trim();
 }
 
+function isDocumentTitleHeading(line: string) {
+  const trimmed = line.trim();
+  return DOCUMENT_TITLE_HEADING_PATTERN.test(trimmed) && !trimmed.startsWith('##');
+}
+
 function shouldDropTranscriptMetadataLine(line: string, hasReachedTranscriptHeading: boolean) {
   const trimmed = line.trim();
   if (!trimmed) return false;
   if (TRANSCRIPT_TIME_LINE_ONLY_PATTERN.test(trimmed)) return true;
   if (TRANSCRIPT_METADATA_LINE_PATTERN.test(trimmed)) return true;
   if (!hasReachedTranscriptHeading && TRANSCRIPT_HEADER_LINK_LINE_PATTERN.test(trimmed)) return true;
-  return !hasReachedTranscriptHeading && trimmed.startsWith('#');
+  // Keep the H1 title; drop other pre-transcript headings (## Transcript is handled separately).
+  if (!hasReachedTranscriptHeading && trimmed.startsWith('#')) return !isDocumentTitleHeading(trimmed);
+  return false;
 }
 
 export function stripTtsMetadataLines(text: string) {
@@ -57,15 +66,6 @@ export function stripTtsMetadataLines(text: string) {
 
 export function splitTtsSentences(text: string) {
   return (text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [text]).map((sentence) => sentence.trim()).filter(Boolean);
-}
-
-/**
- * Swap clause/sentence-final `.` for TTS prosody inside a playable chunk.
- * Playback chunks are sentences; blank lines still define skippable sections.
- */
-export function applyTtsFullStopChar(text: string, fullStopChar?: string) {
-  if (fullStopChar == null) return text;
-  return text.replace(/\.+(?=\s|$)/gu, fullStopChar);
 }
 
 function splitLongText(text: string, maxChars = MAX_SECTION_CHARS) {

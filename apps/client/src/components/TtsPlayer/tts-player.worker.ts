@@ -2,7 +2,7 @@ import { KokoroTTS } from 'kokoro-js';
 import type { TtsDevice, TtsDtype, TtsPlayerSection } from './tts-player.types';
 import type { GenerateOptions, KokoroTTS as KokoroTTSInstance } from 'kokoro-js';
 
-import { applyTtsFullStopChar, splitTtsSentences } from './tts-player.utils';
+import { splitTtsSentences } from './tts-player.utils';
 
 const KOKORO_MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 
@@ -13,7 +13,6 @@ interface StartMessage {
   startIndex: number;
   voice: GenerateOptions['voice'];
   speed: number;
-  fullStopChar?: string;
   dtype: TtsDtype;
   device: TtsDevice;
 }
@@ -70,7 +69,7 @@ async function getTts(runId: number, dtype: TtsDtype, device: TtsDevice) {
 
 function createChunkQueue(message: StartMessage) {
   // Sentence-sized chunks keep time-to-first-audio low; the main thread plays while
-  // this worker synthesizes ahead. fullStopChar only changes prosody inside each chunk.
+  // this worker synthesizes ahead (works well with fp32 + webgpu).
   return message.sections.slice(message.startIndex).flatMap((section, offset) => {
     const sectionIndex = message.startIndex + offset;
     const sentences = splitTtsSentences(section.text);
@@ -78,7 +77,7 @@ function createChunkQueue(message: StartMessage) {
       (sentence, sentenceIndex): ChunkQueueItem => ({
         sectionIndex,
         isLastInSection: sentenceIndex === sentences.length - 1,
-        text: applyTtsFullStopChar(sentence, message.fullStopChar),
+        text: sentence,
       }),
     );
   });

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  applyTtsFullStopChar,
   createTtsSectionsFromText,
   normalizeTtsText,
   splitTtsSentences,
@@ -25,11 +24,11 @@ Think about what happens when you connect to your company's network.
 Normal [Markdown link](https://example.com/path) text remains.`;
 
     expect(normalizeTtsText(stripTtsMetadataLines(text))).toBe(
-      "Think about what happens when you connect to your company's network. Normal Markdown link text remains.",
+      "Zero Trust Explained in 5 Minutes Think about what happens when you connect to your company's network. Normal Markdown link text remains.",
     );
   });
 
-  it('creates sections from transcript body after metadata removal', () => {
+  it('keeps the H1 title while skipping metadata and ## Transcript', () => {
     const sections = createTtsSectionsFromText(`# Heading
 
 **author:** Example
@@ -40,7 +39,11 @@ First paragraph.
 
 Second paragraph.`);
 
-    expect(sections.map((section) => section.text)).toEqual(['First paragraph.', 'Second paragraph.']);
+    expect(sections.map((section) => section.text)).toEqual([
+      'Heading',
+      'First paragraph.',
+      'Second paragraph.',
+    ]);
   });
 
   it('creates one section per blank-line paragraph', () => {
@@ -56,17 +59,11 @@ Second paragraph.`);
     ]);
   });
 
-  it('rewrites sentence-final periods for prosody after sentence split', () => {
-    const sentences = splitTtsSentences('First sentence. Second sentence! Third?');
-    expect(sentences).toEqual(['First sentence.', 'Second sentence!', 'Third?']);
-    expect(sentences.map((sentence) => applyTtsFullStopChar(sentence, ','))).toEqual([
-      'First sentence,',
+  it('splits playback chunks on sentence endings', () => {
+    expect(splitTtsSentences('First sentence. Second sentence! Third?')).toEqual([
+      'First sentence.',
       'Second sentence!',
       'Third?',
     ]);
-  });
-
-  it('leaves text unchanged when fullStopChar is omitted', () => {
-    expect(applyTtsFullStopChar('Keep the period.', undefined)).toBe('Keep the period.');
   });
 });

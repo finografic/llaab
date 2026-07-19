@@ -20,7 +20,6 @@ export interface TtsPlayerProps {
   variant?: TtsPlayerVariant;
   voice?: GenerateOptions['voice'];
   speed?: number;
-  fullStopChar?: string;
   sentencePauseMs?: number;
   paragraphPauseMs?: number;
   estimatedDurationSeconds?: number;

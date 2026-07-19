@@ -906,14 +906,13 @@ export function TranscriptDetail({
                 </span>
               </CollapsibleTrigger>
               <TtsPlayer
-                variant="minimal"
+                variant="full"
                 text={transcript.body}
                 estimatedDurationSeconds={transcriptDurationSeconds ?? undefined}
-                sentencePauseMs={0}
-                paragraphPauseMs={0}
-                fullStopChar="."
-                dtype="fp32"
-                device="webgpu"
+                // sentencePauseMs={0}
+                // paragraphPauseMs={0}
+                // dtype="fp32"
+                // device="webgpu"
               />
             </div>
             <CollapsibleContent className={styles.extractedIdeasContent}>
