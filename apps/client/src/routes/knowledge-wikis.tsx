@@ -34,6 +34,18 @@ function pluralizeMetricLabel(count: number, singular: string, plural = `${singu
   return count === 1 ? singular : plural;
 }
 
+function formatWikiListDateTime(timestamp: string): string {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return timestamp;
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
 function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
   const qualityTone = qualityMetricTone(wiki.quality_score);
   const evidenceMetrics = resolveWikiEvidenceMetrics(wiki);
@@ -49,8 +61,14 @@ function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
               </Link>
               <p className={styles.summary}>{wiki.summary}</p>
               <p className={styles.dates}>
-                Updated {wiki.updated_at}
-                {wiki.reviewed_at ? ` · reviewed ${wiki.reviewed_at}` : ''}
+                <span className={styles.dateLabel}>Updated</span> {formatWikiListDateTime(wiki.updated_at)}
+                {wiki.reviewed_at ? (
+                  <>
+                    {' · '}
+                    <span className={styles.dateLabel}>reviewed</span>{' '}
+                    {formatWikiListDateTime(wiki.reviewed_at)}
+                  </>
+                ) : null}
               </p>
               {wiki.tags.length > 0 ? (
                 <div className={styles.tagList} aria-label="Wiki topics">

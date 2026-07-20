@@ -97,8 +97,8 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                 const isActive = transcript.id === selectedId;
                 const subtitle = transcriptAuthor(transcript);
                 const hasLatency = transcript.llm_duration_ms != null;
-                const ideaCount = transcript.extracted_idea_ids.length;
-                const isConsolidated = Boolean(transcript.canonical_coverage?.canonical_idea_ids.length);
+                const ideaCount = transcript.canonical_coverage?.canonical_idea_ids.length ?? 0;
+                const isConsolidated = ideaCount > 0;
                 const transcriptHref = `/vault/transcripts/${transcript.id}`;
                 const authorHref = transcript.source_id
                   ? `/vault/sources/${transcript.source_id}`

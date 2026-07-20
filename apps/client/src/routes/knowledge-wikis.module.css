@@ -56,6 +56,10 @@
   line-height: 1.45;
 }
 
+.dateLabel {
+  font-weight: 600;
+}
+
 .metricsCol {
   display: flex;
   flex-direction: column;

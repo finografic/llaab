@@ -1,4 +1,4 @@
-import { BrainIcon, InboxIcon, LandPlotIcon, PipetteIcon, VoicemailIcon } from '@llaab/icons';
+import { BookMarkedIcon, BrainIcon, InboxIcon, LandPlotIcon, PipetteIcon, VoicemailIcon } from '@llaab/icons';
 import { NavMenu } from 'components/NavMenu/NavMenu';
 import { buttonVariants } from 'components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
@@ -27,11 +27,14 @@ export function AppHeader({ actions }: AppHeaderProps) {
         <Link to="/vault/transcripts" className={iconButtonClass} aria-label="Transcripts">
           <VoicemailIcon className="icon" aria-hidden />
         </Link>
-        <Link to="/llm" className={iconButtonClass} aria-label="LLM models">
-          <BrainIcon className="icon" aria-hidden />
+        <Link to="/knowledge/wikis" className={iconButtonClass} aria-label="Wikis">
+          <BookMarkedIcon className="icon" aria-hidden />
         </Link>
         <Link to="/vault/inbox" className={iconButtonClass} aria-label="Inbox">
           <InboxIcon className="icon" aria-hidden />
+        </Link>
+        <Link to="/llm" className={iconButtonClass} aria-label="LLM models">
+          <BrainIcon className="icon" aria-hidden />
         </Link>
         <Link to="/dev/icons" className={iconButtonClass} aria-label="LLAAB Icons">
           <LandPlotIcon className="icon" aria-hidden />
