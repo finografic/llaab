@@ -9,4 +9,4 @@ readonly repo_dir="${script_dir:h:h}"
 
 cd "$repo_dir"
 
-exec /opt/homebrew/bin/pnpm --filter @llaab/icons dev
+exec pnpm --filter @llaab/icons dev
