@@ -1,5 +1,5 @@
-import { computeWikiEvidenceMetrics } from '@llaab/schemas';
 import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
+import { KnowledgeWikiFilters } from 'components/KnowledgeWikiFilters/KnowledgeWikiFilters';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Card, CardContent, CardHeader, CardTitle } from 'components/ui/card';
 import { Col, Row } from 'components/ui/grid';
@@ -15,9 +15,17 @@ import {
   SparklesIcon,
 } from 'lucide-react';
 import { useKnowledgeWikis } from 'queries/knowledge';
-import { Link } from 'react-router-dom';
-import type { KnowledgeWikiPage, WikiEvidenceMetrics } from '@llaab/schemas';
+import { useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import type { KnowledgeWikiPage } from '@llaab/schemas';
 
+import {
+  buildKnowledgeWikiFacets,
+  filterKnowledgeWikis,
+  knowledgeWikiFiltersToSearchParams,
+  parseKnowledgeWikiFiltersFromSearchParams,
+  resolveWikiEvidenceMetrics,
+} from 'lib/knowledge-wiki-filters';
 import { usePageTitle } from 'lib/use-page-title';
 
 import styles from './knowledge-wikis.module.css';
@@ -26,25 +34,9 @@ function pluralizeMetricLabel(count: number, singular: string, plural = `${singu
   return count === 1 ? singular : plural;
 }
 
-function resolveEvidenceMetrics(wiki: KnowledgeWikiPage): WikiEvidenceMetrics {
-  return (
-    wiki.evidence_metrics ??
-    computeWikiEvidenceMetrics(
-      wiki.source_refs.map((ref) => ({
-        id: ref.id,
-        transcript_id: ref.kind === 'transcript' ? ref.node_id : undefined,
-        source_id: ref.kind === 'source' ? ref.node_id : undefined,
-        kind: ref.kind,
-        url: ref.url,
-        canonical_idea_ids: ref.kind === 'canonical-idea' && ref.node_id ? [ref.node_id] : [],
-      })),
-    )
-  );
-}
-
 function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
   const qualityTone = qualityMetricTone(wiki.quality_score);
-  const evidenceMetrics = resolveEvidenceMetrics(wiki);
+  const evidenceMetrics = resolveWikiEvidenceMetrics(wiki);
 
   return (
     <article className={styles.wikiCard}>
@@ -197,16 +189,44 @@ function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
 export function KnowledgeWikisPage() {
   usePageTitle('Knowledge wikis');
   const { data: wikis = [], isLoading, error } = useKnowledgeWikis();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = parseKnowledgeWikiFiltersFromSearchParams(searchParams);
+  const facets = useMemo(() => buildKnowledgeWikiFacets(wikis), [wikis]);
+  const filteredWikis = useMemo(() => filterKnowledgeWikis(wikis, filters), [wikis, filters]);
 
   return (
-    <PageLayout hero={<PageHero eyebrow="Knowledge" title="Wikis" />}>
+    <PageLayout
+      hero={
+        <PageHero
+          eyebrow="Knowledge"
+          title="Wikis"
+          meta={
+            <>
+              {filteredWikis.length} shown
+              {filteredWikis.length !== wikis.length ? ` · ${wikis.length} total` : null}
+            </>
+          }
+        />
+      }
+    >
       <PageList>
+        <KnowledgeWikiFilters
+          filters={filters}
+          facets={facets}
+          resultCount={filteredWikis.length}
+          totalCount={wikis.length}
+          onChange={(next) => setSearchParams(knowledgeWikiFiltersToSearchParams(next), { replace: true })}
+        />
+
         {isLoading ? <p className="text-muted-foreground text-sm">Loading wikis…</p> : null}
         {error ? <p className="text-destructive text-sm">{error.message}</p> : null}
         {!isLoading && !error && wikis.length === 0 ? (
           <p className="text-muted-foreground text-sm">No promoted wikis yet.</p>
         ) : null}
-        {wikis.map((wiki) => (
+        {!isLoading && !error && wikis.length > 0 && filteredWikis.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No wikis match the current filters.</p>
+        ) : null}
+        {filteredWikis.map((wiki) => (
           <WikiListItem key={wiki.id} wiki={wiki} />
         ))}
       </PageList>
