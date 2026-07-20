@@ -12,7 +12,7 @@ import type {
 import { createTtsSectionsFromText, formatTtsTime, normalizeTtsText } from './tts-player.utils';
 import styles from './TtsPlayer.module.css';
 
-const DEFAULT_VOICE = 'bm_daniel';
+const DEFAULT_VOICE: TtsPlayerProps['voice'] = 'bm_daniel';
 const DEFAULT_SPEED = 1;
 const DEFAULT_SENTENCE_PAUSE_MS = 0;
 const DEFAULT_PARAGRAPH_PAUSE_MS = 0;

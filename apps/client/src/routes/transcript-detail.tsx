@@ -1,4 +1,5 @@
 import { TranscriptsSplitView } from 'components/TranscriptsSplitView/TranscriptsSplitView';
+import { useKnowledgeWikis } from 'queries/knowledge';
 import { useVaultNode, useVaultNodes } from 'queries/vault';
 import { useMemo } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
@@ -14,6 +15,7 @@ export function TranscriptDetailPage() {
   const { data: ideaNodes = [] } = useVaultNodes({ type: 'idea' });
   const { data: canonicalIdeaNodes = [] } = useVaultNodes({ type: 'canonical-idea' });
   const { data: runNodes = [] } = useVaultNodes({ type: 'run' });
+  const { data: wikis = [] } = useKnowledgeWikis();
 
   const transcripts = useMemo(
     () =>
@@ -79,6 +81,16 @@ export function TranscriptDetailPage() {
       .toSorted((a, b) => b.created_at.localeCompare(a.created_at));
   }, [transcript, canonicalIdeaNodes]);
 
+  const wikiCountsByTranscriptId = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const wiki of wikis) {
+      for (const transcriptId of wiki.source_transcript_ids) {
+        counts.set(transcriptId, (counts.get(transcriptId) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [wikis]);
+
   if (!id) return <Navigate to="/vault/transcripts" replace />;
   if (!transcriptLoading && !listLoading && !transcript) {
     return <Navigate to="/vault/transcripts" replace />;
@@ -96,6 +108,7 @@ export function TranscriptDetailPage() {
       extractedIdeas={extractedIdeas}
       canonicalIdeas={canonicalIdeas}
       extractionRuns={extractionRuns}
+      wikiCountsByTranscriptId={wikiCountsByTranscriptId}
     />
   );
 }

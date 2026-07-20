@@ -1,4 +1,4 @@
-import { BadgeCheckIcon } from '@llaab/icons';
+import { BadgeCheckIcon, BookMarkedIcon } from '@llaab/icons';
 import { cn } from '@llaab/ui/lib/utils';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Col, Container, Row } from 'components/ui/grid';
@@ -21,12 +21,17 @@ import { AuthorFilter } from './AuthorFilter';
 export interface TranscriptsSidebarProps {
   transcripts: TranscriptNode[];
   selectedId?: string;
+  wikiCountsByTranscriptId?: ReadonlyMap<string, number>;
 }
 function transcriptAuthor(transcript: TranscriptNode): string | undefined {
   return transcript.author ?? transcript.source_type;
 }
 
-export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSidebarProps) {
+export function TranscriptsSidebar({
+  transcripts,
+  selectedId,
+  wikiCountsByTranscriptId,
+}: TranscriptsSidebarProps) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const { value: selectedAuthors, setValue: setSelectedAuthors } = usePersistedUiState<string[]>(
@@ -99,6 +104,7 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                 const hasLatency = transcript.llm_duration_ms != null;
                 const ideaCount = transcript.canonical_coverage?.canonical_idea_ids.length ?? 0;
                 const isConsolidated = ideaCount > 0;
+                const wikiCount = wikiCountsByTranscriptId?.get(transcript.id) ?? 0;
                 const transcriptHref = `/vault/transcripts/${transcript.id}`;
                 const authorHref = transcript.source_id
                   ? `/vault/sources/${transcript.source_id}`
@@ -181,6 +187,12 @@ export function TranscriptsSidebar({ transcripts, selectedId }: TranscriptsSideb
                           >
                             {ideaCount} ideas
                           </span>
+                          {wikiCount > 0 ? (
+                            <span className="ml-2 inline-flex items-center gap-1 font-semibold text-(--accent)">
+                              <BookMarkedIcon size={14} className="shrink-0" aria-label="Generated wikis" />
+                              {wikiCount} wikis
+                            </span>
+                          ) : null}
                         </Col>
                         <Col
                           xs={6}
