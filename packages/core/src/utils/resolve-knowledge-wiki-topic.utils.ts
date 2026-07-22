@@ -6,8 +6,7 @@ export type KnowledgeWikiTopicMatchKind =
   | 'alias'
   | 'normalized-title'
   | 'canonical-idea-overlap'
-  | 'fine-tag-overlap'
-  | 'domain-tag-overlap';
+  | 'fine-tag-overlap';
 
 export interface KnowledgeWikiTopicMatch {
   wiki_id: string;
@@ -37,7 +36,6 @@ function matchForKind(
   input: ResolveKnowledgeWikiTopicInput,
 ): KnowledgeWikiTopicMatch[] {
   const canonicalIdeaIds = new Set(input.canonicalIdeaIds);
-  const domainTags = new Set(input.tags.filter((tag) => tag.startsWith('d:')));
   const fineTags = new Set(input.tags.filter((tag) => !tag.startsWith('d:')));
   const normalizedTitle = normalize(input.title);
 
@@ -64,13 +62,15 @@ function matchForKind(
       }
       return [];
     }
-    if (kind === 'domain-tag-overlap' && wiki.tags.some((tag) => domainTags.has(tag))) {
-      return [{ wiki_id: wiki.id, kind, reason: 'Shares a selected domain tag.' }];
-    }
     return [];
   });
 }
 
+/**
+ * Resolve create / update / needs-review against the promoted wiki index.
+ * Domain-only (`d:`) tag overlap is insufficient evidence of the same topic —
+ * coarse domains group unrelated subjects, so it must never drive update/review.
+ */
 export function resolveKnowledgeWikiTopic(
   wikis: KnowledgeWikiPage[],
   input: ResolveKnowledgeWikiTopicInput,
@@ -81,7 +81,6 @@ export function resolveKnowledgeWikiTopic(
     'normalized-title',
     'canonical-idea-overlap',
     'fine-tag-overlap',
-    'domain-tag-overlap',
   ] as const) {
     const matches = matchForKind(kind, wikis, input);
     if (matches.length === 1) return { operation: 'update', matches };

@@ -42,11 +42,34 @@ describe('resolveKnowledgeWikiTopic', () => {
 
   it('requires review when a lower-priority signal is ambiguous', () => {
     const result = resolveKnowledgeWikiTopic(
-      [page({ id: 'first', topic_key: 'first' }), page({ id: 'second', topic_key: 'second' })],
-      { topicKey: 'new-topic', title: 'New topic', canonicalIdeaIds: [], tags: ['d:agents'] },
+      [
+        page({ id: 'first', topic_key: 'first', tags: ['d:agents', 'memory', 'context-window'] }),
+        page({ id: 'second', topic_key: 'second', tags: ['d:agents', 'memory', 'context-window'] }),
+      ],
+      {
+        topicKey: 'new-topic',
+        title: 'New topic',
+        canonicalIdeaIds: [],
+        tags: ['d:agents', 'memory', 'context-window'],
+      },
     );
 
     expect(result.operation).toBe('needs-review');
     expect(result.matches.map((match) => match.wiki_id)).toEqual(['first', 'second']);
+  });
+
+  it('treats domain-only tag overlap as a new topic, never update/review', () => {
+    const result = resolveKnowledgeWikiTopic(
+      [page({ id: 'esm-wiki', topic_key: 'build-performance-esm-only', tags: ['d:infra', 'esm-only'] })],
+      {
+        topicKey: 'zero-trust-security',
+        title: 'Zero Trust Security',
+        canonicalIdeaIds: ['idea-zt'],
+        tags: ['d:infra', 'zero-trust', 'iam'],
+      },
+    );
+
+    expect(result.operation).toBe('create');
+    expect(result.matches).toEqual([]);
   });
 });

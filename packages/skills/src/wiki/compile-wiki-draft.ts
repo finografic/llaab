@@ -504,18 +504,18 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
                 entryTranscript.title,
             );
       const topicKey = existingWiki?.topic_key ?? suggestedTopicKey;
+      // Discovery proposals already passed the stricter resolver (+ model review) —
+      // re-resolving here with the looser matcher caused false-positive overlap failures.
       const topicResolution = existingWiki
         ? { operation: 'update' as const, matches: [] }
-        : resolveKnowledgeWikiTopic(promotedWikis, {
-            topicKey,
-            title:
-              input.suggestedTitle ??
-              input.proposal?.title ??
-              primaryCanonicalIdeas[0]?.title ??
-              canonicalIdeas[0]!.title,
-            canonicalIdeaIds: compileIdeas.map((idea) => idea.id),
-            tags: compileIdeas.flatMap((idea) => idea.tags),
-          });
+        : input.proposal
+          ? { operation: 'create' as const, matches: [] }
+          : resolveKnowledgeWikiTopic(promotedWikis, {
+              topicKey,
+              title: input.suggestedTitle ?? primaryCanonicalIdeas[0]?.title ?? canonicalIdeas[0]!.title,
+              canonicalIdeaIds: compileIdeas.map((idea) => idea.id),
+              tags: compileIdeas.flatMap((idea) => idea.tags),
+            });
       const representedWiki = existingWiki
         ? undefined
         : promotedWikis.find((wiki) =>
