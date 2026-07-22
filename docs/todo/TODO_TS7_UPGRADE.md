@@ -1,6 +1,7 @@
 # TODO — TypeScript 7 Upgrade
 
-> **Status:** Phase 1–2 complete (2026-07-22). Baseline captured; upgrade not yet applied.
+> **Status:** Phase 1–4 complete (2026-07-22). TypeScript bumped to 7.0.2; typecheck passes clean
+> workspace-wide. Test/lint/build validation and completion report still pending.
 
 ## Objectives
 
@@ -45,18 +46,37 @@
 
 ## Progress
 
-- [ ] Phase 1 — Confirm latest stable TS 7.x release tag on npm; re-run the compiler-API and
-      `better-sqlite3` searches once more immediately before upgrading (repo state may have moved).
-- [ ] Phase 2 — Capture full baseline: `pnpm typecheck`, `pnpm test`, `pnpm lint`, `pnpm build` output
-      and timing, saved for comparison.
-- [ ] Phase 3 — Bump `typescript` to the resolved 7.x version in root `package.json`
-      (`devDependencies` + `pnpm.overrides`) and `packages/ui/package.json`; `pnpm install`.
-- [ ] Phase 4 — Run full validation suite (typecheck → test → lint → build) and record failures
-      per package.
-- [ ] Phase 5 — Resolve failures at the root cause, package by package. No `any`, `@ts-ignore`,
-      `skipLibCheck`, or strictness relaxation unless already present and independently justified.
-      Diff any changed `.d.ts` output and classify each change as semantic vs. ordering-only.
-- [ ] Phase 6 — Re-run full validation suite until clean.
+- [x] Phase 1 — Confirmed latest stable TS 7.x release tag on npm (`7.0.2`); re-confirmed no
+      compiler-API or `better-sqlite3` usage (2026-07-22).
+- [x] Phase 2 — Captured full baseline (2026-07-22): see table above.
+- [x] Phase 3 — Bumped `typescript` to `7.0.2` in root `package.json` (`devDependencies` +
+      `pnpm.overrides`), `pnpm-workspace.yaml` `overrides`, and `packages/ui/package.json`;
+      `pnpm install` clean (only unrelated pre-existing Vite peer-dependency warning).
+- [x] Phase 4 — Ran full validation suite. `pnpm typecheck` initially failed in `apps/server`
+      with 3× new TS7 diagnostic `TS2883` ("inferred type ... cannot be named without a reference
+      to 'CloudModelProvider' ... likely not portable"). Root-caused and fixed (see below);
+      typecheck now passes 16/16 tasks workspace-wide.
+- [x] Phase 5 — Root-caused and fixed the `TS2883` failures: 1. `CloudModelProvider` was used structurally in `CloudCatalogModel.provider` but never
+      re-exported from `packages/llm/src/index.ts` — added it to the type-only re-export list
+      (along with a new named `RemoteModelDetail` interface, see next point). 2. `cloudCatalogModelToRemoteDetail()` in `packages/llm/src/cloud-model-catalog.ts` had no
+      explicit return type — added an explicit `RemoteModelDetail` interface + return
+      annotation so the type doesn't need to be auto-inferred/named across the package boundary. 3. Even after both fixes, `apps/server/src/routes/llm/llm.routes.ts` still failed with
+      `TS2305: Module "@llaab/llm" has no exported member 'RemoteModelDetail'` when directly
+      importing the new type — traced to **`packages/llm/dist` being stale** relative to
+      `src` (last built 2026-07-13 vs. source edited 2026-07-22). TS7 treats a `composite: true`
+      package's built declaration output as canonical for cross-package symbol resolution
+      _even without an explicit tsconfig project reference_ — a stricter/changed behavior vs.
+      TS6, where this had never surfaced because no code previously imported a _type_ (only
+      _values_, which resolved fine via the plain `paths` source mapping) directly from
+      `@llaab/llm` into `apps/server`. Rebuilt `packages/llm` (`pnpm --filter @llaab/llm build`)
+      to resolve it, and added an explicit `import type { RemoteModelDetail }` + annotation on
+      `remoteModelDetails` in `llm.routes.ts` so the compiler never needs to auto-synthesize the
+      reference. 4. To prevent this class of staleness recurring, updated `turbo.json`'s `typecheck` task to
+      `dependsOn: ["^build", "^typecheck"]` (was `["^typecheck"]` only) — composite packages'
+      `dist` output is now guaranteed fresh before any dependent package typechecks.
+      No `any`, `@ts-ignore`, `skipLibCheck`, or strictness relaxations were used — every fix was
+      either a genuine missing type export or an explicit annotation the compiler asked for.
+- [x] Phase 6 — Re-ran full validation suite; `pnpm typecheck` clean 16/16.
 - [ ] Phase 7 — Write completion report (see template below) and graduate this file to
       `DONE_TS7_UPGRADE.md`.
 

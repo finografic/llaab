@@ -1,16 +1,5 @@
-import {
-  cloudCatalogModelToRemoteDetail,
-  getLlmStatus,
-  lmStudioListModelDetails,
-  lmStudioListModels,
-  ollamaListModelDetails,
-  ollamaListModels,
-  resolveAnthropicCatalog,
-  resolveOpenCodeCatalog,
-  routeLlm,
-  streamLlm,
-  updateLlmTaskRoute,
-} from '@llaab/llm';
+import { cloudCatalogModelToRemoteDetail, getLlmStatus, lmStudioListModelDetails, lmStudioListModels, ollamaListModelDetails, ollamaListModels, resolveAnthropicCatalog, resolveOpenCodeCatalog, routeLlm, streamLlm, updateLlmTaskRoute } from '@llaab/llm';
+import type { RemoteModelDetail } from '@llaab/llm';
 import { streamSSE } from 'hono/streaming';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { CompleteLlmBody, UpdateLlmRouteBody } from './llm.schema.js';
@@ -139,7 +128,7 @@ export const status = {
       ...lmStudioModelDetails.map((model) => ({ ...model, availability: 'local' as const })),
     ];
 
-    const remoteModelDetails = [
+    const remoteModelDetails: RemoteModelDetail[] = [
       ...openCodeCatalog.models.map((model) =>
         cloudCatalogModelToRemoteDetail(model, openCodeCatalog.availability),
       ),

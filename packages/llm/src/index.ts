@@ -3,7 +3,13 @@ export {
   resolveAnthropicCatalog,
   resolveOpenCodeCatalog,
 } from './cloud-model-catalog.js';
-export type { CloudCatalogModel, CloudCatalogSource, ModelAvailability } from './cloud-model-catalog.js';
+export type {
+  CloudCatalogModel,
+  CloudCatalogSource,
+  CloudModelProvider,
+  ModelAvailability,
+  RemoteModelDetail,
+} from './cloud-model-catalog.js';
 export { findExecutorProvidersByCapability, getExecutorStatus } from './executor-router.js';
 export {
   findProvidersByCapability,

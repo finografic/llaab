@@ -207,7 +207,18 @@ export function resolveAnthropicCatalog(remoteModelName: string): ResolvedCloudP
   };
 }
 
-export function cloudCatalogModelToRemoteDetail(model: CloudCatalogModel, availability: ModelAvailability) {
+export interface RemoteModelDetail {
+  name: string;
+  provider: CloudModelProvider;
+  owned_by?: string;
+  created?: number;
+  availability: ModelAvailability;
+}
+
+export function cloudCatalogModelToRemoteDetail(
+  model: CloudCatalogModel,
+  availability: ModelAvailability,
+): RemoteModelDetail {
   return {
     name: model.name,
     provider: model.provider,
