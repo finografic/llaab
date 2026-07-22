@@ -11,6 +11,8 @@ const SKILL_STALE_MS: Record<string, number> = {
   'compile-wiki-draft': 30 * 60 * 1000,
   'extract-transcript-ideas': 45 * 60 * 1000,
   'ingest-youtube': 90 * 60 * 1000,
+  // Local mlx-whisper transcription of a long episode can take a while on top of the fetch/RSS steps.
+  'ingest-podcast': 120 * 60 * 1000,
 };
 
 function parsePositiveMs(value: string | undefined): number | undefined {

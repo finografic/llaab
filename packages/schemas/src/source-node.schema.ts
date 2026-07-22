@@ -11,6 +11,7 @@ export const SourceProfilePlatformSchema = z.enum([
   'website',
   'twitch',
   'npm',
+  'rss',
 ]);
 
 export const SourceProfileSchema = z.object({

@@ -118,6 +118,8 @@ export {
   TranscriptCanonicalCoverageSchema,
   type TranscriptNode,
   TranscriptNodeSchema,
+  type TranscriptOrigin,
+  TranscriptOriginSchema,
   type TranscriptSourceType,
   TranscriptSourceTypeSchema,
 } from './transcript-node.schema.js';

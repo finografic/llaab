@@ -83,6 +83,12 @@
   border-color: oklch(0.42 0.12 40 / 0.4);
 }
 
+.typePodcast {
+  background: oklch(0.24 0.05 330 / 0.25);
+  color: oklch(0.68 0.19 330);
+  border-color: oklch(0.42 0.12 330 / 0.4);
+}
+
 .typeOther {
   background: var(--surface-raised);
   color: var(--text-muted);

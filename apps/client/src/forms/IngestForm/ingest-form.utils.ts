@@ -15,9 +15,24 @@ export function isYouTubeUrl(value: string): boolean {
   return hostname.replace(/^www\./, '').toLowerCase() === 'youtube.com' || hostname === 'youtu.be';
 }
 
+const PODCAST_HOSTNAMES = new Set(['pca.st', 'pocketcasts.com', 'www.pocketcasts.com']);
+
+export function isPodcastUrl(value: string): boolean {
+  if (!isHttpUrl(value)) return false;
+  const { hostname } = new URL(value);
+  return PODCAST_HOSTNAMES.has(hostname.toLowerCase());
+}
+
 export function classifyUrl(value: string): SourceKind {
   if (!isHttpUrl(value)) return 'unknown';
-  return isYouTubeUrl(value) ? 'youtube' : 'webpage';
+  if (isYouTubeUrl(value)) return 'youtube';
+  if (isPodcastUrl(value)) return 'podcast';
+  return 'webpage';
+}
+
+/** Source kinds the ingest backend actually accepts today. */
+export function isIngestibleSourceKind(kind: SourceKind): kind is 'youtube' | 'podcast' {
+  return kind === 'youtube' || kind === 'podcast';
 }
 
 export function extractDroppedUrl(dataTransfer: DataTransfer): string | null {

@@ -7,14 +7,16 @@ import { applyKnownTranscriptReplacements } from './clean/transcript-replacement
 import { cleanTranscript } from './clean/transcript.js';
 import { llmExtractWithTrace, normalizeContentTags, normalizeDomainTags } from './extract/llm-extract.js';
 import { fetchArticle } from './fetch/article.js';
+import { fetchPodcastEpisode } from './fetch/podcast.js';
 import { fetchRepo } from './fetch/repo.js';
 import { fetchYouTube, parseYouTubeUrl } from './fetch/youtube.js';
 import { structureText } from './structure/text.js';
+import { transcribeAudioLocally } from './transcribe/mlx-whisper.js';
 
 // At the top — new import
 import { isSrtFormat, parseSrtTranscript } from './structure/srt-parser.utils.js';
 
-export type IngestionSourceType = 'youtube' | 'article' | 'repo';
+export type IngestionSourceType = 'youtube' | 'article' | 'repo' | 'podcast';
 
 export interface IngestionInput {
   sourceType: IngestionSourceType;
@@ -146,6 +148,54 @@ async function findExistingYouTubeTranscript(sourceItemId: string): Promise<Inge
         {
           type: 'accept',
           reason: `Existing transcript reused for YouTube video "${sourceItemId}".`,
+        },
+      ],
+    },
+  };
+}
+
+async function findExistingPodcastTranscript(episodeGuid: string): Promise<IngestionResult | undefined> {
+  const nodes = await listNodes({ type: 'transcript' });
+  const existing = nodes.find(
+    (node) =>
+      node.type === 'transcript' &&
+      node.source_type === 'podcast' &&
+      node.podcast_episode_guid === episodeGuid,
+  ) as TranscriptNode | undefined;
+
+  if (!existing) {
+    return undefined;
+  }
+
+  return {
+    id: existing.id,
+    path: getNodeFilePath('transcript', existing.id),
+    type: 'transcript',
+    title: existing.title,
+    sourceId: existing.source_id,
+    sourceItemId: existing.source_item_id,
+    sourceUrl: existing.source_url,
+    author: existing.author,
+    producedNodeIds: [existing.id],
+    reused: true,
+    plainText: existing.body,
+    runTrace: {
+      stages: [
+        completedStage(
+          'dedupe:transcript',
+          { sourceType: 'podcast', episodeGuid },
+          {
+            id: existing.id,
+            path: getNodeFilePath('transcript', existing.id),
+            title: existing.title,
+            reused: true,
+          },
+        ),
+      ],
+      decisions: [
+        {
+          type: 'accept',
+          reason: `Existing transcript reused for podcast episode "${episodeGuid}".`,
         },
       ],
     },
@@ -365,6 +415,194 @@ async function createTranscriptNode(input: IngestionInput): Promise<IngestionRes
   };
 }
 
+/** Human-visible header: episode/show link, air date, ingest time. Mirrors the YouTube header shape. */
+function podcastTranscriptVisibleHeader(
+  sourceUrl: string,
+  podcastTitle: string,
+  ingestedIsoUtc: string,
+  publishedAt?: string,
+): string {
+  const linkLine = `[**${sourceUrl}**](${sourceUrl})`;
+  const authorLine = `**show:** ${podcastTitle}`;
+  const published = publishedAt ? formatIsoUtcForTranscriptBody(publishedAt) : '—';
+  const ingested = formatIsoUtcForTranscriptBody(ingestedIsoUtc);
+  return `${linkLine}\n${authorLine}\n**published:** ${published}\n**ingested:** ${ingested}\n\n## Transcript`;
+}
+
+async function fetchRssTranscriptText(transcriptUrl: string): Promise<string> {
+  const response = await fetch(transcriptUrl);
+  if (!response.ok) {
+    throw new Error(`Could not fetch RSS transcript (HTTP ${response.status}): ${transcriptUrl}`);
+  }
+  return response.text();
+}
+
+async function createPodcastTranscriptNode(input: IngestionInput): Promise<IngestionResult> {
+  const fetched = await fetchPodcastEpisode(input.url);
+  const existingTranscript = await findExistingPodcastTranscript(fetched.episodeGuid);
+
+  if (existingTranscript) {
+    return existingTranscript;
+  }
+
+  const stages: ExtractionRunTrace['stages'] = [
+    completedStage(
+      'fetch:podcast',
+      { url: input.url },
+      {
+        podcastTitle: fetched.podcastTitle,
+        episodeTitle: fetched.episodeTitle,
+        feedUrl: fetched.feedUrl,
+        episodeGuid: fetched.episodeGuid,
+        hasRssTranscript: Boolean(fetched.rssTranscriptUrl),
+      },
+    ),
+  ];
+
+  let rawTranscript: string;
+  let transcriptOrigin: 'rss' | 'generated';
+
+  if (fetched.rssTranscriptUrl) {
+    rawTranscript = await fetchRssTranscriptText(fetched.rssTranscriptUrl);
+    transcriptOrigin = 'rss';
+    stages.push(
+      completedStage(
+        'fetch:rss-transcript',
+        { url: fetched.rssTranscriptUrl },
+        { rawLength: rawTranscript.length },
+      ),
+    );
+  } else {
+    const transcribed = await transcribeAudioLocally(fetched.audioUrl);
+    rawTranscript = transcribed.plainText;
+    transcriptOrigin = 'generated';
+    stages.push(
+      completedStage(
+        'transcribe:mlx-whisper',
+        { audioUrl: fetched.audioUrl },
+        { plainTextLength: rawTranscript.length, segmentCount: transcribed.segments?.length },
+      ),
+    );
+  }
+
+  let structuredContent: string;
+  let plainTextForExtraction: string;
+  let paragraphCount: number;
+  let rawLength: number;
+  let cleanLength: number;
+
+  if (isSrtFormat(rawTranscript)) {
+    const parsed = parseSrtTranscript(rawTranscript);
+    structuredContent = parsed.structuredContent;
+    plainTextForExtraction = applyKnownTranscriptReplacements(parsed.plainText);
+    paragraphCount = parsed.paragraphCount;
+    rawLength = parsed.rawLength;
+    cleanLength = parsed.cleanLength;
+  } else {
+    const cleaned = cleanTranscript(rawTranscript);
+    rawLength = cleaned.rawLength;
+
+    const sanitizedText = applyKnownTranscriptReplacements(cleaned.cleanedText);
+    cleanLength = sanitizedText.length;
+
+    const structured = structureText(sanitizedText);
+    structuredContent = structured.structuredContent;
+    plainTextForExtraction = sanitizedText;
+    paragraphCount = structured.paragraphCount;
+  }
+
+  stages.push(completedStage('structure:podcast-transcript', { rawLength }, { cleanLength, paragraphCount }));
+
+  const { title: transcriptTitle, idWhenUntitled } = resolveYouTubeTranscriptTitle(
+    input.title,
+    fetched.episodeTitle,
+  );
+  const sourceId = toNodeId(fetched.podcastTitle);
+  const producedNodeIds = new Set<string>();
+  const updatedAtIso = now();
+
+  const transcriptBody = `${markdownH1Line(transcriptTitle)}\n\n${podcastTranscriptVisibleHeader(
+    input.url,
+    fetched.podcastTitle,
+    updatedAtIso,
+    fetched.publishedAt,
+  )}\n\n${structuredContent}`;
+
+  const transcriptResult = await createNode({
+    type: 'transcript',
+    ...(idWhenUntitled !== undefined ? { id: idWhenUntitled } : {}),
+    title: transcriptTitle,
+    body: transcriptBody,
+    tags: [...new Set(['d:ingest', ...autoTag(transcriptTitle, ''), ...(input.tags ?? [])])],
+    extra: {
+      source_id: sourceId,
+      source_item_id: fetched.episodeGuid,
+      source_url: input.url,
+      source_type: 'podcast' as TranscriptSourceType,
+      ...(fetched.publishedAt ? { source_published_at: fetched.publishedAt } : {}),
+      author: fetched.podcastTitle,
+      raw_length: rawLength,
+      clean_length: cleanLength,
+      structured_paragraphs: paragraphCount,
+      podcast_feed_url: fetched.feedUrl,
+      podcast_episode_guid: fetched.episodeGuid,
+      podcast_audio_url: fetched.audioUrl,
+      transcript_origin: transcriptOrigin,
+    },
+  });
+  producedNodeIds.add(transcriptResult.id);
+  stages.push(
+    completedStage(
+      'store:transcript',
+      { type: 'transcript', sourceId },
+      { id: transcriptResult.id, path: transcriptResult.path },
+    ),
+  );
+
+  try {
+    const sourceResult = await createNode({
+      type: 'source',
+      title: fetched.podcastTitle,
+      tags: [],
+      extra: {
+        source_kind: 'publication',
+        url: fetched.feedUrl,
+        platforms: ['rss'],
+        profiles: [{ platform: 'rss', url: fetched.feedUrl, label: fetched.podcastTitle, primary: true }],
+        related: [transcriptResult.id],
+      },
+    });
+    producedNodeIds.add(sourceId);
+    stages.push(
+      completedStage(
+        'store:source',
+        { id: sourceId },
+        { id: sourceResult.id, path: sourceResult.path, reused: false },
+      ),
+    );
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes(sourceId)) {
+      throw error;
+    }
+
+    stages.push(completedStage('store:source', { id: sourceId }, { id: sourceId, reused: true }));
+  }
+
+  return {
+    id: transcriptResult.id,
+    path: transcriptResult.path,
+    type: 'transcript',
+    title: transcriptTitle,
+    sourceId,
+    sourceItemId: fetched.episodeGuid,
+    sourceUrl: input.url,
+    author: fetched.podcastTitle,
+    producedNodeIds: [...producedNodeIds],
+    plainText: plainTextForExtraction,
+    runTrace: { stages, decisions: [], llm: undefined },
+  };
+}
+
 export interface ExtractionResult {
   transcriptId: string;
   summary: string;
@@ -482,6 +720,10 @@ export async function extractKnowledgeFromTranscript(
 export async function runIngestionPipeline(input: IngestionInput): Promise<IngestionResult> {
   if (input.sourceType === 'youtube') {
     return createTranscriptNode(input);
+  }
+
+  if (input.sourceType === 'podcast') {
+    return createPodcastTranscriptNode(input);
   }
 
   if (input.sourceType === 'article') {

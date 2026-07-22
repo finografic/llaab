@@ -272,6 +272,44 @@ export function createMcpServer(): McpServer {
     },
   );
 
+  // ── Tool: trigger podcast ingestion ───────────────────────────────────────
+
+  const vaultIngestPodcastSchema = z.object({
+    url: z.url().describe('Pocket Casts episode share URL, e.g. https://pca.st/episode/<uuid>.'),
+    title: z.string().trim().min(1).optional().describe('Optional title override.'),
+    tags: z.array(z.string().trim().min(1)).optional().describe('Optional vault tags.'),
+    skipExtraction: z.boolean().optional().describe('Skip post-ingest idea extraction.'),
+  });
+
+  server.registerTool(
+    'vault_ingest_podcast',
+    {
+      description:
+        'Start the LLAAB podcast ingestion pipeline for a Pocket Casts episode link. Resolves the ' +
+        "show's RSS feed, matches the episode, and uses its published transcript or transcribes " +
+        'the audio locally.',
+      inputSchema: vaultIngestPodcastSchema,
+    },
+    async (args: z.infer<typeof vaultIngestPodcastSchema>) => {
+      const result = await postJsonViaApi('/api/ingest/podcast', {
+        url: args.url,
+        title: args.title,
+        tags: args.tags ?? INBOX_DEFAULT_TAGS,
+        skipExtraction: args.skipExtraction,
+      });
+
+      if (!result.ok) {
+        return errorText(result.error);
+      }
+
+      const ingestResult = asRecord(result.data['result']);
+      const id = typeof ingestResult?.['id'] === 'string' ? ingestResult['id'] : undefined;
+      const reused = ingestResult?.['reused'] === true ? ' (reused existing transcript)' : '';
+
+      return textContent(id ? `Queued podcast ingest ${id}${reused}` : 'Queued podcast ingest');
+    },
+  );
+
   // ── Tool: pin npm package ─────────────────────────────────────────────────
 
   const vaultPinPackageSchema = z.object({

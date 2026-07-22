@@ -77,7 +77,7 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
   const { mutate: dismissMutate } = dismissRunMutation;
   const isActive = isActiveRun(run);
   const isFailed = run.status === 'failed';
-  const canRetry = isFailed && run.skill_id === 'ingest-youtube';
+  const canRetry = isFailed && (run.skill_id === 'ingest-youtube' || run.skill_id === 'ingest-podcast');
   const steps = useMemo(() => buildMonitorPipelineSteps(run), [run]);
   const metaLinks = useMemo(() => (run.primary_link ? [run.primary_link] : undefined), [run.primary_link]);
   const hasDetails =

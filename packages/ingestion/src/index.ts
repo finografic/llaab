@@ -21,3 +21,7 @@ export type { YouTubeSubscriptionStatus } from './fetch/youtube-subscription.js'
 export { checkYouTubeSubscription } from './fetch/youtube-subscription.js';
 export type { ExtractionResult, IngestionInput, IngestionResult, IngestionSourceType } from './pipeline.js';
 export { extractKnowledgeFromTranscript, runIngestionPipeline } from './pipeline.js';
+export type { FetchedPodcastEpisode } from './fetch/podcast.js';
+export { fetchPodcastEpisode, isPocketCastsUrl } from './fetch/podcast.js';
+export type { TranscribedAudio, TranscribedSegment } from './transcribe/mlx-whisper.js';
+export { transcribeAudioLocally } from './transcribe/mlx-whisper.js';

@@ -12,7 +12,7 @@ function hasExtractionFailure(run: RunNode): boolean {
  * and belong in the Activity Monitor, not this table.
  */
 export function isIngestRun(run: RunNode): boolean {
-  return run.skill_id === 'ingest-youtube';
+  return run.skill_id === 'ingest-youtube' || run.skill_id === 'ingest-podcast';
 }
 
 /**
@@ -21,7 +21,7 @@ export function isIngestRun(run: RunNode): boolean {
  */
 export function isRunExtracting(run: RunNode): boolean {
   return (
-    run.skill_id === 'ingest-youtube' &&
+    (run.skill_id === 'ingest-youtube' || run.skill_id === 'ingest-podcast') &&
     run.run_status === 'completed' &&
     run.llm == null &&
     run.produced_node_ids.length === 1 &&

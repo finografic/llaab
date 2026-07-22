@@ -10,6 +10,7 @@ import {
   fetchExistingIdeas,
   useDiscardTranscript,
   useExtractTranscript,
+  useIngestPodcast,
   useIngestYoutube,
 } from 'queries/transcripts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -31,13 +32,13 @@ import { KNOWN_TAGS, normalizeTag } from 'constants/taxonomy.constants';
 import { TagInputField } from '../TagInputField';
 import { IngestPipeline } from './components/IngestPipeline';
 import { IngestQueueList } from './components/IngestQueueList';
-import { classifyUrl, extractDroppedUrl, isHttpUrl } from './ingest-form.utils';
+import { classifyUrl, extractDroppedUrl, isHttpUrl, isIngestibleSourceKind } from './ingest-form.utils';
 
 export interface IngestFormProps {
   submitOnDrop?: boolean;
 }
 
-const INGEST_YOUTUBE_SKILL_ID = 'ingest-youtube';
+const INGEST_SKILL_IDS = new Set(['ingest-youtube', 'ingest-podcast']);
 
 /**
  * Shared throttle between queued ingest items — applied before an automatic retry and between
@@ -120,6 +121,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
   const queryClient = useQueryClient();
   const ingestYoutube = useIngestYoutube();
+  const ingestPodcast = useIngestPodcast();
   const extractTranscript = useExtractTranscript();
   const discardTranscript = useDiscardTranscript();
   const { data: vaultTagsByUsage = [] } = useVaultTagsByUsage();
@@ -128,7 +130,8 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const urlValue = watch('url');
   const sourceKind = useMemo(() => classifyUrl(urlValue.trim()), [urlValue]);
   const activeIngestRun = useMemo(() => {
-    const activeRuns = monitorData?.active.filter((run) => run.skill_id === INGEST_YOUTUBE_SKILL_ID) ?? [];
+    const activeRuns =
+      monitorData?.active.filter((run) => run.skill_id != null && INGEST_SKILL_IDS.has(run.skill_id)) ?? [];
     if (activeRuns.length === 0) return null;
 
     const currentUrl = urlValue.trim();
@@ -140,19 +143,24 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     return activeRuns[0] ?? null;
   }, [monitorData?.active, urlValue]);
   const durableBusy = busy || activeIngestRun != null;
-  // A youtube URL is always submittable — while busy, submitting queues it instead of running it.
-  const canSubmit = sourceKind === 'youtube';
+  // A youtube/podcast URL is always submittable — while busy, submitting queues it instead of running it.
+  const canSubmit = isIngestibleSourceKind(sourceKind);
   const buttonLabel = durableBusy
-    ? sourceKind === 'youtube'
+    ? canSubmit
       ? 'Add to Queue'
       : 'Processing…'
     : sourceKind === 'youtube'
       ? 'Ingest YouTube'
-      : 'Ingest';
+      : sourceKind === 'podcast'
+        ? 'Ingest Podcast'
+        : 'Ingest';
 
   const dropzoneDesc = useMemo(() => {
     if (sourceKind === 'youtube') {
       return 'YouTube video URL detected.';
+    }
+    if (sourceKind === 'podcast') {
+      return 'Pocket Casts episode detected.';
     }
     if (sourceKind === 'webpage') {
       return 'Website or online reference detected. Drop recognition works; this source type is not yet wired for ingestion.';
@@ -163,7 +171,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const processingUrl = currentQueueUrl ?? (activeIngestRun ? getRunInputUrl(activeIngestRun) : null);
   const trimmedUrl = urlValue.trim();
   const isInputProcessing =
-    sourceKind === 'youtube' &&
+    canSubmit &&
     durableBusy &&
     processingUrl != null &&
     trimmedUrl.length > 0 &&
@@ -303,7 +311,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       let json: Awaited<ReturnType<typeof ingestYoutube.mutateAsync>>;
 
       try {
-        json = await ingestYoutube.mutateAsync({ url: trimmedUrl, tags: allTags });
+        json =
+          classifyUrl(trimmedUrl) === 'podcast'
+            ? await ingestPodcast.mutateAsync({ url: trimmedUrl, tags: allTags })
+            : await ingestYoutube.mutateAsync({ url: trimmedUrl, tags: allTags });
       } catch (error) {
         setTranscriptPhase('failed');
         setTranscriptError(error instanceof Error ? error.message : 'Ingestion failed.');
@@ -370,7 +381,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       setBusy(false);
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
     },
-    [ingestYoutube, queryClient],
+    [ingestYoutube, ingestPodcast, queryClient],
   );
 
   const enqueueUrl = useCallback((url: string, itemTags: string[]) => {
@@ -398,10 +409,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     const trimmedUrl = url.trim();
     const detectedSourceKind = classifyUrl(trimmedUrl);
 
-    if (detectedSourceKind !== 'youtube') {
+    if (!isIngestibleSourceKind(detectedSourceKind)) {
       setApiError(
         detectedSourceKind === 'webpage'
-          ? 'Article/docs URL detected. Drop recognition works, but the backend is still YouTube-only right now.'
+          ? 'Article/docs URL detected. Drop recognition works, but the backend only ingests YouTube and podcast URLs right now.'
           : 'Must be a valid URL.',
       );
       return;
@@ -607,11 +618,15 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
     const droppedSourceKind = classifyUrl(droppedUrl);
 
-    if (droppedSourceKind === 'youtube') {
+    if (isIngestibleSourceKind(droppedSourceKind)) {
       if (submitOnDrop) {
         handleSubmit(onSubmit)();
       } else {
-        setDropMessage('YouTube URL detected. Ready to ingest.');
+        setDropMessage(
+          droppedSourceKind === 'youtube'
+            ? 'YouTube URL detected. Ready to ingest.'
+            : 'Pocket Casts episode detected. Ready to ingest.',
+        );
       }
       return;
     }
@@ -639,7 +654,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       <div className="ingest-dropzone__title">
         Drop a browser URL or page link to populate the source field
       </div>
-      {sourceKind === 'youtube' ? (
+      {isIngestibleSourceKind(sourceKind) ? (
         <div className="ingest-dropzone__desc ingest-dropzone__desc--youtube">
           <CheckIcon className="size-4 shrink-0 text-green-600 dark:text-green-400" aria-hidden />
           <span className="text-green-600 dark:text-green-400">{dropzoneDesc}</span>
@@ -658,7 +673,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
                 type="url"
                 autoComplete="off"
                 spellCheck={false}
-                placeholder="https://www.youtube.com/watch?v=…"
+                placeholder="https://www.youtube.com/watch?v=… or https://pca.st/episode/…"
                 className={
                   isInputProcessing
                     ? 'ingest-form__url-input ingest-form__url-input--processing'

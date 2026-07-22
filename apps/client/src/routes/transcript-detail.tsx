@@ -41,7 +41,11 @@ export function TranscriptDetailPage() {
     const ideasById = new Map((ideaNodes as IdeaNode[]).map((idea) => [idea.id, idea]));
 
     return (runNodes as RunNode[])
-      .filter((run) => run.skill_id === 'ingest-youtube' && run.produced_node_ids.includes(transcript.id))
+      .filter(
+        (run) =>
+          (run.skill_id === 'ingest-youtube' || run.skill_id === 'ingest-podcast') &&
+          run.produced_node_ids.includes(transcript.id),
+      )
       .map((run) => {
         const ideas = run.produced_node_ids
           .filter((nodeId) => nodeId !== transcript.id)

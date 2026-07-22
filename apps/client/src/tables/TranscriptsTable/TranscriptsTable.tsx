@@ -16,6 +16,7 @@ const SOURCE_TYPE_CLASS: Record<TranscriptNode['source_type'], string> = {
   article: styles.typeArticle,
   repo: styles.typeRepo,
   chat: styles.typeChat,
+  podcast: styles.typePodcast,
   other: styles.typeOther,
 };
 

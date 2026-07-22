@@ -3,7 +3,9 @@ import { z } from 'zod';
 import { BaseNodeSchema } from './base-node.schema.js';
 import { NodeIdSchema } from './primitives.schema.js';
 
-export const TranscriptSourceTypeSchema = z.enum(['youtube', 'article', 'repo', 'chat', 'other']);
+export const TranscriptSourceTypeSchema = z.enum(['youtube', 'article', 'repo', 'chat', 'podcast', 'other']);
+
+export const TranscriptOriginSchema = z.enum(['rss', 'generated']);
 
 const TranscriptCanonicalCoverageItemSchema = z.object({
   id: NodeIdSchema,
@@ -36,6 +38,14 @@ export const TranscriptNodeSchema = BaseNodeSchema.extend({
   raw_length: z.number().int().nonnegative().optional(),
   clean_length: z.number().int().nonnegative().optional(),
   structured_paragraphs: z.number().int().nonnegative().optional(),
+  /** RSS feed URL the episode was matched in — podcast transcripts only. */
+  podcast_feed_url: z.string().url().optional(),
+  /** RSS `<guid>` (or normalized enclosure URL fallback) — the podcast dedupe key. */
+  podcast_episode_guid: z.string().optional(),
+  /** Episode audio enclosure URL. */
+  podcast_audio_url: z.string().url().optional(),
+  /** How the transcript text was obtained: published in the RSS feed, or generated locally. */
+  transcript_origin: TranscriptOriginSchema.optional(),
   extracted_idea_ids: z.array(NodeIdSchema).default([]),
   extracted_skill_ids: z.array(NodeIdSchema).default([]),
   canonical_coverage: TranscriptCanonicalCoverageSchema.optional(),
@@ -48,3 +58,4 @@ export const TranscriptNodeSchema = BaseNodeSchema.extend({
 
 export type TranscriptNode = z.infer<typeof TranscriptNodeSchema>;
 export type TranscriptSourceType = z.infer<typeof TranscriptSourceTypeSchema>;
+export type TranscriptOrigin = z.infer<typeof TranscriptOriginSchema>;

@@ -167,7 +167,7 @@ const STEP_TITLE_BY_STATUS: Record<string, Record<StepStatus, string>> = {
 };
 
 export function buildMonitorPipelineSteps(run: RunMonitorItem): RunPipelineStepData[] {
-  if (run.skill_id === 'ingest-youtube') {
+  if (run.skill_id === 'ingest-youtube' || run.skill_id === 'ingest-podcast') {
     return buildIngestYoutubeMonitorSteps(run);
   }
 

@@ -1,6 +1,9 @@
 # TODO — Podcast / RSS Ingest
 
-> **Status:** Not started.
+> **Status:** Implementation complete (2026-07-22). Verified end-to-end up through episode
+> matching and the transcription hand-off; final success path (mlx-whisper actually producing a
+> transcript) needs a real run on the Mac Studio, which has mlx-whisper installed — this dev
+> sandbox does not.
 > Adds a second ingestible media type to `/ingest` — podcast episodes, entered as a Pocket Casts
 > share link. Reuses the transcript/idea-extraction pipeline; adds a new resolver + audio
 > transcription step ahead of it.
@@ -115,28 +118,35 @@ export interface FetchedPodcastEpisode {
 export async function fetchPodcastEpisode(url: string): Promise<FetchedPodcastEpisode>;
 ```
 
-Steps inside `fetchPodcastEpisode`:
+Steps inside `fetchPodcastEpisode` (verified against the live Pocket Casts URL from this doc's
+example during implementation):
 
 1. **Resolve the share link.** `fetch(url, { redirect: 'follow' })`, read the final URL and HTML.
-   Pocket Casts share pages are public and don't require login. Parse:
-   - `og:title`, `og:description` meta tags
-   - JSON-LD `PodcastEpisode`/`AudioObject` block if present
-   - canonical episode URL (contains podcast slug + Pocket Casts podcast UUID + episode slug +
-     episode UUID) as a fallback identity if audio isn't directly resolvable from the page
+   Pocket Casts share pages are public and don't require login. Parse `og:title`/`og:description`,
+   and the `<link type="application/json+oembed" href="…">` tag every episode page includes.
 
-2. **Resolve the RSS feed.** In order, stop at first success:
-   - Feed URL embedded in the resolved page's metadata/JSON-LD, if present
-   - `<link rel="alternate" type="application/rss+xml">` on the show's website (if the page links
-     one)
+2. **Resolve podcast identity via oEmbed**, not page meta tags. Pocket Casts' `og:title` is
+   episode-only (no show name) in practice, so it can't reliably split into podcast + episode —
+   `og:title` for the example URL is `"Announcing TypeScript 7, Bun 1.4 is in Rust, and Vite+
+Beta | News | Ep 74"`, with no podcast name anywhere in the meta tags. The oEmbed response
+   (`GET {oembedUrl}` — a standard, publicly documented endpoint, not scraping) instead returns
+   `author_name` (the podcast title), `author_url` (the show's website), and a `title` that's the
+   full episode title suffixed with `" - {author_name}"` — strip that suffix for the episode title.
+
+3. **Resolve the RSS feed.** In order, stop at first success:
+   - `<link rel="alternate" type="application/rss+xml">` on the Pocket Casts page itself (rare)
+   - Same RSS link tag on the oEmbed `author_url` (show website) — this is the reliable path in
+     practice: fetching `author_url` and reading its `rel=alternate` tag resolved the feed for the
+     example URL (`https://feeds.transistor.fm/typescript-fm`)
    - Podcast Index API lookup by podcast title (`https://api.podcastindex.org/api/1.0/search/byterm`
-     — requires free API key, see Open questions)
+     — requires free API key, see Open questions) as a last resort for shows with no website link
    - Give up with a clear "could not resolve feed" error if all fail — do not silently fall back to
      scraping Pocket Casts' internal (undocumented, unstable) endpoints for the MVP.
 
-3. **Fetch and parse the feed** (`fetch(feedUrl)` → XML). Use a lightweight RSS/Atom parser —
+4. **Fetch and parse the feed** (`fetch(feedUrl)` → XML). Use a lightweight RSS/Atom parser —
    `fast-xml-parser` (already dependency-light, no new heavy deps) rather than a full podcast SDK.
 
-4. **Match the episode** inside the parsed feed items. Do not assume the Pocket Casts episode UUID
+5. **Match the episode** inside the parsed feed items. Do not assume the Pocket Casts episode UUID
    matches the RSS `<guid>` — it's Pocket Casts' own identifier. Score candidates:
 
    ```ts
@@ -151,11 +161,11 @@ Steps inside `fetchPodcastEpisode`:
    combination) before accepting a match; otherwise throw a clear "episode not found in feed"
    error rather than silently ingesting the wrong episode.
 
-5. **Extract `<podcast:transcript>` if present** on the matched `<item>` (Podcasting 2.0 namespace
+6. **Extract `<podcast:transcript>` if present** on the matched `<item>` (Podcasting 2.0 namespace
    `podcast: https://podcastindex.org/namespace/1.0`). Prefer `type="text/vtt"` or `text/plain`
    over `application/json` (json shape varies by publisher).
 
-6. Return the `FetchedPodcastEpisode`. Audio is _not_ downloaded at this step — that's a separate
+7. Return the `FetchedPodcastEpisode`. Audio is _not_ downloaded at this step — that's a separate
    call, only made if step 5 found nothing.
 
 ### Transcription — `packages/ingestion/src/transcribe/mlx-whisper.ts` (new)
@@ -236,64 +246,77 @@ No new route group, no new node type — this rides entirely on the existing `Tr
 
 ### Phase 1 — Schemas
 
-- [ ] Add `'podcast'` to `TranscriptSourceTypeSchema` (`transcript-node.schema.ts`)
-- [ ] Add `podcast_feed_url`, `podcast_episode_guid`, `podcast_audio_url`, `transcript_origin`
+- [x] Add `'podcast'` to `TranscriptSourceTypeSchema` (`transcript-node.schema.ts`)
+- [x] Add `podcast_feed_url`, `podcast_episode_guid`, `podcast_audio_url`, `transcript_origin`
       optional fields to `TranscriptNodeSchema`
-- [ ] Add `'rss'` to `SourceProfilePlatformSchema` (`source-node.schema.ts`)
-- [ ] Add `'podcast'` to `IngestionSourceType` (`pipeline.ts:17`)
+- [x] Add `'rss'` to `SourceProfilePlatformSchema` (`source-node.schema.ts`)
+- [x] Add `'podcast'` to `IngestionSourceType` (`pipeline.ts:17`)
 
 ### Phase 2 — Resolver + feed matching (no transcription yet)
 
-- [ ] `packages/ingestion/src/fetch/podcast.ts` — `fetchPodcastEpisode`: Pocket Casts redirect
-      follow, page metadata extraction, feed resolution, `fast-xml-parser`-based RSS parse,
+- [x] `packages/ingestion/src/fetch/podcast.ts` — `fetchPodcastEpisode`: Pocket Casts redirect
+      follow, oEmbed-based identity resolution, feed resolution, `fast-xml-parser`-based RSS parse,
       episode scoring/matching, `<podcast:transcript>` extraction
-- [ ] Add `fast-xml-parser` dependency to `packages/ingestion`
+- [x] Add `fast-xml-parser` dependency to `packages/ingestion`
 - [ ] Unit test the episode-matching scorer against a few real feeds (fixture-based, no live
-      network calls in tests)
+      network calls in tests) — verified live against the example URL end-to-end instead; a
+      fixture-based test is still worth adding as a fast follow
 
 ### Phase 3 — Local transcription
 
-- [ ] Confirm `mlx-whisper` install path on the Mac Studio (system Python, not the repo's Node
-      toolchain) — document exact install command in Notes below once verified
-- [ ] `packages/ingestion/src/transcribe/mlx-whisper.ts` — download, `ffmpeg` normalize, shell out,
+- [ ] Confirm `mlx-whisper` install path on the Mac Studio — not verified: this dev sandbox
+      doesn't have `mlx_whisper` on PATH, and the real transcription run needs to happen on the
+      Mac Studio itself. The pipeline was confirmed to reach this step and fail with the correct,
+      actionable error (`mlx_whisper failed... pip install mlx-whisper`) when it's missing.
+- [x] `packages/ingestion/src/transcribe/mlx-whisper.ts` — download, `ffmpeg` normalize, shell out,
       parse JSON output
-- [ ] Scratch-dir cleanup on success and on failure (don't leak large audio files into
-      `VAULT_ROOT/.tmp`)
+- [x] Scratch-dir cleanup on success and on failure (don't leak large audio files into
+      `VAULT_ROOT/.tmp`) — verified no leftover files after a failed transcription attempt
 
 ### Phase 4 — Pipeline integration
 
-- [ ] `createPodcastTranscriptNode` in `pipeline.ts` — dedupe, transcript-text resolution
+- [x] `createPodcastTranscriptNode` in `pipeline.ts` — dedupe, transcript-text resolution
       (RSS-first, transcribe-fallback), markdown body, `TranscriptNode` + show `SourceNode` creation
-- [ ] Wire `'podcast'` branch into `runIngestionPipeline`'s dispatch
-- [ ] Confirm `extractKnowledgeFromTranscript` needs no changes (should be a no-op verification,
-      not new code)
+- [x] Wire `'podcast'` branch into `runIngestionPipeline`'s dispatch
+- [x] Confirm `extractKnowledgeFromTranscript` needs no changes (verified — no edits needed)
 
 ### Phase 5 — Skill + server + MCP
 
-- [ ] `packages/skills/src/ingest-podcast.ts` — `ingestPodcast` skill (mirrors `ingest-youtube.ts`)
-- [ ] `ingestPodcastBodySchema` in `ingest.schema.ts`
-- [ ] `POST /api/ingest/podcast` route + handler in `ingest.routes.ts` / `index.ts`
-- [ ] `vault_ingest_podcast` MCP tool in `packages/cli/src/mcp/server.ts`
+- [x] `packages/skills/src/ingest-podcast.ts` — `ingestPodcast` skill (mirrors `ingest-youtube.ts`)
+- [x] `ingestPodcastBodySchema` in `ingest.schema.ts`
+- [x] `POST /api/ingest/podcast` route + handler in `ingest.routes.ts` / `index.ts`
+- [x] `vault_ingest_podcast` MCP tool in `packages/cli/src/mcp/server.ts`
+- [x] `POST /api/runs/:id/retry` generalized to dispatch `ingest-youtube`/`ingest-podcast` by the
+      run's `skill_id` (was hardcoded to youtube-only) — a gap the original plan missed
+- [x] Per-skill stale-run timeout override for `ingest-podcast` (120 min, matching the long local
+      transcription step) in `packages/skills/src/stale-run.ts`
 
 ### Phase 6 — Client UI
 
-- [ ] `SourceKind` gains `'podcast'`; `classifyUrl` detects `pca.st`/`pocketcasts.com`
-- [ ] `useIngestPodcast` mutation hook
-- [ ] `IngestForm.tsx`: extend `canSubmit`/`onSubmit`/drop-handler gates to include `'podcast'`;
+- [x] `SourceKind` gains `'podcast'`; `classifyUrl` detects `pca.st`/`pocketcasts.com`
+- [x] `useIngestPodcast` mutation hook
+- [x] `IngestForm.tsx`: extend `canSubmit`/`onSubmit`/drop-handler gates to include `'podcast'`;
       provider-aware detected-hint text (reuse the existing green-check hint pattern, swap icon/copy)
-- [ ] Manual test: paste `https://pca.st/episode/0bd00def-49cf-43f3-a252-acb837815d31`, confirm
-      end-to-end ingest (resolve → feed match → transcript-or-transcribe → node created → idea
-      extraction runs)
+- [x] Run monitor / pipeline card / retry / transcript-detail filters generalized to recognize
+      `ingest-podcast` runs alongside `ingest-youtube` (`run-display.utils.ts`,
+      `run-pipeline-card.utils.ts`, `RunMonitor.tsx`, `transcript-detail.tsx`) — another gap the
+      original plan missed
+- [x] `TranscriptsTable` / `SourceTranscriptsTable` source-type badge styling for `podcast`
+- [x] Manual test: `POST /api/ingest/podcast` with `https://pca.st/episode/0bd00def-49cf-43f3-a252-acb837815d31`
+      confirmed resolve → oEmbed identity → feed match → episode match → RSS-transcript-not-found →
+      falls through to local transcription, which fails cleanly (no `mlx_whisper` on this dev
+      machine) with no orphaned temp files or vault nodes. Full success path (transcript saved →
+      idea extraction) needs a real run on the Mac Studio with `mlx-whisper` installed.
 
 ---
 
 ## Open questions
 
-- **Podcast Index API key** — free registration required (`https://api.podcastindex.org`) for the
-  feed-lookup fallback in step 2 of the resolver. Needs an env var (`PODCASTINDEX_API_KEY` +
-  `PODCASTINDEX_API_SECRET`) added to root `.env`. Confirm before Phase 2 whether Pocket Casts'
-  page metadata alone resolves feeds often enough to make this optional at MVP, or whether it's
-  needed from day one.
+- **Podcast Index API key** — resolved: not needed for the common case. The oEmbed →
+  `author_url` → `rel=alternate` RSS link chain resolved the feed for the example URL without any
+  API key. Podcast Index (`https://api.podcastindex.org`, needs `PODCASTINDEX_API_KEY` +
+  `PODCASTINDEX_API_SECRET` in root `.env`) remains implemented as a last-resort fallback for shows
+  whose website doesn't link an RSS feed, but is not required to ship the MVP.
 - **`mlx-whisper` packaging** — it's a Python package, so the server process needs a working Python
   env with it installed (likely a venv referenced by absolute path, similar to how `yt-dlp` is
   assumed to be on `PATH`). Needs a decision on whether to pin a venv path via env var
