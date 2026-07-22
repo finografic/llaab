@@ -173,6 +173,8 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 | `/hermes`                      | Hermes / MCP dashboard: Discord gateway notes, scoped vault tools, guardrails, cost-routing follow-up                                                 |
 | `/icons`                       | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
 | `/vault`                       | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
+| `/vault/inbox`                 | Hermes capture triage list — grouped by route kind, review/select actions, missing-thumbnail filter                                                   |
+| `/vault/inbox/:id`             | Single capture detail                                                                                                                                 |
 | `/vault/transcripts/:id`       | Detail: source metadata, ideas, one-step Create Wiki(s), and Re-extract                                                                               |
 | `/vault/wiki-drafts/:id`       | Diagnostic/recovery audit draft (not required for creation)                                                                                           |
 | `/vault/wiki-candidates`       | Diagnostic discovery queue (not the normal Create Wiki(s) path)                                                                                       |
@@ -554,6 +556,20 @@ not just host. Remaining manual checks: unauthorized Telegram user rejection and
 console unchanged. Future inbox work is in `TODO_INBOX_VIEWS.md`: shared list/detail views,
 fallback renderers, AI-assisted categorization, snippet extraction from arbitrary docs/blog/code-
 reference links, and richer review/search surfaces.
+
+`/vault/inbox` (`InboxCaptureList`, `apps/client/src/components/InboxCaptureList/`) is the shared
+list view that doc calls for: rows grouped by route kind, each with an always-visible checkbox
+column and an equal-width un/mark-reviewed column (`BookmarkIcon` accent-green when pending,
+clickable `BookmarkCheckIcon` info-blue when reviewed — clicking it reverts to `new` via
+`withInboxReviewState`), then thumbnail/title, meta badges, and a right-aligned action group
+(external link, copy, delete) that stays pinned to the row edge via `margin-left: auto` regardless
+of the grid's column-width remainder. Route-kind color-coding renders as a `left / Npx 100% no-repeat`
+solid-stop gradient layered under the row's surface color (not a `box-shadow`, which visibly follows
+an exaggerated curve at the row's rounded corners) — every row background state (default/hover/
+checked) repeats the same gradient layer so the stripe survives all three. Broken thumbnails are
+detected client-side only (an `<img onError>` swaps in a red `FileExclamationPointIcon` plus a
+"Missing" badge; nothing is persisted to the node) and surfaced via a summary tile + toggleable
+filter so they can be bulk-selected and deleted.
 
 ## Local Dev Ops
 

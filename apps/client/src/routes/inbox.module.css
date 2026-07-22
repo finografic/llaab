@@ -84,8 +84,11 @@
 }
 
 .summaryValue {
-  min-width: 1.5rem;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
   margin-left: auto;
   padding: 0 0.4rem;
   color: var(--foreground);
