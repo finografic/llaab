@@ -6,16 +6,12 @@ import { FilePenLineIcon, LoaderCircleIcon, XIcon } from 'lucide-react';
 import { useRunMonitor } from 'queries/runs';
 import { useCreateWikiDraft } from 'queries/transcripts';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { CanonicalIdeaNode } from '@llaab/schemas';
 
 import { formatElapsed, heartbeatStore, useElapsedMs } from 'lib/heartbeat';
 
-import {
-  formatWikiCreationSuccessMessage,
-  isActiveWikiCreationRun,
-  isForbiddenWikiCreationPath,
-} from './wiki-draft-composer.utils';
+import { formatWikiCreationSuccessMessage, isActiveWikiCreationRun } from './wiki-draft-composer.utils';
 import styles from './WikiDraftComposer.module.css';
 
 interface WikiDraftComposerProps {
@@ -26,6 +22,7 @@ interface WikiDraftComposerProps {
 interface DraftCreationAlert {
   status: 'success' | 'error';
   message: string;
+  wikis?: Array<{ id: string; title: string }>;
 }
 
 function ideaIdsKey(ideas: CanonicalIdeaNode[]): string {
@@ -34,7 +31,6 @@ function ideaIdsKey(ideas: CanonicalIdeaNode[]): string {
 
 export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftComposerProps) {
   const createDraft = useCreateWikiDraft();
-  const navigate = useNavigate();
   const { data: monitor } = useRunMonitor();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(canonicalIdeas.map((idea) => idea.id)),
@@ -84,16 +80,11 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
       if (!result.wikiId) {
         throw new Error('Wiki creation did not return a promoted page.');
       }
-      const destination = `/knowledge/wikis/${result.wikiId}`;
-      if (isForbiddenWikiCreationPath(destination)) {
-        throw new Error('Refusing to route successful creation through draft review.');
-      }
+      // Stay on the transcript — the alert lists every published wiki (there may be several).
       setCreationAlert({
         status: 'success',
         message: formatWikiCreationSuccessMessage(result),
-      });
-      navigate(destination, {
-        state: { generatedWikis: result.wikis },
+        wikis: result.wikis.map((wiki) => ({ id: wiki.id, title: wiki.title })),
       });
     } catch (error) {
       setCreationAlert({
@@ -114,7 +105,7 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
           pages automatically.
         </p>
       </Col>
-      <Col>
+      <Col className="py-3">
         {canonicalIdeas.map((idea) => (
           <label key={idea.id} className="flex cursor-pointer items-start gap-2 py-1 text-sm">
             <Checkbox
@@ -147,7 +138,18 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
             <AlertTitle>
               {creationAlert.status === 'success' ? 'Wikis published' : 'Wiki creation failed'}
             </AlertTitle>
-            <AlertDescription>{creationAlert.message}</AlertDescription>
+            <AlertDescription>
+              {creationAlert.message}
+              {creationAlert.wikis && creationAlert.wikis.length > 0 ? (
+                <ul className={styles.createdLinks}>
+                  {creationAlert.wikis.map((wiki) => (
+                    <li key={wiki.id}>
+                      <Link to={`/knowledge/wikis/${wiki.id}`}>{wiki.title}</Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </AlertDescription>
             <Button
               type="button"
               variant="ghost"

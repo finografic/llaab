@@ -9,3 +9,32 @@
   background: var(--consolidation-bg) !important;
   color: var(--consolidation-text) !important;
 }
+
+/* Published-wiki success list: accent middot bullets + accent links. */
+.createdLinks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.createdLinks li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.createdLinks li::before {
+  content: '•';
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.createdLinks a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

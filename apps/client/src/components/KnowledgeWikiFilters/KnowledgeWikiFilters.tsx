@@ -9,16 +9,16 @@ import { RotateCcwIcon, SearchIcon, SlidersHorizontalIcon, XIcon } from 'lucide-
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 
-import {
-  activeKnowledgeWikiFilterCount,
-  DEFAULT_KNOWLEDGE_WIKI_FILTERS,
-  WIKI_SORT_OPTIONS,
-} from 'lib/knowledge-wiki-filters';
 import type {
   KnowledgeWikiFacetOption,
   KnowledgeWikiFacets,
   KnowledgeWikiFiltersState,
   WikiSortOrder,
+} from 'lib/knowledge-wiki-filters';
+import {
+  activeKnowledgeWikiFilterCount,
+  DEFAULT_KNOWLEDGE_WIKI_FILTERS,
+  WIKI_SORT_OPTIONS,
 } from 'lib/knowledge-wiki-filters';
 
 import styles from './KnowledgeWikiFilters.module.css';
@@ -147,6 +147,7 @@ export function KnowledgeWikiFilters({
               <Col key={option.value} xs={6} md={4} xl={2}>
                 <FacetToggle
                   option={option}
+                  tagValue={option.value}
                   checked={filters.domains.includes(option.value)}
                   onCheckedChange={() => patch({ domains: toggleValue(filters.domains, option.value) })}
                 />
@@ -216,10 +217,13 @@ function FilterCol({ label, children }: { label: string; children: ReactNode }) 
 
 function FacetToggle({
   option,
+  tagValue,
   checked,
   onCheckedChange,
 }: {
   option: KnowledgeWikiFacetOption;
+  /** Domain tag value (e.g. `d:llm`) — colors the button like the matching tag pill. */
+  tagValue?: string;
   checked: boolean;
   onCheckedChange: () => void;
 }) {
@@ -229,6 +233,7 @@ function FacetToggle({
       variant="outline"
       size="sm"
       className={styles.facetButton}
+      data-tag={tagValue}
       data-active={checked || undefined}
       onClick={onCheckedChange}
     >
@@ -281,7 +286,7 @@ function ActiveFilterChips({
     })),
   ];
 
-  if (chips.length === 0 && !filters.search.trim()) return null;
+  // if (chips.length === 0 && !filters.search.trim()) return null;
 
   return (
     <Row gutterWidth={8} align="center" className={styles.activeChips}>
@@ -299,15 +304,17 @@ function ActiveFilterChips({
         </Col>
       ))}
       <Col xs="content">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className={styles.clearAllButton}
-          onClick={() => onChange(DEFAULT_KNOWLEDGE_WIKI_FILTERS)}
-        >
-          Clear all
-        </Button>
+        {chips.length > 0 || Boolean(filters.search.trim()) ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={styles.clearAllButton}
+            onClick={() => onChange(DEFAULT_KNOWLEDGE_WIKI_FILTERS)}
+          >
+            Clear all
+          </Button>
+        ) : null}
       </Col>
     </Row>
   );

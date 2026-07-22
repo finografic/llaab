@@ -100,6 +100,37 @@
   background: color-mix(in oklab, var(--accent) 8%, var(--surface));
 }
 
+/* Domain facets carry data-tag and mirror the matching tag-pill colors. */
+.facetButton[data-tag] {
+  border-color: color-mix(in srgb, var(--tag-color) 30%, transparent);
+  background: color-mix(in srgb, var(--tag-color) 8%, transparent);
+}
+
+.facetButton[data-tag] .facetLabel {
+  color: var(--tag-color);
+}
+
+.facetButton[data-tag] [data-slot="checkbox"] {
+  border-color: color-mix(in srgb, var(--tag-color) 45%, transparent) !important;
+  background: transparent !important;
+}
+
+/* Checked: brighter tint + border, label goes white. */
+.facetButton[data-tag][data-active="true"] {
+  border-color: color-mix(in srgb, var(--tag-color) 75%, transparent);
+  background: color-mix(in srgb, var(--tag-color) 22%, transparent);
+}
+
+.facetButton[data-tag][data-active="true"] .facetLabel {
+  color: var(--foreground);
+}
+
+.facetButton[data-tag][data-active="true"] [data-slot="checkbox"] {
+  border-color: var(--tag-color) !important;
+  background: color-mix(in srgb, var(--tag-color) 55%, transparent) !important;
+  color: var(--foreground) !important;
+}
+
 .facetButton [data-slot="checkbox"] {
   margin-right: var(--space-1);
   pointer-events: none;
@@ -142,6 +173,7 @@
 .activeChips {
   margin-top: var(--space-3);
   row-gap: var(--space-2);
+  min-height: 32px;
 }
 
 .filterChip {

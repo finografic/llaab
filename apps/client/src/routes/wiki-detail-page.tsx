@@ -3,7 +3,6 @@ import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/
 import { DemoteKnowledgeWikiAction } from 'components/DemoteKnowledgeWikiAction/DemoteKnowledgeWikiAction';
 import { PageHero } from 'components/PageHero/PageHero';
 import { TtsPlayer } from 'components/TtsPlayer';
-import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,17 +37,12 @@ import {
   useRegenerateKnowledgeWikiSection,
 } from 'queries/knowledge';
 import { useMemo, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import type { KnowledgeWikiPage } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
 
 import styles from './wiki-detail-page.module.css';
-
-interface CreatedWikiLocationState {
-  generatedWikis?: KnowledgeWikiPage[];
-}
 
 function qualityTone(score: number | undefined): string {
   if (score == null) return styles.neutral;
@@ -63,9 +57,7 @@ function pluralizeMetricLabel(count: number, singular: string, plural = `${singu
 
 export function KnowledgeWikiDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const location = useLocation();
   const navigate = useNavigate();
-  const generatedWikis = (location.state as CreatedWikiLocationState | null)?.generatedWikis ?? [];
   const { data, isLoading, error } = useKnowledgeWiki(id);
   const { data: graph } = useKnowledgeWikiGraph();
   const regenerateSection = useRegenerateKnowledgeWikiSection();
@@ -149,28 +141,6 @@ export function KnowledgeWikiDetailPage() {
         {error ? <p className="text-destructive text-sm">{error.message}</p> : null}
         {wiki ? (
           <Row gutterWidth={20}>
-            {generatedWikis.length > 0 ? (
-              <Col xs={12}>
-                <Alert className={styles.createdAlert}>
-                  <SparklesIcon aria-hidden="true" />
-                  <AlertTitle>
-                    {generatedWikis.length === 1
-                      ? 'Wiki created and published'
-                      : `${generatedWikis.length} focused wikis created and published`}
-                  </AlertTitle>
-                  <AlertDescription>
-                    <ul className={styles.createdLinks}>
-                      {generatedWikis.map((created) => (
-                        <li key={created.id}>
-                          <Link to={`/knowledge/wikis/${created.id}`}>{created.title}</Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              </Col>
-            ) : null}
-
             <Col xs={12}>
               <Row gutterWidth={12} className={styles.metricsRow}>
                 <Col xs={12} sm={6} lg={3}>
