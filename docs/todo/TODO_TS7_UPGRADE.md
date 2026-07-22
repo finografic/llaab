@@ -1,6 +1,6 @@
 # TODO — TypeScript 7 Upgrade
 
-> **Status:** Not started.
+> **Status:** Phase 1–2 complete (2026-07-22). Baseline captured; upgrade not yet applied.
 
 ## Objectives
 
@@ -29,6 +29,17 @@
 - **Note:** `packages/ui` build script uses `tsc` directly (see `DONE_OXLINT_MIGRATION.md` for the
   lint side of this workspace's tooling split) — confirm during Phase 2 whether any package's build
   step depends on `tsc`-specific CLI flags that changed in TS7.
+- **Latest stable TS 7.x (npm, checked 2026-07-22):** `typescript@7.0.2` (`latest` dist-tag).
+  `7.0.1-rc` and dev snapshots also exist; `7.0.2` is the one to install.
+
+### Baseline validation results (2026-07-22, on TypeScript 6.0.3)
+
+| Command          | Result                                                 | Notes                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm typecheck` | ✅ pass                                                | 10/10 tasks, no errors                                                                                                                                                                                                                                                                                                                                                                       |
+| `pnpm lint`      | ✅ pass                                                | 6 pre-existing `oxlint` warnings (not errors) in `packages/ui/src/components/chart.tsx`, `packages/ingestion/src/fetch/youtube-data-api.ts`, `youtube-subscription.ts`, and one server test file — unrelated to TS version, left untouched                                                                                                                                                   |
+| `pnpm build`     | ✅ pass                                                | 8/8 tasks                                                                                                                                                                                                                                                                                                                                                                                    |
+| `pnpm test`      | ❌ **4 pre-existing failures**, unrelated to this task | `packages/schemas/src/wiki.schema.test.ts` (1) and `apps/server/src/routes/vault/vault-wiki-drafts.routes.test.ts` (3) — all wiki-draft/schema logic failures (assertion mismatches on `verification_status`/tag validation and mock call counts), nothing TypeScript-related. **Recorded as baseline so post-upgrade test runs can be compared against this, not against a clean 239/239.** |
 
 ---
 
