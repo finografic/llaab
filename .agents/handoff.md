@@ -329,9 +329,22 @@ file path auto-converted to data URL at startup), and iconsApi host/port.
 
 ## Ingestion Pipeline
 
+`/ingest` accepts two source types: YouTube video URLs and Pocket Casts episode share links
+(`pca.st`/`pocketcasts.com`) — `SourceKind`/`classifyUrl` in `ingest-form.utils.ts` detect both,
+`isIngestibleSourceKind` gates submit. Podcast resolution (`packages/ingestion/src/fetch/podcast.ts`)
+uses Pocket Casts' public oEmbed endpoint (not scraping) to get the show name/website, then reads
+the show site's RSS `rel=alternate` link tag to resolve the feed (Podcast Index API is a fallback,
+needs `PODCASTINDEX_API_KEY`/`SECRET`), then fuzzy-matches the episode by title/date/duration.
+Transcript text prefers RSS `<podcast:transcript>`, else falls back to local **mlx-whisper**
+transcription (`packages/ingestion/src/transcribe/mlx-whisper.ts` — Apple Silicon-native, needs
+`mlx-whisper` + `ffmpeg` on the Mac Studio's PATH, not this dev machine). `ingest-podcast` skill/
+route/MCP tool mirror `ingest-youtube`'s shape exactly; run retry and stale-timeout/monitor-display
+dispatch generically on `skill_id` now (previously hardcoded to youtube only). Plan/status:
+`docs/todo/TODO_PODCAST_INGEST.md`.
+
 Two-phase split — transcript always saved first, extraction is best-effort:
 
-1. `runIngestionPipeline` — fetches YouTube, parses/cleans transcript, saves `TranscriptNode` + `SourceNode`. No LLM call.
+1. `runIngestionPipeline` — fetches YouTube or podcast source, parses/cleans transcript, saves `TranscriptNode` + `SourceNode`. No LLM call.
 2. `extractKnowledgeFromTranscript(id, path, plainText)` — runs `llmExtractWithTrace`, updates transcript `summary`, writes `extracted_idea_ids`, creates `IdeaNode`s with `related: [transcriptId]`. Returns `{ ideaIds, ideas: [{id, title}] }`.
 
 The ingest UI fires these as two sequential API calls so the user sees phase-by-phase feedback.
