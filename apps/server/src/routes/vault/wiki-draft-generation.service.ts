@@ -259,6 +259,8 @@ export async function executeTranscriptWikiCompile(
     });
   }
 
+  const compileTargets: Array<(typeof discovery.result.proposals)[number]> = [];
+
   for (const proposal of discovery.result.proposals) {
     if (proposal.operation === 'needs-review') {
       branches.push({
@@ -292,79 +294,91 @@ export async function executeTranscriptWikiCompile(
       continue;
     }
 
-    const canonicalIdeaIds = [
-      ...new Set([...proposal.primary_canonical_idea_ids, ...proposal.supporting_canonical_idea_ids]),
-    ];
+    compileTargets.push(proposal);
+  }
 
-    try {
-      await appendRunEvent(parentRunId, {
-        level: 'info',
-        message: `Compiling proposal ${proposal.topic_key} (${proposal.operation}).`,
-      });
-      const one = await compileOneProposal({
-        transcriptId: input.transcriptId,
-        parentRunId,
-        discoveryBatchId: discovery.result.discovery_batch_id,
-        proposal: {
-          id: proposal.id,
-          discovery_batch_id: proposal.discovery_batch_id,
-          topic_key: proposal.topic_key,
-          title: proposal.title,
-          rationale: proposal.rationale,
-          primary_canonical_idea_ids: proposal.primary_canonical_idea_ids,
-          supporting_canonical_idea_ids: proposal.supporting_canonical_idea_ids,
-          domains: proposal.domains,
-          tags: proposal.tags,
-          operation: proposal.operation,
-          existing_wiki_id: proposal.existing_wiki_id,
-          coherence_score: proposal.coherence_score,
-          warnings: proposal.warnings,
-        },
-        canonicalIdeaIds,
-        primaryCanonicalIdeaIds: proposal.primary_canonical_idea_ids,
-        supportingCanonicalIdeaIds: proposal.supporting_canonical_idea_ids,
-        suggestedTitle: proposal.title,
-        suggestedTopicKey: proposal.topic_key,
-        targetWikiId: proposal.existing_wiki_id,
-        forceUpdate: proposal.operation === 'update',
-      });
+  // Per-topic wiki compilation is the expensive step (one LLM call each); run them
+  // concurrently so N topics take ~1 call's worth of wall time instead of N calls' worth.
+  await appendRunEvent(parentRunId, {
+    level: 'info',
+    message: `Compiling ${compileTargets.length} wiki proposal(s) concurrently.`,
+  });
 
-      if (one.record.status === 'failed' || !one.result?.draftId) {
-        branches.push({
-          kind: 'failed',
-          proposalId: proposal.id,
-          reason: one.record.error ?? 'Wiki compilation failed.',
-          runId: one.record.runNodeId,
+  const compileResults = await Promise.all(
+    compileTargets.map(async (proposal) => {
+      const canonicalIdeaIds = [
+        ...new Set([...proposal.primary_canonical_idea_ids, ...proposal.supporting_canonical_idea_ids]),
+      ];
+
+      try {
+        const one = await compileOneProposal({
+          transcriptId: input.transcriptId,
+          parentRunId,
+          discoveryBatchId: discovery.result.discovery_batch_id,
+          proposal: {
+            id: proposal.id,
+            discovery_batch_id: proposal.discovery_batch_id,
+            topic_key: proposal.topic_key,
+            title: proposal.title,
+            rationale: proposal.rationale,
+            primary_canonical_idea_ids: proposal.primary_canonical_idea_ids,
+            supporting_canonical_idea_ids: proposal.supporting_canonical_idea_ids,
+            domains: proposal.domains,
+            tags: proposal.tags,
+            operation: proposal.operation,
+            existing_wiki_id: proposal.existing_wiki_id,
+            coherence_score: proposal.coherence_score,
+            warnings: proposal.warnings,
+          },
+          canonicalIdeaIds,
+          primaryCanonicalIdeaIds: proposal.primary_canonical_idea_ids,
+          supportingCanonicalIdeaIds: proposal.supporting_canonical_idea_ids,
+          suggestedTitle: proposal.title,
+          suggestedTopicKey: proposal.topic_key,
+          targetWikiId: proposal.existing_wiki_id,
+          forceUpdate: proposal.operation === 'update',
         });
-        await appendRunEvent(parentRunId, {
-          level: 'warning',
-          message: `Proposal ${proposal.topic_key} failed: ${one.record.error ?? 'unknown error'}`,
-        });
-        continue;
+        return { proposal, one, error: undefined };
+      } catch (error) {
+        return { proposal, one: undefined, error: error instanceof Error ? error.message : String(error) };
       }
+    }),
+  );
 
-      compiled.push(one);
-      branches.push({
-        kind: 'compiled',
-        proposalId: proposal.id,
-        draftId: one.result.draftId,
-        runId: one.record.runNodeId,
-        coherenceFailed: one.result.coherenceFailed,
-        warnings: one.result.warnings,
+  for (const { proposal, one, error } of compileResults) {
+    if (error !== undefined) {
+      branches.push({ kind: 'failed', proposalId: proposal.id, reason: error });
+      await appendRunEvent(parentRunId, {
+        level: 'warning',
+        message: `Proposal ${proposal.topic_key} failed: ${error}`,
       });
-      await appendProducedNodeIds(parentRunId, [one.result.draftId]);
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error);
+      continue;
+    }
+
+    if (!one || one.record.status === 'failed' || !one.result?.draftId) {
       branches.push({
         kind: 'failed',
         proposalId: proposal.id,
-        reason,
+        reason: one?.record.error ?? 'Wiki compilation failed.',
+        runId: one?.record.runNodeId,
       });
       await appendRunEvent(parentRunId, {
         level: 'warning',
-        message: `Proposal ${proposal.topic_key} failed: ${reason}`,
+        message: `Proposal ${proposal.topic_key} failed: ${one?.record.error ?? 'unknown error'}`,
       });
+      continue;
     }
+
+    compiled.push(one);
+    branches.push({
+      kind: 'compiled',
+      proposalId: proposal.id,
+      draftId: one.result.draftId,
+      runId: one.record.runNodeId,
+      coherenceFailed: one.result.coherenceFailed,
+      warnings: one.result.warnings,
+    });
+    await appendProducedNodeIds(parentRunId, [one.result.draftId]);
   }
 
   const hasSuccess = compiled.length > 0 || branches.some((branch) => branch.kind === 'no-op');
