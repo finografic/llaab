@@ -133,9 +133,7 @@ export function IngestPage() {
       }
     >
       <div className="ingest-page">
-        <div className="card ingest-page__card">
-          <IngestForm />
-        </div>
+        <IngestForm />
 
         {enrichIssueList.length > 0 ? (
           <div className="ingest-page__enrich-alerts">

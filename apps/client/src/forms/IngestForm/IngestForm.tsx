@@ -636,7 +636,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="ingest-dropzone__eyebrow">Drop anywhere in this card</div>
       <div className="ingest-dropzone__title">
         Drop a browser URL or page link to populate the source field
       </div>
