@@ -1,7 +1,7 @@
-# TODO — TypeScript 7 Upgrade
+# DONE — TypeScript 7 Upgrade
 
-> **Status:** Phase 1–4 complete (2026-07-22). TypeScript bumped to 7.0.2; typecheck passes clean
-> workspace-wide. Test/lint/build validation and completion report still pending.
+> **Completed:** 2026-07-22 — TypeScript upgraded 6.0.3 → 7.0.2 workspace-wide; one real
+> compatibility break found and fixed at the root cause (see completion report below).
 
 ## Objectives
 
@@ -76,9 +76,46 @@
       `dist` output is now guaranteed fresh before any dependent package typechecks.
       No `any`, `@ts-ignore`, `skipLibCheck`, or strictness relaxations were used — every fix was
       either a genuine missing type export or an explicit annotation the compiler asked for.
-- [x] Phase 6 — Re-ran full validation suite; `pnpm typecheck` clean 16/16.
-- [ ] Phase 7 — Write completion report (see template below) and graduate this file to
-      `DONE_TS7_UPGRADE.md`.
+- [x] Phase 6 — Re-ran full validation suite on TypeScript 7.0.2: `pnpm lint` identical to
+      baseline (same 6 pre-existing warnings, exit 0); `pnpm build` 8/8 pass; `pnpm test`
+      identical to baseline (235/239, same 4 pre-existing failures, same assertions/line numbers —
+      no TS7-induced regressions).
+- [x] Phase 7 — Completion report below; graduating to `DONE_TS7_UPGRADE.md`.
+
+---
+
+## Completion report
+
+1. **Version:** `typescript@6.0.3` → `typescript@7.0.2` (latest stable on npm as of 2026-07-22).
+2. **Files changed:**
+   - `package.json`, `pnpm-workspace.yaml`, `packages/ui/package.json` — version bump (3 declaration
+     sites, all found during baseline orientation).
+   - `pnpm-lock.yaml` — regenerated via `pnpm install`.
+   - `packages/llm/src/cloud-model-catalog.ts` — added explicit `RemoteModelDetail` interface +
+     return type on `cloudCatalogModelToRemoteDetail()`.
+   - `packages/llm/src/index.ts` — re-exported `CloudModelProvider` and the new `RemoteModelDetail`.
+   - `apps/server/src/routes/llm/llm.routes.ts` — explicit `RemoteModelDetail[]` annotation on
+     `remoteModelDetails`.
+   - `turbo.json` — `typecheck` task now `dependsOn: ["^build", "^typecheck"]` (was `["^typecheck"]`).
+   - `packages/llm/dist/**` — rebuilt (was stale from 2026-07-13).
+3. **Compatibility issues found:** one — TS7's new `TS2883` portability diagnostic, triggered by an
+   inferred type (`CloudModelProvider`) not reachable through `@llaab/llm`'s declared public exports,
+   surfacing through Hono's route-chain type inference in `apps/server`. Investigating the fix
+   uncovered a second, previously-latent issue: TS7 resolves cross-package types through a composite
+   package's built `dist` declarations rather than its `paths`-mapped source, even with no explicit
+   project reference — meaning any composite package's stale `dist` can silently hide type changes.
+   This had never surfaced under TS6 because no existing code imported a _type_ (only _values_, which
+   resolve via source regardless) from `@llaab/llm` into `apps/server`.
+4. **Code/config changes:** all additive — a missing type re-export, an explicit return-type
+   annotation, an explicit local-variable annotation, and a build-graph correctness fix
+   (`turbo.json`). No casts, `any`, `@ts-ignore`, `skipLibCheck`, or strictness relaxation.
+5. **Results (TypeScript 7.0.2):** typecheck 16/16 ✅ · lint ✅ (6 pre-existing warnings, unchanged)
+   · build 8/8 ✅ · test 235/239 (4 pre-existing failures, unchanged from baseline — see baseline
+   table above for detail).
+6. **TS6 compiler-API dependency:** none. No package in this repo uses `ts-morph`, `createProgram`,
+   `createSourceFile`, or imports the `typescript` package programmatically — confirmed both before
+   and after the upgrade. The `@typescript/typescript6` side-by-side fallback was not needed.
+7. **`better-sqlite3`:** not used anywhere in this repository — N/A, no smoke test applicable.
 
 ---
 
