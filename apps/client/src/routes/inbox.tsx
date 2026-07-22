@@ -215,6 +215,18 @@ export function InboxPage() {
     }
   };
 
+  const unmarkReviewed = async (capture: ParsedInboxCapture) => {
+    try {
+      await batchUpdate.mutateAsync({
+        ids: [capture.node.id],
+        tags: withInboxReviewState(capture.node.tags, 'new'),
+      });
+      toast.success('Marked unreviewed — back in Needs attention.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update capture.');
+    }
+  };
+
   const archiveReviewed = async () => {
     try {
       // Batch endpoint applies one tags array to all ids; archive reviewed items one-by-one
@@ -426,6 +438,7 @@ export function InboxPage() {
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onMarkReviewed={(capture) => void markReviewed(capture)}
+              onUnmarkReviewed={(capture) => void unmarkReviewed(capture)}
               brokenIds={brokenIds}
               onThumbnailBroken={handleThumbnailBroken}
             />

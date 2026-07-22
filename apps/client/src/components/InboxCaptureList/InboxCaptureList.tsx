@@ -42,6 +42,7 @@ export interface InboxCaptureListProps {
   selectedIds?: ReadonlySet<string>;
   onToggleSelect?: (id: string, selected: boolean) => void;
   onMarkReviewed?: (capture: ParsedInboxCapture) => void;
+  onUnmarkReviewed?: (capture: ParsedInboxCapture) => void;
   brokenIds?: ReadonlySet<string>;
   onThumbnailBroken?: (id: string) => void;
 }
@@ -56,6 +57,7 @@ export function InboxCaptureList({
   selectedIds,
   onToggleSelect,
   onMarkReviewed,
+  onUnmarkReviewed,
   brokenIds,
   onThumbnailBroken,
 }: InboxCaptureListProps) {
@@ -100,6 +102,7 @@ export function InboxCaptureList({
               onToggleSelect ? (checked) => onToggleSelect(capture.node.id, checked === true) : undefined
             }
             onMarkReviewed={onMarkReviewed}
+            onUnmarkReviewed={onUnmarkReviewed}
             broken={brokenIds?.has(capture.node.id) ?? false}
             onThumbnailBroken={onThumbnailBroken}
           />
@@ -116,6 +119,7 @@ function DefaultInboxCaptureListRow({
   checked,
   onCheckedChange,
   onMarkReviewed,
+  onUnmarkReviewed,
   broken,
   onThumbnailBroken,
 }: {
@@ -125,6 +129,7 @@ function DefaultInboxCaptureListRow({
   checked: boolean;
   onCheckedChange?: (checked: boolean | 'indeterminate') => void;
   onMarkReviewed?: (capture: ParsedInboxCapture) => void;
+  onUnmarkReviewed?: (capture: ParsedInboxCapture) => void;
   broken: boolean;
   onThumbnailBroken?: (id: string) => void;
 }) {
@@ -184,9 +189,10 @@ function DefaultInboxCaptureListRow({
               size="icon-sm"
               variant="ghost"
               className={styles.reviewActionDone}
-              title="Reviewed"
-              aria-label="Reviewed"
-              disabled
+              title="Reviewed — click to mark unreviewed"
+              aria-label="Reviewed; mark unreviewed"
+              disabled={reviewPending || !onUnmarkReviewed}
+              onClick={() => onUnmarkReviewed?.(capture)}
             >
               <BookmarkCheckIcon aria-hidden />
             </Button>

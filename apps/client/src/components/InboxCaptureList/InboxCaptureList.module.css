@@ -264,6 +264,7 @@
 
 .stateMeta {
   display: block;
+  padding-left: 2.5rem;
 }
 
 .reviewBadge {
@@ -340,17 +341,29 @@
 }
 
 .reviewActionPending {
-  color: var(--info-text);
+  color: var(--accent);
 }
 
 .reviewActionPending:hover,
 .reviewActionPending:focus-visible {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.reviewActionDone {
+  color: var(--info-text);
+}
+
+.reviewActionDone:hover,
+.reviewActionDone:focus-visible {
   background: var(--info-bg);
   color: var(--info-text);
 }
 
-.reviewActionDone {
-  color: var(--muted-foreground);
+/* BookmarkCheckIcon's glyph reads visually smaller than BookmarkIcon at the same
+   width/height — nudge it up a touch so the two feel like a matched pair. */
+.reviewActionDone svg {
+  transform: scale(1.12);
 }
 
 .copyAction {
