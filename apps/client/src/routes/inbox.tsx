@@ -20,6 +20,7 @@ import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import {
   Clock3Icon,
+  FileExclamationPointIcon,
   FileQuestionIcon,
   InfoIcon,
   PaperclipIcon,
@@ -65,6 +66,8 @@ export function InboxPage() {
   const [confirmBatchArchive, setConfirmBatchArchive] = useState(false);
   const [confirmBatchDelete, setConfirmBatchDelete] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [brokenIds, setBrokenIds] = useState<Set<string>>(() => new Set());
+  const [missingOnly, setMissingOnly] = useState(false);
   const filters = useMemo(() => parseInboxFiltersFromSearchParams(searchParams), [searchParams]);
   const batchUpdate = useBatchUpdateVaultNodes();
   const batchDelete = useDeleteVaultNodes();
@@ -92,10 +95,18 @@ export function InboxPage() {
 
   const allCaptures = useMemo(() => nodes.filter(isInboxCaptureNode).map(parseInboxCapture), [nodes]);
   const filteredCaptures = useMemo(() => filterInboxCaptures(allCaptures, filters), [allCaptures, filters]);
-  const groups = useMemo(
-    () => groupInboxCaptures(filteredCaptures, filters.groupBy),
-    [filteredCaptures, filters.groupBy],
+  const visibleCaptures = useMemo(
+    () =>
+      missingOnly ? filteredCaptures.filter((capture) => brokenIds.has(capture.node.id)) : filteredCaptures,
+    [filteredCaptures, missingOnly, brokenIds],
   );
+  const groups = useMemo(
+    () => groupInboxCaptures(visibleCaptures, filters.groupBy),
+    [visibleCaptures, filters.groupBy],
+  );
+  const handleThumbnailBroken = (id: string) => {
+    setBrokenIds((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+  };
   const viewCounts = useMemo(
     () =>
       Object.fromEntries(
@@ -133,16 +144,16 @@ export function InboxPage() {
   );
   const deletableVisible = useMemo(
     () =>
-      filteredCaptures.filter((capture) => capture.node.type === 'idea' || capture.node.type === 'resource'),
-    [filteredCaptures],
+      visibleCaptures.filter((capture) => capture.node.type === 'idea' || capture.node.type === 'resource'),
+    [visibleCaptures],
   );
   const selectedVisibleCount = deletableVisible.filter((capture) => selectedIds.has(capture.node.id)).length;
   const allVisibleSelected = deletableVisible.length > 0 && selectedVisibleCount === deletableVisible.length;
   const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
 
   const filteredIdKey = useMemo(
-    () => filteredCaptures.map((capture) => capture.node.id).join('\0'),
-    [filteredCaptures],
+    () => visibleCaptures.map((capture) => capture.node.id).join('\0'),
+    [visibleCaptures],
   );
 
   useEffect(() => {
@@ -259,8 +270,8 @@ export function InboxPage() {
           description="Captures from Telegram and other Hermes inbox drops."
           meta={
             <>
-              {filteredCaptures.length} shown
-              {filteredCaptures.length !== allCaptures.length ? ` · ${allCaptures.length} total` : null}
+              {visibleCaptures.length} shown
+              {visibleCaptures.length !== allCaptures.length ? ` · ${allCaptures.length} total` : null}
             </>
           }
           right={
@@ -343,6 +354,16 @@ export function InboxPage() {
               onClick={() => applySummaryView('attachments')}
             />
           </Col>
+          <Col xs={6} md={4} xl={2}>
+            <SummaryMetric
+              icon={FileExclamationPointIcon}
+              value={brokenIds.size}
+              label="Missing"
+              tone="danger"
+              active={missingOnly}
+              onClick={() => setMissingOnly((prev) => !prev)}
+            />
+          </Col>
         </Row>
 
         {deletableVisible.length > 0 ? (
@@ -405,6 +426,8 @@ export function InboxPage() {
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onMarkReviewed={(capture) => void markReviewed(capture)}
+              brokenIds={brokenIds}
+              onThumbnailBroken={handleThumbnailBroken}
             />
           );
 
@@ -495,7 +518,7 @@ function SummaryMetric({
   value: number;
   label: string;
   active?: boolean;
-  tone?: 'default' | 'warning';
+  tone?: 'default' | 'warning' | 'danger';
   onClick?: () => void;
 }) {
   return (

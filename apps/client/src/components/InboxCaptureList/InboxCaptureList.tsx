@@ -4,10 +4,12 @@ import { Button } from 'components/ui/button';
 import { Checkbox } from 'components/ui/checkbox';
 import { Col, Row } from 'components/ui/grid';
 import {
+  BookmarkCheckIcon,
+  BookmarkIcon,
   ClipboardIcon,
-  EyeIcon,
   ExternalLinkIcon,
   FileCode2Icon,
+  FileExclamationPointIcon,
   FileIcon,
   FileTextIcon,
   ImageIcon,
@@ -22,10 +24,10 @@ import { toast } from 'sonner';
 import type { LucideIcon } from 'lucide-react';
 
 import { getInboxListRowRenderer } from 'lib/inbox-capture-renderers';
-import { routeKindLabel } from 'lib/inbox-capture.utils';
 import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
+import { routeKindLabel } from 'lib/inbox-capture.utils';
 import { getInboxReviewState } from 'lib/inbox-review.utils';
-import { formatDetailDate } from 'utils/format-date.utils';
+import { formatCompactDateTime } from 'utils/format-date.utils';
 
 import { getInboxCaptureListPresentation } from './inbox-capture-list.utils';
 import styles from './InboxCaptureList.module.css';
@@ -40,6 +42,8 @@ export interface InboxCaptureListProps {
   selectedIds?: ReadonlySet<string>;
   onToggleSelect?: (id: string, selected: boolean) => void;
   onMarkReviewed?: (capture: ParsedInboxCapture) => void;
+  brokenIds?: ReadonlySet<string>;
+  onThumbnailBroken?: (id: string) => void;
 }
 
 export function InboxCaptureList({
@@ -52,6 +56,8 @@ export function InboxCaptureList({
   selectedIds,
   onToggleSelect,
   onMarkReviewed,
+  brokenIds,
+  onThumbnailBroken,
 }: InboxCaptureListProps) {
   if (loading) {
     return <p className={styles.state}>Loading inbox captures…</p>;
@@ -94,6 +100,8 @@ export function InboxCaptureList({
               onToggleSelect ? (checked) => onToggleSelect(capture.node.id, checked === true) : undefined
             }
             onMarkReviewed={onMarkReviewed}
+            broken={brokenIds?.has(capture.node.id) ?? false}
+            onThumbnailBroken={onThumbnailBroken}
           />
         );
       })}
@@ -108,6 +116,8 @@ function DefaultInboxCaptureListRow({
   checked,
   onCheckedChange,
   onMarkReviewed,
+  broken,
+  onThumbnailBroken,
 }: {
   capture: ParsedInboxCapture;
   selected?: boolean;
@@ -115,6 +125,8 @@ function DefaultInboxCaptureListRow({
   checked: boolean;
   onCheckedChange?: (checked: boolean | 'indeterminate') => void;
   onMarkReviewed?: (capture: ParsedInboxCapture) => void;
+  broken: boolean;
+  onThumbnailBroken?: (id: string) => void;
 }) {
   const { node, routeKind, platform, receivedAt, malformed } = capture;
   const reviewState = getInboxReviewState(node);
@@ -152,11 +164,47 @@ function DefaultInboxCaptureListRow({
           </Col>
         ) : null}
 
-        <Col xs={12} lg={onCheckedChange ? 5 : 6} className={styles.primaryCol}>
+        <Col xs="content" className={styles.reviewCol}>
+          {reviewState === 'new' || reviewState === 'failed' ? (
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              className={styles.reviewActionPending}
+              title="Mark reviewed — keeps this capture in Vault and removes it from Needs attention"
+              aria-label="Mark reviewed; keep in Vault and remove from Needs attention"
+              disabled={reviewPending || !onMarkReviewed}
+              onClick={() => onMarkReviewed?.(capture)}
+            >
+              <BookmarkIcon aria-hidden />
+            </Button>
+          ) : reviewState === 'reviewed' ? (
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              className={styles.reviewActionDone}
+              title="Reviewed"
+              aria-label="Reviewed"
+              disabled
+            >
+              <BookmarkCheckIcon aria-hidden />
+            </Button>
+          ) : null}
+        </Col>
+
+        <Col xs={12} lg={5} className={styles.primaryCol}>
           <Link to={`/vault/inbox/${node.id}`} className={styles.primaryLink}>
-            <span className={styles.visual} aria-hidden>
-              {presentation.imageUrl ? (
-                <img src={presentation.imageUrl} alt="" className={styles.thumbnail} loading="lazy" />
+            <span className={styles.visual} aria-hidden data-broken={broken || undefined}>
+              {presentation.imageUrl && !broken ? (
+                <img
+                  src={presentation.imageUrl}
+                  alt=""
+                  className={styles.thumbnail}
+                  onError={() => onThumbnailBroken?.(node.id)}
+                />
+              ) : broken ? (
+                <FileExclamationPointIcon />
               ) : (
                 <RouteIcon />
               )}
@@ -182,6 +230,11 @@ function DefaultInboxCaptureListRow({
             <Badge variant="secondary" className={styles.kindBadge}>
               {routeKindLabel(routeKind)}
             </Badge>
+            {broken ? (
+              <Badge variant="outline" className={styles.missingBadge}>
+                Missing
+              </Badge>
+            ) : null}
             {presentation.language ? <Badge variant="outline">{presentation.language}</Badge> : null}
             {displayTags.map((tag) => (
               <Badge key={tag} variant="outline" className={styles.captureTag} data-tag={tag}>
@@ -202,12 +255,12 @@ function DefaultInboxCaptureListRow({
               </Badge>
             </div>
             <time className={styles.date} dateTime={receivedAt}>
-              {formatDetailDate(receivedAt)}
+              {formatCompactDateTime(receivedAt)}
             </time>
           </div>
         </Col>
 
-        <Col xs={12} sm={4} lg={2} className={styles.actionsCol}>
+        <Col xs={12} sm={4} lg={1} className={styles.actionsCol}>
           <div className={styles.actions}>
             {presentation.sourceUrl ? (
               <Button asChild type="button" size="icon-sm" variant="ghost" title="Open source">
@@ -221,26 +274,12 @@ function DefaultInboxCaptureListRow({
                 type="button"
                 size="icon-sm"
                 variant="ghost"
+                className={styles.copyAction}
                 title={presentation.isCommand ? 'Copy command reference' : 'Copy capture'}
                 aria-label={presentation.isCommand ? 'Copy command reference' : 'Copy capture'}
                 onClick={() => void copyCapture()}
               >
                 <ClipboardIcon aria-hidden />
-              </Button>
-            ) : null}
-            {reviewState === 'new' && onMarkReviewed ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className={styles.reviewAction}
-                title="Mark reviewed — keeps this capture in Vault and removes it from Needs attention"
-                aria-label="Mark reviewed; keep in Vault and remove from Needs attention"
-                disabled={reviewPending}
-                onClick={() => onMarkReviewed(capture)}
-              >
-                <EyeIcon aria-hidden />
-                Mark reviewed
               </Button>
             ) : null}
             {node.type === 'idea' || node.type === 'resource' ? (

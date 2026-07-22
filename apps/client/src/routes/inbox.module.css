@@ -32,8 +32,8 @@
 }
 
 .selectionBar {
-  margin-bottom: var(--space-3);
   padding: var(--space-2) 0;
+  height: 2rem;
 }
 
 .selectionLabel {
@@ -66,6 +66,10 @@
 
 .summaryCard[data-tone='warning'] > svg {
   color: var(--warning-text, var(--muted-foreground));
+}
+
+.summaryCard[data-tone='danger'] > svg {
+  color: var(--error-text, var(--destructive));
 }
 
 .summaryCard > svg {

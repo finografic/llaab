@@ -458,5 +458,21 @@
   {
     "exportName": "BookMarked",
     "lucideName": "book-marked"
+  },
+  {
+    "exportName": "BookmarkCheck",
+    "lucideName": "bookmark-check"
+  },
+  {
+    "exportName": "BookmarkMinus",
+    "lucideName": "bookmark-minus"
+  },
+  {
+    "exportName": "Bookmark",
+    "lucideName": "bookmark"
+  },
+  {
+    "exportName": "FileExclamationPoint",
+    "lucideName": "file-exclamation-point"
   }
 ]

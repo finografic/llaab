@@ -10,6 +10,18 @@ export function formatDetailDate(ts?: string): string {
   });
 }
 
+/** `dd-mm-yyyy hh:mm` for compact list rows (inbox, etc). */
+export function formatCompactDateTime(ts?: string): string {
+  if (!ts) return '—';
+  const date = new Date(ts);
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${dd}-${mm}-${yyyy} ${hh}:${min}`;
+}
+
 /** Date-only (no time) for registry detail sidebars. */
 export function formatDetailDateOnly(ts?: string): string {
   if (!ts) return '—';

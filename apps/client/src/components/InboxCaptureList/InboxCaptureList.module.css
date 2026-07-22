@@ -2,14 +2,19 @@
   display: block;
 }
 
+/* Type color-coding is a solid-stop gradient layered on the row's own background — it
+   clips to the row's normal (small) corner radius exactly like the surface fill already
+   does, instead of following the exaggerated curve a box-shadow/inset would draw. Each
+   background state below carries the stripe as its first layer so it survives hover,
+   checked, and selected states; --row-accent-color is set per data-route-kind further
+   down and defaults to transparent (no stripe). */
 .row {
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--surface);
-  transition:
-    border-color 120ms ease,
-    background-color 120ms ease;
+  background:
+    linear-gradient(var(--row-accent-color, transparent) 0 0) left / 5px 100% no-repeat,
+    var(--surface);
 }
 
 .row + .row {
@@ -18,7 +23,9 @@
 
 .row:hover {
   border-color: var(--border-strong, var(--border));
-  background: color-mix(in oklab, var(--surface) 88%, var(--muted) 12%);
+  background:
+    linear-gradient(var(--row-accent-color, transparent) 0 0) left / 5px 100% no-repeat,
+    color-mix(in oklab, var(--surface) 88%, var(--muted) 12%);
 }
 
 .rowSelected {
@@ -27,22 +34,59 @@
 
 .rowChecked {
   border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
-  background: color-mix(in oklab, var(--accent) 6%, var(--surface));
+  background:
+    linear-gradient(var(--row-accent-color, transparent) 0 0) left / 5px 100% no-repeat,
+    color-mix(in oklab, var(--accent) 6%, var(--surface));
+}
+
+.row[data-route-kind="docs_link"],
+.row[data-route-kind="docs_attachment"],
+.row[data-route-kind="post_link"] {
+  --row-accent-color: var(--info-text, var(--accent));
+}
+
+.row[data-route-kind="code_snippet"],
+.row[data-route-kind="code_link"],
+.row[data-route-kind="code_attachment"],
+.row[data-route-kind="command_candidate"] {
+  --row-accent-color: var(--accent);
+}
+
+.row[data-route-kind="image"],
+.row[data-route-kind="attachment"] {
+  --row-accent-color: var(--consolidation-text, var(--accent));
+}
+
+.row[data-route-kind="todo"] {
+  --row-accent-color: var(--warning-text, var(--accent));
 }
 
 .row[data-review-state="failed"],
 .row[data-route-kind="raw"],
 .row[data-route-kind="unknown"] {
-  border-left-color: var(--warning-border, var(--border));
+  --row-accent-color: var(--error-text, var(--destructive));
 }
 
-.selectCol {
+.row[data-route-kind="npm_package"],
+.row[data-route-kind="github_repo"],
+.row[data-route-kind="youtube_url"] {
+  --row-accent-color: var(--consolidation-text, var(--accent));
+}
+
+.selectCol,
+.reviewCol {
   display: flex;
   align-items: center;
-  padding: 0 var(--space-2) 0 0;
+  justify-content: center;
+  width: 2.75rem;
+  padding: 0;
 }
 
-.primaryCol,
+.primaryCol {
+  min-width: 0;
+  padding: 0 calc(var(--space-2) + 2rem) 0 var(--space-3)!important;
+}
+
 .metaCol,
 .actionsCol {
   min-width: 0;
@@ -70,6 +114,7 @@
   border-radius: var(--radius-sm);
   background: color-mix(in oklab, var(--muted) 60%, transparent);
   color: var(--muted-foreground);
+  margin-right: 0.33rem;
 }
 
 .visual svg {
@@ -91,6 +136,12 @@
 
 .row[data-route-kind="todo"] .visual {
   color: var(--warning-text, var(--accent));
+}
+
+.row .visual[data-broken="true"] {
+  border-color: color-mix(in oklab, var(--error-text, var(--destructive)) 40%, var(--border));
+  background: color-mix(in oklab, var(--error-text, var(--destructive)) 12%, transparent);
+  color: var(--error-text, var(--destructive));
 }
 
 .thumbnail {
@@ -288,8 +339,42 @@
   color: var(--consolidation-text);
 }
 
-.reviewAction {
+.reviewActionPending {
   color: var(--info-text);
+}
+
+.reviewActionPending:hover,
+.reviewActionPending:focus-visible {
+  background: var(--info-bg);
+  color: var(--info-text);
+}
+
+.reviewActionDone {
+  color: var(--muted-foreground);
+}
+
+.copyAction {
+  opacity: 0.3;
+}
+
+.copyAction:hover {
+  color: var(--foreground);
+  opacity: 1;
+}
+
+/* Button's base class applies pt-[3px] to optically balance text-label buttons against
+   their line-height baseline. Icon-only buttons have no baseline to compensate for, so
+   that padding reads as the icon sitting off-center — override it for every icon button
+   in this row (review, copy, external link, delete) so they all sit centered alike. */
+.reviewCol [data-slot="button"],
+.actions [data-slot="button"] {
+  padding-top: 0;
+}
+
+.missingBadge {
+  border-color: color-mix(in oklab, var(--error-text, var(--destructive)) 30%, transparent);
+  background: color-mix(in oklab, var(--error-text, var(--destructive)) 10%, var(--secondary));
+  color: var(--error-text, var(--destructive));
 }
 
 .date {
@@ -300,8 +385,13 @@
   line-height: 1.35;
 }
 
+.actionsCol {
+  margin-left: auto;
+}
+
 .actionsCol .actions {
   justify-content: flex-end;
+  flex-wrap: nowrap;
 }
 
 .empty,
