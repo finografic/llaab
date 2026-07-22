@@ -22,12 +22,25 @@ const LONG_RUNNING_PATHS = [
 
 console.log(pc.bold(`@llaab/server`) + pc.gray(` starting on port ${port}…`));
 
-// Any pending/running RunNode on disk after boot is orphaned — handlers live only in-process.
-void reconcileOrphanedActiveRuns().then((count) => {
-  if (count > 0) {
-    console.log(pc.yellow(`Failed ${count} orphaned active run${count === 1 ? '' : 's'} after restart.`));
-  }
+// Without these, an unhandled rejection or stray throw anywhere (e.g. reconcileOrphanedActiveRuns
+// below) takes the whole Bun process down and launchd cold-boots it from scratch.
+process.on('uncaughtException', (error) => {
+  console.error(pc.red('Uncaught exception (server kept alive):'), error);
 });
+process.on('unhandledRejection', (reason) => {
+  console.error(pc.red('Unhandled rejection (server kept alive):'), reason);
+});
+
+// Any pending/running RunNode on disk after boot is orphaned — handlers live only in-process.
+void reconcileOrphanedActiveRuns()
+  .then((count) => {
+    if (count > 0) {
+      console.log(pc.yellow(`Failed ${count} orphaned active run${count === 1 ? '' : 's'} after restart.`));
+    }
+  })
+  .catch((error) => {
+    console.error(pc.red('reconcileOrphanedActiveRuns failed:'), error);
+  });
 
 export default {
   port,
