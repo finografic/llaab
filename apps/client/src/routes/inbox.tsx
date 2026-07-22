@@ -19,7 +19,6 @@ import { Col, Row } from 'components/ui/grid';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import {
-  CircleDotIcon,
   Clock3Icon,
   FileQuestionIcon,
   InfoIcon,
@@ -29,7 +28,7 @@ import {
   ZapIcon,
 } from 'lucide-react';
 import { useBatchUpdateVaultNodes, useDeleteVaultNodes, useVaultNodes } from 'queries/vault';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { LucideIcon } from 'lucide-react';
@@ -55,6 +54,10 @@ import { usePageTitle } from 'lib/use-page-title';
 
 import styles from './inbox.module.css';
 
+/** Stable query tags — avoid reallocating the tags array on every render. */
+const INBOX_QUERY_TAGS: string[] = [...INBOX_LIST_TAGS];
+const INBOX_NODES_STALE_MS = 30_000;
+
 export function InboxPage() {
   usePageTitle('Inbox');
 
@@ -62,49 +65,85 @@ export function InboxPage() {
   const [confirmBatchArchive, setConfirmBatchArchive] = useState(false);
   const [confirmBatchDelete, setConfirmBatchDelete] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
-  const filters = parseInboxFiltersFromSearchParams(searchParams);
+  const filters = useMemo(() => parseInboxFiltersFromSearchParams(searchParams), [searchParams]);
   const batchUpdate = useBatchUpdateVaultNodes();
   const batchDelete = useDeleteVaultNodes();
 
-  const {
-    data: nodes = [],
-    isLoading,
-    isError,
-    error,
-  } = useVaultNodes({
-    tags: [...INBOX_LIST_TAGS],
-    search: filters.search.trim() || undefined,
+  // Scope by node type so listNodes only scans ideas/resources — not the whole vault.
+  // Search stays client-side (filterInboxCaptures); do not put `q` in the query key.
+  const ideasQuery = useVaultNodes({
+    type: 'idea',
+    tags: INBOX_QUERY_TAGS,
+    staleTime: INBOX_NODES_STALE_MS,
+  });
+  const resourcesQuery = useVaultNodes({
+    type: 'resource',
+    tags: INBOX_QUERY_TAGS,
+    staleTime: INBOX_NODES_STALE_MS,
   });
 
-  // Server tag filter is OR; keep only Hermes inbox-tagged captures for this page.
-  const allCaptures = nodes.filter(isInboxCaptureNode).map(parseInboxCapture);
-  const filteredCaptures = filterInboxCaptures(allCaptures, filters);
-  const groups = groupInboxCaptures(filteredCaptures, filters.groupBy);
-  const viewCounts = Object.fromEntries(
-    INBOX_CAPTURE_VIEWS.map(({ value }) => [
-      value,
-      allCaptures.filter((capture) => matchesInboxCaptureView(capture, value)).length,
-    ]),
-  ) as Record<InboxCaptureView, number>;
-  const reviewScopeCounts = {
-    unreviewed: allCaptures.filter((capture) => getInboxReviewState(capture.node) === 'new').length,
-    reviewed: allCaptures.filter((capture) => getInboxReviewState(capture.node) === 'reviewed').length,
-    both: allCaptures.length,
-  } satisfies Record<InboxReviewScope, number>;
-  const statusOptions = [...new Set(allCaptures.map((capture) => capture.node.status))].toSorted();
-  const reviewedVisible = filteredCaptures.filter(
-    (capture) => getInboxReviewState(capture.node) === 'reviewed',
+  const nodes = useMemo(
+    () => [...(ideasQuery.data ?? []), ...(resourcesQuery.data ?? [])],
+    [ideasQuery.data, resourcesQuery.data],
   );
-  const unreviewedCount = reviewScopeCounts.unreviewed;
-  const newTodayCount = allCaptures.filter((capture) => isToday(capture.receivedAt)).length;
-  const deletableVisible = filteredCaptures.filter(
-    (capture) => capture.node.type === 'idea' || capture.node.type === 'resource',
+  const isLoading = ideasQuery.isLoading || resourcesQuery.isLoading;
+  const isError = ideasQuery.isError || resourcesQuery.isError;
+  const error = ideasQuery.error ?? resourcesQuery.error;
+
+  const allCaptures = useMemo(() => nodes.filter(isInboxCaptureNode).map(parseInboxCapture), [nodes]);
+  const filteredCaptures = useMemo(() => filterInboxCaptures(allCaptures, filters), [allCaptures, filters]);
+  const groups = useMemo(
+    () => groupInboxCaptures(filteredCaptures, filters.groupBy),
+    [filteredCaptures, filters.groupBy],
+  );
+  const viewCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        INBOX_CAPTURE_VIEWS.map(({ value }) => [
+          value,
+          allCaptures.filter((capture) => matchesInboxCaptureView(capture, value)).length,
+        ]),
+      ) as Record<InboxCaptureView, number>,
+    [allCaptures],
+  );
+  const reviewScopeCounts = useMemo(
+    () =>
+      ({
+        unreviewed: allCaptures.filter((capture) => getInboxReviewState(capture.node) === 'new').length,
+        reviewed: allCaptures.filter((capture) => getInboxReviewState(capture.node) === 'reviewed').length,
+        both: allCaptures.length,
+      }) satisfies Record<InboxReviewScope, number>,
+    [allCaptures],
+  );
+  const statusOptions = useMemo(
+    () => [...new Set(allCaptures.map((capture) => capture.node.status))].toSorted(),
+    [allCaptures],
+  );
+  const reviewedVisible = useMemo(
+    () => filteredCaptures.filter((capture) => getInboxReviewState(capture.node) === 'reviewed'),
+    [filteredCaptures],
+  );
+  const newTodayCount = useMemo(
+    () => allCaptures.filter((capture) => isToday(capture.receivedAt)).length,
+    [allCaptures],
+  );
+  const needsAttentionCount = useMemo(
+    () => allCaptures.filter(inboxCaptureNeedsAttention).length,
+    [allCaptures],
+  );
+  const deletableVisible = useMemo(
+    () =>
+      filteredCaptures.filter((capture) => capture.node.type === 'idea' || capture.node.type === 'resource'),
+    [filteredCaptures],
   );
   const selectedVisibleCount = deletableVisible.filter((capture) => selectedIds.has(capture.node.id)).length;
   const allVisibleSelected = deletableVisible.length > 0 && selectedVisibleCount === deletableVisible.length;
   const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
 
-  const filteredIdKey = filteredCaptures.map((capture) => capture.node.id).join('\0');
+  const filteredIdKey = useMemo(
+    () => filteredCaptures.map((capture) => capture.node.id).join('\0'),
+    [filteredCaptures],
+  );
 
   useEffect(() => {
     const visibleIds = new Set(filteredIdKey.length > 0 ? filteredIdKey.split('\0') : []);
@@ -269,17 +308,8 @@ export function InboxPage() {
           </Col>
           <Col xs={6} md={4} xl={2}>
             <SummaryMetric
-              icon={CircleDotIcon}
-              value={unreviewedCount}
-              label="Unreviewed"
-              active={filters.reviewState === 'new'}
-              onClick={() => updateFilters({ ...filters, view: 'all', reviewState: 'new' })}
-            />
-          </Col>
-          <Col xs={6} md={4} xl={2}>
-            <SummaryMetric
               icon={TriangleAlertIcon}
-              value={allCaptures.filter(inboxCaptureNeedsAttention).length}
+              value={needsAttentionCount}
               label="Needs attention"
               tone="warning"
               active={filters.view === 'needs_attention'}

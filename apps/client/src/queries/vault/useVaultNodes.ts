@@ -12,6 +12,8 @@ export interface UseVaultNodesOptions {
   status?: NodeStatus;
   limit?: number;
   enabled?: boolean;
+  /** Override the app-default staleTime (0). */
+  staleTime?: number;
 }
 
 async function fetchVaultNodes({
@@ -20,7 +22,7 @@ async function fetchVaultNodes({
   search,
   status,
   limit,
-}: Omit<UseVaultNodesOptions, 'enabled'>): Promise<LabNode[]> {
+}: Omit<UseVaultNodesOptions, 'enabled' | 'staleTime'>): Promise<LabNode[]> {
   // Hono RPC types the query from Zod *output* (tags: string[]), but the wire format
   // must be a comma-separated string — otherwise the client emits `?tags=a&tags=b`
   // and Zod rejects it with 400.
@@ -50,11 +52,13 @@ export function useVaultNodes({
   status,
   limit,
   enabled = true,
+  staleTime,
 }: UseVaultNodesOptions = {}) {
   return useQuery({
     queryKey: QUERY_KEYS.vault.nodes({ type, tags, search, status, limit }),
     queryFn: () => fetchVaultNodes({ type, tags, search, status, limit }),
     enabled,
+    staleTime,
   });
 }
 

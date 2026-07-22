@@ -44,7 +44,7 @@ import type { KnowledgeWikiPage } from '@llaab/schemas';
 
 import { usePageTitle } from 'lib/use-page-title';
 
-import styles from './knowledge-wiki-detail.module.css';
+import styles from './wiki-detail-page.module.css';
 
 interface CreatedWikiLocationState {
   generatedWikis?: KnowledgeWikiPage[];
