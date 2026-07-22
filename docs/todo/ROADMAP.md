@@ -225,6 +225,14 @@ agent loop and command bus: `/agent`, `/execute/skills`, and `/pipeline/extract`
 
 Detail: [`docs/todo/TODO_NAV_UNLOCKED_PAGES.md`](./TODO_NAV_UNLOCKED_PAGES.md#phase-2--execution-pages)
 
+### Podcast / RSS Ingest
+
+Add a second ingestible media type to `/ingest`: Pocket Casts episode share links, resolved to the
+show's RSS feed and matched episode, with local `mlx-whisper` transcription when no RSS transcript
+is published. Reuses the existing `TranscriptNode`/`SourceNode` schema and idea-extraction pipeline.
+
+Detail: [`docs/todo/TODO_PODCAST_INGEST.md`](./TODO_PODCAST_INGEST.md)
+
 ### Extracted SkillNode Creation
 
 The LLM extraction schema already has a `skills` array, but the pipeline currently creates
