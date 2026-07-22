@@ -42,7 +42,7 @@ Dependency chain (one-directional):
 ## Stack
 
 - Runtime: Node.js 24.16.0, pnpm 10.32.1, Bun 1.2.2
-- Build: Turborepo 2.x, TypeScript 5.9.3
+- Build: Turborepo 2.x, TypeScript 7.0.2
 - Validation: Zod 4.x
 - Tests: Vitest 4.x
 - Icons: `@finografic/icons` + `@finografic/lucide-manager` via `@llaab/icons`
@@ -580,6 +580,24 @@ runs `scripts/bump-version.ts`, which bumps every `packages/*` and `apps/*` `pac
 same version in lockstep, re-syncs `pnpm-lock.yaml` (with `--ignore-scripts`, since plain
 `--lockfile-only` was observed to overwrite `apps/client/.vscode/launch.json`'s schema version),
 and auto-commits as `chore: <type> version bump to <version>`.
+
+`apps/client/.persistent/` is still live (client only — not the server); it holds atomically-
+promoted build staging (`builds/<timestamp>` → `current` symlink) so a broken `preview`-mode build
+never goes live. `com.llaab.server` had been silently crash-looping (`launchctl print` showed
+`forks` climbing) because `apps/server/src/index.ts` had no `uncaughtException`/`unhandledRejection`
+handlers — any stray error (e.g. from the fire-and-forget `reconcileOrphanedActiveRuns()` call)
+killed the whole Bun process, which launchd then cold-booted from scratch. Fixed: top-level error
+handlers now log-and-survive, and `start-persistent-server.sh` does `mkdir -p ~/Library/Logs/llaab`
+before launch so crash stderr isn't silently lost when launchd's own `KeepAlive` restart (not an
+explicit `llaab-service.sh` command) is what relaunches the process.
+
+TypeScript 7 resolves cross-package types through a `composite: true` package's **built `dist`
+declarations**, not its `paths`-mapped source — even with no explicit tsconfig `"references"` entry.
+A stale `dist` (package rebuilt less recently than its `src`) can silently hide newly-added
+type-only exports, surfacing as a confusing `TS2305`/`TS2883` on a _consumer_ package that looks
+unrelated. `turbo.json`'s `typecheck` task now `dependsOn: ["^build", "^typecheck"]` (previously
+just `^typecheck`) so this can't recur — see `docs/todo/DONE_TS7_UPGRADE.md` for the full
+investigation.
 
 ## Open Questions
 
