@@ -1,6 +1,6 @@
 .wikiCard {
   padding: var(--space-4);
-  padding-bottom: var(--space-3);
+  padding-bottom: var(--space-5);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -20,11 +20,9 @@
 
 .title {
   display: block;
-  margin-bottom: var(--space-2);
   color: var(--accent);
   font-size: var(--text-lg);
   font-weight: 650;
-  /* text-decoration: underline; */
   text-underline-offset: 3px;
   line-height: 1.35;
 }
@@ -54,10 +52,13 @@
   color: var(--text-faint);
   font-size: var(--text-xs);
   line-height: 1.45;
+  letter-spacing: 0.04em;
+  padding-left: 0.8rem;
 }
 
 .dateLabel {
   font-weight: 600;
+  margin-right: 0.25rem;
 }
 
 .metricsCol {

@@ -42,12 +42,34 @@ export function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
       <Row gutterWidth={12} align="stretch">
         <Col className={styles.contentCol}>
           <Row gutterWidth={16} className={styles.bodyRow}>
+            {/* ====================================================================== */}
+
             <Col xs={12} md={7} className={styles.summaryCol}>
               <Link to={`/knowledge/wikis/${wiki.id}`} className={styles.title}>
                 {wiki.title}
               </Link>
-              <p className={styles.summary}>{wiki.summary}</p>
+            </Col>
+
+            <Col xs={12} md={5} className={styles.metricsSideCol}>
               <p className={styles.dates}>
+                <span className={styles.dateLabel}>updated: </span> {formatWikiListDateTime(wiki.updated_at)}
+                {wiki.reviewed_at ? (
+                  <>
+                    <strong className="mr-20" />
+                    <span className={styles.dateLabel}>reviewed: </span>{' '}
+                    {formatWikiListDateTime(wiki.reviewed_at)}
+                  </>
+                ) : null}
+              </p>
+            </Col>
+
+            {/* ====================================================================== */}
+            <Col xs={12} md={7} className={styles.summaryCol}>
+              {/* <Link to={`/knowledge/wikis/${wiki.id}`} className={styles.title}>
+                {wiki.title}
+              </Link> */}
+              <p className={styles.summary}>{wiki.summary}</p>
+              {/* <p className={styles.dates}>
                 <span className={styles.dateLabel}>Updated</span> {formatWikiListDateTime(wiki.updated_at)}
                 {wiki.reviewed_at ? (
                   <>
@@ -56,7 +78,7 @@ export function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
                     {formatWikiListDateTime(wiki.reviewed_at)}
                   </>
                 ) : null}
-              </p>
+              </p> */}
               {wiki.tags.length > 0 ? (
                 <div className={styles.tagList} aria-label="Wiki topics">
                   {wiki.tags.map((tag) => (
