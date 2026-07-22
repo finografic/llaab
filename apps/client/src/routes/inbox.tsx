@@ -13,6 +13,7 @@ import {
 } from 'components/ui/alert-dialog';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
+import { Checkbox } from 'components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { Col, Row } from 'components/ui/grid';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
@@ -20,15 +21,15 @@ import { PageList } from 'layouts/PageList/PageList';
 import {
   CircleDotIcon,
   Clock3Icon,
-  EyeIcon,
   FileQuestionIcon,
   InfoIcon,
   PaperclipIcon,
+  TrashIcon,
   TriangleAlertIcon,
   ZapIcon,
 } from 'lucide-react';
-import { useBatchUpdateVaultNodes, useVaultNodes } from 'queries/vault';
-import { useState } from 'react';
+import { useBatchUpdateVaultNodes, useDeleteVaultNodes, useVaultNodes } from 'queries/vault';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import type { LucideIcon } from 'lucide-react';
@@ -45,6 +46,7 @@ import {
 import type {
   InboxCaptureFilters as InboxCaptureFiltersState,
   InboxCaptureView,
+  InboxReviewScope,
 } from 'lib/inbox-capture-filters';
 import { INBOX_LIST_TAGS, isInboxCaptureNode, parseInboxCapture } from 'lib/inbox-capture.utils';
 import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
@@ -58,8 +60,11 @@ export function InboxPage() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [confirmBatchArchive, setConfirmBatchArchive] = useState(false);
+  const [confirmBatchDelete, setConfirmBatchDelete] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const filters = parseInboxFiltersFromSearchParams(searchParams);
   const batchUpdate = useBatchUpdateVaultNodes();
+  const batchDelete = useDeleteVaultNodes();
 
   const {
     data: nodes = [],
@@ -81,15 +86,38 @@ export function InboxPage() {
       allCaptures.filter((capture) => matchesInboxCaptureView(capture, value)).length,
     ]),
   ) as Record<InboxCaptureView, number>;
+  const reviewScopeCounts = {
+    unreviewed: allCaptures.filter((capture) => getInboxReviewState(capture.node) === 'new').length,
+    reviewed: allCaptures.filter((capture) => getInboxReviewState(capture.node) === 'reviewed').length,
+    both: allCaptures.length,
+  } satisfies Record<InboxReviewScope, number>;
   const statusOptions = [...new Set(allCaptures.map((capture) => capture.node.status))].toSorted();
   const reviewedVisible = filteredCaptures.filter(
     (capture) => getInboxReviewState(capture.node) === 'reviewed',
   );
-  const unreviewedCount = allCaptures.filter((capture) => getInboxReviewState(capture.node) === 'new').length;
-  const reviewedCount = allCaptures.filter(
-    (capture) => getInboxReviewState(capture.node) === 'reviewed',
-  ).length;
+  const unreviewedCount = reviewScopeCounts.unreviewed;
   const newTodayCount = allCaptures.filter((capture) => isToday(capture.receivedAt)).length;
+  const deletableVisible = filteredCaptures.filter(
+    (capture) => capture.node.type === 'idea' || capture.node.type === 'resource',
+  );
+  const selectedVisibleCount = deletableVisible.filter((capture) => selectedIds.has(capture.node.id)).length;
+  const allVisibleSelected = deletableVisible.length > 0 && selectedVisibleCount === deletableVisible.length;
+  const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
+
+  const filteredIdKey = filteredCaptures.map((capture) => capture.node.id).join('\0');
+
+  useEffect(() => {
+    const visibleIds = new Set(filteredIdKey.length > 0 ? filteredIdKey.split('\0') : []);
+    setSelectedIds((prev) => {
+      let changed = false;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (visibleIds.has(id)) next.add(id);
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [filteredIdKey]);
 
   const updateFilters = (next: InboxCaptureFiltersState) => {
     setSearchParams(inboxFiltersToSearchParams(next), { replace: true });
@@ -105,13 +133,33 @@ export function InboxPage() {
     });
   };
 
+  const toggleSelect = (id: string, selected: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllVisible = (selected: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const capture of deletableVisible) {
+        if (selected) next.add(capture.node.id);
+        else next.delete(capture.node.id);
+      }
+      return next;
+    });
+  };
+
   const markReviewed = async (capture: ParsedInboxCapture) => {
     try {
       await batchUpdate.mutateAsync({
         ids: [capture.node.id],
         tags: withInboxReviewState(capture.node.tags, 'reviewed'),
       });
-      toast.success('Marked reviewed — kept in Vault and available under All or Reviewed.');
+      toast.success('Marked reviewed — kept in Vault and available under Both or Reviewed.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update capture.');
     }
@@ -142,6 +190,27 @@ export function InboxPage() {
     }
   };
 
+  const deleteSelected = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+
+    try {
+      const result = await batchDelete.mutateAsync(ids);
+      const scrubbedCount = result.scrubbedReferences.length;
+      toast.success(
+        scrubbedCount > 0
+          ? `Deleted ${result.deleted.length} capture${result.deleted.length === 1 ? '' : 's'} and cleaned ${scrubbedCount} reference${scrubbedCount === 1 ? '' : 's'}.`
+          : `Deleted ${result.deleted.length} capture${result.deleted.length === 1 ? '' : 's'}.`,
+      );
+      setSelectedIds(new Set());
+      setConfirmBatchDelete(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete captures.');
+    }
+  };
+
+  const busy = batchUpdate.isPending || batchDelete.isPending;
+
   return (
     <PageLayout
       hero={
@@ -161,7 +230,7 @@ export function InboxPage() {
                 type="button"
                 size="sm"
                 variant="outline"
-                disabled={batchUpdate.isPending}
+                disabled={busy}
                 onClick={() => setConfirmBatchArchive(true)}
               >
                 Archive reviewed
@@ -177,38 +246,20 @@ export function InboxPage() {
           filters={filters}
           statusOptions={statusOptions}
           viewCounts={viewCounts}
+          reviewScopeCounts={reviewScopeCounts}
           onChange={updateFilters}
         />
 
         <Row gutterWidth={8} align="center" className={styles.reviewHelp}>
-          <Col xs={12} md={9}>
+          <Col xs={12}>
             <p className={styles.reviewHelpText}>
               <InfoIcon aria-hidden />
               <span>
-                <strong>Reviewing completes Inbox triage only.</strong> The capture stays in Vault and All; it
-                leaves Needs attention. Archiving is a separate state. Neither action promotes it to
+                <strong>Reviewing completes Inbox triage only.</strong> The capture stays in Vault and Both;
+                it leaves Needs attention. Archiving is a separate state. Neither action promotes it to
                 knowledge.
               </span>
             </p>
-          </Col>
-          <Col xs={12} md={3} className={styles.reviewHelpAction}>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() =>
-                updateFilters({
-                  ...filters,
-                  view: 'all',
-                  reviewState: 'reviewed',
-                  attention: 'all',
-                })
-              }
-            >
-              <EyeIcon aria-hidden />
-              View reviewed
-              <Badge variant="outline">{reviewedCount}</Badge>
-            </Button>
           </Col>
         </Row>
 
@@ -264,6 +315,51 @@ export function InboxPage() {
           </Col>
         </Row>
 
+        {deletableVisible.length > 0 ? (
+          <Row gutterWidth={8} align="center" className={styles.selectionBar}>
+            <Col xs="content">
+              <Checkbox
+                checked={allVisibleSelected ? true : someVisibleSelected ? 'indeterminate' : false}
+                aria-label="Select all visible captures"
+                onCheckedChange={(checked) => toggleSelectAllVisible(checked === true)}
+              />
+            </Col>
+            <Col xs="content">
+              <span className={styles.selectionLabel}>
+                {selectedIds.size > 0
+                  ? `${selectedIds.size} selected`
+                  : `Select · ${deletableVisible.length} visible`}
+              </span>
+            </Col>
+            <Col xs="content" className={styles.selectionActions}>
+              {selectedIds.size > 0 ? (
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => setSelectedIds(new Set())}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    disabled={busy}
+                    onClick={() => setConfirmBatchDelete(true)}
+                  >
+                    <TrashIcon aria-hidden />
+                    Delete
+                    <Badge variant="outline">{selectedIds.size}</Badge>
+                  </Button>
+                </>
+              ) : null}
+            </Col>
+          </Row>
+        ) : null}
+
         {groups.map((group) => {
           const list = (
             <InboxCaptureList
@@ -275,7 +371,9 @@ export function InboxPage() {
                   ? 'No Hermes inbox captures yet. Drop a link or note in Telegram to see it here.'
                   : 'No captures match the current filters.'
               }
-              reviewPending={batchUpdate.isPending}
+              reviewPending={busy}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
               onMarkReviewed={(capture) => void markReviewed(capture)}
             />
           );
@@ -313,14 +411,40 @@ export function InboxPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={batchUpdate.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              disabled={batchUpdate.isPending}
+              disabled={busy}
               onClick={() => {
                 void archiveReviewed();
               }}
             >
               Archive reviewed
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmBatchDelete} onOpenChange={setConfirmBatchDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected captures?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Permanently deletes {selectedIds.size} capture{selectedIds.size === 1 ? '' : 's'} from the vault
+              and scrubs inbound related/tag/body references. Promoted resources are kept unless they only
+              exist as dangling links.
+              <span className="text-red-400"> This action cannot be undone.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                void deleteSelected();
+              }}
+            >
+              {batchDelete.isPending ? 'Deleting…' : 'Delete captures'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

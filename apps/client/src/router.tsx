@@ -1,7 +1,7 @@
 import { AppLayout } from 'layouts/AppLayout/AppLayout';
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { appLoginLoader, AppLoginPage, VaultLoginPage, vaultLoginLoader } from 'routes/login';
+import { appLoginLoader, AppLoginPage, vaultLoginLoader, VaultLoginPage } from 'routes/login';
 import { VaultLayout, vaultSessionLoader } from 'routes/vault-layout';
 import type { RouteHandle } from 'layouts/AppLayout/AppLayout';
 import type { ComponentType, ReactElement } from 'react';
@@ -60,10 +60,10 @@ const RegistryRepoPage = lazy(() =>
   import('routes/registry-repo').then((module) => ({ default: module.RegistryRepoPage })),
 );
 const KnowledgeWikisPage = lazy(() =>
-  import('routes/knowledge-wikis').then((module) => ({ default: module.KnowledgeWikisPage })),
+  import('routes/wiki-list-page').then((module) => ({ default: module.KnowledgeWikisPage })),
 );
 const KnowledgeWikiDetailPage = lazy(() =>
-  import('routes/knowledge-wiki-detail').then((module) => ({ default: module.KnowledgeWikiDetailPage })),
+  import('routes/wiki-detail-page').then((module) => ({ default: module.KnowledgeWikiDetailPage })),
 );
 const WikiDraftDetailPage = lazy(() =>
   import('routes/wiki-draft-detail').then((module) => ({ default: module.WikiDraftDetailPage })),

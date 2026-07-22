@@ -25,10 +25,21 @@
   border-color: var(--accent);
 }
 
+.rowChecked {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+  background: color-mix(in oklab, var(--accent) 6%, var(--surface));
+}
+
 .row[data-review-state="failed"],
 .row[data-route-kind="raw"],
 .row[data-route-kind="unknown"] {
   border-left-color: var(--warning-border, var(--border));
+}
+
+.selectCol {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-2) 0 0;
 }
 
 .primaryCol,

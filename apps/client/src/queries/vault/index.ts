@@ -41,6 +41,8 @@ export { useUpdateVaultNode, useBatchUpdateVaultNodes } from './useUpdateVaultNo
 export { usePromoteInboxCapture } from './usePromoteInboxCapture';
 export { useDeleteVaultNode } from './useDeleteVaultNode';
 export type { DeleteVaultNodeResult } from './useDeleteVaultNode';
+export { useDeleteVaultNodes } from './useDeleteVaultNodes';
+export type { DeleteVaultNodesResult } from './useDeleteVaultNodes';
 export { useVaultTree } from './useVaultTree';
 export { useVaultGitStatus } from './useVaultGitStatus';
 export { useVaultGitCommit } from './useVaultGitCommit';

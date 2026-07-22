@@ -1,6 +1,7 @@
 import { DeleteInboxCaptureAction } from 'components/DeleteInboxCaptureAction/DeleteInboxCaptureAction';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
+import { Checkbox } from 'components/ui/checkbox';
 import { Col, Row } from 'components/ui/grid';
 import {
   ClipboardIcon,
@@ -36,6 +37,8 @@ export interface InboxCaptureListProps {
   selectedId?: string;
   emptyMessage?: string;
   reviewPending?: boolean;
+  selectedIds?: ReadonlySet<string>;
+  onToggleSelect?: (id: string, selected: boolean) => void;
   onMarkReviewed?: (capture: ParsedInboxCapture) => void;
 }
 
@@ -46,6 +49,8 @@ export function InboxCaptureList({
   selectedId,
   emptyMessage = 'No inbox captures yet.',
   reviewPending = false,
+  selectedIds,
+  onToggleSelect,
   onMarkReviewed,
 }: InboxCaptureListProps) {
   if (loading) {
@@ -84,6 +89,10 @@ export function InboxCaptureList({
             capture={capture}
             selected={selectedId === capture.node.id}
             reviewPending={reviewPending}
+            checked={selectedIds?.has(capture.node.id) ?? false}
+            onCheckedChange={
+              onToggleSelect ? (checked) => onToggleSelect(capture.node.id, checked === true) : undefined
+            }
             onMarkReviewed={onMarkReviewed}
           />
         );
@@ -96,11 +105,15 @@ function DefaultInboxCaptureListRow({
   capture,
   selected = false,
   reviewPending,
+  checked,
+  onCheckedChange,
   onMarkReviewed,
 }: {
   capture: ParsedInboxCapture;
   selected?: boolean;
   reviewPending: boolean;
+  checked: boolean;
+  onCheckedChange?: (checked: boolean | 'indeterminate') => void;
   onMarkReviewed?: (capture: ParsedInboxCapture) => void;
 }) {
   const { node, routeKind, platform, receivedAt, malformed } = capture;
@@ -108,6 +121,7 @@ function DefaultInboxCaptureListRow({
   const presentation = getInboxCaptureListPresentation(capture);
   const RouteIcon = inboxRouteIcon(routeKind);
   const displayTags = node.tags.filter(isDisplayTag).slice(0, 2);
+  const selectable = Boolean(onCheckedChange) && (node.type === 'idea' || node.type === 'resource');
 
   const copyCapture = async () => {
     if (!presentation.copyText) return;
@@ -121,12 +135,24 @@ function DefaultInboxCaptureListRow({
 
   return (
     <article
-      className={`${styles.row}${selected ? ` ${styles.rowSelected}` : ''}`}
+      className={`${styles.row}${selected ? ` ${styles.rowSelected}` : ''}${checked ? ` ${styles.rowChecked}` : ''}`}
       data-review-state={reviewState}
       data-route-kind={routeKind}
     >
       <Row nogutter align="center">
-        <Col xs={12} lg={6} className={styles.primaryCol}>
+        {onCheckedChange ? (
+          <Col xs="content" className={styles.selectCol}>
+            <Checkbox
+              checked={checked}
+              disabled={!selectable}
+              aria-label={`Select ${node.title || 'capture'}`}
+              onCheckedChange={onCheckedChange}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </Col>
+        ) : null}
+
+        <Col xs={12} lg={onCheckedChange ? 5 : 6} className={styles.primaryCol}>
           <Link to={`/vault/inbox/${node.id}`} className={styles.primaryLink}>
             <span className={styles.visual} aria-hidden>
               {presentation.imageUrl ? (

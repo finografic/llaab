@@ -9,17 +9,25 @@ export const INBOX_ROUTE_KIND_FILTERS = HermesInboxRouteKindSchema.options;
 
 export const INBOX_PLATFORM_FILTERS = HermesInboxPlatformSchema.options;
 
+/** Review states offered in advanced filters. `failed` is legacy-only (never written). */
 export const INBOX_REVIEW_STATE_FILTERS = [
   'new',
   'reviewed',
   'archived',
   'promoted',
+] as const satisfies ReadonlyArray<Exclude<InboxReviewState, 'failed'>>;
+
+/** URL/legacy values still accepted when parsing `?review=`. */
+const INBOX_REVIEW_STATE_PARSE = [
+  ...INBOX_REVIEW_STATE_FILTERS,
   'failed',
 ] as const satisfies readonly InboxReviewState[];
 
 export type InboxGroupBy = 'category' | 'none' | 'route_kind' | 'platform';
 export type InboxSortOrder = 'newest' | 'oldest';
-export type InboxAttentionFilter = 'all' | 'needs_attention' | 'failed';
+export type InboxAttentionFilter = 'all' | 'needs_attention';
+/** Primary triage scope control (not the content-kind "All" saved view). */
+export type InboxReviewScope = 'unreviewed' | 'reviewed' | 'both';
 export type InboxCaptureView =
   | 'all'
   | 'needs_attention'
@@ -30,6 +38,34 @@ export type InboxCaptureView =
   | 'attachments'
   | 'todos'
   | 'raw';
+
+export const INBOX_REVIEW_SCOPES = [
+  { value: 'unreviewed', label: 'Unreviewed' },
+  { value: 'reviewed', label: 'Reviewed' },
+  { value: 'both', label: 'Both' },
+] as const satisfies ReadonlyArray<{ value: InboxReviewScope; label: string }>;
+
+export function reviewStateToScope(reviewState: InboxReviewState | 'all'): InboxReviewScope | '' {
+  if (reviewState === 'new') return 'unreviewed';
+  if (reviewState === 'reviewed') return 'reviewed';
+  if (reviewState === 'all') return 'both';
+  return '';
+}
+
+export function scopeToReviewState(scope: InboxReviewScope): InboxReviewState | 'all' {
+  switch (scope) {
+    case 'unreviewed':
+      return 'new';
+    case 'reviewed':
+      return 'reviewed';
+    case 'both':
+      return 'all';
+    default: {
+      const _exhaustive: never = scope;
+      return _exhaustive;
+    }
+  }
+}
 
 export const INBOX_CAPTURE_VIEWS = [
   { value: 'all', label: 'All' },
@@ -100,7 +136,7 @@ export function parseInboxFiltersFromSearchParams(params: URLSearchParams): Inbo
 
   const routeKindParsed = HermesInboxRouteKindSchema.safeParse(routeKindRaw);
   const platformParsed = HermesInboxPlatformSchema.safeParse(platformRaw);
-  const reviewState = INBOX_REVIEW_STATE_FILTERS.includes(reviewRaw as InboxReviewState)
+  const reviewState = INBOX_REVIEW_STATE_PARSE.includes(reviewRaw as InboxReviewState)
     ? (reviewRaw as InboxReviewState)
     : 'all';
 
@@ -116,7 +152,7 @@ export function parseInboxFiltersFromSearchParams(params: URLSearchParams): Inbo
       groupByRaw === 'none' || groupByRaw === 'route_kind' || groupByRaw === 'platform'
         ? groupByRaw
         : 'category',
-    attention: attentionRaw === 'needs_attention' || attentionRaw === 'failed' ? attentionRaw : 'all',
+    attention: attentionRaw === 'needs_attention' ? attentionRaw : 'all',
   };
 }
 
@@ -149,7 +185,6 @@ export function filterInboxCaptures(
       return false;
     }
     if (filters.attention === 'needs_attention' && !inboxCaptureNeedsAttention(capture)) return false;
-    if (filters.attention === 'failed' && getInboxReviewState(capture.node) !== 'failed') return false;
     if (query && !matchesSearch(capture, query)) return false;
     return true;
   });
@@ -244,6 +279,7 @@ export function inboxCaptureNeedsAttention(capture: ParsedInboxCapture): boolean
   if (reviewState === 'archived' || reviewState === 'promoted' || reviewState === 'reviewed') {
     return false;
   }
+  // `failed` review tags are legacy-only (never written); still treat as attention if present.
   if (reviewState === 'failed' || capture.malformed) return true;
   if (capture.routeKind === 'raw' || capture.routeKind === 'unknown') return true;
   if (capture.node.tags.includes('inbox:raw')) return true;

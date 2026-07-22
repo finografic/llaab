@@ -54,6 +54,22 @@
   padding-left: 2.2rem;
 }
 
+.reviewScopeRow {
+  margin-top: var(--space-3);
+}
+
+.reviewScopeRow .label {
+  margin-bottom: 0;
+}
+
+.reviewScopeGroup {
+  max-width: 100%;
+}
+
+.reviewScopeItem {
+  gap: 0.35rem;
+}
+
 .filterToggle {
   display: flex;
   align-items: center;

@@ -5,6 +5,7 @@ import { Col, Row } from 'components/ui/grid';
 import { Input } from 'components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from 'components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from 'components/ui/toggle-group';
 import { RotateCcwIcon, SearchIcon, SlidersHorizontalIcon } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -13,14 +14,18 @@ import {
   DEFAULT_INBOX_CAPTURE_FILTERS,
   INBOX_CAPTURE_VIEWS,
   INBOX_PLATFORM_FILTERS,
+  INBOX_REVIEW_SCOPES,
   INBOX_REVIEW_STATE_FILTERS,
   INBOX_ROUTE_KIND_FILTERS,
+  reviewStateToScope,
+  scopeToReviewState,
 } from 'lib/inbox-capture-filters';
 import type {
   InboxAttentionFilter,
   InboxCaptureFilters as InboxCaptureFiltersState,
   InboxCaptureView,
   InboxGroupBy,
+  InboxReviewScope,
   InboxSortOrder,
 } from 'lib/inbox-capture-filters';
 import { routeKindLabel } from 'lib/inbox-capture.utils';
@@ -32,6 +37,7 @@ export interface InboxCaptureFiltersProps {
   filters: InboxCaptureFiltersState;
   statusOptions: string[];
   viewCounts: Record<InboxCaptureView, number>;
+  reviewScopeCounts: Record<InboxReviewScope, number>;
   onChange: (next: InboxCaptureFiltersState) => void;
 }
 
@@ -39,10 +45,12 @@ export function InboxCaptureFilters({
   filters,
   statusOptions,
   viewCounts,
+  reviewScopeCounts,
   onChange,
 }: InboxCaptureFiltersProps) {
   const advancedFilterCount = countAdvancedFilters(filters);
   const [advancedOpen, setAdvancedOpen] = useState(advancedFilterCount > 0);
+  const reviewScope = reviewStateToScope(filters.reviewState);
 
   const patch = (partial: Partial<InboxCaptureFiltersState>) => {
     onChange({ ...filters, ...partial });
@@ -50,6 +58,12 @@ export function InboxCaptureFilters({
 
   const changeView = (view: InboxCaptureView) => {
     patch({ view, routeKind: 'all', attention: 'all' });
+  };
+
+  const changeReviewScope = (value: string) => {
+    if (!value) return;
+    if (value !== 'unreviewed' && value !== 'reviewed' && value !== 'both') return;
+    patch({ reviewState: scopeToReviewState(value) });
   };
 
   return (
@@ -93,6 +107,35 @@ export function InboxCaptureFilters({
               ) : null}
             </CollapsibleTrigger>
           </Collapsible>
+        </Col>
+      </Row>
+
+      <Row gutterWidth={8} align="center" className={styles.reviewScopeRow}>
+        <Col xs={12} md="content">
+          <span className={styles.label} id="inbox-review-scope-label">
+            Review
+          </span>
+        </Col>
+        <Col xs={12} md="content">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            spacing={0}
+            value={reviewScope || undefined}
+            onValueChange={changeReviewScope}
+            aria-labelledby="inbox-review-scope-label"
+            className={styles.reviewScopeGroup}
+          >
+            {INBOX_REVIEW_SCOPES.map((scope) => (
+              <ToggleGroupItem key={scope.value} value={scope.value} className={styles.reviewScopeItem}>
+                {scope.label}
+                <Badge variant="outline" className={styles.viewCount}>
+                  {reviewScopeCounts[scope.value]}
+                </Badge>
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         </Col>
       </Row>
 
@@ -157,7 +200,7 @@ export function InboxCaptureFilters({
               </Select>
             </FilterCol>
 
-            <FilterCol label="Review">
+            <FilterCol label="Review state">
               <Select
                 value={filters.reviewState}
                 onValueChange={(value) =>
@@ -221,7 +264,6 @@ export function InboxCaptureFilters({
                 <SelectContent>
                   <SelectItem value="all">All captures</SelectItem>
                   <SelectItem value="needs_attention">Needs attention</SelectItem>
-                  <SelectItem value="failed">Failed only</SelectItem>
                 </SelectContent>
               </Select>
             </FilterCol>
@@ -259,7 +301,10 @@ function countAdvancedFilters(filters: InboxCaptureFiltersState): number {
     filters.routeKind !== 'all',
     filters.platform !== 'all',
     filters.status !== 'all',
-    filters.reviewState !== 'all',
+    // Primary review scope (new/reviewed/all) is outside advanced filters.
+    filters.reviewState === 'archived' ||
+      filters.reviewState === 'promoted' ||
+      filters.reviewState === 'failed',
     filters.sort !== 'newest',
     filters.groupBy !== 'category',
     filters.attention !== 'all',

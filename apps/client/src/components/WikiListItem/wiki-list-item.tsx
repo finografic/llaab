@@ -1,11 +1,7 @@
 import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
-import { KnowledgeWikiFilters } from 'components/KnowledgeWikiFilters/KnowledgeWikiFilters';
-import { PageHero } from 'components/PageHero/PageHero';
 import { Card, CardContent, CardHeader, CardTitle } from 'components/ui/card';
 import { Col, Row } from 'components/ui/grid';
 import { qualityMetricTone, WikiMetricCard } from 'components/WikiMetricCard';
-import { PageLayout } from 'layouts/PageLayout/PageLayout';
-import { PageList } from 'layouts/PageList/PageList';
 import {
   ActivityIcon,
   BookCheckIcon,
@@ -14,21 +10,12 @@ import {
   NetworkIcon,
   SparklesIcon,
 } from 'lucide-react';
-import { useKnowledgeWikis } from 'queries/knowledge';
-import { useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { KnowledgeWikiPage } from '@llaab/schemas';
 
-import {
-  buildKnowledgeWikiFacets,
-  filterKnowledgeWikis,
-  knowledgeWikiFiltersToSearchParams,
-  parseKnowledgeWikiFiltersFromSearchParams,
-  resolveWikiEvidenceMetrics,
-} from 'lib/knowledge-wiki-filters';
-import { usePageTitle } from 'lib/use-page-title';
+import { resolveWikiEvidenceMetrics } from 'lib/knowledge-wiki-filters';
 
-import styles from './knowledge-wikis.module.css';
+import styles from './wiki-list-item.module.css';
 
 function pluralizeMetricLabel(count: number, singular: string, plural = `${singular}s`): string {
   return count === 1 ? singular : plural;
@@ -46,7 +33,7 @@ function formatWikiListDateTime(timestamp: string): string {
   return `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
-function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
+export function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
   const qualityTone = qualityMetricTone(wiki.quality_score);
   const evidenceMetrics = resolveWikiEvidenceMetrics(wiki);
 
@@ -55,7 +42,7 @@ function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
       <Row gutterWidth={12} align="stretch">
         <Col className={styles.contentCol}>
           <Row gutterWidth={16} className={styles.bodyRow}>
-            <Col xs={12} md={6} className={styles.summaryCol}>
+            <Col xs={12} md={7} className={styles.summaryCol}>
               <Link to={`/knowledge/wikis/${wiki.id}`} className={styles.title}>
                 {wiki.title}
               </Link>
@@ -81,7 +68,7 @@ function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
               ) : null}
             </Col>
 
-            <Col xs={12} md={6} className={styles.metricsSideCol}>
+            <Col xs={12} md={5} className={styles.metricsSideCol}>
               <div className={styles.metricsCol}>
                 <Row gutterWidth={8} className={styles.metricsGrid}>
                   <Col xs={6}>
@@ -201,53 +188,5 @@ function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
         </Col>
       </Row>
     </article>
-  );
-}
-
-export function KnowledgeWikisPage() {
-  usePageTitle('Knowledge wikis');
-  const { data: wikis = [], isLoading, error } = useKnowledgeWikis();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const filters = parseKnowledgeWikiFiltersFromSearchParams(searchParams);
-  const facets = useMemo(() => buildKnowledgeWikiFacets(wikis), [wikis]);
-  const filteredWikis = useMemo(() => filterKnowledgeWikis(wikis, filters), [wikis, filters]);
-
-  return (
-    <PageLayout
-      hero={
-        <PageHero
-          eyebrow="Knowledge"
-          title="Wikis"
-          meta={
-            <>
-              {filteredWikis.length} shown
-              {filteredWikis.length !== wikis.length ? ` · ${wikis.length} total` : null}
-            </>
-          }
-        />
-      }
-    >
-      <PageList>
-        <KnowledgeWikiFilters
-          filters={filters}
-          facets={facets}
-          resultCount={filteredWikis.length}
-          totalCount={wikis.length}
-          onChange={(next) => setSearchParams(knowledgeWikiFiltersToSearchParams(next), { replace: true })}
-        />
-
-        {isLoading ? <p className="text-muted-foreground text-sm">Loading wikis…</p> : null}
-        {error ? <p className="text-destructive text-sm">{error.message}</p> : null}
-        {!isLoading && !error && wikis.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No promoted wikis yet.</p>
-        ) : null}
-        {!isLoading && !error && wikis.length > 0 && filteredWikis.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No wikis match the current filters.</p>
-        ) : null}
-        {filteredWikis.map((wiki) => (
-          <WikiListItem key={wiki.id} wiki={wiki} />
-        ))}
-      </PageList>
-    </PageLayout>
   );
 }

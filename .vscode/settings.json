@@ -68,5 +68,17 @@
   "cssvar.files": ["apps/client/src/**/*.css", "packages/ui/src/**/*.css"],
 
   "tailwindCSS.files.exclude": ["**/dist/**", "**/node_modules/**"],
-  "tailwindCSS.classFunctions": ["cva", "cx"]
+  "tailwindCSS.classFunctions": ["cva", "cx"],
+  "reactTsScss.autoComplete": true,
+  "reactTsScss.definition": true,
+  "reactTsScss.peekProperties": true,
+  "reactTsScss.cssAutoComplete": true,
+  "reactTsScss.cssDefinitions": true,
+  "reactTsScss.diagnostics": true,
+  "reactTsScss.baseDir": "src",
+  "reactTsScss.cssSyntaxColor": true,
+  "reactTsScss.tsCleanUpDefs": true,
+  "reactTsScss.cleanUpDefs": ["*.module.css", "*.module.scss", "*.module.sass", "*.module.less"],
+  "reactTsScss.references": true,
+  "reactTsScss.codelens": false
 }

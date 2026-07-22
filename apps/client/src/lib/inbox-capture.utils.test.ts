@@ -6,6 +6,8 @@ import {
   inboxCaptureNeedsAttention,
   matchesInboxCaptureView,
   parseInboxFiltersFromSearchParams,
+  reviewStateToScope,
+  scopeToReviewState,
 } from './inbox-capture-filters';
 import { isInboxCaptureNode, parseInboxCapture } from './inbox-capture.utils';
 import { getInboxReviewState, withInboxReviewState } from './inbox-review.utils';
@@ -15,8 +17,8 @@ function ideaNode(partial: Partial<LabNode> & Pick<LabNode, 'id' | 'title' | 'ta
     type: 'idea',
     status: 'seed',
     related: [],
-    created_at: '2026-07-09T00:00:00Z',
-    updated_at: '2026-07-09T00:00:00Z',
+    created_at: '2026-07-20T00:00:00Z',
+    updated_at: '2026-07-20T00:00:00Z',
     origin: 'manual',
     ...partial,
   } as LabNode;
@@ -133,5 +135,22 @@ describe('inbox filters', () => {
       'attachments',
     );
     expect(parseInboxFiltersFromSearchParams(new URLSearchParams('view=missing')).view).toBe('all');
+  });
+
+  it('maps review scope helpers without using a second All label', () => {
+    expect(reviewStateToScope('new')).toBe('unreviewed');
+    expect(reviewStateToScope('reviewed')).toBe('reviewed');
+    expect(reviewStateToScope('all')).toBe('both');
+    expect(reviewStateToScope('archived')).toBe('');
+    expect(scopeToReviewState('unreviewed')).toBe('new');
+    expect(scopeToReviewState('reviewed')).toBe('reviewed');
+    expect(scopeToReviewState('both')).toBe('all');
+  });
+
+  it('still parses legacy review=failed from the URL but does not offer failed attention', () => {
+    expect(parseInboxFiltersFromSearchParams(new URLSearchParams('review=failed')).reviewState).toBe(
+      'failed',
+    );
+    expect(parseInboxFiltersFromSearchParams(new URLSearchParams('attention=failed')).attention).toBe('all');
   });
 });
