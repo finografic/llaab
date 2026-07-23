@@ -27,6 +27,10 @@ export interface SourceProfilesDialogProps {
   primaryUrl?: string;
   primaryPlatform?: 'youtube';
   suggestedGithubUrl?: string;
+  /** Non-LLM YouTube channel match for a podcast source — see match-podcast-youtube.ts. */
+  suggestedYoutubeUrl?: string;
+  youtubeMatchConfidence?: number;
+  youtubeMatchBasis?: 'vault' | 'website' | 'search';
 }
 
 interface PlatformPill {
@@ -52,6 +56,19 @@ function platformLabel(platform: SourceProfile['platform']): string {
       return 'Twitch';
     case 'npm':
       return 'npm';
+    case 'rss':
+      return 'RSS';
+  }
+}
+
+function matchBasisLabel(basis: 'vault' | 'website' | 'search'): string {
+  switch (basis) {
+    case 'vault':
+      return 'matched to a channel already in your vault';
+    case 'website':
+      return "found on the podcast's website";
+    case 'search':
+      return 'found via YouTube search';
   }
 }
 
@@ -77,6 +94,21 @@ function normalizeGithubUrl(value: string): string | undefined {
     if (parsed.hostname !== 'github.com') return undefined;
     const handle = githubHandleFromUrl(parsed.toString());
     return handle ? `https://github.com/${handle}` : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeYoutubeUrl(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(withProtocol);
+    if (!/(^|\.)youtube\.com$/i.test(parsed.hostname)) return undefined;
+    return parsed.toString();
   } catch {
     return undefined;
   }
@@ -108,15 +140,25 @@ export function SourceProfilesDialog({
   primaryUrl,
   primaryPlatform,
   suggestedGithubUrl,
+  suggestedYoutubeUrl,
+  youtubeMatchConfidence,
+  youtubeMatchBasis,
 }: SourceProfilesDialogProps) {
   const queryClient = useQueryClient();
   const initialGithub = profiles.find((profile) => profile.platform === 'github');
   const initialGithubUrl = initialGithub?.url ?? suggestedGithubUrl ?? '';
   const initialGithubEnabled = Boolean(initialGithub);
 
+  const initialYoutube = profiles.find((profile) => profile.platform === 'youtube');
+  const initialYoutubeUrl = initialYoutube?.url ?? suggestedYoutubeUrl ?? '';
+  const initialYoutubeEnabled = Boolean(initialYoutube);
+  const youtubeIsUnconfirmedSuggestion = !initialYoutube && Boolean(suggestedYoutubeUrl);
+
   const [open, setOpen] = useState(false);
   const [githubEnabled, setGithubEnabled] = useState(initialGithubEnabled);
   const [githubUrl, setGithubUrl] = useState(initialGithubUrl);
+  const [youtubeEnabled, setYoutubeEnabled] = useState(initialYoutubeEnabled);
+  const [youtubeUrl, setYoutubeUrl] = useState(initialYoutubeUrl);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -126,6 +168,8 @@ export function SourceProfilesDialog({
     setError(null);
     setGithubEnabled(initialGithubEnabled);
     setGithubUrl(initialGithubUrl);
+    setYoutubeEnabled(initialYoutubeEnabled);
+    setYoutubeUrl(initialYoutubeUrl);
     setSaving(false);
   };
 
@@ -138,8 +182,11 @@ export function SourceProfilesDialog({
   const handleSave = async () => {
     setError(null);
 
-    const nextProfiles = profiles.filter((profile) => profile.platform !== 'github');
+    const nextProfiles = profiles.filter(
+      (profile) => profile.platform !== 'github' && profile.platform !== 'youtube',
+    );
     const normalizedGithubUrl = normalizeGithubUrl(githubUrl);
+    const normalizedYoutubeUrl = normalizeYoutubeUrl(youtubeUrl);
 
     if (githubEnabled) {
       if (!normalizedGithubUrl) {
@@ -152,6 +199,15 @@ export function SourceProfilesDialog({
         url: normalizedGithubUrl,
         handle: githubHandleFromUrl(normalizedGithubUrl),
       });
+    }
+
+    if (youtubeEnabled) {
+      if (!normalizedYoutubeUrl) {
+        setError('Enter a valid YouTube channel URL.');
+        return;
+      }
+
+      nextProfiles.push({ platform: 'youtube', url: normalizedYoutubeUrl });
     }
 
     setSaving(true);
@@ -238,6 +294,41 @@ export function SourceProfilesDialog({
                 }}
               />
             </div>
+
+            {suggestedYoutubeUrl || initialYoutubeEnabled ? (
+              <div className={styles.platformField}>
+                <PlaySquareIcon className={styles.platformIcon} aria-hidden="true" />
+                <div className={styles.inputStack}>
+                  <Label htmlFor={`source-profile-youtube-${sourceId}`}>YouTube</Label>
+                  <Input
+                    id={`source-profile-youtube-${sourceId}`}
+                    type="url"
+                    value={youtubeUrl}
+                    placeholder={suggestedYoutubeUrl ?? 'https://www.youtube.com/@channel'}
+                    disabled={!youtubeEnabled || saving}
+                    onChange={(event) => setYoutubeUrl(event.target.value)}
+                  />
+                  {youtubeIsUnconfirmedSuggestion && youtubeMatchConfidence != null && youtubeMatchBasis ? (
+                    <p className={styles.suggestionHint}>
+                      Suggested — {matchBasisLabel(youtubeMatchBasis)} ({youtubeMatchConfidence}% confidence).
+                      Review before accepting.
+                    </p>
+                  ) : null}
+                </div>
+                <Checkbox
+                  aria-label="Enable YouTube profile"
+                  checked={youtubeEnabled}
+                  disabled={saving}
+                  onCheckedChange={(checked) => {
+                    const enabled = checked === true;
+                    setYoutubeEnabled(enabled);
+                    if (enabled && !youtubeUrl.trim()) {
+                      setYoutubeUrl(suggestedYoutubeUrl ?? '');
+                    }
+                  }}
+                />
+              </div>
+            ) : null}
 
             {error ? <p className={styles.error}>{error}</p> : null}
           </div>

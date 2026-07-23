@@ -1,6 +1,7 @@
 import { InboxCaptureActions } from 'components/InboxCaptureActions/InboxCaptureActions';
 import { InboxCaptureEnrichment } from 'components/InboxCaptureEnrichment/InboxCaptureEnrichment';
 import { InboxCapturePromote } from 'components/InboxCapturePromote/InboxCapturePromote';
+import { TagList } from 'components/TagList/TagList';
 import { Badge } from 'components/ui/badge';
 import { Link } from 'react-router-dom';
 
@@ -46,15 +47,7 @@ function CoreInboxCaptureMeta({ capture }: InboxCaptureDetailProps) {
         <Badge variant="outline">{node.type}</Badge>
       </div>
 
-      {node.tags.length > 0 ? (
-        <div className="tag-row">
-          {node.tags.map((tag) => (
-            <span key={tag} className="tag" data-tag={tag}>
-              {tag}
-            </span>
-          ))}
-        </div>
-      ) : null}
+      <TagList tags={node.tags} />
 
       {malformed || parseError ? (
         <p className={styles.error}>{parseError ?? 'This capture has malformed provenance data.'}</p>

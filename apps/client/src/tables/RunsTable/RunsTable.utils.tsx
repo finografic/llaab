@@ -1,5 +1,5 @@
 import { DeleteRunAction } from 'components/DeleteRunAction/DeleteRunAction';
-import { ExternalLinkIcon, UserCheckIcon, UserXIcon } from 'lucide-react';
+import { ExternalLinkIcon, MicIcon, UserCheckIcon, UserXIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { RunNode, SourceNode } from '@llaab/schemas';
 import type { CellContext } from '@tanstack/react-table';
@@ -12,7 +12,7 @@ import {
   extractRunSubjectTitle,
 } from 'utils/metadata-rendering.utils';
 import type { RunDisplayStatus } from 'utils/run-display.utils';
-import { isYouTubeChannelSource } from 'utils/youtube-source.utils';
+import { isPodcastSource, isYouTubeChannelSource } from 'utils/youtube-source.utils';
 
 import styles from './RunsTable.module.css';
 
@@ -93,7 +93,17 @@ export function renderRunSourceCell({ row }: CellContext<RunNode, unknown>) {
 }
 
 export function renderYouTubeSubscriptionIcon(source: SourceNode | undefined) {
-  if (!source || !isYouTubeChannelSource(source)) return null;
+  if (!source) return null;
+
+  if (isPodcastSource(source)) {
+    return (
+      <span className={styles.podcastSource} title="Podcast" aria-label="Podcast">
+        <MicIcon size={18} aria-hidden />
+      </span>
+    );
+  }
+
+  if (!isYouTubeChannelSource(source)) return null;
 
   if (source.youtube_subscribed === true) {
     return (

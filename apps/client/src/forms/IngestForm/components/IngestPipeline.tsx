@@ -5,6 +5,7 @@ import {
   RunPipelineCard,
 } from 'components/RunPipelineCard/RunPipelineCard';
 import styles from 'components/RunPipelineCard/RunPipelineCard.module.css';
+import { TagList } from 'components/TagList/TagList';
 import { RotateCcwIcon, Trash2Icon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ExtractionPhase, TranscriptData, TranscriptPhase } from '../ingest-form.types';
@@ -48,6 +49,7 @@ export function IngestPipeline({
   runStartedAt,
   totalElapsedSecs,
   activeRun,
+  lockedTags,
   onKeep,
   onDiscard,
   onRetry,
@@ -68,6 +70,7 @@ export function IngestPipeline({
   runStartedAt: number | null;
   totalElapsedSecs: number | null;
   activeRun?: RunMonitorItem | null;
+  lockedTags: string[];
   onKeep: () => void;
   onDiscard: () => Promise<void>;
   onRetry: () => void;
@@ -127,6 +130,7 @@ export function IngestPipeline({
       nodeCount: extractionIdeas.length > 0 ? extractionIdeas.length : undefined,
       children: (
         <>
+          <TagList tags={lockedTags} size="sm" />
           {(extractionPhase === 'success' || extractionPhase === 'existing') && extractionIdeas.length > 0 ? (
             <IdeaList ideas={extractionIdeas} />
           ) : null}
@@ -163,6 +167,7 @@ export function IngestPipeline({
     extractionIdeas,
     extractionPhase,
     extractionStartedAt,
+    lockedTags,
     onRetryExtract,
     onRetryIngest,
     transcriptData,

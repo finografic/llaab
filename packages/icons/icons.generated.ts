@@ -83,6 +83,7 @@ const ICONS = {
   MagnifyingGlassIcon:            Lucide.Search,
   MemoryStickIcon:                Lucide.MemoryStick,
   MenuIcon:                       Lucide.Menu,
+  MicIcon:                        Lucide.Mic,
   MicrochipIcon:                  Lucide.Microchip,
   MinimizeIcon:                   Lucide.Minimize,
   MinusIcon:                      Lucide.Minus,

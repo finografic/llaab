@@ -4,7 +4,7 @@ import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { CheckIcon } from 'lucide-react';
-import { fetchNodeTags, useVaultTagsByUsage } from 'queries/nodes';
+import { fetchNodeTags } from 'queries/nodes';
 import { QUERY_KEYS, useRunMonitor } from 'queries/runs';
 import {
   fetchExistingIdeas,
@@ -27,9 +27,6 @@ import type { ExtractTranscriptResult } from 'queries/transcripts';
 
 import { INGEST_FORM_RESET_EVENT } from 'lib/ingest-form-events';
 
-import { KNOWN_TAGS, normalizeTag } from 'constants/taxonomy.constants';
-
-import { TagInputField } from '../TagInputField';
 import { IngestPipeline } from './components/IngestPipeline';
 import { IngestQueueList } from './components/IngestQueueList';
 import { classifyUrl, extractDroppedUrl, isHttpUrl, isIngestibleSourceKind } from './ingest-form.utils';
@@ -77,9 +74,7 @@ function getRunInputUrl(run: RunMonitorItem): string | null {
 }
 
 export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
-  const [tags, setTags] = useState<string[]>([]);
   const [lockedTags, setLockedTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [isDropActive, setIsDropActive] = useState(false);
   const [dropMessage, setDropMessage] = useState<string | null>(null);
@@ -124,7 +119,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
   const ingestPodcast = useIngestPodcast();
   const extractTranscript = useExtractTranscript();
   const discardTranscript = useDiscardTranscript();
-  const { data: vaultTagsByUsage = [] } = useVaultTagsByUsage();
   const { data: monitorData } = useRunMonitor();
 
   const urlValue = watch('url');
@@ -209,8 +203,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     (options?: { preserveDraft?: boolean }) => {
       if (!options?.preserveDraft) {
         setValue('url', '');
-        setTags([]);
-        setTagInput('');
       }
       setLockedTags([]);
       setBusy(false);
@@ -418,21 +410,14 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       return;
     }
 
-    const pendingTag = tagInput.trim() ? normalizeTag(tagInput) : null;
-    const allTags = pendingTag ? [...new Set([...tags, pendingTag])] : tags;
-
     if (durableBusy) {
-      enqueueUrl(trimmedUrl, allTags);
+      enqueueUrl(trimmedUrl, []);
       setValue('url', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
-      setTags([]);
-      setTagInput('');
       setApiError(null);
       return;
     }
 
-    setTags([]);
-    setTagInput('');
-    startNewItem(trimmedUrl, allTags);
+    startNewItem(trimmedUrl, []);
   };
 
   const onRetryIngest = () => {
@@ -571,22 +556,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     });
   };
 
-  const suggestionPool = useMemo(
-    () => [...KNOWN_TAGS, ...vaultTagsByUsage.filter((tag) => !KNOWN_TAGS.includes(tag))],
-    [vaultTagsByUsage],
-  );
-
-  const suggestions = useMemo(
-    () =>
-      suggestionPool.filter((tag) => {
-        if (tags.includes(tag) || lockedTags.includes(tag)) return false;
-        if (!tagInput) return KNOWN_TAGS.includes(tag);
-        const normalized = normalizeTag(tagInput);
-        return tag.includes(normalized) || tag.includes(tagInput.toLowerCase());
-      }),
-    [lockedTags, suggestionPool, tagInput, tags],
-  );
-
   const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDropActive(true);
@@ -707,20 +676,6 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
               </p>
             ) : null}
           </div>
-
-          <TagInputField
-            label="Tags (optional)"
-            description="Domain tags — e.g. d:llm, d:automation. Type a name to see suggestions."
-            placeholder="d:llm"
-            value={tags}
-            lockedTags={lockedTags}
-            inputValue={tagInput}
-            suggestions={suggestions}
-            onChange={setTags}
-            onInputValueChange={setTagInput}
-            normalizeTag={normalizeTag}
-            validateTag={(value) => value.startsWith('d:') && value.length > 2}
-          />
         </div>
       </form>
 
@@ -757,6 +712,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
           runStartedAt={runStartedAt}
           totalElapsedSecs={totalElapsedSecs}
           activeRun={activeIngestRun}
+          lockedTags={lockedTags}
           onKeep={onKeep}
           onDiscard={onDiscard}
           onRetry={onRetry}

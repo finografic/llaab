@@ -1,5 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 
+import { normalizeTitle, titleSimilarity } from '../utils/title-similarity.js';
+
 export interface FetchedPodcastEpisode {
   podcastTitle: string;
   episodeTitle: string;
@@ -217,26 +219,6 @@ function itemTranscript(item: FeedItem): { url?: string; type?: string } {
     candidates.find((t) => t['@_type'] === 'text/plain') ??
     candidates[0];
   return { url: preferred?.['@_url'], type: preferred?.['@_type'] };
-}
-
-function normalizeTitle(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
-
-function titleSimilarity(a: string, b: string): number {
-  const normA = normalizeTitle(a);
-  const normB = normalizeTitle(b);
-  if (!normA || !normB) return 0;
-  if (normA === normB) return 1;
-  if (normA.includes(normB) || normB.includes(normA)) return 0.8;
-
-  const tokensA = new Set(normA.split(' '));
-  const tokensB = new Set(normB.split(' '));
-  const shared = [...tokensA].filter((token) => tokensB.has(token)).length;
-  return shared / Math.max(tokensA.size, tokensB.size);
 }
 
 function scoreEpisodeMatch(item: FeedItem, episodeTitle: string): number {

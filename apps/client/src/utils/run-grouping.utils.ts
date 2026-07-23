@@ -94,6 +94,14 @@ export function groupRunsBySubject(
     const transcript = transcriptId ? transcriptsById.get(transcriptId) : undefined;
     group.publishedAt ??= transcript?.source_published_at;
     group.isConsolidated = Boolean(transcript?.canonical_coverage?.canonical_idea_ids.length);
+
+    // When the episode's transcript actually came from a matched YouTube upload, attribute
+    // Author to that YouTube channel rather than the podcast's own (RSS) source — the content
+    // came from YouTube, so the channel identity and its subscribe status are what's relevant.
+    if (transcript?.transcript_origin === 'youtube' && transcript.youtube_channel_source_id) {
+      const youtubeChannelSource = sourcesById.get(transcript.youtube_channel_source_id);
+      if (youtubeChannelSource) group.source = youtubeChannelSource;
+    }
   }
 
   return Array.from(groups.values());

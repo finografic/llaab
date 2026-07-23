@@ -1,10 +1,9 @@
 import { resolveDataTableMaxWidth } from '@llaab/ui/lib/data-table-utils';
-import { useQueryClient } from '@tanstack/react-query';
 import { Button } from 'components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'components/ui/table';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
-import { QUERY_KEYS, useRunMonitor, useRuns } from 'queries/runs';
-import { useEffect, useMemo, useState } from 'react';
+import { useRunMonitor, useRuns } from 'queries/runs';
+import { useMemo, useState } from 'react';
 import { RunsGroupHeader } from 'tables/RunsTable/RunsGroupHeader';
 import { buildSourcesById } from 'tables/RunsTable/RunsTable.utils';
 import type { SourceNode, TranscriptNode } from '@llaab/schemas';
@@ -18,6 +17,9 @@ import { groupRunsBySubject } from 'utils/run-grouping.utils';
 import styles from './RunsTable.module.css';
 
 // ─── Component ────────────────────────────────────────────────────────────────
+
+/** Matches useRunMonitor's own active-poll cadence — no reason to refetch the list faster. */
+const ACTIVE_POLL_INTERVAL_MS = 2500;
 
 type SortDirection = 'asc' | 'desc';
 type SortColumn = 'title' | 'date' | 'author' | 'nodes' | 'latency';
@@ -102,7 +104,6 @@ export function RunsTable({
   showHeading = false,
   columnLimits,
 }: RunsTableProps) {
-  const queryClient = useQueryClient();
   const [sort, setSort] = useState<SortState>({ column: 'date', direction: 'desc' });
   const { data: monitorData } = useRunMonitor();
   const monitorRunIds = useMemo(
@@ -116,17 +117,11 @@ export function RunsTable({
         (runId) => !data.some((run) => run.id === runId),
       );
       if ((monitorData?.active.length ?? 0) > 0 || hasMonitorRunMissingFromList) {
-        return 1000;
+        return ACTIVE_POLL_INTERVAL_MS;
       }
-      return data.some(isRunExtracting) ? 1000 : false;
+      return data.some(isRunExtracting) ? ACTIVE_POLL_INTERVAL_MS : false;
     },
   });
-
-  useEffect(() => {
-    if ((monitorData?.active.length ?? 0) > 0 || (monitorData?.recent.length ?? 0) > 0) {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.list() });
-    }
-  }, [monitorData?.active, monitorData?.recent, queryClient]);
 
   const runs = useMemo(() => allRuns.filter(isIngestRun), [allRuns]);
   const sourcesById = useMemo(() => buildSourcesById(sources), [sources]);

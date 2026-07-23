@@ -220,10 +220,14 @@ a.subjectTitle:hover {
 
 .authorLink,
 .authorName {
+  overflow: hidden;
+  min-width: 0;
   color: var(--text);
   text-decoration: none;
   font-size: var(--text-sm);
   line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .authorLink:hover {
@@ -278,6 +282,12 @@ a.subjectTitle:hover {
   align-items: center;
   color: var(--text-muted);
   opacity: 0.5;
+}
+
+.podcastSource {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-faint);
 }
 
 .groupRow {

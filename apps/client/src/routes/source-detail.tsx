@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { PageHero } from 'components/PageHero/PageHero';
+import { TagList } from 'components/TagList/TagList';
 import { buttonVariants } from 'components/ui/button';
 import { SourceProfilesDialog } from 'dialogs/SourceProfilesDialog/SourceProfilesDialog';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
@@ -229,15 +230,7 @@ export function SourceDetailPage() {
           </section>
         ) : null}
 
-        {source.tags.length > 0 ? (
-          <div className="tag-row">
-            {source.tags.map((tag) => (
-              <span key={tag} className="tag" data-tag={tag}>
-                {tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        <TagList tags={source.tags} />
 
         {source.body ? (
           <section className="section">
@@ -333,6 +326,9 @@ export function SourceDetailPage() {
                     primaryUrl={source.url}
                     primaryPlatform={primaryProfilePlatform}
                     suggestedGithubUrl={suggestedGithubUrl}
+                    suggestedYoutubeUrl={source.youtube_match_url}
+                    youtubeMatchConfidence={source.youtube_match_confidence}
+                    youtubeMatchBasis={source.youtube_match_basis}
                   />
                 </dd>
               </>

@@ -18,6 +18,10 @@ export function isYouTubeChannelSource(source: SourceNode): boolean {
   return source.platforms.includes('youtube') && source.source_kind === 'channel';
 }
 
+export function isPodcastSource(source: SourceNode): boolean {
+  return source.platforms.includes('rss') && source.source_kind === 'publication';
+}
+
 /** Parse `**uploaded:**` line from a YouTube transcript body into ISO date. */
 export function parseYouTubePublishedAt(body: string): string | undefined {
   const match = body.match(/^\*\*uploaded:\*\*\s*(.+)$/m);

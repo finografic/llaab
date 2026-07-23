@@ -1,5 +1,6 @@
 import { ModelMetaCard } from 'components/ModelMetaCard/ModelMetaCard';
 import { PageHero } from 'components/PageHero/PageHero';
+import { TagList } from 'components/TagList/TagList';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { useVaultNode } from 'queries/vault';
@@ -65,15 +66,7 @@ export function NodeDetailPage() {
       }
     >
       <PageDetail variant="narrow">
-        {node.tags.length > 0 ? (
-          <div className="tag-row">
-            {node.tags.map((tag) => (
-              <span key={tag} className="tag" data-tag={tag}>
-                {tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        <TagList tags={node.tags} />
 
         {idea ? (
           <ModelMetaCard

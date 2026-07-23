@@ -213,7 +213,7 @@ function MonitorSection({
 
 export function RunMonitor({ onClose }: { onClose: () => void }) {
   const { dismissRuns, dismissedRunIds } = useRunMonitorState();
-  const { data, error, isLoading } = useRunMonitor({ refetchInterval: 3000 });
+  const { data, error, isLoading } = useRunMonitor();
   const dismissAllRuns = useDismissAllRuns();
   const dismissedSet = useMemo(() => new Set(dismissedRunIds), [dismissedRunIds]);
   const active = useMemo(() => data?.active ?? EMPTY_RUNS, [data?.active]);

@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { DeleteExtractedIdeaAction } from 'components/DeleteExtractedIdeaAction/DeleteExtractedIdeaAction';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { CONSOLIDATION_SKILL_ID } from 'components/RunPipelineCard/RunPipelineCard';
+import { SplitTagList } from 'components/TagList/TagList';
 import { TtsPlayer } from 'components/TtsPlayer';
 import {
   AlertDialog,
@@ -114,7 +115,6 @@ export function TranscriptDetail({
   const promoteMutation = usePromoteCanonicalIdea();
   const { mutate: promoteMutate, isPending: isPromotePending, variables: promoteVariables } = promoteMutation;
 
-  const { domain, generated } = splitTags(transcript.tags);
   const selectedRun = useMemo(
     () => extractionRuns.find((run) => run.id === selectedRunId) ?? extractionRuns[0],
     [extractionRuns, selectedRunId],
@@ -448,26 +448,11 @@ export function TranscriptDetail({
       </header>
 
       {transcript.tags.length > 0 ? (
-        <div className="tags">
-          {domain.length > 0 ? (
-            <div className="tag-row tag-row--domain">
-              {domain.map((tag) => (
-                <span key={tag} className="tag" data-tag={tag}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          {generated.length > 0 ? (
-            <div className="tag-row tag-row--topic">
-              {generated.map((tag) => (
-                <span key={tag} className="tag" data-tag={tag}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        <SplitTagList
+          tags={transcript.tags}
+          domainClassName="tag-row tag-row--domain"
+          generatedClassName="tag-row tag-row--topic"
+        />
       ) : null}
 
       <section className="section">
@@ -762,7 +747,6 @@ export function TranscriptDetail({
         ) : (
           <ul className={styles.ideaList}>
             {canonicalIdeas.map((idea) => {
-              const ideaTags = splitTags(idea.tags);
               return (
                 <li key={idea.id} className={styles.canonicalIdeaItem}>
                   <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
@@ -789,26 +773,13 @@ export function TranscriptDetail({
                     {idea.coverage_notes ? (
                       <p className={styles.coverageNotes}>{idea.coverage_notes}</p>
                     ) : null}
-                    <div className="tags">
-                      {ideaTags.domain.length > 0 ? (
-                        <span className={`${styles.ideaTags} idea-tags--domain`}>
-                          {ideaTags.domain.map((tag) => (
-                            <span key={tag} className="tag tag--sm" data-tag={tag}>
-                              {tag}
-                            </span>
-                          ))}
-                        </span>
-                      ) : null}
-                      {ideaTags.generated.length > 0 ? (
-                        <span className={`${styles.ideaTags} idea-tags--topic`}>
-                          {ideaTags.generated.map((tag) => (
-                            <span key={tag} className="tag tag--sm" data-tag={tag}>
-                              {tag}
-                            </span>
-                          ))}
-                        </span>
-                      ) : null}
-                    </div>
+                    <SplitTagList
+                      tags={idea.tags}
+                      size="sm"
+                      domainClassName={`${styles.ideaTags} idea-tags--domain`}
+                      generatedClassName={`${styles.ideaTags} idea-tags--topic`}
+                      as="span"
+                    />
                   </Link>
                 </li>
               );
@@ -848,33 +819,19 @@ export function TranscriptDetail({
             {visibleIdeaCount > 0 && visibleIdeas.length > 0 ? (
               <ul className={styles.ideaList}>
                 {visibleIdeas.map((idea) => {
-                  const ideaTags = splitTags(idea.tags);
                   return (
                     <li key={idea.id} className={styles.ideaItem}>
                       <Row className={styles.ideaRow} align="flex-start" wrap="nowrap" nogutter>
                         <Col className={styles.ideaMain}>
                           <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
                             <p className={styles.ideaTitle}>{idea.title}</p>
-                            <div className="tags">
-                              {ideaTags.domain.length > 0 ? (
-                                <span className={`${styles.ideaTags} idea-tags--domain`}>
-                                  {ideaTags.domain.map((tag) => (
-                                    <span key={tag} className="tag tag--sm" data-tag={tag}>
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </span>
-                              ) : null}
-                              {ideaTags.generated.length > 0 ? (
-                                <span className={`${styles.ideaTags} idea-tags--topic`}>
-                                  {ideaTags.generated.map((tag) => (
-                                    <span key={tag} className="tag tag--sm" data-tag={tag}>
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </span>
-                              ) : null}
-                            </div>
+                            <SplitTagList
+                              tags={idea.tags}
+                              size="sm"
+                              domainClassName={`${styles.ideaTags} idea-tags--domain`}
+                              generatedClassName={`${styles.ideaTags} idea-tags--topic`}
+                              as="span"
+                            />
                           </Link>
                         </Col>
                         <Col xs="content" className={styles.ideaActions}>

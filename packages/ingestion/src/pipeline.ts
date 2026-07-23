@@ -1,10 +1,15 @@
 import { autoTag, createNode, getNodeFilePath, listNodes, updateNode } from '@llaab/core';
 import { appendDatetimeFilenameSegment, formatIsoUtcForTranscriptBody, now, toNodeId } from '@llaab/schemas';
 import type { ExtractionRunTrace } from './extract/llm-extract.js';
-import type { TranscriptNode, TranscriptSourceType } from '@llaab/schemas';
+import type { FetchedPodcastEpisode } from './fetch/podcast.js';
+import type { SourceNode, TranscriptNode, TranscriptSourceType } from '@llaab/schemas';
 
 import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
 import { cleanTranscript } from './clean/transcript.js';
+import {
+  matchPodcastEpisodeOnYouTube,
+  resolveTrustedYouTubeChannelId,
+} from './enrich/match-podcast-youtube.js';
 import { llmExtractWithTrace, normalizeContentTags, normalizeDomainTags } from './extract/llm-extract.js';
 import { fetchArticle } from './fetch/article.js';
 import { fetchPodcastEpisode } from './fetch/podcast.js';
@@ -437,6 +442,46 @@ async function fetchRssTranscriptText(transcriptUrl: string): Promise<string> {
   return response.text();
 }
 
+/**
+ * If this podcast's source already has a trusted YouTube channel match (see
+ * match-podcast-youtube.ts), tries to find this specific episode's upload there and pull its
+ * captions — far faster than local mlx-whisper transcription. Returns undefined on any failure
+ * or low-confidence result so the caller falls back to whisper.
+ */
+async function tryYouTubeEpisodeTranscript(
+  sourceId: string,
+  fetched: FetchedPodcastEpisode,
+): Promise<{ videoUrl: string; rawTranscript: string; channelSourceId?: string } | undefined> {
+  try {
+    const sources = (await listNodes({ type: 'source' })) as SourceNode[];
+    const existingSource = sources.find((node) => node.id === sourceId);
+    if (!existingSource) return undefined;
+
+    const channelId = resolveTrustedYouTubeChannelId(existingSource);
+    if (!channelId) return undefined;
+
+    const episodeMatch = await matchPodcastEpisodeOnYouTube(
+      channelId,
+      fetched.episodeTitle,
+      fetched.publishedAt,
+    );
+    if (!episodeMatch) return undefined;
+
+    const youtubeTranscript = await fetchYouTube(episodeMatch.videoUrl);
+    if (!youtubeTranscript.rawTranscript.trim()) return undefined;
+
+    const channelSourceId = sources.find((node) => node.platform_id === channelId)?.id;
+
+    return {
+      videoUrl: episodeMatch.videoUrl,
+      rawTranscript: youtubeTranscript.rawTranscript,
+      channelSourceId,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 async function createPodcastTranscriptNode(input: IngestionInput): Promise<IngestionResult> {
   const fetched = await fetchPodcastEpisode(input.url);
   const existingTranscript = await findExistingPodcastTranscript(fetched.episodeGuid);
@@ -459,8 +504,11 @@ async function createPodcastTranscriptNode(input: IngestionInput): Promise<Inges
     ),
   ];
 
+  const sourceId = toNodeId(fetched.podcastTitle);
+
   let rawTranscript: string;
-  let transcriptOrigin: 'rss' | 'generated';
+  let transcriptOrigin: 'rss' | 'youtube' | 'generated';
+  let youtubeEpisode: Awaited<ReturnType<typeof tryYouTubeEpisodeTranscript>> | undefined;
 
   if (fetched.rssTranscriptUrl) {
     rawTranscript = await fetchRssTranscriptText(fetched.rssTranscriptUrl);
@@ -473,16 +521,30 @@ async function createPodcastTranscriptNode(input: IngestionInput): Promise<Inges
       ),
     );
   } else {
-    const transcribed = await transcribeAudioLocally(fetched.audioUrl);
-    rawTranscript = transcribed.plainText;
-    transcriptOrigin = 'generated';
-    stages.push(
-      completedStage(
-        'transcribe:mlx-whisper',
-        { audioUrl: fetched.audioUrl },
-        { plainTextLength: rawTranscript.length, segmentCount: transcribed.segments?.length },
-      ),
-    );
+    youtubeEpisode = await tryYouTubeEpisodeTranscript(sourceId, fetched);
+
+    if (youtubeEpisode) {
+      rawTranscript = youtubeEpisode.rawTranscript;
+      transcriptOrigin = 'youtube';
+      stages.push(
+        completedStage(
+          'fetch:youtube-episode',
+          { videoUrl: youtubeEpisode.videoUrl },
+          { rawLength: rawTranscript.length },
+        ),
+      );
+    } else {
+      const transcribed = await transcribeAudioLocally(fetched.audioUrl);
+      rawTranscript = transcribed.plainText;
+      transcriptOrigin = 'generated';
+      stages.push(
+        completedStage(
+          'transcribe:mlx-whisper',
+          { audioUrl: fetched.audioUrl },
+          { plainTextLength: rawTranscript.length, segmentCount: transcribed.segments?.length },
+        ),
+      );
+    }
   }
 
   let structuredContent: string;
@@ -517,7 +579,6 @@ async function createPodcastTranscriptNode(input: IngestionInput): Promise<Inges
     input.title,
     fetched.episodeTitle,
   );
-  const sourceId = toNodeId(fetched.podcastTitle);
   const producedNodeIds = new Set<string>();
   const updatedAtIso = now();
 
@@ -548,6 +609,10 @@ async function createPodcastTranscriptNode(input: IngestionInput): Promise<Inges
       podcast_episode_guid: fetched.episodeGuid,
       podcast_audio_url: fetched.audioUrl,
       transcript_origin: transcriptOrigin,
+      ...(youtubeEpisode ? { youtube_video_url: youtubeEpisode.videoUrl } : {}),
+      ...(youtubeEpisode?.channelSourceId
+        ? { youtube_channel_source_id: youtubeEpisode.channelSourceId }
+        : {}),
     },
   });
   producedNodeIds.add(transcriptResult.id);
@@ -567,8 +632,11 @@ async function createPodcastTranscriptNode(input: IngestionInput): Promise<Inges
       extra: {
         source_kind: 'publication',
         url: fetched.feedUrl,
-        platforms: ['rss'],
-        profiles: [{ platform: 'rss', url: fetched.feedUrl, label: fetched.podcastTitle, primary: true }],
+        platforms: fetched.showWebsite ? ['rss', 'website'] : ['rss'],
+        profiles: [
+          { platform: 'rss', url: fetched.feedUrl, label: fetched.podcastTitle, primary: true },
+          ...(fetched.showWebsite ? [{ platform: 'website' as const, url: fetched.showWebsite }] : []),
+        ],
         related: [transcriptResult.id],
       },
     });

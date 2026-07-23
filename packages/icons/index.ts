@@ -82,6 +82,7 @@ export const {
   MagnifyingGlassIcon,
   MemoryStickIcon,
   MenuIcon,
+  MicIcon,
   MicrochipIcon,
   MinimizeIcon,
   MinusIcon,

@@ -42,6 +42,15 @@ export const SourceNodeSchema = BaseNodeSchema.extend({
   /** Whether the configured Google account subscribes to this channel, when checkable. */
   youtube_subscribed: z.boolean().optional(),
   profiles: z.array(SourceProfileSchema).default([]),
+  /**
+   * Non-LLM YouTube channel match for a podcast source (title similarity / link scraping,
+   * never confirmed automatically) — surfaced as a suggestion until the user accepts it into
+   * `profiles`. Cleared once a `youtube` profile is linked.
+   */
+  youtube_match_url: z.string().url().optional(),
+  youtube_match_channel_id: z.string().optional(),
+  youtube_match_confidence: z.number().min(0).max(100).optional(),
+  youtube_match_basis: z.enum(['vault', 'website', 'search']).optional(),
 });
 
 export type SourceNode = z.infer<typeof SourceNodeSchema>;

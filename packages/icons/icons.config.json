@@ -474,5 +474,9 @@
   {
     "exportName": "FileExclamationPoint",
     "lucideName": "file-exclamation-point"
+  },
+  {
+    "exportName": "Mic",
+    "lucideName": "mic"
   }
 ]

@@ -1,4 +1,5 @@
 import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
+import { TagList } from 'components/TagList/TagList';
 import { Card, CardContent, CardHeader, CardTitle } from 'components/ui/card';
 import { Col, Row } from 'components/ui/grid';
 import { qualityMetricTone, WikiMetricCard } from 'components/WikiMetricCard';
@@ -79,15 +80,7 @@ export function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
                   </>
                 ) : null}
               </p> */}
-              {wiki.tags.length > 0 ? (
-                <div className={styles.tagList} aria-label="Wiki topics">
-                  {wiki.tags.map((tag) => (
-                    <span key={tag} className="tag tag--sm" data-tag={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
+              <TagList tags={wiki.tags} size="sm" className={styles.tagList} ariaLabel="Wiki topics" />
             </Col>
 
             <Col xs={12} md={5} className={styles.metricsSideCol}>

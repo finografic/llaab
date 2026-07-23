@@ -87,6 +87,12 @@ conventions: `apps/client/src/layouts/AGENTS.md`. New rule for any process with 
 from durable, shared query state (`useRunMonitor`), never a mutation's own `isPending`/local
 component state, since the component can remount (e.g. switching transcripts) and lose it. Audit
 of remaining non-compliant spots: `docs/todo/TODO_PROCESS_STATE_AUDIT.md`.
+`useRunMonitor`'s adaptive `refetchInterval` (2.5s while any run is active, 20s idle) is the single
+source of truth for monitor polling cadence — callers must not pass a hardcoded override (a
+previous `RunMonitor` override + a redundant invalidate-on-every-poll-tick effect in `RunsTable`
+were compounding into effectively continuous `/api/runs` + `/api/runs/monitor` polling; both removed).
+`RunsTable`'s Author column caps at `max-width: 250px` with ellipsis truncation (`RunsGroupHeader.tsx`)
+so a long author/podcast name can't push the row's Delete button off-screen.
 Both the ingest form (`IngestPipeline`) and Run Monitor render the same `RunPipelineCard`
 (`apps/client/src/components/RunPipelineCard/`) — grey collapsible RUN shell, chain-of-thought
 transcript/extraction steps (blue active / green complete / orange warning). A deduped/reused
@@ -335,12 +341,46 @@ file path auto-converted to data URL at startup), and iconsApi host/port.
 uses Pocket Casts' public oEmbed endpoint (not scraping) to get the show name/website, then reads
 the show site's RSS `rel=alternate` link tag to resolve the feed (Podcast Index API is a fallback,
 needs `PODCASTINDEX_API_KEY`/`SECRET`), then fuzzy-matches the episode by title/date/duration.
-Transcript text prefers RSS `<podcast:transcript>`, else falls back to local **mlx-whisper**
-transcription (`packages/ingestion/src/transcribe/mlx-whisper.ts` — Apple Silicon-native, needs
-`mlx-whisper` + `ffmpeg` on the Mac Studio's PATH, not this dev machine). `ingest-podcast` skill/
+Transcript text priority is RSS `<podcast:transcript>` → matched YouTube captions → local
+**mlx-whisper** (`transcript_origin`: `rss` | `youtube` | `generated`). `ingest-podcast` skill/
 route/MCP tool mirror `ingest-youtube`'s shape exactly; run retry and stale-timeout/monitor-display
 dispatch generically on `skill_id` now (previously hardcoded to youtube only). Plan/status:
 `docs/todo/TODO_PODCAST_INGEST.md`.
+`/api/ingest/podcast` must stay in server `LONG_RUNNING_PATHS` (`apps/server/src/index.ts`) —
+without it Bun's 10s idle-timeout kills the connection while a long `mlx_whisper` transcription
+keeps running server-side, so the client never sees the (eventually successful) response and the
+UI spinner hangs forever. `mlx_whisper`/`ffmpeg` (Apple Silicon-native,
+`packages/ingestion/src/transcribe/mlx-whisper.ts`) must be on the **server process's** `PATH` —
+launchd's `com.llaab.server.plist` and `scripts/macos/start-persistent-server.sh` both hardcode
+`PATH` explicitly (don't inherit the login shell), so a pip user-install under `~/.local/bin` is
+invisible to the server even though it's on the interactive shell's `PATH`; both now include it.
+A full `large-v3-turbo` transcription of a ~1hr episode takes ~13-14 minutes — expected, not a bug.
+
+**Non-LLM podcast→YouTube cross-referencing** (`packages/ingestion/src/enrich/match-podcast-youtube.ts`,
+shared `titleSimilarity()` in `packages/ingestion/src/utils/title-similarity.ts`): given a podcast
+`SourceNode` (`source_kind: 'publication'`, `platforms: ['rss']`), tries to find its YouTube channel
+via three confidence-scored levels — an already-ingested vault channel (title _or_ handle
+similarity, free), the podcast's own website (`platforms: ['website']` profile, scraped for a
+`youtube.com` link), then YouTube Data API `search.list` (needs `YOUTUBE_API_KEY`) — keeping the
+best-scoring result with its `basis`. Runs automatically inside the existing
+`enrichSourceMetadata`/`/api/vault/sources/:id/enrich` flow (already fires post-ingest and on
+source-detail load); persists as a suggestion (`youtube_match_url/channel_id/confidence/basis` on
+`SourceNode`), never auto-applied. `SourceProfilesDialog` (`apps/client/src/dialogs/`) surfaces it
+as a pre-filled, unchecked, editable YouTube row with a confidence note — same pattern the dialog
+already used for suggested GitHub URLs — accepting it writes a normal `youtube` profile via the
+existing `PATCH /api/vault/sources/:id/profiles`.
+
+Once a channel match is **trusted** (user-confirmed profile, or auto-match ≥80% confidence —
+`resolveTrustedYouTubeChannelId`), podcast ingestion searches that channel for the specific episode
+(title similarity + publish-date proximity bonus, ≥60% to trust) and pulls YouTube's own captions
+via `fetchYouTube()` instead of running local whisper — verified live: a ~14min whisper transcript
+vs. ~96s for the same show's next episode once the channel was confirmed. Only benefits a podcast's
+_second-and-later_ episodes (first ingest has no source/match yet). `TranscriptNode.youtube_video_url`
+/ `youtube_channel_source_id` record the match when used; `RunsTable`'s Author column
+(`run-grouping.utils.ts`) swaps to that YouTube channel (real name + subscribe icon) instead of the
+podcast's own source whenever `transcript_origin === 'youtube'` — no render-layer changes needed,
+since it just overrides which `SourceNode` the group resolves to. Podcast sources otherwise show a
+dim grey `MicIcon` (no hover) in Author, not the YouTube subscribe icon.
 
 Two-phase split — transcript always saved first, extraction is best-effort:
 
@@ -482,8 +522,14 @@ via regex. All ingest runs apply `d:ingest` + `autoTag`. Source nodes carry no d
 LLM-extracted content tags (`IdeaNode.tags`) are required (`z.array(z.string()).min(1)`) and the
 extraction prompt's few-shot example deliberately uses an orthogonal domain (cooking) with an
 anti-copying instruction — small local models otherwise anchor on the example's wording/tags for
-in-domain (AI/LLM) input and either echo it verbatim or omit `tags`. `IngestForm` tag suggestions
-blend `KNOWN_TAGS` with tags ranked by usage across existing vault nodes (`vaultTagsByUsage`).
+in-domain (AI/LLM) input and either echo it verbatim or omit `tags`.
+
+`IngestForm` no longer has manual tag entry — tags are auto-generated only, shown after ingestion
+via `TagList` in `IngestPipeline`'s extraction step. `TagInputField` (`apps/client/src/forms/`)
+still exists and is used by `CreateIdeaPanel` only. All other tag-pill rendering across the app
+(node/source/wiki detail, wiki list, transcript detail's domain/generated split) is consolidated
+into `components/TagList/TagList.tsx` (`TagList` flat list, `SplitTagList` for the domain/generated
+split) — one shared component instead of ~7 duplicated inline `.tag`/`data-tag` blocks.
 
 ## Client data fetching
 

@@ -2,6 +2,7 @@ import { computeWikiEvidenceMetrics } from '@llaab/schemas';
 import { DeleteKnowledgeWikiAction } from 'components/DeleteKnowledgeWikiAction/DeleteKnowledgeWikiAction';
 import { DemoteKnowledgeWikiAction } from 'components/DemoteKnowledgeWikiAction/DemoteKnowledgeWikiAction';
 import { PageHero } from 'components/PageHero/PageHero';
+import { TagList } from 'components/TagList/TagList';
 import { TtsPlayer } from 'components/TtsPlayer';
 import {
   AlertDialog,
@@ -305,13 +306,7 @@ export function KnowledgeWikiDetailPage() {
             <Col xs={12}>
               <section className={styles.summaryCard}>
                 <p>{wiki.summary}</p>
-                <div className={styles.tagList} aria-label="Wiki topics">
-                  {wiki.tags.map((tag) => (
-                    <span key={tag} className="tag" data-tag={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                <TagList tags={wiki.tags} className={styles.tagList} ariaLabel="Wiki topics" />
               </section>
             </Col>
 
@@ -394,11 +389,7 @@ export function KnowledgeWikiDetailPage() {
                           <li key={`${edge.source}-${edge.relation}-${edge.target}`}>
                             <Link to={`/knowledge/wikis/${relatedId}`}>{related?.title ?? relatedId}</Link>
                             <Badge variant="outline">{edge.relation}</Badge>
-                            {edge.shared_tags?.map((tag) => (
-                              <span key={tag} className="tag tag--sm" data-tag={tag}>
-                                {tag}
-                              </span>
-                            ))}
+                            <TagList tags={edge.shared_tags ?? []} size="sm" wrap={false} />
                           </li>
                         );
                       })}

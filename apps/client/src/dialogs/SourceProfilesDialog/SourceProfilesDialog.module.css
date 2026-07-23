@@ -81,3 +81,9 @@
   color: var(--error);
   font-size: var(--text-sm);
 }
+
+.suggestionHint {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}

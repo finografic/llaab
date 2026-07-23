@@ -5,7 +5,8 @@ import { NodeIdSchema } from './primitives.schema.js';
 
 export const TranscriptSourceTypeSchema = z.enum(['youtube', 'article', 'repo', 'chat', 'podcast', 'other']);
 
-export const TranscriptOriginSchema = z.enum(['rss', 'generated']);
+/** `youtube` = captions pulled from a matched YouTube upload of the episode, not re-transcribed. */
+export const TranscriptOriginSchema = z.enum(['rss', 'youtube', 'generated']);
 
 const TranscriptCanonicalCoverageItemSchema = z.object({
   id: NodeIdSchema,
@@ -46,6 +47,10 @@ export const TranscriptNodeSchema = BaseNodeSchema.extend({
   podcast_audio_url: z.string().url().optional(),
   /** How the transcript text was obtained: published in the RSS feed, or generated locally. */
   transcript_origin: TranscriptOriginSchema.optional(),
+  /** Matched YouTube upload used when `transcript_origin` is `youtube` — the video URL. */
+  youtube_video_url: z.string().url().optional(),
+  /** Vault id of the YouTube channel source the video was pulled from — attributes Author to it. */
+  youtube_channel_source_id: NodeIdSchema.optional(),
   extracted_idea_ids: z.array(NodeIdSchema).default([]),
   extracted_skill_ids: z.array(NodeIdSchema).default([]),
   canonical_coverage: TranscriptCanonicalCoverageSchema.optional(),
