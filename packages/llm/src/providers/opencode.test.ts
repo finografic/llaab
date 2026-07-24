@@ -144,14 +144,57 @@ describe('openCodeComplete', () => {
   });
 });
 
+const SSE_CHUNK_FIXTURE = [
+  'data: {"id":"c1","object":"chat.completion.chunk","created":1,"model":"glm-5.2","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}',
+  '',
+  'data: {"id":"c1","object":"chat.completion.chunk","created":1,"model":"glm-5.2","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}',
+  '',
+  'data: {"id":"c1","object":"chat.completion.chunk","created":1,"model":"glm-5.2","choices":[{"index":0,"delta":{"content":" world"},"finish_reason":null}]}',
+  '',
+  'data: {"id":"c1","object":"chat.completion.chunk","created":1,"model":"glm-5.2","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":2,"total_tokens":5}}',
+  '',
+  'data: [DONE]',
+  '',
+  '',
+].join('\n');
+
+// Real streaming since migration phase A3 — this supersedes the A0 single-chunk pseudo-stream
+// test (the sanctioned exception recorded in the migration ledger).
 describe('openCodeStream', () => {
-  // Current behaviour — single-chunk pseudo-stream. Scheduled to be superseded by real
-  // streaming in migration phase A3; replacing this test there is the sanctioned exception.
-  it('yields the full completion as a single chunk', async () => {
+  it('yields streamed text deltas in order from an SSE response', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(SSE_CHUNK_FIXTURE, { status: 200, headers: { 'content-type': 'text/event-stream' } }),
+    );
+
     const chunks: string[] = [];
     for await (const chunk of openCodeStream('p', { model: 'glm-5.2' })) chunks.push(chunk);
 
-    expect(chunks).toEqual(['oc-response']);
+    expect(chunks).toEqual(['Hello', ' world']);
+    const { body } = capturedFetch();
+    expect(body['stream']).toBe(true);
+  });
+
+  it('throws the mapped transport error when the stream request fails', async () => {
+    fetchMock.mockResolvedValue(new Response('upstream down', { status: 503 }));
+
+    const consume = async () => {
+      const chunks: string[] = [];
+      for await (const chunk of openCodeStream('p', { model: 'glm-5.2' })) chunks.push(chunk);
+      return chunks;
+    };
+
+    await expect(consume()).rejects.toThrow('OpenCode request failed: 503 upstream down');
+  });
+
+  it('throws before any fetch when OPENCODE_API_KEY is missing', async () => {
+    vi.stubEnv('OPENCODE_API_KEY', undefined);
+
+    const consume = async () => {
+      for await (const chunk of openCodeStream('p', { model: 'glm-5.2' })) void chunk;
+    };
+
+    await expect(consume()).rejects.toThrow('OPENCODE_API_KEY is not configured');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

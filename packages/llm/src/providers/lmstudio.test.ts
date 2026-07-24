@@ -326,16 +326,48 @@ describe('progress lifecycle', () => {
   });
 });
 
+const SSE_CHUNK_FIXTURE = [
+  'data: {"id":"c1","object":"chat.completion.chunk","created":1,"model":"model-x","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}',
+  '',
+  'data: {"id":"c1","object":"chat.completion.chunk","created":1,"model":"model-x","choices":[{"index":0,"delta":{"content":"lm-"},"finish_reason":null}]}',
+  '',
+  'data: {"id":"c1","object":"chat.completion.chunk","created":1,"model":"model-x","choices":[{"index":0,"delta":{"content":"stream"},"finish_reason":null}]}',
+  '',
+  'data: {"id":"c1","object":"chat.completion.chunk","created":1,"model":"model-x","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":2,"total_tokens":5}}',
+  '',
+  'data: [DONE]',
+  '',
+  '',
+].join('\n');
+
+// Real streaming since migration phase A3 — this supersedes the A0 single-chunk pseudo-stream
+// test (the sanctioned exception recorded in the migration ledger).
 describe('lmStudioStream', () => {
-  // Current behaviour — single-chunk pseudo-stream. Scheduled to be superseded by real
-  // streaming in migration phase A3; replacing this test there is the sanctioned exception.
-  it('yields the full completion as a single chunk', async () => {
-    loadedModels = [{ identifier: 'model-x' }];
+  it('runs the model-load preflight, then yields streamed text deltas in order', async () => {
+    loadedModels = [];
+    fetchMock.mockResolvedValue(
+      new Response(SSE_CHUNK_FIXTURE, { status: 200, headers: { 'content-type': 'text/event-stream' } }),
+    );
 
     const chunks: string[] = [];
     for await (const chunk of lmStudioStream('p', { model: 'model-x' })) chunks.push(chunk);
 
-    expect(chunks).toEqual(['lm-response']);
+    expect(chunks).toEqual(['lm-', 'stream']);
+    expect(lmsCalls('load')[0]?.[1]).toEqual(['load', 'model-x', '--yes']);
+    const { body } = capturedFetch();
+    expect(body['stream']).toBe(true);
+    expect(timeoutSpy).toHaveBeenLastCalledWith(20 * 60 * 1000);
+  });
+
+  it('throws the mapped transport error when the stream request fails', async () => {
+    loadedModels = [{ identifier: 'model-x' }];
+    fetchMock.mockResolvedValue(new Response('boom', { status: 500 }));
+
+    const consume = async () => {
+      for await (const chunk of lmStudioStream('p', { model: 'model-x' })) void chunk;
+    };
+
+    await expect(consume()).rejects.toThrow('LM Studio request failed: 500 boom');
   });
 });
 

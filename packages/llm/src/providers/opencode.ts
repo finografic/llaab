@@ -1,4 +1,4 @@
-import { APICallError, generateText } from 'ai';
+import { APICallError, generateText, streamText } from 'ai';
 import type { LlmProvider, LlmProviderResult } from '../provider.js';
 import type { LlmCompleteOptions } from '../types.js';
 
@@ -84,7 +84,30 @@ export async function openCodeComplete(prompt: string, opts: LlmCompleteOptions)
 }
 
 export async function* openCodeStream(prompt: string, opts: LlmCompleteOptions): AsyncGenerator<string> {
-  yield (await openCodeComplete(prompt, opts)).text;
+  await opts.onProgress?.({ status: 'processing prompt' });
+  requireApiKey();
+
+  const result = streamText({
+    model: resolveAiSdkModel('opencode', opts.model),
+    ...(opts.system && { system: opts.system }),
+    prompt,
+    temperature: getTemperature(),
+    ...(opts.maxTokens ? { maxOutputTokens: opts.maxTokens } : {}),
+    maxRetries: AI_SDK_MAX_RETRIES,
+  });
+
+  // fullStream instead of textStream: textStream swallows transport errors, and callers rely
+  // on stream failures throwing.
+  for await (const part of result.fullStream) {
+    if (part.type === 'text-delta' && part.text) {
+      yield part.text;
+    } else if (part.type === 'error') {
+      throw mapOpenCodeError(part.error);
+    }
+  }
+
+  const usage = await result.usage;
+  await opts.onProgress?.({ status: 'completed', completionTokens: usage.outputTokens });
 }
 
 export function openCodeListModels(): Promise<string[]> {

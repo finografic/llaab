@@ -1,6 +1,6 @@
 # Fable Migration Ledger
 
-Branch: `codex/fable-ai-sdk-migration-setup` · Started: 2026-07-24 · Last updated: 2026-07-24 A1
+Branch: `codex/fable-ai-sdk-migration-setup` · Started: 2026-07-24 · Last updated: 2026-07-24 A3
 
 ## Status
 
@@ -9,17 +9,20 @@ A0–A2 complete. Anthropic, OpenCode, and LM Studio completions all run through
 streams through `streamText`. Ollama stays on the native client (Phase 6 parity decision
 pending). LM Studio keeps its CLI lifecycle preflight, progress polling, and
 `AbortSignal.timeout` completion-timeout semantics; OpenCode keeps its pre-request API-key gate
-and catalog logic. `@anthropic-ai/sdk` removed. LM Studio and OpenCode `stream()` are still
-single-chunk pseudo-streams — that is A3's job.
+and catalog logic. `@anthropic-ai/sdk` removed. A3 done: LM Studio and OpenCode `stream()` now really stream via
+`streamText` (consuming `fullStream` so transport errors throw instead of being swallowed by
+`textStream`); LM Studio streaming keeps the model-load preflight, progress polling, and
+completion timeout. `streamLlm`'s caller-facing `AsyncGenerator<string>` shape is unchanged.
 
 ## Resume Here
 
-Start A3 — real streaming for LM Studio and OpenCode: route their `stream()` through
-`streamText` with the same model/registry/error mapping as `complete()`, and replace the two
-pre-declared single-chunk tests ("yields the full completion as a single chunk" in
-`providers/lmstudio.test.ts` and `providers/opencode.test.ts`) with multi-delta SSE fixtures —
-that replacement is the sanctioned exception recorded under Decisions. Confirm `streamLlm`'s
-caller-facing shape (an `AsyncGenerator<string>` of text chunks) is unchanged.
+Start A4 — cross-cutting behaviour: usage/error/timeout mapping is already unified through
+`ai-sdk-model-registry.ts` + the per-provider `map*Error` helpers, so A4's remaining scope is
+the typed structured-output path: add `routeLlmObject()` inside `@llaab/llm` per
+`TODO_VERCEL_AI_SDK_MIGRATION.md` Phase 4 (schema in, typed data + the same
+provider/model/usage metadata out; AI SDK types stay private). The consumer-side pilot
+(wiki-link enrichment) requires consumer edits and is out of this session's scope — defer with
+a ledger note. Then A5 closeout.
 
 ## Phase Log
 
@@ -29,7 +32,7 @@ caller-facing shape (an `AsyncGenerator<string>` of text chunks) is unchanged.
 | A0 characterization tests         | done — 102 tests, 8 files                                        | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build`        |
 | A1 dependencies and boundary      | done — deps, registry, smoke                                     | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke          |
 | A2 provider migration             | done — anthropic 5fe4105, opencode 109adf1, lmstudio this commit | this commit | `pnpm exec vitest run packages/llm` (109 passing) after each provider; `pnpm typecheck`; `pnpm build` |
-| A3 streaming                      | not started                                                      | —           | —                                                                                                     |
+| A3 streaming                      | done — lmstudio + opencode real streaming                        | this commit | `pnpm exec vitest run packages/llm` (112 passing); `pnpm typecheck`; `pnpm build`                     |
 | A4 cross-cutting behavior         | not started                                                      | —           | —                                                                                                     |
 | A5 verification and documentation | not started                                                      | —           | —                                                                                                     |
 | B process-state audit             | blocked until Task A complete                                    | —           | —                                                                                                     |

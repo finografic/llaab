@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { APICallError, generateText } from 'ai';
+import { APICallError, generateText, streamText } from 'ai';
 import type { LlmProvider, LlmProviderResult } from '../provider.js';
 import type { LlmCompleteOptions, LlmProgress } from '../types.js';
 
@@ -288,7 +288,37 @@ export async function lmStudioComplete(prompt: string, opts: LlmCompleteOptions)
 }
 
 export async function* lmStudioStream(prompt: string, opts: LlmCompleteOptions): AsyncGenerator<string> {
-  yield (await lmStudioComplete(prompt, opts)).text;
+  await opts.onProgress?.({ status: 'loading' });
+  await ensureRequestedModelLoaded(opts.model);
+  await opts.onProgress?.({ status: 'processing prompt' });
+  const stopProgressPolling = startProgressPolling(opts.model, opts.onProgress);
+
+  try {
+    const result = streamText({
+      model: resolveAiSdkModel('lmstudio', opts.model),
+      ...(opts.system && { system: opts.system }),
+      prompt,
+      temperature: getTemperature(),
+      ...(opts.maxTokens ? { maxOutputTokens: opts.maxTokens } : {}),
+      abortSignal: AbortSignal.timeout(getCompletionTimeoutMs()),
+      maxRetries: AI_SDK_MAX_RETRIES,
+    });
+
+    // fullStream instead of textStream: textStream swallows transport errors, and callers rely
+    // on stream failures throwing.
+    for await (const part of result.fullStream) {
+      if (part.type === 'text-delta' && part.text) {
+        yield part.text;
+      } else if (part.type === 'error') {
+        throw mapLmStudioError(part.error);
+      }
+    }
+
+    const usage = await result.usage;
+    await opts.onProgress?.({ status: 'completed', completionTokens: usage.outputTokens });
+  } finally {
+    stopProgressPolling();
+  }
 }
 
 export async function lmStudioListModels(): Promise<string[]> {
