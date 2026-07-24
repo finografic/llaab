@@ -1,29 +1,36 @@
 # Fable Migration Ledger
 
-Branch: `codex/fable-ai-sdk-migration-setup` · Started: 2026-07-24 · Last updated: 2026-07-24 A0
+Branch: `codex/fable-ai-sdk-migration-setup` · Started: 2026-07-24 · Last updated: 2026-07-24 A1
 
 ## Status
 
-A0 complete: 102 new characterization tests across 8 colocated files in `packages/llm/src` pin the
-current `routeLlm`/`streamLlm`/`getLlmStatus` contract, cache semantics, routing config
-merge/persistence, all four provider transports, and the OpenCode executor. No transport source has
-changed. Branch was fast-forwarded onto master (TypeScript 7 pin commits) before starting.
+A0 and A1 complete. 102 characterization tests pin the pre-migration contract; the AI SDK
+(`ai@7`, `@ai-sdk/anthropic@4`, `@ai-sdk/openai-compatible@3`) is installed in `packages/llm`
+only, with the internal boundary in `packages/llm/src/ai-sdk-model-registry.ts`
+(`resolveAiSdkModel`, `toProviderResult`, `AI_SDK_MAX_RETRIES = 0`) kept out of `index.ts`.
+Bun smoke (`bun run packages/llm/scripts/ai-sdk-bun-smoke.ts`) passes on Bun 1.2.2. No provider
+transport has switched yet.
 
 ## Resume Here
 
-Start A1: add `ai`, `@ai-sdk/anthropic`, `@ai-sdk/openai-compatible` to `packages/llm` only (one
-pinned stable major), create the internal model-registry/result-mapping boundary
-(`packages/llm/src/ai-sdk-model-registry.ts` per `TODO_VERCEL_AI_SDK_MIGRATION.md` Phase 1), set
-explicit `maxRetries`, and run the relocated Phase 0 spike (TS7 strict-ESM typecheck + Bun smoke
-against a mocked OpenAI-compatible endpoint). No provider switched yet; A0 tests stay untouched.
+Start A2, one provider per commit with all `packages/llm` tests green after each:
+
+1. Anthropic — migrate `providers/anthropic.ts` complete/stream to `generateText`/`streamText`
+   via `resolveAiSdkModel('anthropic', …)`; keep throwing `'Unexpected response type from
+Anthropic'` when the response yields no text so the A0 fetch-level tests in
+   `providers/anthropic.test.ts` pass unmodified. Drop `@anthropic-ai/sdk` when unreferenced.
+2. OpenCode — migrate `providers/opencode.ts`; keep the pre-fetch `'OPENCODE_API_KEY is not
+configured'` throw and catalog/availability logic outside the transport.
+3. LM Studio — replace only the `/chat/completions` call; lifecycle preflight, CLI inspection,
+   progress polling stay as-is.
 
 ## Phase Log
 
 | Phase                             | State                         | Commit      | Verified by                                                                                    |
 | --------------------------------- | ----------------------------- | ----------- | ---------------------------------------------------------------------------------------------- |
 | Setup                             | done — brief and ledger only  | 8c580799    | `pnpm run lint:md`; `git diff --check`                                                         |
-| A0 characterization tests         | done — 102 tests, 8 files     | this commit | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build` |
-| A1 dependencies and boundary      | not started                   | —           | —                                                                                              |
+| A0 characterization tests         | done — 102 tests, 8 files     | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build` |
+| A1 dependencies and boundary      | done — deps, registry, smoke  | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke   |
 | A2 provider migration             | not started                   | —           | —                                                                                              |
 | A3 streaming                      | not started                   | —           | —                                                                                              |
 | A4 cross-cutting behavior         | not started                   | —           | —                                                                                              |
@@ -51,6 +58,16 @@ against a mocked OpenAI-compatible endpoint). No provider switched yet; A0 tests
   suggests Ollama first; the migration doc explicitly keeps Ollama on the native client until its
   Phase 6 parity decision and migrates Anthropic + OpenCode (Phase 2) then LM Studio (Phase 3).
   Repo doc wins on specifics.
+- **AI SDK version pin (A1):** `ai@^7.0.37` + `@ai-sdk/anthropic@^4.0.19` +
+  `@ai-sdk/openai-compatible@^3.0.14`, resolved against workspace `zod@4.4.3`. One major across
+  the whole migration; uses the v7 `generateText`/`streamText` API (usage fields
+  `inputTokens`/`outputTokens`, `maxOutputTokens`, model instances are `LanguageModelV4`).
+- **Transport retries pinned to 0** (`AI_SDK_MAX_RETRIES`): the SDK default of 2 would multiply
+  LLAAB's semantic retries. Enforced by a call-count test in `ai-sdk-model-registry.test.ts`.
+- **`@ai-sdk/gateway` is a transitive dep of `ai@7`** (its default global provider). LLAAB never
+  uses it — all models come from `resolveAiSdkModel` — so the "no AI Gateway dependency"
+  acceptance criterion is about usage, not node_modules presence. Size impact of all AI SDK
+  packages combined: ~13 MB in `node_modules/.pnpm` (acceptable).
 
 ## Deferred / Noticed
 

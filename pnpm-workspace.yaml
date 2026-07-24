@@ -11,3 +11,8 @@ allowBuilds:
   msw: false
   onnxruntime-node: false
   protobufjs: true
+
+minimumReleaseAgeExclude:
+  - '@ai-sdk/anthropic@4.0.19'
+  - '@ai-sdk/gateway@4.0.28'
+  - ai@7.0.37
