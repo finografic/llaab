@@ -41,7 +41,7 @@ export default {
     {
       label: 'TypeScript — pinned',
       dependencies: ['typescript'],
-      pinVersion: '6.0.3',
+      pinVersion: '7.0.2',
     },
     // Node types — exact pin, same version everywhere
     {
