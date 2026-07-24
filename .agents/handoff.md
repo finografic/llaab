@@ -470,6 +470,13 @@ failures throw `LlmStructuredOutputError` carrying the raw model text. Character
 `packages/llm/src` pin the router, cache, and provider transport contracts. Detail:
 `docs/todo/TODO_VERCEL_AI_SDK_MIGRATION.md` and `docs/todo/TODO_FABLE_MIGRATION_LEDGER.md`.
 
+A per-call `model` override string may be provider-qualified (`provider:model`, the same encoding
+`LlmRoutingEditor` uses for persisted routing) to redirect the task to a different provider; a
+bare model string (including real Ollama tags containing a colon, e.g. `gemma4:e4b-it-qat`) keeps
+the task's routed provider. The response cache key includes `system` and `maxTokens` alongside
+provider/model/prompt, so calls that only differ by system prompt or token cap no longer collide;
+`bypassCache` skips both the cache read and the write.
+
 Capabilities are shared through `@llaab/core`. LLM providers, skill routes, typed commands, and
 executor adapters declare/query capabilities. `OpenCode` is registered as an external executor
 adapter but reports unavailable unless the `opencode` binary exists.
