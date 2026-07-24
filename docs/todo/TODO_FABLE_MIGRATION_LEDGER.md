@@ -9,7 +9,7 @@ for this run, and no source migration work has started.
 
 ## Resume Here
 
-Start Task A0 from [`docs/todo/TODO_PROMPT_FABLE_SESSION.md`](./TODO_PROMPT_FABLE_SESSION.md): add
+Start Task A0 from [`docs/todo/TODO_FABLE_SESSION_PROMPT.md`](./TODO_FABLE_SESSION_PROMPT.md): add
 characterization tests for the current `@llaab/llm` router, cache, routing overrides, streaming,
 errors, and RunNode telemetry before changing transport code.
 
