@@ -29,11 +29,23 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-function capturedFetch(index = 0): { url: string; init: RequestInit; body: Record<string, unknown> } {
+function capturedFetch(index = 0): {
+  url: string;
+  init: RequestInit;
+  headers: Record<string, string>;
+  body: Record<string, unknown>;
+} {
   const [input, init] = fetchMock.mock.calls[index] as [unknown, RequestInit];
+  // Header names are case-insensitive on the wire — normalize so the pin survives transports
+  // that emit lowercase names (recorded in the migration ledger under Decisions).
+  const headers: Record<string, string> = {};
+  new Headers(init.headers).forEach((value, key) => {
+    headers[key] = value;
+  });
   return {
     url: String(input),
     init,
+    headers,
     body: init.body ? (JSON.parse(init.body as string) as Record<string, unknown>) : {},
   };
 }
@@ -51,13 +63,11 @@ describe('openCodeComplete', () => {
   it('POSTs the default Zen base URL with bearer auth and temperature 0.3', async () => {
     await openCodeComplete('the prompt', { model: 'glm-5.2' });
 
-    const { url, init, body } = capturedFetch();
+    const { url, init, headers, body } = capturedFetch();
     expect(url).toBe('https://opencode.ai/zen/go/v1/chat/completions');
     expect(init.method).toBe('POST');
-    expect(init.headers).toEqual({
-      'Authorization': 'Bearer oc-key',
-      'Content-Type': 'application/json',
-    });
+    expect(headers['authorization']).toBe('Bearer oc-key');
+    expect(headers['content-type']).toBe('application/json');
     expect(body).toEqual({
       model: 'glm-5.2',
       messages: [{ role: 'user', content: 'the prompt' }],

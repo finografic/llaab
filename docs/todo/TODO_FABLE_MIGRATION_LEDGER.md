@@ -26,16 +26,16 @@ configured'` throw and catalog/availability logic outside the transport.
 
 ## Phase Log
 
-| Phase                             | State                         | Commit      | Verified by                                                                                    |
-| --------------------------------- | ----------------------------- | ----------- | ---------------------------------------------------------------------------------------------- |
-| Setup                             | done — brief and ledger only  | 8c580799    | `pnpm run lint:md`; `git diff --check`                                                         |
-| A0 characterization tests         | done — 102 tests, 8 files     | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build` |
-| A1 dependencies and boundary      | done — deps, registry, smoke  | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke   |
-| A2 provider migration             | in progress — anthropic done  | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`              |
-| A3 streaming                      | not started                   | —           | —                                                                                              |
-| A4 cross-cutting behavior         | not started                   | —           | —                                                                                              |
-| A5 verification and documentation | not started                   | —           | —                                                                                              |
-| B process-state audit             | blocked until Task A complete | —           | —                                                                                              |
+| Phase                             | State                                                                | Commit      | Verified by                                                                                    |
+| --------------------------------- | -------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------- |
+| Setup                             | done — brief and ledger only                                         | 8c580799    | `pnpm run lint:md`; `git diff --check`                                                         |
+| A0 characterization tests         | done — 102 tests, 8 files                                            | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build` |
+| A1 dependencies and boundary      | done — deps, registry, smoke                                         | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke   |
+| A2 provider migration             | in progress — anthropic 5fe4105, opencode this commit; lmstudio next | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`              |
+| A3 streaming                      | not started                                                          | —           | —                                                                                              |
+| A4 cross-cutting behavior         | not started                                                          | —           | —                                                                                              |
+| A5 verification and documentation | not started                                                          | —           | —                                                                                              |
+| B process-state audit             | blocked until Task A complete                                        | —           | —                                                                                              |
 
 ## Decisions
 
@@ -71,6 +71,13 @@ configured'` throw and catalog/availability logic outside the transport.
   string equality; every other A0 assertion (URL, method, `max_tokens`, usage mapping, error
   messages, SSE stream deltas) passes byte-identical. Alternative rejected: forcing string
   serialization would mean forking the provider's request builder.
+- **A2 OpenCode wire-shape test adjustment (sanctioned, logged here per brief §0.8):** the AI SDK
+  emits lowercase header names plus an additive `user-agent` header. The header assertion in
+  `providers/opencode.test.ts` now normalizes via `Headers` and pins `authorization` +
+  `content-type` values instead of exact-object equality. Request bodies stayed byte-identical
+  (plain-string message content), so all body pins pass unmodified. Error contract preserved by
+  `mapOpenCodeError` (APICallError status/body → `OpenCode request failed: …`; malformed success
+  responses → `Unexpected response from OpenCode`; statusless network errors propagate).
 - **`@ai-sdk/gateway` is a transitive dep of `ai@7`** (its default global provider). LLAAB never
   uses it — all models come from `resolveAiSdkModel` — so the "no AI Gateway dependency"
   acceptance criterion is about usage, not node_modules presence. Size impact of all AI SDK

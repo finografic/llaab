@@ -1,15 +1,9 @@
+import { APICallError, generateText } from 'ai';
 import type { LlmProvider, LlmProviderResult } from '../provider.js';
 import type { LlmCompleteOptions } from '../types.js';
 
+import { AI_SDK_MAX_RETRIES, resolveAiSdkModel, toProviderResult } from '../ai-sdk-model-registry.js';
 import { openCodeGetConfiguredModelNames } from './opencode-catalog.js';
-
-interface OpenAiChatResponse {
-  choices?: Array<{ message?: { content?: string } }>;
-  usage?: {
-    completion_tokens?: number;
-    prompt_tokens?: number;
-  };
-}
 
 export interface OpenCodeModelInfo {
   created?: number;
@@ -18,12 +12,7 @@ export interface OpenCodeModelInfo {
   provider: 'opencode';
 }
 
-const DEFAULT_BASE_URL = 'https://opencode.ai/zen/go/v1';
 const DEFAULT_TEMPERATURE = 0.3;
-
-function getBaseUrl() {
-  return (process.env['OPENCODE_BASE_URL'] ?? DEFAULT_BASE_URL).replace(/\/$/, '');
-}
 
 function getApiKey() {
   return process.env['OPENCODE_API_KEY'];
@@ -34,71 +23,64 @@ function getTemperature() {
   return Number.isFinite(configured) ? configured : DEFAULT_TEMPERATURE;
 }
 
-function buildMessages(prompt: string, system?: string) {
-  const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
-  if (system) messages.push({ role: 'system', content: system });
-  messages.push({ role: 'user', content: prompt });
-  return messages;
+function requireApiKey(): void {
+  if (!getApiKey()) throw new Error('OPENCODE_API_KEY is not configured');
 }
 
-function getHeaders(): Record<string, string> {
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error('OPENCODE_API_KEY is not configured');
-
-  return {
-    'Authorization': `Bearer ${apiKey}`,
-    'Content-Type': 'application/json',
-  };
-}
-
-async function openCodeFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${getBaseUrl()}${path}`, {
-    ...init,
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(
+/**
+ * Re-maps AI SDK transport errors onto the provider's existing error contract:
+ * HTTP failures become `OpenCode request failed: <status> <body>`, and malformed success
+ * responses (e.g. empty `choices`) become `Unexpected response from OpenCode`. Errors without
+ * an HTTP status (network-level failures) propagate unchanged.
+ */
+function mapOpenCodeError(error: unknown): Error {
+  if (APICallError.isInstance(error) && error.statusCode != null) {
+    const body = error.responseBody ?? '';
+    return new Error(
       body
-        ? `OpenCode request failed: ${response.status} ${body}`
-        : `OpenCode request failed: ${response.status}`,
+        ? `OpenCode request failed: ${error.statusCode} ${body}`
+        : `OpenCode request failed: ${error.statusCode}`,
     );
   }
-
-  return (await response.json()) as T;
+  if (error instanceof TypeError) {
+    return new Error('Unexpected response from OpenCode');
+  }
+  return error instanceof Error ? error : new Error(String(error));
 }
 
 export async function openCodeComplete(prompt: string, opts: LlmCompleteOptions): Promise<LlmProviderResult> {
   const start = performance.now();
   await opts.onProgress?.({ status: 'processing prompt' });
+  requireApiKey();
 
-  const response = await openCodeFetch<OpenAiChatResponse>('/chat/completions', {
-    method: 'POST',
-    body: JSON.stringify({
-      model: opts.model,
-      messages: buildMessages(prompt, opts.system),
+  let result;
+  try {
+    result = await generateText({
+      model: resolveAiSdkModel('opencode', opts.model),
+      ...(opts.system && { system: opts.system }),
+      prompt,
       temperature: getTemperature(),
-      ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}),
-    }),
-  });
+      ...(opts.maxTokens ? { maxOutputTokens: opts.maxTokens } : {}),
+      maxRetries: AI_SDK_MAX_RETRIES,
+    });
+  } catch (error) {
+    throw mapOpenCodeError(error);
+  }
 
-  const text = response.choices?.[0]?.message?.content;
-  if (!text) throw new Error('Unexpected response from OpenCode');
+  if (!result.text) throw new Error('Unexpected response from OpenCode');
 
   await opts.onProgress?.({
     status: 'completed',
-    completionTokens: response.usage?.completion_tokens,
+    completionTokens: result.usage.outputTokens,
   });
 
-  return {
-    text,
-    durationMs: Math.round(performance.now() - start),
+  return toProviderResult({
+    text: result.text,
+    usage: result.usage,
     providerId: 'opencode',
     model: opts.model,
-    promptTokens: response.usage?.prompt_tokens,
-    completionTokens: response.usage?.completion_tokens,
-  };
+    startedAt: start,
+  });
 }
 
 export async function* openCodeStream(prompt: string, opts: LlmCompleteOptions): AsyncGenerator<string> {
