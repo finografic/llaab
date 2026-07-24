@@ -1,8 +1,12 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import { generateText, NoObjectGeneratedError, Output } from 'ai';
 import type { LlmProviderResult } from './provider.js';
 import type { LlmProviderId } from './types.js';
 import type { LanguageModel, LanguageModelUsage } from 'ai';
+import type { z } from 'zod';
+
+import { LlmStructuredOutputError } from './structured-output.js';
 
 /**
  * Internal AI SDK boundary for @llaab/llm (Fable migration A1). Maps LLAAB provider ids to
@@ -61,6 +65,42 @@ export function resolveAiSdkModel(providerId: AiSdkProviderId, modelId: string):
       });
       return provider(modelId);
     }
+  }
+}
+
+/**
+ * Typed object generation through the AI SDK (`generateText` + `Output.object`). Schema-invalid
+ * or non-JSON model output surfaces as `LlmStructuredOutputError` with the raw model text
+ * preserved; transport errors propagate for the caller to map per provider.
+ */
+export async function generateAiSdkObject<OBJECT>(args: {
+  providerId: AiSdkProviderId;
+  model: string;
+  prompt: string;
+  schema: z.ZodType<OBJECT>;
+  system?: string;
+  maxTokens?: number;
+}): Promise<{ object: OBJECT; text: string; usage: LanguageModelUsage | undefined }> {
+  try {
+    const result = await generateText({
+      model: resolveAiSdkModel(args.providerId, args.model),
+      ...(args.system && { system: args.system }),
+      prompt: args.prompt,
+      ...(args.maxTokens ? { maxOutputTokens: args.maxTokens } : {}),
+      output: Output.object({ schema: args.schema }),
+      maxRetries: AI_SDK_MAX_RETRIES,
+    });
+    return { object: result.output, text: result.text, usage: result.usage };
+  } catch (error) {
+    if (NoObjectGeneratedError.isInstance(error)) {
+      throw new LlmStructuredOutputError('Model output failed structured-output validation', {
+        provider: args.providerId,
+        model: args.model,
+        rawText: error.text,
+        cause: error,
+      });
+    }
+    throw error;
   }
 }
 

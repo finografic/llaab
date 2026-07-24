@@ -9,20 +9,24 @@ A0–A2 complete. Anthropic, OpenCode, and LM Studio completions all run through
 streams through `streamText`. Ollama stays on the native client (Phase 6 parity decision
 pending). LM Studio keeps its CLI lifecycle preflight, progress polling, and
 `AbortSignal.timeout` completion-timeout semantics; OpenCode keeps its pre-request API-key gate
-and catalog logic. `@anthropic-ai/sdk` removed. A3 done: LM Studio and OpenCode `stream()` now really stream via
-`streamText` (consuming `fullStream` so transport errors throw instead of being swallowed by
-`textStream`); LM Studio streaming keeps the model-load preflight, progress polling, and
-completion timeout. `streamLlm`'s caller-facing `AsyncGenerator<string>` shape is unchanged.
+and catalog logic. `@anthropic-ai/sdk` removed. A3: LM Studio and OpenCode `stream()` really stream via
+`streamText` (consuming `fullStream` so transport errors still throw); `streamLlm`'s
+caller-facing shape is unchanged. A4: additive `routeLlmObject()` typed structured-output API
+(AI SDK `Output.object` for anthropic/opencode; deterministic JSON-extraction fallback for
+local providers) with `LlmObjectResult` / `LlmStructuredOutputError` exported from the barrel.
+Remaining: A5 closeout (handoff, docs, roadmap decision, final verification).
 
 ## Resume Here
 
-Start A4 — cross-cutting behaviour: usage/error/timeout mapping is already unified through
-`ai-sdk-model-registry.ts` + the per-provider `map*Error` helpers, so A4's remaining scope is
-the typed structured-output path: add `routeLlmObject()` inside `@llaab/llm` per
-`TODO_VERCEL_AI_SDK_MIGRATION.md` Phase 4 (schema in, typed data + the same
-provider/model/usage metadata out; AI SDK types stay private). The consumer-side pilot
-(wiki-link enrichment) requires consumer edits and is out of this session's scope — defer with
-a ledger note. Then A5 closeout.
+Start A5 — closeout: full `pnpm build && pnpm typecheck && pnpm test && pnpm lint`; update
+`.agents/handoff.md` **LLM Layer**; per todo-done conventions rename
+`TODO_VERCEL_AI_SDK_MIGRATION.md` → `DONE_VERCEL_AI_SDK_MIGRATION.md` only if its tracked scope
+is judged complete — it is NOT (doc Phases 5–8 remain open: vision, Ollama parity decision,
+embeddings, closeout verification against the live app), so instead update that doc's Status
+header and checkboxes for Phases 0–4 and leave it `TODO_`. The single authorised `ROADMAP.md`
+edit only applies if Task A is "fully complete" per the brief — record the outcome here either
+way. Then run the Rebuild & Reload App workflow (`./scripts/macos/dev-refresh.sh`) since
+server-consumed `packages/llm` changed, and write the final ledger summary.
 
 ## Phase Log
 
@@ -33,7 +37,7 @@ a ledger note. Then A5 closeout.
 | A1 dependencies and boundary      | done — deps, registry, smoke                                     | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke          |
 | A2 provider migration             | done — anthropic 5fe4105, opencode 109adf1, lmstudio this commit | this commit | `pnpm exec vitest run packages/llm` (109 passing) after each provider; `pnpm typecheck`; `pnpm build` |
 | A3 streaming                      | done — lmstudio + opencode real streaming                        | this commit | `pnpm exec vitest run packages/llm` (112 passing); `pnpm typecheck`; `pnpm build`                     |
-| A4 cross-cutting behavior         | not started                                                      | —           | —                                                                                                     |
+| A4 cross-cutting behavior         | done — routeLlmObject + structured-output boundary               | this commit | `pnpm exec vitest run packages/llm` (122 passing); `pnpm typecheck`; `pnpm build`                     |
 | A5 verification and documentation | not started                                                      | —           | —                                                                                                     |
 | B process-state audit             | blocked until Task A complete                                    | —           | —                                                                                                     |
 
@@ -83,8 +87,22 @@ a ledger note. Then A5 closeout.
   acceptance criterion is about usage, not node_modules presence. Size impact of all AI SDK
   packages combined: ~13 MB in `node_modules/.pnpm` (acceptable).
 
+- **A4 structured-output design:** `routeLlmObject(task, prompt, zodSchema, opts?)` is additive
+  public API (frozen exports unchanged). Anthropic/OpenCode routes use the AI SDK
+  `Output.object` path; ollama/lmstudio routes use text generation + deterministic JSON
+  extraction (`structured-output.ts`) because local models fence JSON and LM Studio's model
+  lifecycle lives in `complete()`. No caching for object responses in v1. Failures throw
+  `LlmStructuredOutputError` carrying the raw model text. Note: the openai-compatible chat model
+  does not send `response_format` JSON schemas (AI SDK warns "responseFormat is not supported")
+  — prompts must instruct JSON output; validation happens SDK-side/LLAAB-side.
+
 ## Deferred / Noticed
 
+- **Consumer-side structured-output pilot (wiki-link enrichment) not done** — requires editing
+  consumer packages, which this brief forbids. `routeLlmObject` is ready for it.
+- **Migration doc Phases 5 (vision), 6 (Ollama parity decision), 7 (embeddings), and the live-app
+  parts of Phase 8** are out of this session's scope and remain open in
+  `TODO_VERCEL_AI_SDK_MIGRATION.md`.
 - Podcast ingest fixture/live validation remains in `ROADMAP.md#next`.
 - Vault/knowledge split manual validation remains in `ROADMAP.md#next`.
 - `resolveModel` in `packages/llm/src/router.ts` has an inert ternary (a model override never

@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { LlmProvider } from './provider.js';
+import type { LlmObjectResult } from './structured-output.js';
 import type {
   LlmCompleteOptions,
   LlmCompleteResult,
@@ -10,7 +11,9 @@ import type {
   TaskType,
 } from './types.js';
 import type { Capability } from '@llaab/core';
+import type { z } from 'zod';
 
+import { generateAiSdkObject } from './ai-sdk-model-registry.js';
 import { cacheDelete, cacheGet, cacheSet } from './cache.js';
 import { anthropicProvider } from './providers/anthropic.js';
 import { lmStudioListModelDetails, lmStudioListModels, lmStudioProvider } from './providers/lmstudio.js';
@@ -20,7 +23,13 @@ import {
   ollamaListModels,
   ollamaProvider,
 } from './providers/ollama.js';
-import { openCodeListModelDetails, openCodeListModels, openCodeProvider } from './providers/opencode.js';
+import {
+  mapOpenCodeError,
+  openCodeListModelDetails,
+  openCodeListModels,
+  openCodeProvider,
+} from './providers/opencode.js';
+import { extractJsonObjectPayload, LlmStructuredOutputError } from './structured-output.js';
 
 // ── Tier → model name (env-configurable) ─────────────────────────────────────
 
@@ -211,6 +220,92 @@ export async function* streamLlm(
   yield* provider.stream(prompt, completeOpts);
 }
 
+/**
+ * Providers whose structured output runs through the AI SDK `Output.object` path. Local
+ * providers (ollama, lmstudio) use text generation plus deterministic JSON extraction instead —
+ * local models routinely fence JSON, and LM Studio's model-load lifecycle lives in `complete()`.
+ */
+const AI_SDK_OBJECT_PROVIDERS = new Set<LlmProviderId>(['anthropic', 'opencode']);
+
+/**
+ * Typed structured-output routing (Fable migration A4): resolves the task route like
+ * `routeLlm`, generates an object matching `schema`, and returns it with the same
+ * provider/model/usage metadata. Responses are never cached. Schema-invalid output throws
+ * `LlmStructuredOutputError` with the raw model text preserved.
+ */
+export async function routeLlmObject<OBJECT>(
+  task: TaskType,
+  prompt: string,
+  schema: z.ZodType<OBJECT>,
+  opts?: { model?: string; system?: string; maxTokens?: number },
+): Promise<LlmObjectResult<OBJECT>> {
+  const { model, provider } = resolveModel(task, opts?.model);
+  const start = performance.now();
+
+  if (AI_SDK_OBJECT_PROVIDERS.has(provider.id)) {
+    if (provider.id === 'opencode' && !process.env['OPENCODE_API_KEY']) {
+      throw new Error('OPENCODE_API_KEY is not configured');
+    }
+    try {
+      const generated = await generateAiSdkObject({
+        providerId: provider.id as 'anthropic' | 'opencode',
+        model,
+        prompt,
+        schema,
+        system: opts?.system,
+        maxTokens: opts?.maxTokens,
+      });
+      return {
+        object: generated.object,
+        rawText: generated.text,
+        model,
+        provider: provider.id,
+        durationMs: Math.round(performance.now() - start),
+        promptTokens: generated.usage?.inputTokens,
+        completionTokens: generated.usage?.outputTokens,
+      };
+    } catch (error) {
+      if (error instanceof LlmStructuredOutputError) throw error;
+      throw provider.id === 'opencode' ? mapOpenCodeError(error) : error;
+    }
+  }
+
+  const completion = await provider.complete(prompt, {
+    model,
+    system: opts?.system,
+    maxTokens: opts?.maxTokens,
+  });
+  const errorContext = { provider: completion.providerId, model: completion.model, rawText: completion.text };
+
+  const payload = extractJsonObjectPayload(completion.text);
+  if (!payload) throw new LlmStructuredOutputError('No JSON object found in model output', errorContext);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payload);
+  } catch (cause) {
+    throw new LlmStructuredOutputError('Model output is not valid JSON', { ...errorContext, cause });
+  }
+
+  const validated = schema.safeParse(parsed);
+  if (!validated.success) {
+    throw new LlmStructuredOutputError('Model output failed schema validation', {
+      ...errorContext,
+      cause: validated.error,
+    });
+  }
+
+  return {
+    object: validated.data,
+    rawText: completion.text,
+    model: completion.model,
+    provider: completion.providerId,
+    durationMs: completion.durationMs,
+    promptTokens: completion.promptTokens,
+    completionTokens: completion.completionTokens,
+  };
+}
+
 export async function getLlmStatus(): Promise<{
   availableProviders: Array<LlmProvider['id']>;
   capabilities: Array<{
@@ -269,6 +364,8 @@ export function updateLlmTaskRoute(task: TaskType, route: Partial<TaskRoute>): R
   return getRouting();
 }
 
+export { LlmStructuredOutputError } from './structured-output.js';
+export type { LlmObjectResult } from './structured-output.js';
 export {
   lmStudioListModelDetails,
   lmStudioListModels,

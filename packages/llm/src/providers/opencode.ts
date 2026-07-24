@@ -33,7 +33,7 @@ function requireApiKey(): void {
  * responses (e.g. empty `choices`) become `Unexpected response from OpenCode`. Errors without
  * an HTTP status (network-level failures) propagate unchanged.
  */
-function mapOpenCodeError(error: unknown): Error {
+export function mapOpenCodeError(error: unknown): Error {
   if (APICallError.isInstance(error) && error.statusCode != null) {
     const body = error.responseBody ?? '';
     return new Error(

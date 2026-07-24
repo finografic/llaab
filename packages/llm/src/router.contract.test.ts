@@ -68,6 +68,7 @@ vi.mock('./providers/opencode.js', () => ({
   openCodeStream: vi.fn(),
   openCodeListModels: vi.fn(),
   openCodeListModelDetails: vi.fn(),
+  mapOpenCodeError: vi.fn((error: unknown) => (error instanceof Error ? error : new Error(String(error)))),
 }));
 
 const MODEL_ENV_VARS = [

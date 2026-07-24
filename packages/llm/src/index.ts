@@ -15,6 +15,7 @@ export {
   findProvidersByCapability,
   getLlmStatus,
   invalidateLlmCache,
+  LlmStructuredOutputError,
   lmStudioListModelDetails,
   lmStudioListModels,
   ollamaGetModelContextLength,
@@ -24,10 +25,18 @@ export {
   openCodeListModels,
   resolveLlmRoute,
   routeLlm,
+  routeLlmObject,
   streamLlm,
   updateLlmTaskRoute,
 } from './router.js';
-export type { LlmCompleteResult, LlmProgress, LlmProviderId, ModelTier, TaskType } from './router.js';
+export type {
+  LlmCompleteResult,
+  LlmObjectResult,
+  LlmProgress,
+  LlmProviderId,
+  ModelTier,
+  TaskType,
+} from './router.js';
 export type { ExecutionPlan, ExecutionResult, ExecutorProvider } from './executor-provider.js';
 export type { LlmProvider, LlmProviderResult } from './provider.js';
 
