@@ -1,10 +1,10 @@
 # Fable Migration Ledger
 
-Branch: `codex/fable-ai-sdk-migration-setup` · Started: 2026-07-24 · Last updated: 2026-07-24 A3
+Branch: `codex/fable-ai-sdk-migration-setup` · Started: 2026-07-24 · Last updated: 2026-07-24 A5
 
 ## Status
 
-A0–A2 complete. Anthropic, OpenCode, and LM Studio completions all run through AI SDK
+Task A complete (A0–A5). Anthropic, OpenCode, and LM Studio completions all run through AI SDK
 `generateText` via `ai-sdk-model-registry.ts` with transport retries pinned to 0; Anthropic
 streams through `streamText`. Ollama stays on the native client (Phase 6 parity decision
 pending). LM Studio keeps its CLI lifecycle preflight, progress polling, and
@@ -28,16 +28,16 @@ pilot (wiki-link enrichment via `routeLlmObject`) and the Phase 6 Ollama parity 
 
 ## Phase Log
 
-| Phase                             | State                                                            | Commit      | Verified by                                                                                                   |
-| --------------------------------- | ---------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------- |
-| Setup                             | done — brief and ledger only                                     | 8c580799    | `pnpm run lint:md`; `git diff --check`                                                                        |
-| A0 characterization tests         | done — 102 tests, 8 files                                        | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build`                |
-| A1 dependencies and boundary      | done — deps, registry, smoke                                     | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke                  |
-| A2 provider migration             | done — anthropic 5fe4105, opencode 109adf1, lmstudio this commit | this commit | `pnpm exec vitest run packages/llm` (109 passing) after each provider; `pnpm typecheck`; `pnpm build`         |
-| A3 streaming                      | done — lmstudio + opencode real streaming                        | this commit | `pnpm exec vitest run packages/llm` (112 passing); `pnpm typecheck`; `pnpm build`                             |
-| A4 cross-cutting behavior         | done — routeLlmObject + structured-output boundary               | this commit | `pnpm exec vitest run packages/llm` (122 passing); `pnpm typecheck`; `pnpm build`                             |
-| A5 verification and documentation | done — handoff, doc status, final summary                        | this commit | `pnpm test` (355 passing, only the 4 pre-existing wiki failures); `pnpm typecheck`; `pnpm lint`; `pnpm build` |
-| B process-state audit             | not started — deliberate (see Resume Here)                       | —           | —                                                                                                             |
+| Phase                             | State                                                        | Commit   | Verified by                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------- |
+| Setup                             | done — brief and ledger only                                 | 8c580799 | `pnpm run lint:md`; `git diff --check`                                                                        |
+| A0 characterization tests         | done — 102 tests, 8 files                                    | 94ba1a1  | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build`                |
+| A1 dependencies and boundary      | done — deps, registry, smoke                                 | 7ff1976  | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke                  |
+| A2 provider migration             | done — anthropic 5fe4105, opencode 109adf1, lmstudio 8792891 | 8792891  | `pnpm exec vitest run packages/llm` (109 passing) after each provider; `pnpm typecheck`; `pnpm build`         |
+| A3 streaming                      | done — lmstudio + opencode real streaming                    | 303aaa8  | `pnpm exec vitest run packages/llm` (112 passing); `pnpm typecheck`; `pnpm build`                             |
+| A4 cross-cutting behavior         | done — routeLlmObject + structured-output boundary           | 1d5e7fe  | `pnpm exec vitest run packages/llm` (122 passing); `pnpm typecheck`; `pnpm build`                             |
+| A5 verification and documentation | done — handoff, doc status, final summary                    | 3eb3d46  | `pnpm test` (355 passing, only the 4 pre-existing wiki failures); `pnpm typecheck`; `pnpm lint`; `pnpm build` |
+| B process-state audit             | not started — deliberate (see Resume Here)                   | —        | —                                                                                                             |
 
 ## Decisions
 
