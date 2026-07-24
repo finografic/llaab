@@ -85,11 +85,23 @@ function barePsCalls(): Array<[string, string[], Record<string, unknown>]> {
   return lmsCalls('ps').filter(([, args]) => args[1] !== '--json');
 }
 
-function capturedFetch(index = 0): { url: string; init: RequestInit; body: Record<string, unknown> } {
+function capturedFetch(index = 0): {
+  url: string;
+  init: RequestInit;
+  headers: Record<string, string>;
+  body: Record<string, unknown>;
+} {
   const [input, init] = fetchMock.mock.calls[index] as [unknown, RequestInit];
+  // Header names are case-insensitive on the wire — normalize so the pin survives transports
+  // that emit lowercase names (recorded in the migration ledger under Decisions).
+  const headers: Record<string, string> = {};
+  new Headers(init.headers).forEach((value, key) => {
+    headers[key] = value;
+  });
   return {
     url: String(input),
     init,
+    headers,
     body: init.body ? (JSON.parse(init.body as string) as Record<string, unknown>) : {},
   };
 }
@@ -165,10 +177,11 @@ describe('completion request shape', () => {
 
     await lmStudioComplete('the prompt', { model: 'model-x' });
 
-    const { url, init, body } = capturedFetch();
+    const { url, init, headers, body } = capturedFetch();
     expect(url).toBe('http://localhost:1234/v1/chat/completions');
     expect(init.method).toBe('POST');
-    expect(init.headers).toEqual({ 'Content-Type': 'application/json' });
+    expect(headers['content-type']).toBe('application/json');
+    expect(headers['authorization']).toBeUndefined();
     expect(body).toEqual({
       model: 'model-x',
       messages: [{ role: 'user', content: 'the prompt' }],
@@ -197,12 +210,10 @@ describe('completion request shape', () => {
 
     await lmStudioComplete('p', { model: 'model-x' });
 
-    const { url, init, body } = capturedFetch();
+    const { url, headers, body } = capturedFetch();
     expect(url).toBe('http://studio-host:9999/v1/chat/completions');
-    expect(init.headers).toEqual({
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer lm-key',
-    });
+    expect(headers['content-type']).toBe('application/json');
+    expect(headers['authorization']).toBe('Bearer lm-key');
     expect(body['temperature']).toBe(0.9);
   });
 

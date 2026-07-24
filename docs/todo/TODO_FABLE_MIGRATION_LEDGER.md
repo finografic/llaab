@@ -4,38 +4,35 @@ Branch: `codex/fable-ai-sdk-migration-setup` · Started: 2026-07-24 · Last upda
 
 ## Status
 
-A0 and A1 complete. 102 characterization tests pin the pre-migration contract; the AI SDK
-(`ai@7`, `@ai-sdk/anthropic@4`, `@ai-sdk/openai-compatible@3`) is installed in `packages/llm`
-only, with the internal boundary in `packages/llm/src/ai-sdk-model-registry.ts`
-(`resolveAiSdkModel`, `toProviderResult`, `AI_SDK_MAX_RETRIES = 0`) kept out of `index.ts`.
-Bun smoke (`bun run packages/llm/scripts/ai-sdk-bun-smoke.ts`) passes on Bun 1.2.2. No provider
-transport has switched yet.
+A0–A2 complete. Anthropic, OpenCode, and LM Studio completions all run through AI SDK
+`generateText` via `ai-sdk-model-registry.ts` with transport retries pinned to 0; Anthropic
+streams through `streamText`. Ollama stays on the native client (Phase 6 parity decision
+pending). LM Studio keeps its CLI lifecycle preflight, progress polling, and
+`AbortSignal.timeout` completion-timeout semantics; OpenCode keeps its pre-request API-key gate
+and catalog logic. `@anthropic-ai/sdk` removed. LM Studio and OpenCode `stream()` are still
+single-chunk pseudo-streams — that is A3's job.
 
 ## Resume Here
 
-Start A2, one provider per commit with all `packages/llm` tests green after each:
-
-1. Anthropic — migrate `providers/anthropic.ts` complete/stream to `generateText`/`streamText`
-   via `resolveAiSdkModel('anthropic', …)`; keep throwing `'Unexpected response type from
-Anthropic'` when the response yields no text so the A0 fetch-level tests in
-   `providers/anthropic.test.ts` pass unmodified. Drop `@anthropic-ai/sdk` when unreferenced.
-2. OpenCode — migrate `providers/opencode.ts`; keep the pre-fetch `'OPENCODE_API_KEY is not
-configured'` throw and catalog/availability logic outside the transport.
-3. LM Studio — replace only the `/chat/completions` call; lifecycle preflight, CLI inspection,
-   progress polling stay as-is.
+Start A3 — real streaming for LM Studio and OpenCode: route their `stream()` through
+`streamText` with the same model/registry/error mapping as `complete()`, and replace the two
+pre-declared single-chunk tests ("yields the full completion as a single chunk" in
+`providers/lmstudio.test.ts` and `providers/opencode.test.ts`) with multi-delta SSE fixtures —
+that replacement is the sanctioned exception recorded under Decisions. Confirm `streamLlm`'s
+caller-facing shape (an `AsyncGenerator<string>` of text chunks) is unchanged.
 
 ## Phase Log
 
-| Phase                             | State                                                                | Commit      | Verified by                                                                                    |
-| --------------------------------- | -------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------- |
-| Setup                             | done — brief and ledger only                                         | 8c580799    | `pnpm run lint:md`; `git diff --check`                                                         |
-| A0 characterization tests         | done — 102 tests, 8 files                                            | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build` |
-| A1 dependencies and boundary      | done — deps, registry, smoke                                         | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke   |
-| A2 provider migration             | in progress — anthropic 5fe4105, opencode this commit; lmstudio next | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`              |
-| A3 streaming                      | not started                                                          | —           | —                                                                                              |
-| A4 cross-cutting behavior         | not started                                                          | —           | —                                                                                              |
-| A5 verification and documentation | not started                                                          | —           | —                                                                                              |
-| B process-state audit             | blocked until Task A complete                                        | —           | —                                                                                              |
+| Phase                             | State                                                            | Commit      | Verified by                                                                                           |
+| --------------------------------- | ---------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| Setup                             | done — brief and ledger only                                     | 8c580799    | `pnpm run lint:md`; `git diff --check`                                                                |
+| A0 characterization tests         | done — 102 tests, 8 files                                        | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build`        |
+| A1 dependencies and boundary      | done — deps, registry, smoke                                     | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke          |
+| A2 provider migration             | done — anthropic 5fe4105, opencode 109adf1, lmstudio this commit | this commit | `pnpm exec vitest run packages/llm` (109 passing) after each provider; `pnpm typecheck`; `pnpm build` |
+| A3 streaming                      | not started                                                      | —           | —                                                                                                     |
+| A4 cross-cutting behavior         | not started                                                      | —           | —                                                                                                     |
+| A5 verification and documentation | not started                                                      | —           | —                                                                                                     |
+| B process-state audit             | blocked until Task A complete                                    | —           | —                                                                                                     |
 
 ## Decisions
 

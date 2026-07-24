@@ -1,7 +1,10 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { APICallError, generateText } from 'ai';
 import type { LlmProvider, LlmProviderResult } from '../provider.js';
 import type { LlmCompleteOptions, LlmProgress } from '../types.js';
+
+import { AI_SDK_MAX_RETRIES, resolveAiSdkModel, toProviderResult } from '../ai-sdk-model-registry.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -51,14 +54,6 @@ interface LmStudioCliModel {
   vision?: boolean;
 }
 
-interface OpenAiChatResponse {
-  choices?: Array<{ message?: { content?: string } }>;
-  usage?: {
-    completion_tokens?: number;
-    prompt_tokens?: number;
-  };
-}
-
 const DEFAULT_BASE_URL = 'http://localhost:1234/v1';
 const DEFAULT_CLI_PATH = `${process.env['HOME'] ?? ''}/.lmstudio/bin/lms`;
 const DEFAULT_TEMPERATURE = 0.3;
@@ -92,13 +87,6 @@ function getHeaders(): Record<string, string> {
 function getTemperature() {
   const configured = Number(process.env['LLAAB_LMSTUDIO_TEMPERATURE']);
   return Number.isFinite(configured) ? configured : DEFAULT_TEMPERATURE;
-}
-
-function buildMessages(prompt: string, system?: string) {
-  const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
-  if (system) messages.push({ role: 'system', content: system });
-  messages.push({ role: 'user', content: prompt });
-  return messages;
 }
 
 function getCompletionTimeoutMs() {
@@ -239,36 +227,64 @@ async function ensureRequestedModelLoaded(model: string) {
   });
 }
 
+/**
+ * Re-maps AI SDK transport errors onto the provider's existing error contract:
+ * HTTP failures become `LM Studio request failed: <status> <body>`, and malformed success
+ * responses (e.g. empty `choices`) become `Unexpected response from LM Studio`. Errors without
+ * an HTTP status (network-level failures, timeouts) propagate unchanged.
+ */
+function mapLmStudioError(error: unknown): Error {
+  if (APICallError.isInstance(error) && error.statusCode != null) {
+    const body = error.responseBody ?? '';
+    return new Error(
+      body
+        ? `LM Studio request failed: ${error.statusCode} ${body}`
+        : `LM Studio request failed: ${error.statusCode}`,
+    );
+  }
+  if (error instanceof TypeError) {
+    return new Error('Unexpected response from LM Studio');
+  }
+  return error instanceof Error ? error : new Error(String(error));
+}
+
 export async function lmStudioComplete(prompt: string, opts: LlmCompleteOptions): Promise<LlmProviderResult> {
   const start = performance.now();
   await opts.onProgress?.({ status: 'loading' });
   await ensureRequestedModelLoaded(opts.model);
   await opts.onProgress?.({ status: 'processing prompt' });
   const stopProgressPolling = startProgressPolling(opts.model, opts.onProgress);
-  const response = await lmStudioFetch<OpenAiChatResponse>('/chat/completions', {
-    method: 'POST',
-    body: JSON.stringify({
-      model: opts.model,
-      messages: buildMessages(prompt, opts.system),
+
+  let result;
+  try {
+    result = await generateText({
+      model: resolveAiSdkModel('lmstudio', opts.model),
+      ...(opts.system && { system: opts.system }),
+      prompt,
       temperature: getTemperature(),
-      ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}),
-    }),
-  }).finally(stopProgressPolling);
-  const text = response.choices?.[0]?.message?.content;
-  if (!text) throw new Error('Unexpected response from LM Studio');
+      ...(opts.maxTokens ? { maxOutputTokens: opts.maxTokens } : {}),
+      abortSignal: AbortSignal.timeout(getCompletionTimeoutMs()),
+      maxRetries: AI_SDK_MAX_RETRIES,
+    });
+  } catch (error) {
+    throw mapLmStudioError(error);
+  } finally {
+    stopProgressPolling();
+  }
+
+  if (!result.text) throw new Error('Unexpected response from LM Studio');
   await opts.onProgress?.({
     status: 'completed',
-    completionTokens: response.usage?.completion_tokens,
+    completionTokens: result.usage.outputTokens,
   });
 
-  return {
-    text,
-    durationMs: Math.round(performance.now() - start),
+  return toProviderResult({
+    text: result.text,
+    usage: result.usage,
     providerId: 'lmstudio',
     model: opts.model,
-    promptTokens: response.usage?.prompt_tokens,
-    completionTokens: response.usage?.completion_tokens,
-  };
+    startedAt: start,
+  });
 }
 
 export async function* lmStudioStream(prompt: string, opts: LlmCompleteOptions): AsyncGenerator<string> {
