@@ -434,5 +434,5 @@ keeping transcript provenance distinct from verification.
       implemented wiki-draft -> review -> promotion workflow.
 - [ ] Add an operator-facing wiki workflow document once the first vertical slice is stable; keep
       this TODO as the implementation record rather than duplicating operational guidance here.
-- [ ] Update the Roadmap priority/link and `NEXT_STEPS.md` only when this initiative is scheduled
-      or a phase becomes active.
+- [ ] Update the Roadmap priority/link and `ROADMAP.md#next` only when this initiative is
+      scheduled or a phase becomes active.

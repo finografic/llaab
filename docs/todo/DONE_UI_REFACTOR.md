@@ -3,7 +3,7 @@
 > **Completed:** 2026-06-06 — shadcn component adoption, `--text-2xs`…`--text-4xl` type scale,
 > px → rem conversion across client, `!important` removal, inline style cleanup.
 > Deferred polish: shadcn `Tabs` for tab-like patterns; end-to-end font-scale verification
-> (tracked in [`NEXT_STEPS.md`](./NEXT_STEPS.md) manual testing checklist).
+> (tracked in [`ROADMAP.md#next`](./ROADMAP.md#next) manual testing checklist).
 
 Refactor the client UI to eliminate hand-rolled CSS components in favour of shadcn primitives,
 and replace all hard `px` font-size declarations with a `rem`-based type scale so the root

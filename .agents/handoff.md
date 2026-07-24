@@ -556,7 +556,7 @@ YAML `profiles` object-array parsing so all source nodes load for runs author li
 
 ## Roadmap & Planning
 
-Primary plan: `docs/todo/ROADMAP.md`. Near-term tasks: `docs/todo/NEXT_STEPS.md`.
+Primary plan: `docs/todo/ROADMAP.md`; near-term tasks live in `ROADMAP.md#next`.
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
 Wiki generation is implemented; the completion record is `docs/todo/DONE_WIKI_GENERATION.md` and
 the ongoing feature reference is `docs/process/WIKI_WORKFLOW.md`.

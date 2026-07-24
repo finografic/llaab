@@ -3,7 +3,7 @@
 > **Completed:** 2026-04-18 — `writeNode`/`updateNode`, `@llaab/control`, persistent `RunNode` logging,
 > YouTube ingestion v1, and controlled idea extraction from transcripts.
 >
-> **Current work:** [`NEXT_STEPS.md`](./NEXT_STEPS.md) and [`ROADMAP.md`](./ROADMAP.md).
+> **Current work:** [`ROADMAP.md`](./ROADMAP.md), especially [Next](./ROADMAP.md#next).
 > Step-by-step completion tracker: [`docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`](../05_CONTROL_LAYER_AND_EXECUTION_MODEL.md) §9.
 
 ---
@@ -233,5 +233,5 @@ If you want the most immediately satisfying move, start here:
 ## Carry-Forward (not part of this milestone)
 
 - `lab idea` and `lab read` CLI commands — not built; `lab vault list` covers partial list needs
-- Skill node extraction from transcripts — ideas only; tracked in [`NEXT_STEPS.md`](./NEXT_STEPS.md)
+- Skill node extraction from transcripts — ideas only; tracked in [`ROADMAP.md#next`](./ROADMAP.md#next)
 - `--tag` / `--search` vault list filters — not built

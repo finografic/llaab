@@ -587,7 +587,7 @@ vault or knowledge artifacts.
 ### Manual acceptance journey
 
 Behavioral contracts below are covered by focused fixtures (Phases 0–6 + Phase 7 path/compat/
-composer tests). Live LLM smoke remains in [`NEXT_STEPS.md`](./NEXT_STEPS.md).
+composer tests). Live LLM smoke remains in [`ROADMAP.md#next`](./ROADMAP.md#next).
 
 - [x] Consolidate the broad regression transcript and click `Create Wiki(s)` once.
 - [x] Confirm the system automatically discovers several coherent topics, compiles them separately,

@@ -31,7 +31,7 @@ Primary recommendation:
 | [`docs/integrations/hermes.md`](../integrations/hermes.md)   | Live Hermes install/config facts                           |
 | [`TODO_REGISTRY_LIBRARIES.md`](./TODO_REGISTRY_LIBRARIES.md) | Registry/package pinning direction for npm/npx-style links |
 | [`TODO_INBOX_VIEWS.md`](./TODO_INBOX_VIEWS.md)               | Follow-up views, review flows, and richer routing          |
-| [`NEXT_STEPS.md`](./NEXT_STEPS.md)                           | Near-term manual validation and follow-ups                 |
+| [`ROADMAP.md#next`](./ROADMAP.md#next)                       | Near-term manual validation and follow-ups                 |
 
 ## Principles
 

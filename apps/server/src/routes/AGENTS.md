@@ -137,14 +137,14 @@ inside `apps/server`. Scheduling is always OS crontab-backed through the managed
 
 ## Agent (`agent/`)
 
-> TODO — populate. See `docs/todo/NEXT_STEPS.md`.
+> TODO — populate. See `docs/todo/ROADMAP.md#next`.
 
 `POST /api/agent/run` (one-shot agent processor, optional `{ nodeId?, force? }`) and
 `GET /api/agent/status` (last run metadata).
 
 ## Ingest (`ingest/`)
 
-> TODO — populate. See `docs/todo/NEXT_STEPS.md`.
+> TODO — populate. See `docs/todo/ROADMAP.md#next`.
 
 `POST /api/ingest/youtube` — `ingestYouTube` skill, `{ url, title?, tags?, skipExtraction? }`.
 
@@ -181,7 +181,7 @@ embeddings, or LM Studio tool-use flows.
 
 ## Runs (`runs/`)
 
-> TODO — populate. See `docs/todo/NEXT_STEPS.md`.
+> TODO — populate. See `docs/todo/ROADMAP.md#next`.
 
 Run list/detail/monitor (`GET /`, `/:id`, `/monitor`), retry (`POST /:id/retry`), and dismiss
 (`POST /:id/dismiss`).

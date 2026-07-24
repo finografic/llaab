@@ -581,7 +581,7 @@ everything downstream.
 - [x] Confirm current 6 000-character truncation is acceptable for typical YouTube transcripts,
       or document exactly where it fails and what content is lost.
 - [x] Write a one-paragraph validation result at the top of `TODO_HARNESS.md` Phase 1 section.
-- [x] Record the result in `NEXT_STEPS.md`.
+- [x] Record the result in `ROADMAP.md#next`.
 - [x] Make the priority call: is token-aware chunking now the real blocker, or does Terminal
       Panel stay next? Record the decision in `ROADMAP.md`.
 

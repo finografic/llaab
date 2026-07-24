@@ -732,6 +732,6 @@ research adapters as `59c2806`; and cross-cutting verification as `6f327b9`.
 - [x] Update the taxonomy guide only if implementation intentionally changes the existing tag
       contract.
 - [x] Update `ROADMAP.md` priority/link only when the initiative moves tiers; update
-      `NEXT_STEPS.md` when a phase becomes active or leaves manual validation work.
+      `ROADMAP.md#next` when a phase becomes active or leaves manual validation work.
 - [x] Rename this file to `DONE_WIKI_GENERATION.md`, update its title/status, and move the roadmap
       item to Done only after every tracked completion checkbox is resolved.

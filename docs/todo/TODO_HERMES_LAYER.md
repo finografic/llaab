@@ -217,13 +217,13 @@ platform_toolsets:
 
 Implement tools sketched in the setup guide. Suggested order:
 
-| Tool                   | Boundary                                                 | Needs server?         |
-| ---------------------- | -------------------------------------------------------- | --------------------- |
-| `vault_search`         | `@llaab/core` `listNodes`                                | No                    |
-| `vault_status`         | core + `GET /api/llm/status`                             | Optional              |
-| `vault_plan_next`      | read `ROADMAP.md`, `.agents/handoff.md`, `NEXT_STEPS.md` | No                    |
-| `vault_capture_idea`   | `POST /api/vault/nodes`                                  | Yes + `LLAAB_API_KEY` |
-| `vault_ingest_youtube` | `POST /api/ingest/youtube`                               | Yes + `LLAAB_API_KEY` |
+| Tool                   | Boundary                                        | Needs server?         |
+| ---------------------- | ----------------------------------------------- | --------------------- |
+| `vault_search`         | `@llaab/core` `listNodes`                       | No                    |
+| `vault_status`         | core + `GET /api/llm/status`                    | Optional              |
+| `vault_plan_next`      | read `ROADMAP.md#next` and `.agents/handoff.md` | No                    |
+| `vault_capture_idea`   | `POST /api/vault/nodes`                         | Yes + `LLAAB_API_KEY` |
+| `vault_ingest_youtube` | `POST /api/ingest/youtube`                      | Yes + `LLAAB_API_KEY` |
 
 MCP child env for write tools:
 

@@ -5,8 +5,8 @@
 > agent to install or repair the same structure there.
 >
 > Scope:
-> This doc explains how `ROADMAP.md`, `NEXT_STEPS.md`, `.agents/handoff.md`, and
-> `.agents/memory.md` relate to each other.
+> This doc explains how `ROADMAP.md`, `.agents/handoff.md`, and `.agents/memory.md`
+> relate to each other.
 > It does **not** replace the project's TODO/DONE documentation conventions, which should remain in
 > the existing instructions file.
 
@@ -19,19 +19,19 @@ Paste these blocks into `AGENTS.md` as prominent top-level sections:
 ```md
 ## Project Memory Model
 
-- `docs/todo/ROADMAP.md` = milestone plan and completed history.
-- `docs/todo/NEXT_STEPS.md` = near-term tasks and manual checks.
+- `docs/todo/ROADMAP.md` = near-term tasks, milestone plan, and completed history.
 - `.agents/handoff.md` = stable current project state.
 - `.agents/memory.md` = chronological session log.
 
-Promote durable findings from memory → handoff, priorities → roadmap, and concrete follow-ups → next steps.
+Promote durable findings from memory → handoff, and priorities, concrete follow-ups, manual
+checks, or milestone completions → roadmap.
 
 Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMORY_MODEL.md)
 
 ## Roadmap and Planning Docs
 
 - Check `ROADMAP.md` before proposing new initiatives.
-- Use `NEXT_STEPS.md` for small follow-ups and manual validation.
+- Use `ROADMAP.md#next` for small follow-ups and manual validation.
 - Keep detailed plans in `docs/todo/TODO_*.md`; graduate completed plans to `DONE_*.md`.
 - Follow `.github/instructions/documentation/todo-done-docs.instructions.md`.
 ```
@@ -48,6 +48,8 @@ For TODO/DONE naming, lifecycle, and formatting rules, use:
 
 Use for:
 
+- current near-term execution queue in `## Next`
+- small follow-ups and manual validation checks
 - priority tiers such as `P0`, `P1`, `P2`, `P3`
 - feature and architecture initiatives
 - completed milestone-scale work in the Done table
@@ -56,21 +58,7 @@ Do not use for:
 
 - session notes
 - half-finished investigation details
-- tiny one-off fixes
-
-### `docs/todo/NEXT_STEPS.md`
-
-Use for:
-
-- near-term implementation tasks
-- manual testing checklists
-- small polish items
-- follow-ups that are too small for roadmap treatment
-
-Do not use for:
-
-- architecture snapshots
-- long session narratives
+- long one-off task scratchpads
 
 ### `.agents/handoff.md`
 
@@ -112,7 +100,7 @@ When information changes category, move it upward:
 1. Session note or partial finding starts in `.agents/memory.md`.
 2. If it becomes stable current truth, summarize it in `.agents/handoff.md`.
 3. If it changes project priority or completes a milestone, reflect that in `ROADMAP.md`.
-4. If it creates concrete next actions or manual checks, add those to `NEXT_STEPS.md`.
+4. If it creates concrete next actions or manual checks, add those to `ROADMAP.md#next`.
 
 This prevents the same content from being copied everywhere.
 
@@ -124,14 +112,13 @@ If another repo does not yet use this system, install it like this:
 
 1. Ensure `AGENTS.md` exists at repo root and add the exact block above.
 2. Create `docs/todo/ROADMAP.md` if missing.
-3. Create `docs/todo/NEXT_STEPS.md` if the repo uses a separate near-term working list.
-4. Create `.agents/handoff.md` for the current-state snapshot.
-5. Create `.agents/memory.md` for session logging.
-6. If the repo already has `.claude/memory.md`, move the real content into `.agents/memory.md`, then
+3. Create `.agents/handoff.md` for the current-state snapshot.
+4. Create `.agents/memory.md` for session logging.
+5. If the repo already has `.claude/memory.md`, move the real content into `.agents/memory.md`, then
    delete `.claude/memory.md`.
-7. Ensure ignore rules allow `.agents/handoff.md` to be tracked while keeping `.agents/memory.md`
+6. Ensure ignore rules allow `.agents/handoff.md` to be tracked while keeping `.agents/memory.md`
    gitignored unless the repo intentionally wants it tracked.
-8. If the repo already has TODO/DONE docs, keep using the existing TODO/DONE instruction file for
+7. If the repo already has TODO/DONE docs, keep using the existing TODO/DONE instruction file for
    naming and lifecycle rules rather than redefining those rules here.
 
 Suggested ignore pattern:
@@ -153,7 +140,7 @@ If the repo already has some version of these files but they are stale or mixed 
 3. Move current architecture truth into `.agents/handoff.md`.
 4. Move session-like notes and partial context into `.agents/memory.md`.
 5. Remove duplicated text that appears in all files.
-6. Add or update `NEXT_STEPS.md` so near-term tasks are actionable.
+6. Add or update `ROADMAP.md#next` so near-term tasks are actionable.
 7. Add the exact block to `AGENTS.md`.
 8. Leave TODO/DONE structure rules in the existing project instruction file instead of copying them
    into this document.
@@ -170,7 +157,7 @@ Heuristic:
 
 - update `.agents/memory.md` during or at the end of a session
 - update `.agents/handoff.md` after changes that affect architecture, conventions, priorities, or open questions
-- update `NEXT_STEPS.md` when near-term tasks change
+- update `ROADMAP.md#next` when near-term tasks change
 - update the `ROADMAP.md` Done table only when milestone-scale work is actually complete
 
 ---

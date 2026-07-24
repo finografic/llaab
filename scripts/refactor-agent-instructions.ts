@@ -536,7 +536,7 @@ const ROADMAP_SECTION_LINES = [
   '## Roadmap and Planning Docs',
   '',
   '**`docs/todo/ROADMAP.md` is the primary high-level plan for this project.**',
-  '**`docs/todo/NEXT_STEPS.md` is the near-term working list** — small tasks, fixes, and manual testing checklists too small for ROADMAP.',
+  '**`docs/todo/ROADMAP.md#next` is the near-term working list** — small tasks, fixes, and manual testing checklists.',
   '',
   '- Before proposing or generating new features, check the roadmap for existing items.',
   '- When conceiving a new feature or initiative, add it to the appropriate priority tier.',
