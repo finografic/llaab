@@ -222,9 +222,13 @@ function getConsolidationConfig(mode: ConsolidationMode): {
   modelOverride?: string;
 } {
   if (mode === 'fast') {
+    const extractRoute = resolveLlmRoute('extract');
     return {
       promptStyle: 'full',
-      modelOverride: resolveLlmRoute('extract').model,
+      // provider:model — extract and consolidate can be routed to different providers, and a
+      // bare model string would silently keep consolidate's provider (see resolveModel in
+      // @llaab/llm's router).
+      modelOverride: `${extractRoute.provider}:${extractRoute.model}`,
     };
   }
   return { promptStyle: 'compact' };

@@ -83,27 +83,61 @@ interface RoutingConfigFile {
 const CACHEABLE = new Set<TaskType>(['route', 'format', 'extract']);
 
 /**
+ * Builds the cache key's provider/model/call-shape component. `system` and `maxTokens` are part
+ * of the key because they change what the model actually produces — two calls with the same
+ * prompt but a different system instruction (or token cap) must not collide in the cache.
+ */
+function buildCacheKeyContext(
+  providerId: LlmProviderId,
+  model: string,
+  system?: string,
+  maxTokens?: number,
+): string {
+  return `${providerId}:${model}:${system ?? ''}:${maxTokens ?? ''}`;
+}
+
+/**
  * Evict a cached `routeLlm` response for a cacheable task. Call this when the cached response turns
  * out to be unusable (e.g. fails downstream schema validation) — otherwise every retry replays the
  * same broken output instead of re-querying the model.
+ *
+ * Only evicts the entry cached for a call made without `system`/`maxTokens` — this function has
+ * no way to know what a caller passed for those on the call it wants to invalidate. Its one
+ * current caller (`@llaab/ingestion` extraction) always sets `bypassCache: true`, which since the
+ * cache-key fix never writes an entry to evict in the first place, so this is a no-op there.
  */
 export function invalidateLlmCache(task: TaskType, prompt: string, override?: string): void {
   if (!CACHEABLE.has(task)) return;
   const { model, provider } = resolveModel(task, override);
-  cacheDelete(prompt, `${provider.id}:${model}`);
+  cacheDelete(prompt, buildCacheKeyContext(provider.id, model));
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * Splits a `provider:model` override into its parts — the same encoding
+ * `LlmRoutingEditor` uses for persisted routing selections. The prefix must be a recognized
+ * `LlmProviderId`; otherwise the whole string is treated as a bare model name so overrides like
+ * `llama3.2:3b` or `gemma4:e4b-it-qat` (real Ollama tags, not provider prefixes) are unaffected.
+ */
+function parseModelOverride(override: string): { provider: LlmProviderId; model: string } | undefined {
+  const separatorIndex = override.indexOf(':');
+  if (separatorIndex === -1) return undefined;
+  const prefix = override.slice(0, separatorIndex);
+  if (!isProviderId(prefix)) return undefined;
+  return { provider: prefix, model: override.slice(separatorIndex + 1) };
+}
 
 function resolveModel(
   task: TaskType,
   override?: string,
 ): { model: string; tier: ModelTier; provider: LlmProvider } {
   const route = getRouting()[task];
+  const parsedOverride = override ? parseModelOverride(override) : undefined;
   return {
-    model: override ?? route.model,
+    model: parsedOverride?.model ?? override ?? route.model,
     tier: route.tier,
-    provider: override ? PROVIDERS_BY_ID[route.provider] : PROVIDERS_BY_ID[route.provider],
+    provider: PROVIDERS_BY_ID[parsedOverride?.provider ?? route.provider],
   };
 }
 
@@ -189,14 +223,19 @@ export async function routeLlm(
     onProgress: opts?.onProgress,
   };
 
-  if (CACHEABLE.has(task) && !completeOpts.bypassCache) {
-    const hit = cacheGet(prompt, `${provider.id}:${model}`);
+  const cacheable = CACHEABLE.has(task) && !completeOpts.bypassCache;
+  const cacheKeyContext = buildCacheKeyContext(provider.id, model, opts?.system, opts?.maxTokens);
+
+  if (cacheable) {
+    const hit = cacheGet(prompt, cacheKeyContext);
     if (hit) return { text: hit, model, cached: true, provider: provider.id, durationMs: 0 };
   }
 
   const result = await provider.complete(prompt, completeOpts);
 
-  if (CACHEABLE.has(task)) cacheSet(prompt, `${provider.id}:${model}`, result.text);
+  // bypassCache means "don't touch the cache at all" — a bypassed call must never write a
+  // response a later non-bypassed call could inherit.
+  if (cacheable) cacheSet(prompt, cacheKeyContext, result.text);
 
   return {
     text: result.text,

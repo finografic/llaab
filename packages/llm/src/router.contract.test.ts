@@ -189,14 +189,34 @@ describe('routeLlm', () => {
     expect(hit.completionTokens).toBeUndefined();
   });
 
-  it('ignores system and maxTokens in the cache key', async () => {
+  it('serves a cache hit when system and maxTokens are unchanged', async () => {
     const { routeLlm } = await importRouter();
 
     await routeLlm('extract', 'p', { system: 'system A', maxTokens: 10 });
-    const hit = await routeLlm('extract', 'p', { system: 'system B', maxTokens: 999 });
+    const hit = await routeLlm('extract', 'p', { system: 'system A', maxTokens: 10 });
 
     expect(fakes.ollama.complete).toHaveBeenCalledTimes(1);
     expect(hit.cached).toBe(true);
+  });
+
+  it('includes system in the cache key, so a different system prompt misses', async () => {
+    const { routeLlm } = await importRouter();
+
+    await routeLlm('extract', 'p', { system: 'system A' });
+    const miss = await routeLlm('extract', 'p', { system: 'system B' });
+
+    expect(fakes.ollama.complete).toHaveBeenCalledTimes(2);
+    expect(miss.cached).toBe(false);
+  });
+
+  it('includes maxTokens in the cache key, so a different token cap misses', async () => {
+    const { routeLlm } = await importRouter();
+
+    await routeLlm('extract', 'p', { maxTokens: 10 });
+    const miss = await routeLlm('extract', 'p', { maxTokens: 999 });
+
+    expect(fakes.ollama.complete).toHaveBeenCalledTimes(2);
+    expect(miss.cached).toBe(false);
   });
 
   it('keys the cache per provider:model, so a model override misses', async () => {
@@ -208,7 +228,7 @@ describe('routeLlm', () => {
     expect(fakes.ollama.complete).toHaveBeenCalledTimes(2);
   });
 
-  it('bypassCache skips the cache read but still writes the response', async () => {
+  it('bypassCache skips both the cache read and the write — it never touches the cache', async () => {
     const { routeLlm } = await importRouter();
 
     await routeLlm('extract', 'p');
@@ -224,9 +244,10 @@ describe('routeLlm', () => {
     expect(bypassed.text).toBe('fresh-text');
     expect(fakes.ollama.complete).toHaveBeenCalledTimes(2);
 
-    // The bypassed call overwrote the cache entry.
+    // The bypassed call must not have overwritten the cache entry — a later non-bypassed call
+    // still sees the original cached response, not whatever the bypassed call happened to return.
     const hit = await routeLlm('extract', 'p');
-    expect(hit).toMatchObject({ cached: true, text: 'fresh-text' });
+    expect(hit).toMatchObject({ cached: true, text: 'ollama-text' });
     expect(fakes.ollama.complete).toHaveBeenCalledTimes(2);
   });
 
@@ -249,10 +270,10 @@ describe('routeLlm', () => {
     expect(fakes.ollama.complete).toHaveBeenCalledTimes(2);
   });
 
-  it('a model override changes the model but never the provider (current behaviour)', async () => {
+  it('a bare model override changes the model but keeps the routed provider', async () => {
     const { routeLlm } = await importRouter();
 
-    // reason-plus routes to anthropic; an ollama-looking model override stays on anthropic.
+    // reason-plus routes to anthropic; a bare ollama-looking model override stays on anthropic.
     await routeLlm('reason-plus', 'p', { model: DEFAULT_MID_MODEL });
 
     expect(fakes.anthropic.complete).toHaveBeenCalledTimes(1);
@@ -260,6 +281,33 @@ describe('routeLlm', () => {
     expect(fakes.anthropic.complete).toHaveBeenCalledWith(
       'p',
       expect.objectContaining({ model: DEFAULT_MID_MODEL }),
+    );
+  });
+
+  it('a provider:model override redirects both the provider and the model', async () => {
+    const { routeLlm } = await importRouter();
+
+    // reason-plus routes to anthropic by default; a provider-prefixed override redirects to ollama.
+    await routeLlm('reason-plus', 'p', { model: `ollama:${DEFAULT_MID_MODEL}` });
+
+    expect(fakes.ollama.complete).toHaveBeenCalledTimes(1);
+    expect(fakes.anthropic.complete).not.toHaveBeenCalled();
+    expect(fakes.ollama.complete).toHaveBeenCalledWith(
+      'p',
+      expect.objectContaining({ model: DEFAULT_MID_MODEL }),
+    );
+  });
+
+  it('a colon-bearing model name that is not a recognized provider prefix stays bare', async () => {
+    const { routeLlm } = await importRouter();
+
+    // Real Ollama tags contain colons (e.g. "gemma4:e4b-it-qat") — these must not be
+    // misparsed as a provider:model override.
+    await routeLlm('extract', 'p', { model: 'gemma4:e4b-it-qat' });
+
+    expect(fakes.ollama.complete).toHaveBeenCalledWith(
+      'p',
+      expect.objectContaining({ model: 'gemma4:e4b-it-qat' }),
     );
   });
 });
@@ -308,13 +356,23 @@ describe('resolveLlmRoute', () => {
     });
   });
 
-  it('a model override keeps the routed provider and tier (current behaviour)', async () => {
+  it('a bare model override keeps the routed provider and tier', async () => {
     const { resolveLlmRoute } = await importRouter();
 
     expect(resolveLlmRoute('extract', 'claude-x')).toEqual({
       model: 'claude-x',
       tier: 'local-mid',
       provider: 'ollama',
+    });
+  });
+
+  it('a provider:model override redirects the provider and keeps the routed tier', async () => {
+    const { resolveLlmRoute } = await importRouter();
+
+    expect(resolveLlmRoute('extract', 'anthropic:claude-x')).toEqual({
+      model: 'claude-x',
+      tier: 'local-mid',
+      provider: 'anthropic',
     });
   });
 });
