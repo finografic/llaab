@@ -1,52 +1,46 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { generateText, streamText } from 'ai';
 import type { LlmProvider, LlmProviderResult } from '../provider.js';
 import type { LlmCompleteOptions } from '../types.js';
 
-let client: Anthropic | null = null;
+import { AI_SDK_MAX_RETRIES, resolveAiSdkModel, toProviderResult } from '../ai-sdk-model-registry.js';
 
-function getClient(): Anthropic {
-  if (!client) {
-    client = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] });
-  }
-  return client;
-}
+const DEFAULT_MAX_TOKENS = 1024;
 
 export async function anthropicComplete(
   prompt: string,
   opts: LlmCompleteOptions,
 ): Promise<LlmProviderResult> {
   const start = performance.now();
-  const response = await getClient().messages.create({
-    model: opts.model,
-    max_tokens: opts.maxTokens ?? 1024,
+  const result = await generateText({
+    model: resolveAiSdkModel('anthropic', opts.model),
+    maxOutputTokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS,
     ...(opts.system && { system: opts.system }),
-    messages: [{ role: 'user', content: prompt }],
+    prompt,
+    maxRetries: AI_SDK_MAX_RETRIES,
   });
 
-  const block = response.content[0];
+  const block = result.content[0];
   if (block?.type !== 'text') throw new Error('Unexpected response type from Anthropic');
-  return {
+  return toProviderResult({
     text: block.text,
-    durationMs: Math.round(performance.now() - start),
+    usage: result.usage,
     providerId: 'anthropic',
     model: opts.model,
-    promptTokens: response.usage.input_tokens,
-    completionTokens: response.usage.output_tokens,
-  };
+    startedAt: start,
+  });
 }
 
 export async function* anthropicStream(prompt: string, opts: LlmCompleteOptions): AsyncGenerator<string> {
-  const stream = getClient().messages.stream({
-    model: opts.model,
-    max_tokens: opts.maxTokens ?? 1024,
+  const result = streamText({
+    model: resolveAiSdkModel('anthropic', opts.model),
+    maxOutputTokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS,
     ...(opts.system && { system: opts.system }),
-    messages: [{ role: 'user', content: prompt }],
+    prompt,
+    maxRetries: AI_SDK_MAX_RETRIES,
   });
 
-  for await (const event of stream) {
-    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-      yield event.delta.text;
-    }
+  for await (const chunk of result.textStream) {
+    if (chunk) yield chunk;
   }
 }
 

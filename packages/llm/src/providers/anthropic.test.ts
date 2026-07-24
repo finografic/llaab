@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Characterization tests for the Anthropic provider transport (Fable migration A0). Mocked at
- * the HTTP boundary (global fetch) rather than the SDK so the pinned wire shapes survive the
- * planned swap from @anthropic-ai/sdk to @ai-sdk/anthropic. Error fixtures use status 400 —
- * the SDK auto-retries 408/429/5xx with real-timer backoff.
+ * the HTTP boundary (global fetch) rather than the SDK so the pinned wire shapes survived the
+ * A2 swap from @anthropic-ai/sdk to @ai-sdk/anthropic. Error fixtures use status 400 — retrying
+ * SDKs treat 408/429/5xx as retryable with real-timer backoff.
  */
 
 const fetchMock = vi.fn();
@@ -44,6 +44,21 @@ function messageResponse(overrides: MessageFixtureOverrides = {}): Response {
     }),
     { status: 200, headers: { 'content-type': 'application/json' } },
   );
+}
+
+/**
+ * The Anthropic API accepts prompt text either as a plain string or as an array of text blocks;
+ *
+ * @anthropic-ai/sdk sent strings, @ai-sdk/anthropic sends block arrays. Both are canonical —
+ * assert the joined text so the pin survives the transport swap (recorded in the migration
+ * ledger under Decisions).
+ */
+function textOf(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    return value.map((block) => (block as { text?: string }).text ?? '').join('');
+  }
+  return '';
 }
 
 async function capturedRequest(
@@ -103,7 +118,10 @@ describe('anthropicComplete', () => {
     expect(request.method).toBe('POST');
     expect(request.body['model']).toBe('claude-x');
     expect(request.body['max_tokens']).toBe(1024);
-    expect(request.body['messages']).toEqual([{ role: 'user', content: 'the prompt' }]);
+    const messages = request.body['messages'] as Array<{ role: string; content: unknown }>;
+    expect(messages).toHaveLength(1);
+    expect(messages[0]?.role).toBe('user');
+    expect(textOf(messages[0]?.content)).toBe('the prompt');
     expect(request.body).not.toHaveProperty('system');
   });
 
@@ -115,7 +133,7 @@ describe('anthropicComplete', () => {
 
     const request = await capturedRequest();
     expect(request.body['max_tokens']).toBe(7);
-    expect(request.body['system']).toBe('be terse');
+    expect(textOf(request.body['system'])).toBe('be terse');
   });
 
   it('maps text and usage onto LlmProviderResult', async () => {

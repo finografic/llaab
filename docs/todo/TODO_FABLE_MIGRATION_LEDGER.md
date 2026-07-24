@@ -31,7 +31,7 @@ configured'` throw and catalog/availability logic outside the transport.
 | Setup                             | done — brief and ledger only  | 8c580799    | `pnpm run lint:md`; `git diff --check`                                                         |
 | A0 characterization tests         | done — 102 tests, 8 files     | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build` |
 | A1 dependencies and boundary      | done — deps, registry, smoke  | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke   |
-| A2 provider migration             | not started                   | —           | —                                                                                              |
+| A2 provider migration             | in progress — anthropic done  | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`              |
 | A3 streaming                      | not started                   | —           | —                                                                                              |
 | A4 cross-cutting behavior         | not started                   | —           | —                                                                                              |
 | A5 verification and documentation | not started                   | —           | —                                                                                              |
@@ -64,6 +64,13 @@ configured'` throw and catalog/availability logic outside the transport.
   `inputTokens`/`outputTokens`, `maxOutputTokens`, model instances are `LanguageModelV4`).
 - **Transport retries pinned to 0** (`AI_SDK_MAX_RETRIES`): the SDK default of 2 would multiply
   LLAAB's semantic retries. Enforced by a call-count test in `ai-sdk-model-registry.test.ts`.
+- **A2 Anthropic wire-shape test adjustment (sanctioned, logged here per brief §0.8):**
+  `@ai-sdk/anthropic` serializes `system` and user message `content` as text-block arrays where
+  `@anthropic-ai/sdk` sent plain strings — both canonical per the Anthropic API. The two affected
+  assertions in `providers/anthropic.test.ts` now compare joined block text (`textOf`) instead of
+  string equality; every other A0 assertion (URL, method, `max_tokens`, usage mapping, error
+  messages, SSE stream deltas) passes byte-identical. Alternative rejected: forcing string
+  serialization would mean forking the provider's request builder.
 - **`@ai-sdk/gateway` is a transitive dep of `ai@7`** (its default global provider). LLAAB never
   uses it — all models come from `resolveAiSdkModel` — so the "no AI Gateway dependency"
   acceptance criterion is about usage, not node_modules presence. Size impact of all AI SDK
