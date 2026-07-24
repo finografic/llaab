@@ -60,6 +60,23 @@ describe('wiki schemas', () => {
         verification_status: 'source-backed',
       }).success,
     ).toBe(true);
+    // Semantic topic tags remain allowed when accompanied by at least one d: domain tag.
+    expect(
+      KnowledgeWikiPageSchema.safeParse({
+        id: 'context-management',
+        type: 'wiki',
+        topic_key: 'context-management',
+        title: 'Context Management',
+        summary: 'A topic-level synthesis.',
+        body: '<!-- wiki-section:overview -->\n\n## Overview\n\nUnicode proof: café.',
+        status: 'seed',
+        tags: ['d:llm', 'context-management'],
+        revision: 1,
+        created_at: createdAt,
+        updated_at: createdAt,
+        verification_status: 'source-backed',
+      }).success,
+    ).toBe(true);
     expect(
       KnowledgeWikiPageSchema.safeParse({
         id: 'context-management',

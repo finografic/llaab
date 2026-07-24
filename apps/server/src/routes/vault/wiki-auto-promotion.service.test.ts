@@ -30,7 +30,7 @@ describe('autoPromoteWikiDrafts', () => {
       summary: 'Existing page',
       body: '<!-- wiki-section:existing -->\n\n## Existing\n\nExisting.[^existing-ref]',
       status: 'seed',
-      tags: ['context-management'],
+      tags: ['d:llm', 'context-management'],
       links: [],
       source_refs: [{ id: 'existing-ref', kind: 'transcript', verification: 'source-backed' }],
       source_canonical_idea_ids: ['existing-idea'],

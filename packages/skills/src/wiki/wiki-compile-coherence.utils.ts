@@ -226,6 +226,8 @@ const FIXABLE_ERROR_PATTERNS = [
   /changed the required topic key/i,
   /does not account for selected canonical idea/i,
   /has no source references/i,
+  /unavailable link target/i,
+  /link lacks evidence/i,
   /invalid_type|expected|required/i,
 ];
 

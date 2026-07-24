@@ -201,7 +201,8 @@ describe('wiki draft routes', () => {
     expect(body.draftCount).toBe(3);
     expect(body.draftIds).toHaveLength(3);
     expect(body.draftId).toBe(body.draftIds[0]);
-    expect(routeLlm).toHaveBeenCalledTimes(3);
+    // One wiki-compile call per focused draft; wiki-link enrichment is a separate stage.
+    expect(routeLlm.mock.calls.filter(([task]) => task === 'wiki-compile')).toHaveLength(3);
     await expect(core.readNodeByType('wiki-draft', body.draftIds[0]!)).resolves.toMatchObject({
       type: 'wiki-draft',
     });
@@ -228,6 +229,6 @@ describe('wiki draft routes', () => {
     });
 
     expect(response.status).toBe(500);
-    expect(routeLlm).toHaveBeenCalledTimes(2);
+    expect(routeLlm.mock.calls.filter(([task]) => task === 'wiki-compile')).toHaveLength(2);
   });
 });

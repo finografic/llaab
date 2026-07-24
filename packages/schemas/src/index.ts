@@ -261,6 +261,7 @@ export {
   type WikiSourceRef,
   WikiSourceRefKindSchema,
   WikiSourceRefSchema,
+  WikiDomainTagSchema,
   WikiTagSchema,
   type WikiTopicMatch,
   WikiTopicMatchSchema,

@@ -40,6 +40,12 @@ describe('wiki compile coherence', () => {
 
   it('classifies fixable vs terminal failures', () => {
     expect(isFixableWikiCompileFailure('Wiki compiler returned malformed or truncated JSON.')).toBe(true);
+    expect(
+      isFixableWikiCompileFailure('Wiki output introduced an unavailable link target: unavailable-wiki'),
+    ).toBe(true);
+    expect(
+      isFixableWikiCompileFailure('Wiki output link lacks evidence beyond shared taxonomy: some-wiki'),
+    ).toBe(true);
     expect(hasTerminalCoherenceFailure([{ code: 'mechanical-idea-headings', message: 'mechanical' }])).toBe(
       true,
     );

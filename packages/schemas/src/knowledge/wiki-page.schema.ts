@@ -4,6 +4,7 @@ import { NodeIdSchema, TimestampSchema } from '../primitives.schema.js';
 import { WikiEvidenceMetricsSchema } from '../wiki-evidence-metrics.js';
 import { WikiQualityReportSchema } from '../wiki-quality-dimensions.js';
 import {
+  WikiDomainTagSchema,
   WikiLifecycleStatusSchema,
   WikiLinkSchema,
   WikiSourceRefSchema,
@@ -20,7 +21,17 @@ export const KnowledgeWikiPageSchema = z.object({
   summary: z.string(),
   body: z.string(),
   status: WikiLifecycleStatusSchema,
-  tags: z.array(WikiTagSchema).default([]),
+  tags: z
+    .array(WikiTagSchema)
+    .default([])
+    .superRefine((tags, ctx) => {
+      if (tags.length === 0) return;
+      if (tags.some((tag) => WikiDomainTagSchema.safeParse(tag).success)) return;
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Promoted wiki pages require at least one d: domain tag',
+      });
+    }),
   links: z.array(WikiLinkSchema).default([]),
   source_refs: z.array(WikiSourceRefSchema).default([]),
   source_canonical_idea_ids: z.array(NodeIdSchema).default([]),

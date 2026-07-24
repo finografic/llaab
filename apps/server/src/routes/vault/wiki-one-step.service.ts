@@ -6,7 +6,7 @@ import {
   updateNode,
 } from '@llaab/core';
 import { assertNoForbiddenDraftPromotionUx, isWikiOneStepOverallSuccess } from '@llaab/schemas';
-import { appendProducedNodeIds, appendRunEvent, linkWikiTopics, runSkill } from '@llaab/skills';
+import { appendRunEvent, linkWikiTopics, runSkill } from '@llaab/skills';
 import type { CreateWikiDraftBody } from './vault-wiki-drafts.schema.js';
 import type { KnowledgeWikiPage, WikiLink, WikiOneStepBranchResult } from '@llaab/schemas';
 
@@ -196,13 +196,6 @@ export async function createTranscriptWikis(input: {
       const success = isWikiOneStepOverallSuccess(branches);
       assertNoForbiddenDraftPromotionUx(warnings);
 
-      if (wikis.length > 0) {
-        await appendProducedNodeIds(
-          parentRunId,
-          wikis.map((wiki) => wiki.id),
-        );
-      }
-
       return {
         success,
         runId: parentRunId,
@@ -218,7 +211,7 @@ export async function createTranscriptWikis(input: {
         warnings,
         qualityScore,
         linkWarnings: linkResult.warnings,
-        producedNodeIds: [...draftIds, ...wikis.map((wiki) => wiki.id)],
+        producedNodeIds: draftIds,
         runTrace: {
           stages: [
             {

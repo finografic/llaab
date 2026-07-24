@@ -30,7 +30,7 @@ describe('knowledge wiki section review', () => {
       summary: 'Two sections',
       body: '<!-- wiki-section:first -->\n\n## First\n\nFirst.[^first-ref]\n\n<!-- wiki-section:second -->\n\n## Second\n\nSecond.[^second-ref]',
       status: 'seed',
-      tags: ['reviewable'],
+      tags: ['d:llm', 'reviewable'],
       links: [],
       source_refs: [
         { id: 'first-ref', kind: 'transcript', verification: 'source-backed' },

@@ -14,7 +14,7 @@ function wiki(overrides: Partial<KnowledgeWikiPage> = {}): KnowledgeWikiPage {
     summary: 'Summary',
     body: '<!-- wiki-section:overview -->\n\n## Overview\n\nBody.[^ref-1]',
     status: 'seed',
-    tags: ['agents'],
+    tags: ['d:agents'],
     links: [],
     source_refs: [{ id: 'ref-1', kind: 'transcript', verification: 'source-backed' }],
     source_canonical_idea_ids: ['idea-a'],
@@ -64,7 +64,7 @@ describe('demoteKnowledgeWiki', () => {
       id: 'demote-draft',
       title: 'Demote Target',
       body: '<!-- wiki-section:overview -->\n\n## Overview\n\nBody.[^ref-1]',
-      tags: ['agents'],
+      tags: ['d:agents'],
       extra: {
         topic_key: 'demote-target',
         operation: 'create',

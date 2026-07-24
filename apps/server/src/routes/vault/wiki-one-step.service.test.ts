@@ -129,7 +129,7 @@ describe('createTranscriptWikis', () => {
       summary: 'Existing',
       body: '<!-- wiki-section:overview -->\n\n## Overview\n\nExisting.[^e]',
       status: 'seed',
-      tags: ['context'],
+      tags: ['d:llm', 'context'],
       links: [],
       source_refs: [{ id: 'e', kind: 'transcript', verification: 'source-backed' }],
       source_canonical_idea_ids: ['idea-b'],

@@ -9,6 +9,8 @@ export const WikiLifecycleStatusSchema = z.enum(['seed', 'growing', 'mature']);
 export const WikiTagSchema = z
   .string()
   .regex(/^(?:d:)?[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use a normalized topic or d: domain tag');
+/** Promoted pages require `d:` domain tags; semantic topic tags remain allowed alongside them. */
+export const WikiDomainTagSchema = z.string().regex(/^d:[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use a d: domain tag');
 export const WikiLinkRelationSchema = z.enum([
   'related-to',
   'depends-on',
