@@ -457,6 +457,19 @@ provider and model in `configs/llm-routing.json`.
 Extraction prep is token-aware: long transcripts are chunked with overlap instead of blindly
 truncated, and chunk outputs are reduced/deduped.
 
+`@llaab/llm` transport runs on Vercel AI SDK Core: Anthropic, OpenCode, and LM Studio chat
+completions go through `generateText`/`streamText` behind the internal
+`ai-sdk-model-registry.ts` boundary, with transport retries pinned to 0 because retry policy
+belongs to LLAAB workflows. Ollama stays on the native `ollama` client pending an explicit parity
+decision. LM Studio and OpenCode stream real token deltas; LM Studio keeps its CLI load/unload
+preflight, progress polling, and completion timeout, and OpenCode keeps its pre-request API-key
+gate and error message contract. `routeLlmObject()` is the typed structured-output path: Zod
+schema in, typed object plus the same provider/model/usage metadata out; anthropic/opencode
+routes use the SDK object path while local providers use deterministic JSON extraction, and
+failures throw `LlmStructuredOutputError` carrying the raw model text. Characterization tests in
+`packages/llm/src` pin the router, cache, and provider transport contracts. Detail:
+`docs/todo/TODO_VERCEL_AI_SDK_MIGRATION.md` and `docs/todo/TODO_FABLE_MIGRATION_LEDGER.md`.
+
 Capabilities are shared through `@llaab/core`. LLM providers, skill routes, typed commands, and
 executor adapters declare/query capabilities. `OpenCode` is registered as an external executor
 adapter but reports unavailable unless the `opencode` binary exists.

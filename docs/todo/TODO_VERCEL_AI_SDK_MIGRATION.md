@@ -1,6 +1,9 @@
 # TODO — Vercel AI SDK Migration
 
-> **Status:** Not started. P1 next up.
+> **Status:** Phases 0–3 complete, Phase 4 core API complete (2026-07-24) — transport migrated
+> inside `@llaab/llm` on branch `codex/fable-ai-sdk-migration-setup`; see
+> [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Phase 4 consumer pilot and
+> Phases 5–8 not started.
 
 ---
 
@@ -69,11 +72,12 @@ Pin one stable AI SDK major version across the migration. Do not mix examples fr
 
 ## Progress
 
-- [ ] Phase 0 — baseline contracts and runtime spike
-- [ ] Phase 1 — internal AI SDK model registry and shared result mapping
-- [ ] Phase 2 — Anthropic and OpenCode migration
-- [ ] Phase 3 — LM Studio migration with lifecycle preservation
-- [ ] Phase 4 — typed structured-output boundary and low-risk pilot
+- [x] Phase 0 — baseline contracts and runtime spike
+- [x] Phase 1 — internal AI SDK model registry and shared result mapping
+- [x] Phase 2 — Anthropic and OpenCode migration
+- [x] Phase 3 — LM Studio migration with lifecycle preservation
+- [ ] Phase 4 — typed structured-output boundary and low-risk pilot (boundary API done; consumer
+      pilot pending)
 - [ ] Phase 5 — multimodal vision migration
 - [ ] Phase 6 — Ollama parity decision
 - [ ] Phase 7 — optional embedding boundary after retrieval design
@@ -81,72 +85,77 @@ Pin one stable AI SDK major version across the migration. Do not mix examples fr
 
 ## Phase 0 — Baseline Contracts and Runtime Spike
 
-- [ ] Record the current public behavior of `routeLlm()`, `streamLlm()`, cache hits, usage fields,
+- [x] Record the current public behavior of `routeLlm()`, `streamLlm()`, cache hits, usage fields,
       provider ids, model overrides, progress callbacks, and error propagation.
-- [ ] Add focused contract tests around the public router rather than testing SDK internals.
-- [ ] Add provider transport tests with mocked HTTP responses for Anthropic-compatible metadata and
+- [x] Add focused contract tests around the public router rather than testing SDK internals.
+- [x] Add provider transport tests with mocked HTTP responses for Anthropic-compatible metadata and
       OpenAI-compatible completion/stream payloads.
-- [ ] Verify the chosen AI SDK version typechecks under strict ESM, TypeScript 7, Node 24, and the
+- [x] Verify the chosen AI SDK version typechecks under strict ESM, TypeScript 7, Node 24, and the
       Bun server runtime.
-- [ ] Run one minimal Bun smoke call against a local or mocked OpenAI-compatible endpoint.
-- [ ] Confirm package size and dependency changes are acceptable before migrating providers.
+- [x] Run one minimal Bun smoke call against a local or mocked OpenAI-compatible endpoint
+      (`packages/llm/scripts/ai-sdk-bun-smoke.ts`).
+- [x] Confirm package size and dependency changes are acceptable before migrating providers.
 
 Exit criteria: the SDK can run inside `@llaab/llm` under Bun without changing a consumer.
 
 ## Phase 1 — Internal Model Registry and Shared Mapping
 
-- [ ] Add a named implementation module such as `ai-sdk-model-registry.ts`; keep `index.ts` as a
+- [x] Add a named implementation module such as `ai-sdk-model-registry.ts`; keep `index.ts` as a
       barrel only.
-- [ ] Map existing provider ids and model ids to AI SDK `LanguageModel` instances.
-- [ ] Use the official Anthropic provider for `anthropic`.
-- [ ] Use separate `createOpenAICompatible()` instances for `lmstudio` and `opencode`.
-- [ ] Centralise conversion from AI SDK results to `LlmProviderResult` /
+- [x] Map existing provider ids and model ids to AI SDK `LanguageModel` instances (anthropic,
+      lmstudio, opencode; ollama stays native pending Phase 6).
+- [x] Use the official Anthropic provider for `anthropic`.
+- [x] Use separate `createOpenAICompatible()` instances for `lmstudio` and `opencode`.
+- [x] Centralise conversion from AI SDK results to `LlmProviderResult` /
       `LlmCompleteResult`, including duration and token usage.
-- [ ] Set transport retries explicitly. Do not rely on AI SDK defaults because several LLAAB
+- [x] Set transport retries explicitly. Do not rely on AI SDK defaults because several LLAAB
       workflows already retry semantic/schema failures.
-- [ ] Add explicit abort/timeout options without weakening the existing LM Studio completion
+- [x] Add explicit abort/timeout options without weakening the existing LM Studio completion
       timeout.
-- [ ] Preserve provider-specific request options through a small typed internal mapping rather than
+- [x] Preserve provider-specific request options through a small typed internal mapping rather than
       leaking AI SDK `providerOptions` to consumers.
 
 Exit criteria: one internal model resolver can serve text generation without changing public types.
 
 ## Phase 2 — Anthropic and OpenCode
 
-- [ ] Migrate Anthropic completion and streaming to `generateText()` / `streamText()`.
-- [ ] Preserve system prompts, output-token limits, usage counts, provider/model ids, and errors.
-- [ ] Migrate OpenCode completion through its OpenAI-compatible endpoint.
-- [ ] Replace OpenCode's one-chunk pseudo-stream with actual streamed text deltas.
-- [ ] Preserve the OpenCode model catalog and availability logic outside the transport.
-- [ ] Remove `@anthropic-ai/sdk` only after all direct imports are gone and parity tests pass.
+- [x] Migrate Anthropic completion and streaming to `generateText()` / `streamText()`.
+- [x] Preserve system prompts, output-token limits, usage counts, provider/model ids, and errors.
+- [x] Migrate OpenCode completion through its OpenAI-compatible endpoint.
+- [x] Replace OpenCode's one-chunk pseudo-stream with actual streamed text deltas.
+- [x] Preserve the OpenCode model catalog and availability logic outside the transport.
+- [x] Remove `@anthropic-ai/sdk` only after all direct imports are gone and parity tests pass.
 
 Exit criteria: Anthropic and OpenCode pass the router contract tests and OpenCode streams multiple
 deltas from a streaming fixture.
 
 ## Phase 3 — LM Studio
 
-- [ ] Keep `ensureRequestedModelLoaded()` as an explicit preflight before generation.
-- [ ] Keep CLI model inspection, load overrides, and progress polling owned by LLAAB.
-- [ ] Replace only `/chat/completions` request/response handling with the OpenAI-compatible provider.
-- [ ] Preserve `LLAAB_LMSTUDIO_BASE_URL`, API key, temperature, and completion timeout semantics.
-- [ ] Replace LM Studio's one-chunk pseudo-stream with real text streaming.
-- [ ] Ensure progress polling always stops on success, provider error, timeout, or abort.
-- [ ] Keep model listing and embedding-model filtering independent of AI SDK transport.
+- [x] Keep `ensureRequestedModelLoaded()` as an explicit preflight before generation.
+- [x] Keep CLI model inspection, load overrides, and progress polling owned by LLAAB.
+- [x] Replace only `/chat/completions` request/response handling with the OpenAI-compatible provider.
+- [x] Preserve `LLAAB_LMSTUDIO_BASE_URL`, API key, temperature, and completion timeout semantics.
+- [x] Replace LM Studio's one-chunk pseudo-stream with real text streaming.
+- [x] Ensure progress polling always stops on success, provider error, timeout, or abort.
+- [x] Keep model listing and embedding-model filtering independent of AI SDK transport.
 
 Exit criteria: local completion, timeout, progress, usage, and streaming behavior remain observable
 through existing routes and RunNode metadata.
 
 ## Phase 4 — Structured Output
 
-- [ ] Add a LLAAB-owned API such as `routeLlmObject()` that accepts a schema and returns typed data
+- [x] Add a LLAAB-owned API such as `routeLlmObject()` that accepts a schema and returns typed data
       plus the same provider/model/usage metadata as `routeLlm()`.
-- [ ] Keep AI SDK types private to `@llaab/llm`; consumers should depend on LLAAB types and schemas.
+- [x] Keep AI SDK types private to `@llaab/llm`; consumers should depend on LLAAB types and schemas.
 - [ ] Distinguish transport retries from semantic retries in `@llaab/control`.
 - [ ] Pilot structured output on a low-risk, optional workflow such as wiki-link enrichment.
 - [ ] Retain deterministic validation that rejects unknown ids, invalid relationships, weak
       rationales, and other domain errors after schema validation.
-- [ ] Preserve access to raw model text/usage when structured generation fails.
-- [ ] Evaluate JSON-extraction middleware for local models that still return fenced JSON.
+- [x] Preserve access to raw model text/usage when structured generation fails
+      (`LlmStructuredOutputError` carries the raw model text).
+- [ ] Evaluate JSON-extraction middleware for local models that still return fenced JSON
+      (deterministic fence/prose extraction ships as the local-provider fallback; middleware
+      evaluation pending).
 - [ ] Do not migrate wiki compilation first; its tolerant normalization and repair behavior is
       intentional.
 - [ ] Do not remove extraction/consolidation repair paths until model/provider parity is measured.

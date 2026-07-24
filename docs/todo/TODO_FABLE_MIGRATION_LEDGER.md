@@ -14,32 +14,30 @@ and catalog logic. `@anthropic-ai/sdk` removed. A3: LM Studio and OpenCode `stre
 caller-facing shape is unchanged. A4: additive `routeLlmObject()` typed structured-output API
 (AI SDK `Output.object` for anthropic/opencode; deterministic JSON-extraction fallback for
 local providers) with `LlmObjectResult` / `LlmStructuredOutputError` exported from the barrel.
-Remaining: A5 closeout (handoff, docs, roadmap decision, final verification).
+A5 closeout done: full verification run, `.agents/handoff.md` LLM Layer updated, migration doc
+status/checkboxes updated (kept as `TODO_`), no roadmap edit (see Decisions).
 
 ## Resume Here
 
-Start A5 — closeout: full `pnpm build && pnpm typecheck && pnpm test && pnpm lint`; update
-`.agents/handoff.md` **LLM Layer**; per todo-done conventions rename
-`TODO_VERCEL_AI_SDK_MIGRATION.md` → `DONE_VERCEL_AI_SDK_MIGRATION.md` only if its tracked scope
-is judged complete — it is NOT (doc Phases 5–8 remain open: vision, Ollama parity decision,
-embeddings, closeout verification against the live app), so instead update that doc's Status
-header and checkboxes for Phases 0–4 and leave it `TODO_`. The single authorised `ROADMAP.md`
-edit only applies if Task A is "fully complete" per the brief — record the outcome here either
-way. Then run the Rebuild & Reload App workflow (`./scripts/macos/dev-refresh.sh`) since
-server-consumed `packages/llm` changed, and write the final ledger summary.
+Task A is complete. Task B (process-state audit) was intentionally not started — a complete
+Task A plus an untouched Task B is the brief's preferred outcome over two half-done tasks. A
+successor with budget should read `docs/todo/TODO_PROCESS_STATE_AUDIT.md`
+`#blocked-on-a-prerequisite` first (wrap transcript re-extraction in `runSkill` before deriving
+its UI state from the shared monitor). The next migration-doc work is the Phase 4 consumer
+pilot (wiki-link enrichment via `routeLlmObject`) and the Phase 6 Ollama parity decision.
 
 ## Phase Log
 
-| Phase                             | State                                                            | Commit      | Verified by                                                                                           |
-| --------------------------------- | ---------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
-| Setup                             | done — brief and ledger only                                     | 8c580799    | `pnpm run lint:md`; `git diff --check`                                                                |
-| A0 characterization tests         | done — 102 tests, 8 files                                        | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build`        |
-| A1 dependencies and boundary      | done — deps, registry, smoke                                     | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke          |
-| A2 provider migration             | done — anthropic 5fe4105, opencode 109adf1, lmstudio this commit | this commit | `pnpm exec vitest run packages/llm` (109 passing) after each provider; `pnpm typecheck`; `pnpm build` |
-| A3 streaming                      | done — lmstudio + opencode real streaming                        | this commit | `pnpm exec vitest run packages/llm` (112 passing); `pnpm typecheck`; `pnpm build`                     |
-| A4 cross-cutting behavior         | done — routeLlmObject + structured-output boundary               | this commit | `pnpm exec vitest run packages/llm` (122 passing); `pnpm typecheck`; `pnpm build`                     |
-| A5 verification and documentation | not started                                                      | —           | —                                                                                                     |
-| B process-state audit             | blocked until Task A complete                                    | —           | —                                                                                                     |
+| Phase                             | State                                                            | Commit      | Verified by                                                                                                   |
+| --------------------------------- | ---------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------- |
+| Setup                             | done — brief and ledger only                                     | 8c580799    | `pnpm run lint:md`; `git diff --check`                                                                        |
+| A0 characterization tests         | done — 102 tests, 8 files                                        | 94ba1a1     | `pnpm exec vitest run packages/llm` (105 passing); `pnpm typecheck`; `pnpm lint`; `pnpm build`                |
+| A1 dependencies and boundary      | done — deps, registry, smoke                                     | this commit | `pnpm exec vitest run packages/llm` (109 passing); `pnpm typecheck`; `pnpm build`; Bun smoke                  |
+| A2 provider migration             | done — anthropic 5fe4105, opencode 109adf1, lmstudio this commit | this commit | `pnpm exec vitest run packages/llm` (109 passing) after each provider; `pnpm typecheck`; `pnpm build`         |
+| A3 streaming                      | done — lmstudio + opencode real streaming                        | this commit | `pnpm exec vitest run packages/llm` (112 passing); `pnpm typecheck`; `pnpm build`                             |
+| A4 cross-cutting behavior         | done — routeLlmObject + structured-output boundary               | this commit | `pnpm exec vitest run packages/llm` (122 passing); `pnpm typecheck`; `pnpm build`                             |
+| A5 verification and documentation | done — handoff, doc status, final summary                        | this commit | `pnpm test` (355 passing, only the 4 pre-existing wiki failures); `pnpm typecheck`; `pnpm lint`; `pnpm build` |
+| B process-state audit             | not started — deliberate (see Resume Here)                       | —           | —                                                                                                             |
 
 ## Decisions
 
@@ -86,6 +84,14 @@ server-consumed `packages/llm` changed, and write the final ledger summary.
   uses it — all models come from `resolveAiSdkModel` — so the "no AI Gateway dependency"
   acceptance criterion is about usage, not node_modules presence. Size impact of all AI SDK
   packages combined: ~13 MB in `node_modules/.pnpm` (acceptable).
+- **No TODO→DONE rename and no ROADMAP edit (A5).** The brief authorises both "if Task A is fully
+  complete", and its A0–A5 shape is complete — but the brief also says the migration doc wins on
+  specifics, and that doc still tracks open work (Phase 4 consumer pilot, Phases 5–8). The repo's
+  todo-done convention forbids renaming while unchecked items remain, and marking the roadmap P1
+  item Delivered would misstate the doc's status. Conservative choice: doc stays `TODO_` with an
+  accurate status header and per-phase checkboxes; ROADMAP.md untouched; the operator can judge
+  whether "transport standardisation" as a roadmap initiative is close enough to done to move it.
+  Rejected alternative: rename + Delivered row now, which would orphan Phases 5–8.
 
 - **A4 structured-output design:** `routeLlmObject(task, prompt, zodSchema, opts?)` is additive
   public API (frozen exports unchanged). Anthropic/OpenCode routes use the AI SDK
@@ -126,3 +132,26 @@ server-consumed `packages/llm` changed, and write the final ledger summary.
 - Router/config tests chdir into a temp dir because `configs/llm-routing.json` and
   `configs/cloud-model-catalog.json` paths resolve from `process.cwd()` at module load — this
   relies on Vitest's default forks pool and breaks under `pool: 'threads'`.
+
+## Final Summary (Task A)
+
+**Shipped** (branch `codex/fable-ai-sdk-migration-setup`, commits 94ba1a1 → this commit): 122
+`packages/llm` tests (102-test A0 characterization net + A1/A3/A4 additions); AI SDK Core
+transport (`ai@7`, `@ai-sdk/anthropic@4`, `@ai-sdk/openai-compatible@3`, `zod@4` in
+`packages/llm` only) behind `ai-sdk-model-registry.ts` with `maxRetries` 0; Anthropic, OpenCode,
+and LM Studio completions migrated; real streaming for LM Studio and OpenCode; additive
+`routeLlmObject()` + `LlmObjectResult` + `LlmStructuredOutputError`; `@anthropic-ai/sdk`
+removed; Bun smoke script `packages/llm/scripts/ai-sdk-bun-smoke.ts`. Public API frozen —
+consumers compile with zero source edits (full-workspace `pnpm typecheck` and `pnpm build`
+green).
+
+**Unprotected by tests:** LM Studio progress-poll internals; real timeout firing; live provider
+wire quirks (fixtures encode assumed shapes — first live LM Studio/OpenCode/Anthropic calls
+after this migration deserve a watchful eye); legacy `summarizeText`; `cloud-model-catalog.ts`.
+The structured-output SDK path sends no `response_format` schema (prompt-driven JSON).
+
+**Human must verify manually:** `/llm` page shows correct provider/model routing and
+availability after Rebuild & Reload; one real extraction/consolidation run end-to-end (RunNode
+telemetry fields: model, provider, duration_ms, prompt_tokens, completion_tokens); LM Studio
+live completion incl. model auto-load and progress; `/api/llm/stream` streaming behaviour in
+the browser; the 4 pre-existing wiki test failures (unrelated to this work) still need an owner.
