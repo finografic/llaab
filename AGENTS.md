@@ -223,6 +223,16 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 - Do not include `Co-Authored-By` lines in commit messages.
 - `.github/instructions/git/git-policy.instructions.md` (see Commits and Releases sections)
 
+### Upstream Sync Before Work
+
+- Before beginning or resuming non-trivial work on the main checkout, run `git fetch origin --prune`
+  and inspect `git status --short --branch`.
+- If the checkout is on `master`, clean, and behind `origin/master`, update it with
+  `git pull --ff-only` before editing.
+- If the checkout has local changes, is on a feature branch, or has diverged from upstream, do not
+  auto-pull/rebase/merge. Report the state and choose an explicit path that preserves local work.
+- Do not use background auto-fetch/watchers for this repo; sync is a one-shot pre-work check.
+
 ---
 
 ## Rules — Components
