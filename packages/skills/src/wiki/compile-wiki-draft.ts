@@ -59,6 +59,17 @@ interface CompileAttempt {
 
 const MAX_RELATED_WIKIS = 8;
 
+const WIKI_COMPILE_TRANSPORT_FAILURE_PATTERNS = [
+  /^(?:OpenCode|LM Studio) request failed: (?:408|429|5\d\d)\b/i,
+  /\b(?:408|429|5\d\d)\b.*\b(?:anthropic|request|response|status|provider)\b/i,
+  /\b(?:aborterror|fetch failed|network|timeout|timed out|econnreset|etimedout)\b/i,
+  /\b(?:rate limit|too many requests|temporarily unavailable|service unavailable)\b/i,
+];
+
+function isRetryableWikiCompileTransportFailure(errorMessage: string): boolean {
+  return WIKI_COMPILE_TRANSPORT_FAILURE_PATTERNS.some((pattern) => pattern.test(errorMessage));
+}
+
 function selectRelatedWikis(
   wikis: KnowledgeWikiPage[],
   target: KnowledgeWikiPage | undefined,
@@ -603,13 +614,20 @@ export async function compileWikiDraft(input: CompileWikiDraftInput) {
       } catch (error) {
         firstFailure = error instanceof Error ? error.message : String(error);
       }
-      // Retry once only for concrete fixable validation/parse failures — not coherence failures.
-      if (!attempt && firstFailure && isFixableWikiCompileFailure(firstFailure)) {
-        retryAttempted = true;
-        attempt = await compileAttempt({
-          ...validationInput,
-          system: `${WIKI_COMPILE_SYSTEM_PROMPT}\nFix invalid output or validation issues: ${firstFailure}`,
-        });
+      if (!attempt && firstFailure) {
+        if (isRetryableWikiCompileTransportFailure(firstFailure)) {
+          retryAttempted = true;
+          attempt = await compileAttempt({
+            ...validationInput,
+            system: WIKI_COMPILE_SYSTEM_PROMPT,
+          });
+        } else if (isFixableWikiCompileFailure(firstFailure)) {
+          retryAttempted = true;
+          attempt = await compileAttempt({
+            ...validationInput,
+            system: `${WIKI_COMPILE_SYSTEM_PROMPT}\nFix invalid output or validation issues: ${firstFailure}`,
+          });
+        }
       }
       if (!attempt) {
         throw new Error(firstFailure ?? 'Wiki compilation failed without a usable model result.');

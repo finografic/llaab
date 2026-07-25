@@ -94,6 +94,86 @@ describe('compileWikiDraft', () => {
     expect(result.producedNodeIds).toEqual([draft.id]);
   });
 
+  it('retries a transport failure without adding a validation-fix prompt', async () => {
+    routeLlm
+      .mockRejectedValueOnce(new Error('OpenCode request failed: 503 upstream unavailable'))
+      .mockImplementationOnce(async (_task, prompt) => {
+        const input = JSON.parse(prompt) as {
+          evidence: Array<{ id: string }>;
+          canonicalIdeas: Array<{ id: string }>;
+        };
+        return {
+          text: JSON.stringify({
+            operation: 'create',
+            topic: { topic_key: 'transport-retry', title: 'Transport Retry', aliases: [] },
+            summary: 'Transport retries reissue the same wiki compile request.',
+            sections: [
+              {
+                id: 'overview',
+                heading: 'Overview',
+                body: 'Transport retries reissue the same wiki compile request.',
+                source_ref_ids: [input.evidence[0]?.id],
+                source_canonical_idea_ids: [input.canonicalIdeas[0]?.id],
+              },
+            ],
+            links: [],
+            source_refs: input.evidence.map((item) => item.id),
+            coverage: {
+              represented_canonical_idea_ids: [input.canonicalIdeas[0]?.id],
+              omitted_canonical_ideas: [],
+            },
+            change_summary: 'Creates a retry-tested seed wiki.',
+            unresolved_questions: [],
+            contested_claims: [],
+          }),
+          model: 'test-model',
+          provider: 'opencode',
+          durationMs: 10,
+        };
+      });
+
+    const core = await import('@llaab/core');
+    const { compileWikiDraft } = await import('./compile-wiki-draft.js');
+    const transcript = await core.createNode({
+      type: 'transcript',
+      title: 'Transport retry',
+      body: '<!-- t:0:42 -->\n\nTransport retries reissue the same wiki compile request.',
+      extra: { source_url: 'https://example.com/transport-retry', source_type: 'youtube' },
+    });
+    const candidate = await core.createNode({
+      type: 'idea',
+      title: 'Transport retry candidate',
+      body: '',
+      extra: { origin: 'extracted' },
+    });
+    const canonicalIdea = await core.createNode({
+      type: 'canonical-idea',
+      title: 'Transport retries reissue compile requests',
+      extra: { transcript_id: transcript.id, source_candidate_idea_ids: [candidate.id] },
+    });
+
+    const { record } = await compileWikiDraft({
+      transcriptId: transcript.id,
+      canonicalIdeaIds: [canonicalIdea.id],
+      suggestedTopicKey: 'transport-retry',
+      entryPath: 'manual',
+    });
+    const firstOptions = routeLlm.mock.calls[0]?.[2] as { system?: string };
+    const secondOptions = routeLlm.mock.calls[1]?.[2] as { system?: string };
+
+    expect(record.status).toBe('completed');
+    expect(routeLlm).toHaveBeenCalledTimes(2);
+    expect(secondOptions.system).toBe(firstOptions.system);
+    expect(secondOptions.system).not.toContain('Fix invalid output or validation issues');
+    const run = await core.readNodeByType('run', record.runNodeId);
+    expect(run.stages).toContainEqual(
+      expect.objectContaining({
+        name: 'compile',
+        output: expect.objectContaining({ attempts: 2 }),
+      }),
+    );
+  });
+
   it('keeps the model-generated title while normalizing model-created ids', async () => {
     routeLlm.mockImplementation(async (_task, prompt) => {
       const input = JSON.parse(prompt) as {

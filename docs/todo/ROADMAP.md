@@ -16,7 +16,7 @@ implementation plans into `TODO_*.md` files.
 ### Up Next
 
 - [ ] **Finish outstanding LLM Migration bugfixes**
-      Detail: [`TODO_BUGFIXES_LLM_MIGRATION.md`](./TODO_VAULT_KNOWLEDGE_SPLIT.md).
+      Detail: [`TODO_BUGFIXES_LLM_MIGRATION.md`](./TODO_BUGFIXES_LLM_MIGRATION.md).
 
 - [ ] **Close podcast ingest validation** — add fixture-based episode matching coverage, then run
       one real Mac Studio `mlx_whisper` transcription and confirm the saved transcript, source,

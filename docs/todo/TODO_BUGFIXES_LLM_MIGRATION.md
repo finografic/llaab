@@ -232,18 +232,26 @@ courtesy a malformed-JSON response gets.
 
 **Acceptance criteria:**
 
-- [ ] Decide whether transport errors deserve the _same_ retry path as fixable validation
+- [x] Decide whether transport errors deserve the _same_ retry path as fixable validation
       failures, or a separate one (the current retry re-prompts the model with
       `"Fix invalid output or validation issues: ${firstFailure}"`, which makes no sense to send
       back to the model for a transport failure — a transport retry should just re-issue the same
       request, not append a "fix this" instruction).
-- [ ] If a transport retry is added, keep it a single retry (matching the existing one-retry
+      → Added a separate transport retry path: retryable transport-shaped failures re-issue the
+      same compile request with the original system prompt, while parse/schema validation failures
+      keep the existing amended-prompt retry.
+- [x] If a transport retry is added, keep it a single retry (matching the existing one-retry
       ceiling here) rather than introducing unbounded retry — this is exactly the
       retry-multiplication risk the AI SDK migration's `AI_SDK_MAX_RETRIES = 0` was set to avoid,
       so any new retry here must stay a deliberate, capped, application-level decision.
-- [ ] Add a test where `compileAttempt` rejects with a transport-shaped error message on the first
+      → The retry remains one additional application-level attempt.
+- [x] Add a test where `compileAttempt` rejects with a transport-shaped error message on the first
       call and succeeds on the second, asserting compilation still completes.
-- [ ] Full `packages/skills` suite green.
+- [x] Full `packages/skills` suite green.
+      → `pnpm exec vitest run packages/skills/src && pnpm --filter @llaab/skills typecheck`
+      passed (14 test files, 60 tests, plus `tsc --noEmit`).
+
+**Status: done.**
 
 ---
 
