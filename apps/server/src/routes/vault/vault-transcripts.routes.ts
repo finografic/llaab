@@ -1,5 +1,4 @@
 import { createNode, deleteNode, getNodeFilePath, listNodes, readNode, updateNode } from '@llaab/core';
-import { extractKnowledgeFromTranscript } from '@llaab/ingestion';
 import { resolveLlmRoute, routeLlm } from '@llaab/llm';
 import {
   formatConsolidationQualityWarning,
@@ -7,7 +6,7 @@ import {
   formatIsoUtcSeconds,
   validateConsolidationQuality,
 } from '@llaab/schemas';
-import { appendProducedNodeIds, appendRunEvent, runSkill, setRunLlmTrace } from '@llaab/skills';
+import { appendRunEvent, extractTranscriptIdeas, runSkill, setRunLlmTrace } from '@llaab/skills';
 import { z } from 'zod';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { PromoteCanonicalIdeaBody, ResolveCanonicalIdeaConflictBody } from './vault.schema.js';
@@ -635,64 +634,20 @@ export const extractTranscript = {
     if (!node) return c.json({ error: 'Transcript not found' }, 404);
     if (!node.body) return c.json({ error: 'Transcript has no body' }, 400);
 
-    const filePath = getNodeFilePath(node.type, node.id);
-    const runNodes = await listNodes({ type: 'run' });
-    const matchingRuns = (runNodes as RunNode[])
-      .filter((n) => n.produced_node_ids?.includes(id))
-      .sort((a, b) => {
-        const left = a.started_at ?? a.created_at;
-        const right = b.started_at ?? b.created_at;
-        return right.localeCompare(left);
-      });
-    const originatingRun = matchingRuns[0];
+    const { record, result } = await extractTranscriptIdeas({ transcript: node });
 
-    if (originatingRun) {
-      await appendRunEvent(originatingRun.id, {
-        level: 'info',
-        message: 'Extracting ideas from transcript',
-      });
-    }
-
-    try {
-      const result = await extractKnowledgeFromTranscript(id, filePath, node.body);
-
-      // Extraction runs as a follow-on step after the originating run was persisted —
-      // append the newly created idea node ids so the run's produced-node count stays accurate.
-      if (originatingRun) {
-        await appendProducedNodeIds(originatingRun.id, result.ideaIds, {
-          completedAt: formatIsoUtcSeconds(new Date()),
-        });
-        await setRunLlmTrace(originatingRun.id, {
-          model: result.llmMeta.model,
-          provider: result.llmMeta.provider,
-          duration_ms: result.llmMeta.durationMs,
-          prompt_tokens: result.llmMeta.promptTokens,
-          completion_tokens: result.llmMeta.completionTokens,
-        });
-        await appendRunEvent(originatingRun.id, {
-          level: 'success',
-          message: `Extracted ${result.ideaIds.length} idea${result.ideaIds.length === 1 ? '' : 's'}`,
-          node_ids: result.ideaIds,
-        });
-      }
-
-      return c.json({ success: true, ...result });
-    } catch (err) {
-      if (originatingRun) {
-        await appendRunEvent(originatingRun.id, {
-          level: 'warning',
-          message: `Extraction failed (transcript saved): ${err instanceof Error ? err.message : String(err)}`,
-        });
-      }
-
+    if (record.status === 'failed') {
       return c.json(
         {
           success: false,
-          error: err instanceof Error ? err.message : 'Extraction failed',
+          error: record.error ?? 'Extraction failed',
+          runId: record.runNodeId,
         },
         500,
       );
     }
+
+    return c.json({ success: true, runId: record.runNodeId, ...result });
   },
 };
 

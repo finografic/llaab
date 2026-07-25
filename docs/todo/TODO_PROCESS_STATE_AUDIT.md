@@ -1,6 +1,6 @@
 # TODO — Process State Architecture Audit
 
-> **Status:** Not started. Tracking doc for
+> **Status:** Confirmed bug-class items fixed. Tracking doc for
 > `.github/instructions/project/process-state-architecture.instructions.md` — migrate the items
 > below opportunistically (e.g. when touching the relevant file for other reasons), not as a
 > standalone sprint.
@@ -41,14 +41,16 @@ This doc tracks where else in the client the same fragility exists, found via a 
       run-backed initial ingest path for extraction; retry extraction remains covered by the
       separate prerequisite below.
 
-## Blocked on a prerequisite
+## Fixed after prerequisite
 
-- [ ] **Transcript re-extraction status** (`TranscriptDetail.tsx` — `isExtracting`,
-      `extractStatus`, `extractStatusClass`, `handleReExtract`) — same local-state-only fragility,
-      but `extractTranscript` (`apps/server/src/routes/vault/vault-transcripts.routes.ts`) does
-      not currently go through `runSkill`, so there's no durable RunNode to cross-check yet.
-      Prerequisite: wire `extractTranscript` through `runSkill` (mirroring the
-      `consolidate-canonical-ideas` wrap-up) before applying the durable-status pattern here.
+- [x] **Transcript re-extraction status** (`TranscriptDetail.tsx` — `isExtracting`,
+      `extractStatus`, `extractStatusClass`, `handleReExtract`) — previously had the same
+      local-state-only fragility, and `extractTranscript`
+      (`apps/server/src/routes/vault/vault-transcripts.routes.ts`) did not go through `runSkill`,
+      so there was no durable RunNode to cross-check.
+      Fixed by routing the server handler through the existing `extractTranscriptIdeas` skill and
+      deriving active UI state from the shared run monitor for matching `extract-transcript-ideas`
+      runs. Verified with a route regression that returns `runId` and persists produced idea IDs.
 
 ## Stylistic migration candidates (not bugs — fast, non-RunNode operations)
 

@@ -73,6 +73,7 @@ export interface TranscriptExtractionRun {
 
 const EMPTY_EXTRACTION_RUNS: TranscriptExtractionRun[] = [];
 const EMPTY_CANONICAL_IDEAS: CanonicalIdeaNode[] = [];
+const EXTRACT_TRANSCRIPT_SKILL_ID = 'extract-transcript-ideas';
 
 function fmtRunDate(value?: string) {
   if (!value) return 'Run';
@@ -96,6 +97,17 @@ function hasExtractionMeta(run: TranscriptExtractionRun) {
 
 function formatTokenCount(value: number) {
   return value.toLocaleString();
+}
+
+function parseExtractRunTranscriptId(inputSummary: string | undefined): string | undefined {
+  if (!inputSummary) return undefined;
+
+  try {
+    const parsed = JSON.parse(inputSummary) as { transcript?: { id?: unknown } };
+    return typeof parsed.transcript?.id === 'string' ? parsed.transcript.id : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function TranscriptDetail({
@@ -204,7 +216,19 @@ export function TranscriptDetail({
       ),
     [monitorData, transcript.id],
   );
+  const activeExtractRun = useMemo(
+    () =>
+      monitorData?.active.find(
+        (run) =>
+          run.skill_id === EXTRACT_TRANSCRIPT_SKILL_ID &&
+          parseExtractRunTranscriptId(run.input_summary) === transcript.id,
+      ),
+    [monitorData, transcript.id],
+  );
   const isConsolidating = consolidateMutation.isPending || activeConsolidateRun != null;
+  const isExtractingActive = isExtracting || activeExtractRun != null;
+  const displayExtractStatus = activeExtractRun ? 'Extracting ideas...' : extractStatus;
+  const displayExtractStatusClass = activeExtractRun ? 'text-[11px] text-accent' : extractStatusClass;
   const remoteConsolidateStartedAtMs = activeConsolidateRun?.started_at
     ? Date.parse(activeConsolidateRun.started_at)
     : null;
@@ -327,6 +351,7 @@ export function TranscriptDetail({
     try {
       const res = await fetch(`/api/vault/transcripts/${transcript.id}/extract`, { method: 'POST' });
       const json = (await res.json()) as { success: boolean; ideaIds?: string[]; error?: string };
+      void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.monitor() });
 
       if (json.success) {
         setExtractStatus(`✓ ${json.ideaIds?.length ?? 0} ideas extracted — reloading…`);
@@ -341,6 +366,7 @@ export function TranscriptDetail({
       setExtractStatus('Network error');
       setExtractStatusClass('text-[11px] text-destructive');
       setIsExtracting(false);
+      void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.monitor() });
     }
   }
 
@@ -802,14 +828,16 @@ export function TranscriptDetail({
               variant="outline"
               size="sm"
               className="h-auto shrink-0 cursor-pointer rounded-sm border-border-subtle px-2.5 py-0.5 font-sans text-[10px] font-medium text-muted-foreground hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-50"
-              disabled={isExtracting}
+              disabled={isExtractingActive}
               onClick={handleReExtract}
             >
-              {isExtracting ? 'Extracting...' : visibleIdeaCount > 0 ? 'Re-extract' : 'Extract now'}
+              {isExtractingActive ? 'Extracting...' : visibleIdeaCount > 0 ? 'Re-extract' : 'Extract now'}
             </Button>
-            {extractStatus ? (
-              <span className={`normal-case text-[11px] font-normal tracking-normal ${extractStatusClass}`}>
-                {extractStatus}
+            {displayExtractStatus ? (
+              <span
+                className={`normal-case text-[11px] font-normal tracking-normal ${displayExtractStatusClass}`}
+              >
+                {displayExtractStatus}
               </span>
             ) : null}
           </div>

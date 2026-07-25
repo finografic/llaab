@@ -3,12 +3,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { resolveLlmRoute, routeLlm } = vi.hoisted(() => ({
+const { ollamaGetModelContextLength, resolveLlmRoute, routeLlm } = vi.hoisted(() => ({
+  ollamaGetModelContextLength: vi.fn(() => 8192),
   resolveLlmRoute: vi.fn(() => ({ provider: 'opencode', model: 'glm-5.2' })),
   routeLlm: vi.fn(),
 }));
 
 vi.mock('@llaab/llm', () => ({
+  ollamaGetModelContextLength,
   resolveLlmRoute,
   routeLlm,
 }));
@@ -177,5 +179,59 @@ describe('consolidateTranscriptIdeasForTranscript', () => {
     await expect(core.readNodeByType('source', source.id)).rejects.toThrow();
     await expect(core.readNodeByType('idea', idea.id)).rejects.toThrow();
     await expect(core.readNodeByType('run', run.id)).rejects.toThrow();
+  });
+
+  it('extracts transcript ideas through a durable run node', async () => {
+    const core = await import('@llaab/core');
+    const transcript = await core.createNode({
+      type: 'transcript',
+      id: 'durable-extract-transcript',
+      title: 'Durable extract transcript',
+      body: 'Durable extraction should create a visible run node.',
+      extra: {
+        source_url: 'https://www.youtube.com/watch?v=durable123',
+        source_type: 'youtube',
+      },
+    });
+    routeLlm.mockResolvedValueOnce({
+      text: JSON.stringify({
+        ideas: [
+          {
+            title: 'Durable extraction creates observable runs',
+            domain_tags: ['d:ingest'],
+            topic_tags: ['durable-runs'],
+          },
+        ],
+        skills: ['run-backed extraction'],
+        summary: 'Transcript extraction is persisted as a run.',
+        tags: ['durable-runs', 'transcript-extraction'],
+      }),
+      model: 'glm-5.2',
+      provider: 'opencode',
+      durationMs: 5,
+      promptTokens: 10,
+      completionTokens: 20,
+    });
+
+    const { extractTranscript } = await import('./vault-transcripts.routes.js');
+    const response = await extractTranscript.handler({
+      req: { param: () => ({ id: transcript.id }) },
+      json: (body: unknown, status?: number) => new Response(JSON.stringify(body), { status: status ?? 200 }),
+    } as never);
+    const body = (await response.json()) as { success: boolean; ideaIds: string[]; runId: string };
+
+    expect(body.success).toBe(true);
+    expect(body.ideaIds).toHaveLength(1);
+    expect(body.runId).toContain('extract-transcript-ideas-run');
+    await expect(core.readNodeByType('run', body.runId)).resolves.toMatchObject({
+      skill_id: 'extract-transcript-ideas',
+      run_status: 'completed',
+      produced_node_ids: body.ideaIds,
+    });
+    await expect(core.readNodeByType('transcript', transcript.id)).resolves.toMatchObject({
+      extracted_idea_ids: body.ideaIds,
+      llm_model: 'glm-5.2',
+      llm_provider: 'opencode',
+    });
   });
 });

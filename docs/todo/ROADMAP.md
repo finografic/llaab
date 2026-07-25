@@ -26,7 +26,7 @@ implementation plans into `TODO_*.md` files.
       repo, core app pages still load, discard removes expected files, and Telegram ingest/todo
       writes still work.
       Detail: [`TODO_VAULT_KNOWLEDGE_SPLIT.md`](./TODO_VAULT_KNOWLEDGE_SPLIT.md#phase-7--validation).
-- [ ] **Make transcript re-extraction durable** — wrap the server workflow in `runSkill`, then
+- [x] **Make transcript re-extraction durable** — wrap the server workflow in `runSkill`, then
       derive transcript UI state from the shared run monitor so navigation cannot hide an active
       extraction.
       Detail: [`TODO_PROCESS_STATE_AUDIT.md`](./TODO_PROCESS_STATE_AUDIT.md#blocked-on-a-prerequisite).
