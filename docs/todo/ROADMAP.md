@@ -4,7 +4,7 @@
 > Agents and contributors: check this file before proposing new work. Keep immediate validation,
 > small follow-ups, large initiatives, and completed milestone history here.
 >
-> Last reconciled: 2026-07-24.
+> Last reconciled: 2026-07-26.
 
 ---
 
@@ -12,6 +12,21 @@
 
 Short current execution queue. Keep this section small, actionable, and current; move detailed
 implementation plans into `TODO_*.md` files.
+
+### Active Experiment — Local Agent-Pipeline Integration
+
+LLAAB is being driven by a local `@finografic/ai-agent-pipeline` integration experiment: each issue
+spins up a worktree at `~/.agent-pipeline/worktrees/<N>-<slug>/` paired with an `agent/<N>-<slug>`
+branch (e.g. `agent/9-clarify-local-agent-pipeline-integration`) and aimed at one PR. Progress is
+tracked per-issue via the worktree branch and PR history — not via a roadmap item. The experiment is
+tooling for cutting roadmap work, not a roadmap deliverable itself; the unfinished items in
+[Up Next](#up-next) remain the source of truth for pending projects and are not marked complete by
+this experiment.
+
+> `pipeline status` (the local `pipeline` CLI at `~/.bun/bin/pipeline`) reports the agent-pipeline
+> runtime queue/state (e.g. `WIP: 1/1`) and is an **inspection command only** — it is not a separate
+> workflow that must be run to complete roadmap work. `pipeline run`/`gate`/`abort` drive the
+> worktree lifecycle; `status` and `doctor` only observe it.
 
 ### Up Next
 
