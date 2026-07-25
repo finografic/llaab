@@ -258,9 +258,12 @@ No new route group, no new node type — this rides entirely on the existing `Tr
       follow, oEmbed-based identity resolution, feed resolution, `fast-xml-parser`-based RSS parse,
       episode scoring/matching, `<podcast:transcript>` extraction
 - [x] Add `fast-xml-parser` dependency to `packages/ingestion`
-- [ ] Unit test the episode-matching scorer against a few real feeds (fixture-based, no live
+- [x] Unit test the episode-matching scorer against a few real feeds (fixture-based, no live
       network calls in tests) — verified live against the example URL end-to-end instead; a
-      fixture-based test is still worth adding as a fast follow
+      fixture-based test now covers Pocket Casts page resolution, oEmbed identity, show-page RSS
+      discovery, RSS item matching, transcript preference, and below-threshold rejection.
+      → `pnpm exec vitest run packages/ingestion/src && pnpm --filter @llaab/ingestion typecheck`
+      passed (7 test files, 22 tests, plus `tsc --noEmit`).
 
 ### Phase 3 — Local transcription
 
