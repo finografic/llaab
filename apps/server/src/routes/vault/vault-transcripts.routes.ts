@@ -300,13 +300,13 @@ async function callLlmForJson<T>(
 ): Promise<{ llm: Awaited<ReturnType<typeof routeLlm>>; result: T }> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    const llm = await routeLlm(task, input, {
-      system,
-      bypassCache: true,
-      model: modelOverride,
-      onProgress,
-    });
     try {
+      const llm = await routeLlm(task, input, {
+        system,
+        bypassCache: true,
+        model: modelOverride,
+        onProgress,
+      });
       return { llm, result: schema.parse(parseJsonFromLlmText(llm.text)) };
     } catch (err) {
       lastError = err;

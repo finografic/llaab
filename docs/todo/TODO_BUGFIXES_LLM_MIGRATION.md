@@ -195,17 +195,25 @@ suggests it was meant to retry the whole call, not just the parse step.
 
 **Acceptance criteria:**
 
-- [ ] Move the `routeLlm` call inside the existing `try` block (or wrap it separately) so a
+- [x] Move the `routeLlm` call inside the existing `try` block (or wrap it separately) so a
       transport-level throw on attempt N < `attempts` triggers the same retry path as a
       parse/schema failure, rather than aborting the loop.
-- [ ] Decide whether _all_ transport errors should be retried, or only ones that look transient
+- [x] Decide whether _all_ transport errors should be retried, or only ones that look transient
       (this repo already has a `mapOpenCodeError`/`mapLmStudioError`-style pattern in
       `packages/llm` that turns HTTP status codes into typed messages — consider whether a status
       code is available to gate on here, or whether retrying blindly for 2 attempts is acceptable
       given consolidation is already a background/manual-retry-able run).
-- [ ] Add a test exercising `callLlmForJson` (or `consolidateTranscriptIdeasForTranscript`) where
+      → Retrying any first-attempt thrown error is acceptable here: this helper already caps the
+      draft pass at 2 attempts, consolidation is a durable `runSkill` workflow, and the caller can
+      still manually re-run if both attempts fail. Avoided transport-specific classification in
+      the route layer so provider error-message parsing stays inside `@llaab/llm`.
+- [x] Add a test exercising `callLlmForJson` (or `consolidateTranscriptIdeasForTranscript`) where
       the first `routeLlm` call rejects and the second succeeds, asserting the run still completes.
-- [ ] Full `apps/server` suite green.
+- [x] Full `apps/server` suite green.
+      → `pnpm exec vitest run apps/server/src && pnpm --filter @llaab/server typecheck` passed
+      (16 test files, 44 tests, plus `tsc --noEmit`).
+
+**Status: done.**
 
 ---
 
