@@ -101,6 +101,9 @@ Use progressive validation, stopping once the changed behaviour is sufficiently 
    - a failure specifically requires the broader command; or
    - the user explicitly requests full validation.
 
+For CI-drift or branch-handoff work, include `pnpm format:check` with the verification pass.
+Pre-commit formatting is staged-file-only and does not prove the full repository is formatted.
+
 Do not rebuild dependent packages merely because checked-in or local `dist` output is stale unless the affected consumer actually resolves through that output. Prefer source-level validation when the workspace supports it.
 
 Do not restart or refresh running applications unless required to verify runtime behaviour. Report that a restart may be needed instead of performing unrelated environment management.

@@ -36,3 +36,12 @@ pnpm lint:fix -- "src/**/*.tsx"
 - Use **`format:fix`** when you intend to modify files.
 
 - Staged workflows use `oxfmt --no-error-on-unmatched-pattern` where appropriate so empty globs do not fail.
+
+## Avoiding CI Drift
+
+- Before handing off a branch that touched generated, formatted, or broad UI/source files, run
+  `pnpm format:check` in addition to the focused checks for the changed package.
+- If `format:check` fails on unrelated files, run `pnpm format:fix`, review the formatter-only diff,
+  and commit it separately from behavior changes when practical.
+- Do not assume pre-commit formatting proves the whole repository is formatted; lint-staged checks
+  only staged files.
