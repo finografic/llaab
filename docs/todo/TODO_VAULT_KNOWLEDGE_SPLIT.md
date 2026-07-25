@@ -1,6 +1,7 @@
 # TODO — Vault and Knowledge Split
 
-> **Status:** Phases 0-6 complete (2026-07-09). Phase 7 partially validated; Phase 8 optional.
+> **Status:** Phases 0-6 complete (2026-07-09). Phase 7 mostly validated; Hermes Telegram checks
+> remain. Phase 8 optional.
 
 ## Purpose
 
@@ -196,11 +197,11 @@ GitHub remote setup for `vault/`:
 ## Phase 7 — Validation
 
 - [x] Parent repo: source-code change creates a clean app commit with no vault noise.
-- [ ] Vault repo: ingest creates expected dirty vault data in `vault/.git`.
+- [x] Vault repo: ingest creates expected dirty vault data in `vault/.git`.
 - [x] Vault repo: committing generated nodes works independently.
-- [ ] LLAAB app: ingest page still lists runs/transcripts.
-- [ ] LLAAB app: source detail and transcript pages still load vault nodes.
-- [ ] LLAAB app: discard still removes the expected vault files.
+- [x] LLAAB app: ingest page still lists runs/transcripts.
+- [x] LLAAB app: source detail and transcript pages still load vault nodes.
+- [x] LLAAB app: discard still removes the expected vault files.
 - [ ] Hermes: Telegram YouTube URL still ingests and returns the expected receipt.
 - [ ] Hermes: Telegram todo still creates a vault todo node.
 - [x] No `.gitmodules` file is created.
@@ -212,6 +213,17 @@ Validated automatically on 2026-07-09:
 - `GET /api/vault/git/status` logic reads from nested `vault/.git` and expands untracked files with
   `--untracked-files=all`.
 - Vault git path validation rejects absolute paths and `..` escapes.
+
+Validated on 2026-07-26:
+
+- Parent `git status --short --ignored=matching vault .gitmodules knowledge` reports `vault/` as
+  ignored and no `.gitmodules` file exists; `git -C vault status --short` reports only nested-vault
+  generated data.
+- `GET /api/runs/monitor`, `GET /api/vault/nodes?type=transcript`, `GET /api/vault/nodes?type=source`,
+  and `GET /api/vault/nodes?type=run` return vault-backed app data.
+- Representative transcript and source detail endpoints load through `GET /api/vault/nodes/:id`.
+- Added a focused `discardTranscript` regression test that deletes a transcript plus its source,
+  extracted idea, and associated run from a temp vault.
 
 ## Phase 8 — Optional Later Move
 

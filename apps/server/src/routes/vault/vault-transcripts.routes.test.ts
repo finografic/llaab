@@ -121,4 +121,61 @@ describe('consolidateTranscriptIdeasForTranscript', () => {
       },
     });
   });
+
+  it('discards a transcript and its generated vault files', async () => {
+    const core = await import('@llaab/core');
+    const source = await core.createNode({
+      type: 'source',
+      id: 'discard-source',
+      title: 'Discard source',
+      body: 'Source for discard validation.',
+      extra: {
+        source_kind: 'channel',
+        url: 'https://example.com/source',
+      },
+    });
+    const idea = await core.createNode({
+      type: 'idea',
+      id: 'discard-idea',
+      title: 'Discard idea',
+      body: 'Idea for discard validation.',
+      extra: {
+        origin: 'extracted',
+      },
+    });
+    const transcript = await core.createNode({
+      type: 'transcript',
+      id: 'discard-transcript',
+      title: 'Discard transcript',
+      body: 'Transcript for discard validation.',
+      extra: {
+        extracted_idea_ids: [idea.id],
+        source_id: source.id,
+        source_url: 'https://www.youtube.com/watch?v=discard123',
+        source_type: 'youtube',
+      },
+    });
+    const run = await core.createNode({
+      type: 'run',
+      id: 'discard-run',
+      title: 'Discard run',
+      extra: {
+        skill_id: 'ingest-youtube',
+        run_status: 'completed',
+        produced_node_ids: [transcript.id, source.id, idea.id],
+      },
+    });
+
+    const { discardTranscript } = await import('./vault-transcripts.routes.js');
+    const response = await discardTranscript.handler({
+      req: { param: () => ({ id: transcript.id }) },
+      json: (body: unknown, status?: number) => new Response(JSON.stringify(body), { status: status ?? 200 }),
+    } as never);
+
+    await expect(response.json()).resolves.toEqual({ success: true });
+    await expect(core.readNodeByType('transcript', transcript.id)).rejects.toThrow();
+    await expect(core.readNodeByType('source', source.id)).rejects.toThrow();
+    await expect(core.readNodeByType('idea', idea.id)).rejects.toThrow();
+    await expect(core.readNodeByType('run', run.id)).rejects.toThrow();
+  });
 });
