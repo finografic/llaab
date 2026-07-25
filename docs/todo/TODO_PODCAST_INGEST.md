@@ -316,8 +316,14 @@ No new route group, no new node type — this rides entirely on the existing `Tr
       `LLAAB_MLX_WHISPER_MODEL=mlx-community/whisper-tiny` confirmed resolve → episode match →
       local transcription → `transcript_origin: generated` → saved transcript/source/run nodes →
       no leftover `.tmp` files. Extraction was intentionally skipped for this validation slice.
-- [ ] Manual test: run extraction on a generated podcast transcript and confirm the post-ingest
-      extraction hand-off creates the expected idea output.
+- [x] Manual test: full temp-vault `ingestPodcast` run with explicit
+      `LLAAB_LOCAL_MID_MODEL=gemma4:e4b-it-qat` confirmed generated transcript → extraction
+      hand-off → 5 idea nodes → summary written → run event `Extracted 5 ideas` → no leftover
+      podcast `.tmp` files.
+- [x] Manual test: temp-vault `ingestYouTube` run with `https://www.youtube.com/watch?v=TilDSWeiAlw`
+      confirmed the caption fast path still resolves `hasTranscript: true`, parses SRT/VTT text,
+      and stores transcript/source/run nodes. Existing YouTube fetch behavior leaves its
+      metadata/subtitle scratch files in `.tmp`; not a podcast regression.
 
 ---
 
