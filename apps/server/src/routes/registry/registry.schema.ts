@@ -21,6 +21,14 @@ export const repoPinBodySchema = z.object({
     .string()
     .min(3)
     .regex(/^[^/]+\/[^/]+$/, 'Expected owner/repo'),
+  provenance: z
+    .object({
+      routeKind: z.string().min(1).optional(),
+      source: z.record(z.string(), z.unknown()).optional(),
+      payload: z.record(z.string(), z.unknown()).optional(),
+      capturedAt: z.string().min(1).optional(),
+    })
+    .optional(),
 });
 
 export type SearchQuery = z.infer<typeof searchQuerySchema>;

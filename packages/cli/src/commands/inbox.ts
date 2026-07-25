@@ -212,7 +212,15 @@ async function executePackagePin(toolCall: HermesInboxToolCall): Promise<HermesI
 
 async function executeRepositoryPin(toolCall: HermesInboxToolCall): Promise<HermesInboxExecutionResult> {
   const fullName = stringArg(toolCall, 'fullName');
-  const result = await postJsonViaApi('/api/registry/repo-pins', { fullName });
+  const result = await postJsonViaApi('/api/registry/repo-pins', {
+    fullName,
+    provenance: {
+      routeKind: stringArg(toolCall, 'route_kind') || 'github_repo',
+      source: recordArg(toolCall, 'source'),
+      payload: recordArg(toolCall, 'payload'),
+      capturedAt: new Date().toISOString(),
+    },
+  });
 
   if (!result.ok) {
     if (result.status === 409) {

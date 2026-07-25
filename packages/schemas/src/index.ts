@@ -294,6 +294,7 @@ export {
   type GithubRepoSearchItem,
   type GithubRepoSearchResponse,
   type PinnedRepository,
+  type RegistryPinProvenance,
   type RegistryResourceProjectionStatus as RepoRegistryResourceProjectionStatus,
   type RepoDetailResponse,
   type RepoLanguageShare,

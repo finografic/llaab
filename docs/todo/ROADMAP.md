@@ -30,7 +30,7 @@ implementation plans into `TODO_*.md` files.
       derive transcript UI state from the shared run monitor so navigation cannot hide an active
       extraction.
       Detail: [`TODO_PROCESS_STATE_AUDIT.md`](./TODO_PROCESS_STATE_AUDIT.md#blocked-on-a-prerequisite).
-- [ ] **Close the Hermes repository-pin gap** — add `vault_pin_repository`, route GitHub repository
+- [x] **Close the Hermes repository-pin gap** — add `vault_pin_repository`, route GitHub repository
       captures to the registry pin endpoint, preserve inbox provenance, and treat HTTP 409 as
       idempotent success.
 - [ ] **Graduate completed planning docs** — after their remaining acceptance checks pass, rename

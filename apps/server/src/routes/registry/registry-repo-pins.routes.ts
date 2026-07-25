@@ -1,6 +1,6 @@
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { RepoPinBody } from './registry.schema.js';
-import type { PinnedRepository } from '@llaab/schemas';
+import type { PinnedRepository, RegistryPinProvenance } from '@llaab/schemas';
 
 import { fetchRepoMeta } from './registry-github.routes.js';
 import { readRepoPins, writeRepoPins } from './registry-repo-pins.store.js';
@@ -26,18 +26,27 @@ export const listRepoPins = {
 export const pinRepository = {
   path: '/repo-pins' as const,
   handler: async (c: AppCtxJson<RepoPinBody>) => {
-    const { fullName } = c.req.valid('json');
+    const { fullName, provenance } = c.req.valid('json');
     const pins = await readRepoPins();
 
     const existing = pins.find((p) => p.fullName === fullName);
     if (existing) {
-      const resource = await projectPinnedRepositoryResource(existing);
-      return c.json({ error: 'Already pinned', pin: existing, resource }, 409);
+      const nextPin = mergeRepositoryPinProvenance(existing, provenance);
+      if (nextPin !== existing) {
+        await writeRepoPins(pins.map((pin) => (pin.fullName === fullName ? nextPin : pin)));
+      }
+      const resource = await projectPinnedRepositoryResource(nextPin);
+      return c.json({ error: 'Already pinned', pin: nextPin, resource }, 409);
     }
 
     try {
       const meta = await fetchRepoMeta(fullName);
-      const pin: PinnedRepository = { fullName, pinnedAt: new Date().toISOString(), meta };
+      const pin: PinnedRepository = {
+        fullName,
+        pinnedAt: new Date().toISOString(),
+        meta,
+        ...(provenance ? { provenance: [provenance] } : {}),
+      };
       await writeRepoPins([...pins, pin]);
       const resource = await projectPinnedRepositoryResource(pin);
       return c.json({ pin, resource }, 201);
@@ -47,6 +56,20 @@ export const pinRepository = {
     }
   },
 };
+
+function mergeRepositoryPinProvenance(
+  pin: PinnedRepository,
+  provenance: RegistryPinProvenance | undefined,
+): PinnedRepository {
+  if (!provenance) return pin;
+
+  const nextProvenance = [...(pin.provenance ?? [])];
+  const provenanceKey = JSON.stringify(provenance);
+  const alreadyRecorded = nextProvenance.some((item) => JSON.stringify(item) === provenanceKey);
+  if (alreadyRecorded) return pin;
+
+  return { ...pin, provenance: [...nextProvenance, provenance] };
+}
 
 export const unpinRepository = {
   path: '/repo-pins/:owner/:repo' as const,

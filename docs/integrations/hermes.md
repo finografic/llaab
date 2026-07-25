@@ -156,6 +156,7 @@ Write tools:
 - `vault_capture_inbox`
 - `vault_ingest_youtube`
 - `vault_pin_package`
+- `vault_pin_repository`
 - `vault_capture_todo`
 - `vault_capture_web_link`
 - `vault_capture_attachment`
@@ -218,6 +219,12 @@ Validated 2026-07-07:
 - `lab inbox --attachmentPath ...` routes screenshots/files to `vault_capture_attachment`.
 - Duplicate npm pin attempts return an idempotent already-pinned receipt.
 - MCP write tools can read `LLAAB_API_KEY` from local env files when the process env omits it.
+
+Validated 2026-07-26:
+
+- GitHub repository captures route to `vault_pin_repository` and `POST /api/registry/repo-pins`.
+- Duplicate repository pins return idempotent already-pinned receipts on HTTP 409.
+- Repository pins preserve inbox provenance in the pinned registry record and projected resource.
 
 Validated 2026-07-08:
 

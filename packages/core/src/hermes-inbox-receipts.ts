@@ -31,7 +31,12 @@ export function createHermesInboxToolCall(
     case 'pin_repository':
       return {
         name: 'vault_pin_repository',
-        arguments: { fullName: repoFullName(route) },
+        arguments: {
+          fullName: repoFullName(route),
+          source,
+          payload: route.payload,
+          route_kind: route.kind,
+        },
       };
     case 'capture_todo':
       return {

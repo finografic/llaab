@@ -30,11 +30,29 @@ describe('createHermesInboxToolCall', () => {
   });
 
   it('maps GitHub repository routes to the repository pin tool', () => {
-    const route = routeHermesInboxText('https://github.com/finografic/LLAAB');
+    const item = {
+      raw_text: 'https://github.com/finografic/LLAAB',
+      attachments: [],
+      source: {
+        platform: 'telegram' as const,
+        chat_id: 'chat-1',
+        message_id: 'message-2',
+      },
+    };
+    const route = routeHermesInboxText(item.raw_text);
 
-    expect(createHermesInboxToolCall(route)).toEqual({
+    expect(createHermesInboxToolCall(route, item)).toEqual({
       name: 'vault_pin_repository',
-      arguments: { fullName: 'finografic/LLAAB' },
+      arguments: {
+        fullName: 'finografic/LLAAB',
+        route_kind: 'github_repo',
+        source: item.source,
+        payload: {
+          owner: 'finografic',
+          repo: 'LLAAB',
+          url: 'https://github.com/finografic/LLAAB',
+        },
+      },
     });
   });
 

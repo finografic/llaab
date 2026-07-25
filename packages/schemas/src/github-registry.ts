@@ -84,9 +84,17 @@ export interface RegistryResourceProjectionStatus {
   status: 'linked' | 'missing' | 'needs_sync';
 }
 
+export interface RegistryPinProvenance {
+  routeKind?: string;
+  source?: Record<string, unknown>;
+  payload?: Record<string, unknown>;
+  capturedAt?: string;
+}
+
 export interface PinnedRepository {
   fullName: string;
   pinnedAt: string;
   meta: RepoMetaResponse;
+  provenance?: RegistryPinProvenance[];
   resource?: RegistryResourceProjectionStatus;
 }

@@ -360,6 +360,9 @@ export function createMcpServer(): McpServer {
       .min(3)
       .regex(/^[^/]+\/[^/]+$/u)
       .describe('GitHub repo name, e.g. owner/repo'),
+    route_kind: z.string().trim().min(1).optional(),
+    source: z.record(z.string(), z.unknown()).optional(),
+    payload: z.record(z.string(), z.unknown()).optional(),
   });
 
   server.registerTool(
@@ -369,7 +372,15 @@ export function createMcpServer(): McpServer {
       inputSchema: vaultPinRepositorySchema,
     },
     async (args: z.infer<typeof vaultPinRepositorySchema>) => {
-      const result = await postJsonViaApi('/api/registry/repo-pins', { fullName: args.fullName });
+      const result = await postJsonViaApi('/api/registry/repo-pins', {
+        fullName: args.fullName,
+        provenance: {
+          routeKind: args.route_kind ?? 'github_repo',
+          source: args.source,
+          payload: args.payload,
+          capturedAt: new Date().toISOString(),
+        },
+      });
 
       if (!result.ok) {
         if (result.status === 409) {

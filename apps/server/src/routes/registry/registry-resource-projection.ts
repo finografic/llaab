@@ -216,6 +216,29 @@ function buildPinnedPackageBody(pin: PinnedPackage): string {
 }
 
 function buildPinnedRepositoryBody(pin: PinnedRepository): string {
+  const provenanceLines =
+    pin.provenance && pin.provenance.length > 0
+      ? [
+          '',
+          '## Inbox Provenance',
+          '',
+          ...pin.provenance.map((item, index) => {
+            const source = item.source;
+            const platform = typeof source?.['platform'] === 'string' ? source['platform'] : 'unknown';
+            const messageId = typeof source?.['message_id'] === 'string' ? source['message_id'] : undefined;
+            const timestamp = typeof source?.['timestamp'] === 'string' ? source['timestamp'] : undefined;
+            const label = [
+              `${index + 1}. ${platform}`,
+              messageId ? `message ${messageId}` : undefined,
+              timestamp,
+            ]
+              .filter((part): part is string => part !== undefined)
+              .join(' — ');
+            return `- ${label}`;
+          }),
+        ]
+      : [];
+
   return [
     `Registry repository pin for \`${pin.fullName}\`.`,
     '',
@@ -238,6 +261,7 @@ function buildPinnedRepositoryBody(pin: PinnedRepository): string {
     '## Pin Rationale',
     '',
     'Curated registry pin. Add rationale or topic notes here.',
+    ...provenanceLines,
     '',
     '```json registry-pin',
     JSON.stringify(
@@ -247,6 +271,7 @@ function buildPinnedRepositoryBody(pin: PinnedRepository): string {
           full_name: pin.fullName,
           pinned_at: pin.pinnedAt,
         },
+        provenance: pin.provenance ?? [],
         meta: {
           full_name: pin.meta.fullName,
           owner: pin.meta.owner,
