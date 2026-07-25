@@ -213,7 +213,7 @@ Detail: [`TODO_CROSS_TAB_SYNC.md`](./TODO_CROSS_TAB_SYNC.md)
 
 | Date       | Initiative                                                                                                                                                                                                      |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-07-22 | Podcast/RSS ingest — Pocket Casts resolution, RSS matching, local whisper path, YouTube-caption fast path, and full extraction hand-off validated. Detail: [`DONE_PODCAST_INGEST.md`](./DONE_PODCAST_INGEST.md) |
+| 2026-07-26 | Podcast/RSS ingest — Pocket Casts resolution, RSS matching, local whisper path, YouTube-caption fast path, and full extraction hand-off validated. Detail: [`DONE_PODCAST_INGEST.md`](./DONE_PODCAST_INGEST.md) |
 | 2026-07-19 | One-step topic-oriented wiki generation — discover, compile, link, and auto-promote. Detail: [`DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md`](./DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md)                                 |
 | 2026-07-15 | Wiki generation and knowledge promotion. Detail: [`DONE_WIKI_GENERATION.md`](./DONE_WIKI_GENERATION.md)                                                                                                         |
 | 2026-07-11 | Grid layout migration. Detail: [`DONE_GRID_LAYOUT_MIGRATION.md`](./DONE_GRID_LAYOUT_MIGRATION.md)                                                                                                               |
