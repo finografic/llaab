@@ -28,6 +28,9 @@ this experiment.
 > workflow that must be run to complete roadmap work. `pipeline run`/`gate`/`abort` drive the
 > worktree lifecycle; `status` and `doctor` only observe it.
 
+> Gate review comments now render visible status icons: `✅` for pass, `❌` for fail, and `⚠️` for
+> warnings.
+
 ### Up Next
 
 - [ ] **Finish outstanding LLM Migration bugfixes**
