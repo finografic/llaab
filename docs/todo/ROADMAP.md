@@ -21,7 +21,7 @@ implementation plans into `TODO_*.md` files.
 - [x] **Close podcast ingest validation** — add fixture-based episode matching coverage, then run
       one real Mac Studio `mlx_whisper` transcription and confirm the saved transcript, source,
       cleanup, extraction hand-off, and YouTube-caption fast path.
-      Detail: [`TODO_PODCAST_INGEST.md`](./TODO_PODCAST_INGEST.md).
+      Detail: [`DONE_PODCAST_INGEST.md`](./DONE_PODCAST_INGEST.md).
 - [ ] **Finish vault/knowledge split validation** — verify ingest dirties only the nested vault
       repo, core app pages still load, discard removes expected files, and Telegram ingest/todo
       writes still work.
@@ -211,15 +211,15 @@ Detail: [`TODO_CROSS_TAB_SYNC.md`](./TODO_CROSS_TAB_SYNC.md)
 
 ## Delivered
 
-| Date       | Initiative                                                                                                                                                                        |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-07-22 | Podcast/RSS ingest implementation — Pocket Casts resolution, RSS matching, local whisper path, and YouTube-caption fast path; remaining live/fixture checks are in [Next](#next). |
-| 2026-07-19 | One-step topic-oriented wiki generation — discover, compile, link, and auto-promote. Detail: [`DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md`](./DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md)   |
-| 2026-07-15 | Wiki generation and knowledge promotion. Detail: [`DONE_WIKI_GENERATION.md`](./DONE_WIKI_GENERATION.md)                                                                           |
-| 2026-07-11 | Grid layout migration. Detail: [`DONE_GRID_LAYOUT_MIGRATION.md`](./DONE_GRID_LAYOUT_MIGRATION.md)                                                                                 |
-| 2026-07-10 | Registry package/repository resource projections and operational inbox integration.                                                                                               |
-| 2026-07-09 | Vault/knowledge split core phases and inbox review workflows; final manual split validation remains in [Next](#next).                                                             |
-| 2026-06-13 | Vite/React Router client migration. Detail: [`DONE_CLIENT_VITE_MIGRATION.md`](./DONE_CLIENT_VITE_MIGRATION.md)                                                                    |
-| 2026-06-07 | Orchestration, provider, command bus, Terminal, capability, and harness foundations. Detail: [`DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md)                                   |
-| 2026-06-07 | UI refactor and horizontal navigation foundation. Detail: [`DONE_UI_REFACTOR.md`](./DONE_UI_REFACTOR.md)                                                                          |
-| 2026-04-18 | Foundational schemas, controlled extraction, RunNode persistence, and YouTube ingestion. Detail: [`DONE_FOUNDATIONAL_LAYER.md`](./DONE_FOUNDATIONAL_LAYER.md)                     |
+| Date       | Initiative                                                                                                                                                                                                      |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-22 | Podcast/RSS ingest — Pocket Casts resolution, RSS matching, local whisper path, YouTube-caption fast path, and full extraction hand-off validated. Detail: [`DONE_PODCAST_INGEST.md`](./DONE_PODCAST_INGEST.md) |
+| 2026-07-19 | One-step topic-oriented wiki generation — discover, compile, link, and auto-promote. Detail: [`DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md`](./DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md)                                 |
+| 2026-07-15 | Wiki generation and knowledge promotion. Detail: [`DONE_WIKI_GENERATION.md`](./DONE_WIKI_GENERATION.md)                                                                                                         |
+| 2026-07-11 | Grid layout migration. Detail: [`DONE_GRID_LAYOUT_MIGRATION.md`](./DONE_GRID_LAYOUT_MIGRATION.md)                                                                                                               |
+| 2026-07-10 | Registry package/repository resource projections and operational inbox integration.                                                                                                                             |
+| 2026-07-09 | Vault/knowledge split core phases and inbox review workflows; final manual split validation remains in [Next](#next).                                                                                           |
+| 2026-06-13 | Vite/React Router client migration. Detail: [`DONE_CLIENT_VITE_MIGRATION.md`](./DONE_CLIENT_VITE_MIGRATION.md)                                                                                                  |
+| 2026-06-07 | Orchestration, provider, command bus, Terminal, capability, and harness foundations. Detail: [`DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md)                                                                 |
+| 2026-06-07 | UI refactor and horizontal navigation foundation. Detail: [`DONE_UI_REFACTOR.md`](./DONE_UI_REFACTOR.md)                                                                                                        |
+| 2026-04-18 | Foundational schemas, controlled extraction, RunNode persistence, and YouTube ingestion. Detail: [`DONE_FOUNDATIONAL_LAYER.md`](./DONE_FOUNDATIONAL_LAYER.md)                                                   |

@@ -1,9 +1,8 @@
-# TODO — Podcast / RSS Ingest
+# DONE — Podcast / RSS Ingest
 
-> **Status:** Implementation complete (2026-07-22). Verified end-to-end through episode
-> matching, local `mlx-whisper` transcription, saved transcript/source/run nodes, and scratch
-> cleanup on a real Mac Studio run. Remaining validation: run idea extraction from a generated
-> podcast transcript and confirm the full hand-off path.
+> **Completed:** 2026-07-26 — Podcast/RSS ingest validated end-to-end through episode matching,
+> local `mlx-whisper` transcription, saved transcript/source/run nodes, scratch cleanup, and full
+> extraction hand-off on a real Mac Studio run.
 > Adds a second ingestible media type to `/ingest` — podcast episodes, entered as a Pocket Casts
 > share link. Reuses the transcript/idea-extraction pipeline; adds a new resolver + audio
 > transcription step ahead of it.
