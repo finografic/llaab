@@ -21,8 +21,8 @@ status/checkboxes updated (kept as `TODO_`), no roadmap edit (see Decisions).
 
 Task A is complete. Task B (process-state audit) was intentionally not started — a complete
 Task A plus an untouched Task B is the brief's preferred outcome over two half-done tasks. A
-successor with budget should read `docs/todo/TODO_PROCESS_STATE_AUDIT.md`
-`#blocked-on-a-prerequisite` first (wrap transcript re-extraction in `runSkill` before deriving
+successor with budget should read `docs/todo/DONE_PROCESS_STATE_AUDIT.md`
+first (wrap transcript re-extraction in `runSkill` before deriving
 its UI state from the shared monitor). The next migration-doc work is the Phase 4 consumer
 pilot (wiki-link enrichment via `routeLlmObject`) and the Phase 6 Ollama parity decision.
 
