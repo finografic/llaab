@@ -4,6 +4,9 @@
 > transcript re-extraction work this doc tracked is graduated from the roadmap. Retained as the
 > audit record for `.github/instructions/project/process-state-architecture.instructions.md` —
 > re-run a similar audit if the client grows new local-state-only process surfaces.
+>
+> **Completion record:** both checklist sections below — `Confirmed bug-class risk` and
+> `Fixed after prerequisite` — are marked `[x]`; no unchecked items remain.
 
 ---
 
