@@ -1,9 +1,9 @@
-# TODO — Process State Architecture Audit
+# DONE — Process State Architecture Audit
 
-> **Status:** Confirmed bug-class items fixed. Tracking doc for
-> `.github/instructions/project/process-state-architecture.instructions.md` — migrate the items
-> below opportunistically (e.g. when touching the relevant file for other reasons), not as a
-> standalone sprint.
+> **Status:** Completed 2026-07-26. All bug-class checklist items fixed and verified; the durable
+> transcript re-extraction work this doc tracked is graduated from the roadmap. Retained as the
+> audit record for `.github/instructions/project/process-state-architecture.instructions.md` —
+> re-run a similar audit if the client grows new local-state-only process surfaces.
 
 ---
 

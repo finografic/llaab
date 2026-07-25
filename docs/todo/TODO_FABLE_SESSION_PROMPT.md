@@ -42,8 +42,8 @@ Read these in order. Do not skim; the constraints in them are real.
 - `.agents/handoff.md` — project state snapshot. Sections **LLM Layer**, **Architecture**,
   **Stack**, **Local Dev Ops** are load-bearing for this session.
 - `docs/todo/TODO_VERCEL_AI_SDK_MIGRATION.md` — the plan you are executing (Task A).
-- `docs/todo/TODO_PROCESS_STATE_AUDIT.md` — Task B, including its
-  `#blocked-on-a-prerequisite` section.
+- `docs/todo/DONE_PROCESS_STATE_AUDIT.md` — Task B (completed); its
+  `#fixed-after-prerequisite` section records the audit outcome.
 - `docs/todo/ROADMAP.md` — sections `Next` and `P1 → 1. Vercel AI SDK Transport Standardisation`.
 - `.github/instructions/project/process-state-architecture.instructions.md` — the invariant Task B
   enforces.
@@ -190,9 +190,9 @@ it. Do not "fix" a consumer to work around a stale build artifact.
 Do **not** start this if Task A is unfinished. A complete Task A plus an untouched Task B is a good
 outcome; two half-finished tasks is a bad one. If you have budget and Task A is committed and green:
 
-Work `docs/todo/TODO_PROCESS_STATE_AUDIT.md`. Read its `#blocked-on-a-prerequisite` section first
-and honour the stated prerequisite ordering — wrap the server-side transcript re-extraction workflow
-in `runSkill` **before** deriving its UI state from the shared monitor.
+Work `docs/todo/DONE_PROCESS_STATE_AUDIT.md`. It is already completed; use its audit record
+as the reference for the durable process-state pattern — the server-side transcript re-extraction
+workflow is wrapped in `runSkill` and its UI state is derived from the shared monitor.
 
 The invariant, per `.github/instructions/project/process-state-architecture.instructions.md`: any
 process with live-status UI derives that status from durable shared query state (`useRunMonitor`),
