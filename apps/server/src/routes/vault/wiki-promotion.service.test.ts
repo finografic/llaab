@@ -71,7 +71,7 @@ describe('promoteCreateWikiDraft', () => {
     ]);
 
     expect(result.page.revision).toBe(1);
-    expect([result.recovered, retry.recovered].sort()).toEqual([false, true]);
+    expect([result.recovered, retry.recovered].sort((a, b) => Number(a) - Number(b))).toEqual([false, true]);
     expect(await core.listKnowledgeWikis()).toHaveLength(1);
     expect((await core.readNodeByType('wiki-draft', stored.id)).draft_status).toBe('accepted');
   });

@@ -16,6 +16,6 @@
   text-decoration: none;
 }
 
-.brand[aria-current='page'] {
+.brand[aria-current="page"] {
   color: var(--accent-hover);
 }

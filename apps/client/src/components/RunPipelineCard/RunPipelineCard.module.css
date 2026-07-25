@@ -93,7 +93,7 @@
 }
 
 .itemList li::before {
-  content: '▪';
+  content: "▪";
   flex-shrink: 0;
   font-size: var(--text-xs);
   opacity: 0.5;

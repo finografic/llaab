@@ -1,6 +1,10 @@
-import { assertRefinedBroadHermesExpectation, createBroadHermesFixture, createSingleTopicFixture } from '@llaab/schemas';
-import type { CanonicalIdeaNode } from '@llaab/schemas';
+import {
+  assertRefinedBroadHermesExpectation,
+  createBroadHermesFixture,
+  createSingleTopicFixture,
+} from '@llaab/schemas';
 import { describe, expect, it } from 'vitest';
+import type { CanonicalIdeaNode } from '@llaab/schemas';
 
 import {
   clusterCanonicalIdeasForWikiDiscovery,

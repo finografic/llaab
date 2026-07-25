@@ -1,9 +1,10 @@
-import { CanonicalIdeaNodeSchema } from './canonical-idea-node.schema.js';
 import type { CanonicalIdeaNode } from './canonical-idea-node.schema.js';
-import { KnowledgeWikiPageSchema } from './knowledge/wiki-page.schema.js';
 import type { KnowledgeWikiPage } from './knowledge/wiki-page.schema.js';
-import { TranscriptNodeSchema } from './transcript-node.schema.js';
 import type { TranscriptNode } from './transcript-node.schema.js';
+
+import { CanonicalIdeaNodeSchema } from './canonical-idea-node.schema.js';
+import { KnowledgeWikiPageSchema } from './knowledge/wiki-page.schema.js';
+import { TranscriptNodeSchema } from './transcript-node.schema.js';
 import { createKnowledgeWikiFixture, createWikiFixtureCanonicalIdea } from './wiki.fixtures.js';
 
 export const WIKI_TOPIC_DISCOVERY_FIXTURE_TIMESTAMP = '2026-07-19T00:00:00Z';

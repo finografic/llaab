@@ -1,9 +1,13 @@
 import { listKnowledgeWikis } from '@llaab/core';
 import { routeLlm } from '@llaab/llm';
+import type { WikiLinkCandidatePage } from './wiki-link.utils.js';
 import type { WikiLink } from '@llaab/schemas';
 
-import { parseWikiLinkSuggestions, validateWikiLinkSuggestions, WIKI_LINK_ENRICHMENT_RELATIONS } from './wiki-link.utils.js';
-import type { WikiLinkCandidatePage } from './wiki-link.utils.js';
+import {
+  parseWikiLinkSuggestions,
+  validateWikiLinkSuggestions,
+  WIKI_LINK_ENRICHMENT_RELATIONS,
+} from './wiki-link.utils.js';
 
 export interface LinkWikiTopicsInput {
   candidates: WikiLinkCandidatePage[];

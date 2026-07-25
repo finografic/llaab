@@ -77,7 +77,7 @@ export async function checkYouTubeSubscription(
     query.set('key', apiKey);
   }
 
-  const response = await fetch(`https://www.googleapis.com/youtube/v3/subscriptions?${query}`, {
+  const response = await fetch(`https://www.googleapis.com/youtube/v3/subscriptions?${query.toString()}`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

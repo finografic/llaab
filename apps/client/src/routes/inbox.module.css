@@ -55,20 +55,20 @@
   text-align: left;
 }
 
-.summaryCard[aria-disabled='true'] {
+.summaryCard[aria-disabled="true"] {
   pointer-events: none;
 }
 
-.summaryCard[data-active='true'] {
+.summaryCard[data-active="true"] {
   border-color: var(--accent);
   background: color-mix(in oklab, var(--accent) 8%, var(--surface));
 }
 
-.summaryCard[data-tone='warning'] > svg {
+.summaryCard[data-tone="warning"] > svg {
   color: var(--warning-text, var(--muted-foreground));
 }
 
-.summaryCard[data-tone='danger'] > svg {
+.summaryCard[data-tone="danger"] > svg {
   color: var(--error-text, var(--destructive));
 }
 
@@ -122,7 +122,7 @@
   color: var(--accent);
 }
 
-.groupTrigger > [data-slot='collapsible-trigger-icon'] {
+.groupTrigger > [data-slot="collapsible-trigger-icon"] {
   margin-top: 0;
 }
 

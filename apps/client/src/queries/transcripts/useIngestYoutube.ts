@@ -20,7 +20,7 @@ export interface IngestYoutubeResult {
 
 async function ingestYoutube(input: IngestYoutubeInput): Promise<IngestYoutubeResult> {
   const res = await api.ingest.youtube.$post({ json: input });
-  return (await res.json());
+  return await res.json();
 }
 
 /** Ingest a YouTube URL into a transcript node; refresh runs + vault joins once settled. */

@@ -17,11 +17,11 @@
   color: oklch(0.7 0.19 40);
 }
 
-.ingest-page__enrich-alert--warning [data-slot='alert-title'] {
+.ingest-page__enrich-alert--warning [data-slot="alert-title"] {
   color: inherit;
 }
 
-.ingest-page__enrich-alert--warning [data-slot='alert-description'] {
+.ingest-page__enrich-alert--warning [data-slot="alert-description"] {
   color: color-mix(in oklab, currentColor 85%, var(--text-muted));
 }
 

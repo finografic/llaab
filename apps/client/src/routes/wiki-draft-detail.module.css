@@ -202,7 +202,7 @@
   min-width: 0;
 }
 
-.sectionTrigger :global([data-slot='collapsible-trigger-icon']) {
+.sectionTrigger :global([data-slot="collapsible-trigger-icon"]) {
   color: var(--text-faint);
 }
 

@@ -32,14 +32,14 @@
     appearance: none;
   }
 
-  :is(.dark, [data-theme='dark']) input[type="text"],
-  :is(.dark, [data-theme='dark']) input[type="email"],
-  :is(.dark, [data-theme='dark']) input[type="url"],
-  :is(.dark, [data-theme='dark']) input[type="search"],
-  :is(.dark, [data-theme='dark']) input[type="password"],
-  :is(.dark, [data-theme='dark']) input[type="number"],
-  :is(.dark, [data-theme='dark']) textarea,
-  :is(.dark, [data-theme='dark']) select {
+  :is(.dark, [data-theme="dark"]) input[type="text"],
+  :is(.dark, [data-theme="dark"]) input[type="email"],
+  :is(.dark, [data-theme="dark"]) input[type="url"],
+  :is(.dark, [data-theme="dark"]) input[type="search"],
+  :is(.dark, [data-theme="dark"]) input[type="password"],
+  :is(.dark, [data-theme="dark"]) input[type="number"],
+  :is(.dark, [data-theme="dark"]) textarea,
+  :is(.dark, [data-theme="dark"]) select {
     background: rgb(0 0 0 / 0.33);
   }
 

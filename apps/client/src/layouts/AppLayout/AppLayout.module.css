@@ -45,7 +45,7 @@
 
 .secondaryPanelTrigger:hover,
 .secondaryPanelTrigger:focus-visible,
-.secondaryPanelTrigger[aria-pressed='true'],
+.secondaryPanelTrigger[aria-pressed="true"],
 .secondaryPanelTrigger.isActive {
   color: var(--accent-hover);
 }
@@ -85,4 +85,3 @@
   flex-direction: column;
   min-height: 0;
 }
-
