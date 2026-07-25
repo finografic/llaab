@@ -49,7 +49,7 @@ export async function fetchYouTubeDataApiChannelStats(
     key: apiKey,
   });
 
-  const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?${query}`);
+  const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?${query.toString()}`);
   const json = (await response.json()) as YouTubeChannelsResponse;
   if (!response.ok) {
     throw new Error(json.error?.message ?? `YouTube channels lookup failed (${response.status}).`);
@@ -99,7 +99,7 @@ export async function searchYouTubeChannelsByTitle(query: string): Promise<YouTu
     key: apiKey,
   });
 
-  const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
+  const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`);
   const json = (await response.json()) as YouTubeSearchResponse;
   if (!response.ok) {
     throw new Error(json.error?.message ?? `YouTube channel search failed (${response.status}).`);
@@ -154,7 +154,7 @@ export async function searchYouTubeVideosByChannel(
     key: apiKey,
   });
 
-  const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
+  const response = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`);
   const json = (await response.json()) as YouTubeVideoSearchResponse;
   if (!response.ok) {
     throw new Error(json.error?.message ?? `YouTube video search failed (${response.status}).`);

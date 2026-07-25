@@ -79,6 +79,7 @@ yt-dlp is a feature-rich command-line audio/video downloader with support for [t
     - [Removed](#removed)
 - [CONTRIBUTING](#contributing)
 - [WIKI](#wiki)
+
 <!-- MANPAGE: END EXCLUDED SECTION -->
 
 # INSTALLATION

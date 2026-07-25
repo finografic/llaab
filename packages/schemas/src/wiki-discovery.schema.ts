@@ -1,8 +1,14 @@
 import { z } from 'zod';
+import type { WikiValidationIssue } from './wiki.schema.js';
 
 import { NodeIdSchema } from './primitives.schema.js';
-import { WikiOmittedCanonicalIdeaSchema, WikiOperationSchema, WikiTagSchema, WikiTopicMatchSchema, WikiValidationIssueSchema } from './wiki.schema.js';
-import type { WikiValidationIssue } from './wiki.schema.js';
+import {
+  WikiOmittedCanonicalIdeaSchema,
+  WikiOperationSchema,
+  WikiTagSchema,
+  WikiTopicMatchSchema,
+  WikiValidationIssueSchema,
+} from './wiki.schema.js';
 
 /** One internally discovered topic proposal — never a user-facing review step. */
 export const WikiTopicProposalSchema = z

@@ -1,8 +1,20 @@
-import { cloudCatalogModelToRemoteDetail, getLlmStatus, lmStudioListModelDetails, lmStudioListModels, ollamaListModelDetails, ollamaListModels, resolveAnthropicCatalog, resolveOpenCodeCatalog, routeLlm, streamLlm, updateLlmTaskRoute } from '@llaab/llm';
-import type { RemoteModelDetail } from '@llaab/llm';
+import {
+  cloudCatalogModelToRemoteDetail,
+  getLlmStatus,
+  lmStudioListModelDetails,
+  lmStudioListModels,
+  ollamaListModelDetails,
+  ollamaListModels,
+  resolveAnthropicCatalog,
+  resolveOpenCodeCatalog,
+  routeLlm,
+  streamLlm,
+  updateLlmTaskRoute,
+} from '@llaab/llm';
 import { streamSSE } from 'hono/streaming';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { CompleteLlmBody, UpdateLlmRouteBody } from './llm.schema.js';
+import type { RemoteModelDetail } from '@llaab/llm';
 
 export const complete = {
   path: '/complete' as const,

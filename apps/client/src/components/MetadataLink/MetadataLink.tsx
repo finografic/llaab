@@ -10,13 +10,7 @@ export interface MetadataLinkProps extends MetadataLinkTargetOptions {
   rel?: string;
 }
 
-export function MetadataLink({
-  href,
-  children,
-  className,
-  target = '_blank',
-  rel,
-}: MetadataLinkProps) {
+export function MetadataLink({ href, children, className, target = '_blank', rel }: MetadataLinkProps) {
   const linkRel = rel ?? (target === '_blank' ? 'noopener noreferrer' : undefined);
 
   return (

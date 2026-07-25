@@ -1,9 +1,9 @@
 import { getNodeFilePath, listNodes, updateNode } from '@llaab/core';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
+import type { DeleteKnowledgeWikiResult } from './knowledge-wiki-delete.service.js';
 import type { WikiDraftNode } from '@llaab/schemas';
 
 import { deleteKnowledgeWikiAndReferences } from './knowledge-wiki-delete.service.js';
-import type { DeleteKnowledgeWikiResult } from './knowledge-wiki-delete.service.js';
 
 export type DemoteKnowledgeWikiResult = DeleteKnowledgeWikiResult & {
   retainedDraftIds: string[];

@@ -20,7 +20,7 @@
   --tw-ring-offset-shadow: 0 0 #0000;
 }
 
-.compactCard :global([data-slot='card-header']) {
+.compactCard :global([data-slot="card-header"]) {
   padding-block: 0;
 }
 
