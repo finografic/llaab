@@ -1,9 +1,9 @@
 # TODO — Podcast / RSS Ingest
 
-> **Status:** Implementation complete (2026-07-22). Verified end-to-end up through episode
-> matching and the transcription hand-off; final success path (mlx-whisper actually producing a
-> transcript) needs a real run on the Mac Studio, which has mlx-whisper installed — this dev
-> sandbox does not.
+> **Status:** Implementation complete (2026-07-22). Verified end-to-end through episode
+> matching, local `mlx-whisper` transcription, saved transcript/source/run nodes, and scratch
+> cleanup on a real Mac Studio run. Remaining validation: run idea extraction from a generated
+> podcast transcript and confirm the full hand-off path.
 > Adds a second ingestible media type to `/ingest` — podcast episodes, entered as a Pocket Casts
 > share link. Reuses the transcript/idea-extraction pipeline; adds a new resolver + audio
 > transcription step ahead of it.
@@ -267,14 +267,15 @@ No new route group, no new node type — this rides entirely on the existing `Tr
 
 ### Phase 3 — Local transcription
 
-- [ ] Confirm `mlx-whisper` install path on the Mac Studio — not verified: this dev sandbox
-      doesn't have `mlx_whisper` on PATH, and the real transcription run needs to happen on the
-      Mac Studio itself. The pipeline was confirmed to reach this step and fail with the correct,
-      actionable error (`mlx_whisper failed... pip install mlx-whisper`) when it's missing.
+- [x] Confirm `mlx-whisper` install path on the Mac Studio — `/Users/justin/.local/bin/mlx_whisper`.
+      A direct helper run against a real podcast audio URL produced 50,598 chars / 582 segments
+      with no leftover scratch files.
 - [x] `packages/ingestion/src/transcribe/mlx-whisper.ts` — download, `ffmpeg` normalize, shell out,
-      parse JSON output
+      parse JSON output. Follow-up fix: retry failed `http://` audio downloads as `https://` so
+      feeds with stale Libsyn-style URLs still transcribe.
 - [x] Scratch-dir cleanup on success and on failure (don't leak large audio files into
-      `VAULT_ROOT/.tmp`) — verified no leftover files after a failed transcription attempt
+      `VAULT_ROOT/.tmp`) — verified no leftover files after failed transcription attempts, the
+      direct helper success path, and a full temp-vault podcast ingest.
 
 ### Phase 4 — Pipeline integration
 
@@ -310,6 +311,13 @@ No new route group, no new node type — this rides entirely on the existing `Tr
       falls through to local transcription, which fails cleanly (no `mlx_whisper` on this dev
       machine) with no orphaned temp files or vault nodes. Full success path (transcript saved →
       idea extraction) needs a real run on the Mac Studio with `mlx-whisper` installed.
+- [x] Manual test: temp-vault `ingestPodcast` run with
+      `https://pca.st/episode/f3558aba-ebf2-4137-a4d6-19839d98755c` and
+      `LLAAB_MLX_WHISPER_MODEL=mlx-community/whisper-tiny` confirmed resolve → episode match →
+      local transcription → `transcript_origin: generated` → saved transcript/source/run nodes →
+      no leftover `.tmp` files. Extraction was intentionally skipped for this validation slice.
+- [ ] Manual test: run extraction on a generated podcast transcript and confirm the post-ingest
+      extraction hand-off creates the expected idea output.
 
 ---
 

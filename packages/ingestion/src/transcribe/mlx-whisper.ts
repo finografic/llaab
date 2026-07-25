@@ -26,6 +26,17 @@ interface MlxWhisperJson {
   segments?: Array<{ start?: number; end?: number; text?: string }>;
 }
 
+async function fetchAudio(audioUrl: string): Promise<Response> {
+  try {
+    return await fetch(audioUrl);
+  } catch (error) {
+    const parsed = new URL(audioUrl);
+    if (parsed.protocol !== 'http:') throw error;
+    parsed.protocol = 'https:';
+    return fetch(parsed.toString());
+  }
+}
+
 /**
  * Downloads a podcast episode's audio and transcribes it locally with mlx-whisper (Apple
  * Silicon-native, runs on the same Mac Studio as LM Studio — no cloud STT dependency).
@@ -35,7 +46,7 @@ export async function transcribeAudioLocally(
   audioUrl: string,
   opts: { model?: string } = {},
 ): Promise<TranscribedAudio> {
-  const model = opts.model ?? 'mlx-community/whisper-large-v3-turbo';
+  const model = opts.model ?? process.env.LLAAB_MLX_WHISPER_MODEL ?? 'mlx-community/whisper-large-v3-turbo';
   const TEMP_DIR = tempDir();
 
   if (!existsSync(TEMP_DIR)) {
@@ -47,7 +58,7 @@ export async function transcribeAudioLocally(
   const normalizedPath = `${scratchBase}.wav`;
 
   try {
-    const response = await fetch(audioUrl);
+    const response = await fetchAudio(audioUrl);
     if (!response.ok) {
       throw new Error(`Failed to download episode audio (HTTP ${response.status}): ${audioUrl}`);
     }
