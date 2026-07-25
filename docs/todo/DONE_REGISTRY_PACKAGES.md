@@ -1,6 +1,6 @@
-# TODO — Registry: Pinned Packages
+# DONE — Registry: Pinned Packages
 
-> **Status:** All 6 phases complete. Readme renderer (Phase 2 extension) committed in third batch.
+> **Status:** Completed. All 6 phases shipped; this document is retained as a historical record of the implementation.
 
 Add a "Registry" section to LLAAB for browsing and pinning npm packages. The UI mirrors npmx.dev (search → results list → package detail) with a Pin action on the detail page and a dedicated Pinned Packages list. The npmx.dev repo at `/Users/justin/repos-finografic-ref/npmx.dev` is used as a reference — TypeScript types and API endpoint logic are lifted directly; Vue components are used as structural blueprints and rewritten as React.
 
