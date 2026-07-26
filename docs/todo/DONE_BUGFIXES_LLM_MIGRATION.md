@@ -1,4 +1,8 @@
-# TODO — Bugfixes found during LLM transport migration
+# DONE — Bugfixes found during LLM transport migration
+
+> **Completed:** 2026-07-26 — All implementation bugfixes found during the transport migration are
+> fixed or verified; the remaining provider-timeout and live-wire checks are deferred manual watch
+> items for the broader Vercel AI SDK migration.
 
 > Discovered by Claude Fable 5 while migrating `@llaab/llm` to the Vercel AI SDK
 > (`codex/fable-ai-sdk-migration-setup`, see `docs/todo/TODO_FABLE_MIGRATION_LEDGER.md`).
@@ -279,17 +283,17 @@ out explicitly in the ledger's Risks & Landmines so they don't get assumed-safe 
       The spot-check found and fixed a real regex bug: percentage states like `LOADING 42.5%` did
       not match because the trailing word boundary after `%` could never succeed. Existing
       lifecycle coverage still pins no polling without `onProgress` and stop-on-error behaviour.
-- [ ] Real `AbortSignal.timeout` / `execFile` timeout firing — only the requested millisecond
-      values are pinned, not that a timeout actually fires and is handled correctly under load.
-      Not spot-checked — same reasoning, needs live infra under load to be meaningful.
-- [ ] Live wire formats for all three remote providers — fixtures encode _assumed_ shapes; worth a
-      watchful eye on the first live calls after this migration (see the ledger's manual-test list).
-      Still open — this needs real API traffic, not a code read.
+- Real `AbortSignal.timeout` / `execFile` timeout firing — only the requested millisecond values are
+  pinned, not that a timeout actually fires and is handled correctly under load. Deferred to manual
+  live-infra observation because an isolated code read is not meaningful.
+- Live wire formats for all three remote providers — fixtures encode _assumed_ shapes; keep a
+  watchful eye on the first live calls after this migration (see the ledger's manual-test list).
+  Deferred to real API traffic.
 
-No action required unless a spot-check turns up a real issue — if one does, split it into its own
-item above with acceptance criteria. (Three items above were spot-checked; one real progress-parser
-bug was fixed. The remaining two need live traffic/infra to meaningfully check and are left for the
-manual-test pass already tracked in the migration ledger.)
+No action required unless a manual/live check turns up a real issue — if one does, split it into its
+own TODO with acceptance criteria. Three items above were spot-checked; one real progress-parser bug
+was fixed. The remaining two need live traffic/infra to meaningfully check and are left for the
+manual-test pass already tracked in the migration ledger.
 
 ---
 
