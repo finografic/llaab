@@ -80,6 +80,14 @@ export {
 } from './utils/resolve-knowledge-wiki-topic.utils.js';
 export { MONOREPO_ROOT } from './utils/vault-root.js';
 export { listNodes } from './utils/list-nodes.utils.js';
+export {
+  rankVaultSearchNodes,
+  searchVaultNodes,
+  type VaultSearchMatch,
+  type VaultSearchMatchField,
+  type VaultSearchQuery,
+  type VaultSearchResult,
+} from './utils/search-vault-nodes.utils.js';
 export { parseFrontmatter } from './utils/parse-frontmatter.utils.js';
 export { readNode } from './utils/read-node.utils.js';
 export { readNodeByType } from './utils/read-node-by-type.utils.js';

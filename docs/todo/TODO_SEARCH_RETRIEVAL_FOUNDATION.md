@@ -1,6 +1,6 @@
 # TODO — Search and Retrieval Foundation
 
-> **Status:** Active (2026-07-26). Phase 0 planning started; implementation not started.
+> **Status:** Active (2026-07-26). Phase 0 contract and Phase 1 core service started.
 
 ## Goal
 
@@ -45,22 +45,22 @@ clear snippets, match reasons, and deterministic limits.
 
 ## Phase 0 — Contract and Fixtures
 
-- [ ] Define a `VaultSearchQuery` / `VaultSearchResult` contract with deterministic ordering,
+- [x] Define a `VaultSearchQuery` / `VaultSearchResult` contract with deterministic ordering,
       matched fields, snippets, source path, node type, tags, status, and provenance metadata.
 - [ ] Add a fixture corpus that covers transcripts, canonical ideas, resources, wiki drafts, inbox
       captures, runs, and instructions.
-- [ ] Add ranking fixtures for title hits, tag hits, body hits, recency tie-breaks, and type/status
+- [x] Add ranking fixtures for title hits, tag hits, body hits, recency tie-breaks, and type/status
       filters.
-- [ ] Document the expected behavior for empty queries, short queries, limit handling, and no-match
+- [x] Document the expected behavior for empty queries, short queries, limit handling, and no-match
       results.
 
 ## Phase 1 — Core Search Service
 
-- [ ] Add a core search service that reads vault nodes and returns the contract from Phase 0.
+- [x] Add a core search service that reads vault nodes and returns the contract from Phase 0.
 - [ ] Keep route handlers thin; search scoring, snippet creation, and field matching live in the
       owning service layer.
 - [ ] Preserve existing `listNodes()` behavior so current routes and MCP tools do not regress.
-- [ ] Add focused unit tests for scoring, snippets, filters, and deterministic ordering.
+- [x] Add focused unit tests for scoring, snippets, filters, and deterministic ordering.
 
 ## Phase 2 — API and MCP Surface
 
@@ -94,7 +94,7 @@ clear snippets, match reasons, and deterministic limits.
 
 ## Validation
 
-- [ ] Run focused core tests for search ranking and snippets.
+- [x] Run focused core tests for search ranking and snippets.
 - [ ] Run server route tests for `/api/vault/search`.
 - [ ] Run MCP smoke test for `vault_search`.
 - [ ] Run client tests/build only when the UI phase begins.
