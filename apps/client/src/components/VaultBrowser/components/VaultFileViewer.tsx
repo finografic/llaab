@@ -1,4 +1,5 @@
 import { File, PatchDiff } from '@pierre/diffs/react';
+import { ToggleGroup, ToggleGroupItem } from 'components/ui/toggle-group';
 import { useVaultFile, useVaultFileDiff } from 'queries/vault';
 import { useMemo } from 'react';
 
@@ -9,10 +10,26 @@ import styles from './VaultFileViewer.module.css';
 export interface VaultFileViewerProps {
   path: string | null;
   showDiff?: boolean;
+  showRenderedMarkdown?: boolean;
+  onMarkdownViewChange?: (mode: 'raw' | 'render') => void;
 }
 
-export function VaultFileViewer({ path, showDiff = false }: VaultFileViewerProps) {
-  const { data: content, isLoading: fileLoading, error: fileError } = useVaultFile(path, !showDiff);
+function isMarkdownPath(path: string | null): boolean {
+  return path?.toLowerCase().endsWith('.md') === true || path?.toLowerCase().endsWith('.markdown') === true;
+}
+
+export function VaultFileViewer({
+  path,
+  showDiff = false,
+  showRenderedMarkdown = false,
+  onMarkdownViewChange,
+}: VaultFileViewerProps) {
+  const renderMarkdown = showRenderedMarkdown && isMarkdownPath(path);
+  const {
+    data: fileContent,
+    isLoading: fileLoading,
+    error: fileError,
+  } = useVaultFile(path, !showDiff, renderMarkdown);
   const { data: patch, isLoading: diffLoading, error: diffError } = useVaultFileDiff(path, showDiff);
   const activeError = showDiff ? diffError : fileError;
   const loading = showDiff ? diffLoading : fileLoading;
@@ -23,15 +40,36 @@ export function VaultFileViewer({ path, showDiff = false }: VaultFileViewerProps
   // syntax highlighting) to evaluate how it handles markdown before deciding whether to also
   // adopt it for the Vault Changes diff view.
   const file = useMemo(
-    () => (path && content != null ? { name: path, contents: content } : null),
-    [path, content],
+    () =>
+      path && fileContent?.content != null && !fileContent.html
+        ? { name: path, contents: fileContent.content }
+        : null,
+    [path, fileContent],
   );
+  const canRenderMarkdown = !showDiff && isMarkdownPath(path);
 
   return (
     <div className={styles.viewer}>
       {!path ? <p className={styles.viewerEmpty}>Select a file to view its contents.</p> : null}
       {path && loading ? <p className={styles.viewerLoading}>Loading…</p> : null}
       {path && error ? <p className={styles.viewerError}>{error}</p> : null}
+      {path && canRenderMarkdown && !loading && !error ? (
+        <div className={styles.viewerToolbar}>
+          <ToggleGroup
+            type="single"
+            size="sm"
+            variant="outline"
+            value={showRenderedMarkdown ? 'render' : 'raw'}
+            onValueChange={(value) => {
+              if (value === 'raw' || value === 'render') onMarkdownViewChange?.(value);
+            }}
+            aria-label="Markdown view"
+          >
+            <ToggleGroupItem value="raw">Raw</ToggleGroupItem>
+            <ToggleGroupItem value="render">Rendered</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+      ) : null}
       {path && showDiff && patch === '' && !loading && !error ? (
         <p className={styles.viewerEmpty}>No working-tree diff for this file.</p>
       ) : null}
@@ -48,6 +86,9 @@ export function VaultFileViewer({ path, showDiff = false }: VaultFileViewerProps
           }}
           className={styles.viewerFile}
         />
+      ) : null}
+      {path && !showDiff && showRenderedMarkdown && fileContent?.html ? (
+        <article className={styles.markdownContent} dangerouslySetInnerHTML={{ __html: fileContent.html }} />
       ) : null}
       {file ? (
         <File

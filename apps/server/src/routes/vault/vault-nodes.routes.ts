@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { resolve, sep } from 'node:path';
+import { extname, resolve, sep } from 'node:path';
 import {
   cleanRecentVaultActivity,
   createNode,
@@ -21,6 +21,7 @@ import type {
   UpdateVaultNodeBody,
 } from './vault.schema.js';
 
+import { renderReadmeToHtml } from '../../lib/readme-renderer.js';
 import { readVaultRootTree } from '../../lib/vault-tree.js';
 import { scrubNodeReferences } from './scrub-node-references.js';
 
@@ -59,7 +60,11 @@ export const file = {
 
     try {
       const content = await readFile(resolved, 'utf-8');
-      return c.json({ content });
+      const extension = extname(resolved).toLowerCase();
+      const shouldRenderMarkdown =
+        c.req.query('render') === 'markdown' && (extension === '.md' || extension === '.markdown');
+      const html = shouldRenderMarkdown ? await renderReadmeToHtml(content) : null;
+      return c.json({ content, html });
     } catch {
       return c.json({ error: 'File not found.' }, 404);
     }

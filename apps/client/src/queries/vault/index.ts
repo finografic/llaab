@@ -9,7 +9,8 @@ export interface VaultNodesQueryKeyInput {
 export const QUERY_KEYS = {
   vault: {
     all: ['vault'] as const,
-    file: (path: string) => [...QUERY_KEYS.vault.all, 'file', path] as const,
+    file: (path: string, renderMarkdown = false) =>
+      [...QUERY_KEYS.vault.all, 'file', path, renderMarkdown ? 'rendered' : 'raw'] as const,
     fileDiff: (path: string) => [...QUERY_KEYS.vault.all, 'file-diff', path] as const,
     nodes: (input?: string | VaultNodesQueryKeyInput) => {
       if (typeof input === 'string' || input === undefined) {
