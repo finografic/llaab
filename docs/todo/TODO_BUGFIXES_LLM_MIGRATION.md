@@ -272,10 +272,13 @@ out explicitly in the ledger's Risks & Landmines so they don't get assumed-safe 
       `source === 'config'` branch and its fallback branch both resolve to
       `hasApiKey ? 'catalog' : 'on-request'` — functionally redundant but not incorrect (both
       branches already produce the same result), so not worth a change.
-- [ ] LM Studio progress-poll internals (`lms ps` line-parsing regex, 2.5s cadence, duplicate
-      suppression) — only the `onProgress` lifecycle and stop-on-error are pinned by tests. Not
-      spot-checked this pass — no reported symptom to chase, and it needs a live `lms` process to
-      exercise meaningfully rather than a desk check.
+- [x] LM Studio progress-poll internals (`lms ps` line-parsing regex, 2.5s cadence, duplicate
+      suppression) — direct parser coverage added in
+      `packages/llm/src/providers/lmstudio-progress.test.ts` for loading, prompt-processing, idle,
+      generation token counts with comma separators, unrelated models, and unsupported statuses.
+      The spot-check found and fixed a real regex bug: percentage states like `LOADING 42.5%` did
+      not match because the trailing word boundary after `%` could never succeed. Existing
+      lifecycle coverage still pins no polling without `onProgress` and stop-on-error behaviour.
 - [ ] Real `AbortSignal.timeout` / `execFile` timeout firing — only the requested millisecond
       values are pinned, not that a timeout actually fires and is handled correctly under load.
       Not spot-checked — same reasoning, needs live infra under load to be meaningful.
@@ -284,9 +287,9 @@ out explicitly in the ledger's Risks & Landmines so they don't get assumed-safe 
       Still open — this needs real API traffic, not a code read.
 
 No action required unless a spot-check turns up a real issue — if one does, split it into its own
-item above with acceptance criteria. (Two items above were spot-checked with no bug found; the
-remaining three need live traffic/infra to meaningfully check and are left for the manual-test
-pass already tracked in the migration ledger.)
+item above with acceptance criteria. (Three items above were spot-checked; one real progress-parser
+bug was fixed. The remaining two need live traffic/infra to meaningfully check and are left for the
+manual-test pass already tracked in the migration ledger.)
 
 ---
 
