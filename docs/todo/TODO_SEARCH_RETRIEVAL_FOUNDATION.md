@@ -1,6 +1,6 @@
 # TODO — Search and Retrieval Foundation
 
-> **Status:** Active (2026-07-26). Phase 0 contract and Phase 1 core service started.
+> **Status:** Active (2026-07-26). Phases 0–2 complete; Phase 3 context assembly started.
 
 ## Goal
 
@@ -73,11 +73,11 @@ clear snippets, match reasons, and deterministic limits.
 
 ## Phase 3 — Context Assembly
 
-- [ ] Define a reusable context-packet shape for workflow inputs.
-- [ ] Add deterministic context assembly limits by token/character budget and evidence kind.
-- [ ] Require every packet to carry source node ID, title, type, path, snippet/source span when
+- [x] Define a reusable context-packet shape for workflow inputs.
+- [x] Add deterministic context assembly limits by token/character budget and evidence kind.
+- [x] Require every packet to carry source node ID, title, type, path, snippet/source span when
       available, and why it was selected.
-- [ ] Add fixtures showing that context assembly prefers relevant evidence over large undifferentiated
+- [x] Add fixtures showing that context assembly prefers relevant evidence over large undifferentiated
       prompt stuffing.
 
 ## Phase 4 — Operator UI

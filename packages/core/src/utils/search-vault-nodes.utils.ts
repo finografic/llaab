@@ -36,6 +36,30 @@ export interface VaultSearchResult {
   };
 }
 
+export type VaultContextKind = 'direct-source' | 'derived-summary' | 'operational' | 'execution-history';
+
+export interface VaultContextPacket {
+  id: string;
+  kind: VaultContextKind;
+  node_id: string;
+  node_type: NodeType;
+  title: string;
+  path: string;
+  score: number;
+  reason: string;
+  content: string;
+  snippet: string;
+  matches: VaultSearchMatch[];
+  char_count: number;
+  provenance: VaultSearchResult['provenance'];
+}
+
+export interface VaultContextAssemblyOptions {
+  maxPackets?: number;
+  maxCharacters?: number;
+  maxCharactersPerPacket?: number;
+}
+
 interface RankedNode {
   node: LabNode;
   score: number;
@@ -48,6 +72,9 @@ const TAG_MATCH_SCORE = 60;
 const BODY_MATCH_SCORE = 20;
 const EXACT_TITLE_BONUS = 40;
 const SNIPPET_RADIUS = 90;
+const DEFAULT_CONTEXT_PACKET_LIMIT = 10;
+const DEFAULT_CONTEXT_CHARACTER_LIMIT = 6000;
+const DEFAULT_CONTEXT_PACKET_CHARACTER_LIMIT = 1200;
 
 export async function searchVaultNodes(query: VaultSearchQuery): Promise<VaultSearchResult[]> {
   const nodes = await listNodes({ status: query.status, tags: query.tags, type: query.type });
@@ -65,6 +92,48 @@ export function rankVaultSearchNodes(nodes: LabNode[], query: VaultSearchQuery):
     .sort(compareRankedNodes)
     .slice(0, query.limit ?? Number.POSITIVE_INFINITY)
     .map(toVaultSearchResult);
+}
+
+export function buildVaultContextPackets(
+  results: VaultSearchResult[],
+  options: VaultContextAssemblyOptions = {},
+): VaultContextPacket[] {
+  const maxPackets = options.maxPackets ?? DEFAULT_CONTEXT_PACKET_LIMIT;
+  const maxCharacters = options.maxCharacters ?? DEFAULT_CONTEXT_CHARACTER_LIMIT;
+  const maxCharactersPerPacket = options.maxCharactersPerPacket ?? DEFAULT_CONTEXT_PACKET_CHARACTER_LIMIT;
+  const packets: VaultContextPacket[] = [];
+  let usedCharacters = 0;
+
+  for (const result of results) {
+    if (packets.length >= maxPackets) break;
+    if (usedCharacters >= maxCharacters) break;
+
+    const remainingCharacters = maxCharacters - usedCharacters;
+    const contentLimit = Math.min(maxCharactersPerPacket, remainingCharacters);
+    const content = truncateContextContent(result.snippet || result.node.body || result.title, contentLimit);
+    if (!content) continue;
+
+    const packet: VaultContextPacket = {
+      char_count: content.length,
+      content,
+      id: `${result.node_type}:${result.node_id}`,
+      kind: inferContextKind(result.node_type),
+      matches: result.matches,
+      node_id: result.node_id,
+      node_type: result.node_type,
+      path: result.path,
+      provenance: result.provenance,
+      reason: describeContextReason(result),
+      score: result.score,
+      snippet: result.snippet,
+      title: result.title,
+    };
+
+    packets.push(packet);
+    usedCharacters += packet.char_count;
+  }
+
+  return packets;
 }
 
 function tokenizeSearchQuery(query: string): string[] {
@@ -187,4 +256,40 @@ function toVaultSearchResult(entry: RankedNode): VaultSearchResult {
     tags: entry.node.tags,
     title: entry.node.title,
   };
+}
+
+function inferContextKind(nodeType: NodeType): VaultContextKind {
+  switch (nodeType) {
+    case 'transcript':
+    case 'source':
+    case 'resource':
+      return 'direct-source';
+    case 'instruction':
+    case 'prompt':
+    case 'skill':
+      return 'operational';
+    case 'decision':
+    case 'run':
+      return 'execution-history';
+    case 'canonical-idea':
+    case 'idea':
+    case 'wiki-candidate':
+    case 'wiki-draft':
+      return 'derived-summary';
+  }
+}
+
+function describeContextReason(result: VaultSearchResult): string {
+  const fields = result.matches.map((match) => (match.value ? `${match.field}:${match.value}` : match.field));
+  return `Matched ${fields.join(', ')} with score ${result.score}`;
+}
+
+function truncateContextContent(content: string, maxCharacters: number): string {
+  if (maxCharacters <= 0) return '';
+
+  const compact = content.replace(/\s+/g, ' ').trim();
+  if (compact.length <= maxCharacters) return compact;
+  if (maxCharacters <= 3) return compact.slice(0, maxCharacters);
+
+  return `${compact.slice(0, maxCharacters - 3).trimEnd()}...`;
 }

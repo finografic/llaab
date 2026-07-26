@@ -158,6 +158,45 @@ describe('vault search', () => {
     expect(rankVaultSearchNodes([node({ title: 'Anything' })], { query: '   ' })).toEqual([]);
   });
 
+  it('assembles bounded context packets with provenance and evidence kinds', async () => {
+    const { buildVaultContextPackets, rankVaultSearchNodes } = await import('./search-vault-nodes.utils.js');
+    const results = rankVaultSearchNodes(
+      [
+        node({
+          body: 'Retrieval source evidence '.repeat(20),
+          id: 'source-evidence',
+          title: 'Source Evidence',
+          type: 'transcript',
+        }),
+        node({
+          body: 'Retrieval operating instruction.',
+          id: 'retrieval-instruction',
+          title: 'Retrieval Instruction',
+          type: 'instruction',
+        }),
+        node({
+          body: 'Retrieval execution history.',
+          id: 'retrieval-run',
+          title: 'Retrieval Run',
+          type: 'run',
+        }),
+      ],
+      { query: 'retrieval' },
+    );
+
+    const packets = buildVaultContextPackets(results, {
+      maxCharacters: 140,
+      maxCharactersPerPacket: 80,
+      maxPackets: 2,
+    });
+
+    expect(packets).toHaveLength(2);
+    expect(packets.map((packet) => packet.kind)).toEqual(['operational', 'execution-history']);
+    expect(packets.every((packet) => packet.char_count <= 80)).toBe(true);
+    expect(packets[0]?.reason).toContain('score');
+    expect(packets[0]?.provenance.path).toBe(packets[0]?.path);
+  });
+
   it('reads vault nodes through the same contract', async () => {
     const core = await import('@llaab/core');
     await core.createNode({

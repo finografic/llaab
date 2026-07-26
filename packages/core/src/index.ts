@@ -81,8 +81,12 @@ export {
 export { MONOREPO_ROOT } from './utils/vault-root.js';
 export { listNodes } from './utils/list-nodes.utils.js';
 export {
+  buildVaultContextPackets,
   rankVaultSearchNodes,
   searchVaultNodes,
+  type VaultContextAssemblyOptions,
+  type VaultContextKind,
+  type VaultContextPacket,
   type VaultSearchMatch,
   type VaultSearchMatchField,
   type VaultSearchQuery,
