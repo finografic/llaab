@@ -776,18 +776,15 @@ export function TranscriptDetail({
               return (
                 <li key={idea.id} className={styles.canonicalIdeaItem}>
                   <Link to={`/vault/nodes/${idea.id}`} className={styles.ideaLink}>
-                    <Row justify="space-between" className={styles.canonicalIdeaMetaRow}>
-                      <Col xs="content" className={styles.canonicalIdeaMeta}>
-                        {idea.confidence ? `${idea.confidence} confidence` : 'canonical'}
-                        {' · '}
-                        {idea.source_candidate_idea_ids.length} source
-                        {idea.source_candidate_idea_ids.length === 1 ? '' : 's'}
+                    <Row className="w-full" justify="space-between">
+                      <Col xs={10}>
+                        <p className={styles.ideaTitle}>{idea.title}</p>
                       </Col>
-                      <Col xs="content" className={styles.canonicalIdeaDate}>
+                      <Col xs={2} className={styles.canonicalIdeaDate}>
                         {fmtListDateNumeric(idea.created_at)}
                       </Col>
                     </Row>
-                    <p className={styles.ideaTitle}>{idea.title}</p>
+
                     {idea.body ? <p className={styles.canonicalIdeaBody}>{idea.body}</p> : null}
                     {idea.key_claims.length > 0 ? (
                       <ul className={styles.keyClaimsList}>
@@ -799,6 +796,14 @@ export function TranscriptDetail({
                     {idea.coverage_notes ? (
                       <p className={styles.coverageNotes}>{idea.coverage_notes}</p>
                     ) : null}
+                    <Row justify="space-between" className={styles.canonicalIdeaMetaRow}>
+                      <Col xs="content" className={styles.canonicalIdeaMeta}>
+                        {idea.confidence ? `${idea.confidence} confidence` : 'canonical'}
+                        {' · '}
+                        {idea.source_candidate_idea_ids.length} source
+                        {idea.source_candidate_idea_ids.length === 1 ? '' : 's'}
+                      </Col>
+                    </Row>
                     <SplitTagList
                       tags={idea.tags}
                       size="sm"
