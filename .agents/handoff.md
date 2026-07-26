@@ -599,6 +599,10 @@ config. Treat this as a context-hygiene pilot: Hermes usage is registered but no
 LLAAB inbox/runtime path, and raw reads/search remain the escape hatch while evaluating whether
 LeanCTX actually reduces context noise.
 
+The local `@finografic/ai-agent-pipeline` integration automates PR work on this repo. When its
+local GitHub App config is present, that automation posts PR comments, labels, and other PR
+operations as the `Finografic Agent Pipeline[bot]` identity rather than a personal GitHub account.
+
 ## Hermes / MCP
 
 Hermes is installed and connected to Discord as `lab` and Telegram as the LLAAB Inbox bot. Discord
