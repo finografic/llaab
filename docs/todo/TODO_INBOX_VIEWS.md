@@ -299,7 +299,7 @@ Purpose: connect inbox captures to the larger vault/knowledge lifecycle.
 - [x] Link promoted outputs back to their original inbox capture (`related` + `from-inbox:` /
       `to-resource:` tags, 2026-07-09).
 - [x] Preserve provenance from Telegram/source message through promoted node/artifact (capture body + source capture id in resource body, 2026-07-09).
-- [x] Coordinate with `TODO_VAULT_KNOWLEDGE_SPLIT.md` before writing to `knowledge/` (promote stays
+- [x] Coordinate with `DONE_VAULT_KNOWLEDGE_SPLIT.md` before writing to `knowledge/` (promote stays
       in working vault `resource` nodes only, 2026-07-09).
 
 Exit criteria: inbox captures can mature into durable LLAAB knowledge without losing provenance.

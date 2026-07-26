@@ -1,7 +1,7 @@
-# TODO — Vault and Knowledge Split
+# DONE — Vault and Knowledge Split
 
-> **Status:** Phases 0-6 complete (2026-07-09). Phase 7 mostly validated; Hermes Telegram checks
-> remain. Phase 8 optional.
+> **Completed:** 2026-07-26 — Parent source, nested vault, committed knowledge, app loading,
+> discard, and Hermes Telegram ingest/todo validation are complete. Phase 8 remains optional.
 
 ## Purpose
 
@@ -202,8 +202,8 @@ GitHub remote setup for `vault/`:
 - [x] LLAAB app: ingest page still lists runs/transcripts.
 - [x] LLAAB app: source detail and transcript pages still load vault nodes.
 - [x] LLAAB app: discard still removes the expected vault files.
-- [ ] Hermes: Telegram YouTube URL still ingests and returns the expected receipt.
-- [ ] Hermes: Telegram todo still creates a vault todo node.
+- [x] Hermes: Telegram YouTube URL still ingests and returns the expected receipt.
+- [x] Hermes: Telegram todo still creates a vault todo node.
 - [x] No `.gitmodules` file is created.
 
 Validated automatically on 2026-07-09:
@@ -224,6 +224,9 @@ Validated on 2026-07-26:
 - Representative transcript and source detail endpoints load through `GET /api/vault/nodes/:id`.
 - Added a focused `discardTranscript` regression test that deletes a transcript plus its source,
   extracted idea, and associated run from a temp vault.
+- Hermes Telegram YouTube URL ingest returns the expected receipt and creates the transcript-backed
+  inbox outcome.
+- Hermes Telegram todo capture returns the expected receipt and creates a vault todo node.
 
 ## Phase 8 — Optional Later Move
 
@@ -237,12 +240,12 @@ If nested Git ever feels too hidden, consider a second migration:
 That later move would require adding and validating a configurable `LLAAB_VAULT_DIR`. It is not
 required for the first split because keeping `vault/` in place avoids code-path churn.
 
-## Open Questions
+## Deferred Questions
 
-- [ ] Should the nested vault repo get a remote now, or stay local until the workflow settles?
-- [ ] Should generated run nodes be committed frequently, squashed periodically, or archived outside Git?
-- [ ] Should `knowledge/knowledge-graphs/` store Mermaid summaries, structured graph JSON, or both?
-- [ ] Should promoted agent profiles live as markdown only, or eventually compile into Hermes/LLAAB agent
-      config?
-- [ ] Should mature canonical skills become schema-backed `SkillNode`s, markdown specs, executable package
-      code, or all three?
+- Should the nested vault repo get a remote now, or stay local until the workflow settles?
+- Should generated run nodes be committed frequently, squashed periodically, or archived outside Git?
+- Should `knowledge/knowledge-graphs/` store Mermaid summaries, structured graph JSON, or both?
+- Should promoted agent profiles live as markdown only, or eventually compile into Hermes/LLAAB agent
+  config?
+- Should mature canonical skills become schema-backed `SkillNode`s, markdown specs, executable package
+  code, or all three?

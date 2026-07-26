@@ -144,7 +144,7 @@ export function RegistryAddPinForm() {
     >
       <h2 className={cn(styles.title, styles.titleAccent)}>
         <PinIcon className={styles.titleIcon} aria-hidden />
-        Add new registry
+        Add new
       </h2>
 
       <p className={cn(styles.feedback, detection && styles.feedbackAccent)}>

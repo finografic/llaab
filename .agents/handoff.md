@@ -582,7 +582,7 @@ Wiki generation is implemented; the completion record is `docs/todo/DONE_WIKI_GE
 the ongoing feature reference is `docs/process/WIKI_WORKFLOW.md`.
 Hermes setup and follow-ups: `docs/todo/TODO_HERMES_LAYER.md`,
 `docs/todo/DONE_HERMES_DROPBOX.md`, and `docs/todo/TODO_INBOX_VIEWS.md`. Vault/knowledge split plan:
-`docs/todo/TODO_VAULT_KNOWLEDGE_SPLIT.md`; current shape is source/docs/`knowledge/` in the parent
+`docs/todo/DONE_VAULT_KNOWLEDGE_SPLIT.md`; current shape is source/docs/`knowledge/` in the parent
 repo and volatile working data in the nested `vault/.git` repo.
 Playwright learning playground: `docs/todo/TODO_PLAYWRIGHT_PRACTICE.md`.
 UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07. P0 is empty.
