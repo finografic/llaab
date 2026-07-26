@@ -105,6 +105,7 @@
   --page-list-max: var(--content-max);
   --page-detail-max: var(--content-max);
   --page-dashboard-max: var(--content-max);
+  --scrollbar-outset: 12px;
 
   /* ── Motion ───────────────────────────────────────────────────────────────── */
   --duration-fast: 100ms;

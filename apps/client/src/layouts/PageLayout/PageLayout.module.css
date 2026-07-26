@@ -26,7 +26,9 @@
 }
 
 .main {
+  padding-right: var(--scrollbar-outset);
   overflow-y: auto;
+  scrollbar-gutter: stable;
   min-width: 0;
 }
 
@@ -41,5 +43,6 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  padding-right: 0;
   overflow: hidden;
 }
