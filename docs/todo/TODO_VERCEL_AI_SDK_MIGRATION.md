@@ -1,8 +1,8 @@
 # TODO — Vercel AI SDK Migration
 
-> **Status:** Phases 0–4 complete (2026-07-26). Phase 5 has started: code-image extraction now
-> routes through `@llaab/llm` for Ollama/LM Studio vision payload ownership. Transport migrated
-> inside `@llaab/llm` on branch `codex/fable-ai-sdk-migration-setup`; see
+> **Status:** Phases 0–5 complete (2026-07-26). Code-image extraction now routes through
+> `@llaab/llm` for Ollama/LM Studio vision payload ownership and typed output validation.
+> Transport migrated inside `@llaab/llm` on branch `codex/fable-ai-sdk-migration-setup`; see
 > [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Phases 6–8 remain open.
 
 ---
@@ -77,8 +77,7 @@ Pin one stable AI SDK major version across the migration. Do not mix examples fr
 - [x] Phase 2 — Anthropic and OpenCode migration
 - [x] Phase 3 — LM Studio migration with lifecycle preservation
 - [x] Phase 4 — typed structured-output boundary and low-risk pilot
-- [ ] Phase 5 — multimodal vision migration (route boundary + local provider payload ownership done;
-      structured output and broader fixtures pending)
+- [x] Phase 5 — multimodal vision migration
 - [ ] Phase 6 — Ollama parity decision
 - [ ] Phase 7 — optional embedding boundary after retrieval design
 - [ ] Phase 8 — telemetry, documentation, and migration closeout
@@ -177,17 +176,18 @@ validation or diagnostics.
       provider-specific payloads.
       → Added `LlmImageInput`, provider `completeWithImage`, and `routeLlmVision()`.
 - [x] Route code-image extraction through `@llaab/llm` instead of separate CLI fetch functions.
-      → `packages/cli` now delegates to `routeLlmVision()` and only owns prompt construction plus
-      code-extraction result parsing.
+      → `packages/cli` now delegates to `routeLlmVisionObject()` and only owns prompt construction
+      plus code-extraction result normalization.
 - [x] Preserve LM Studio model loading before multimodal requests.
       → `lmStudioCompleteWithImage()` reuses the provider's model-load preflight and timeout/env
       helpers.
 - [x] Preserve Ollama image support while the Ollama transport decision remains open.
       → `ollamaCompleteWithImage()` preserves the native Ollama chat image payload and JSON-format
       request.
-- [ ] Replace ad hoc image extraction parsing with the structured-output boundary where provider
+- [x] Replace ad hoc image extraction parsing with the structured-output boundary where provider
       compatibility is proven.
-- [ ] Add fixtures for code screenshot, non-code image, malformed output, and low confidence.
+      → Added `routeLlmVisionObject()` and removed CLI-local JSON parsing.
+- [x] Add fixtures for code screenshot, non-code image, malformed output, and low confidence.
 
 Exit criteria: the CLI no longer owns provider-specific vision HTTP payloads.
 

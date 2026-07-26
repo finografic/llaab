@@ -27,6 +27,7 @@ export {
   routeLlm,
   routeLlmObject,
   routeLlmVision,
+  routeLlmVisionObject,
   streamLlm,
   updateLlmTaskRoute,
 } from './router.js';

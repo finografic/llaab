@@ -1,4 +1,5 @@
-import { routeLlmVision } from '@llaab/llm';
+import { routeLlmVisionObject } from '@llaab/llm';
+import { z } from 'zod';
 
 const VISION_MAX_TOKENS = 4096;
 
@@ -26,23 +27,32 @@ export interface CodeImageExtraction {
   confidence: number;
 }
 
+const CodeImageExtractionSchema = z.object({
+  is_code: z.boolean(),
+  language: z.string().optional(),
+  code: z.string(),
+  confidence: z.number().min(0).max(1).optional(),
+});
+
 export async function extractCodeFromImage(
   input: CodeImageExtractionInput,
 ): Promise<CodeImageExtractionResult> {
   const prompt = buildCodeImagePrompt(input.description);
 
   try {
-    const llm = await routeLlmVision(
+    const llm = await routeLlmVisionObject(
       prompt,
       { base64: input.imageBase64, mimeType: input.mimeType },
+      CodeImageExtractionSchema,
       { maxTokens: VISION_MAX_TOKENS },
     );
-    const parsed = parseCodeImageExtraction(llm.text);
-    if (!parsed) {
-      return { ok: false, error: 'vision model returned invalid code extraction JSON' };
-    }
 
-    return { ok: true, provider: llm.provider, model: llm.model, result: parsed };
+    return {
+      ok: true,
+      provider: llm.provider,
+      model: llm.model,
+      result: normalizeCodeImageExtraction(llm.object),
+    };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : 'vision extraction failed' };
   }
@@ -84,38 +94,14 @@ function buildCodeImagePrompt(description: string): string {
   ].join('\n');
 }
 
-function parseCodeImageExtraction(text: string): CodeImageExtraction | undefined {
-  const parsed = parseJsonObject(extractJsonObjectText(text) ?? text);
-  if (!parsed) {
-    return undefined;
-  }
-
-  const isCode = parsed['is_code'] === true;
-  const code = typeof parsed['code'] === 'string' ? parsed['code'].trim() : '';
-  const confidence =
-    typeof parsed['confidence'] === 'number' ? parsed['confidence'] : isCode && code ? 0.7 : 0;
-
+function normalizeCodeImageExtraction(
+  parsed: z.infer<typeof CodeImageExtractionSchema>,
+): CodeImageExtraction {
+  const code = parsed.code.trim();
   return {
-    is_code: isCode,
-    language: normalizeCodeLanguage(typeof parsed['language'] === 'string' ? parsed['language'] : undefined),
+    is_code: parsed.is_code,
+    language: normalizeCodeLanguage(parsed.language),
     code,
-    confidence: Math.max(0, Math.min(1, confidence)),
+    confidence: parsed.confidence ?? (parsed.is_code && code ? 0.7 : 0),
   };
-}
-
-function extractJsonObjectText(text: string): string | undefined {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  return start >= 0 && end > start ? text.slice(start, end + 1) : undefined;
-}
-
-function parseJsonObject(text: string): Record<string, unknown> | null {
-  try {
-    const value: unknown = JSON.parse(text);
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
-      ? (value as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
 }

@@ -292,12 +292,56 @@ export async function routeLlmVision(
   };
 }
 
+export async function routeLlmVisionObject<OBJECT>(
+  prompt: string,
+  image: LlmImageInput,
+  schema: z.ZodType<OBJECT>,
+  opts?: { model?: string; system?: string; maxTokens?: number },
+): Promise<LlmObjectResult<OBJECT>> {
+  const completion = await routeLlmVision(prompt, image, opts);
+  return parseStructuredCompletion(completion, schema);
+}
+
 /**
  * Providers whose structured output runs through the AI SDK `Output.object` path. Local
  * providers (ollama, lmstudio) use text generation plus deterministic JSON extraction instead —
  * local models routinely fence JSON, and LM Studio's model-load lifecycle lives in `complete()`.
  */
 const AI_SDK_OBJECT_PROVIDERS = new Set<LlmProviderId>(['anthropic', 'opencode']);
+
+function parseStructuredCompletion<OBJECT>(
+  completion: Omit<LlmCompleteResult, 'cached'>,
+  schema: z.ZodType<OBJECT>,
+): LlmObjectResult<OBJECT> {
+  const errorContext = { provider: completion.provider, model: completion.model, rawText: completion.text };
+  const payload = extractJsonObjectPayload(completion.text);
+  if (!payload) throw new LlmStructuredOutputError('No JSON object found in model output', errorContext);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payload);
+  } catch (cause) {
+    throw new LlmStructuredOutputError('Model output is not valid JSON', { ...errorContext, cause });
+  }
+
+  const validated = schema.safeParse(parsed);
+  if (!validated.success) {
+    throw new LlmStructuredOutputError('Model output failed schema validation', {
+      ...errorContext,
+      cause: validated.error,
+    });
+  }
+
+  return {
+    object: validated.data,
+    rawText: completion.text,
+    model: completion.model,
+    provider: completion.provider,
+    durationMs: completion.durationMs,
+    promptTokens: completion.promptTokens,
+    completionTokens: completion.completionTokens,
+  };
+}
 
 /**
  * Typed structured-output routing (Fable migration A4): resolves the task route like
@@ -347,35 +391,17 @@ export async function routeLlmObject<OBJECT>(
     system: opts?.system,
     maxTokens: opts?.maxTokens,
   });
-  const errorContext = { provider: completion.providerId, model: completion.model, rawText: completion.text };
-
-  const payload = extractJsonObjectPayload(completion.text);
-  if (!payload) throw new LlmStructuredOutputError('No JSON object found in model output', errorContext);
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(payload);
-  } catch (cause) {
-    throw new LlmStructuredOutputError('Model output is not valid JSON', { ...errorContext, cause });
-  }
-
-  const validated = schema.safeParse(parsed);
-  if (!validated.success) {
-    throw new LlmStructuredOutputError('Model output failed schema validation', {
-      ...errorContext,
-      cause: validated.error,
-    });
-  }
-
-  return {
-    object: validated.data,
-    rawText: completion.text,
-    model: completion.model,
-    provider: completion.providerId,
-    durationMs: completion.durationMs,
-    promptTokens: completion.promptTokens,
-    completionTokens: completion.completionTokens,
-  };
+  return parseStructuredCompletion(
+    {
+      text: completion.text,
+      model: completion.model,
+      provider: completion.providerId,
+      durationMs: completion.durationMs,
+      promptTokens: completion.promptTokens,
+      completionTokens: completion.completionTokens,
+    },
+    schema,
+  );
 }
 
 export async function getLlmStatus(): Promise<{

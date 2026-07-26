@@ -23,8 +23,9 @@ Task A is complete. Task B (process-state audit) was later completed in
 `docs/todo/DONE_PROCESS_STATE_AUDIT.md`. Phase 4 is now complete: wiki-link enrichment uses
 `routeLlmObject()` while keeping deterministic validation; retry ownership is documented as SDK
 transport retries pinned to `0`, `@llaab/control` semantic retries, and workflow-owned transport
-retries; local structured-output fallback keeps deterministic JSON extraction. The next
-migration-doc work is Phase 5 multimodal vision and the Phase 6 Ollama parity decision.
+retries; local structured-output fallback keeps deterministic JSON extraction. Phase 5 is now
+complete: code-image extraction uses `routeLlmVisionObject()` and shared structured-output
+validation. The next migration-doc work is the Phase 6 Ollama parity decision.
 
 ## Phase Log
 
@@ -107,9 +108,11 @@ migration-doc work is Phase 5 multimodal vision and the Phase 6 Ollama parity de
 - **Consumer-side structured-output pilot (wiki-link enrichment) done on 2026-07-26** —
   `linkWikiTopics()` now calls `routeLlmObject()` with a structured payload schema, then preserves
   deterministic `validateWikiLinkSuggestions()` domain validation.
-- **Migration doc Phases 5 (vision), 6 (Ollama parity decision), 7 (embeddings), and the live-app
-  parts of Phase 8** are out of this session's scope and remain open in
-  `TODO_VERCEL_AI_SDK_MIGRATION.md`.
+- **Migration doc Phases 6 (Ollama parity decision), 7 (embeddings), and the live-app parts of
+  Phase 8** remain open in `TODO_VERCEL_AI_SDK_MIGRATION.md`.
+- **Phase 5 vision boundary done on 2026-07-26** — `routeLlmVisionObject()` applies the same
+  deterministic structured-output extraction/validation to multimodal local-provider output, and
+  `packages/cli` no longer owns code-image JSON parsing.
 - Podcast ingest fixture/live validation remains in `ROADMAP.md#next`.
 - Vault/knowledge split manual validation remains in `ROADMAP.md#next`.
 - `resolveModel` in `packages/llm/src/router.ts` has an inert ternary (a model override never

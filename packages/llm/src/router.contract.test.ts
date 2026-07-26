@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
 /**
  * Characterization tests for the routeLlm/streamLlm/getLlmStatus contract (Fable migration A0).
@@ -464,6 +465,55 @@ describe('routeLlmVision', () => {
         { model: 'anthropic:claude-x' },
       ),
     ).rejects.toThrow('vision route provider is not image-capable: anthropic');
+  });
+});
+
+describe('routeLlmVisionObject', () => {
+  const VisionPayloadSchema = z.object({
+    label: z.string(),
+    confidence: z.number(),
+  });
+
+  it('extracts schema-valid JSON from image completion text', async () => {
+    fakes.ollama.completeWithImage!.mockResolvedValueOnce({
+      text: '```json\n{"label":"code screenshot","confidence":0.92}\n```',
+      durationMs: 17,
+      providerId: 'ollama',
+      model: 'vision-reported-model',
+      promptTokens: 13,
+      completionTokens: 8,
+    });
+    const { routeLlmVisionObject } = await importRouter();
+
+    const result = await routeLlmVisionObject(
+      'inspect image',
+      { base64: 'abc123', mimeType: 'image/png' },
+      VisionPayloadSchema,
+    );
+
+    expect(result).toEqual({
+      object: { label: 'code screenshot', confidence: 0.92 },
+      rawText: '```json\n{"label":"code screenshot","confidence":0.92}\n```',
+      model: 'vision-reported-model',
+      provider: 'ollama',
+      durationMs: 17,
+      promptTokens: 13,
+      completionTokens: 8,
+    });
+  });
+
+  it('throws structured-output errors when image output fails schema validation', async () => {
+    fakes.ollama.completeWithImage!.mockResolvedValueOnce({
+      text: '{"label":"missing confidence"}',
+      durationMs: 17,
+      providerId: 'ollama',
+      model: 'vision-reported-model',
+    });
+    const { LlmStructuredOutputError, routeLlmVisionObject } = await importRouter();
+
+    await expect(
+      routeLlmVisionObject('inspect image', { base64: 'abc123', mimeType: 'image/png' }, VisionPayloadSchema),
+    ).rejects.toBeInstanceOf(LlmStructuredOutputError);
   });
 });
 
