@@ -252,9 +252,13 @@ Foundation, which should define the measurable ranking/evaluation need first.
 - [x] Document retry ownership: transport, structured-output, semantic, and workflow retries.
 - [x] Document which providers support text, streaming, structured output, vision, tools, and
       embeddings.
-- [ ] Verify `/api/llm/complete`, `/api/llm/stream`, `/llm`, extraction, consolidation, wiki
-      creation, and image-code extraction.
+- [x] Verify `/api/llm/complete`, `/api/llm/stream`, and `/llm`.
+      → 2026-07-26 local smoke: `/llm` returned the Vite app shell; `/api/llm/complete` returned
+      text/provider/model/duration; `/api/llm/stream` returned SSE data and `[DONE]`.
+- [ ] Verify extraction, consolidation, wiki creation, and image-code extraction.
 - [x] Run focused package/app typechecks and provider contract tests.
+      → Ran focused `@llaab/llm`, `@llaab/cli`, and `@llaab/server` typechecks/build/tests around
+      the migrated boundary.
 - [x] After server-consumed package changes, run the required Rebuild & Reload App workflow before
       browser verification.
 - [ ] Graduate this document to `DONE_VERCEL_AI_SDK_MIGRATION.md` and move the roadmap item to
