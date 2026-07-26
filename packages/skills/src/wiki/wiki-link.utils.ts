@@ -1,4 +1,4 @@
-import { WikiLinkRelationSchema } from '@llaab/schemas';
+import { WikiLinkRelationSchema, z } from '@llaab/schemas';
 import type { WikiLink, WikiLinkRelation } from '@llaab/schemas';
 
 /** Relations allowed for normal wiki-link enrichment (lifecycle supersedes excluded). */
@@ -31,6 +31,23 @@ export interface WikiLinkSuggestion {
   relation: WikiLinkRelation;
   note: string;
 }
+
+export const WikiLinkSuggestionRowSchema = z
+  .object({
+    source_temporary_key: z.string().optional(),
+    source: z.string().optional(),
+    target: z.string().optional(),
+    target_wiki_id: z.string().optional(),
+    relation: z.string(),
+    note: z.string(),
+  })
+  .passthrough();
+
+export const WikiLinkSuggestionsPayloadSchema = z
+  .object({
+    links: z.array(WikiLinkSuggestionRowSchema),
+  })
+  .passthrough();
 
 export interface ValidatedWikiLinkBundle {
   linksBySourceKey: Map<string, WikiLink[]>;
@@ -171,24 +188,18 @@ export function parseWikiLinkSuggestions(text: string): WikiLinkSuggestion[] {
       : null;
   if (!rows) throw new Error('wiki-link output must be a JSON array or { links: [] }.');
 
+  return normalizeWikiLinkSuggestions(rows);
+}
+
+export function normalizeWikiLinkSuggestions(rows: readonly unknown[]): WikiLinkSuggestion[] {
   return rows.flatMap((row) => {
-    if (!row || typeof row !== 'object') return [];
-    const value = row as Record<string, unknown>;
-    const source =
-      typeof value.source_temporary_key === 'string'
-        ? value.source_temporary_key
-        : typeof value.source === 'string'
-          ? value.source
-          : undefined;
-    const target =
-      typeof value.target === 'string'
-        ? value.target
-        : typeof value.target_wiki_id === 'string'
-          ? value.target_wiki_id
-          : undefined;
+    const parsed = WikiLinkSuggestionRowSchema.safeParse(row);
+    if (!parsed.success) return [];
+    const value = parsed.data;
+    const source = value.source_temporary_key ?? value.source;
+    const target = value.target ?? value.target_wiki_id;
     const relation = normalizeRelation(value.relation);
-    const note = typeof value.note === 'string' ? value.note : undefined;
-    if (!source || !target || !relation || !note) return [];
-    return [{ source_temporary_key: source, target, relation, note }];
+    if (!source || !target || !relation || !value.note) return [];
+    return [{ source_temporary_key: source, target, relation, note: value.note }];
   });
 }

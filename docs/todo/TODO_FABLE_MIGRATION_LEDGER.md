@@ -1,6 +1,6 @@
 # Fable Migration Ledger
 
-Branch: `codex/fable-ai-sdk-migration-setup` · Started: 2026-07-24 · Last updated: 2026-07-24 A5
+Branch: `codex/fable-ai-sdk-migration-setup` · Started: 2026-07-24 · Last updated: 2026-07-26
 
 ## Status
 
@@ -19,12 +19,11 @@ status/checkboxes updated (kept as `TODO_`), no roadmap edit (see Decisions).
 
 ## Resume Here
 
-Task A is complete. Task B (process-state audit) was intentionally not started — a complete
-Task A plus an untouched Task B is the brief's preferred outcome over two half-done tasks. A
-successor with budget should read `docs/todo/DONE_PROCESS_STATE_AUDIT.md`
-first (wrap transcript re-extraction in `runSkill` before deriving
-its UI state from the shared monitor). The next migration-doc work is the Phase 4 consumer
-pilot (wiki-link enrichment via `routeLlmObject`) and the Phase 6 Ollama parity decision.
+Task A is complete. Task B (process-state audit) was later completed in
+`docs/todo/DONE_PROCESS_STATE_AUDIT.md`. The Phase 4 consumer pilot is now complete:
+wiki-link enrichment uses `routeLlmObject()` while keeping deterministic validation. The next
+migration-doc work is retry-ownership/middleware closeout, Phase 5 multimodal vision, and the
+Phase 6 Ollama parity decision.
 
 ## Phase Log
 
@@ -104,8 +103,9 @@ pilot (wiki-link enrichment via `routeLlmObject`) and the Phase 6 Ollama parity 
 
 ## Deferred / Noticed
 
-- **Consumer-side structured-output pilot (wiki-link enrichment) not done** — requires editing
-  consumer packages, which this brief forbids. `routeLlmObject` is ready for it.
+- **Consumer-side structured-output pilot (wiki-link enrichment) done on 2026-07-26** —
+  `linkWikiTopics()` now calls `routeLlmObject()` with a structured payload schema, then preserves
+  deterministic `validateWikiLinkSuggestions()` domain validation.
 - **Migration doc Phases 5 (vision), 6 (Ollama parity decision), 7 (embeddings), and the live-app
   parts of Phase 8** are out of this session's scope and remain open in
   `TODO_VERCEL_AI_SDK_MIGRATION.md`.

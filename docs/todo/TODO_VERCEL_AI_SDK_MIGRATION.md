@@ -1,9 +1,9 @@
 # TODO — Vercel AI SDK Migration
 
-> **Status:** Phases 0–3 complete, Phase 4 core API complete (2026-07-24) — transport migrated
-> inside `@llaab/llm` on branch `codex/fable-ai-sdk-migration-setup`; see
-> [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Phase 4 consumer pilot and
-> Phases 5–8 not started.
+> **Status:** Phases 0–3 complete; Phase 4 boundary and wiki-link consumer pilot complete
+> (2026-07-26), with retry-ownership and middleware notes still open. Transport migrated inside
+> `@llaab/llm` on branch `codex/fable-ai-sdk-migration-setup`; see
+> [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Phases 5–8 remain open.
 
 ---
 
@@ -76,8 +76,8 @@ Pin one stable AI SDK major version across the migration. Do not mix examples fr
 - [x] Phase 1 — internal AI SDK model registry and shared result mapping
 - [x] Phase 2 — Anthropic and OpenCode migration
 - [x] Phase 3 — LM Studio migration with lifecycle preservation
-- [ ] Phase 4 — typed structured-output boundary and low-risk pilot (boundary API done; consumer
-      pilot pending)
+- [ ] Phase 4 — typed structured-output boundary and low-risk pilot (boundary API + wiki-link pilot
+      done; retry ownership and middleware evaluation pending)
 - [ ] Phase 5 — multimodal vision migration
 - [ ] Phase 6 — Ollama parity decision
 - [ ] Phase 7 — optional embedding boundary after retrieval design
@@ -148,17 +148,21 @@ through existing routes and RunNode metadata.
       plus the same provider/model/usage metadata as `routeLlm()`.
 - [x] Keep AI SDK types private to `@llaab/llm`; consumers should depend on LLAAB types and schemas.
 - [ ] Distinguish transport retries from semantic retries in `@llaab/control`.
-- [ ] Pilot structured output on a low-risk, optional workflow such as wiki-link enrichment.
-- [ ] Retain deterministic validation that rejects unknown ids, invalid relationships, weak
+- [x] Pilot structured output on a low-risk, optional workflow such as wiki-link enrichment.
+      → `linkWikiTopics()` now calls `routeLlmObject()` with a wiki-link payload schema, while
+      preserving best-effort warning-only failure behavior.
+- [x] Retain deterministic validation that rejects unknown ids, invalid relationships, weak
       rationales, and other domain errors after schema validation.
+      → Structured rows still pass through `validateWikiLinkSuggestions()` before any proposed link
+      is accepted.
 - [x] Preserve access to raw model text/usage when structured generation fails
       (`LlmStructuredOutputError` carries the raw model text).
 - [ ] Evaluate JSON-extraction middleware for local models that still return fenced JSON
       (deterministic fence/prose extraction ships as the local-provider fallback; middleware
       evaluation pending).
-- [ ] Do not migrate wiki compilation first; its tolerant normalization and repair behavior is
+- [x] Do not migrate wiki compilation first; its tolerant normalization and repair behavior is
       intentional.
-- [ ] Do not remove extraction/consolidation repair paths until model/provider parity is measured.
+- [x] Do not remove extraction/consolidation repair paths until model/provider parity is measured.
 
 Exit criteria: one production workflow uses typed structured output with no loss of domain
 validation or diagnostics.

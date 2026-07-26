@@ -1,12 +1,13 @@
 import { listKnowledgeWikis } from '@llaab/core';
-import { routeLlm } from '@llaab/llm';
+import { routeLlmObject } from '@llaab/llm';
 import type { WikiLinkCandidatePage } from './wiki-link.utils.js';
 import type { WikiLink } from '@llaab/schemas';
 
 import {
-  parseWikiLinkSuggestions,
+  normalizeWikiLinkSuggestions,
   validateWikiLinkSuggestions,
   WIKI_LINK_ENRICHMENT_RELATIONS,
+  WikiLinkSuggestionsPayloadSchema,
 } from './wiki-link.utils.js';
 
 export interface LinkWikiTopicsInput {
@@ -53,7 +54,7 @@ export async function linkWikiTopics(input: LinkWikiTopicsInput): Promise<LinkWi
     }));
 
   try {
-    const llm = await routeLlm(
+    const llm = await routeLlmObject(
       'wiki-link',
       JSON.stringify({
         batch_pages: input.candidates,
@@ -65,10 +66,11 @@ export async function linkWikiTopics(input: LinkWikiTopicsInput): Promise<LinkWi
           forbid_supersedes: true,
         },
       }),
-      { system: WIKI_LINK_SYSTEM_PROMPT, bypassCache: true },
+      WikiLinkSuggestionsPayloadSchema,
+      { system: WIKI_LINK_SYSTEM_PROMPT },
     );
 
-    const suggestions = parseWikiLinkSuggestions(llm.text);
+    const suggestions = normalizeWikiLinkSuggestions(llm.object.links);
     const validated = validateWikiLinkSuggestions({
       suggestions,
       candidates: input.candidates,
