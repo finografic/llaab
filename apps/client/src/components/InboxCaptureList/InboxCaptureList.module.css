@@ -33,10 +33,10 @@
 }
 
 .rowChecked {
-  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+  border-color: color-mix(in oklab, var(--muted-foreground) 45%, var(--border));
   background:
     linear-gradient(var(--row-accent-color, transparent) 0 0) left / 5px 100% no-repeat,
-    color-mix(in oklab, var(--accent) 6%, var(--surface));
+    color-mix(in oklab, var(--muted) 18%, var(--surface));
 }
 
 .row[data-route-kind="docs_link"],
@@ -80,6 +80,13 @@
   justify-content: center;
   width: 2.75rem;
   padding: 0;
+}
+
+.selectionCheckbox[data-state="checked"],
+.selectionCheckbox[data-checked] {
+  border-color: color-mix(in oklab, var(--muted-foreground) 70%, var(--border));
+  background: color-mix(in oklab, var(--muted-foreground) 45%, var(--surface));
+  color: var(--foreground);
 }
 
 .primaryCol {

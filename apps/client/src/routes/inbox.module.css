@@ -32,8 +32,12 @@
 }
 
 .selectionBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-height: 2rem;
   padding: var(--space-2) 0;
-  height: 2rem;
+  background: var(--background);
 }
 
 .selectionLabel {

@@ -160,6 +160,7 @@ function DefaultInboxCaptureListRow({
         {onCheckedChange ? (
           <Col xs="content" className={styles.selectCol}>
             <Checkbox
+              className={styles.selectionCheckbox}
               checked={checked}
               disabled={!selectable}
               aria-label={`Select ${node.title || 'capture'}`}
