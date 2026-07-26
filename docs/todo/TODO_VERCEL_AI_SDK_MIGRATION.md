@@ -1,8 +1,7 @@
 # TODO — Vercel AI SDK Migration
 
-> **Status:** Phases 0–3 complete; Phase 4 boundary and wiki-link consumer pilot complete
-> (2026-07-26), with retry-ownership and middleware notes still open. Transport migrated inside
-> `@llaab/llm` on branch `codex/fable-ai-sdk-migration-setup`; see
+> **Status:** Phases 0–4 complete (2026-07-26). Transport migrated inside `@llaab/llm` on branch
+> `codex/fable-ai-sdk-migration-setup`; see
 > [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Phases 5–8 remain open.
 
 ---
@@ -76,8 +75,7 @@ Pin one stable AI SDK major version across the migration. Do not mix examples fr
 - [x] Phase 1 — internal AI SDK model registry and shared result mapping
 - [x] Phase 2 — Anthropic and OpenCode migration
 - [x] Phase 3 — LM Studio migration with lifecycle preservation
-- [ ] Phase 4 — typed structured-output boundary and low-risk pilot (boundary API + wiki-link pilot
-      done; retry ownership and middleware evaluation pending)
+- [x] Phase 4 — typed structured-output boundary and low-risk pilot
 - [ ] Phase 5 — multimodal vision migration
 - [ ] Phase 6 — Ollama parity decision
 - [ ] Phase 7 — optional embedding boundary after retrieval design
@@ -147,7 +145,10 @@ through existing routes and RunNode metadata.
 - [x] Add a LLAAB-owned API such as `routeLlmObject()` that accepts a schema and returns typed data
       plus the same provider/model/usage metadata as `routeLlm()`.
 - [x] Keep AI SDK types private to `@llaab/llm`; consumers should depend on LLAAB types and schemas.
-- [ ] Distinguish transport retries from semantic retries in `@llaab/control`.
+- [x] Distinguish transport retries from semantic retries in `@llaab/control`.
+      → AI SDK transport retries stay pinned to `0` at `generateText()`/`streamText()` boundaries;
+      `@llaab/control` owns schema/semantic retry decisions through `onInvalid`/`onFailure`, and
+      workflow-specific transport retries remain explicit one-shot choices outside the SDK.
 - [x] Pilot structured output on a low-risk, optional workflow such as wiki-link enrichment.
       → `linkWikiTopics()` now calls `routeLlmObject()` with a wiki-link payload schema, while
       preserving best-effort warning-only failure behavior.
@@ -157,9 +158,10 @@ through existing routes and RunNode metadata.
       is accepted.
 - [x] Preserve access to raw model text/usage when structured generation fails
       (`LlmStructuredOutputError` carries the raw model text).
-- [ ] Evaluate JSON-extraction middleware for local models that still return fenced JSON
+- [x] Evaluate JSON-extraction middleware for local models that still return fenced JSON
       (deterministic fence/prose extraction ships as the local-provider fallback; middleware
-      evaluation pending).
+      rejected for now because local providers still need tolerant text-to-object extraction, and
+      OpenAI-compatible structured generation does not enforce JSON-schema response format here).
 - [x] Do not migrate wiki compilation first; its tolerant normalization and repair behavior is
       intentional.
 - [x] Do not remove extraction/consolidation repair paths until model/provider parity is measured.

@@ -20,10 +20,11 @@ status/checkboxes updated (kept as `TODO_`), no roadmap edit (see Decisions).
 ## Resume Here
 
 Task A is complete. Task B (process-state audit) was later completed in
-`docs/todo/DONE_PROCESS_STATE_AUDIT.md`. The Phase 4 consumer pilot is now complete:
-wiki-link enrichment uses `routeLlmObject()` while keeping deterministic validation. The next
-migration-doc work is retry-ownership/middleware closeout, Phase 5 multimodal vision, and the
-Phase 6 Ollama parity decision.
+`docs/todo/DONE_PROCESS_STATE_AUDIT.md`. Phase 4 is now complete: wiki-link enrichment uses
+`routeLlmObject()` while keeping deterministic validation; retry ownership is documented as SDK
+transport retries pinned to `0`, `@llaab/control` semantic retries, and workflow-owned transport
+retries; local structured-output fallback keeps deterministic JSON extraction. The next
+migration-doc work is Phase 5 multimodal vision and the Phase 6 Ollama parity decision.
 
 ## Phase Log
 
