@@ -5,6 +5,7 @@ import type { LlmObjectResult } from './structured-output.js';
 import type {
   LlmCompleteOptions,
   LlmCompleteResult,
+  LlmImageInput,
   LlmProgress,
   LlmProviderId,
   ModelTier,
@@ -259,6 +260,38 @@ export async function* streamLlm(
   yield* provider.stream(prompt, completeOpts);
 }
 
+export async function routeLlmVision(
+  prompt: string,
+  image: LlmImageInput,
+  opts?: {
+    model?: string;
+    system?: string;
+    maxTokens?: number;
+    onProgress?: LlmCompleteOptions['onProgress'];
+  },
+): Promise<LlmCompleteResult> {
+  const { model, provider } = resolveModel('vision', opts?.model);
+  if (!provider.completeWithImage) {
+    throw new Error(`vision route provider is not image-capable: ${provider.id}`);
+  }
+  const result = await provider.completeWithImage(prompt, image, {
+    model,
+    system: opts?.system,
+    maxTokens: opts?.maxTokens,
+    onProgress: opts?.onProgress,
+  });
+
+  return {
+    text: result.text,
+    model: result.model,
+    cached: false,
+    provider: result.providerId,
+    durationMs: result.durationMs,
+    promptTokens: result.promptTokens,
+    completionTokens: result.completionTokens,
+  };
+}
+
 /**
  * Providers whose structured output runs through the AI SDK `Output.object` path. Local
  * providers (ollama, lmstudio) use text generation plus deterministic JSON extraction instead —
@@ -414,4 +447,4 @@ export {
   openCodeListModelDetails,
   openCodeListModels,
 };
-export type { LlmCompleteResult, LlmProgress, LlmProviderId, ModelTier, TaskType };
+export type { LlmCompleteResult, LlmImageInput, LlmProgress, LlmProviderId, ModelTier, TaskType };

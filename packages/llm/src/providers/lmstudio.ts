@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { APICallError, generateText, streamText } from 'ai';
 import type { LlmProvider, LlmProviderResult } from '../provider.js';
-import type { LlmCompleteOptions, LlmProgress } from '../types.js';
+import type { LlmCompleteOptions, LlmImageInput, LlmProgress } from '../types.js';
 
 import { AI_SDK_MAX_RETRIES, resolveAiSdkModel, toProviderResult } from '../ai-sdk-model-registry.js';
 import { parseLmStudioProgressLine } from './lmstudio-progress.js';
@@ -37,6 +37,14 @@ interface OpenAiModel {
 
 interface OpenAiModelsResponse {
   data?: OpenAiModel[];
+}
+
+interface OpenAiChatResponse {
+  choices?: Array<{ message?: { content?: string } }>;
+  usage?: {
+    completion_tokens?: number;
+    prompt_tokens?: number;
+  };
 }
 
 interface LmStudioCliModel {
@@ -263,6 +271,54 @@ export async function lmStudioComplete(prompt: string, opts: LlmCompleteOptions)
   });
 }
 
+export async function lmStudioCompleteWithImage(
+  prompt: string,
+  image: LlmImageInput,
+  opts: LlmCompleteOptions,
+): Promise<LlmProviderResult> {
+  const start = performance.now();
+  await opts.onProgress?.({ status: 'loading' });
+  await ensureRequestedModelLoaded(opts.model);
+  await opts.onProgress?.({ status: 'processing prompt' });
+
+  const messages = [
+    ...(opts.system ? [{ role: 'system', content: opts.system }] : []),
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: prompt },
+        {
+          type: 'image_url',
+          image_url: { url: `data:${image.mimeType};base64,${image.base64}` },
+        },
+      ],
+    },
+  ];
+
+  const response = await lmStudioFetch<OpenAiChatResponse>('/chat/completions', {
+    method: 'POST',
+    body: JSON.stringify({
+      model: opts.model,
+      messages,
+      temperature: 0,
+      ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}),
+      response_format: { type: 'json_object' },
+    }),
+  });
+  const text = response.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Unexpected response from LM Studio');
+  await opts.onProgress?.({ status: 'completed', completionTokens: response.usage?.completion_tokens });
+
+  return {
+    text,
+    durationMs: Math.round(performance.now() - start),
+    providerId: 'lmstudio',
+    model: opts.model,
+    promptTokens: response.usage?.prompt_tokens,
+    completionTokens: response.usage?.completion_tokens,
+  };
+}
+
 export async function* lmStudioStream(prompt: string, opts: LlmCompleteOptions): AsyncGenerator<string> {
   await opts.onProgress?.({ status: 'loading' });
   await ensureRequestedModelLoaded(opts.model);
@@ -391,6 +447,7 @@ export const lmStudioProvider: LlmProvider = {
   displayName: 'LM Studio',
   capabilities: ['chat', 'summarize', 'extract', 'reduce', 'structure'],
   complete: lmStudioComplete,
+  completeWithImage: lmStudioCompleteWithImage,
   stream: lmStudioStream,
   async isAvailable() {
     try {

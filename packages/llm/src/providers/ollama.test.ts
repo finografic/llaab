@@ -110,6 +110,38 @@ describe('ollamaComplete', () => {
   });
 });
 
+describe('ollamaCompleteWithImage', () => {
+  it('sends the image through Ollama chat with JSON format and token cap', async () => {
+    const { ollamaCompleteWithImage } = await importOllama();
+    sdk.chat.mockResolvedValue({
+      message: { content: '{"is_code":true}' },
+      prompt_eval_count: 12,
+      eval_count: 5,
+    });
+
+    const result = await ollamaCompleteWithImage(
+      'inspect this',
+      { base64: 'image-base64', mimeType: 'image/png' },
+      { model: 'vision-model', maxTokens: 4096 },
+    );
+
+    expect(sdk.chat).toHaveBeenCalledWith({
+      model: 'vision-model',
+      messages: [{ role: 'user', content: 'inspect this', images: ['image-base64'] }],
+      stream: false,
+      format: 'json',
+      options: { num_ctx: 16384, num_predict: 4096 },
+    });
+    expect(result).toMatchObject({
+      text: '{"is_code":true}',
+      providerId: 'ollama',
+      model: 'vision-model',
+      promptTokens: 12,
+      completionTokens: 5,
+    });
+  });
+});
+
 describe('ollamaStream', () => {
   it('streams with stream true and yields only non-empty message content', async () => {
     const { ollamaStream } = await importOllama();

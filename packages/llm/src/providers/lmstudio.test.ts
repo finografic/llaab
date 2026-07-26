@@ -233,6 +233,43 @@ describe('completion request shape', () => {
   });
 });
 
+describe('vision completion request shape', () => {
+  it('runs model preflight and sends OpenAI-compatible image content', async () => {
+    loadedModels = [{ identifier: 'model-x' }];
+    const { lmStudioCompleteWithImage } = await import('./lmstudio.js');
+
+    const result = await lmStudioCompleteWithImage(
+      'inspect screenshot',
+      { base64: 'image-base64', mimeType: 'image/png' },
+      { model: 'model-x', maxTokens: 4096 },
+    );
+
+    const { body } = capturedFetch();
+    expect(body).toEqual({
+      model: 'model-x',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'inspect screenshot' },
+            { type: 'image_url', image_url: { url: 'data:image/png;base64,image-base64' } },
+          ],
+        },
+      ],
+      temperature: 0,
+      max_tokens: 4096,
+      response_format: { type: 'json_object' },
+    });
+    expect(result).toMatchObject({
+      text: 'lm-response',
+      providerId: 'lmstudio',
+      model: 'model-x',
+      promptTokens: 12,
+      completionTokens: 6,
+    });
+  });
+});
+
 describe('timeout selection', () => {
   it('uses the 20-minute default for /chat/completions and honours the env override', async () => {
     loadedModels = [{ identifier: 'model-x' }];

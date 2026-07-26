@@ -22,6 +22,11 @@ export interface LlmCompleteOptions {
   onProgress?: (progress: LlmProgress) => void | Promise<void>;
 }
 
+export interface LlmImageInput {
+  base64: string;
+  mimeType: string;
+}
+
 export interface LlmProgress {
   status?: string;
   completionTokens?: number;

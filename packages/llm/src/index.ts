@@ -26,11 +26,13 @@ export {
   resolveLlmRoute,
   routeLlm,
   routeLlmObject,
+  routeLlmVision,
   streamLlm,
   updateLlmTaskRoute,
 } from './router.js';
 export type {
   LlmCompleteResult,
+  LlmImageInput,
   LlmObjectResult,
   LlmProgress,
   LlmProviderId,

@@ -10,17 +10,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  */
 
 const fakes = vi.hoisted(() => {
-  const makeProvider = (id: string, displayName: string, capabilities: string[]) => ({
+  const makeProvider = (id: string, displayName: string, capabilities: string[], supportsImages = false) => ({
     id,
     displayName,
     capabilities,
     complete: vi.fn(),
+    completeWithImage: supportsImages ? vi.fn() : undefined,
     stream: vi.fn(),
     isAvailable: vi.fn(),
   });
 
   return {
-    ollama: makeProvider('ollama', 'Ollama', ['chat', 'summarize', 'extract', 'reduce', 'structure']),
+    ollama: makeProvider('ollama', 'Ollama', ['chat', 'summarize', 'extract', 'reduce', 'structure'], true),
     anthropic: makeProvider('anthropic', 'Anthropic', [
       'chat',
       'reason',
@@ -29,7 +30,12 @@ const fakes = vi.hoisted(() => {
       'structure',
       'plan',
     ]),
-    lmstudio: makeProvider('lmstudio', 'LM Studio', ['chat', 'summarize', 'extract', 'reduce', 'structure']),
+    lmstudio: makeProvider(
+      'lmstudio',
+      'LM Studio',
+      ['chat', 'summarize', 'extract', 'reduce', 'structure'],
+      true,
+    ),
     opencode: makeProvider('opencode', 'OpenCode', [
       'chat',
       'reason',
@@ -110,6 +116,14 @@ beforeEach(() => {
     model: 'anthropic-reported-model',
     promptTokens: 11,
     completionTokens: 5,
+  });
+  fakes.ollama.completeWithImage!.mockResolvedValue({
+    text: 'vision-text',
+    durationMs: 17,
+    providerId: 'ollama',
+    model: 'vision-reported-model',
+    promptTokens: 13,
+    completionTokens: 8,
   });
 });
 
@@ -410,6 +424,46 @@ describe('streamLlm', () => {
     // And streaming did not overwrite the cached routeLlm response.
     const hit = await routeLlm('extract', 'p');
     expect(hit).toMatchObject({ cached: true, text: 'ollama-text' });
+  });
+});
+
+describe('routeLlmVision', () => {
+  it('routes image completion through the vision task provider', async () => {
+    const { routeLlmVision } = await importRouter();
+
+    const result = await routeLlmVision('inspect image', { base64: 'abc123', mimeType: 'image/png' });
+
+    expect(fakes.ollama.completeWithImage).toHaveBeenCalledWith(
+      'inspect image',
+      { base64: 'abc123', mimeType: 'image/png' },
+      {
+        model: DEFAULT_MID_MODEL,
+        system: undefined,
+        maxTokens: undefined,
+        onProgress: undefined,
+      },
+    );
+    expect(result).toEqual({
+      text: 'vision-text',
+      model: 'vision-reported-model',
+      cached: false,
+      provider: 'ollama',
+      durationMs: 17,
+      promptTokens: 13,
+      completionTokens: 8,
+    });
+  });
+
+  it('rejects providers that do not implement image completion', async () => {
+    const { routeLlmVision } = await importRouter();
+
+    await expect(
+      routeLlmVision(
+        'inspect image',
+        { base64: 'abc123', mimeType: 'image/png' },
+        { model: 'anthropic:claude-x' },
+      ),
+    ).rejects.toThrow('vision route provider is not image-capable: anthropic');
   });
 });
 

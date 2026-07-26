@@ -1,6 +1,6 @@
 import { Ollama } from 'ollama';
 import type { LlmProvider, LlmProviderResult } from '../provider.js';
-import type { LlmCompleteOptions } from '../types.js';
+import type { LlmCompleteOptions, LlmImageInput } from '../types.js';
 
 export interface OllamaModelDetails {
   families?: string[];
@@ -39,6 +39,13 @@ function buildMessages(prompt: string, system?: string) {
   return messages;
 }
 
+function buildImageMessages(prompt: string, image: LlmImageInput, system?: string) {
+  const messages: Array<{ role: 'system' | 'user'; content: string; images?: string[] }> = [];
+  if (system) messages.push({ role: 'system', content: system });
+  messages.push({ role: 'user', content: prompt, images: [image.base64] });
+  return messages;
+}
+
 /**
  * Ollama defaults `num_ctx` to 4096 regardless of a model's native context window. Smaller
  * models tend to be more verbose and can fill that window before finishing a JSON response,
@@ -53,6 +60,32 @@ export async function ollamaComplete(prompt: string, opts: LlmCompleteOptions): 
     model: opts.model,
     messages: buildMessages(prompt, opts.system),
     stream: false,
+    options: {
+      num_ctx: DEFAULT_NUM_CTX,
+      ...(opts.maxTokens ? { num_predict: opts.maxTokens } : {}),
+    },
+  });
+  return {
+    text: response.message.content,
+    durationMs: Math.round(performance.now() - start),
+    providerId: 'ollama',
+    model: opts.model,
+    promptTokens: response.prompt_eval_count,
+    completionTokens: response.eval_count,
+  };
+}
+
+export async function ollamaCompleteWithImage(
+  prompt: string,
+  image: LlmImageInput,
+  opts: LlmCompleteOptions,
+): Promise<LlmProviderResult> {
+  const start = performance.now();
+  const response = await getClient().chat({
+    model: opts.model,
+    messages: buildImageMessages(prompt, image, opts.system),
+    stream: false,
+    format: 'json',
     options: {
       num_ctx: DEFAULT_NUM_CTX,
       ...(opts.maxTokens ? { num_predict: opts.maxTokens } : {}),
@@ -156,6 +189,7 @@ export const ollamaProvider: LlmProvider = {
   displayName: 'Ollama',
   capabilities: ['chat', 'summarize', 'extract', 'reduce', 'structure'],
   complete: ollamaComplete,
+  completeWithImage: ollamaCompleteWithImage,
   stream: ollamaStream,
   async isAvailable() {
     try {
