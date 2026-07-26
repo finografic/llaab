@@ -124,7 +124,7 @@ lifecycle is **review-and-merge by a human**, not an automated merge:
 - **Gate approval is not an automatic merge.** A passing gate signals the PR is
   ready; a human still inspects the diff, adjusts if needed, and merges (or
   requests further passes via `pipeline run`).
-- `pipeline abort <pr>` discards a run without merging.
+- `pipeline abort <issue>` discards a run without merging.
 
 `pipeline status` and `pipeline doctor` are inspection/health commands only —
 they do not drive the worktree lifecycle.
