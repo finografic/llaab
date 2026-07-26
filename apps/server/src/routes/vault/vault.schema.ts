@@ -31,6 +31,31 @@ export const listNodesQuerySchema = z.object({
 
 export type ListNodesQuery = z.infer<typeof listNodesQuerySchema>;
 
+export const searchVaultQuerySchema = z.object({
+  query: z.string().trim().min(1),
+  type: NodeTypeSchema.optional(),
+  status: z.enum(['seed', 'growing', 'mature', 'archived']).optional(),
+  tags: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((val) => {
+      if (val === undefined) return undefined;
+      const parts = Array.isArray(val) ? val : val.split(',');
+      const tags = parts.map((tag) => tag.trim()).filter(Boolean);
+      return tags.length > 0 ? tags : undefined;
+    }),
+  limit: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((val) => {
+      if (val === undefined) return undefined;
+      const parsed = typeof val === 'number' ? val : Number.parseInt(val, 10);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }),
+});
+
+export type SearchVaultQuery = z.infer<typeof searchVaultQuerySchema>;
+
 export const createNodeBodySchema = z.object({
   type: z.literal('idea'),
   title: z.string().min(1, 'Title is required'),

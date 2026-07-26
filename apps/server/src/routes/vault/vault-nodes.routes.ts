@@ -6,6 +6,7 @@ import {
   deleteNode,
   getNodeFilePath,
   listNodes,
+  searchVaultNodes,
   updateNode,
   VAULT_ROOT,
 } from '@llaab/core';
@@ -16,6 +17,7 @@ import type {
   CreateNodeBody,
   CreateResourceNodeBody,
   ListNodesQuery,
+  SearchVaultQuery,
   UpdateVaultNodeBody,
 } from './vault.schema.js';
 
@@ -70,6 +72,15 @@ export const listVaultNodes = {
     const query = c.req.valid('query');
     const nodes = await listNodes(query);
     return c.json({ nodes });
+  },
+};
+
+export const searchVault = {
+  path: '/search' as const,
+  handler: async (c: AppCtxQuery<SearchVaultQuery>) => {
+    const query = c.req.valid('query');
+    const results = await searchVaultNodes(query);
+    return c.json({ results });
   },
 };
 

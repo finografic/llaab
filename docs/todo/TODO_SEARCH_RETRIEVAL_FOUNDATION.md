@@ -32,6 +32,8 @@ clear snippets, match reasons, and deterministic limits.
 - Context assembly must distinguish direct source material, derived summaries, operational
   instructions, and execution history.
 - All retrieval work is one-shot and request-bound; no background indexing, watchers, or scheduler.
+- Hermes and other MCP clients should use `vault_search` for compact ranked evidence, then
+  `vault_read` for explicitly selected full content.
 - UI comes after the search contract is stable enough to avoid reworking the operator surface.
 
 ## Non-Goals
@@ -57,17 +59,17 @@ clear snippets, match reasons, and deterministic limits.
 ## Phase 1 — Core Search Service
 
 - [x] Add a core search service that reads vault nodes and returns the contract from Phase 0.
-- [ ] Keep route handlers thin; search scoring, snippet creation, and field matching live in the
+- [x] Keep route handlers thin; search scoring, snippet creation, and field matching live in the
       owning service layer.
-- [ ] Preserve existing `listNodes()` behavior so current routes and MCP tools do not regress.
+- [x] Preserve existing `listNodes()` behavior so current routes and MCP tools do not regress.
 - [x] Add focused unit tests for scoring, snippets, filters, and deterministic ordering.
 
 ## Phase 2 — API and MCP Surface
 
-- [ ] Add a read-only `GET /api/vault/search` endpoint after the core contract is tested.
-- [ ] Add a read-only `vault_search` MCP tool that returns compact result summaries and node IDs.
-- [ ] Keep `vault_list` available for basic listing and backward compatibility.
-- [ ] Document Hermes usage boundaries before expanding any write-capable MCP surface.
+- [x] Add a read-only `GET /api/vault/search` endpoint after the core contract is tested.
+- [x] Add a read-only `vault_search` MCP tool that returns compact result summaries and node IDs.
+- [x] Keep `vault_list` available for basic listing and backward compatibility.
+- [x] Document Hermes usage boundaries before expanding any write-capable MCP surface.
 
 ## Phase 3 — Context Assembly
 
@@ -95,8 +97,8 @@ clear snippets, match reasons, and deterministic limits.
 ## Validation
 
 - [x] Run focused core tests for search ranking and snippets.
-- [ ] Run server route tests for `/api/vault/search`.
-- [ ] Run MCP smoke test for `vault_search`.
+- [x] Run server route tests for `/api/vault/search`.
+- [x] Run MCP smoke test for `vault_search`.
 - [ ] Run client tests/build only when the UI phase begins.
 - [ ] Run markdown lint and format checks for this plan.
 

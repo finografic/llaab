@@ -1,11 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { getNodeFilePath, listNodes } from '@llaab/core';
+import { getNodeFilePath, listNodes, searchVaultNodes } from '@llaab/core';
 import { NodeTypeSchema } from '@llaab/schemas';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { NodeType } from '@llaab/schemas';
+import type { NodeStatus, NodeType } from '@llaab/schemas';
 
 const DEFAULT_API_URL = 'http://localhost:8888';
 const MAX_DERIVED_TITLE_LENGTH = 80;
@@ -23,7 +23,7 @@ export function createMcpServer(): McpServer {
     {
       instructions:
         'LLAAB vault: your personal knowledge base of ideas, transcripts, skills, and decisions. ' +
-        'Use vault_list to search or filter nodes, vault_read to fetch full content by id.',
+        'Use vault_search for ranked evidence, vault_list to filter nodes, and vault_read to fetch full content by id.',
     },
   );
 
@@ -430,6 +430,49 @@ export function createMcpServer(): McpServer {
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(summaries, null, 2) }],
       };
+    },
+  );
+
+  // ── Tool: ranked vault search ─────────────────────────────────────────────
+
+  const vaultSearchSchema = z.object({
+    query: z.string().trim().min(1).describe('Search query for ranked local vault evidence.'),
+    type: NodeTypeSchema.optional().describe(
+      'Optional node type: idea | transcript | skill | prompt | instruction | resource | source | decision | run',
+    ),
+    status: z.enum(['seed', 'growing', 'mature', 'archived']).optional().describe('Optional node status.'),
+    tags: z.array(z.string()).optional().describe('Optional OR-filter by tags, e.g. ["d:llm"].'),
+    limit: z.number().int().min(1).max(20).optional().describe('Max results (default 10).'),
+  });
+
+  server.registerTool(
+    'vault_search',
+    {
+      description:
+        'Search vault nodes with deterministic local ranking. Returns compact evidence summaries with scores, snippets, match fields, and node ids for vault_read.',
+      inputSchema: vaultSearchSchema,
+    },
+    async (args: z.infer<typeof vaultSearchSchema>) => {
+      const results = await searchVaultNodes({
+        limit: args.limit ?? 10,
+        query: args.query,
+        status: args.status as NodeStatus | undefined,
+        tags: args.tags,
+        type: args.type as NodeType | undefined,
+      });
+      const summaries = results.map((result) => ({
+        id: result.node_id,
+        type: result.node_type,
+        title: result.title,
+        status: result.status,
+        tags: result.tags,
+        score: result.score,
+        snippet: result.snippet,
+        matches: result.matches,
+        path: result.path,
+      }));
+
+      return textContent(JSON.stringify(summaries, null, 2));
     },
   );
 

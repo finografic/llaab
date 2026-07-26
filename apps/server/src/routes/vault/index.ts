@@ -20,6 +20,7 @@ import {
   mediaQuerySchema,
   promoteCanonicalIdeaBodySchema,
   resolveCanonicalIdeaConflictBodySchema,
+  searchVaultQuerySchema,
   updateSourceProfilesBodySchema,
   updateVaultNodeBodySchema,
   wikiResearchBodySchema,
@@ -37,6 +38,7 @@ export const vaultRouter = createRouter()
   .get(routes.media.path, zValidator('query', mediaQuerySchema), routes.media.handler)
   .get(routes.file.path, routes.file.handler)
   .get(routes.listVaultNodes.path, zValidator('query', listNodesQuerySchema), routes.listVaultNodes.handler)
+  .get(routes.searchVault.path, zValidator('query', searchVaultQuerySchema), routes.searchVault.handler)
   .post(routes.createVaultNode.path, zValidator('json', createNodeBodySchema), routes.createVaultNode.handler)
   .post(
     routes.createVaultResourceNode.path,

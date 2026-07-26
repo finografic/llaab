@@ -176,7 +176,7 @@ Exit criteria: another agent can reproduce the setup from committed docs without
 
 Do not begin until Phase 4 passes.
 
-- [ ] Add `vault_search` as a read-only MCP tool.
+- [x] Add `vault_search` as a read-only MCP tool (2026-07-26; direct handler smoke passed).
 - [ ] Add `vault_status` as a mostly read-only health summary.
 - [ ] Add `vault_plan_next` over roadmap / handoff / next steps.
 - [ ] Add transcript/source-candidate navigation so Hermes can follow origin transcript and candidate
