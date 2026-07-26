@@ -41,7 +41,7 @@ Read these in order. Do not skim; the constraints in them are real.
 
 - `.agents/handoff.md` — project state snapshot. Sections **LLM Layer**, **Architecture**,
   **Stack**, **Local Dev Ops** are load-bearing for this session.
-- `docs/todo/TODO_VERCEL_AI_SDK_MIGRATION.md` — the plan you are executing (Task A).
+- `docs/todo/DONE_VERCEL_AI_SDK_MIGRATION.md` — the plan executed for Task A.
 - `docs/todo/DONE_PROCESS_STATE_AUDIT.md` — Task B (completed); its
   `#fixed-after-prerequisite` section records the audit outcome.
 - `docs/todo/ROADMAP.md` — sections `Next` and `P1 → 1. Vercel AI SDK Transport Standardisation`.
@@ -116,7 +116,7 @@ never duplicate `.agents/memory.md`.
 ## 3. Task A — Vercel AI SDK transport standardisation (primary)
 
 Adopt Vercel AI SDK Core as the transport inside `@llaab/llm` while preserving LLAAB's existing
-surface and behaviour. Follow `TODO_VERCEL_AI_SDK_MIGRATION.md`; the phases below are the required
+surface and behaviour. Follow `DONE_VERCEL_AI_SDK_MIGRATION.md`; the phases below are the required
 _shape_ of the work, and where that doc is more specific, it wins.
 
 ### Invariants that must survive
@@ -161,7 +161,7 @@ client's consumption of it are unchanged from the caller's point of view.
 **A4 — Cross-cutting behaviour.**
 Unify usage accounting, error mapping, and timeout handling through the SDK layer while keeping the
 externally observed shapes identical. Add the typed structured-output path if
-`TODO_VERCEL_AI_SDK_MIGRATION.md` specifies it; otherwise leave it for a follow-up and say so.
+`DONE_VERCEL_AI_SDK_MIGRATION.md` specifies it; otherwise leave it for a follow-up and say so.
 
 **A5 — Verification and documentation.**
 Full `pnpm build && pnpm typecheck && pnpm test && pnpm lint`. Then update `.agents/handoff.md`
@@ -213,7 +213,7 @@ One commit per non-compliant surface fixed. Ledger updated per surface.
 - `docs/todo/TODO_FABLE_MIGRATION_LEDGER.md` accurate as of the final commit.
 - `.agents/handoff.md` updated for any architecture change (LLM Layer at minimum).
 - If Task A is fully complete: per the repo's TODO/DONE conventions, rename
-  `TODO_VERCEL_AI_SDK_MIGRATION.md` → `DONE_VERCEL_AI_SDK_MIGRATION.md`, update inbound links, and
+  `DONE_VERCEL_AI_SDK_MIGRATION.md`, update inbound links, and
   update the corresponding `ROADMAP.md` entries (`Next Large Initiative` and the `P1` item, plus a
   `Delivered` row). This is the **only** roadmap edit you are authorised to make.
 - A final summary in the ledger: what shipped, what is unprotected by tests, what a human must

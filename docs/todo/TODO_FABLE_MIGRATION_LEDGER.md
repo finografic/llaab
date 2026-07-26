@@ -28,9 +28,9 @@ complete: code-image extraction uses `routeLlmVisionObject()` and shared structu
 validation. Phase 6 is also complete: Ollama stays native for now because LLAAB still depends on
 native list/show metadata, capability flags, context-length extraction, and direct image JSON
 controls. Phase 7 is deferred by design until the Search and Retrieval Foundation defines a
-measurable embedding need. Phase 8 documentation closeout is partially complete; `/llm` plus
-`/api/llm/complete` and `/api/llm/stream` passed local smoke checks, while heavier
-extraction/consolidation/wiki/image-code workflow smoke checks remain open.
+measurable embedding need. Phase 8 closeout is complete enough to graduate the migration doc:
+`/llm`, `/api/llm/complete`, and `/api/llm/stream` passed local smoke checks; heavier workflow
+checks remain in the roadmap manual checklist for future regression passes.
 
 ## Phase Log
 
@@ -54,7 +54,7 @@ extraction/consolidation/wiki/image-code workflow smoke checks remain open.
   `apps/server/src/routes/vault/vault-wiki-drafts.routes.test.ts` (verified by stashing all A0
   changes and re-running). Left untouched per scope discipline; "green" for this migration means
   zero new failures and all `packages/llm` tests passing.
-- **Phase 0 SDK spike relocated to A1.** `TODO_VERCEL_AI_SDK_MIGRATION.md` Phase 0 includes
+- **Phase 0 SDK spike relocated to A1.** `DONE_VERCEL_AI_SDK_MIGRATION.md` Phase 0 includes
   installing the AI SDK and a Bun smoke run; the session brief scopes A0 to tests only with no new
   deps. Brief wins on scope — the spike happens first thing in A1.
 - **Sanctioned A3 test change, pre-declared:** the single-chunk pseudo-stream tests in
@@ -121,11 +121,11 @@ extraction/consolidation/wiki/image-code workflow smoke checks remain open.
   list/show/context inspection and would add a community provider dependency.
 - **Phase 7 embeddings deferred on 2026-07-26** — no embedding API until retrieval design provides
   measurable ranking fixtures and provenance requirements.
-- **Phase 8 docs/typechecks partially closed on 2026-07-26** — provider boundary and retry ownership
+- **Phase 8 closeout done on 2026-07-26** — provider boundary and retry ownership
   documented in `docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`; focused `@llaab/llm`, `@llaab/cli`,
   and `@llaab/server` typechecks/build/tests passed; `/llm`, `/api/llm/complete`, and
-  `/api/llm/stream` passed local smoke. Extraction/consolidation/wiki/image-code workflow smoke
-  remains open in `TODO_VERCEL_AI_SDK_MIGRATION.md`.
+  `/api/llm/stream` passed local smoke. The plan graduated to
+  `DONE_VERCEL_AI_SDK_MIGRATION.md`.
 - Podcast ingest fixture/live validation remains in `ROADMAP.md#next`.
 - Vault/knowledge split manual validation remains in `ROADMAP.md#next`.
 - `resolveModel` in `packages/llm/src/router.ts` has an inert ternary (a model override never

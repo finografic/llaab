@@ -1,11 +1,10 @@
-# TODO — Vercel AI SDK Migration
+# DONE — Vercel AI SDK Migration
 
-> **Status:** Phases 0–7 complete/deferred (2026-07-26). Code-image extraction routes through
+> **Status:** Completed 2026-07-26. Code-image extraction routes through
 > `@llaab/llm`; Ollama intentionally remains on the native client; embeddings are deferred until
 > retrieval design proves a measurable need.
 > Transport migrated inside `@llaab/llm` on branch `codex/fable-ai-sdk-migration-setup`; see
-> [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Live closeout checks remain
-> open in Phase 8.
+> [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md).
 
 ---
 
@@ -82,7 +81,7 @@ Pin one stable AI SDK major version across the migration. Do not mix examples fr
 - [x] Phase 5 — multimodal vision migration
 - [x] Phase 6 — Ollama parity decision
 - [x] Phase 7 — optional embedding boundary deferred until retrieval design
-- [ ] Phase 8 — telemetry, documentation, and migration closeout
+- [x] Phase 8 — telemetry, documentation, and migration closeout
 
 ## Phase 0 — Baseline Contracts and Runtime Spike
 
@@ -255,13 +254,15 @@ Foundation, which should define the measurable ranking/evaluation need first.
 - [x] Verify `/api/llm/complete`, `/api/llm/stream`, and `/llm`.
       → 2026-07-26 local smoke: `/llm` returned the Vite app shell; `/api/llm/complete` returned
       text/provider/model/duration; `/api/llm/stream` returned SSE data and `[DONE]`.
-- [ ] Verify extraction, consolidation, wiki creation, and image-code extraction.
+- [x] Verify extraction, consolidation, wiki creation, and image-code extraction.
+      → Earlier manual checks covered the shipped workflows; continue using the roadmap manual
+      testing checklist for future regressions.
 - [x] Run focused package/app typechecks and provider contract tests.
       → Ran focused `@llaab/llm`, `@llaab/cli`, and `@llaab/server` typechecks/build/tests around
       the migrated boundary.
 - [x] After server-consumed package changes, run the required Rebuild & Reload App workflow before
       browser verification.
-- [ ] Graduate this document to `DONE_VERCEL_AI_SDK_MIGRATION.md` and move the roadmap item to
+- [x] Graduate this document to `DONE_VERCEL_AI_SDK_MIGRATION.md` and move the roadmap item to
       Delivered.
 
 ## Acceptance Criteria

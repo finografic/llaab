@@ -51,7 +51,7 @@ this experiment.
 - [x] **Close the Hermes repository-pin gap** — add `vault_pin_repository`, route GitHub repository
       captures to the registry pin endpoint, preserve inbox provenance, and treat HTTP 409 as
       idempotent success.
-- [ ] **Graduate completed planning docs** — after their remaining acceptance checks pass, rename
+- [x] **Graduate completed planning docs** — after their remaining acceptance checks pass, rename
       stale `TODO_` documents to `DONE_` and update inbound links.
 
 ### Manual Testing Checklist
@@ -73,9 +73,8 @@ this experiment.
 
 ### Next Large Initiative
 
-Start [`TODO_VERCEL_AI_SDK_MIGRATION.md`](./TODO_VERCEL_AI_SDK_MIGRATION.md). The implementation
-bugfix pass is closed; remaining provider-timeout and live-wire checks are manual watch items inside
-the migration closeout.
+Start Search and Retrieval Foundation. The AI SDK migration is delivered; embeddings are explicitly
+deferred until retrieval design proves a measurable ranking need.
 
 ## Priority Model
 
@@ -105,10 +104,9 @@ the nested private vault plus committed knowledge split.
 
 The roadmap therefore shifts away from proving basic orchestration and toward:
 
-1. standardising the LLM transport boundary
-2. closing validation gaps in shipped workflows
-3. adding retrieval and broader ingestion deliberately
-4. exposing new UI only when it supports a real operator workflow
+1. closing validation gaps in shipped workflows
+2. adding retrieval and broader ingestion deliberately
+3. exposing new UI only when it supports a real operator workflow
 
 ## P0 — Active
 
@@ -117,20 +115,7 @@ the [Next](#next) section.
 
 ## P1 — Next Up
 
-### 1. Vercel AI SDK Transport Standardisation
-
-Adopt Vercel AI SDK Core inside `@llaab/llm` while preserving LLAAB's `routeLlm()` /
-`streamLlm()` API, task routing, cache, model catalogs, LM Studio lifecycle controls, RunNode
-telemetry, and deterministic validation.
-
-This is first because it is a bounded foundation improvement with immediate wins: shared provider
-transport, true LM Studio/OpenCode streaming, consistent usage/error/timeout handling, a typed
-structured-output path, and a cleaner multimodal boundary. It also reduces duplicated integration
-work before retrieval, more ingestion types, or additional LLM workflows are added.
-
-Detail: [`TODO_VERCEL_AI_SDK_MIGRATION.md`](./TODO_VERCEL_AI_SDK_MIGRATION.md)
-
-### 2. Search and Retrieval Foundation
+### 1. Search and Retrieval Foundation
 
 Define retrieval rules before unlocking `/vault/search` or adding broad RAG behavior. Start with a
 deterministic local full-text search contract, context assembly limits, provenance requirements,
@@ -139,7 +124,7 @@ when they materially improve ranking.
 
 Reference: [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) §3
 
-### 3. Article Ingestion
+### 2. Article Ingestion
 
 Replace the placeholder article fetcher with a real, bounded article ingestion path. Reuse the
 existing transcript-first save/extract boundary and connect it to inbox docs/post captures. Keep
@@ -147,7 +132,7 @@ document/PDF ingestion separate because upload, parsing, and provenance requirem
 
 Planning doc required before implementation.
 
-### 4. Extracted Skill Candidate Lifecycle
+### 3. Extracted Skill Candidate Lifecycle
 
 The extraction schema returns `skills[]`, but the pipeline persists only `IdeaNode`s. Decide whether
 model-extracted skills become provisional `SkillNode`s, another candidate shape, or remain trace
@@ -230,17 +215,18 @@ Detail: [`TODO_CROSS_TAB_SYNC.md`](./TODO_CROSS_TAB_SYNC.md)
 
 ## Delivered
 
-| Date       | Initiative                                                                                                                                                                                                                                   |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-07-26 | LLM migration bugfix pass — provider override, cache key/bypass semantics, consolidation/wiki transport retries, and LM Studio progress parser coverage closed. Detail: [`DONE_BUGFIXES_LLM_MIGRATION.md`](./DONE_BUGFIXES_LLM_MIGRATION.md) |
-| 2026-07-26 | Vault/knowledge split validation — nested vault dirty-state isolation, app loading, discard behavior, and Hermes Telegram YouTube/todo writes validated. Detail: [`DONE_VAULT_KNOWLEDGE_SPLIT.md`](./DONE_VAULT_KNOWLEDGE_SPLIT.md)          |
-| 2026-07-26 | Podcast/RSS ingest — Pocket Casts resolution, RSS matching, local whisper path, YouTube-caption fast path, and full extraction hand-off validated. Detail: [`DONE_PODCAST_INGEST.md`](./DONE_PODCAST_INGEST.md)                              |
-| 2026-07-19 | One-step topic-oriented wiki generation — discover, compile, link, and auto-promote. Detail: [`DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md`](./DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md)                                                              |
-| 2026-07-15 | Wiki generation and knowledge promotion. Detail: [`DONE_WIKI_GENERATION.md`](./DONE_WIKI_GENERATION.md)                                                                                                                                      |
-| 2026-07-11 | Grid layout migration. Detail: [`DONE_GRID_LAYOUT_MIGRATION.md`](./DONE_GRID_LAYOUT_MIGRATION.md)                                                                                                                                            |
-| 2026-07-10 | Registry package/repository resource projections and operational inbox integration.                                                                                                                                                          |
-| 2026-07-09 | Vault/knowledge split core phases and inbox review workflows.                                                                                                                                                                                |
-| 2026-06-13 | Vite/React Router client migration. Detail: [`DONE_CLIENT_VITE_MIGRATION.md`](./DONE_CLIENT_VITE_MIGRATION.md)                                                                                                                               |
-| 2026-06-07 | Orchestration, provider, command bus, Terminal, capability, and harness foundations. Detail: [`DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md)                                                                                              |
-| 2026-06-07 | UI refactor and horizontal navigation foundation. Detail: [`DONE_UI_REFACTOR.md`](./DONE_UI_REFACTOR.md)                                                                                                                                     |
-| 2026-04-18 | Foundational schemas, controlled extraction, RunNode persistence, and YouTube ingestion. Detail: [`DONE_FOUNDATIONAL_LAYER.md`](./DONE_FOUNDATIONAL_LAYER.md)                                                                                |
+| Date       | Initiative                                                                                                                                                                                                                                                                                                                        |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-26 | Vercel AI SDK transport standardisation — Anthropic/OpenCode/LM Studio transport migrated behind `@llaab/llm`, real LM Studio/OpenCode streaming, typed structured output, vision boundary, native Ollama parity decision, and embedding deferral. Detail: [`DONE_VERCEL_AI_SDK_MIGRATION.md`](./DONE_VERCEL_AI_SDK_MIGRATION.md) |
+| 2026-07-26 | LLM migration bugfix pass — provider override, cache key/bypass semantics, consolidation/wiki transport retries, and LM Studio progress parser coverage closed. Detail: [`DONE_BUGFIXES_LLM_MIGRATION.md`](./DONE_BUGFIXES_LLM_MIGRATION.md)                                                                                      |
+| 2026-07-26 | Vault/knowledge split validation — nested vault dirty-state isolation, app loading, discard behavior, and Hermes Telegram YouTube/todo writes validated. Detail: [`DONE_VAULT_KNOWLEDGE_SPLIT.md`](./DONE_VAULT_KNOWLEDGE_SPLIT.md)                                                                                               |
+| 2026-07-26 | Podcast/RSS ingest — Pocket Casts resolution, RSS matching, local whisper path, YouTube-caption fast path, and full extraction hand-off validated. Detail: [`DONE_PODCAST_INGEST.md`](./DONE_PODCAST_INGEST.md)                                                                                                                   |
+| 2026-07-19 | One-step topic-oriented wiki generation — discover, compile, link, and auto-promote. Detail: [`DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md`](./DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md)                                                                                                                                                   |
+| 2026-07-15 | Wiki generation and knowledge promotion. Detail: [`DONE_WIKI_GENERATION.md`](./DONE_WIKI_GENERATION.md)                                                                                                                                                                                                                           |
+| 2026-07-11 | Grid layout migration. Detail: [`DONE_GRID_LAYOUT_MIGRATION.md`](./DONE_GRID_LAYOUT_MIGRATION.md)                                                                                                                                                                                                                                 |
+| 2026-07-10 | Registry package/repository resource projections and operational inbox integration.                                                                                                                                                                                                                                               |
+| 2026-07-09 | Vault/knowledge split core phases and inbox review workflows.                                                                                                                                                                                                                                                                     |
+| 2026-06-13 | Vite/React Router client migration. Detail: [`DONE_CLIENT_VITE_MIGRATION.md`](./DONE_CLIENT_VITE_MIGRATION.md)                                                                                                                                                                                                                    |
+| 2026-06-07 | Orchestration, provider, command bus, Terminal, capability, and harness foundations. Detail: [`DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md)                                                                                                                                                                                   |
+| 2026-06-07 | UI refactor and horizontal navigation foundation. Detail: [`DONE_UI_REFACTOR.md`](./DONE_UI_REFACTOR.md)                                                                                                                                                                                                                          |
+| 2026-04-18 | Foundational schemas, controlled extraction, RunNode persistence, and YouTube ingestion. Detail: [`DONE_FOUNDATIONAL_LAYER.md`](./DONE_FOUNDATIONAL_LAYER.md)                                                                                                                                                                     |

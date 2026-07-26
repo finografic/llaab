@@ -457,18 +457,21 @@ provider and model in `configs/llm-routing.json`.
 Extraction prep is token-aware: long transcripts are chunked with overlap instead of blindly
 truncated, and chunk outputs are reduced/deduped.
 
-`@llaab/llm` transport runs on Vercel AI SDK Core: Anthropic, OpenCode, and LM Studio chat
-completions go through `generateText`/`streamText` behind the internal
-`ai-sdk-model-registry.ts` boundary, with transport retries pinned to 0 because retry policy
-belongs to LLAAB workflows. Ollama stays on the native `ollama` client pending an explicit parity
-decision. LM Studio and OpenCode stream real token deltas; LM Studio keeps its CLI load/unload
-preflight, progress polling, and completion timeout, and OpenCode keeps its pre-request API-key
-gate and error message contract. `routeLlmObject()` is the typed structured-output path: Zod
-schema in, typed object plus the same provider/model/usage metadata out; anthropic/opencode
-routes use the SDK object path while local providers use deterministic JSON extraction, and
-failures throw `LlmStructuredOutputError` carrying the raw model text. Characterization tests in
+The Vercel AI SDK migration is delivered. `@llaab/llm` transport runs on Vercel AI SDK Core for
+Anthropic, OpenCode, and LM Studio chat completions through `generateText`/`streamText` behind the
+internal `ai-sdk-model-registry.ts` boundary, with transport retries pinned to 0 because retry
+policy belongs to LLAAB workflows. LM Studio and OpenCode stream real token deltas; LM Studio keeps
+its CLI load/unload preflight, progress polling, and completion timeout, and OpenCode keeps its
+pre-request API-key gate and error message contract. Ollama intentionally stays on the native
+`ollama` client after parity review because LLAAB still depends on native list/show metadata,
+capability flags, context-length extraction, and direct image JSON controls.
+`routeLlmObject()` is the typed structured-output path for text; `routeLlmVisionObject()` applies
+the same LLAAB-owned schema validation to vision output. Anthropic/opencode routes use the SDK
+object path while local providers use deterministic JSON extraction, and failures throw
+`LlmStructuredOutputError` carrying the raw model text. Embeddings are deferred until Search and
+Retrieval Foundation defines measurable ranking fixtures. Characterization tests in
 `packages/llm/src` pin the router, cache, and provider transport contracts. Detail:
-`docs/todo/TODO_VERCEL_AI_SDK_MIGRATION.md` and `docs/todo/TODO_FABLE_MIGRATION_LEDGER.md`.
+`docs/todo/DONE_VERCEL_AI_SDK_MIGRATION.md` and `docs/todo/TODO_FABLE_MIGRATION_LEDGER.md`.
 
 A per-call `model` override string may be provider-qualified (`provider:model`, the same encoding
 `LlmRoutingEditor` uses for persisted routing) to redirect the task to a different provider; a
