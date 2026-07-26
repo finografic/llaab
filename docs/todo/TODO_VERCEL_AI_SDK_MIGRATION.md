@@ -1,9 +1,9 @@
 # TODO — Vercel AI SDK Migration
 
-> **Status:** Phases 0–5 complete (2026-07-26). Code-image extraction now routes through
-> `@llaab/llm` for Ollama/LM Studio vision payload ownership and typed output validation.
+> **Status:** Phases 0–6 complete (2026-07-26). Code-image extraction routes through
+> `@llaab/llm`; Ollama intentionally remains on the native client after parity review.
 > Transport migrated inside `@llaab/llm` on branch `codex/fable-ai-sdk-migration-setup`; see
-> [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Phases 6–8 remain open.
+> [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Phases 7–8 remain open.
 
 ---
 
@@ -78,7 +78,7 @@ Pin one stable AI SDK major version across the migration. Do not mix examples fr
 - [x] Phase 3 — LM Studio migration with lifecycle preservation
 - [x] Phase 4 — typed structured-output boundary and low-risk pilot
 - [x] Phase 5 — multimodal vision migration
-- [ ] Phase 6 — Ollama parity decision
+- [x] Phase 6 — Ollama parity decision
 - [ ] Phase 7 — optional embedding boundary after retrieval design
 - [ ] Phase 8 — telemetry, documentation, and migration closeout
 
@@ -193,17 +193,38 @@ Exit criteria: the CLI no longer owns provider-specific vision HTTP payloads.
 
 ## Phase 6 — Ollama Parity Decision
 
-- [ ] Compare the existing official `ollama` client with current AI SDK community providers and
+- [x] Compare the existing official `ollama` client with current AI SDK community providers and
       Ollama's OpenAI-compatible endpoint.
-- [ ] Verify chat/system separation, real streaming, multimodal input, structured output,
+- [x] Verify chat/system separation, real streaming, multimodal input, structured output,
       `num_ctx`, `num_predict`, reasoning, usage counts, errors, and abort behavior.
-- [ ] Verify model list/show capabilities and context-length inspection remain available.
-- [ ] Keep the native adapter if AI SDK integration would reduce reliability or local controls.
-- [ ] If migrated, pin the provider package and add the same contract coverage as first-party
-      providers.
+- [x] Verify model list/show capabilities and context-length inspection remain available.
+- [x] Keep the native adapter if AI SDK integration would reduce reliability or local controls.
+- [x] Record that no provider package pin or migration contract suite is needed while Ollama stays
+      native.
 
 Exit criteria: an explicit documented keep/migrate decision based on parity, not API uniformity
 alone.
+
+Decision: keep Ollama on the native `ollama` client for now.
+
+Evidence:
+
+- Current `ollama-ai-provider-v2@4.0.1` targets AI SDK `^7.0.0` and exposes `num_ctx`,
+  `num_predict`, streaming, embeddings, and multimodal-capable chat models, so it is a plausible
+  future adapter.
+- LLAAB still relies on `ollama show` metadata for `capabilities`, native context-length
+  extraction from `model_info`, model catalog details, and availability checks.
+- The native adapter already preserves image payloads, `format: 'json'`, `num_ctx`, `num_predict`,
+  stream chunks, usage counts, and local error behavior with focused coverage.
+- Migrating text generation alone would not remove the native client because listing/show/context
+  inspection still need it, and migrating vision now would add a community dependency without
+  eliminating risk.
+
+Revisit when one of these is true:
+
+- The AI SDK has an official or first-party Ollama provider with list/show metadata parity.
+- LLAAB adds embeddings and chooses a shared Ollama embedding boundary.
+- Native Ollama request handling becomes a maintenance burden compared with the community adapter.
 
 ## Phase 7 — Optional Embedding Boundary
 

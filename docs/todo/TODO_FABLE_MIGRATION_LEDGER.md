@@ -25,7 +25,9 @@ Task A is complete. Task B (process-state audit) was later completed in
 transport retries pinned to `0`, `@llaab/control` semantic retries, and workflow-owned transport
 retries; local structured-output fallback keeps deterministic JSON extraction. Phase 5 is now
 complete: code-image extraction uses `routeLlmVisionObject()` and shared structured-output
-validation. The next migration-doc work is the Phase 6 Ollama parity decision.
+validation. Phase 6 is also complete: Ollama stays native for now because LLAAB still depends on
+native list/show metadata, capability flags, context-length extraction, and direct image JSON
+controls. The next migration-doc work is Phase 7 embeddings, if retrieval design needs it.
 
 ## Phase Log
 
@@ -108,11 +110,14 @@ validation. The next migration-doc work is the Phase 6 Ollama parity decision.
 - **Consumer-side structured-output pilot (wiki-link enrichment) done on 2026-07-26** —
   `linkWikiTopics()` now calls `routeLlmObject()` with a structured payload schema, then preserves
   deterministic `validateWikiLinkSuggestions()` domain validation.
-- **Migration doc Phases 6 (Ollama parity decision), 7 (embeddings), and the live-app parts of
-  Phase 8** remain open in `TODO_VERCEL_AI_SDK_MIGRATION.md`.
 - **Phase 5 vision boundary done on 2026-07-26** — `routeLlmVisionObject()` applies the same
   deterministic structured-output extraction/validation to multimodal local-provider output, and
   `packages/cli` no longer owns code-image JSON parsing.
+- **Phase 6 Ollama decision done on 2026-07-26** — keep the native `ollama` client. Current
+  `ollama-ai-provider-v2@4.0.1` is AI SDK v7-compatible, but migration would not remove native
+  list/show/context inspection and would add a community provider dependency.
+- **Migration doc Phase 7 (embeddings) and the live-app parts of Phase 8** remain open in
+  `TODO_VERCEL_AI_SDK_MIGRATION.md`.
 - Podcast ingest fixture/live validation remains in `ROADMAP.md#next`.
 - Vault/knowledge split manual validation remains in `ROADMAP.md#next`.
 - `resolveModel` in `packages/llm/src/router.ts` has an inert ternary (a model override never
