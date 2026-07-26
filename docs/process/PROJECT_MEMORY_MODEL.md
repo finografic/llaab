@@ -93,6 +93,25 @@ Rules:
 
 ---
 
+## External Automation and Pipeline Status
+
+External automation or pipeline status (for example, a CI run, an agent-pipeline run, or another
+tool's dashboard) may be **linked** from memory files as supporting evidence or a pointer to
+current work.
+
+It does **not** replace the file-role model:
+
+- durable project priorities and concrete follow-ups still belong in `docs/todo/ROADMAP.md`
+- stable current truth still belongs in `.agents/handoff.md`
+- session notes still belong in `.agents/memory.md`
+
+Treat external status as a referenced signal, not a source of record. When a status link matters,
+keep the link and a one-line summary in the appropriate memory file; do not copy the pipeline's
+status text into the repo memory files, and do not let an external system become the place where
+priorities or current truth live.
+
+---
+
 ## Promotion Rules
 
 When information changes category, move it upward:
