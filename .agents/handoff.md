@@ -579,7 +579,9 @@ YAML `profiles` object-array parsing so all source nodes load for runs author li
 
 ## Roadmap & Planning
 
-Primary plan: `docs/todo/ROADMAP.md`; near-term tasks live in `ROADMAP.md#next`.
+Primary plan: `docs/todo/ROADMAP.md`; near-term tasks live in `ROADMAP.md#next`. Current large task:
+`docs/todo/TODO_SEARCH_RETRIEVAL_FOUNDATION.md` — deterministic local retrieval contract, fixtures,
+provenance-aware results, context assembly limits, and an explicit embedding decision gate.
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
 Wiki generation is implemented; the completion record is `docs/todo/DONE_WIKI_GENERATION.md` and
 the ongoing feature reference is `docs/process/WIKI_WORKFLOW.md`.
@@ -588,7 +590,7 @@ Hermes setup and follow-ups: `docs/todo/TODO_HERMES_LAYER.md`,
 `docs/todo/DONE_VAULT_KNOWLEDGE_SPLIT.md`; current shape is source/docs/`knowledge/` in the parent
 repo and volatile working data in the nested `vault/.git` repo.
 Playwright learning playground: `docs/todo/TODO_PLAYWRIGHT_PRACTICE.md`.
-UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07. P0 is empty.
+UI Refactor (all 3 phases) and horizontal nav menu migration are complete as of 2026-06-07.
 Orchestration phases 0–10 are complete. The Phase 6b addendum content is consolidated into
 `DONE_ORCHESTRATION.md`; there is no separate addendum tracking file.
 TODO/DONE doc conventions: `.github/instructions/documentation/todo-done-docs.instructions.md`.

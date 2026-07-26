@@ -73,8 +73,11 @@ this experiment.
 
 ### Next Large Initiative
 
-Start Search and Retrieval Foundation. The AI SDK migration is delivered; embeddings are explicitly
-deferred until retrieval design proves a measurable ranking need.
+Search and Retrieval Foundation is now active. Start with deterministic local full-text search,
+explicit result/provenance contracts, context assembly limits, and evaluation fixtures. Embeddings
+remain deferred until this work proves a measurable ranking need.
+
+Detail: [`TODO_SEARCH_RETRIEVAL_FOUNDATION.md`](./TODO_SEARCH_RETRIEVAL_FOUNDATION.md)
 
 ## Priority Model
 
@@ -110,21 +113,18 @@ The roadmap therefore shifts away from proving basic orchestration and toward:
 
 ## P0 — Active
 
-No large initiative is currently active. Immediate validation and cleanup tasks are maintained in
-the [Next](#next) section.
-
-## P1 — Next Up
-
-### 1. Search and Retrieval Foundation
+### Search and Retrieval Foundation
 
 Define retrieval rules before unlocking `/vault/search` or adding broad RAG behavior. Start with a
 deterministic local full-text search contract, context assembly limits, provenance requirements,
 and explicit evaluation fixtures. Embeddings can be added later through the standardised LLM layer
 when they materially improve ranking.
 
-Reference: [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) §3
+Detail: [`TODO_SEARCH_RETRIEVAL_FOUNDATION.md`](./TODO_SEARCH_RETRIEVAL_FOUNDATION.md)
 
-### 2. Article Ingestion
+## P1 — Next Up
+
+### 1. Article Ingestion
 
 Replace the placeholder article fetcher with a real, bounded article ingestion path. Reuse the
 existing transcript-first save/extract boundary and connect it to inbox docs/post captures. Keep
@@ -132,7 +132,7 @@ document/PDF ingestion separate because upload, parsing, and provenance requirem
 
 Planning doc required before implementation.
 
-### 3. Extracted Skill Candidate Lifecycle
+### 2. Extracted Skill Candidate Lifecycle
 
 The extraction schema returns `skills[]`, but the pipeline persists only `IdeaNode`s. Decide whether
 model-extracted skills become provisional `SkillNode`s, another candidate shape, or remain trace
