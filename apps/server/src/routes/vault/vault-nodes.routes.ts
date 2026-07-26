@@ -22,6 +22,7 @@ import type {
 } from './vault.schema.js';
 
 import { renderReadmeToHtml } from '../../lib/readme-renderer.js';
+import { renderVaultMarkdownSections } from '../../lib/vault-markdown-sections.js';
 import { readVaultRootTree } from '../../lib/vault-tree.js';
 import { scrubNodeReferences } from './scrub-node-references.js';
 
@@ -61,10 +62,12 @@ export const file = {
     try {
       const content = await readFile(resolved, 'utf-8');
       const extension = extname(resolved).toLowerCase();
-      const shouldRenderMarkdown =
-        c.req.query('render') === 'markdown' && (extension === '.md' || extension === '.markdown');
-      const html = shouldRenderMarkdown ? await renderReadmeToHtml(content) : null;
-      return c.json({ content, html });
+      const renderMode = c.req.query('render');
+      const isMarkdown = extension === '.md' || extension === '.markdown';
+      const html = renderMode === 'markdown' && isMarkdown ? await renderReadmeToHtml(content) : null;
+      const sections =
+        renderMode === 'sections' && isMarkdown ? await renderVaultMarkdownSections(content) : [];
+      return c.json({ content, html, sections });
     } catch {
       return c.json({ error: 'File not found.' }, 404);
     }

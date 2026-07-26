@@ -19,6 +19,35 @@ const DEFAULT_PARAGRAPH_PAUSE_MS = 0;
 /** Best quality + speed on Apple Silicon / modern GPUs. */
 const DEFAULT_DTYPE: TtsDtype = 'fp32';
 const DEFAULT_DEVICE: TtsDevice = 'webgpu';
+const TTS_PLAYBACK_CLAIM_EVENT = 'tts-playback-claim';
+
+const ttsPlaybackCoordinator = new EventTarget();
+let activeTtsPlayerId: string | null = null;
+let nextTtsPlayerId = 0;
+
+interface TtsPlaybackClaimEventDetail {
+  playerId: string;
+}
+
+function createTtsPlayerId() {
+  nextTtsPlayerId += 1;
+  return `tts-player-${nextTtsPlayerId}`;
+}
+
+function claimTtsPlayback(playerId: string) {
+  if (activeTtsPlayerId === playerId) return;
+
+  activeTtsPlayerId = playerId;
+  ttsPlaybackCoordinator.dispatchEvent(
+    new CustomEvent<TtsPlaybackClaimEventDetail>(TTS_PLAYBACK_CLAIM_EVENT, {
+      detail: { playerId },
+    }),
+  );
+}
+
+function releaseTtsPlayback(playerId: string) {
+  if (activeTtsPlayerId === playerId) activeTtsPlayerId = null;
+}
 
 function getPlayableSections(text?: string, sections?: TtsPlayerSection[]) {
   const sourceSections = sections?.length ? sections : text ? createTtsSectionsFromText(text) : [];
@@ -70,6 +99,7 @@ export function TtsPlayer({
   const workerRef = useRef<Worker | null>(null);
   const workerMessageCleanupRef = useRef<() => void>(() => {});
   const playbackQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const playerIdRef = useRef(createTtsPlayerId());
 
   const hasSections = playableSections.length > 0;
   const isFull = variant === 'full';
@@ -85,12 +115,16 @@ export function TtsPlayer({
       : 0;
 
   useEffect(() => {
+    const handlePlaybackClaim = (event: Event) => {
+      const {detail} = (event as CustomEvent<TtsPlaybackClaimEventDetail>);
+      if (detail.playerId !== playerIdRef.current) stopPlayback({ releaseClaim: false });
+    };
+
+    ttsPlaybackCoordinator.addEventListener(TTS_PLAYBACK_CLAIM_EVENT, handlePlaybackClaim);
+
     return () => {
-      playbackRunRef.current += 1;
-      workerMessageCleanupRef.current();
-      workerRef.current?.postMessage({ type: 'cancel', runId: playbackRunRef.current });
-      workerRef.current?.terminate();
-      clearCurrentAudio();
+      ttsPlaybackCoordinator.removeEventListener(TTS_PLAYBACK_CLAIM_EVENT, handlePlaybackClaim);
+      stopPlayback();
       void audioContextRef.current?.close();
     };
   }, []);
@@ -101,11 +135,7 @@ export function TtsPlayer({
     setCompletedAudioSeconds(0);
     setCurrentAudioSeconds(0);
     setError('');
-    playbackRunRef.current += 1;
-    workerMessageCleanupRef.current();
-    workerRef.current?.terminate();
-    workerRef.current = null;
-    clearCurrentAudio();
+    stopPlayback();
   }, [playableSections, dtype, device]);
 
   function getWorker() {
@@ -124,13 +154,31 @@ export function TtsPlayer({
 
   function clearCurrentAudio() {
     clearProgressTimer();
-    sourceRef.current?.disconnect();
     try {
       sourceRef.current?.stop();
     } catch {
       // Already stopped.
     }
+    sourceRef.current?.disconnect();
     sourceRef.current = null;
+  }
+
+  function stopPlayback({ releaseClaim = true }: { releaseClaim?: boolean } = {}) {
+    const runId = playbackRunRef.current;
+    playbackRunRef.current += 1;
+    playbackQueueRef.current = Promise.resolve();
+    workerMessageCleanupRef.current();
+    workerRef.current?.postMessage({ type: 'cancel', runId }, { transfer: [] });
+    workerRef.current?.terminate();
+    workerRef.current = null;
+    clearCurrentAudio();
+    void audioContextRef.current?.suspend();
+    setStatus('idle');
+    setSectionIndex(0);
+    setCompletedAudioSeconds(0);
+    setError('');
+    setCurrentAudioSeconds(0);
+    if (releaseClaim) releaseTtsPlayback(playerIdRef.current);
   }
 
   async function getAudioContext() {
@@ -179,6 +227,7 @@ export function TtsPlayer({
 
   async function startPlayback(startIndex = sectionIndex) {
     if (!hasSections) return;
+    claimTtsPlayback(playerIdRef.current);
     const runId = playbackRunRef.current + 1;
     playbackRunRef.current = runId;
     setStatus('loading');
@@ -236,6 +285,7 @@ export function TtsPlayer({
             setSectionIndex(0);
             setCompletedAudioSeconds(0);
             setCurrentAudioSeconds(0);
+            releaseTtsPlayback(playerIdRef.current);
             return undefined;
           });
           return;
@@ -263,6 +313,7 @@ export function TtsPlayer({
       );
     } catch (err) {
       if (playbackRunRef.current !== runId) return;
+      releaseTtsPlayback(playerIdRef.current);
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Unable to start text-to-speech.');
     }
@@ -270,27 +321,22 @@ export function TtsPlayer({
 
   function handlePlayPause() {
     if (status === 'loading') {
-      const runId = playbackRunRef.current;
-      playbackRunRef.current += 1;
-      workerMessageCleanupRef.current();
-      workerRef.current?.postMessage({ type: 'cancel', runId }, { transfer: [] });
-      workerRef.current?.terminate();
-      workerRef.current = null;
-      clearCurrentAudio();
-      setStatus('idle');
-      setError('');
+      stopPlayback();
       return;
     }
 
     if (status === 'playing') {
-      void audioContextRef.current?.suspend();
-      setStatus('paused');
+      void audioContextRef.current?.suspend().then(() => {
+        if (activeTtsPlayerId === playerIdRef.current) setStatus('paused');
+      });
       return;
     }
 
     if (status === 'paused') {
-      void audioContextRef.current?.resume();
-      setStatus('playing');
+      claimTtsPlayback(playerIdRef.current);
+      void audioContextRef.current?.resume().then(() => {
+        if (activeTtsPlayerId === playerIdRef.current) setStatus('playing');
+      });
       return;
     }
 
@@ -301,13 +347,7 @@ export function TtsPlayer({
     const nextIndex = Math.min(Math.max(sectionIndex + delta, 0), playableSections.length - 1);
     if (nextIndex === sectionIndex) return;
 
-    const runId = playbackRunRef.current;
-    playbackRunRef.current += 1;
-    workerMessageCleanupRef.current();
-    workerRef.current?.postMessage({ type: 'cancel', runId }, { transfer: [] });
-    workerRef.current?.terminate();
-    workerRef.current = null;
-    clearCurrentAudio();
+    stopPlayback({ releaseClaim: false });
     setCompletedAudioSeconds(0);
     setCurrentAudioSeconds(0);
     setSectionIndex(nextIndex);

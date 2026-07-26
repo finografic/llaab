@@ -1,7 +1,10 @@
 import { File, PatchDiff } from '@pierre/diffs/react';
+import { TtsPlayer } from 'components/TtsPlayer';
+import { Card, CardContent } from 'components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from 'components/ui/toggle-group';
 import { useVaultFile, useVaultFileDiff } from 'queries/vault';
 import { useMemo } from 'react';
+import type { VaultMarkdownRenderMode } from 'queries/vault';
 
 import { PIERRE_DIFFS_THEME_STYLE } from 'constants/pierre-diffs-theme';
 
@@ -11,7 +14,8 @@ export interface VaultFileViewerProps {
   path: string | null;
   showDiff?: boolean;
   showRenderedMarkdown?: boolean;
-  onMarkdownViewChange?: (mode: 'raw' | 'render') => void;
+  showEnhancedMarkdown?: boolean;
+  onMarkdownViewChange?: (mode: VaultMarkdownRenderMode) => void;
 }
 
 function isMarkdownPath(path: string | null): boolean {
@@ -22,14 +26,19 @@ export function VaultFileViewer({
   path,
   showDiff = false,
   showRenderedMarkdown = false,
+  showEnhancedMarkdown = false,
   onMarkdownViewChange,
 }: VaultFileViewerProps) {
-  const renderMarkdown = showRenderedMarkdown && isMarkdownPath(path);
+  const markdownView: VaultMarkdownRenderMode = showEnhancedMarkdown
+    ? 'enhanced'
+    : showRenderedMarkdown
+      ? 'render'
+      : 'raw';
   const {
     data: fileContent,
     isLoading: fileLoading,
     error: fileError,
-  } = useVaultFile(path, !showDiff, renderMarkdown);
+  } = useVaultFile(path, !showDiff, isMarkdownPath(path) ? markdownView : 'raw');
   const { data: patch, isLoading: diffLoading, error: diffError } = useVaultFileDiff(path, showDiff);
   const activeError = showDiff ? diffError : fileError;
   const loading = showDiff ? diffLoading : fileLoading;
@@ -41,7 +50,7 @@ export function VaultFileViewer({
   // adopt it for the Vault Changes diff view.
   const file = useMemo(
     () =>
-      path && fileContent?.content != null && !fileContent.html
+      path && fileContent?.content != null && !fileContent.html && fileContent.sections.length === 0
         ? { name: path, contents: fileContent.content }
         : null,
     [path, fileContent],
@@ -59,14 +68,17 @@ export function VaultFileViewer({
             type="single"
             size="sm"
             variant="outline"
-            value={showRenderedMarkdown ? 'render' : 'raw'}
+            value={markdownView}
             onValueChange={(value) => {
-              if (value === 'raw' || value === 'render') onMarkdownViewChange?.(value);
+              if (value === 'raw' || value === 'render' || value === 'enhanced') {
+                onMarkdownViewChange?.(value);
+              }
             }}
             aria-label="Markdown view"
           >
             <ToggleGroupItem value="raw">Raw</ToggleGroupItem>
             <ToggleGroupItem value="render">Rendered</ToggleGroupItem>
+            <ToggleGroupItem value="enhanced">Enhanced</ToggleGroupItem>
           </ToggleGroup>
         </div>
       ) : null}
@@ -89,6 +101,23 @@ export function VaultFileViewer({
       ) : null}
       {path && !showDiff && showRenderedMarkdown && fileContent?.html ? (
         <article className={styles.markdownContent} dangerouslySetInnerHTML={{ __html: fileContent.html }} />
+      ) : null}
+      {path && !showDiff && showEnhancedMarkdown && fileContent?.sections.length ? (
+        <div className={styles.enhancedSections}>
+          {fileContent.sections.map((section) => (
+            <Card key={section.id} className={styles.enhancedCard}>
+              <CardContent className={styles.enhancedCardContent}>
+                <div className={styles.enhancedCardToolbar}>
+                  <TtsPlayer variant="minimal" text={section.markdown} />
+                </div>
+                <article
+                  className={styles.markdownContent}
+                  dangerouslySetInnerHTML={{ __html: section.html }}
+                />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : null}
       {file ? (
         <File

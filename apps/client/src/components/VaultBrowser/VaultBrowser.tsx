@@ -16,6 +16,8 @@ const PATH_SEARCH_PARAM = 'path';
 const VIEW_SEARCH_PARAM = 'view';
 const DIFF_VIEW = 'diff';
 const RENDER_VIEW = 'render';
+const ENHANCED_VIEW = 'enhanced';
+type MarkdownView = 'raw' | 'render' | 'enhanced';
 
 export interface VaultBrowserProps {
   tree: VaultNode[];
@@ -30,6 +32,7 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
   const view = searchParams.get(VIEW_SEARCH_PARAM);
   const showDiff = view === DIFF_VIEW;
   const showRenderedMarkdown = view === RENDER_VIEW;
+  const showEnhancedMarkdown = view === ENHANCED_VIEW;
 
   const setSelectedPath = useCallback(
     (path: string) => {
@@ -47,12 +50,14 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
   );
 
   const setMarkdownView = useCallback(
-    (mode: 'raw' | 'render') => {
+    (mode: MarkdownView) => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
           if (mode === 'render') {
             next.set(VIEW_SEARCH_PARAM, RENDER_VIEW);
+          } else if (mode === 'enhanced') {
+            next.set(VIEW_SEARCH_PARAM, ENHANCED_VIEW);
           } else {
             next.delete(VIEW_SEARCH_PARAM);
           }
@@ -88,6 +93,7 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
       path={selectedPath}
       showDiff={showDiff}
       showRenderedMarkdown={showRenderedMarkdown}
+      showEnhancedMarkdown={showEnhancedMarkdown}
       onMarkdownViewChange={setMarkdownView}
     />
   );
