@@ -40,7 +40,9 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
         (prev) => {
           const next = new URLSearchParams(prev);
           next.set(PATH_SEARCH_PARAM, path);
-          next.delete(VIEW_SEARCH_PARAM);
+          if (next.get(VIEW_SEARCH_PARAM) === DIFF_VIEW) {
+            next.delete(VIEW_SEARCH_PARAM);
+          }
           return next;
         },
         { replace: true },

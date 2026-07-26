@@ -79,6 +79,9 @@
 }
 
 .markdownContent {
+  --markdown-accent-dim: oklch(from var(--accent) calc(l * 0.78) calc(c * 0.78) h);
+  --markdown-accent-background: oklch(from var(--accent) l c h / 0.12);
+
   max-width: 100%;
   overflow-x: hidden;
   overflow-wrap: anywhere;
@@ -227,7 +230,7 @@
 
 .highlightBold strong,
 .highlightBold b {
-  color: oklch(from var(--accent) calc(l * 0.78) calc(c * 0.78) h);
+  color: var(--markdown-accent-dim);
 }
 
 .italiciseQuotes :global(.quote-run) {
@@ -320,9 +323,10 @@
 
 .markdownContent blockquote {
   margin: 1em 0;
-  border-left: 3px solid var(--border);
+  border-left: 3px solid var(--markdown-accent-dim);
+  background: var(--markdown-accent-background);
   padding-left: 1em;
-  color: var(--text-muted);
+  color: var(--markdown-accent-dim);
 }
 
 .markdownContent table {

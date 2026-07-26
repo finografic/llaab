@@ -107,6 +107,7 @@ export const {
   SparklesIcon,
   SpeakerLoudIcon,
   SpeechIcon,
+  SquareArrowUpIcon,
   StarIcon,
   StopIcon,
   SunIcon,
