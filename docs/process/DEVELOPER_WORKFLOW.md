@@ -113,6 +113,22 @@ In this repo, the canonical setup is **Husky**:
 .husky/commit-msg  -> pnpm exec commitlint --edit "$1"
 ```
 
+### Agent-pipeline PR gate
+
+For work cut through the local agent-pipeline (the `pipeline` CLI), the run/gate
+lifecycle is **review-and-merge by a human**, not an automated merge:
+
+- `pipeline run <issue>` creates a worktree branch and opens a **draft PR**.
+- `pipeline gate <pr>` runs the **R0** (structure) and **R1** (content) review
+  passes on that PR.
+- **Gate approval is not an automatic merge.** A passing gate signals the PR is
+  ready; a human still inspects the diff, adjusts if needed, and merges (or
+  requests further passes via `pipeline run`).
+- `pipeline abort <pr>` discards a run without merging.
+
+`pipeline status` and `pipeline doctor` are inspection/health commands only —
+they do not drive the worktree lifecycle.
+
 ---
 
 ## Release workflow
