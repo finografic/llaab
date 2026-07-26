@@ -16,6 +16,10 @@
   font-family: var(--font-mono);
 }
 
+.filterRow {
+  margin-top: var(--space-4);
+}
+
 .empty,
 .error {
   padding: var(--space-6);
@@ -29,6 +33,28 @@
 
 .results {
   display: block;
+}
+
+.resultGroup {
+  padding: var(--space-4) 0 var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.resultGroup:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.groupHeading {
+  margin-bottom: var(--space-3);
+}
+
+.groupHeading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-base);
+  font-weight: 700;
+  text-transform: capitalize;
 }
 
 .result {

@@ -1,6 +1,6 @@
 # TODO — Search and Retrieval Foundation
 
-> **Status:** Active (2026-07-26). Phases 0–3 complete; Phase 4 minimal UI landed with filters/grouping deferred for operator feedback.
+> **Status:** Active (2026-07-26). Phases 0–4 complete; Phase 5 embedding decision gate is next.
 
 ## Goal
 
@@ -84,7 +84,7 @@ clear snippets, match reasons, and deterministic limits.
 
 - [x] Unlock a minimal `/vault/search` view only after API and MCP behavior are stable.
 - [x] Surface query, result metadata, match reasons, snippets, and open/read actions.
-- [ ] Add filters and result grouping after the minimal result list has operator feedback.
+- [x] Add filters and result grouping after the minimal result list has operator feedback.
 - [x] Avoid graph or RAG chat UI until retrieval behavior has real operator feedback.
 - [x] Add manual browser checks for dense desktop and mobile layouts.
 

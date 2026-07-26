@@ -179,6 +179,7 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 | `/hermes`                      | Hermes / MCP dashboard: Discord gateway notes, scoped vault tools, guardrails, cost-routing follow-up                                                 |
 | `/icons`                       | Redirect to `/dev/icons` (embedded Lucide picker)                                                                                                     |
 | `/vault`                       | Gated file-tree browser — recursive tree, `@pierre/diffs` file viewer, optional `?view=diff` working-tree diff per selected file                      |
+| `/vault/search`                | Deterministic local vault search — URL-backed query, type/status filters, grouped results, snippets, match reasons, and open actions                  |
 | `/vault/inbox`                 | Hermes capture triage list — grouped by route kind, review/select actions, missing-thumbnail filter                                                   |
 | `/vault/inbox/:id`             | Single capture detail                                                                                                                                 |
 | `/vault/transcripts/:id`       | Detail: source metadata, ideas, one-step Create Wiki(s), and Re-extract                                                                               |
@@ -582,7 +583,8 @@ YAML `profiles` object-array parsing so all source nodes load for runs author li
 
 Primary plan: `docs/todo/ROADMAP.md`; near-term tasks live in `ROADMAP.md#next`. Current large task:
 `docs/todo/TODO_SEARCH_RETRIEVAL_FOUNDATION.md` — deterministic local retrieval contract, fixtures,
-provenance-aware results, context assembly limits, and an explicit embedding decision gate.
+provenance-aware results, context assembly limits, `/vault/search`, and an explicit embedding
+decision gate.
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
 Wiki generation is implemented; the completion record is `docs/todo/DONE_WIKI_GENERATION.md` and
 the ongoing feature reference is `docs/process/WIKI_WORKFLOW.md`.
