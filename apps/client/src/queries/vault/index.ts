@@ -26,6 +26,16 @@ export const QUERY_KEYS = {
         input.limit ?? '',
       ] as const;
     },
+    search: (input: { query: string; type?: string; tags?: string[]; status?: string; limit?: number }) =>
+      [
+        ...QUERY_KEYS.vault.all,
+        'search',
+        input.query,
+        input.type ?? 'all',
+        input.tags?.join(',') ?? '',
+        input.status ?? '',
+        input.limit ?? '',
+      ] as const,
     node: (id: string) => [...QUERY_KEYS.vault.all, 'node', id] as const,
     tree: () => [...QUERY_KEYS.vault.all, 'tree'] as const,
     enrichedSource: (id: string) => [...QUERY_KEYS.vault.all, 'source', id, 'enriched'] as const,
@@ -37,6 +47,8 @@ export { useVaultFile } from './useVaultFile';
 export { useVaultFileDiff } from './useVaultFileDiff';
 export { useVaultClean } from './useVaultClean';
 export { useVaultNodes, useVaultNode } from './useVaultNodes';
+export { useVaultSearch } from './useVaultSearch';
+export type { VaultSearchMatch, VaultSearchMatchField, VaultSearchResult } from './useVaultSearch';
 export { useUpdateVaultNode, useBatchUpdateVaultNodes } from './useUpdateVaultNode';
 export { usePromoteInboxCapture } from './usePromoteInboxCapture';
 export { useDeleteVaultNode } from './useDeleteVaultNode';

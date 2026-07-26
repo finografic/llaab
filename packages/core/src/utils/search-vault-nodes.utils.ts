@@ -1,3 +1,4 @@
+import { NodeTypeSchema } from '@llaab/schemas';
 import type { LabNode, NodeStatus, NodeType } from '@llaab/schemas';
 
 import { listNodes } from './list-nodes.utils.js';
@@ -77,7 +78,7 @@ const DEFAULT_CONTEXT_CHARACTER_LIMIT = 6000;
 const DEFAULT_CONTEXT_PACKET_CHARACTER_LIMIT = 1200;
 
 export async function searchVaultNodes(query: VaultSearchQuery): Promise<VaultSearchResult[]> {
-  const nodes = await listNodes({ status: query.status, tags: query.tags, type: query.type });
+  const nodes = await listSearchableNodes(query);
   return rankVaultSearchNodes(nodes, query);
 }
 
@@ -146,6 +147,18 @@ function tokenizeSearchQuery(query: string): string[] {
         .filter((term) => term.length > 0),
     ),
   );
+}
+
+async function listSearchableNodes(query: VaultSearchQuery): Promise<LabNode[]> {
+  if (query.type) {
+    return listNodes({ status: query.status, tags: query.tags, type: query.type });
+  }
+
+  const byType = await Promise.all(
+    NodeTypeSchema.options.map((type) => listNodes({ status: query.status, tags: query.tags, type })),
+  );
+
+  return byType.flat();
 }
 
 function matchesNodeFilters(node: LabNode, query: VaultSearchQuery): boolean {

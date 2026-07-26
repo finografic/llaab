@@ -1,0 +1,83 @@
+.searchForm {
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.label {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.input {
+  font-family: var(--font-mono);
+}
+
+.empty,
+.error {
+  padding: var(--space-6);
+  color: var(--text-muted);
+  font-size: var(--text-base);
+}
+
+.error {
+  color: var(--error-text);
+}
+
+.results {
+  display: block;
+}
+
+.result {
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.result:first-child {
+  padding-top: 0;
+}
+
+.badges,
+.matches,
+.tags {
+  margin-bottom: var(--space-3);
+}
+
+.resultTitle {
+  margin: 0 0 var(--space-2);
+  color: var(--text);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.resultTitle a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.resultTitle a:hover {
+  text-decoration: underline;
+}
+
+.snippet {
+  max-width: 80ch;
+  margin: 0 0 var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+
+.score {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.tags span {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}

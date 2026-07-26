@@ -22,6 +22,9 @@ const DevIconsPage = lazy(() =>
 const VaultBrowsePage = lazy(() =>
   import('routes/vault-browse').then((module) => ({ default: module.VaultBrowsePage })),
 );
+const VaultSearchPage = lazy(() =>
+  import('routes/vault-search').then((module) => ({ default: module.VaultSearchPage })),
+);
 const SourcesPage = lazy(() => import('routes/sources').then((module) => ({ default: module.SourcesPage })));
 const SourceDetailPage = lazy(() =>
   import('routes/source-detail').then((module) => ({ default: module.SourceDetailPage })),
@@ -190,6 +193,11 @@ export const router = createBrowserRouter([
             index: true,
             element: lazyElement(VaultBrowsePage),
             handle: { title: 'Vault' } satisfies RouteHandle,
+          },
+          {
+            path: 'search',
+            element: lazyElement(VaultSearchPage),
+            handle: { title: 'Vault Search' } satisfies RouteHandle,
           },
           {
             path: 'sources',

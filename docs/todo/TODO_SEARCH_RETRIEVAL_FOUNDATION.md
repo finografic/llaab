@@ -1,6 +1,6 @@
 # TODO — Search and Retrieval Foundation
 
-> **Status:** Active (2026-07-26). Phases 0–2 complete; Phase 3 context assembly started.
+> **Status:** Active (2026-07-26). Phases 0–3 complete; Phase 4 minimal UI landed with filters/grouping deferred for operator feedback.
 
 ## Goal
 
@@ -82,10 +82,11 @@ clear snippets, match reasons, and deterministic limits.
 
 ## Phase 4 — Operator UI
 
-- [ ] Unlock a minimal `/vault/search` view only after API and MCP behavior are stable.
-- [ ] Surface query, filters, result groups, match reasons, snippets, and open/read actions.
-- [ ] Avoid graph or RAG chat UI until retrieval behavior has real operator feedback.
-- [ ] Add manual browser checks for dense desktop and mobile layouts.
+- [x] Unlock a minimal `/vault/search` view only after API and MCP behavior are stable.
+- [x] Surface query, result metadata, match reasons, snippets, and open/read actions.
+- [ ] Add filters and result grouping after the minimal result list has operator feedback.
+- [x] Avoid graph or RAG chat UI until retrieval behavior has real operator feedback.
+- [x] Add manual browser checks for dense desktop and mobile layouts.
 
 ## Phase 5 — Embedding Decision Gate
 
@@ -99,8 +100,8 @@ clear snippets, match reasons, and deterministic limits.
 - [x] Run focused core tests for search ranking and snippets.
 - [x] Run server route tests for `/api/vault/search`.
 - [x] Run MCP smoke test for `vault_search`.
-- [ ] Run client tests/build only when the UI phase begins.
-- [ ] Run markdown lint and format checks for this plan.
+- [x] Run client tests/build only when the UI phase begins.
+- [x] Run markdown lint and format checks for this plan.
 
 ## References
 

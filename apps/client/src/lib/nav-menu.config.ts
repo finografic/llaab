@@ -56,7 +56,7 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         label: 'Search',
         description: 'Full-text search across vault nodes',
         href: '/vault/search',
-        live: false,
+        live: true,
       },
     ],
   },
