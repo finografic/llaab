@@ -24,6 +24,21 @@ function ideaNode(partial: Partial<LabNode> & Pick<LabNode, 'id' | 'title' | 'ta
   } as LabNode;
 }
 
+function transcriptNode(
+  partial: Partial<LabNode> & Pick<LabNode, 'id' | 'title' | 'tags' | 'body'>,
+): LabNode {
+  return {
+    type: 'transcript',
+    status: 'seed',
+    related: [],
+    created_at: '2026-07-20T00:00:00Z',
+    updated_at: '2026-07-20T00:00:00Z',
+    origin: 'youtube',
+    source_id: 'source.youtube-example',
+    ...partial,
+  } as LabNode;
+}
+
 describe('inbox capture parsing', () => {
   it('parses hermes body JSON provenance', () => {
     const node = ideaNode({
@@ -64,6 +79,31 @@ describe('inbox capture parsing', () => {
     const capture = parseInboxCapture(node);
     expect(capture.malformed).toBe(true);
     expect(capture.routeKind).toBe('unknown');
+  });
+
+  it('treats Hermes inbox transcript nodes as YouTube captures', () => {
+    const node = transcriptNode({
+      id: 'transcript.youtube-example',
+      title: 'Claude Code Dynamic Workflows Clearly Explained',
+      tags: ['hermes', 'inbox'],
+      body: '# Claude Code Dynamic Workflows Clearly Explained',
+    });
+
+    expect(isInboxCaptureNode(node)).toBe(true);
+    const capture = parseInboxCapture(node);
+    expect(capture.routeKind).toBe('youtube_url');
+    expect(matchesInboxCaptureView(capture, 'action_backed')).toBe(true);
+  });
+
+  it('ignores generated ideas that only inherited broad Hermes inbox tags', () => {
+    const node = ideaNode({
+      id: 'idea.extracted-from-hermes-transcript',
+      title: 'Workflows can consume massive input tokens',
+      tags: ['hermes', 'inbox', 'd:ingest', 'd:llm'],
+      body: 'Generated idea from transcript extraction, not a Hermes inbox receipt.',
+    });
+
+    expect(isInboxCaptureNode(node)).toBe(false);
   });
 });
 

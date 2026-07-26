@@ -31,7 +31,9 @@ const FENCED_JSON_RE = /```json\s*([\s\S]*?)```/i;
 
 export function isInboxCaptureNode(node: LabNode): boolean {
   const tags = node.tags ?? [];
-  return tags.includes('hermes') || tags.includes('inbox') || tags.some((tag) => tag.startsWith('inbox:'));
+  if (tags.some((tag) => tag.startsWith('inbox:'))) return true;
+  if (node.body?.includes('# Hermes Inbox Item')) return true;
+  return node.type === 'transcript' && tags.includes('hermes') && tags.includes('inbox');
 }
 
 export function parseInboxCapture(node: LabNode): ParsedInboxCapture {

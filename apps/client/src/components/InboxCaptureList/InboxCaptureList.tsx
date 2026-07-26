@@ -1,3 +1,4 @@
+import { VoicemailIcon } from '@llaab/icons';
 import { DeleteInboxCaptureAction } from 'components/DeleteInboxCaptureAction/DeleteInboxCaptureAction';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
@@ -21,7 +22,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import type { LucideIcon } from 'lucide-react';
+import type { ElementType } from 'react';
 
 import { getInboxListRowRenderer } from 'lib/inbox-capture-renderers';
 import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
@@ -299,7 +300,7 @@ function DefaultInboxCaptureListRow({
   );
 }
 
-function inboxRouteIcon(routeKind: string): LucideIcon {
+function inboxRouteIcon(routeKind: string): ElementType {
   switch (routeKind) {
     case 'todo':
       return ListTodoIcon;
@@ -318,8 +319,9 @@ function inboxRouteIcon(routeKind: string): LucideIcon {
     case 'npm_package':
     case 'github_repo':
       return PackageIcon;
-    case 'web_link':
     case 'youtube_url':
+      return VoicemailIcon;
+    case 'web_link':
       return LinkIcon;
     default:
       return FileIcon;

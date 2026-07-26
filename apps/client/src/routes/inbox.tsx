@@ -72,10 +72,15 @@ export function InboxPage() {
   const batchUpdate = useBatchUpdateVaultNodes();
   const batchDelete = useDeleteVaultNodes();
 
-  // Scope by node type so listNodes only scans ideas/resources — not the whole vault.
+  // Scope by node type so listNodes only scans inbox-capable node families — not the whole vault.
   // Search stays client-side (filterInboxCaptures); do not put `q` in the query key.
   const ideasQuery = useVaultNodes({
     type: 'idea',
+    tags: INBOX_QUERY_TAGS,
+    staleTime: INBOX_NODES_STALE_MS,
+  });
+  const transcriptsQuery = useVaultNodes({
+    type: 'transcript',
     tags: INBOX_QUERY_TAGS,
     staleTime: INBOX_NODES_STALE_MS,
   });
@@ -86,12 +91,12 @@ export function InboxPage() {
   });
 
   const nodes = useMemo(
-    () => [...(ideasQuery.data ?? []), ...(resourcesQuery.data ?? [])],
-    [ideasQuery.data, resourcesQuery.data],
+    () => [...(ideasQuery.data ?? []), ...(resourcesQuery.data ?? []), ...(transcriptsQuery.data ?? [])],
+    [ideasQuery.data, resourcesQuery.data, transcriptsQuery.data],
   );
-  const isLoading = ideasQuery.isLoading || resourcesQuery.isLoading;
-  const isError = ideasQuery.isError || resourcesQuery.isError;
-  const error = ideasQuery.error ?? resourcesQuery.error;
+  const isLoading = ideasQuery.isLoading || resourcesQuery.isLoading || transcriptsQuery.isLoading;
+  const isError = ideasQuery.isError || resourcesQuery.isError || transcriptsQuery.isError;
+  const error = ideasQuery.error ?? resourcesQuery.error ?? transcriptsQuery.error;
 
   const allCaptures = useMemo(() => nodes.filter(isInboxCaptureNode).map(parseInboxCapture), [nodes]);
   const filteredCaptures = useMemo(() => filterInboxCaptures(allCaptures, filters), [allCaptures, filters]);

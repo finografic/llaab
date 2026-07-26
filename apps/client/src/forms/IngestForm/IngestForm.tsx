@@ -105,12 +105,14 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
    * the live form fields, since those may already hold a draft for a *later* item.
    */
   const currentItemRef = useRef<{ url: string; tags: string[] } | null>(null);
+  const externalProcessingUrlRef = useRef<string | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
+    getValues,
     watch,
   } = useForm<FormValues>({ defaultValues: { url: '' } });
 
@@ -172,12 +174,25 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
     trimmedUrl === processingUrl;
 
   useEffect(() => {
-    if (!processingUrl || trimmedUrl.length > 0) {
+    if (!processingUrl) {
+      const hydratedUrl = externalProcessingUrlRef.current;
+      if (hydratedUrl && trimmedUrl === hydratedUrl) {
+        setValue('url', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+      }
+      externalProcessingUrlRef.current = null;
+      return;
+    }
+
+    if (activeIngestRun != null) {
+      externalProcessingUrlRef.current = processingUrl;
+    }
+
+    if (trimmedUrl.length > 0) {
       return;
     }
 
     setValue('url', processingUrl, { shouldDirty: false, shouldTouch: false, shouldValidate: true });
-  }, [processingUrl, setValue, trimmedUrl]);
+  }, [activeIngestRun, processingUrl, setValue, trimmedUrl]);
 
   useEffect(() => {
     const preventWindowDropNavigation = (event: DragEvent) => {
@@ -370,10 +385,13 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
       setExtractionElapsedSecs(Math.floor((Date.now() - extractionStart) / 1000));
       setTotalElapsedSecs(Math.floor((Date.now() - now) / 1000));
+      if (getValues('url').trim() === trimmedUrl) {
+        setValue('url', '', { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+      }
       setBusy(false);
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
     },
-    [ingestYoutube, ingestPodcast, queryClient],
+    [getValues, ingestYoutube, ingestPodcast, queryClient, setValue],
   );
 
   const enqueueUrl = useCallback((url: string, itemTags: string[]) => {
