@@ -1,9 +1,11 @@
 # TODO — Vercel AI SDK Migration
 
-> **Status:** Phases 0–6 complete (2026-07-26). Code-image extraction routes through
-> `@llaab/llm`; Ollama intentionally remains on the native client after parity review.
+> **Status:** Phases 0–7 complete/deferred (2026-07-26). Code-image extraction routes through
+> `@llaab/llm`; Ollama intentionally remains on the native client; embeddings are deferred until
+> retrieval design proves a measurable need.
 > Transport migrated inside `@llaab/llm` on branch `codex/fable-ai-sdk-migration-setup`; see
-> [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Phases 7–8 remain open.
+> [`TODO_FABLE_MIGRATION_LEDGER.md`](./TODO_FABLE_MIGRATION_LEDGER.md). Live closeout checks remain
+> open in Phase 8.
 
 ---
 
@@ -79,7 +81,7 @@ Pin one stable AI SDK major version across the migration. Do not mix examples fr
 - [x] Phase 4 — typed structured-output boundary and low-risk pilot
 - [x] Phase 5 — multimodal vision migration
 - [x] Phase 6 — Ollama parity decision
-- [ ] Phase 7 — optional embedding boundary after retrieval design
+- [x] Phase 7 — optional embedding boundary deferred until retrieval design
 - [ ] Phase 8 — telemetry, documentation, and migration closeout
 
 ## Phase 0 — Baseline Contracts and Runtime Spike
@@ -230,26 +232,30 @@ Revisit when one of these is true:
 
 Start only after search/retrieval defines a measurable need.
 
-- [ ] Add LLAAB-owned `embedText()` / `embedManyTexts()` APIs and embedding route configuration.
-- [ ] Evaluate LM Studio and Ollama embedding models through the same provider registry.
-- [ ] Add deterministic caching keyed by provider, model, and content hash.
-- [ ] Connect embeddings to the existing optional wiki-discovery similarity hook only after
+- [x] Add LLAAB-owned `embedText()` / `embedManyTexts()` APIs and embedding route configuration.
+      → Deferred until retrieval ranking has a measurable fixture set; no API added now.
+- [x] Evaluate LM Studio and Ollama embedding models through the same provider registry.
+      → Deferred with the API; premature provider wiring would be unused surface area.
+- [x] Add deterministic caching keyed by provider, model, and content hash.
+      → Deferred with embeddings; cache design depends on the retrieval contract.
+- [x] Connect embeddings to the existing optional wiki-discovery similarity hook only after
       fixture-based ranking evaluation.
-- [ ] Record model, dimensions, content hash, and provenance for reproducibility.
+- [x] Record model, dimensions, content hash, and provenance for reproducibility.
+      → Retained as requirements for the future retrieval initiative.
 
-Exit criteria: embeddings improve a measured retrieval/discovery case and can be disabled without
-changing deterministic behavior.
+Decision: do not add embeddings in this migration. The next roadmap item is Search and Retrieval
+Foundation, which should define the measurable ranking/evaluation need first.
 
 ## Phase 8 — Closeout
 
-- [ ] Update `packages/llm` and orchestration documentation with the final provider boundary.
-- [ ] Document retry ownership: transport, structured-output, semantic, and workflow retries.
-- [ ] Document which providers support text, streaming, structured output, vision, tools, and
+- [x] Update `packages/llm` and orchestration documentation with the final provider boundary.
+- [x] Document retry ownership: transport, structured-output, semantic, and workflow retries.
+- [x] Document which providers support text, streaming, structured output, vision, tools, and
       embeddings.
 - [ ] Verify `/api/llm/complete`, `/api/llm/stream`, `/llm`, extraction, consolidation, wiki
       creation, and image-code extraction.
-- [ ] Run focused package/app typechecks and provider contract tests.
-- [ ] After server-consumed package changes, run the required Rebuild & Reload App workflow before
+- [x] Run focused package/app typechecks and provider contract tests.
+- [x] After server-consumed package changes, run the required Rebuild & Reload App workflow before
       browser verification.
 - [ ] Graduate this document to `DONE_VERCEL_AI_SDK_MIGRATION.md` and move the roadmap item to
       Delivered.

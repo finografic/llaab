@@ -27,7 +27,9 @@ retries; local structured-output fallback keeps deterministic JSON extraction. P
 complete: code-image extraction uses `routeLlmVisionObject()` and shared structured-output
 validation. Phase 6 is also complete: Ollama stays native for now because LLAAB still depends on
 native list/show metadata, capability flags, context-length extraction, and direct image JSON
-controls. The next migration-doc work is Phase 7 embeddings, if retrieval design needs it.
+controls. Phase 7 is deferred by design until the Search and Retrieval Foundation defines a
+measurable embedding need. Phase 8 documentation closeout is partially complete; live browser/API
+smoke checks remain open.
 
 ## Phase Log
 
@@ -116,8 +118,11 @@ controls. The next migration-doc work is Phase 7 embeddings, if retrieval design
 - **Phase 6 Ollama decision done on 2026-07-26** — keep the native `ollama` client. Current
   `ollama-ai-provider-v2@4.0.1` is AI SDK v7-compatible, but migration would not remove native
   list/show/context inspection and would add a community provider dependency.
-- **Migration doc Phase 7 (embeddings) and the live-app parts of Phase 8** remain open in
-  `TODO_VERCEL_AI_SDK_MIGRATION.md`.
+- **Phase 7 embeddings deferred on 2026-07-26** — no embedding API until retrieval design provides
+  measurable ranking fixtures and provenance requirements.
+- **Phase 8 docs/typechecks partially closed on 2026-07-26** — provider boundary and retry ownership
+  documented in `docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`; live app/API smoke checks remain
+  open in `TODO_VERCEL_AI_SDK_MIGRATION.md`.
 - Podcast ingest fixture/live validation remains in `ROADMAP.md#next`.
 - Vault/knowledge split manual validation remains in `ROADMAP.md#next`.
 - `resolveModel` in `packages/llm/src/router.ts` has an inert ternary (a model override never

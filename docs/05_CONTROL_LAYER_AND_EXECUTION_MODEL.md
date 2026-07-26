@@ -73,6 +73,35 @@ It is responsible for:
 
 ---
 
+## LLM Provider Boundary
+
+Current inference transport is owned by `@llaab/llm`:
+
+```text
+control / skills / ingestion
+→ routeLlm() / streamLlm() / routeLlmObject() / routeLlmVisionObject()
+→ task routing, cache, provider selection, retries, and telemetry mapping
+→ provider adapters
+```
+
+Provider boundary:
+
+| Provider  | Text | Streaming | Structured output | Vision | Tools | Embeddings | Notes                                                   |
+| --------- | ---- | --------- | ----------------- | ------ | ----- | ---------- | ------------------------------------------------------- |
+| Anthropic | yes  | yes       | AI SDK            | no     | no    | no         | Official AI SDK provider; transport retries pinned to 0 |
+| OpenCode  | yes  | yes       | AI SDK            | no     | no    | no         | OpenAI-compatible AI SDK provider                       |
+| LM Studio | yes  | yes       | local fallback    | yes    | no    | no         | AI SDK text/stream; LLAAB keeps model-load preflight    |
+| Ollama    | yes  | yes       | local fallback    | yes    | no    | no         | Native client retained for list/show/context metadata   |
+
+Retry ownership:
+
+- Transport retries are pinned at the provider boundary.
+- Structured-output validation belongs to `@llaab/llm`.
+- Semantic retries and accept/reject decisions belong to `@llaab/control`.
+- Workflow-specific retries remain explicit in the owning workflow.
+
+---
+
 ## Minimal Interface
 
 ```ts
