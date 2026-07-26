@@ -77,6 +77,81 @@ describe('vault search', () => {
     expect(results.map((result) => result.node_id)).toEqual(['idea-match']);
   });
 
+  it('returns provenance for a representative local vault corpus', async () => {
+    const { rankVaultSearchNodes } = await import('./search-vault-nodes.utils.js');
+    const nodes = [
+      node({
+        body: 'Retrieval source material belongs in bounded evidence packets.',
+        id: 'transcript-fixture',
+        title: 'Transcript Fixture',
+        type: 'transcript',
+      }),
+      node({
+        body: 'Canonical retrieval ideas summarize repeated evidence.',
+        id: 'canonical-fixture',
+        title: 'Canonical Fixture',
+        type: 'canonical-idea',
+      }),
+      node({
+        body: 'Resource references should stay citeable during retrieval.',
+        id: 'resource-fixture',
+        title: 'Resource Fixture',
+        type: 'resource',
+      }),
+      node({
+        body: 'Wiki drafts are derived summaries and not direct retrieval evidence.',
+        id: 'wiki-draft-fixture',
+        title: 'Wiki Draft Fixture',
+        type: 'wiki-draft',
+      }),
+      node({
+        body: 'Wiki candidates can help explain retrieval topic selection.',
+        id: 'wiki-candidate-fixture',
+        title: 'Wiki Candidate Fixture',
+        type: 'wiki-candidate',
+      }),
+      node({
+        body: 'Runs describe execution history for retrieval workflows.',
+        id: 'run-fixture',
+        title: 'Run Fixture',
+        type: 'run',
+      }),
+      node({
+        body: 'Instructions constrain retrieval and context assembly behavior.',
+        id: 'instruction-fixture',
+        title: 'Instruction Fixture',
+        type: 'instruction',
+      }),
+      node({
+        body: 'Inbox captures can contain retrieval follow-up tasks.',
+        id: 'inbox-like-fixture',
+        tags: ['inbox:telegram'],
+        title: 'Inbox-Like Fixture',
+        type: 'idea',
+      }),
+    ];
+
+    const results = rankVaultSearchNodes(nodes, { query: 'retrieval' });
+
+    expect(results).toHaveLength(nodes.length);
+    expect(new Set(results.map((result) => result.node_type))).toEqual(
+      new Set([
+        'canonical-idea',
+        'idea',
+        'instruction',
+        'resource',
+        'run',
+        'transcript',
+        'wiki-candidate',
+        'wiki-draft',
+      ]),
+    );
+    expect(results.every((result) => result.path.endsWith(`${result.node_type}.${result.node_id}.md`))).toBe(
+      true,
+    );
+    expect(results.every((result) => result.provenance.path === result.path)).toBe(true);
+  });
+
   it('returns no results for empty queries', async () => {
     const { rankVaultSearchNodes } = await import('./search-vault-nodes.utils.js');
 

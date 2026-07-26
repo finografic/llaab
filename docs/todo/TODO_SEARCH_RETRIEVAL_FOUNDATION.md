@@ -47,7 +47,7 @@ clear snippets, match reasons, and deterministic limits.
 
 - [x] Define a `VaultSearchQuery` / `VaultSearchResult` contract with deterministic ordering,
       matched fields, snippets, source path, node type, tags, status, and provenance metadata.
-- [ ] Add a fixture corpus that covers transcripts, canonical ideas, resources, wiki drafts, inbox
+- [x] Add a fixture corpus that covers transcripts, canonical ideas, resources, wiki drafts, inbox
       captures, runs, and instructions.
 - [x] Add ranking fixtures for title hits, tag hits, body hits, recency tie-breaks, and type/status
       filters.
