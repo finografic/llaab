@@ -1,6 +1,7 @@
 import { File, PatchDiff } from '@pierre/diffs/react';
 import { TtsPlayer } from 'components/TtsPlayer';
 import { Card, CardContent } from 'components/ui/card';
+import { Col, Row } from 'components/ui/grid';
 import { ToggleGroup, ToggleGroupItem } from 'components/ui/toggle-group';
 import { useVaultFile, useVaultFileDiff } from 'queries/vault';
 import { useMemo } from 'react';
@@ -103,21 +104,41 @@ export function VaultFileViewer({
         <article className={styles.markdownContent} dangerouslySetInnerHTML={{ __html: fileContent.html }} />
       ) : null}
       {path && !showDiff && showEnhancedMarkdown && fileContent?.sections.length ? (
-        <div className={styles.enhancedSections}>
-          {fileContent.sections.map((section) => (
-            <Card key={section.id} className={styles.enhancedCard}>
-              <CardContent className={styles.enhancedCardContent}>
-                <div className={styles.enhancedCardToolbar}>
-                  <TtsPlayer variant="minimal" text={section.markdown} />
-                </div>
-                <article
-                  className={styles.markdownContent}
-                  dangerouslySetInnerHTML={{ __html: section.html }}
-                />
+        <Row className={styles.enhancedLayout} gutterWidth={16}>
+          <Col xs={12} lg="content" className={styles.enhancedMain}>
+            <div className={styles.enhancedSections}>
+              {fileContent.sections.map((section) => (
+                <Card key={section.id} id={section.id} className={styles.enhancedCard}>
+                  <CardContent className={styles.enhancedCardContent}>
+                    <div className={styles.enhancedCardToolbar}>
+                      <TtsPlayer variant="minimal" text={section.markdown} />
+                    </div>
+                    <article
+                      className={styles.markdownContent}
+                      dangerouslySetInnerHTML={{ __html: section.html }}
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </Col>
+          <Col xs={12} lg="content" className={styles.enhancedTocCol}>
+            <Card className={styles.enhancedTocCard}>
+              <CardContent className={styles.enhancedTocContent}>
+                <div className={styles.enhancedTocHeading}>Contents</div>
+                <nav aria-label="Enhanced markdown sections">
+                  <ol className={styles.enhancedTocList}>
+                    {fileContent.sections.map((section) => (
+                      <li key={section.id}>
+                        <a href={`#${section.id}`}>{section.heading}</a>
+                      </li>
+                    ))}
+                  </ol>
+                </nav>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </Col>
+        </Row>
       ) : null}
       {file ? (
         <File
