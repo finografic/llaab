@@ -36,7 +36,7 @@
   border-color: color-mix(in oklab, var(--muted-foreground) 45%, var(--border));
   background:
     linear-gradient(var(--row-accent-color, transparent) 0 0) left / 5px 100% no-repeat,
-    color-mix(in oklab, var(--muted) 18%, var(--surface));
+    color-mix(in oklab, var(--muted) 33%, var(--surface));
 }
 
 .row[data-route-kind="docs_link"],
