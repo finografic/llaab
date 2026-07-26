@@ -11,10 +11,35 @@
 }
 
 .viewerToolbar {
-  display: flex;
-  justify-content: flex-end;
   border-bottom: 1px solid var(--border-subtle);
   padding: var(--space-3) var(--space-6);
+}
+
+.viewerToolbarRow {
+  width: 100%;
+}
+
+.viewerToolbarLeft {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.viewerToolbarRight {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.viewerToolbar :global([data-state="on"]) {
+  border-color: var(--accent);
+  background: oklch(from var(--accent) l c h / 0.12);
+  color: var(--accent);
+}
+
+.viewerToolbar :global([data-state="on"]:hover),
+.viewerToolbar :global([data-state="on"]:focus-visible) {
+  background: oklch(from var(--accent) l c h / 0.18);
+  color: var(--accent);
 }
 
 .enhancedLayout {
@@ -126,6 +151,43 @@
   text-decoration: none;
 }
 
+.enhancedTocList .enhancedTocLinkActive {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.backToTopButton {
+  position: fixed;
+  right: var(--space-12);
+  bottom: var(--space-6);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: 0 12px 24px oklch(0 0 0 / 0.28);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+
+.backToTopButton:hover,
+.backToTopButton:focus-visible {
+  background: oklch(from var(--accent) l c h / 0.12);
+  transform: translateY(-1px);
+}
+
+.backToTopButton svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
 @media (max-width: 1023px) {
   .enhancedMain {
     flex: 0 0 100% !important;
@@ -161,6 +223,15 @@
 
 .markdownContent h1 {
   font-size: var(--text-2xl);
+}
+
+.highlightBold strong,
+.highlightBold b {
+  color: oklch(from var(--accent) calc(l * 0.78) calc(c * 0.78) h);
+}
+
+.italiciseQuotes :global(.quote-run) {
+  font-style: italic;
 }
 
 .markdownContent h2 {
