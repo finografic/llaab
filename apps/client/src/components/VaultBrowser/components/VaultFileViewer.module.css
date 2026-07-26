@@ -80,7 +80,12 @@
 
 .markdownContent {
   --markdown-accent-dim: oklch(from var(--accent) calc(l * 0.78) calc(c * 0.78) h);
-  --markdown-accent-background: oklch(from var(--accent) l c h / 0.12);
+  --markdown-accent-background-strength: 5%;
+  --markdown-accent-background: color-mix(
+    in oklch,
+    var(--accent) var(--markdown-accent-background-strength),
+    transparent
+  );
 
   max-width: 100%;
   overflow-x: hidden;
@@ -325,8 +330,11 @@
   margin: 1em 0;
   border-left: 3px solid var(--markdown-accent-dim);
   background: var(--markdown-accent-background);
-  padding-left: 1em;
-  color: var(--markdown-accent-dim);
+  padding: 1em 0.5em 0.25em 1.5em;
+  color: var(--color-accent);
+  strong {
+    color: var(--color-accent);
+  }
 }
 
 .markdownContent table {
