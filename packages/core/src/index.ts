@@ -107,6 +107,36 @@ export {
   type KnowledgeDocSearchQuery,
   type KnowledgeDocSearchResult,
 } from './utils/search-knowledge-docs.utils.js';
+export {
+  compareToBaseline,
+  DEFAULT_EVAL_KS,
+  documentRef,
+  evaluateRetrieval,
+  parseDocumentRef,
+  type RetrievalBaseline,
+  type RetrievalComparison,
+  type RetrievalEvalReport,
+  type RetrievalEvalScope,
+  type RetrievalFn,
+  type RetrievalGoldQuery,
+  type RetrievalQueryReport,
+  type RetrievalTier,
+} from './retrieval/retrieval-eval.utils.js';
+export {
+  mean,
+  ndcgAtK,
+  precisionAtK,
+  recallAtK,
+  reciprocalRank,
+  relevantRanks,
+  roundMetric,
+} from './retrieval/retrieval-metrics.utils.js';
+export {
+  loadFrozenDocuments,
+  loadFrozenGoldQueries,
+  retrieveFromFrozenCorpus,
+} from './retrieval/frozen-corpus.utils.js';
+export { loadLiveGoldQueries, retrieveFromLiveCorpus } from './retrieval/live-corpus.utils.js';
 export { parseFrontmatter } from './utils/parse-frontmatter.utils.js';
 export { readNode } from './utils/read-node.utils.js';
 export { readNodeByType } from './utils/read-node-by-type.utils.js';

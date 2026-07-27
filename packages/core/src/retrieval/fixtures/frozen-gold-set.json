@@ -1,0 +1,72 @@
+{
+  "$comment": "Gold queries against frozen-corpus.json. These back the CI regression guard. Add a fixture whenever a ranking behaviour is worth protecting; add it with known_miss when it records a failure the current ranking genuinely cannot satisfy.",
+  "queries": [
+    {
+      "id": "harness-definition",
+      "question": "What is an agent harness?",
+      "scope": "all",
+      "relevant": ["knowledge:wikis/agent-harness-engineering.md"],
+      "grades": {
+        "knowledge:wikis/agent-harness-engineering.md": 3,
+        "vault:idea.harness-owns-execution-bounds": 1
+      },
+      "notes": "Title match on the canonical wiki must outrank the supporting vault idea; knowledge tier is the reviewed answer."
+    },
+    {
+      "id": "stopword-heavy-question",
+      "question": "What is the best way to keep the quality of a long run from degrading?",
+      "scope": "all",
+      "relevant": ["knowledge:wikis/context-reset-guardrails.md"],
+      "notes": "Guards the stopword fix. Terms what/is/the/best/way/of/a/from match nothing meaningful; degrading and long run carry the signal. Before stopword filtering this query matched every document."
+    },
+    {
+      "id": "punctuation-terminated-term",
+      "question": "How does model tiering work?",
+      "scope": "all",
+      "relevant": ["knowledge:wikis/agent-orchestration-cost-optimization.md"],
+      "notes": "Guards punctuation trimming. Without it the token is `work?` and `tiering` still matches, but a query ending in the only meaningful term would retrieve nothing."
+    },
+    {
+      "id": "sub-agent-topology",
+      "question": "Can sub-agents talk to each other directly?",
+      "scope": "all",
+      "relevant": ["knowledge:wikis/orchestration-parallel-execution.md"],
+      "notes": "Body-only match — the answer phrase peer-to-peer never appears in the title."
+    },
+    {
+      "id": "scope-knowledge-only",
+      "question": "How should execution bounds be enforced?",
+      "scope": "knowledge",
+      "relevant": ["knowledge:wikis/agent-harness-engineering.md"],
+      "notes": "Scope filter must exclude vault:idea.harness-owns-execution-bounds despite it being the stronger lexical match."
+    },
+    {
+      "id": "scope-vault-only",
+      "question": "How should execution bounds be enforced?",
+      "scope": "vault",
+      "relevant": ["vault:idea.harness-owns-execution-bounds"],
+      "notes": "Mirror of scope-knowledge-only; same question, opposite tier."
+    },
+    {
+      "id": "tag-driven-recall",
+      "question": "least-privilege iam-roles",
+      "scope": "all",
+      "relevant": ["knowledge:wikis/blast-radius-iam-roles.md"],
+      "notes": "Tag-shaped query. Exercises tag scoring independent of title and body."
+    },
+    {
+      "id": "off-corpus-question",
+      "question": "What is the capital city of Portugal?",
+      "scope": "all",
+      "relevant": [],
+      "notes": "Nothing local should rank. Empty relevant set means recall is trivially satisfied; the value is precision@k, which must stay at 0. This is the regression guard for context pollution on out-of-domain questions."
+    },
+    {
+      "id": "buried-in-long-transcript",
+      "question": "How do I combine lexical and semantic search results?",
+      "scope": "all",
+      "relevant": ["vault:transcript.long-episode-on-agent-tooling"],
+      "notes": "Document ranking succeeds here — the transcript is the only match and ranks first. The Phase 3 problem this fixture exists for is NOT ranking but snippet extraction: an early incidental match on `search results` anchors the snippet in the intro, so the passage that actually answers the question never reaches the model. Asserted separately in retrieval-eval.utils.test.ts; ranking metrics alone cannot see this failure."
+    }
+  ]
+}

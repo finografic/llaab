@@ -1,0 +1,75 @@
+{
+  "$comment": "Frozen mini-corpus for hermetic ranking evaluation. Never changes except deliberately. The live vault is not usable for a CI guard because it grows with every ingest, so baselines there drift for reasons unrelated to ranking. Documents mirror real LLAAB subject matter so query behaviour is representative.",
+  "documents": [
+    {
+      "tier": "knowledge",
+      "id": "wikis/agent-harness-engineering.md",
+      "title": "Agent Harness Engineering",
+      "tags": ["d:llm", "agent-harness", "harness-engineering"],
+      "body": "The harness is the complete intermediary layer between a language model and the external world. It owns tool calling, context management, and execution bounds. Harness engineering is the discipline of shaping that layer rather than only shaping prompts."
+    },
+    {
+      "tier": "knowledge",
+      "id": "wikis/context-reset-guardrails.md",
+      "title": "Self-verification and Context Reset Within Harness Guardrails",
+      "tags": ["d:automation", "self-verification", "context-reset", "guardrails"],
+      "body": "A loop drafts a task list, executes one task, verifies the output, then resets context before looping again. Context reset is a guardrail that keeps reasoning quality from degrading across a long run."
+    },
+    {
+      "tier": "knowledge",
+      "id": "wikis/agent-orchestration-cost-optimization.md",
+      "title": "Model Tiering for Cost-Optimized Agent Orchestration",
+      "tags": ["d:llm", "orchestration", "cost-optimization", "model-tiering"],
+      "body": "Route complex reasoning and coordination to an expensive lead model, and delegate repetitive well-scoped tasks to cheaper worker sub-agents. Tiering buys most of the quality at a fraction of the cost."
+    },
+    {
+      "tier": "knowledge",
+      "id": "wikis/orchestration-parallel-execution.md",
+      "title": "Parallel Sub-Agent Execution: Orchestration Constraints",
+      "tags": ["d:llm", "orchestration", "sub-agents", "parallel-execution"],
+      "body": "Sub-agent orchestration follows a one-to-one hub-and-spoke topology. Sub-agents communicate exclusively with the parent session and have no peer-to-peer channel between siblings."
+    },
+    {
+      "tier": "knowledge",
+      "id": "wikis/blast-radius-iam-roles.md",
+      "title": "Blast Radius Containment via Least-Privilege IAM Roles",
+      "tags": ["d:infra", "least-privilege", "iam-roles", "blast-radius"],
+      "body": "Minimum-permission role scoping is a defense-in-depth control. Upstream API gateway authorization is a complementary layer, and network isolation is not the same as implicit trust."
+    },
+    {
+      "tier": "knowledge",
+      "id": "wikis/build-performance-esm-only.md",
+      "title": "JS Toolchain Modernization via ESM-Only Adoption",
+      "tags": ["d:build", "esm", "toolchain", "rust"],
+      "body": "Dropping CommonJS support removes a whole class of dual-package hazards. Rust rewrites of bundlers and formatters compound the gain by removing the slowest step in the build."
+    },
+    {
+      "tier": "vault",
+      "id": "idea.harness-owns-execution-bounds",
+      "title": "The harness owns execution bounds, not the model",
+      "tags": ["d:llm", "agent-harness"],
+      "body": "Execution bounds belong in the harness because a model cannot reliably bound itself. Iteration caps, token ceilings, and timeouts are structural guarantees."
+    },
+    {
+      "tier": "vault",
+      "id": "idea.stock-tooling-beats-customization",
+      "title": "Stock tooling outperforms heavily customized setups for most users",
+      "tags": ["d:tooling"],
+      "body": "Heavy customization tends to lose to defaults over time because defaults keep improving and customizations rot. Choose the simplest level that fits without over-engineering."
+    },
+    {
+      "tier": "vault",
+      "id": "canonical-idea.retrieval-precedes-generation",
+      "title": "Retrieval quality bounds generation quality",
+      "tags": ["d:llm", "retrieval", "rag"],
+      "body": "No amount of prompt work recovers from retrieving the wrong evidence. Measuring retrieval separately from answer quality is what makes the pipeline debuggable."
+    },
+    {
+      "tier": "vault",
+      "id": "transcript.long-episode-on-agent-tooling",
+      "title": "Long episode on agent tooling",
+      "tags": ["d:llm", "transcript"],
+      "body": "Welcome back to the show. Before anything else the host reads out some listener mail about search results from last week's episode, which is a nice bit of housekeeping but carries no actual information. Then comes a word from our sponsors, a digression about the weather, travel plans, and what everyone had for breakfast this morning. There is a lot of ground to cover today and we will meander through most of it without much structure. The guest talks about their background, their first job, the company they founded, and the company they left. More anecdotes follow, none of them relevant. Only much later, buried deep in the second half of the conversation, does the guest mention the one genuinely useful detail of the entire episode: reciprocal rank fusion is the practical way to combine lexical and semantic candidate lists without having to tune a blend weight by hand. The conversation immediately moves on and never returns to it, continuing with closing remarks and a preview of next week's episode."
+    }
+  ]
+}

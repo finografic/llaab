@@ -1,6 +1,7 @@
 # TODO — Knowledge Retrieval and Chat
 
-> **Status:** Phases 0–1 complete (2026-07-28). Phases 2–14 not started.
+> **Status:** Phases 0–2 complete (2026-07-28), pending your review of the draft eval fixtures.
+> Phases 3–14 not started.
 
 ## Goal
 
@@ -132,15 +133,30 @@ block on it.
 is a guess. This phase is small, has no UI, and unblocks Phases 3–7. It also operationalises the
 embedding decision gate that Phase 0 wrote down but left unmeasured.
 
-- [ ] Define a gold query set in `packages/core/src/retrieval/fixtures/` — real questions paired
-      with the node ids or knowledge paths that _should_ rank. Seed from questions already asked
-      against `chat.ask`.
-- [ ] Implement `recall@k`, `MRR`, and `nDCG@k` over the existing `VaultSearchResult` shape.
-- [ ] Add a one-shot `lab retrieval eval` CLI command printing per-query and aggregate scores, plus
+- [x] Define a gold query set in `packages/core/src/retrieval/fixtures/` — real questions paired
+      with the node ids or knowledge paths that _should_ rank. Two sets: `frozen-gold-set.json`
+      against a fixed corpus, `live-gold-set.json` against the real vault.
+- [x] Implement `recall@k`, `precision@k`, `MRR`, and `nDCG@k` with graded-relevance support.
+- [x] Add a one-shot `lab retrieval eval` CLI command printing per-query and aggregate scores, plus
       a diff against the last recorded baseline.
-- [ ] Record baselines in a committed JSON file so ranking regressions show up in review.
-- [ ] Add a vitest guard asserting aggregate metrics do not fall below the recorded baseline.
-- [ ] Document how to add a fixture when a real question retrieves the wrong thing.
+- [x] Record baselines in a committed JSON file so ranking regressions show up in review.
+- [x] Add a vitest guard asserting aggregate metrics do not fall below the recorded baseline.
+- [x] Document how to add a fixture when a real question retrieves the wrong thing —
+      `packages/core/src/retrieval/README.md`.
+- [ ] **Review the draft fixtures.** Every `notes` line in `live-gold-set.json` is marked DRAFT and
+      states why that document is the right answer. Correct anything you disagree with — a wrong
+      fixture is worse than no fixture, because it locks in a wrong target.
+- [ ] Replace the drafts with real questions that actually failed, as they accumulate from usage.
+
+**Findings from the first run (2026-07-28).** On the live corpus, 8 of 8 substantive queries rank
+their expected document **first** — MRR 0.889, nDCG@k 1.0 across all k. Two consequences:
+
+1. **The Phase 5 embedding gate is not met and is not close.** There is currently no paraphrase
+   miss or mis-ranking to justify a vector store. Do not start Phase 5 on principle.
+2. **The result is weaker than it looks.** The corpus is 14 wikis, and the queries were written by
+   someone who already knew the answers — selection bias in the fixture author's favour. The set
+   needs real failed questions before its scores mean much. Precision@10 of 0.24 also shows a
+   long weak tail being retrieved, which is what Phases 3–4 address.
 
 **Exit criteria:** a ranking change can be stated as "recall@5 went from X to Y" rather than "it
 feels better".
@@ -382,7 +398,7 @@ Phases 4–7 and is partially buildable at any point.
 
 - [x] Phase 0 — deterministic retrieval contract (2026-07-28)
 - [x] Phase 1 — `chat.ask` conversational surface (2026-07-28)
-- [ ] Phase 2 — retrieval evaluation harness
+- [x] Phase 2 — retrieval evaluation harness (2026-07-28) — draft fixtures await your review
 - [ ] Phase 3 — passage-level retrieval
 - [ ] Phase 4 — BM25 ranking and persisted lexical index
 - [ ] Phase 5 — hybrid retrieval with embeddings

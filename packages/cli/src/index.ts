@@ -7,6 +7,7 @@ import { doctorCommand } from './commands/doctor.js';
 import { inboxCommand } from './commands/inbox.js';
 import { ingestCommand } from './commands/ingest.js';
 import { mcpCommand } from './commands/mcp.js';
+import { retrievalCommand } from './commands/retrieval.js';
 import { routeCommand } from './commands/route.js';
 import { vaultCommand } from './commands/vault.js';
 
@@ -23,6 +24,7 @@ const main = defineCommand({
     ingest: ingestCommand,
     inbox: inboxCommand,
     mcp: mcpCommand,
+    retrieval: retrievalCommand,
     route: routeCommand,
     vault: vaultCommand,
   },

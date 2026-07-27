@@ -1,0 +1,71 @@
+{
+  "$comment": "Gold queries against the LIVE corpus, run via `lab retrieval eval`. Unlike the frozen set these do not back a CI guard: the vault grows with every ingest, so metrics move for reasons unrelated to ranking. Expected references use knowledge/ paths where possible because those are committed with the parent repo and stable; vault node ids drift and may need updating. THESE ARE DRAFTS — each `notes` line states why that document is the right answer, and any judgement you disagree with should be corrected.",
+  "queries": [
+    {
+      "id": "what-is-a-harness",
+      "question": "What is an agent harness?",
+      "scope": "knowledge",
+      "relevant": ["knowledge:wikis/agent-harness-harness-engineering.md"],
+      "notes": "DRAFT — the canonical wiki defining the harness as the intermediary layer. Should rank first for the definitional question."
+    },
+    {
+      "id": "harness-vs-model-intelligence",
+      "question": "Should I add more structure to the harness or rely on a smarter model?",
+      "scope": "knowledge",
+      "relevant": ["knowledge:wikis/harness-design-balance-intelligence-vs-structure.md"],
+      "notes": "DRAFT — this wiki is specifically about that tradeoff. Paraphrase query: the wiki title says 'Balancing Model Intelligence and Harness Structure', the question says neither phrase directly."
+    },
+    {
+      "id": "cheaper-agent-runs",
+      "question": "How can I reduce the cost of running agents?",
+      "scope": "knowledge",
+      "relevant": ["knowledge:wikis/agent-orchestration-cost-optimization.md"],
+      "notes": "DRAFT — model tiering is the cost answer. Note 'reduce the cost' vs the wiki's 'cost-optimized'."
+    },
+    {
+      "id": "parallel-subagent-limits",
+      "question": "Can parallel sub-agents talk to each other?",
+      "scope": "knowledge",
+      "relevant": ["knowledge:wikis/orchestration-model-parallel-execution.md"],
+      "notes": "DRAFT — the hub-and-spoke constraint. The answer (no peer-to-peer) is in the body, not the title."
+    },
+    {
+      "id": "long-running-tasks",
+      "question": "How do agents keep working on something for a long time?",
+      "scope": "knowledge",
+      "relevant": ["knowledge:wikis/agent-loop-mechanism-long-duration-tasks.md"],
+      "notes": "DRAFT — loop structures for long-duration tasks. Heavily paraphrased; a good test of whether lexical matching survives casual phrasing."
+    },
+    {
+      "id": "too-many-tools",
+      "question": "Does giving an agent lots of tools hurt its performance?",
+      "scope": "knowledge",
+      "relevant": [
+        "knowledge:wikis/agent-configuration-system-prompt-bloat.md",
+        "knowledge:wikis/agent-distraction-context-optimization.md"
+      ],
+      "notes": "DRAFT — two wikis both cover system prompt bloat from unused tools. Deliberately multi-answer, so nDCG is more meaningful than recall here."
+    },
+    {
+      "id": "least-privilege-infra",
+      "question": "How do I limit the blast radius of a compromised credential?",
+      "scope": "knowledge",
+      "relevant": ["knowledge:wikis/blast-radius-iam-roles.md"],
+      "notes": "DRAFT — least-privilege IAM roles. Included as an off-domain control: the corpus is mostly LLM material, so this checks that a distinct topic is not drowned out."
+    },
+    {
+      "id": "esm-only-builds",
+      "question": "Why go ESM-only?",
+      "scope": "knowledge",
+      "relevant": ["knowledge:wikis/build-performance-esm-only.md"],
+      "notes": "DRAFT — very short query with one rare, high-signal term. Tests that brevity does not hurt."
+    },
+    {
+      "id": "off-corpus-control",
+      "question": "What is the capital city of Portugal?",
+      "scope": "all",
+      "relevant": [],
+      "notes": "Control. Nothing local should be relevant; precision@k must stay 0. This is the live equivalent of the frozen off-corpus guard."
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "$comment": "Recorded metrics for the frozen corpus. Update deliberately, never to make a failing guard pass. A drop means ranking got worse; a rise means it got better and the new floor should be locked in. Regenerate with `lab retrieval eval --frozen --update-baseline`.",
+  "recorded_at": "2026-07-28T00:00:00.000Z",
+  "corpus": {
+    "knowledge_docs": 6,
+    "vault_nodes": 4
+  },
+  "aggregate": {
+    "mrr": 0.7593,
+    "recall_at_k": {
+      "1": 0.7778,
+      "3": 1,
+      "5": 1,
+      "10": 1
+    },
+    "precision_at_k": {
+      "1": 0.6667,
+      "3": 0.4815,
+      "5": 0.437,
+      "10": 0.427
+    },
+    "ndcg_at_k": {
+      "1": 0.7778,
+      "3": 0.9268,
+      "5": 0.9268,
+      "10": 0.9268
+    }
+  }
+}
