@@ -38,6 +38,16 @@ lab retrieval eval --json --out report.json         # full report
 Recall alone is misleading: it cannot tell `[correct, junk, junk]` from `[junk, junk, correct]`.
 MRR and nDCG can.
 
+## What ranking metrics cannot see
+
+Metrics score the **ordering of documents**. They are blind to whether the retrieved text actually
+contains the answer. Phase 3 demonstrated this concretely: passage-level retrieval changed which
+text reaches the model on every long document, and moved recall, MRR, and nDCG by exactly zero —
+because both corpora were already at ceiling.
+
+When a change affects context quality rather than document order, assert it directly. See the
+`passage extraction on long documents` block in `retrieval-eval.utils.test.ts`.
+
 ## Adding a fixture
 
 Do this whenever a real question retrieves the wrong thing. That is the whole point — a bad answer

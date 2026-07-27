@@ -1,4 +1,10 @@
-import { MONOREPO_ROOT, buildVaultContextPackets, searchKnowledgeDocs, searchVaultNodes } from '@llaab/core';
+import {
+  MONOREPO_ROOT,
+  buildVaultContextPackets,
+  formatPassageForContext,
+  searchKnowledgeDocs,
+  searchVaultNodes,
+} from '@llaab/core';
 import { streamLlm } from '@llaab/llm';
 import type { ChatScope, KnowledgeDocSearchResult, VaultContextPacket } from '@llaab/core';
 import type { NodeType } from '@llaab/schemas';
@@ -127,7 +133,7 @@ export function buildChatPrompt(input: {
       : input.context.knowledge
           .map(
             (doc, index) =>
-              `[K${index + 1}] ${doc.title} — knowledge/${doc.path}\n${collapseWhitespace(doc.body, KNOWLEDGE_SNIPPET_LIMIT)}`,
+              `[K${index + 1}] ${doc.title} — knowledge/${doc.path}\n${knowledgeContextBody(doc)}`,
           )
           .join('\n\n'),
   );
@@ -168,6 +174,26 @@ function vaultNodeHref(nodeType: NodeType, nodeId: string): string {
     default:
       return `/vault/nodes/${nodeId}`;
   }
+}
+
+/**
+ * Prefers the matching passages over the whole document. Sending a full wiki spends the context
+ * budget on sections that have nothing to do with the question.
+ */
+function knowledgeContextBody(doc: KnowledgeDocSearchResult): string {
+  if (doc.passages.length === 0) return collapseWhitespace(doc.body, KNOWLEDGE_SNIPPET_LIMIT);
+
+  const sections: string[] = [];
+  let used = 0;
+
+  for (const scored of doc.passages) {
+    const formatted = formatPassageForContext(scored.passage);
+    if (sections.length > 0 && used + formatted.length > KNOWLEDGE_SNIPPET_LIMIT) break;
+    sections.push(formatted);
+    used += formatted.length;
+  }
+
+  return collapseWhitespace(sections.join('\n\n'), KNOWLEDGE_SNIPPET_LIMIT);
 }
 
 /** Vault search returns absolute paths; sources display them alongside repo-relative `knowledge/` paths. */

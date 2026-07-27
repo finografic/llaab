@@ -1,6 +1,8 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
+import type { ScoredPassage } from '../retrieval/rank-passages.utils.js';
 
+import { scorePassages } from '../retrieval/rank-passages.utils.js';
 import { KNOWLEDGE_ROOT } from './knowledge-root.js';
 import { parseFrontmatter } from './parse-frontmatter.utils.js';
 import { buildTextSnippet, tokenizeSearchQuery } from './search-vault-nodes.utils.js';
@@ -25,6 +27,8 @@ export interface KnowledgeDoc {
 export interface KnowledgeDocSearchResult extends KnowledgeDoc {
   score: number;
   snippet: string;
+  /** Best-matching passages, best-first. Empty when the match was title- or tag-only. */
+  passages: ScoredPassage[];
   /** Client route when the collection is browsable, otherwise undefined. */
   href?: string;
 }
@@ -150,16 +154,29 @@ function rankKnowledgeDoc(
   for (const term of searchTerms) {
     if (title.includes(term)) score += TITLE_MATCH_SCORE;
     if (doc.tags.some((tag) => tag.toLowerCase().includes(term))) score += TAG_MATCH_SCORE;
-    if (body.includes(term)) score += BODY_MATCH_SCORE;
+  }
+
+  // Body scoring is passage-level, matching the vault tier: best passage plus saturating credit
+  // for corroborating ones, so a long wiki cannot outrank a focused one on volume alone.
+  const passageResult = scorePassages(doc.body, searchTerms);
+  if (passageResult.score > 0) {
+    score += passageResult.score;
+  } else if (searchTerms.some((term) => body.includes(term))) {
+    score += BODY_MATCH_SCORE;
   }
 
   if (score === 0) return null;
   if (title === rawQuery.trim().toLowerCase()) score += EXACT_TITLE_BONUS;
 
+  const best = passageResult.passages[0];
+
   return {
     ...doc,
     href: getKnowledgeDocHref(doc),
+    passages: passageResult.passages,
     score,
-    snippet: buildTextSnippet(doc.body, doc.title, searchTerms),
+    snippet: best
+      ? best.passage.text.replace(/\s+/g, ' ').trim()
+      : buildTextSnippet(doc.body, doc.title, searchTerms),
   };
 }

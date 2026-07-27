@@ -136,6 +136,17 @@ export {
   loadFrozenGoldQueries,
   retrieveFromFrozenCorpus,
 } from './retrieval/frozen-corpus.utils.js';
+export {
+  chunkMarkdown,
+  formatPassageForContext,
+  type ChunkMarkdownOptions,
+  type MarkdownPassage,
+} from './retrieval/chunk-markdown.utils.js';
+export {
+  scorePassages,
+  type PassageScoreResult,
+  type ScoredPassage,
+} from './retrieval/rank-passages.utils.js';
 export { loadLiveGoldQueries, retrieveFromLiveCorpus } from './retrieval/live-corpus.utils.js';
 export { parseFrontmatter } from './utils/parse-frontmatter.utils.js';
 export { readNode } from './utils/read-node.utils.js';

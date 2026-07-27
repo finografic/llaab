@@ -1,7 +1,7 @@
 # TODO — Knowledge Retrieval and Chat
 
-> **Status:** Phases 0–2 complete (2026-07-28), pending your review of the draft eval fixtures.
-> Phases 3–14 not started.
+> **Status:** Phases 0–3 complete (2026-07-28), pending your review of the draft eval fixtures.
+> Phases 4–14 not started.
 
 ## Goal
 
@@ -172,14 +172,41 @@ snippet. A 90-minute transcript that mentions the answer once ranks the same as 
 the assembled context packet may not even contain the relevant sentence. This is the single largest
 quality lever available without embeddings.
 
-- [ ] Chunk markdown on heading and paragraph boundaries with a bounded size and small overlap,
-      preserving heading breadcrumbs so a passage carries its own context.
-- [ ] Rank at passage level, then aggregate to a document score (best passage + saturating bonus
-      for multiple hits) so multi-mention documents rank above single-mention ones.
-- [ ] Return the best-matching passages as the context packet content instead of a radius snippet.
-- [ ] Keep transcript timestamp markers (`<!-- t:… -->`) attached to passages so a cited answer can
+- [x] Chunk markdown on heading and paragraph boundaries with a bounded size and sentence-aligned
+      overlap, preserving heading breadcrumbs so a passage carries its own context. Fenced code
+      blocks stay intact. `chunk-markdown.utils.ts`.
+- [x] Rank at passage level, then aggregate to a document score (best passage + saturating,
+      **capped** corroboration bonus). `rank-passages.utils.ts`.
+- [x] Return the best-matching passages as the context packet content instead of a radius snippet —
+      both tiers: `buildVaultContextPackets` and the `knowledge/` context in the chat service.
+- [x] Keep transcript timestamp markers (`<!-- t:… -->`) attached to passages so a cited answer can
       deep-link into the transcript at the right moment.
-- [ ] Extend fixtures with passage-level expectations; confirm Phase 2 metrics improve.
+- [x] Extend fixtures with passage-level expectations.
+- [ ] ~~Confirm Phase 2 metrics improve~~ — **they did not, and could not.** See below.
+
+**Findings (2026-07-28).**
+
+_Ranking metrics did not move._ Both corpora were already at ceiling before this phase (live nDCG
+was 1.0 at every k), so there was no headroom for passage ranking to show up in recall, MRR, or
+nDCG. This is not a failure of the phase — it is Phase 2's stated limitation arriving in practice:
+**ranking metrics cannot see context-assembly quality.** The improvement is real and is verified by
+direct assertion instead:
+
+- The Phase 2 characterization test inverted exactly as predicted. The context packet for the
+  long-transcript query now contains the answering passage (`reciprocal rank fusion`) rather than
+  the incidental intro match that anchored the old radius snippet.
+- On a real 53-passage transcript, the best passage for a loop-structure query is the `[0:42]`
+  segment about loops, carrying its heading breadcrumb and timestamp.
+
+_A length-bias risk was found and capped._ The corroboration bonus initially scaled as
+`10·log₂(n+1)` over matching passages, letting a 53-passage transcript accumulate ~44 points from
+volume alone — which would have made length bias **worse**, the opposite of this phase's goal.
+Corroboration is now capped at half the best passage's score, tying it to match quality rather than
+document length. Proper length normalization remains Phase 4 (BM25 `b`).
+
+_Implication for Phase 4._ Saturated metrics mean the current gold sets cannot justify further
+ranking work either. Phase 4 needs harder fixtures — real failed questions — before its parameter
+tuning can be evaluated. This strengthens the case for using `chat.ask` in anger before continuing.
 
 ## Phase 4 — BM25 ranking and a persisted lexical index
 
@@ -399,7 +426,7 @@ Phases 4–7 and is partially buildable at any point.
 - [x] Phase 0 — deterministic retrieval contract (2026-07-28)
 - [x] Phase 1 — `chat.ask` conversational surface (2026-07-28)
 - [x] Phase 2 — retrieval evaluation harness (2026-07-28) — draft fixtures await your review
-- [ ] Phase 3 — passage-level retrieval
+- [x] Phase 3 — passage-level retrieval (2026-07-28)
 - [ ] Phase 4 — BM25 ranking and persisted lexical index
 - [ ] Phase 5 — hybrid retrieval with embeddings
 - [ ] Phase 6 — query understanding

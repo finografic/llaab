@@ -1,6 +1,9 @@
 import { NodeTypeSchema } from '@llaab/schemas';
+import type { PassageScoreResult, ScoredPassage } from '../retrieval/rank-passages.utils.js';
 import type { LabNode, NodeStatus, NodeType } from '@llaab/schemas';
 
+import { formatPassageForContext } from '../retrieval/chunk-markdown.utils.js';
+import { scorePassages } from '../retrieval/rank-passages.utils.js';
 import { listNodes } from './list-nodes.utils.js';
 import { getNodeFilePath } from './node-file.utils.js';
 
@@ -30,6 +33,8 @@ export interface VaultSearchResult {
   score: number;
   snippet: string;
   matches: VaultSearchMatch[];
+  /** Best-matching passages, best-first. Empty when the match was title- or tag-only. */
+  passages: ScoredPassage[];
   provenance: {
     node_id: string;
     node_type: NodeType;
@@ -66,6 +71,7 @@ interface RankedNode {
   score: number;
   snippet: string;
   matches: VaultSearchMatch[];
+  passages: ScoredPassage[];
 }
 
 const TITLE_MATCH_SCORE = 100;
@@ -205,7 +211,7 @@ export function buildVaultContextPackets(
 
     const remainingCharacters = maxCharacters - usedCharacters;
     const contentLimit = Math.min(maxCharactersPerPacket, remainingCharacters);
-    const content = truncateContextContent(result.snippet || result.node.body || result.title, contentLimit);
+    const content = truncateContextContent(buildPacketContent(result, contentLimit), contentLimit);
     if (!content) continue;
 
     const packet: VaultContextPacket = {
@@ -229,6 +235,30 @@ export function buildVaultContextPackets(
   }
 
   return packets;
+}
+
+/**
+ * Fills a packet with the highest-scoring passages that fit the budget, each carrying its heading
+ * breadcrumb and transcript timestamp. Falls back to the snippet when a match was title- or
+ * tag-only and there are no passages.
+ */
+function buildPacketContent(result: VaultSearchResult, limit: number): string {
+  if (result.passages.length === 0) {
+    return result.snippet || result.node.body || result.title;
+  }
+
+  const sections: string[] = [];
+  let used = 0;
+
+  for (const scored of result.passages) {
+    const formatted = formatPassageForContext(scored.passage);
+    // Always take the best passage, even if it must be truncated to fit.
+    if (sections.length > 0 && used + formatted.length + 2 > limit) break;
+    sections.push(formatted);
+    used += formatted.length + 2;
+  }
+
+  return sections.join('\n\n');
 }
 
 /**
@@ -292,11 +322,17 @@ function rankNode(node: LabNode, searchTerms: string[], rawQuery: string): Ranke
         addMatch(matches, { field: 'tag', value: tag });
       }
     }
+  }
 
-    if (body.includes(term)) {
-      score += BODY_MATCH_SCORE;
-      addMatch(matches, { field: 'body' });
-    }
+  // Body contribution is passage-level: the best-matching passage plus saturating credit for
+  // corroborating ones, so one mention in a long transcript no longer scores like a focused note.
+  const passageResult = scorePassages(node.body, searchTerms);
+  if (passageResult.score > 0) {
+    score += passageResult.score;
+    addMatch(matches, { field: 'body' });
+  } else if (body.includes(searchTerms[0] ?? '')) {
+    score += BODY_MATCH_SCORE;
+    addMatch(matches, { field: 'body' });
   }
 
   if (score === 0) return null;
@@ -308,8 +344,9 @@ function rankNode(node: LabNode, searchTerms: string[], rawQuery: string): Ranke
   return {
     matches,
     node,
+    passages: passageResult.passages,
     score,
-    snippet: buildSnippet(node, searchTerms),
+    snippet: buildSnippet(node, searchTerms, passageResult),
   };
 }
 
@@ -318,7 +355,14 @@ function addMatch(matches: VaultSearchMatch[], next: VaultSearchMatch): void {
   matches.push(next);
 }
 
-function buildSnippet(node: LabNode, searchTerms: string[]): string {
+/**
+ * Prefers the best-matching passage over a radius snippet. A radius snippet anchors on the first
+ * matching term, which in a long document is routinely an incidental early mention rather than the
+ * passage that answers the question.
+ */
+function buildSnippet(node: LabNode, searchTerms: string[], passageResult: PassageScoreResult): string {
+  const best = passageResult.passages[0];
+  if (best) return best.passage.text.replace(/\s+/g, ' ').trim();
   return buildTextSnippet(node.body, node.title, searchTerms);
 }
 
@@ -368,6 +412,7 @@ function toVaultSearchResult(entry: RankedNode): VaultSearchResult {
     node: entry.node,
     node_id: entry.node.id,
     node_type: entry.node.type,
+    passages: entry.passages,
     path,
     provenance: {
       node_id: entry.node.id,

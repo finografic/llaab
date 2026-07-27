@@ -104,16 +104,13 @@ describe('frozen corpus regression guard', () => {
   });
 });
 
-describe('snippet extraction on long documents (Phase 3 evidence)', () => {
+describe('passage extraction on long documents', () => {
   /**
-   * Characterization test for a failure ranking metrics cannot see. The transcript ranks first for
-   * this question, but the assembled context packet does not contain the sentence that answers it —
-   * an early incidental match anchors the snippet in the intro.
-   *
-   * Phase 3 (passage-level retrieval) should invert both assertions below. When it does, this test
-   * will fail loudly, which is the intent: update it rather than delete it.
+   * Was a characterization test for the Phase 2 failure: a radius snippet anchored on an early
+   * incidental match on `search results`, so the passage that answers the question never reached
+   * the model. Phase 3 inverted it — passage ranking now surfaces the answering passage first.
    */
-  it('anchors the snippet on the first match, missing the answer later in the body', () => {
+  it('surfaces the answering passage rather than the incidental early match', () => {
     const document = loadFrozenDocuments().find(
       (entry) => entry.id === 'transcript.long-episode-on-agent-tooling',
     );
@@ -125,10 +122,52 @@ describe('snippet extraction on long documents (Phase 3 evidence)', () => {
     const [packet] = buildVaultContextPackets(results);
 
     expect(packet?.content).toBeDefined();
-    expect(packet?.content).toContain('search results from last week');
-    // The actual answer — present in the body, absent from the context the model receives.
-    expect(document!.body).toContain('reciprocal rank fusion');
-    expect(packet?.content).not.toContain('reciprocal rank fusion');
+    expect(packet?.content).toContain('reciprocal rank fusion');
+    expect(results[0]?.snippet).toContain('reciprocal rank fusion');
+    // The answering passage outranks the intro passage that merely mentions `search results`.
+    expect(results[0]?.passages[0]?.passage.text).toContain('reciprocal rank fusion');
+  });
+
+  it('carries heading breadcrumbs and transcript timestamps into context', () => {
+    const results = rankVaultSearchNodes(
+      [
+        toNode({
+          body: ['## Transcript', '', '<!-- t:1:46 -->', 'The loop structure bounds the agent.'].join('\n'),
+          id: 'transcript.with-markers',
+          tags: [],
+          title: 'Marked Transcript',
+        }),
+      ],
+      { query: 'loop structure' },
+    );
+    const [packet] = buildVaultContextPackets(results);
+
+    expect(packet?.content).toContain('Transcript');
+    expect(packet?.content).toContain('[1:46]');
+    expect(results[0]?.passages[0]?.passage.timestamp).toBe('1:46');
+  });
+
+  it('scores a focused note above a long document that mentions the term once', () => {
+    const filler = 'This sentence is unrelated padding that does not answer anything. '.repeat(20);
+    const results = rankVaultSearchNodes(
+      [
+        toNode({
+          body: `${filler}\n\nSomewhere in here retrieval is mentioned exactly once.`,
+          id: 'long-doc',
+          tags: [],
+          title: 'Long Document',
+        }),
+        toNode({
+          body: 'Retrieval quality bounds generation quality. Retrieval must be measured on its own.',
+          id: 'focused-doc',
+          tags: [],
+          title: 'Focused Note',
+        }),
+      ],
+      { query: 'retrieval quality' },
+    );
+
+    expect(results[0]?.node_id).toBe('focused-doc');
   });
 });
 
