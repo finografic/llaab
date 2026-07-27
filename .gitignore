@@ -47,6 +47,7 @@ pids
 *.seed
 *.pid.lock
 configs/cron-history.json
+configs/cloud-model-catalog.json
 
 # Cache
 .cache/

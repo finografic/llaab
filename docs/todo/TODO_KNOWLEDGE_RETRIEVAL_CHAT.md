@@ -24,6 +24,28 @@ Ordering principle: **measure → improve what is cheap and deterministic → ad
 the answer → widen the surface → close the loop.** Each phase should be independently shippable
 and independently reversible.
 
+## Decisions Needed From You
+
+Every phase below carries a **Depends on** line and a **Your input** line. Legend: 🔴 blocking —
+do not start without a decision · 🟡 a preference or budget, best answered from real usage ·
+🟢 none, implementation detail.
+
+| Phase | Decision                                                                                 | When it is needed                   |
+| ----- | ---------------------------------------------------------------------------------------- | ----------------------------------- |
+| 5 🔴  | Spend on embeddings at all; local vs cloud model — cloud sends vault content off-machine | Only once Phase 2 proves a miss     |
+| 10 🔴 | Whether chat threads become durable vault nodes, and `ChatNode` vs `RunNode` turns       | Before any durable-session work     |
+| 12 🔴 | `/chat` layout, and whether it replaces or complements the Terminal                      | Before UI work                      |
+| 4 🟡  | Where the index lives and what triggers a rebuild                                        | At Phase 4 start                    |
+| 7 🟡  | Acceptable answer latency budget                                                         | At Phase 7 start                    |
+| 8 🟡  | How strictly the system should refuse on weak evidence                                   | Tunable any time                    |
+| 11 🟡 | Iteration and token ceiling per agentic question                                         | At Phase 11 start                   |
+| 2 🟡  | Which node _should_ rank for a given question                                            | Reviewable after a draft set exists |
+| 6 🟡  | Your shorthand versus corpus vocabulary                                                  | Emerges from real misses            |
+
+**Nothing blocking is in the way of starting.** Phases 2, 3, and 8 need no decision from you up
+front; Phases 5, 10, and 12 do, and all three are far enough out that the answers will be clearer
+by the time they matter.
+
 ## Constraints
 
 These are not negotiable and shape every phase below.
@@ -100,6 +122,12 @@ Detail: `.agents/handoff.md` § Apps → `@llaab/client`.
 
 ## Phase 2 — Retrieval evaluation harness
 
+**Depends on:** nothing — startable now.
+**Your input:** 🟡 **partial, and not blocking.** The harness, metrics, CLI, and baseline can be
+built and seeded without you. What only you can supply is judgement: for a given question, which
+node _should_ have ranked first. Plan is to ship a draft fixture set for you to correct rather than
+block on it.
+
 **Why first:** every later phase is a ranking change, and without a measurement baseline each one
 is a guess. This phase is small, has no UI, and unblocks Phases 3–7. It also operationalises the
 embedding decision gate that Phase 0 wrote down but left unmeasured.
@@ -119,6 +147,10 @@ feels better".
 
 ## Phase 3 — Passage-level retrieval
 
+**Depends on:** Phase 2 (soft) — buildable without it, but you cannot prove it helped without it.
+**Your input:** 🟢 **none.** Chunk size, overlap, and aggregation are tunable implementation
+details validated against fixtures, not preferences.
+
 **Why:** today a whole transcript is scored as one unit and represented by a ~180-character
 snippet. A 90-minute transcript that mentions the answer once ranks the same as a focused wiki, and
 the assembled context packet may not even contain the relevant sentence. This is the single largest
@@ -134,6 +166,12 @@ quality lever available without embeddings.
 - [ ] Extend fixtures with passage-level expectations; confirm Phase 2 metrics improve.
 
 ## Phase 4 — BM25 ranking and a persisted lexical index
+
+**Depends on:** Phase 2 (hard — BM25 parameter tuning is meaningless without metrics); Phase 3
+(soft — index passages once, rather than indexing documents then re-indexing passages later).
+**Your input:** 🟡 **one decision.** Where the index lives and how it is triggered — a `lab index
+build` you run manually, a step folded into ingestion, or a `/crons` recipe. This is an operational
+preference about your workflow, not a technical constraint.
 
 **Why:** current scoring adds a flat constant per matching term. It has no notion of term rarity
 (`LLAAB` and `agent` score identically), no document-length normalization (long transcripts win by
@@ -152,6 +190,13 @@ rescans and re-parses the corpus on every query.
 - [ ] Confirm Phase 2 metrics improve and query latency drops on the full corpus.
 
 ## Phase 5 — Hybrid retrieval with embeddings
+
+**Depends on:** Phase 2 (hard — this is the gate), Phase 3 (hard — embed passages, not documents),
+Phase 4 (hard — fusion needs a strong lexical list to fuse with).
+**Your input:** 🔴 **required, and this is the big one.** Whether to spend on embeddings at all,
+and if so whether the embedding model stays local (free, offline, weaker) or goes cloud (better
+recall, per-query cost, sends vault content off-machine). That last point is a privacy decision
+about your own captures and is explicitly yours to make, not mine.
 
 **Gate:** only start once Phase 2 fixtures contain repeatable misses matching the failure classes
 named in the Phase 0 decision gate — paraphrase misses, conceptually-related evidence outranked by
@@ -172,6 +217,12 @@ unrelated exact matches, or evidence buried in long bodies.
 
 ## Phase 6 — Query understanding
 
+**Depends on:** Phase 2 (hard — every step here can make a good query worse; only fixtures catch it).
+**Your input:** 🟡 **light but valuable.** The synonym map is generated from `LLAAB_GLOSSARY.md`
+and the tag taxonomy, but your personal shorthand is not written down anywhere — the terms you type
+versus the terms the corpus uses. Easiest captured from real `chat.ask` misses rather than asked
+for up front.
+
 **Why:** the operator asks questions in their own shorthand. The corpus uses the project's
 vocabulary. `LLAAB_GLOSSARY.md` and the tag taxonomy already encode that mapping and are unused by
 retrieval.
@@ -189,6 +240,11 @@ retrieval.
 
 ## Phase 7 — Reranking
 
+**Depends on:** Phase 2 (hard — precision gain must be measured against its latency cost), Phase 3
+(soft — reranking passages beats reranking whole documents).
+**Your input:** 🟡 **one tradeoff.** Your acceptable latency budget for an answer. Reranking buys
+precision with seconds, and only you know how long you will tolerate waiting at the terminal.
+
 **Why:** ranking is cheap and shallow; reranking is expensive and precise. Applying the expensive
 step to only the top candidates gets most of the precision for a small fraction of the cost.
 
@@ -201,6 +257,13 @@ step to only the top candidates gets most of the precision for a small fraction 
 - [ ] Measure precision gain against Phase 2 and record the latency cost.
 
 ## Phase 8 — Grounded answers and citation contract
+
+**Depends on:** nothing — **fully independent of all ranking work, and startable now.** This is the
+best candidate to run in parallel with Phases 2–4.
+**Your input:** 🟡 **one preference.** How strict refusal should be. A system that refuses when
+evidence is weak is trustworthy but terse; one that always attempts an answer is useful but
+occasionally confident and wrong. That calibration is a matter of taste and easiest judged from
+real answers.
 
 **Why:** the model already emits `[K1]`-style markers spontaneously, but nothing validates them. An
 unverified citation is worse than none because it looks trustworthy.
@@ -217,6 +280,10 @@ unverified citation is worse than none because it looks trustworthy.
 
 ## Phase 9 — Graph-aware context expansion
 
+**Depends on:** Phase 2 (hard — expansion adds noise as easily as signal), Phase 3 (soft — expand
+to passages rather than whole neighbours).
+**Your input:** 🟢 **none.** Hop count and score discount are fixture-tuned.
+
 **Why:** LLAAB already has a knowledge graph — wiki links, shared tags, and canonical-idea →
 transcript provenance edges — and retrieval ignores it. The neighbour of a strong hit is often the
 actual answer.
@@ -231,6 +298,13 @@ actual answer.
 
 ## Phase 10 — Durable chat sessions
 
+**Depends on:** nothing technically — but see below.
+**Your input:** 🔴 **required before implementation.** Two decisions that are yours: whether chat
+threads become durable vault nodes at all (they are conversations _about_ your knowledge, not
+knowledge itself — persisting them grows the vault with material that may never be worth keeping),
+and if so whether they are a new `ChatNode` type or turns attached to a `RunNode`. That choice
+affects the taxonomy, so it should not be made by default.
+
 **Why:** chat memory is currently an in-process `Map` that dies with the server, is invisible to
 every other surface, and violates the spirit of the process-state rule for anything worth keeping.
 
@@ -242,6 +316,11 @@ every other surface, and violates the spirit of the process-state rule for anyth
 - [ ] Keep an explicit ephemeral mode — not every question deserves a durable record.
 
 ## Phase 11 — Agentic retrieval loop
+
+**Depends on:** Phase 10 (soft — traces need somewhere durable to live), Phases 3–4 (soft — an
+iterative loop over weak ranking just compounds the weakness).
+**Your input:** 🟡 **one budget.** The hard cap on iterations and total tokens per question. This
+is a cost ceiling, and it is your money and your patience.
 
 **Why:** one-shot retrieval answers one-shot questions. Real questions often need a first search to
 discover the right vocabulary, then a second search to find the answer.
@@ -256,6 +335,12 @@ discover the right vocabulary, then a second search to find the answer.
 
 ## Phase 12 — Chat UI surface
 
+**Depends on:** Phase 10 (hard — a thread list needs durable threads), Phase 8 (soft — source cards
+are much better with validated citations).
+**Your input:** 🔴 **required.** This is a design surface, and your UI preferences are specific and
+well-established. Layout, source-card density, and whether `/chat` replaces or complements the
+Terminal as the primary asking surface are all yours to direct.
+
 - [ ] A `/chat` route with threaded conversation, per-turn source cards, and scope controls.
 - [ ] Source cards showing tier, score, matched passage, and a link to the node or wiki.
 - [ ] Thread list backed by Phase 10 durable sessions with search across past conversations.
@@ -263,6 +348,12 @@ discover the right vocabulary, then a second search to find the answer.
 - [ ] Follows `PageLayout` / `PageHero` and the `Row`/`Col` grid rules; shadcn primitives only.
 
 ## Phase 13 — Feedback loop
+
+**Depends on:** Phase 2 (hard — feedback has nowhere to go without a fixture format), Phase 12
+(soft — Terminal-only feedback works, but a UI makes it a one-click habit).
+**Your input:** 🟡 **ongoing, by design.** This phase _is_ your input, operationalised — it is the
+mechanism by which your judgement about wrong answers becomes ranking improvement without you
+having to write fixtures by hand.
 
 **Why:** this is what makes the system compound. Without it, Phase 2 fixtures are written once and
 go stale; with it, every bad answer permanently improves ranking.
@@ -274,6 +365,10 @@ go stale; with it, every bad answer permanently improves ranking.
 - [ ] Surface recurring misses that share a failure class as evidence for the next phase.
 
 ## Phase 14 — Retrieval observability
+
+**Depends on:** whichever retrieval stages exist — it instruments them, so it is worth most after
+Phases 4–7 and is partially buildable at any point.
+**Your input:** 🟢 **none.**
 
 - [ ] Record a retrieval trace per query — candidates per strategy, fusion, rerank movement, final
       context, and per-stage latency.
