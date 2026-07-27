@@ -162,6 +162,7 @@ function createSidebarPanel(config: SidebarPanelConfig) {
       maxSize={toCssSize(config.maxWidth)}
       collapsible={config.collapsible}
       collapsedSize={config.collapsedSize}
+      groupResizeBehavior="preserve-pixel-size"
       onResize={config.onResize}
       panelRef={config.panelRef}
       className={cn('min-w-0', config.panelClassName)}

@@ -2,6 +2,7 @@
    ancestor route container (`AppLayout`'s `.pageContent`, which already scrolls) provides the
    single scrollbar, rather than nesting a second scroll region inside the panel. */
 .viewer {
+  container-type: inline-size;
   min-width: 0;
 }
 
@@ -211,6 +212,16 @@
 
   .enhancedTocCard {
     position: static;
+  }
+}
+
+@container (max-width: 1023px) {
+  .enhancedMain {
+    max-width: 100% !important;
+  }
+
+  .enhancedTocCol {
+    display: none;
   }
 }
 

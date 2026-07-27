@@ -1,7 +1,9 @@
 import { useAppLeftSidebar } from 'layouts/AppLayout/AppLeftSidebarContext';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { VaultNode } from './vault-browser.types';
+
+import { BREAKPOINTS } from 'lib/viewport';
 
 import { VaultFileViewer } from './components/VaultFileViewer';
 import { VaultSidebar } from './components/VaultSidebar';
@@ -10,8 +12,9 @@ export type { VaultNode } from './vault-browser.types';
 
 const VAULT_SIDEBAR_ID = 'vault-browser';
 const VAULT_SIDEBAR_MIN_WIDTH = '280px';
-const VAULT_SIDEBAR_MAX_WIDTH = '720px';
-const VAULT_SIDEBAR_DEFAULT_WIDTH = '480px';
+const VAULT_SIDEBAR_WIDE_DEFAULT_WIDTH = '430px';
+const VAULT_SIDEBAR_WIDE_MAX_WIDTH = '580px';
+const VAULT_SIDEBAR_WIDE_BREAKPOINT = BREAKPOINTS['2xl'];
 const PATH_SEARCH_PARAM = 'path';
 const VIEW_SEARCH_PARAM = 'view';
 const DIFF_VIEW = 'diff';
@@ -19,12 +22,30 @@ const RENDER_VIEW = 'render';
 const ENHANCED_VIEW = 'enhanced';
 type MarkdownView = 'raw' | 'render' | 'enhanced';
 
+function useWideVaultSidebar(): boolean {
+  const [wide, setWide] = useState(false);
+
+  useEffect(() => {
+    function updateWideSidebar() {
+      setWide(window.innerWidth > VAULT_SIDEBAR_WIDE_BREAKPOINT);
+    }
+
+    updateWideSidebar();
+    window.addEventListener('resize', updateWideSidebar);
+
+    return () => window.removeEventListener('resize', updateWideSidebar);
+  }, []);
+
+  return wide;
+}
+
 export interface VaultBrowserProps {
   tree: VaultNode[];
 }
 
 export function VaultBrowser({ tree }: VaultBrowserProps) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const wideVaultSidebar = useWideVaultSidebar();
   // Search params are the single source of truth, so external navigation (e.g. clicking a
   // file in the Vault Changes sidebar while already on this route) is picked up immediately —
   // a separate `useState` mirror would only capture the value at mount.
@@ -82,10 +103,10 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
       content: sidebarContent,
       defaultOpen: true,
       minWidth: VAULT_SIDEBAR_MIN_WIDTH,
-      maxWidth: VAULT_SIDEBAR_MAX_WIDTH,
-      defaultWidth: VAULT_SIDEBAR_DEFAULT_WIDTH,
+      maxWidth: wideVaultSidebar ? VAULT_SIDEBAR_WIDE_MAX_WIDTH : VAULT_SIDEBAR_MIN_WIDTH,
+      defaultWidth: wideVaultSidebar ? VAULT_SIDEBAR_WIDE_DEFAULT_WIDTH : VAULT_SIDEBAR_MIN_WIDTH,
     }),
-    [sidebarContent],
+    [sidebarContent, wideVaultSidebar],
   );
 
   useAppLeftSidebar(leftSidebar);
