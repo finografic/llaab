@@ -24,6 +24,18 @@ export const AiRunCommandSchema = z.object({
   maxTokens: z.number().int().positive().optional(),
 });
 
+export const ChatScopeSchema = z.enum(['all', 'knowledge', 'vault']);
+
+export const ChatAskCommandSchema = z.object({
+  kind: z.literal('chat.ask'),
+  question: z.string().min(1),
+  scope: ChatScopeSchema.optional(),
+  limit: z.number().int().positive().max(25).optional(),
+  model: z.string().min(1).optional(),
+  sessionId: z.string().min(1).optional(),
+  resetSession: z.boolean().optional(),
+});
+
 export const AgentRunCommandSchema = z.object({
   kind: z.literal('agent.run'),
   executor: z.enum(['llaab', 'hermes']).optional(),
@@ -61,6 +73,7 @@ export const ShellExecCommandSchema = z.object({
 
 export const CommandSchema = z.discriminatedUnion('kind', [
   AiRunCommandSchema,
+  ChatAskCommandSchema,
   AgentRunCommandSchema,
   CronRunCommandSchema,
   FsReadCommandSchema,
@@ -124,6 +137,8 @@ export const OutputEnvelopeSchema = z.object({
 export type CommandSource = z.infer<typeof CommandSourceSchema>;
 export type Command = z.infer<typeof CommandSchema>;
 export type AiRunCommand = z.infer<typeof AiRunCommandSchema>;
+export type ChatAskCommand = z.infer<typeof ChatAskCommandSchema>;
+export type ChatScope = z.infer<typeof ChatScopeSchema>;
 export type AgentRunCommand = z.infer<typeof AgentRunCommandSchema>;
 export type CronRunCommand = z.infer<typeof CronRunCommandSchema>;
 export type FsReadCommand = z.infer<typeof FsReadCommandSchema>;

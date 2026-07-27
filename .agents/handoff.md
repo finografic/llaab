@@ -111,11 +111,27 @@ dialog regardless of route. The always-visible "Clean" button on the transcript 
 automatic flow can't reach (orphaned files from manual deletes, or a conflict from before this
 flow existed) — deletes every canonical-idea file + consolidate run tied to that transcript and
 clears its coverage.
-Terminal (`/terminal`) is a typed command-bus UI, not raw shell passthrough. It supports `ai.run`,
-`agent.run`, `cron.run`, `fs.read`, `fs.list`, and session-gated `shell.exec`; command references
-and the left action rail paste commands into the input and focus it, but never auto-run. Command
-execution persists durable command `RunNode`s, and live process status belongs in the global
+Terminal (`/terminal`) is a typed command-bus UI, not raw shell passthrough. It supports `chat.ask`,
+`ai.run`, `agent.run`, `cron.run`, `fs.read`, `fs.list`, and session-gated `shell.exec`; command
+references and the left action rail paste commands into the input and focus it, but never auto-run.
+Command execution persists durable command `RunNode`s, and live process status belongs in the global
 Activity Monitor sidebar, not terminal-local state.
+
+`chat.ask` is the open-ended question surface over local knowledge: it treats `knowledge/` and
+`vault/` as retrieved context for the routed model rather than as a browsable list. Grammar is
+`chat.ask "question" [--scope all|knowledge|vault] [--limit n] [--model id] [--reset]`. The handler
+(`apps/server/src/commands/chat-command.handler.ts`) delegates to `knowledge-chat.service.ts`, which
+assembles both tiers through the Search and Retrieval Foundation primitives (`searchKnowledgeDocs`
+for `knowledge/`, `searchVaultNodes` + `buildVaultContextPackets` for `vault/`), then streams a
+`reason`-task answer. Context precedence is explicit and enforced in the system prompt: **KNOWLEDGE
+outranks VAULT, and both outrank the model's own training knowledge**; when local context does not
+cover the question the model says so in one line and answers under an `Outside the vault:` heading,
+so synthesized answers stay distinguishable from grounded ones. Output order is a `chat.context`
+meta event (per-tier hit counts), streamed answer tokens, then a `chat.sources` meta event the
+Terminal renders as a clickable provenance list — the model is told not to write its own sources
+list. Sessions are in-process only (`Map`, last 4 turns, keyed by a client-generated `sessionId`,
+cleared on server restart or `--reset`) — chat memory is deliberately not durable and is not a
+`RunNode`.
 Crons (`/crons`) are one-shot recipes plus external trigger snippets, not an internal scheduler.
 The first recipe, `check-transcripts-consolidation`, scans transcripts with extracted ideas and no
 canonical set, runs missing consolidation via the shared consolidation helper, and creates durable
@@ -470,10 +486,11 @@ capability flags, context-length extraction, and direct image JSON controls.
 `routeLlmObject()` is the typed structured-output path for text; `routeLlmVisionObject()` applies
 the same LLAAB-owned schema validation to vision output. Anthropic/opencode routes use the SDK
 object path while local providers use deterministic JSON extraction, and failures throw
-`LlmStructuredOutputError` carrying the raw model text. Embeddings are deferred until Search and
-Retrieval Foundation defines measurable ranking fixtures. Characterization tests in
-`packages/llm/src` pin the router, cache, and provider transport contracts. Detail:
-`docs/todo/DONE_VERCEL_AI_SDK_MIGRATION.md` and `docs/todo/TODO_FABLE_MIGRATION_LEDGER.md`.
+`LlmStructuredOutputError` carrying the raw model text. Search and Retrieval Foundation keeps
+embeddings deferred until repeatable deterministic-search misses prove a measurable ranking need.
+Characterization tests in `packages/llm/src` pin the router, cache, and provider transport
+contracts. Detail: `docs/todo/DONE_VERCEL_AI_SDK_MIGRATION.md` and
+`docs/todo/TODO_FABLE_MIGRATION_LEDGER.md`.
 
 A per-call `model` override string may be provider-qualified (`provider:model`, the same encoding
 `LlmRoutingEditor` uses for persisted routing) to redirect the task to a different provider; a
@@ -582,9 +599,12 @@ YAML `profiles` object-array parsing so all source nodes load for runs author li
 ## Roadmap & Planning
 
 Primary plan: `docs/todo/ROADMAP.md`; near-term tasks live in `ROADMAP.md#next`. Current large task:
-`docs/todo/TODO_SEARCH_RETRIEVAL_FOUNDATION.md` — deterministic local retrieval contract, fixtures,
-provenance-aware results, context assembly limits, `/vault/search`, and an explicit embedding
-decision gate.
+Article Ingestion — first write the implementation plan, then replace the placeholder article
+fetcher with a bounded ingest path that reuses the transcript-first save/extract boundary and
+connects to inbox docs/post captures. Search and Retrieval Foundation is complete; detail:
+`docs/todo/DONE_SEARCH_RETRIEVAL_FOUNDATION.md`. Its continuation is
+`docs/todo/TODO_KNOWLEDGE_RETRIEVAL_CHAT.md` (P1) — Phases 0–1 done, Phase 2 (retrieval evaluation
+harness) should be pulled forward since every later ranking change is unmeasurable without it.
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
 Wiki generation is implemented; the completion record is `docs/todo/DONE_WIKI_GENERATION.md` and
 the ongoing feature reference is `docs/process/WIKI_WORKFLOW.md`.

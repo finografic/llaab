@@ -6,7 +6,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/
 import { Col, Row } from 'components/ui/grid';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from 'components/ui/input-group';
 import { ScrollArea } from 'components/ui/scroll-area';
-import { FileTextIcon, FolderIcon, SendIcon, TerminalIcon, XIcon } from 'lucide-react';
+import {
+  BookOpenIcon,
+  FileTextIcon,
+  FolderIcon,
+  LibraryIcon,
+  SendIcon,
+  TerminalIcon,
+  XIcon,
+} from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { TerminalAction } from './terminal-panel.constants';
@@ -23,9 +31,11 @@ import {
   commandForReference,
   eventText,
   findExecutableReference,
+  isChatSourcesMeta,
   isCommandRunMeta,
   isFsListMeta,
   parseTerminalCommand,
+  readChatSources,
   readFsListEntries,
   readShellSessionEnabled,
   readStringMeta,
@@ -75,7 +85,12 @@ export function TerminalPanel() {
     {
       id: 'welcome',
       kind: 'system',
-      text: 'Connected commands: ai.run, agent.run, fs.read, fs.list, shell.exec',
+      text: 'Connected commands: chat.ask, ai.run, agent.run, fs.read, fs.list, shell.exec',
+    },
+    {
+      id: 'chat-hint',
+      kind: 'system',
+      text: 'chat.ask answers from knowledge/ first, then vault/, then the model. Example: chat.ask "How do I write a harness well?"',
     },
     {
       id: 'shell-warning',
@@ -99,6 +114,7 @@ export function TerminalPanel() {
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const shellSessionIdRef = useRef<string | null>(null);
+  const chatSessionIdRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -156,7 +172,11 @@ export function TerminalPanel() {
 
     try {
       shellSessionIdRef.current ??= crypto.randomUUID();
-      const parsed = parseTerminalCommand(trimmed, shellSessionIdRef.current);
+      chatSessionIdRef.current ??= crypto.randomUUID();
+      const parsed = parseTerminalCommand(trimmed, {
+        chat: chatSessionIdRef.current,
+        shell: shellSessionIdRef.current,
+      });
       socketRef.current?.send(
         JSON.stringify({
           id: crypto.randomUUID(),
@@ -281,6 +301,54 @@ export function TerminalPanel() {
           <TerminalIcon aria-hidden className="size-3.5" />
           View run {runId}
         </Link>
+      );
+    }
+
+    if (line.event && isChatSourcesMeta(line.event)) {
+      const sources = readChatSources(line.event);
+      if (sources.length === 0) {
+        return <span className="text-muted-foreground">No matching sources in knowledge/ or vault/.</span>;
+      }
+
+      return (
+        <div className="space-y-1">
+          <span className="font-semibold">Sources:</span>
+          <div className="grid gap-1">
+            {sources.map((source) => {
+              const Icon = source.origin === 'knowledge' ? LibraryIcon : BookOpenIcon;
+              const label = (
+                <>
+                  <Icon
+                    aria-hidden
+                    className={cn(
+                      'size-3.5 shrink-0',
+                      source.origin === 'knowledge' ? 'text-primary' : 'text-muted-foreground',
+                    )}
+                  />
+                  <span className="truncate">{source.title}</span>
+                  <span className="truncate text-muted-foreground">{source.path}</span>
+                </>
+              );
+
+              return source.href ? (
+                <Link
+                  key={`${source.origin}-${source.path}`}
+                  to={source.href}
+                  className="flex min-w-0 items-center gap-2 rounded px-1.5 py-1 hover:bg-muted"
+                >
+                  {label}
+                </Link>
+              ) : (
+                <span
+                  key={`${source.origin}-${source.path}`}
+                  className="flex min-w-0 items-center gap-2 rounded px-1.5 py-1"
+                >
+                  {label}
+                </span>
+              );
+            })}
+          </div>
+        </div>
       );
     }
 

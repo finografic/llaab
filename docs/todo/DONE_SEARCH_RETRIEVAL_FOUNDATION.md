@@ -1,6 +1,7 @@
-# TODO — Search and Retrieval Foundation
+# DONE — Search and Retrieval Foundation
 
-> **Status:** Active (2026-07-26). Phases 0–4 complete; Phase 5 embedding decision gate is next.
+> **Status:** Done (2026-07-28). Deterministic local retrieval is complete; embeddings remain
+> explicitly deferred until real misses prove a measurable ranking need.
 
 ## Goal
 
@@ -90,10 +91,52 @@ clear snippets, match reasons, and deterministic limits.
 
 ## Phase 5 — Embedding Decision Gate
 
-- [ ] Compare deterministic search against fixture expectations and real operator misses.
-- [ ] Define measurable ranking failures that embeddings should improve.
-- [ ] If needed, add an embedding adapter through `@llaab/llm` after the contract is stable.
-- [ ] If not needed, explicitly keep embeddings deferred.
+- [x] Compare deterministic search against fixture expectations and real operator misses.
+- [x] Define measurable ranking failures that embeddings should improve.
+- [x] Decide whether an embedding adapter through `@llaab/llm` is needed after the contract is
+      stable.
+- [x] Explicitly keep embeddings deferred because no repeatable ranking miss requires them yet.
+
+## Embedding Decision
+
+Embeddings are **not needed yet**.
+
+The deterministic search contract now has fixture coverage for title, tag, body, recency tie-break,
+type/status/tag filters, representative vault node types, provenance, snippets, no-match behavior,
+and bounded context assembly. The current `/vault/search`, `GET /api/vault/search`, and
+`vault_search` MCP surfaces are good enough to collect operator feedback without adding a vector
+store, embedding lifecycle, cache invalidation path, or background indexing.
+
+Add embeddings only after at least one repeatable miss is captured where deterministic search cannot
+rank the expected evidence high enough. A future embedding adapter should improve one of these
+measurable failures:
+
+- synonym or paraphrase queries miss evidence whose exact terms are absent
+- conceptually related evidence ranks below unrelated exact string matches
+- long transcript bodies hide the expected source despite relevant snippets
+- multi-hop evidence needs semantic recall before graph/context assembly can help
+
+If those misses appear, add embeddings as a ranking adapter behind the existing
+`VaultSearchQuery` / `VaultSearchResult` contract through `@llaab/llm`; do not replace the current
+deterministic search API or make retrieval depend on a background index.
+
+## Follow-On — `chat.ask` (2026-07-28)
+
+The first consumer of this foundation is the Terminal `chat.ask` command, which answers open-ended
+questions by treating `knowledge/` and `vault/` as retrieved context for the routed model. It adds
+`searchKnowledgeDocs` (the `knowledge/` counterpart to `searchVaultNodes`, sharing the tokenizer and
+snippet builder) and consumes `buildVaultContextPackets` unchanged — the retrieval contract defined
+here needed no revision to support it. Detail: `.agents/handoff.md` § Apps → `@llaab/client`.
+
+Live validation of that command exposed one ranking defect in this phase's tokenizer, now fixed:
+`tokenizeSearchQuery` performed no stopword or punctuation handling, so a natural-language question
+matched `the` / `of` / `for` against every document body while a trailing `?` prevented the real
+term from matching at all. Asking "What is the capital city of Portugal?" returned 8 knowledge hits
+scoring 140–240; after filtering stopwords and trimming surrounding punctuation the same question
+returns 1 hit scoring 20, while "What are the rules for agent execution in LLAAB?" keeps its full
+knowledge-tier result set. Queries consisting only of stopwords fall back to the raw terms, so a
+literal search for `the` still returns results. This improves `/vault/search` and `vault_search`
+equally, and does not change the result, provenance, or context-packet shapes.
 
 ## Validation
 
@@ -102,10 +145,11 @@ clear snippets, match reasons, and deterministic limits.
 - [x] Run MCP smoke test for `vault_search`.
 - [x] Run client tests/build only when the UI phase begins.
 - [x] Run markdown lint and format checks for this plan.
+- [x] Record the embedding decision gate outcome.
 
 ## References
 
-- [`ROADMAP.md`](./ROADMAP.md) — current P0 owner.
+- [`ROADMAP.md`](./ROADMAP.md) — delivered milestone and next large initiative owner.
 - [`docs/ARCHITECTURAL_PRIORITIES.md`](../ARCHITECTURAL_PRIORITIES.md) §3 — retrieval and context
   assembly rationale.
 - [`DONE_VERCEL_AI_SDK_MIGRATION.md`](./DONE_VERCEL_AI_SDK_MIGRATION.md) — embedding boundary

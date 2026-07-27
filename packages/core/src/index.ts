@@ -9,6 +9,8 @@ export type { Capability } from './capability.js';
 export {
   AgentRunCommandSchema,
   AiRunCommandSchema,
+  ChatAskCommandSchema,
+  ChatScopeSchema,
   CommandEnvelopeSchema,
   CommandSchema,
   CommandSourceSchema,
@@ -28,6 +30,8 @@ export {
 export type {
   AgentRunCommand,
   AiRunCommand,
+  ChatAskCommand,
+  ChatScope,
   Command,
   CommandEnvelope,
   CommandSource,
@@ -81,9 +85,11 @@ export {
 export { MONOREPO_ROOT } from './utils/vault-root.js';
 export { listNodes } from './utils/list-nodes.utils.js';
 export {
+  buildTextSnippet,
   buildVaultContextPackets,
   rankVaultSearchNodes,
   searchVaultNodes,
+  tokenizeSearchQuery,
   type VaultContextAssemblyOptions,
   type VaultContextKind,
   type VaultContextPacket,
@@ -92,6 +98,15 @@ export {
   type VaultSearchQuery,
   type VaultSearchResult,
 } from './utils/search-vault-nodes.utils.js';
+export {
+  getKnowledgeDocHref,
+  listKnowledgeDocs,
+  rankKnowledgeDocs,
+  searchKnowledgeDocs,
+  type KnowledgeDoc,
+  type KnowledgeDocSearchQuery,
+  type KnowledgeDocSearchResult,
+} from './utils/search-knowledge-docs.utils.js';
 export { parseFrontmatter } from './utils/parse-frontmatter.utils.js';
 export { readNode } from './utils/read-node.utils.js';
 export { readNodeByType } from './utils/read-node-by-type.utils.js';

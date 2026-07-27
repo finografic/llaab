@@ -25,6 +25,7 @@ export type Capability = z.infer<typeof CapabilitySchema>;
 
 export const COMMAND_CAPABILITIES: Record<Command['kind'], Capability[]> = {
   'ai.run': ['chat', 'extract', 'reason', 'command_run'],
+  'chat.ask': ['chat', 'reason', 'memory_read', 'command_run'],
   'agent.run': ['agent_run', 'skill_run', 'command_run'],
   'cron.run': ['skill_run', 'command_run'],
   'fs.read': ['memory_read', 'command_run'],

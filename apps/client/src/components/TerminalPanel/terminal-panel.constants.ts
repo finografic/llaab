@@ -1,4 +1,11 @@
-import { BotIcon, ListTreeIcon, SparklesIcon, TerminalIcon, TimerIcon } from 'lucide-react';
+import {
+  BotIcon,
+  ListTreeIcon,
+  MessagesSquareIcon,
+  SparklesIcon,
+  TerminalIcon,
+  TimerIcon,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface TerminalAction {
@@ -13,13 +20,16 @@ export interface TerminalActionGroup {
   actions: TerminalAction[];
 }
 
-export const DEFAULT_ACTION_GROUP_ID = 'vault';
+export const DEFAULT_ACTION_GROUP_ID = 'chat';
 
 export const HISTORY_STORAGE_KEY = 'llaab-terminal-history';
 
 export const COMMAND_PLACEHOLDER = 'Type a command, or choose an action';
 
 export const COMMAND_SUGGESTIONS = [
+  'chat.ask "Give me info on how to write a harness well."',
+  'chat.ask "What did I capture about context engineering?" --scope vault',
+  'chat.ask "Summarise my canonical ideas on agent execution." --scope knowledge',
   'ai.run extract "Extract three reusable ideas from this note."',
   'ai.run reason "Think through this decision."',
   'agent.run --executor llaab --force',
@@ -37,6 +47,7 @@ export const COMMAND_SUGGESTIONS = [
 ] as const;
 
 export const EXECUTABLE_COMMAND_REFERENCES = [
+  'chat.ask',
   'shell.exec --enable-session --confirm',
   'shell.exec --disable-session',
   'shell.exec --confirm',
@@ -49,6 +60,23 @@ export const EXECUTABLE_COMMAND_REFERENCES = [
 ] as const;
 
 export const COMMAND_ACTION_GROUPS: TerminalActionGroup[] = [
+  {
+    id: 'chat',
+    label: 'Chat',
+    icon: MessagesSquareIcon,
+    actions: [
+      { label: 'Ask the vault', command: 'chat.ask "How do I write a harness well?"' },
+      {
+        label: 'Ask knowledge only',
+        command: 'chat.ask "What are my canonical ideas on agent execution?" --scope knowledge',
+      },
+      {
+        label: 'Ask vault captures only',
+        command: 'chat.ask "What did I capture about context engineering?" --scope vault',
+      },
+      { label: 'Start a fresh thread', command: 'chat.ask "New question." --reset' },
+    ],
+  },
   {
     id: 'vault',
     label: 'Vault',

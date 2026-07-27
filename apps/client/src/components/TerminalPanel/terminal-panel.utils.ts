@@ -1,8 +1,14 @@
-import type { Command, OutputEvent } from 'types/terminal-protocol';
+import type { ChatScope, ChatSource, Command, OutputEvent } from 'types/terminal-protocol';
 
 import { EXECUTABLE_COMMAND_REFERENCES } from './terminal-panel.constants';
 
 type AiRunTask = Extract<Command, { kind: 'ai.run' }>['task'];
+type ChatAskCommand = Extract<Command, { kind: 'chat.ask' }>;
+
+export interface TerminalSessionIds {
+  shell: string;
+  chat: string;
+}
 
 export interface FsListEntry {
   name: string;
@@ -25,8 +31,13 @@ export function splitCommand(input: string): string[] {
   });
 }
 
-export function parseTerminalCommand(input: string, shellSessionId: string): Command {
+export function parseTerminalCommand(input: string, sessionIds: TerminalSessionIds): Command {
   const [kind, ...args] = splitCommand(input.trim());
+  const shellSessionId = sessionIds.shell;
+
+  if (kind === 'chat.ask' || kind === 'chat') {
+    return parseChatAskCommand(args, sessionIds.chat);
+  }
 
   if (kind === 'ai.run') {
     const [task, ...promptParts] = args;
@@ -107,7 +118,48 @@ export function parseTerminalCommand(input: string, shellSessionId: string): Com
     };
   }
 
-  throw new Error('Unknown command. Try: ai.run extract "summarize this"');
+  throw new Error('Unknown command. Try: chat.ask "how do I write a harness well?"');
+}
+
+const CHAT_ASK_USAGE =
+  'Usage: chat.ask "question" [--scope all|knowledge|vault] [--limit <n>] [--model <id>] [--reset]';
+
+function parseChatAskCommand(args: string[], chatSessionId: string): ChatAskCommand {
+  const scopeIndex = args.indexOf('--scope');
+  const limitIndex = args.indexOf('--limit');
+  const modelIndex = args.indexOf('--model');
+  const flagValueIndexes = new Set(
+    [scopeIndex, limitIndex, modelIndex].filter((index) => index !== -1).map((index) => index + 1),
+  );
+
+  const questionParts = args.filter((arg, index) => {
+    if (arg === '--scope' || arg === '--limit' || arg === '--model' || arg === '--reset') return false;
+    return !flagValueIndexes.has(index);
+  });
+
+  const question = questionParts.join(' ').trim();
+  if (!question) throw new Error(CHAT_ASK_USAGE);
+
+  return {
+    kind: 'chat.ask',
+    limit: limitIndex === -1 ? undefined : readChatLimit(args[limitIndex + 1]),
+    model: modelIndex === -1 ? undefined : args[modelIndex + 1],
+    question,
+    resetSession: args.includes('--reset'),
+    scope: scopeIndex === -1 ? undefined : readChatScope(args[scopeIndex + 1]),
+    sessionId: chatSessionId,
+  };
+}
+
+function readChatScope(value: string | undefined): ChatScope {
+  if (value === 'all' || value === 'knowledge' || value === 'vault') return value;
+  throw new Error(CHAT_ASK_USAGE);
+}
+
+function readChatLimit(value: string | undefined): number {
+  const limit = Number(value);
+  if (!Number.isInteger(limit) || limit < 1 || limit > 25) throw new Error(CHAT_ASK_USAGE);
+  return limit;
 }
 
 function isAiRunTask(value: string): value is AiRunTask {
@@ -148,6 +200,13 @@ export function eventText(event: OutputEvent): string {
   if (event.type === 'meta') {
     if (event.data['kind'] === 'fs.list') return `listed ${readStringMeta(event.data['path'], '.')}`;
     if (event.data['kind'] === 'fs.read') return `reading ${readStringMeta(event.data['path'], '')}`;
+    if (event.data['kind'] === 'chat.context') {
+      const knowledgeHits = readNumberMeta(event.data['knowledge_hits']);
+      const vaultHits = readNumberMeta(event.data['vault_hits']);
+      const scope = readStringMeta(event.data['scope'], 'all');
+      return `context: ${knowledgeHits} knowledge, ${vaultHits} vault (scope ${scope})`;
+    }
+    if (event.data['kind'] === 'chat.sources') return 'Sources';
     return JSON.stringify(event.data);
   }
   if (event.type === 'error') return `${event.code ?? 'ERROR'}: ${event.message}`;
@@ -158,6 +217,10 @@ export function readStringMeta(value: unknown, fallback: string): string {
   return typeof value === 'string' ? value : fallback;
 }
 
+function readNumberMeta(value: unknown): number {
+  return typeof value === 'number' ? value : 0;
+}
+
 export function isFsListMeta(event: OutputEvent): event is Extract<OutputEvent, { type: 'meta' }> {
   return event.type === 'meta' && event.data['kind'] === 'fs.list' && Array.isArray(event.data['entries']);
 }
@@ -166,6 +229,32 @@ export function isCommandRunMeta(event: OutputEvent): event is Extract<OutputEve
   return (
     event.type === 'meta' && event.data['kind'] === 'command.run' && typeof event.data['href'] === 'string'
   );
+}
+
+export function isChatSourcesMeta(event: OutputEvent): event is Extract<OutputEvent, { type: 'meta' }> {
+  return (
+    event.type === 'meta' && event.data['kind'] === 'chat.sources' && Array.isArray(event.data['sources'])
+  );
+}
+
+export function readChatSources(event: Extract<OutputEvent, { type: 'meta' }>): ChatSource[] {
+  return (event.data['sources'] as unknown[]).flatMap((entry) => {
+    if (!entry || typeof entry !== 'object') return [];
+    const candidate = entry as Record<string, unknown>;
+    if (candidate['origin'] !== 'knowledge' && candidate['origin'] !== 'vault') return [];
+    if (typeof candidate['title'] !== 'string') return [];
+    if (typeof candidate['path'] !== 'string') return [];
+    return [
+      {
+        href: typeof candidate['href'] === 'string' ? candidate['href'] : undefined,
+        origin: candidate['origin'],
+        path: candidate['path'],
+        score: typeof candidate['score'] === 'number' ? candidate['score'] : 0,
+        snippet: typeof candidate['snippet'] === 'string' ? candidate['snippet'] : '',
+        title: candidate['title'],
+      },
+    ];
+  });
 }
 
 export function readFsListEntries(event: Extract<OutputEvent, { type: 'meta' }>): FsListEntry[] {
@@ -186,6 +275,7 @@ export function readFsListEntries(event: Extract<OutputEvent, { type: 'meta' }>)
 }
 
 export function commandForReference(reference: string): string {
+  if (reference === 'chat.ask') return 'chat.ask ';
   if (reference === 'ai.run') return 'ai.run ';
   if (reference === 'agent.run') return 'agent.run ';
   if (reference === 'cron.run') return 'cron.run ';

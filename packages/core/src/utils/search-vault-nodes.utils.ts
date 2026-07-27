@@ -73,6 +73,100 @@ const TAG_MATCH_SCORE = 60;
 const BODY_MATCH_SCORE = 20;
 const EXACT_TITLE_BONUS = 40;
 const SNIPPET_RADIUS = 90;
+const MIN_SEARCH_TERM_LENGTH = 2;
+const SEARCH_STOPWORDS = new Set([
+  'about',
+  'after',
+  'all',
+  'also',
+  'and',
+  'any',
+  'are',
+  'because',
+  'been',
+  'but',
+  'can',
+  'did',
+  'does',
+  'each',
+  'for',
+  'from',
+  'get',
+  'give',
+  'had',
+  'has',
+  'have',
+  'her',
+  'here',
+  'him',
+  'his',
+  'how',
+  'into',
+  'its',
+  'just',
+  'like',
+  'make',
+  'many',
+  'may',
+  'more',
+  'most',
+  'much',
+  'must',
+  'need',
+  'not',
+  'now',
+  'off',
+  'one',
+  'only',
+  'other',
+  'our',
+  'out',
+  'over',
+  'own',
+  'please',
+  'said',
+  'same',
+  'she',
+  'should',
+  'show',
+  'some',
+  'such',
+  'take',
+  'tell',
+  'than',
+  'that',
+  'the',
+  'their',
+  'them',
+  'then',
+  'there',
+  'these',
+  'they',
+  'this',
+  'those',
+  'through',
+  'too',
+  'under',
+  'use',
+  'used',
+  'using',
+  'very',
+  'want',
+  'was',
+  'were',
+  'what',
+  'when',
+  'where',
+  'which',
+  'while',
+  'who',
+  'why',
+  'will',
+  'with',
+  'would',
+  'you',
+  'your',
+]);
 const DEFAULT_CONTEXT_PACKET_LIMIT = 10;
 const DEFAULT_CONTEXT_CHARACTER_LIMIT = 6000;
 const DEFAULT_CONTEXT_PACKET_CHARACTER_LIMIT = 1200;
@@ -137,16 +231,28 @@ export function buildVaultContextPackets(
   return packets;
 }
 
-function tokenizeSearchQuery(query: string): string[] {
-  return Array.from(
+/**
+ * Natural-language questions carry function words that `includes()` matching would hit in every
+ * document body, so they are dropped before ranking. If a query is nothing but stopwords the raw
+ * terms are kept, so a literal search for `the` still returns something.
+ */
+export function tokenizeSearchQuery(query: string): string[] {
+  const rawTerms = Array.from(
     new Set(
       query
         .trim()
         .toLowerCase()
         .split(/\s+/)
+        .map((term) => term.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''))
         .filter((term) => term.length > 0),
     ),
   );
+
+  const meaningfulTerms = rawTerms.filter(
+    (term) => term.length > MIN_SEARCH_TERM_LENGTH && !SEARCH_STOPWORDS.has(term),
+  );
+
+  return meaningfulTerms.length > 0 ? meaningfulTerms : rawTerms;
 }
 
 async function listSearchableNodes(query: VaultSearchQuery): Promise<LabNode[]> {
@@ -213,8 +319,13 @@ function addMatch(matches: VaultSearchMatch[], next: VaultSearchMatch): void {
 }
 
 function buildSnippet(node: LabNode, searchTerms: string[]): string {
-  const compactBody = node.body.replace(/\s+/g, ' ').trim();
-  if (compactBody.length === 0) return node.title;
+  return buildTextSnippet(node.body, node.title, searchTerms);
+}
+
+/** Snippet around the first matching term, falling back to `fallback` when nothing matches. */
+export function buildTextSnippet(text: string, fallback: string, searchTerms: string[]): string {
+  const compactBody = text.replace(/\s+/g, ' ').trim();
+  if (compactBody.length === 0) return fallback;
 
   const lowerBody = compactBody.toLowerCase();
   const hitIndex = searchTerms
@@ -222,7 +333,7 @@ function buildSnippet(node: LabNode, searchTerms: string[]): string {
     .filter((index) => index >= 0)
     .sort((a, b) => a - b)[0];
 
-  if (hitIndex === undefined) return node.title;
+  if (hitIndex === undefined) return fallback;
 
   const start = Math.max(0, hitIndex - SNIPPET_RADIUS);
   const end = Math.min(compactBody.length, hitIndex + SNIPPET_RADIUS);

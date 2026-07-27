@@ -1,3 +1,14 @@
+export type ChatScope = 'all' | 'knowledge' | 'vault';
+
+export interface ChatSource {
+  origin: 'knowledge' | 'vault';
+  title: string;
+  path: string;
+  score: number;
+  href?: string;
+  snippet: string;
+}
+
 export type Command =
   | {
       kind: 'ai.run';
@@ -15,6 +26,15 @@ export type Command =
       model?: string;
       system?: string;
       maxTokens?: number;
+    }
+  | {
+      kind: 'chat.ask';
+      question: string;
+      scope?: ChatScope;
+      limit?: number;
+      model?: string;
+      sessionId?: string;
+      resetSession?: boolean;
     }
   | {
       kind: 'agent.run';

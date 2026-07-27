@@ -1,5 +1,6 @@
 export { agentCommandHandler } from './agent-command.handler.js';
 export { defaultCommandHandlers, dispatchCommandEnvelope } from './bus.js';
+export { chatCommandHandler } from './chat-command.handler.js';
 export { cronCommandHandler } from './cron-command.handler.js';
 export { fsListCommandHandler, fsReadCommandHandler } from './fs-command.handler.js';
 export type { CommandContext, CommandHandler } from './handler.js';

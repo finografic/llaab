@@ -4,7 +4,7 @@
 > Agents and contributors: check this file before proposing new work. Keep immediate validation,
 > small follow-ups, large initiatives, and completed milestone history here.
 >
-> Last reconciled: 2026-07-26.
+> Last reconciled: 2026-07-28.
 
 ---
 
@@ -58,26 +58,26 @@ this experiment.
 
 #### One-Step Wiki Creation
 
-- [ ] Consolidate a broad regression transcript and click **Create Wiki(s)** once.
-- [ ] Confirm several coherent topics auto-promote without draft/candidate review steps.
+- [x] Consolidate a broad regression transcript and click **Create Wiki(s)** once.
+- [x] Confirm several coherent topics auto-promote without draft/candidate review steps.
 - [ ] Confirm an ambiguous/invalid branch creates no suffixed wiki and does not block siblings.
 - [ ] Confirm evidence metrics separate refs, transcripts, channels, and independent sources.
 - [ ] Re-run unchanged generation for stable no-op/update, then test Unpublish and regeneration.
 
 #### Runtime Surfaces
 
-- [ ] Open `/terminal` and confirm typed commands stream output.
+- [x] Open `/terminal` and confirm typed commands stream output.
 - [ ] Run `ai.run extract "..."` and confirm a durable `RunNode` is created.
 - [ ] Verify `/llm` shows current provider/model routing and availability.
-- [ ] Verify dark mode across primary app, vault, registry, inbox, and knowledge routes.
+- [x] Verify dark mode across primary app, vault, registry, inbox, and knowledge routes.
 
 ### Next Large Initiative
 
-Search and Retrieval Foundation is now active. Start with deterministic local full-text search,
-explicit result/provenance contracts, context assembly limits, and evaluation fixtures. Embeddings
-remain deferred until this work proves a measurable ranking need.
+Article Ingestion is now active. Start by writing the implementation plan, then replace the
+placeholder article fetcher with a real, bounded ingestion path that reuses the transcript-first
+save/extract boundary and connects to inbox docs/post captures.
 
-Detail: [`TODO_SEARCH_RETRIEVAL_FOUNDATION.md`](./TODO_SEARCH_RETRIEVAL_FOUNDATION.md)
+Planning doc required before implementation.
 
 ## Priority Model
 
@@ -113,18 +113,7 @@ The roadmap therefore shifts away from proving basic orchestration and toward:
 
 ## P0 — Active
 
-### Search and Retrieval Foundation
-
-Define retrieval rules before unlocking `/vault/search` or adding broad RAG behavior. Start with a
-deterministic local full-text search contract, context assembly limits, provenance requirements,
-and explicit evaluation fixtures. Embeddings can be added later through the standardised LLM layer
-when they materially improve ranking.
-
-Detail: [`TODO_SEARCH_RETRIEVAL_FOUNDATION.md`](./TODO_SEARCH_RETRIEVAL_FOUNDATION.md)
-
-## P1 — Next Up
-
-### 1. Article Ingestion
+### Article Ingestion
 
 Replace the placeholder article fetcher with a real, bounded article ingestion path. Reuse the
 existing transcript-first save/extract boundary and connect it to inbox docs/post captures. Keep
@@ -132,7 +121,23 @@ document/PDF ingestion separate because upload, parsing, and provenance requirem
 
 Planning doc required before implementation.
 
-### 2. Extracted Skill Candidate Lifecycle
+## P1 — Next Up
+
+### Knowledge Retrieval and Chat
+
+Extend `chat.ask` from a working first cut into a robust retrieval system: passage-level chunking,
+BM25 ranking over a persisted one-shot index, query understanding, reranking, a citation contract,
+graph-aware context expansion, durable threads, and a feedback loop that turns real misses into
+ranking fixtures. Embeddings stay gated behind measured need.
+
+Phase 2 (retrieval evaluation harness) should be pulled forward and run alongside Article
+Ingestion — it is small, has no UI, and every later ranking change is guesswork without it.
+Article Ingestion also grows the corpus this work is measured against, so the two are
+complementary rather than competing.
+
+Detail: [`TODO_KNOWLEDGE_RETRIEVAL_CHAT.md`](./TODO_KNOWLEDGE_RETRIEVAL_CHAT.md)
+
+### Extracted Skill Candidate Lifecycle
 
 The extraction schema returns `skills[]`, but the pipeline persists only `IdeaNode`s. Decide whether
 model-extracted skills become provisional `SkillNode`s, another candidate shape, or remain trace
@@ -215,18 +220,19 @@ Detail: [`TODO_CROSS_TAB_SYNC.md`](./TODO_CROSS_TAB_SYNC.md)
 
 ## Delivered
 
-| Date       | Initiative                                                                                                                                                                                                                                                                                                                        |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-07-26 | Vercel AI SDK transport standardisation — Anthropic/OpenCode/LM Studio transport migrated behind `@llaab/llm`, real LM Studio/OpenCode streaming, typed structured output, vision boundary, native Ollama parity decision, and embedding deferral. Detail: [`DONE_VERCEL_AI_SDK_MIGRATION.md`](./DONE_VERCEL_AI_SDK_MIGRATION.md) |
-| 2026-07-26 | LLM migration bugfix pass — provider override, cache key/bypass semantics, consolidation/wiki transport retries, and LM Studio progress parser coverage closed. Detail: [`DONE_BUGFIXES_LLM_MIGRATION.md`](./DONE_BUGFIXES_LLM_MIGRATION.md)                                                                                      |
-| 2026-07-26 | Vault/knowledge split validation — nested vault dirty-state isolation, app loading, discard behavior, and Hermes Telegram YouTube/todo writes validated. Detail: [`DONE_VAULT_KNOWLEDGE_SPLIT.md`](./DONE_VAULT_KNOWLEDGE_SPLIT.md)                                                                                               |
-| 2026-07-26 | Podcast/RSS ingest — Pocket Casts resolution, RSS matching, local whisper path, YouTube-caption fast path, and full extraction hand-off validated. Detail: [`DONE_PODCAST_INGEST.md`](./DONE_PODCAST_INGEST.md)                                                                                                                   |
-| 2026-07-19 | One-step topic-oriented wiki generation — discover, compile, link, and auto-promote. Detail: [`DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md`](./DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md)                                                                                                                                                   |
-| 2026-07-15 | Wiki generation and knowledge promotion. Detail: [`DONE_WIKI_GENERATION.md`](./DONE_WIKI_GENERATION.md)                                                                                                                                                                                                                           |
-| 2026-07-11 | Grid layout migration. Detail: [`DONE_GRID_LAYOUT_MIGRATION.md`](./DONE_GRID_LAYOUT_MIGRATION.md)                                                                                                                                                                                                                                 |
-| 2026-07-10 | Registry package/repository resource projections and operational inbox integration.                                                                                                                                                                                                                                               |
-| 2026-07-09 | Vault/knowledge split core phases and inbox review workflows.                                                                                                                                                                                                                                                                     |
-| 2026-06-13 | Vite/React Router client migration. Detail: [`DONE_CLIENT_VITE_MIGRATION.md`](./DONE_CLIENT_VITE_MIGRATION.md)                                                                                                                                                                                                                    |
-| 2026-06-07 | Orchestration, provider, command bus, Terminal, capability, and harness foundations. Detail: [`DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md)                                                                                                                                                                                   |
-| 2026-06-07 | UI refactor and horizontal navigation foundation. Detail: [`DONE_UI_REFACTOR.md`](./DONE_UI_REFACTOR.md)                                                                                                                                                                                                                          |
-| 2026-04-18 | Foundational schemas, controlled extraction, RunNode persistence, and YouTube ingestion. Detail: [`DONE_FOUNDATIONAL_LAYER.md`](./DONE_FOUNDATIONAL_LAYER.md)                                                                                                                                                                     |
+| Date       | Initiative                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-28 | Search and Retrieval Foundation — deterministic local full-text search contract, ranking fixtures, provenance-aware API/MCP surfaces, bounded context packets, `/vault/search`, and an explicit decision to defer embeddings until repeatable ranking misses justify them. Its first consumer, the Terminal `chat.ask` command, answers open-ended questions over `knowledge/` + `vault/` with tiered precedence and provenance-linked sources. Detail: [`DONE_SEARCH_RETRIEVAL_FOUNDATION.md`](./DONE_SEARCH_RETRIEVAL_FOUNDATION.md), ongoing plan [`TODO_KNOWLEDGE_RETRIEVAL_CHAT.md`](./TODO_KNOWLEDGE_RETRIEVAL_CHAT.md) |
+| 2026-07-26 | Vercel AI SDK transport standardisation — Anthropic/OpenCode/LM Studio transport migrated behind `@llaab/llm`, real LM Studio/OpenCode streaming, typed structured output, vision boundary, native Ollama parity decision, and embedding deferral. Detail: [`DONE_VERCEL_AI_SDK_MIGRATION.md`](./DONE_VERCEL_AI_SDK_MIGRATION.md)                                                                                                                                                                                                                                                                                             |
+| 2026-07-26 | LLM migration bugfix pass — provider override, cache key/bypass semantics, consolidation/wiki transport retries, and LM Studio progress parser coverage closed. Detail: [`DONE_BUGFIXES_LLM_MIGRATION.md`](./DONE_BUGFIXES_LLM_MIGRATION.md)                                                                                                                                                                                                                                                                                                                                                                                  |
+| 2026-07-26 | Vault/knowledge split validation — nested vault dirty-state isolation, app loading, discard behavior, and Hermes Telegram YouTube/todo writes validated. Detail: [`DONE_VAULT_KNOWLEDGE_SPLIT.md`](./DONE_VAULT_KNOWLEDGE_SPLIT.md)                                                                                                                                                                                                                                                                                                                                                                                           |
+| 2026-07-26 | Podcast/RSS ingest — Pocket Casts resolution, RSS matching, local whisper path, YouTube-caption fast path, and full extraction hand-off validated. Detail: [`DONE_PODCAST_INGEST.md`](./DONE_PODCAST_INGEST.md)                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 2026-07-19 | One-step topic-oriented wiki generation — discover, compile, link, and auto-promote. Detail: [`DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md`](./DONE_WIKI_TOPIC_DISCOVERY_PIPELINE.md)                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 2026-07-15 | Wiki generation and knowledge promotion. Detail: [`DONE_WIKI_GENERATION.md`](./DONE_WIKI_GENERATION.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 2026-07-11 | Grid layout migration. Detail: [`DONE_GRID_LAYOUT_MIGRATION.md`](./DONE_GRID_LAYOUT_MIGRATION.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 2026-07-10 | Registry package/repository resource projections and operational inbox integration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 2026-07-09 | Vault/knowledge split core phases and inbox review workflows.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 2026-06-13 | Vite/React Router client migration. Detail: [`DONE_CLIENT_VITE_MIGRATION.md`](./DONE_CLIENT_VITE_MIGRATION.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 2026-06-07 | Orchestration, provider, command bus, Terminal, capability, and harness foundations. Detail: [`DONE_ORCHESTRATION.md`](./DONE_ORCHESTRATION.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 2026-06-07 | UI refactor and horizontal navigation foundation. Detail: [`DONE_UI_REFACTOR.md`](./DONE_UI_REFACTOR.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 2026-04-18 | Foundational schemas, controlled extraction, RunNode persistence, and YouTube ingestion. Detail: [`DONE_FOUNDATIONAL_LAYER.md`](./DONE_FOUNDATIONAL_LAYER.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
