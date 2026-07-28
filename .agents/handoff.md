@@ -132,6 +132,36 @@ Terminal renders as a clickable provenance list — the model is told not to wri
 list. Sessions are in-process only (`Map`, last 4 turns, keyed by a client-generated `sessionId`,
 cleared on server restart or `--reset`) — chat memory is deliberately not durable and is not a
 `RunNode`.
+
+**Retrieval is passage-level on both tiers.** `packages/core/src/retrieval/` chunks markdown on
+heading and paragraph boundaries with sentence-aligned overlap (`chunk-markdown.utils.ts`),
+preserving heading breadcrumbs, keeping fenced code intact, and attaching transcript `<!-- t:… -->`
+timestamps to each passage. A document's body score is its best passage plus a **capped**
+corroboration bonus (`rank-passages.utils.ts`) — the cap is load-bearing: uncapped, a 53-passage
+transcript accumulated ~44 points from volume alone, making length bias worse rather than better.
+Real length normalization is deferred to BM25 (`b`). Context packets and snippets are filled from
+the best-matching passages rather than a radius snippet, so the text the model receives contains
+the sentence that answers the question rather than an incidental early match. Both
+`searchVaultNodes` and `rankKnowledgeDocs` expose `passages` on their results.
+
+**Retrieval quality is measured, not asserted.** `lab retrieval eval` scores a gold query set —
+recall@k, precision@k, MRR, nDCG@k with graded relevance. Two corpora with different jobs: the
+**frozen** fixture corpus backs a vitest regression guard and a committed baseline
+(`fixtures/retrieval-baseline.json`), because the live vault grows with every ingest and its
+metrics drift for reasons unrelated to ranking; the **live** gold set measures the real corpus and
+is informational only. Known misses are reported but excluded from aggregates so a recorded failure
+cannot depress the baseline and mask a real regression. Never update the baseline to make a failing
+guard pass. Full guidance: `packages/core/src/retrieval/README.md`.
+
+Two standing caveats. **Ranking metrics cannot see context-assembly quality** — passage-level
+retrieval changed the text reaching the model on every long document and moved recall/MRR/nDCG by
+exactly zero, because both corpora were already at ceiling; changes of that kind must be asserted
+directly (see the `passage extraction on long documents` block in `retrieval-eval.utils.test.ts`).
+And the current gold sets are **saturated and author-biased** — they were written by someone who
+already knew the answers, so they cannot justify further ranking work (BM25, embeddings) until real
+failed questions accumulate. Write fixture queries cold, before consulting the corpus; label
+`relevant` afterwards. Prefer stable `knowledge:<path>` refs over `vault:<node-id>`, which drift
+when drafts regenerate.
 Crons (`/crons`) are one-shot recipes plus external trigger snippets, not an internal scheduler.
 The first recipe, `check-transcripts-consolidation`, scans transcripts with extracted ideas and no
 canonical set, runs missing consolidation via the shared consolidation helper, and creates durable
@@ -603,8 +633,12 @@ Article Ingestion — first write the implementation plan, then replace the plac
 fetcher with a bounded ingest path that reuses the transcript-first save/extract boundary and
 connects to inbox docs/post captures. Search and Retrieval Foundation is complete; detail:
 `docs/todo/DONE_SEARCH_RETRIEVAL_FOUNDATION.md`. Its continuation is
-`docs/todo/TODO_KNOWLEDGE_RETRIEVAL_CHAT.md` (P1) — Phases 0–1 done, Phase 2 (retrieval evaluation
-harness) should be pulled forward since every later ranking change is unmeasurable without it.
+`docs/todo/TODO_KNOWLEDGE_RETRIEVAL_CHAT.md` (P1) — Phases 0–3 done (contract, `chat.ask`,
+evaluation harness, passage-level retrieval). Phase 4 (BM25) and Phase 5 (embeddings) are both
+**blocked on evidence, not effort**: the gold sets are saturated, so neither can be evaluated until
+real failed questions accumulate. The operator is growing the corpus (promoting canonical ideas to
+wikis) and adding 2–3 fixtures per week from real usage. Phase 8 (citation contract) is independent
+of ranking and is the available parallel track.
 Current orchestration plan: `docs/todo/DONE_ORCHESTRATION.md`.
 Wiki generation is implemented; the completion record is `docs/todo/DONE_WIKI_GENERATION.md` and
 the ongoing feature reference is `docs/process/WIKI_WORKFLOW.md`.
