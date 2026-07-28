@@ -1,6 +1,6 @@
 # TODO — Article Ingestion
 
-> **Status:** Not started. Planning complete (2026-07-28).
+> **Status:** In progress. Planning complete (2026-07-28); execution started 2026-07-28.
 
 ## Goal
 
@@ -19,6 +19,31 @@ article URL
   → best-effort idea extraction
   → searchable vault evidence
 ```
+
+## Execution Conventions
+
+- Mark each checkbox `[x]` in this file as the item lands; do not batch-mark at the end.
+- Commit once per completed phase, using `feat(ingestion): …` / `feat(server): …` style scopes plus a
+  `docs(todo): mark phase N complete` update to this file in the same commit.
+- Focused test command: `pnpm vitest run <path>` (root `vitest` workspace). Typecheck a single
+  package with `pnpm --filter @llaab/<pkg> typecheck`.
+- Formatting: `pnpm format:fix` on touched files; `pnpm format:check` once before branch handoff.
+- Do not rebuild the whole workspace between phases. Only run `./scripts/macos/dev-refresh.sh` once
+  Phase 4+ changes reach `apps/server` or server-consumed packages.
+
+## File Map
+
+Expected owning files per phase. Anything outside this list is a scope expansion and needs a reason.
+
+| Phase | Files                                                                                                                                                                      |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | `packages/ingestion/src/fetch/article/__fixtures__/*.html`, `article.contract.ts`, `article.limits.ts`, `article.url.ts` (+ tests)                                         |
+| 1     | `packages/ingestion/src/fetch/article/fetch-article.ts`, `article.parse.ts`, `article.markdown.ts`, `index.ts` (+ tests); delete `packages/ingestion/src/fetch/article.ts` |
+| 2     | `packages/ingestion/src/pipeline.ts` (article branch → `create-article-nodes.ts`), `packages/schemas/src/resource-node.schema.ts`                                          |
+| 3     | `packages/ingestion/src/pipeline.ts` (extraction primitive), `packages/skills/src/ingest-article.ts`, `packages/skills/src/index.ts`                                       |
+| 4     | `apps/server/src/routes/ingest.{schema,routes}.ts`, run retry route, `packages/cli` MCP schema/server, discard/run-deletion service                                        |
+| 5     | `apps/client/src/forms/IngestForm/**`, `apps/client/src/queries/**`, `RunMonitor`, `RunsTable`, run display helpers                                                        |
+| 6     | Hermes route/tool contracts (`docs/integrations/hermes.md` + Hermes repo-side config), inbox provenance wiring                                                             |
 
 ## Current Baseline
 
@@ -100,6 +125,34 @@ interface FetchedArticle {
 }
 ```
 
+Typed failures are a discriminated result, never a thrown string. The failure code set is closed:
+
+```ts
+type ArticleFetchFailureCode =
+  | 'invalid_url' // unparseable, non-http(s), or credentials embedded
+  | 'blocked_target' // localhost/loopback/private/link-local/multicast/reserved after DNS
+  | 'insecure_redirect' // downgrade to http: across a redirect
+  | 'too_many_redirects'
+  | 'timeout'
+  | 'network_error'
+  | 'http_error' // non-2xx; carries status only, never the body
+  | 'unsupported_content_type' // PDF, Office, image, JSON, …
+  | 'response_too_large'
+  | 'not_readable'; // parsed, but under the minimum article-text threshold
+
+interface ArticleFetchFailure {
+  ok: false;
+  code: ArticleFetchFailureCode;
+  message: string; // operator-safe; no response bodies, headers, or secrets
+  requestedUrl: string;
+  finalUrl?: string;
+  httpStatus?: number;
+}
+```
+
+`fetchArticle` returns `{ ok: true } & FetchedArticle | ArticleFetchFailure`. Callers map the code to
+a run-event message; the skill never surfaces raw exception text to the UI.
+
 Implementation direction:
 
 - Parse HTML with a server-safe DOM adapter.
@@ -115,6 +168,17 @@ Implementation direction:
 Dependency choice should be confirmed with a small fixture spike before the implementation phase.
 The preferred stack is `@mozilla/readability`, `linkedom`, and `turndown`; do not introduce a
 headless browser for the MVP.
+
+Install into `@llaab/ingestion` only (it currently has no DOM dependency):
+
+```bash
+pnpm --filter @llaab/ingestion add @mozilla/readability linkedom turndown
+pnpm --filter @llaab/ingestion add -D @types/turndown
+```
+
+`linkedom` is preferred over `jsdom` for startup cost and the absence of native bindings; if
+Readability proves incompatible with `linkedom`'s DOM surface against the Phase 0 fixtures, fall back
+to `jsdom` and record the reason here rather than silently swapping the stack.
 
 ## Persistence Contract
 
@@ -219,6 +283,8 @@ failure.
 ## Phase 2 — Save-First Article Pipeline
 
 - [ ] Replace the current article `createResourceNode` shortcut with a dedicated article pipeline.
+      `createResourceNode` is shared with `sourceType: 'repo'`; leave the repo branch (and the
+      `fetchRepo` placeholder) working exactly as-is rather than deleting the shared helper.
 - [ ] Add canonical-URL deduplication and deterministic content hashing.
 - [ ] Create/reuse the publication `SourceNode`.
 - [ ] Save the article `ResourceNode` before extraction begins.
@@ -307,6 +373,23 @@ remaining auditable from the inbox.
 - [ ] Run touched-file format/lint checks and `pnpm format:check` before branch handoff.
 - [ ] Rename this file to `DONE_ARTICLE_INGESTION.md`, move the roadmap item to Delivered, and update
       `.agents/handoff.md` only after all acceptance checks pass.
+
+## Risks and Watch Items
+
+- **Shared `createResourceNode`.** The repo branch depends on it. Regressing repo ingest while
+  carving out the article path is the most likely accidental breakage.
+- **`extractKnowledgeFromTranscript` signature.** It is exported from `@llaab/ingestion` and consumed
+  by skills and the server. The compatibility wrapper must keep the exact current signature and
+  `ExtractionResult` shape, or YouTube/podcast runs break silently.
+- **Vault writes in tests.** Phase 2+ tests must use a temp vault (`VAULT_ROOT` override), following
+  the podcast ingest tests. A test that writes into the real `vault/` is a defect.
+- **Publication source reuse.** Two articles from one site must not create two `SourceNode`s, and
+  discarding one article must not delete a source another article still references.
+- **`@llaab/ingestion` is consumed through `dist`.** After Phase 3, server-side verification needs a
+  package rebuild, not just source edits.
+- **SSRF surface.** DNS re-resolution before every request (including redirects) is the control that
+  actually blocks rebinding. Validating only the initial URL is insufficient and must not be
+  simplified away.
 
 ## Non-Goals
 
