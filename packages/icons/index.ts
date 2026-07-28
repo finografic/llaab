@@ -108,6 +108,8 @@ export const {
   SpeakerLoudIcon,
   SpeechIcon,
   SquareArrowUpIcon,
+  SquareCheckIcon,
+  SquareXIcon,
   StarIcon,
   StopIcon,
   SunIcon,

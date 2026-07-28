@@ -109,6 +109,8 @@ const ICONS = {
   SpeakerLoudIcon:                Lucide.Volume2,
   SpeechIcon:                     Lucide.Speech,
   SquareArrowUpIcon:              Lucide.SquareArrowUp,
+  SquareCheckIcon:                Lucide.SquareCheck,
+  SquareXIcon:                    Lucide.SquareX,
   StarIcon:                       Lucide.Star,
   StopIcon:                       Lucide.CircleStop,
   SunIcon:                        Lucide.Sun,

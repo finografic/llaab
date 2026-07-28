@@ -482,5 +482,13 @@
   {
     "exportName": "SquareArrowUp",
     "lucideName": "square-arrow-up"
+  },
+  {
+    "exportName": "SquareX",
+    "lucideName": "square-x"
+  },
+  {
+    "exportName": "SquareCheck",
+    "lucideName": "square-check"
   }
 ]

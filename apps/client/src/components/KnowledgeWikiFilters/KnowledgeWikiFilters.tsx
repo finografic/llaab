@@ -1,6 +1,5 @@
-import { Badge } from 'components/ui/badge';
+import { DomainFilterBar, FacetToggle } from 'components/DomainFilterBar/DomainFilterBar';
 import { Button } from 'components/ui/button';
-import { Checkbox } from 'components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { Col, Row } from 'components/ui/grid';
 import { Input } from 'components/ui/input';
@@ -9,6 +8,7 @@ import { RotateCcwIcon, SearchIcon, SlidersHorizontalIcon, XIcon } from 'lucide-
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 
+import { toggleDomainValue } from 'lib/domain-filters';
 import type {
   KnowledgeWikiFacetOption,
   KnowledgeWikiFacets,
@@ -20,7 +20,6 @@ import {
   DEFAULT_KNOWLEDGE_WIKI_FILTERS,
   WIKI_SORT_OPTIONS,
 } from 'lib/knowledge-wiki-filters';
-import { domainTagStyle } from 'utils/domain-tag-color.utils';
 
 import styles from './KnowledgeWikiFilters.module.css';
 
@@ -141,22 +140,12 @@ export function KnowledgeWikiFilters({
         </Col>
       </Row>
 
-      {facets.domains.length > 0 ? (
-        <section className={styles.domainPanel} aria-label="Domain filters">
-          <Row gutterWidth={8} className={styles.optionGrid}>
-            {facets.domains.map((option) => (
-              <Col key={option.value} xs={6} md={4} xl={2}>
-                <FacetToggle
-                  option={option}
-                  tagValue={option.value}
-                  checked={filters.domains.includes(option.value)}
-                  onCheckedChange={() => patch({ domains: toggleValue(filters.domains, option.value) })}
-                />
-              </Col>
-            ))}
-          </Row>
-        </section>
-      ) : null}
+      <DomainFilterBar
+        className={styles.domainPanel}
+        options={facets.domains}
+        selected={filters.domains}
+        onChange={(domains) => patch({ domains })}
+      />
 
       <Collapsible open={moreFiltersOpen} onOpenChange={setMoreFiltersOpen}>
         <CollapsibleContent className={styles.moreFilters}>
@@ -171,7 +160,7 @@ export function KnowledgeWikiFilters({
                         option={option}
                         checked={filters.topicTags.includes(option.value)}
                         onCheckedChange={() =>
-                          patch({ topicTags: toggleValue(filters.topicTags, option.value) })
+                          patch({ topicTags: toggleDomainValue(filters.topicTags, option.value) })
                         }
                       />
                     </Col>
@@ -213,38 +202,6 @@ function FilterCol({ label, children }: { label: string; children: ReactNode }) 
       <span className={styles.label}>{label}</span>
       {children}
     </Col>
-  );
-}
-
-function FacetToggle({
-  option,
-  tagValue,
-  checked,
-  onCheckedChange,
-}: {
-  option: KnowledgeWikiFacetOption;
-  /** Domain tag value (e.g. `d:llm`) — colors the button like the matching tag pill. */
-  tagValue?: string;
-  checked: boolean;
-  onCheckedChange: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      className={styles.facetButton}
-      data-tag={tagValue}
-      data-active={checked || undefined}
-      style={tagValue ? domainTagStyle(tagValue) : undefined}
-      onClick={onCheckedChange}
-    >
-      <Checkbox checked={checked} aria-hidden tabIndex={-1} />
-      <span className={styles.facetLabel}>{option.label}</span>
-      <Badge variant="secondary" className={styles.facetCount}>
-        {option.count}
-      </Badge>
-    </Button>
   );
 }
 
@@ -339,10 +296,6 @@ function visibleTopicOptions(
   return topicTags
     .filter((option, index) => index < TOP_TOPIC_TAG_LIMIT || active.has(option.value))
     .toSorted((a, b) => Number(active.has(b.value)) - Number(active.has(a.value)) || b.count - a.count);
-}
-
-function toggleValue(values: string[], value: string): string[] {
-  return values.includes(value) ? removeValue(values, value) : [...values, value];
 }
 
 function removeValue(values: string[], value: string): string[] {

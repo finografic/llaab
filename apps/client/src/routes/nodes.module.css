@@ -1,3 +1,7 @@
+.domainFilters {
+  margin-bottom: var(--space-4);
+}
+
 .empty {
   padding: var(--space-6);
   font-size: var(--text-base);

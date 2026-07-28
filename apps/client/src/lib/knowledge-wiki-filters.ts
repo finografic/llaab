@@ -6,6 +6,9 @@ import type {
   WikiVerificationStatus,
 } from '@llaab/schemas';
 
+import { buildDomainFacets, parseDomainFilterParam } from 'lib/domain-filters';
+import type { DomainFacetOption } from 'lib/domain-filters';
+
 export type WikiSortOrder =
   | 'recently_updated'
   | 'recently_created'
@@ -23,11 +26,7 @@ export interface KnowledgeWikiFiltersState {
   sort: WikiSortOrder;
 }
 
-export interface KnowledgeWikiFacetOption {
-  value: string;
-  label: string;
-  count: number;
-}
+export type KnowledgeWikiFacetOption = DomainFacetOption;
 
 export interface KnowledgeWikiFacets {
   domains: KnowledgeWikiFacetOption[];
@@ -54,17 +53,6 @@ export const WIKI_SORT_OPTIONS = [
   { value: 'alphabetical', label: 'Alphabetical' },
 ] as const satisfies ReadonlyArray<{ value: WikiSortOrder; label: string }>;
 
-const DOMAIN_FILTERS = [
-  { value: 'd:llm', label: 'LLM' },
-  { value: 'd:automation', label: 'Automation' },
-  { value: 'd:infra', label: 'Infrastructure' },
-  { value: 'd:integration', label: 'Integration' },
-  { value: 'd:schema', label: 'Schema' },
-  { value: 'd:ingest', label: 'Ingest' },
-  { value: 'd:ui', label: 'UI' },
-  { value: 'd:meta', label: 'Meta' },
-] as const;
-
 const LIFECYCLE_OPTIONS = [
   { value: 'seed', label: 'Seed' },
   { value: 'growing', label: 'Growing' },
@@ -82,7 +70,6 @@ const LIFECYCLE_VALUES = new Set<WikiLifecycleStatus>(LIFECYCLE_OPTIONS.map((opt
 const VERIFICATION_VALUES = new Set<WikiVerificationStatus>(
   VERIFICATION_OPTIONS.map((option) => option.value),
 );
-const DOMAIN_VALUES = new Set<string>(DOMAIN_FILTERS.map((option) => option.value));
 
 export function parseKnowledgeWikiFiltersFromSearchParams(
   params: URLSearchParams,
@@ -93,7 +80,7 @@ export function parseKnowledgeWikiFiltersFromSearchParams(
 
   return {
     search: params.get('q') ?? '',
-    domains: parseListParam(params.get('domain')).filter((tag) => DOMAIN_VALUES.has(tag)),
+    domains: parseDomainFilterParam(params.get('domain')),
     lifecycle: LIFECYCLE_VALUES.has(lifecycleRaw as WikiLifecycleStatus)
       ? (lifecycleRaw as WikiLifecycleStatus)
       : 'all',
@@ -118,19 +105,12 @@ export function knowledgeWikiFiltersToSearchParams(filters: KnowledgeWikiFilters
 }
 
 export function buildKnowledgeWikiFacets(wikis: KnowledgeWikiPage[]): KnowledgeWikiFacets {
-  const domainCounts = countValues(wikis.flatMap((wiki) => wiki.tags.filter((tag) => tag.startsWith('d:'))));
   const lifecycleCounts = countValues(wikis.map((wiki) => wiki.status));
   const verificationCounts = countValues(wikis.map((wiki) => wiki.verification_status));
   const topicCounts = countValues(wikis.flatMap((wiki) => wiki.tags.filter((tag) => !tag.startsWith('d:'))));
 
   return {
-    domains: DOMAIN_FILTERS.map((option) => ({
-      value: option.value,
-      label: option.label,
-      count: domainCounts.get(option.value) ?? 0,
-    }))
-      .filter((option) => option.count > 0)
-      .toSorted((a, b) => b.count - a.count || a.label.localeCompare(b.label)),
+    domains: buildDomainFacets(wikis.map((wiki) => wiki.tags)),
     lifecycle: LIFECYCLE_OPTIONS.map((option) => ({
       value: option.value,
       label: option.label,
@@ -218,6 +198,10 @@ function compareWikis(a: KnowledgeWikiPage, b: KnowledgeWikiPage, sort: WikiSort
       return a.title.localeCompare(b.title);
     case 'recently_updated':
       return compareDateDesc(a.updated_at, b.updated_at);
+    default: {
+      const _exhaustive: never = sort;
+      return _exhaustive;
+    }
   }
 }
 

@@ -1,0 +1,153 @@
+.root {
+  min-width: 0;
+}
+
+.panel {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--surface) 75%, transparent);
+}
+
+.bar {
+  min-width: 0;
+  width: 100%;
+}
+
+.facetsCol {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.toggleAllCol {
+  flex-shrink: 0;
+}
+
+.grid {
+  row-gap: var(--space-2);
+  /* Allow horizontal scroll on narrow viewports rather than wrapping the domain row. */
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.toggleAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-right: 0;
+  color: var(--text-faint);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.toggleAll:hover {
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.toggleAllIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  display: block;
+}
+
+.toggleAllLabel {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  padding-top: 3px;
+}
+
+.facetButton {
+  justify-content: flex-start;
+  width: auto;
+  min-width: 0;
+  min-height: 2.25rem;
+  padding-inline: var(--space-2);
+  gap: var(--space-1);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.facetButtonWide {
+  width: 100%;
+}
+
+.facetButton[data-active="true"] {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface));
+}
+
+/* Domain facets carry data-tag and mirror the matching tag-pill colors. */
+.facetButton[data-tag] {
+  border-color: color-mix(in srgb, var(--tag-color) 30%, transparent);
+  background: color-mix(in srgb, var(--tag-color) 8%, transparent);
+}
+
+.facetButton[data-tag] .facetLabel {
+  color: var(--tag-color);
+}
+
+.facetButton[data-tag] [data-slot="checkbox"] {
+  border-color: color-mix(in srgb, var(--tag-color) 45%, transparent) !important;
+  background: transparent !important;
+}
+
+.facetButton[data-tag][data-active="true"] {
+  border-color: color-mix(in srgb, var(--tag-color) 75%, transparent);
+  background: color-mix(in srgb, var(--tag-color) 22%, transparent);
+}
+
+.facetButton[data-tag][data-active="true"] .facetLabel {
+  color: var(--foreground);
+}
+
+.facetButton[data-tag][data-active="true"] [data-slot="checkbox"] {
+  border-color: var(--tag-color) !important;
+  background: color-mix(in srgb, var(--tag-color) 55%, transparent) !important;
+  color: var(--foreground) !important;
+}
+
+.facetButton [data-slot="checkbox"] {
+  margin-right: var(--space-1);
+  pointer-events: none;
+}
+
+.facetLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.facetCount {
+  min-width: 1.3rem;
+  height: 1.2rem;
+  justify-content: center;
+  margin-left: 2rem;
+  padding: 0 0.35rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Domain count badge: darker tint of the filter’s own --tag-color */
+.facetButton[data-tag] .facetCount {
+  background: color-mix(in srgb, var(--tag-color) 28%, var(--surface));
+  color: var(--tag-color);
+}
+
+.facetButton[data-tag][data-active="true"] .facetCount {
+  background: color-mix(in srgb, var(--tag-color) 40%, var(--surface));
+  color: var(--foreground);
+}
+
+.resultCount {
+  margin: var(--space-3) 0 0;
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+}
