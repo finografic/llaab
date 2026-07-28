@@ -5,7 +5,7 @@ const DOCS_PREFIX_RE = /^\s*docs:\s*/i;
 const POST_PREFIX_RE = /^\s*post:\s*/i;
 const CODE_PREFIX_RE = /^\s*code:\s*/i;
 const COMMAND_CANDIDATE_RE = /^\s*(?:npx|npmx|pnpm\s+dlx)\s+\S+/i;
-const URL_CANDIDATE_RE = /https?:\/\/[^\s<>"')\]]+/i;
+const URL_CANDIDATE_RE = /(?:https?:\/\/|www\.)[^\s<>"')\]]+/i;
 const CODE_FILE_LANGUAGE_BY_EXTENSION = new Map<string, string>([
   ['astro', 'astro'],
   ['cjs', 'javascript'],
@@ -255,7 +255,8 @@ function extractFirstUrl(text: string): URL | undefined {
   }
 
   try {
-    return new URL(match[0].replace(/[.,;:!?]+$/u, ''));
+    const candidate = match[0].replace(/[.,;:!?]+$/u, '');
+    return new URL(/^https?:\/\//iu.test(candidate) ? candidate : `https://${candidate}`);
   } catch {
     return undefined;
   }

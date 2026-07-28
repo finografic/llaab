@@ -11,6 +11,17 @@ describe('routeHermesInboxText', () => {
     expect(routeHermesInboxText('https://www.youtube.com/watch?v=abc123').action).toBe('ingest_youtube');
   });
 
+  it('routes scheme-less www YouTube watch URLs to ingestion', () => {
+    expect(routeHermesInboxText('www.youtube.com/watch?v=abc123')).toMatchObject({
+      kind: 'youtube_url',
+      action: 'ingest_youtube',
+      payload: {
+        url: 'https://www.youtube.com/watch?v=abc123',
+        video_id: 'abc123',
+      },
+    });
+  });
+
   it('routes short YouTube URLs to ingestion', () => {
     expect(routeHermesInboxText('https://youtu.be/abc123?t=10')).toMatchObject({
       kind: 'youtube_url',
