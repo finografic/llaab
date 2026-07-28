@@ -73,11 +73,9 @@ this experiment.
 
 ### Next Large Initiative
 
-Article Ingestion is now active. Start by writing the implementation plan, then replace the
-placeholder article fetcher with a real, bounded ingestion path that reuses the transcript-first
-save/extract boundary and connects to inbox docs/post captures.
-
-Planning doc required before implementation.
+Article Ingestion is delivered. Knowledge Retrieval and Chat moves to P0, and the retrieval
+evaluation harness should lead — article resources now grow the corpus that ranking is measured
+against.
 
 ## Priority Model
 
@@ -93,8 +91,8 @@ Planning doc required before implementation.
 The primary ingest-to-knowledge loop is operational:
 
 ```text
-YouTube or podcast
-  → transcript
+YouTube, podcast, or article
+  → transcript or article resource
   → extracted ideas
   → canonical ideas
   → focused wiki discovery / compile / link
@@ -113,29 +111,21 @@ The roadmap therefore shifts away from proving basic orchestration and toward:
 
 ## P0 — Active
 
-### Article Ingestion
-
-Replace the placeholder article fetcher with a real, bounded article ingestion path. Reuse the
-existing transcript-first save/extract boundary and connect it to inbox docs/post captures. Keep
-document/PDF ingestion separate because upload, parsing, and provenance requirements are different.
-
-Planning doc required before implementation.
-
-## P1 — Next Up
-
 ### Knowledge Retrieval and Chat
+
+Promoted from P1 now that Article Ingestion is delivered.
 
 Extend `chat.ask` from a working first cut into a robust retrieval system: passage-level chunking,
 BM25 ranking over a persisted one-shot index, query understanding, reranking, a citation contract,
 graph-aware context expansion, durable threads, and a feedback loop that turns real misses into
 ranking fixtures. Embeddings stay gated behind measured need.
 
-Phase 2 (retrieval evaluation harness) should be pulled forward and run alongside Article
-Ingestion — it is small, has no UI, and every later ranking change is guesswork without it.
-Article Ingestion also grows the corpus this work is measured against, so the two are
-complementary rather than competing.
+The retrieval evaluation harness should lead — it is small, has no UI, and every later ranking
+change is guesswork without it. Article resources now grow the corpus this work is measured against.
 
 Detail: [`TODO_KNOWLEDGE_RETRIEVAL_CHAT.md`](./TODO_KNOWLEDGE_RETRIEVAL_CHAT.md)
+
+## P1 — Next Up
 
 ### Extracted Skill Candidate Lifecycle
 
@@ -222,6 +212,7 @@ Detail: [`TODO_CROSS_TAB_SYNC.md`](./TODO_CROSS_TAB_SYNC.md)
 
 | Date       | Initiative                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-28 | Article Ingestion — bounded single-URL fetch (SSRF-guarded, redirect-revalidating, size/MIME/timeout capped), deterministic Readability parsing to Markdown, save-first article `ResourceNode` plus publication `SourceNode`, canonical-URL/content-hash dedupe, a source-neutral saved-node extraction primitive, `POST /api/ingest/article`, `vault_ingest_article`, retry and shared-source-safe discard, `/ingest` form support, and explicit Hermes `docs:`/`post:` ingestion with capture-before-ingest provenance. Detail: [`DONE_ARTICLE_INGESTION.md`](./DONE_ARTICLE_INGESTION.md)                                  |
 | 2026-07-28 | Search and Retrieval Foundation — deterministic local full-text search contract, ranking fixtures, provenance-aware API/MCP surfaces, bounded context packets, `/vault/search`, and an explicit decision to defer embeddings until repeatable ranking misses justify them. Its first consumer, the Terminal `chat.ask` command, answers open-ended questions over `knowledge/` + `vault/` with tiered precedence and provenance-linked sources. Detail: [`DONE_SEARCH_RETRIEVAL_FOUNDATION.md`](./DONE_SEARCH_RETRIEVAL_FOUNDATION.md), ongoing plan [`TODO_KNOWLEDGE_RETRIEVAL_CHAT.md`](./TODO_KNOWLEDGE_RETRIEVAL_CHAT.md) |
 | 2026-07-26 | Vercel AI SDK transport standardisation — Anthropic/OpenCode/LM Studio transport migrated behind `@llaab/llm`, real LM Studio/OpenCode streaming, typed structured output, vision boundary, native Ollama parity decision, and embedding deferral. Detail: [`DONE_VERCEL_AI_SDK_MIGRATION.md`](./DONE_VERCEL_AI_SDK_MIGRATION.md)                                                                                                                                                                                                                                                                                             |
 | 2026-07-26 | LLM migration bugfix pass — provider override, cache key/bypass semantics, consolidation/wiki transport retries, and LM Studio progress parser coverage closed. Detail: [`DONE_BUGFIXES_LLM_MIGRATION.md`](./DONE_BUGFIXES_LLM_MIGRATION.md)                                                                                                                                                                                                                                                                                                                                                                                  |

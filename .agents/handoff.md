@@ -12,7 +12,7 @@
 
 `llaab` — Learning Loop & Agent Automation Base. Turborepo + pnpm monorepo. Two-process
 architecture: `apps/server` (Hono + Bun, business logic) + `apps/client` (Vite + React Router SPA, UI).
-Core pipeline: ingest YouTube → transcript → extracted ideas → canonical ideas → one-step
+Core pipeline: ingest YouTube/podcast/article → transcript or article resource → extracted ideas → canonical ideas → one-step
 `Create Wiki(s)` (internal discover/compile/link/auto-promote) → promoted `knowledge/wikis/` pages,
 with vault drafts and RunNode traces retained as provenance only.
 Executable/generated skills are future work, not current ingest output.
@@ -383,9 +383,10 @@ file path auto-converted to data URL at startup), and iconsApi host/port.
 
 ## Ingestion Pipeline
 
-`/ingest` accepts two source types: YouTube video URLs and Pocket Casts episode share links
-(`pca.st`/`pocketcasts.com`) — `SourceKind`/`classifyUrl` in `ingest-form.utils.ts` detect both,
-`isIngestibleSourceKind` gates submit. Podcast resolution (`packages/ingestion/src/fetch/podcast.ts`)
+`/ingest` accepts three source types: YouTube video URLs, Pocket Casts episode share links
+(`pca.st`/`pocketcasts.com`), and any other public HTTP(S) page as an **article** —
+`SourceKind`/`classifyUrl` in `ingest-form.utils.ts` detect all three, `isIngestibleSourceKind`
+gates submit. Podcast resolution (`packages/ingestion/src/fetch/podcast.ts`)
 uses Pocket Casts' public oEmbed endpoint (not scraping) to get the show name/website, then reads
 the show site's RSS `rel=alternate` link tag to resolve the feed (Podcast Index API is a fallback,
 needs `PODCASTINDEX_API_KEY`/`SECRET`), then fuzzy-matches the episode by title/date/duration.
@@ -394,7 +395,21 @@ Transcript text priority is RSS `<podcast:transcript>` → matched YouTube capti
 route/MCP tool mirror `ingest-youtube`'s shape exactly; run retry and stale-timeout/monitor-display
 dispatch generically on `skill_id` now (previously hardcoded to youtube only). Plan/status:
 `docs/todo/TODO_PODCAST_INGEST.md`.
-`/api/ingest/podcast` must stay in server `LONG_RUNNING_PATHS` (`apps/server/src/index.ts`) —
+**Articles** (`packages/ingestion/src/fetch/article/`, `src/article/create-article-nodes.ts`) land as
+`ResourceNode`s (`resource_type: article`) with a `source_kind: publication` `SourceNode` keyed by
+site origin — not transcripts. The fetch is bounded and SSRF-guarded: DNS is re-resolved immediately
+before every request _including each redirect hop_, redirects are followed manually (max 5, no
+https→http downgrade), the body is size-capped while streaming (`Content-Length` is not trusted),
+and only HTML/XHTML is accepted. Parsing is deterministic — `linkedom` + `@mozilla/readability` +
+`turndown`, no LLM — and `linkedom` needs `baseURI`/`documentURI` set from the final URL or relative
+links are stored unresolved. Failures are a closed typed code set, never thrown strings, with URL
+credentials redacted. Dedupe matches canonical URL **or** SHA-256 content hash. Extraction runs
+through the source-neutral `extractKnowledgeFromNode`; because Zod strips unknown keys, it writes
+`description` for resources and `summary` for everything else. Explicit Hermes `docs:`/`post:` links
+route to `ingest_article` and write the inbox capture **before** ingesting, so a failed fetch never
+loses the operator's link; unprefixed links stay capture-only. Detail:
+`docs/todo/DONE_ARTICLE_INGESTION.md`.
+`/api/ingest/podcast` and `/api/ingest/article` must stay in server `LONG_RUNNING_PATHS` (`apps/server/src/index.ts`) —
 without it Bun's 10s idle-timeout kills the connection while a long `mlx_whisper` transcription
 keeps running server-side, so the client never sees the (eventually successful) response and the
 UI spinner hangs forever. `mlx_whisper`/`ffmpeg` (Apple Silicon-native,
@@ -628,10 +643,9 @@ YAML `profiles` object-array parsing so all source nodes load for runs author li
 
 ## Roadmap & Planning
 
-Primary plan: `docs/todo/ROADMAP.md`; near-term tasks live in `ROADMAP.md#next`. Current large task:
-Article Ingestion — first write the implementation plan, then replace the placeholder article
-fetcher with a bounded ingest path that reuses the transcript-first save/extract boundary and
-connects to inbox docs/post captures. Search and Retrieval Foundation is complete; detail:
+Primary plan: `docs/todo/ROADMAP.md`; near-term tasks live in `ROADMAP.md#next`. Article Ingestion is
+complete; detail: `docs/todo/DONE_ARTICLE_INGESTION.md`. Current large task: Knowledge Retrieval and
+Chat (promoted to P0). Search and Retrieval Foundation is complete; detail:
 `docs/todo/DONE_SEARCH_RETRIEVAL_FOUNDATION.md`. Its continuation is
 `docs/todo/TODO_KNOWLEDGE_RETRIEVAL_CHAT.md` (P1) — Phases 0–3 done (contract, `chat.ask`,
 evaluation harness, passage-level retrieval). Phase 4 (BM25) and Phase 5 (embeddings) are both

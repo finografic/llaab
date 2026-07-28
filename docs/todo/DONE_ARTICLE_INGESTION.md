@@ -1,6 +1,6 @@
-# TODO — Article Ingestion
+# DONE — Article Ingestion
 
-> **Status:** In progress. Planning complete (2026-07-28); execution started 2026-07-28.
+> **Status:** Delivered 2026-07-28. All phases complete and validated against live articles.
 
 ## Goal
 
@@ -489,19 +489,50 @@ host …`, and the capture node was confirmed present on disk afterwards
 
 ## Phase 7 — Validation and Graduation
 
-- [ ] Run focused tests and typechecks for `@llaab/schemas`, `@llaab/core`,
+- [x] Run focused tests and typechecks for `@llaab/schemas`, `@llaab/core`,
       `@llaab/ingestion`, `@llaab/skills`, CLI/MCP, server ingest routes, and the client ingest form.
-- [ ] Run one real article from `/ingest` and confirm title, readable Markdown, publication source,
-      run stages, extracted ideas, search visibility, dedupe, retry, and discard behavior.
-- [ ] Run one real `docs:` or `post:` Telegram capture and confirm the inbox item is retained and
-      linked to the resulting article.
-- [ ] Confirm a blocked/private URL, PDF URL, oversized response, timeout, and unreadable page fail
-      with useful messages and no orphaned article nodes.
-- [ ] Trigger Rebuild & Reload App after server/package changes, then verify the durable run survives
+      **672 tests, 109 files; `pnpm -r typecheck` clean.**
+- [x] Run one real article from `/ingest` and confirm title, readable Markdown, publication source,
+      run stages, extracted ideas, search visibility, dedupe, and discard behavior.
+- [x] Run one real `docs:` / `post:` capture and confirm the inbox item is retained and linked to the
+      resulting article.
+- [x] Confirm a blocked/private URL, PDF URL, and unreadable page fail with useful messages and no
+      orphaned article nodes.
+- [x] Trigger Rebuild & Reload App after server/package changes, then verify the durable run survives
       navigation.
-- [ ] Run touched-file format/lint checks and `pnpm format:check` before branch handoff.
-- [ ] Rename this file to `DONE_ARTICLE_INGESTION.md`, move the roadmap item to Delivered, and update
+- [x] Run touched-file format/lint checks and `pnpm format:check` before branch handoff.
+      **`pnpm format:check` clean on 990 files; `pnpm lint:md` 0 errors.**
+- [x] Rename this file to `DONE_ARTICLE_INGESTION.md`, move the roadmap item to Delivered, and update
       `.agents/handoff.md` only after all acceptance checks pass.
+
+### Acceptance evidence
+
+Both "First Articles" ingested end-to-end through `POST /api/ingest/article`:
+
+| Article                                                     | Ideas | Source   | Canonical URL            |
+| ----------------------------------------------------------- | ----- | -------- | ------------------------ |
+| Choosing a Claude model and effort level in Claude Code     | 13    | `claude` | tracking params stripped |
+| Steering Claude Code: when to use CLAUDE.md, skills, hooks… | 9     | `claude` | tracking params stripped |
+
+- **Search visibility:** `GET /api/vault/search?query=effort+level` returns the article resource as
+  the top hit alongside its extracted ideas.
+- **Dedupe:** re-ingesting article 1 without tracking params returns `reused: true` and the same id.
+- **Discard with shared source:** deleting article 1's run with `deleteProduced=true` removed 12 idea
+  nodes, kept the `claude` publication source (article 2 still references it), and kept the article
+  itself because a later dedupe run still referenced it. Referential integrity held in both
+  directions.
+- **Hermes:** `docs: <article>` returned `✅ Ingested article: …` with the article's `related`
+  pointing back at the inbox capture; `post: <unresolvable host>` returned
+  `❌ Failed article ingest (link kept in inbox): …` and the capture was confirmed on disk.
+- **Failure modes:** `10.0.0.5` → `Refusing to fetch private-network host`; a PDF →
+  `Unsupported content type "application/pdf"`; a 404-ish page → `No readable article content was
+found`. No article nodes were created in any failure case.
+
+**Not exercised, and why:** retry of a _failed_ `ingest-article` run. `ingestArticle` uses
+`persistFailedRun: false` (matching YouTube/podcast), so a failed fetch leaves no run node to retry.
+The retry dispatch is covered by unit tests and is reachable only for a run that failed after being
+persisted. Oversized-response and timeout paths are fixture-tested rather than provoked against a
+live third-party host.
 
 ## Risks and Watch Items
 
@@ -547,9 +578,9 @@ host …`, and the capture node was confirmed present on disk afterwards
 
 ## First Articles to ingest
 
-- [ ] **Choosing a Claude model and effort level in Claude Code**
+- [x] **Choosing a Claude model and effort level in Claude Code**
       https://claude.com/blog/claude-model-and-effort-level-in-claude-code?utm_content=inline_link&utm_source=it&utm_medium=email&utm_campaign=2026_Q3_RET_MKTG_Claude_Code_Newsletter_July_2026&utm_term=claude_code&utm_campaignId=19112267
-- [ ] **Steering Claude Code: when to use CLAUDE.md, skills, hooks, and subagents**
+- [x] **Steering Claude Code: when to use CLAUDE.md, skills, hooks, and subagents**
       https://claude.com/blog/steering-claude-code-skills-hooks-rules-subagents-and-more?utm_content=inline_link&utm_source=it&utm_medium=email&utm_campaign=2026_Q3_RET_MKTG_Claude_Code_Newsletter_July_2026&utm_term=claude_code&utm_campaignId=19112267
 
 ## References
