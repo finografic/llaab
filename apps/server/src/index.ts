@@ -10,6 +10,8 @@ const COMMAND_TIMEOUT_MS = 120_000;
 const LONG_RUNNING_PATHS = [
   /^\/api\/ingest\/youtube$/,
   /^\/api\/ingest\/podcast$/,
+  // Bounded fetch is quick, but the follow-on extraction runs inside the same request.
+  /^\/api\/ingest\/article$/,
   /^\/api\/crons\/[^/]+\/run$/,
   /^\/api\/vault\/sources\/[^/]+\/enrich$/,
   /^\/api\/vault\/transcripts\/[^/]+\/extract$/,

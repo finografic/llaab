@@ -11,6 +11,7 @@ export { useExtractTranscript } from './useExtractTranscript';
 export { useDiscardTranscript } from './useDiscardTranscript';
 export { useIngestYoutube } from './useIngestYoutube';
 export { useIngestPodcast } from './useIngestPodcast';
+export { useIngestArticle } from './useIngestArticle';
 export { usePromoteCanonicalIdea } from './usePromoteCanonicalIdea';
 export { useResolveCanonicalIdeaConflict } from './useResolveCanonicalIdeaConflict';
 export { useCleanCanonicalIdeaArtifacts } from './useCleanCanonicalIdeaArtifacts';
@@ -20,6 +21,7 @@ export type { ConsolidateCanonicalIdeasResult } from './useConsolidateCanonicalI
 export type { ExtractTranscriptResult } from './useExtractTranscript';
 export type { IngestYoutubeInput, IngestYoutubeResult } from './useIngestYoutube';
 export type { IngestPodcastInput, IngestPodcastResult } from './useIngestPodcast';
+export type { IngestArticleInput, IngestArticleResult } from './useIngestArticle';
 export type { PromoteCanonicalIdeaResult } from './usePromoteCanonicalIdea';
 export type { ResolveCanonicalIdeaConflictResult } from './useResolveCanonicalIdeaConflict';
 export type { CleanCanonicalIdeaArtifactsResult } from './useCleanCanonicalIdeaArtifacts';

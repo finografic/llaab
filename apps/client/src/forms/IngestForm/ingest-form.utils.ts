@@ -31,8 +31,32 @@ export function classifyUrl(value: string): SourceKind {
 }
 
 /** Source kinds the ingest backend actually accepts today. */
-export function isIngestibleSourceKind(kind: SourceKind): kind is 'youtube' | 'podcast' {
+export function isIngestibleSourceKind(kind: SourceKind): kind is 'youtube' | 'podcast' | 'webpage' {
+  return kind === 'youtube' || kind === 'podcast' || kind === 'webpage';
+}
+
+/** Articles land as resource nodes; YouTube and podcasts land as transcripts. */
+export function producesTranscript(kind: SourceKind): boolean {
   return kind === 'youtube' || kind === 'podcast';
+}
+
+/** Noun for the primary node this source kind produces, used in shared pipeline copy. */
+export function contentNoun(kind: SourceKind): string {
+  return kind === 'webpage' ? 'Article' : 'Transcript';
+}
+
+export function sourceKindLabel(kind: SourceKind): string {
+  if (kind === 'youtube') return 'YouTube video URL detected.';
+  if (kind === 'podcast') return 'Pocket Casts episode detected.';
+  if (kind === 'webpage') return 'Article or web page detected.';
+  return 'The form classifies the source asset and adapts the ingest action.';
+}
+
+export function ingestButtonLabel(kind: SourceKind): string {
+  if (kind === 'youtube') return 'Ingest YouTube';
+  if (kind === 'podcast') return 'Ingest Podcast';
+  if (kind === 'webpage') return 'Ingest Article';
+  return 'Ingest';
 }
 
 export function extractDroppedUrl(dataTransfer: DataTransfer): string | null {
@@ -57,16 +81,20 @@ export function extractDroppedUrl(dataTransfer: DataTransfer): string | null {
   return null;
 }
 
-export function stepLabel(transcriptPhase: TranscriptPhase, extractionPhase: ExtractionPhase): string {
-  if (transcriptPhase === 'processing') return 'Fetching transcript…';
-  if (transcriptPhase === 'failed') return 'Transcript fetch failed';
+export function stepLabel(
+  transcriptPhase: TranscriptPhase,
+  extractionPhase: ExtractionPhase,
+  noun = 'Transcript',
+): string {
+  if (transcriptPhase === 'processing') return `Fetching ${noun.toLowerCase()}…`;
+  if (transcriptPhase === 'failed') return `${noun} fetch failed`;
   if (extractionPhase === 'waiting') return 'Waiting for extraction';
   if (extractionPhase === 'pending') return 'Extracting ideas…';
   if (extractionPhase === 'success' || extractionPhase === 'existing') return 'Complete';
   if (extractionPhase === 'extractable') return 'No ideas extracted';
   if (extractionPhase === 'failed') return 'Extraction failed';
-  if (transcriptPhase === 'saved') return 'Transcript saved';
-  if (transcriptPhase === 'reused') return 'Transcript already saved';
+  if (transcriptPhase === 'saved') return `${noun} saved`;
+  if (transcriptPhase === 'reused') return `${noun} already saved`;
   return 'Starting…';
 }
 
@@ -83,12 +111,12 @@ export function runPhase(
   return 'success';
 }
 
-export function transcriptStepTitle(phase: TranscriptPhase): string {
-  if (phase === 'saved') return 'Transcript saved';
-  if (phase === 'reused') return 'Transcript already saved';
-  if (phase === 'failed') return 'Transcript failed';
-  if (phase === 'processing') return 'Transcript processing';
-  return 'Transcript pending';
+export function transcriptStepTitle(phase: TranscriptPhase, noun = 'Transcript'): string {
+  if (phase === 'saved') return `${noun} saved`;
+  if (phase === 'reused') return `${noun} already saved`;
+  if (phase === 'failed') return `${noun} failed`;
+  if (phase === 'processing') return `${noun} processing`;
+  return `${noun} pending`;
 }
 
 export function extractionStepTitle(phase: ExtractionPhase): string {

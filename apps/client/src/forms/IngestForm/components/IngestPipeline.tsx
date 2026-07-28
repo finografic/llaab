@@ -50,6 +50,7 @@ export function IngestPipeline({
   totalElapsedSecs,
   activeRun,
   lockedTags,
+  contentNoun = 'Transcript',
   onKeep,
   onDiscard,
   onRetry,
@@ -71,6 +72,8 @@ export function IngestPipeline({
   totalElapsedSecs: number | null;
   activeRun?: RunMonitorItem | null;
   lockedTags: string[];
+  /** "Transcript" for YouTube/podcast, "Article" for web pages — drives shared step copy and links. */
+  contentNoun?: string;
   onKeep: () => void;
   onDiscard: () => Promise<void>;
   onRetry: () => void;
@@ -103,13 +106,21 @@ export function IngestPipeline({
     const transcriptStep: RunPipelineStepData = {
       id: 'transcript',
       status: transcriptChainStepStatus(transcriptPhase),
-      title: transcriptStepTitle(transcriptPhase),
+      title: transcriptStepTitle(transcriptPhase, contentNoun),
       startedAt: transcriptStartedAt,
       elapsedSecs: transcriptElapsedSecs,
       active: transcriptPhase === 'processing',
       nodeCount: transcriptData ? 1 : undefined,
       items: transcriptData
-        ? [{ label: transcriptData.filename, href: `/vault/transcripts/${transcriptData.id}` }]
+        ? [
+            {
+              label: transcriptData.filename,
+              href:
+                contentNoun === 'Article'
+                  ? `/vault/resources/${transcriptData.id}`
+                  : `/vault/transcripts/${transcriptData.id}`,
+            },
+          ]
         : undefined,
       children:
         transcriptPhase === 'failed' && transcriptError ? (
@@ -161,6 +172,7 @@ export function IngestPipeline({
     return [transcriptStep, extractionStep];
   }, [
     activeRun,
+    contentNoun,
     isBusy,
     extractionElapsedSecs,
     extractionError,
@@ -214,7 +226,7 @@ export function IngestPipeline({
   return (
     <RunPipelineCard
       headerTitle="RUN"
-      headerSubtitle={activeRun ? 'Processing…' : stepLabel(transcriptPhase, extractionPhase)}
+      headerSubtitle={activeRun ? 'Processing…' : stepLabel(transcriptPhase, extractionPhase, contentNoun)}
       headerMeta={
         hasRunElapsed || totalNodeCount > 0 ? (
           <span className="flex shrink-0 items-center gap-2 font-mono text-xs text-muted-foreground">

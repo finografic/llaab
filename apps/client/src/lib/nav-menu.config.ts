@@ -103,8 +103,9 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
       {
         label: 'Ingest Article',
         description: 'Ingest a web article or blog post as a resource node',
-        href: '/ingest/article',
-        live: false,
+        // Articles share the canonical /ingest form — there is no separate article page.
+        href: '/ingest',
+        live: true,
       },
       {
         label: 'Ingest Document',

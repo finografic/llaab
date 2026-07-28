@@ -132,6 +132,7 @@ export function extractRunSubjectHref(run: {
         const type = readMetadataStringField(record, 'type');
         if (type === 'transcript') return `/vault/transcripts/${id}`;
         if (type === 'source') return `/vault/sources/${id}`;
+        if (type === 'resource') return `/vault/resources/${id}`;
 
         return `/vault/nodes/${id}`;
       }

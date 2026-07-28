@@ -130,6 +130,10 @@ describe('inbox filters', () => {
         ideaNode({
           id: 'todo-1',
           title: 'Todo: one',
+          // A *fresh* unreviewed todo needs no attention. Pinning a literal date made this assert a
+          // wall-clock coincidence instead, and it silently began failing once the fixture aged past
+          // the 7-day threshold.
+          created_at: new Date().toISOString(),
           tags: ['hermes', 'inbox', 'inbox:todo'],
           body: [
             '# Hermes Inbox Item',

@@ -13,6 +13,7 @@ import type { RunMonitorItem } from '@llaab/schemas';
 import type { ReactNode } from 'react';
 
 import { formatElapsed, useElapsedSeconds } from 'lib/heartbeat';
+import { INGEST_SKILL_IDS } from 'utils/run-display.utils';
 
 import styles from './RunMonitor.module.css';
 
@@ -77,7 +78,7 @@ function MonitorRunCard({ run }: { run: RunMonitorItem }) {
   const { mutate: dismissMutate } = dismissRunMutation;
   const isActive = isActiveRun(run);
   const isFailed = run.status === 'failed';
-  const canRetry = isFailed && (run.skill_id === 'ingest-youtube' || run.skill_id === 'ingest-podcast');
+  const canRetry = isFailed && (INGEST_SKILL_IDS as readonly string[]).includes(run.skill_id ?? '');
   const steps = useMemo(() => buildMonitorPipelineSteps(run), [run]);
   const metaLinks = useMemo(() => (run.primary_link ? [run.primary_link] : undefined), [run.primary_link]);
   const hasDetails =

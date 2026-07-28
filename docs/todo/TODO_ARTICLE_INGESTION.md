@@ -409,21 +409,49 @@ Live verification after Rebuild & Reload (artifacts cleaned up afterwards):
 
 ## Phase 5 — Ingest Form and Run Surfaces
 
-- [ ] Make `webpage` an ingestible source kind and add an article mutation hook.
-- [ ] Update detected copy, button labels, URL placeholder, queue behavior, and drop-submit behavior
+- [x] Make `webpage` an ingestible source kind and add an article mutation hook.
+- [x] Update detected copy, button labels, URL placeholder, queue behavior, and drop-submit behavior
       for articles.
-- [ ] Generalize transcript-specific form state/copy to source/content language where article runs
+- [x] Generalize transcript-specific form state/copy to source/content language where article runs
       share the UI.
-- [ ] Recognize `ingest-article` in `RunMonitor`, pipeline cards, run display helpers, retry controls,
+- [x] Recognize `ingest-article` in `RunMonitor`, pipeline cards, run display helpers, retry controls,
       and Runs table grouping.
-- [ ] Clear the URL field when the durable article run finishes, matching YouTube/podcast behavior.
-- [ ] Keep the existing `/ingest` page as the canonical UI; update the stale `/ingest/article`
+- [x] Clear the URL field when the durable article run finishes, matching YouTube/podcast behavior.
+- [x] Keep the existing `/ingest` page as the canonical UI; update the stale `/ingest/article`
       navigation target rather than creating a duplicate form.
-- [ ] Add focused client tests for classification, submission, queueing, durable-run hydration, and
+- [x] Add focused client tests for classification, submission, queueing, durable-run hydration, and
       completed-form reset.
 
 Exit criteria: paste/drop of an article URL behaves like the existing durable ingest flows without
-calling it a transcript.
+calling it a transcript. **Met.** 662 tests repo-wide, all typechecks, lint, format.
+
+Notes:
+
+- **Client tests were never running.** `vitest.config.ts` only included `packages/**` and
+  `apps/server/**`, so every existing `apps/client/**/*.test.ts` was dead. Added the client include
+  plus the client path aliases. Suite went 572 → 662 tests.
+- Turning the runner on surfaced one pre-existing failure in `inbox-capture.utils.test.ts`: the
+  fixture pinned `created_at: '2026-07-20'` and the assertion `inboxCaptureNeedsAttention === false`
+  silently began failing once that date aged past the 7-day threshold (i.e. on 2026-07-27). Fixed the
+  fixture to use a relative date so it asserts intent rather than a wall-clock coincidence. Product
+  logic unchanged.
+- **`/api/ingest/article` was missing from `LONG_RUNNING_PATHS`.** Extraction runs inside the same
+  request, so a real ingest exceeded Bun's idle timeout and the browser dropped the connection at
+  ~155s. The durable run survived and completed correctly — which is the design working — but the
+  path now has the exemption.
+- `isRunExtracting` is deliberately restricted to YouTube/podcast. Those persist the run as completed
+  and let the client drive extraction; article extraction happens inside the skill, so a completed
+  article run is genuinely finished.
+- Step _ids_ stay `transcript`/`extraction` across all source kinds; only user-visible copy changes.
+
+Live verification (artifacts cleaned up afterwards):
+
+- typing an article URL → "Article or web page detected.", button "Ingest Article", hint naming the
+  HTML-only limits
+- submitting → pipeline reads "Fetching article…" / "Article processing", never "transcript"
+- completion → 13 ideas extracted, URL field cleared, run in the Runs table with the publication
+  source ("Claude") as Author
+- nav "Ingest Article" now live and pointing at `/ingest`
 
 ## Phase 6 — Hermes Docs/Post Integration
 

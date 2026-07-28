@@ -57,11 +57,26 @@ function stepStatusFromEvents(
   return 'pending';
 }
 
-/** High-level transcript + extraction steps for ingest-youtube monitor rows. */
-export function buildIngestYoutubeMonitorSteps(run: RunMonitorItem): RunPipelineStepData[] {
+/**
+ * High-level content + extraction steps for ingest monitor rows.
+ *
+ * Shared by `ingest-youtube`, `ingest-podcast`, and `ingest-article`; `noun` swaps the step copy and
+ * the vault link family so an article run never reads as a transcript.
+ */
+export function buildIngestMonitorSteps(
+  run: RunMonitorItem,
+  noun: 'Transcript' | 'Article' = 'Transcript',
+): RunPipelineStepData[] {
+  const isArticle = noun === 'Article';
+  const linkPrefix = isArticle ? '/vault/resources/' : '/vault/transcripts/';
+  const fetchPattern = isArticle
+    ? /fetching article|saved article/i
+    : /fetching transcript|saved transcript/i;
+  const savedPattern = isArticle ? /saved article/i : /saved transcript/i;
+
   const reused = Boolean(findEvent(run, /already saved|reused/i));
   const transcriptFailed = run.steps.some(
-    (step) => /transcript|dedupe|fetch|store/i.test(step.title) && step.status === 'failed',
+    (step) => /transcript|article|dedupe|fetch|store/i.test(step.title) && step.status === 'failed',
   );
   const extractionFailed = run.steps.some(
     (step) => /execute|extract/i.test(step.title) && step.status === 'failed',
@@ -75,7 +90,7 @@ export function buildIngestYoutubeMonitorSteps(run: RunMonitorItem): RunPipeline
       ? 'complete'
       : run.status === 'running' || run.status === 'pending'
         ? 'active'
-        : stepStatusFromEvents(run, /fetching transcript|saved transcript/i, /saved transcript/i, false);
+        : stepStatusFromEvents(run, fetchPattern, savedPattern, false);
 
   let extractionStatus: StepStatus = 'pending';
   if (extractionFailed || run.error) {
@@ -89,14 +104,14 @@ export function buildIngestYoutubeMonitorSteps(run: RunMonitorItem): RunPipeline
   }
 
   const transcriptTitle = transcriptFailed
-    ? 'Transcript failed'
+    ? `${noun} failed`
     : reused
-      ? 'Transcript already saved'
+      ? `${noun} already saved`
       : transcriptStatus === 'active'
-        ? 'Transcript processing'
+        ? `${noun} processing`
         : transcriptStatus === 'complete'
-          ? 'Transcript saved'
-          : 'Transcript pending';
+          ? `${noun} saved`
+          : `${noun} pending`;
 
   const extractionTitle = extractionFailed
     ? 'Extraction failed'
@@ -107,7 +122,7 @@ export function buildIngestYoutubeMonitorSteps(run: RunMonitorItem): RunPipeline
         : 'Extraction pending';
 
   const transcriptItems: RunPipelineLink[] = [];
-  if (run.primary_link?.href.includes('/vault/transcripts/')) {
+  if (run.primary_link?.href.includes(linkPrefix)) {
     transcriptItems.push(run.primary_link);
   }
 
@@ -167,8 +182,12 @@ const STEP_TITLE_BY_STATUS: Record<string, Record<StepStatus, string>> = {
 };
 
 export function buildMonitorPipelineSteps(run: RunMonitorItem): RunPipelineStepData[] {
+  if (run.skill_id === 'ingest-article') {
+    return buildIngestMonitorSteps(run, 'Article');
+  }
+
   if (run.skill_id === 'ingest-youtube' || run.skill_id === 'ingest-podcast') {
-    return buildIngestYoutubeMonitorSteps(run);
+    return buildIngestMonitorSteps(run, 'Transcript');
   }
 
   const titleByStatus = run.skill_id ? STEP_TITLE_BY_STATUS[run.skill_id] : undefined;

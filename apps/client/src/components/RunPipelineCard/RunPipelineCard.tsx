@@ -164,7 +164,7 @@ export function RunPipelineCard({
 export { PipelineNodeCountMeta, PipelineStepMeta } from './components/PipelineStepMeta';
 export type { RunPipelineLink, RunPipelineStepData } from './run-pipeline-card.utils';
 export {
-  buildIngestYoutubeMonitorSteps,
+  buildIngestMonitorSteps,
   buildMonitorPipelineSteps,
   CONSOLIDATION_SKILL_ID,
   formatMonitorDateTime,
