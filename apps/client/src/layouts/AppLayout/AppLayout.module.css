@@ -8,41 +8,6 @@
   background: var(--bg);
 }
 
-.secondaryBar {
-  height: var(--secondary-actions-h);
-  max-height: var(--secondary-actions-h);
-  min-height: var(--secondary-actions-h);
-  justify-content: flex-end;
-  border-color: var(--border-subtle);
-  background: var(--surface);
-  padding: 0 var(--space-6);
-}
-
-.secondaryActions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  width: 100%;
-}
-
-.secondaryLeading,
-.secondaryTrailing {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-/* Icon-button chrome insets the glyph ~10px; pull leading controls flush with subnav/sidebar text. */
-.secondaryLeading {
-  margin-left: -9px;
-}
-
-.secondaryTrailing {
-  margin-left: auto;
-}
-
 .secondaryPanelTrigger {
   position: relative;
 }

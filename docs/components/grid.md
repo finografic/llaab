@@ -221,7 +221,7 @@ owns structure only.
 **Narrow exceptions:**
 
 - Micro inline clusters inside a **single** control (icon + label) — `flex items-center gap-*`.
-- App chrome (`AppLayout`, `AppHeader`, `SecondaryActionBar`, sidebars, resizable panels).
+- App chrome (`AppLayout`, `AppHeader`, `SectionSubnav`, sidebars, resizable panels).
 - Documented shells: `BalancedGrid`, `llm-card-grid`, `PageLayout` outer frame.
 - shadcn / `@llaab/ui` primitive internals; third-party layouts (tables, diff viewers).
 

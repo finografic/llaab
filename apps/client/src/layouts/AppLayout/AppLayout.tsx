@@ -15,7 +15,6 @@ import type { ReactNode, SetStateAction } from 'react';
 
 import styles from './AppLayout.module.css';
 import { AppLeftSidebarContext } from './AppLeftSidebarContext';
-import { SecondaryActionBar } from './SecondaryActionBar';
 import { SecondaryActionBarContext } from './SecondaryActionBarContext';
 
 export interface RouteHandle {
@@ -108,9 +107,16 @@ export function AppLayout() {
   return (
     <div className={styles.appShell}>
       <AppHeader />
-      <SectionSubnav />
       <SecondaryActionBarContext.Provider value={secondaryActionBarValue}>
         <TooltipProvider>
+          <SectionSubnav
+            leadingAction={leadingAction}
+            hasLeftSidebar={leftSidebar !== null}
+            isLeftSidebarOpen={isLeftSidebarOpen}
+            onLeftSidebarOpenChange={setIsLeftSidebarOpen}
+            activePanel={activePanel}
+            onActivePanelChange={setActivePanel}
+          />
           <AppSidebarLayout
             position="inline"
             align="right"
@@ -134,20 +140,9 @@ export function AppLayout() {
             leftOnExpand={() => setIsLeftSidebarOpen(true)}
             onCollapse={() => setActivePanel(null)}
             onExpand={() => setActivePanel((prev) => prev ?? 'runs')}
-            headerClassName={styles.secondaryBar}
             leftSidebarClassName={styles.leftSidebar}
             sidebarClassName={styles.runMonitorSidebar}
             insetClassName={styles.appInset}
-            header={
-              <SecondaryActionBar
-                leadingAction={leadingAction}
-                hasLeftSidebar={leftSidebar !== null}
-                isLeftSidebarOpen={isLeftSidebarOpen}
-                onLeftSidebarOpenChange={setIsLeftSidebarOpen}
-                activePanel={activePanel}
-                onActivePanelChange={setActivePanel}
-              />
-            }
             leftSidebar={leftSidebar?.content}
             sidebar={
               activePanel === 'vaultGit' ? (

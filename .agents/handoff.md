@@ -70,11 +70,12 @@ Vault pages fetch via TanStack Query hooks + Hono RPC (`/api/vault/*`); optional
 `VAULT_PASSWORD` is set (unset = open local access).
 
 Layout hierarchy: `index.html` + `main.tsx` mount a single React tree. `AppLayout` wraps a sticky
-header + `SecondaryActionBar` (header of one resizable right-hand `AppSidebarLayout` slot) + main +
-footer. `AppHeader` hosts `NavMenu` (brand link + shadcn megamenus + mobile sheet) plus navigation
-shortcuts (ingest, transcripts, LLM, inbox, icons). `SecondaryActionBar` holds global contextual
-actions — Clean Vault (dialog), Vault Changes, Activity Monitor (renamed from "Run Monitor" —
-it's not ingest-specific anymore) — that share the single sidebar slot: `AppLayout` owns
+header + `SectionSubnav` (section links with inline leading/trailing secondary tools) + main inside
+one resizable `AppSidebarLayout` + footer. `AppHeader` hosts `NavMenu` (brand link + shadcn
+megamenus + mobile sheet) plus navigation shortcuts (ingest, transcripts, LLM, inbox, icons).
+`SectionSubnav` trailing holds global contextual actions — Clean Vault (dialog), Vault Changes,
+Activity Monitor — that share the single right sidebar slot; leading holds the left-sidebar toggle
+(when registered) and per-route back actions. `AppLayout` owns
 `activePanel: 'runs' | 'vaultGit' | null` as the one source of truth for which panel renders
 (mutually exclusive), syncing it to the resizable panel imperatively via `usePanelRef()`.
 Per-route leading actions (e.g. registry detail back) register via
@@ -239,10 +240,10 @@ Homepage (`routes/root.tsx`) callout cards: Ingest, Vault, Runs, Models, Hermes 
 | `/knowledge/wikis`             | Browse promoted source-backed wiki pages from `knowledge/wikis/`, with confirmed wiki deletion                                                        |
 | `/knowledge/wikis/:id`         | Rendered promoted page with evidence metrics, unpublish/delete, and section regenerate/delete                                                         |
 | `/registry`                    | Packages list — shared Add/Search toolbar; Pinned \| Search results tabs; `PackageCard` list (Title / Last Publish / Downloads)                       |
-| `/registry/package/:name`      | Package detail — readme + aligned metadata aside; SecondaryActionBar back to `/registry`                                                              |
+| `/registry/package/:name`      | Package detail — readme + aligned metadata aside; SectionSubnav back to `/registry`                                                                   |
 | `/registry/pinned`             | Redirects into `/registry` Pinned tab                                                                                                                 |
 | `/registry/repos`              | Repositories list — same toolbar/tabs pattern against GitHub; `PackageCard variant="repo"` (Title / Updated / Stars)                                  |
-| `/registry/repos/:owner/:repo` | Repo detail — readme + aligned metadata aside; SecondaryActionBar back to `/registry/repos`                                                           |
+| `/registry/repos/:owner/:repo` | Repo detail — readme + aligned metadata aside; SectionSubnav back to `/registry/repos`                                                                |
 
 **Registry UI (Packages + Repositories):** Both list pages share `forms/RegistryAddPinForm` —
 Add New Registry (paste/drop URL → pin) + Search card always visible. Add form accepts

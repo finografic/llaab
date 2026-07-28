@@ -93,6 +93,12 @@ Canonical primitive: `packages/ui/src/components/tabs.tsx` (`components/ui/tabs`
 - Prefer these defaults; override with `className` or a future `size` variant only when a denser control is required.
 - Do not re-declare line/size styles in page CSS modules — change the shared primitive instead.
 
+## Section / sidebar title counts
+
+Counts that label a heading or sidebar title sit **immediately to the right of the title**, using
+`.section__count`. Never far-right-align them opposite the title. Full rule:
+[`.github/instructions/project/section-count-badges.instructions.md`](./section-count-badges.instructions.md).
+
 ## CSS tokens vs hard-coded values
 
 Never hard-code hex or rgb colours in component files or Astro pages. Instead use:

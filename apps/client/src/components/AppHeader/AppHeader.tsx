@@ -1,4 +1,5 @@
 import { BookMarkedIcon, BrainIcon, InboxIcon, LandPlotIcon, PipetteIcon, VoicemailIcon } from '@llaab/icons';
+import { cn } from '@llaab/ui/lib/utils';
 import { NavMenu } from 'components/NavMenu/NavMenu';
 import { buttonVariants } from 'components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
@@ -6,7 +7,11 @@ import type { ReactNode } from 'react';
 
 import styles from './AppHeader.module.css';
 
-const iconButtonClass = buttonVariants({ variant: 'outline', size: 'icon' });
+const iconButtonClass = cn(
+  buttonVariants({ variant: 'ghost', size: 'icon' }),
+  // Ghost defaults to hover:text-foreground; keep always-on accent like the old outline tier.
+  'hover:text-[var(--accent-hover)]',
+);
 
 interface AppHeaderProps {
   actions?: ReactNode;

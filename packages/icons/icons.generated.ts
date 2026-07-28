@@ -43,6 +43,8 @@ const ICONS = {
   CoffeeIcon:                     Lucide.Coffee,
   Columns3Icon:                   Lucide.Columns3,
   Columns4Icon:                   Lucide.Columns4,
+  CopyMinusIcon:                  Lucide.CopyMinus,
+  CopyPlusIcon:                   Lucide.CopyPlus,
   CountdownTimerIcon:             Lucide.Hourglass,
   CpuIcon:                        Lucide.Cpu,
   Cross2Icon:                     Lucide.X,

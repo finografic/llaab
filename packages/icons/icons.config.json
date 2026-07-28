@@ -510,5 +510,13 @@
   {
     "exportName": "SquareCheck",
     "lucideName": "square-check"
+  },
+  {
+    "exportName": "CopyMinus",
+    "lucideName": "copy-minus"
+  },
+  {
+    "exportName": "CopyPlus",
+    "lucideName": "copy-plus"
   }
 ]

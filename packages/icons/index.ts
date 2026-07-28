@@ -42,6 +42,8 @@ export const {
   CoffeeIcon,
   Columns3Icon,
   Columns4Icon,
+  CopyMinusIcon,
+  CopyPlusIcon,
   CountdownTimerIcon,
   CpuIcon,
   Cross2Icon,

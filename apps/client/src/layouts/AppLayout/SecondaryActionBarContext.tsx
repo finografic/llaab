@@ -17,7 +17,7 @@ export function useSecondaryActionBar() {
   return useContext(SecondaryActionBarContext);
 }
 
-/** Register per-route leading content in the SecondaryActionBar; clears on unmount. */
+/** Register per-route leading content in the SectionSubnav leading slot; clears on unmount. */
 export function useSecondaryLeadingAction(action: ReactNode | null) {
   const context = useSecondaryActionBar();
 
@@ -30,7 +30,7 @@ export function useSecondaryLeadingAction(action: ReactNode | null) {
   }, [action, context]);
 }
 
-/** Standard back icon button for the SecondaryActionBar leading slot. */
+/** Standard back icon button for the SectionSubnav leading slot. */
 export function useSecondaryBackAction(to: string, label = 'Back') {
   const action = useMemo(
     () => (

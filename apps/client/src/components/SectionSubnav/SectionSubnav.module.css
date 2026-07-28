@@ -4,6 +4,7 @@
   z-index: 40;
   display: flex;
   align-items: center;
+  gap: var(--space-3);
   width: 100%;
   height: var(--section-subnav-h);
   min-height: var(--section-subnav-h);
@@ -14,12 +15,21 @@
   background: var(--bg-secondary);
 }
 
+.leading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  /* Icon-button chrome insets the glyph ~10px; keep flush with page content. */
+  margin-left: -9px;
+}
+
 .list {
   display: flex;
   align-items: stretch;
   gap: calc(var(--space-6) + 0.25rem);
   min-width: 0;
-  width: 100%;
+  flex: 1 1 auto;
   height: 100%;
   /* Pull links out by their horizontal padding so first/last text stays
      flush with page content while active underlines keep full padding. */
@@ -29,6 +39,11 @@
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
+}
+
+.listSpacer {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .list > li {
@@ -77,4 +92,14 @@
   width: 0.75rem;
   height: 0.75rem;
   flex-shrink: 0;
+}
+
+.trailing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  margin-left: auto;
+  /* Nudge icons 1px up within the subnav (button pt-[3px] sits them slightly low). */
+  margin-bottom: 2px;
 }

@@ -100,12 +100,11 @@
   /* ── Layout dimensions ────────────────────────────────────────────────────── */
   --sidebar-w: 220px;
   --header-h: 52px;
-  --section-subnav-h: 36px;
-  --secondary-actions-h: 40px;
+  --section-subnav-h: 40px;
+  /* Reserved for optional AppSidebarLayout header slots (unused when tools live in SectionSubnav). */
+  --secondary-actions-h: 0px;
   --footer-h: 40px;
-  --content-area-h: calc(
-    100dvh - var(--header-h) - var(--section-subnav-h) - var(--secondary-actions-h) - var(--footer-h)
-  );
+  --content-area-h: calc(100dvh - var(--header-h) - var(--section-subnav-h) - var(--footer-h));
   --content-narrow-max: 768px;
   --content-max: 1280px;
   --content-wide-max: 1536px;

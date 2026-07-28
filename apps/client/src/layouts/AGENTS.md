@@ -5,8 +5,9 @@ sticky bars they compose. Page-level content rules live in component/route AGENT
 
 ## Layout primitives
 
-- `AppLayout` is the app shell: sticky `AppHeader`, the `SecondaryActionBar` (header of the
-  resizable `AppSidebarLayout`), the routed `<Outlet>`, and `AppFooter`. One instance, mounted once.
+- `AppLayout` is the app shell: sticky `AppHeader`, sticky `SectionSubnav` (section links + inline
+  secondary tools), the routed `<Outlet>` inside a resizable `AppSidebarLayout`, and `AppFooter`.
+  One instance, mounted once.
 - `PageLayout` / `PageDetail` / `PageList` are per-route content wrappers rendered inside
   `AppLayout`'s `<Outlet>`. Don't duplicate chrome (headers, global icon rows) inside them — that
   belongs at the `AppLayout` level so it's consistent across routes.
@@ -27,9 +28,10 @@ Tailwind `flex` / `grid` / `grid-cols-*` for multi-column structure.
 Two tiers, kept visually distinct so users can tell "navigation" from "contextual action" at a glance:
 
 1. **Primary nav** (`AppHeader.tsx` — Ingest, Transcripts, LLM, Icons): `buttonVariants({ variant:
-'outline', size: 'icon' })`, always-on accent-green icon, no hover-color shift. These are
-   destinations (`<Link>`), not actions.
-2. **Contextual / secondary actions** (`SecondaryActionBar.tsx` — Clean Vault, Vault Changes,
+'ghost', size: 'icon' })` with `hover:text-[var(--accent-hover)]` so icons stay accent-green (no
+   border; outline’s `dark:border-input` fought `border-transparent`). These are destinations
+   (`<Link>`), not actions.
+2. **Contextual / secondary actions** (`SectionSubnav` trailing — Clean Vault, Vault Changes,
    Activity/RunMonitor toggle): shadcn `<Button variant="ghost" size="icon">`, default
    (white/`--text`) icon, no border, `color: var(--accent-hover)` on `:hover`/`:focus-visible` (and
    `[aria-pressed="true"]` for toggles). No background fill, no per-button accent color — one shared
@@ -39,25 +41,27 @@ Two tiers, kept visually distinct so users can tell "navigation" from "contextua
 When adding a new icon button, decide which tier it belongs to first — don't mix outline/ghost
 styling within the same row.
 
-## Secondary Action Bar
+## Section Subnav (links + secondary tools)
 
-`SecondaryActionBar.tsx` is the thin bar directly under `AppHeader`, split into two flex slots:
+`SectionSubnav` is the single bar under `AppHeader`. Layout left → right:
 
-- `secondaryLeading` — per-route content, set via `useSecondaryActionBar().setLeadingAction(node)`
-  (`SecondaryActionBarContext`). Routes opt in; default is empty. Don't reach into
-  `SecondaryActionBar` directly from a route — go through the context.
-- `secondaryTrailing` — global, always-mounted controls that apply everywhere (Clean Vault, Vault
-  Changes, RunMonitor toggle). Order is left-to-right by how "destructive/infrequent" →
-  "informational" the action is (Clean Vault, a rare maintenance action, sits left of Vault Changes,
-  which sits left of the frequently-toggled Activity monitor). New global icon actions go here, not
-  in `AppHeader`, unless they're a navigation destination.
+- **Leading** — left-sidebar toggle (only when a route registers via `useAppLeftSidebar()`), then
+  optional per-route content from `useSecondaryActionBar().setLeadingAction(node)` /
+  `useSecondaryBackAction` (`SecondaryActionBarContext`). Routes opt in; default is empty. Don't
+  reach into `SectionSubnav` directly from a route — go through the context.
+- **Links** — current parent section’s live/disabled items from `NAV_MENU_SECTIONS`.
+- **Trailing** — global controls (Clean Vault, Vault Changes, RunMonitor toggle). Order is
+  left-to-right by how "destructive/infrequent" → "informational" the action is. New global icon
+  actions go here, not in `AppHeader`, unless they're a navigation destination.
 
-The left-sidebar toggle is owned by `SecondaryActionBar`, but only renders when the current route
-registers left-sidebar content through `useAppLeftSidebar()` (`AppLeftSidebarContext`). Routes own
-the content; `AppLayout` owns the physical panel, width, collapse state, and toggle.
+There is no separate secondary-actions row. `--section-subnav-h` reserves the bar height;
+`--secondary-actions-h` stays at `0` for optional `AppSidebarLayout` header slots only.
 
-Dialog triggers (e.g. `CleanVaultDialog`) are fully self-contained and drop straight into
-`secondaryTrailing` with zero wiring. Sidebar-panel triggers (`VaultGitTrigger`, `RunMonitorTrigger`)
+Routes own left-sidebar content; `AppLayout` owns the physical panel, width, collapse state, and
+toggle (wired through `SectionSubnav`).
+
+Dialog triggers (e.g. `CleanVaultDialog`) are fully self-contained and drop straight into the
+trailing slot with zero wiring. Sidebar-panel triggers (`VaultGitTrigger`, `RunMonitorTrigger`)
 are _not_ self-contained — there is one right sidebar slot for multiple panels, so `AppLayout` owns
 which panel is active and passes each trigger its `isOpen`/`isActive` + `onToggle` as props. See
 Dialogs & sidebar toggles below.
