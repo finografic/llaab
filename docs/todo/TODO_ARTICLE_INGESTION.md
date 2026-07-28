@@ -1,0 +1,358 @@
+# TODO — Article Ingestion
+
+> **Status:** Not started. Planning complete (2026-07-28).
+
+## Goal
+
+Add a bounded, one-shot path that accepts one public article URL, saves the readable article as a
+provenance-rich `ResourceNode`, and then best-effort extracts ideas from the already-saved content.
+The same path must work from the existing ingest form and from explicit Hermes `docs:` / `post:`
+captures.
+
+The first useful outcome is:
+
+```text
+article URL
+  → bounded fetch
+  → readable Markdown
+  → publication SourceNode + article ResourceNode
+  → best-effort idea extraction
+  → searchable vault evidence
+```
+
+## Current Baseline
+
+- `runIngestionPipeline({ sourceType: 'article' })` exists, but
+  `packages/ingestion/src/fetch/article.ts` returns placeholder text.
+- The article branch creates a `ResourceNode` and runs one LLM extraction only to populate its
+  description; it does not use the durable save-first / extract-second skill lifecycle.
+- There is no `ingestArticle` skill, `POST /api/ingest/article` route, retry support, or article MCP
+  tool.
+- `IngestForm` classifies ordinary HTTP(S) URLs as `webpage`, but deliberately disables submission.
+- Hermes `docs:` and `post:` inputs are safely captured as inbox links through
+  `vault_capture_web_link`; they are not ingested.
+- `ResourceNode` already supports `resource_type: article`, `url`, `source_id`, `description`, and
+  inherited `related` references.
+- `TranscriptSourceTypeSchema` also contains `article`, but an article is not a transcript. This
+  plan keeps article content in `ResourceNode` and generalizes only the proven lifecycle boundary.
+
+## Product Decisions
+
+- Ingest exactly one explicitly supplied URL per trigger. No crawl, feed scan, watcher, scheduler,
+  or automatic linked-page traversal.
+- Store the readable article as a `ResourceNode`, not a `TranscriptNode`.
+- Save the article before any LLM call. Extraction failure must leave the fetched article readable,
+  searchable, retryable, and discardable.
+- Use deterministic HTML parsing for article content and metadata. Do not ask an LLM to clean HTML.
+- Use the final canonical URL as durable identity when available; retain the originally requested
+  URL as provenance.
+- Reuse an existing article for the same canonical URL. Refreshing an existing article is a later
+  explicit action under Source Auto-Follow, not implicit ingest behavior.
+- Keep generic unprefixed Hermes links as safe inbox captures. Only explicit `docs:` and `post:`
+  routes auto-start article ingestion.
+- Preserve the originating inbox capture and relate it to the article/run. Do not replace or delete
+  the capture after success.
+- Keep remote PDF, Office, image-only, paywalled, authenticated, and JavaScript-only pages out of
+  scope. They need different parsing or access contracts.
+
+## Fetch and Safety Contract
+
+The fetcher must enforce these limits in one owning module, with constants covered by tests:
+
+| Concern         | Required behavior                                                                                           |
+| --------------- | ----------------------------------------------------------------------------------------------------------- |
+| Protocol        | Accept `http:` and `https:` input; require `https:` after redirects unless the original site cannot upgrade |
+| URL credentials | Reject URLs containing a username or password                                                               |
+| Network targets | Reject localhost, loopback, private, link-local, multicast, and reserved IP ranges                          |
+| DNS             | Resolve the hostname and reject the request if any resolved address is disallowed                           |
+| Redirects       | Follow manually, revalidating every target; maximum 5 redirects                                             |
+| Timeout         | Abort the complete fetch after 20 seconds                                                                   |
+| Response size   | Reject bodies larger than 5 MiB while streaming; do not trust `Content-Length` alone                        |
+| Content type    | Accept HTML/XHTML only; report PDFs and other document types as unsupported                                 |
+| User agent      | Send a stable LLAAB user agent and normal HTML `Accept` header                                              |
+| Article text    | Require at least 200 non-whitespace characters after readability extraction                                 |
+| Stored content  | Cap normalized Markdown at 500,000 characters and report truncation in metadata                             |
+| Errors          | Return typed, operator-safe failure codes without embedding response bodies or secrets                      |
+
+DNS validation must happen immediately before each request, including redirects. Tests must cover
+IPv4 and IPv6 loopback/private targets, redirect-to-private targets, oversized streamed responses,
+timeouts, unsupported MIME types, and malformed HTML.
+
+## Article Contract
+
+Replace the string return from `fetchArticle` with a typed result:
+
+```ts
+interface FetchedArticle {
+  requestedUrl: string;
+  finalUrl: string;
+  canonicalUrl: string;
+  title: string;
+  byline?: string;
+  siteName?: string;
+  excerpt?: string;
+  publishedAt?: string;
+  language?: string;
+  markdown: string;
+  plainText: string;
+  contentHash: string;
+  truncated: boolean;
+}
+```
+
+Implementation direction:
+
+- Parse HTML with a server-safe DOM adapter.
+- Use `@mozilla/readability` for the primary article selection.
+- Convert the selected article HTML to Markdown with `turndown`.
+- Normalize whitespace, links, headings, images, and tracking parameters deterministically.
+- Resolve metadata in this order: Readability result, Open Graph/article metadata, standard HTML
+  metadata, then safe hostname/title fallbacks.
+- Resolve relative links against `finalUrl`.
+- Remove scripts, styles, forms, navigation, cookie banners, and non-content embeds.
+- Compute `contentHash` from normalized `plainText`, not raw HTML.
+
+Dependency choice should be confirmed with a small fixture spike before the implementation phase.
+The preferred stack is `@mozilla/readability`, `linkedom`, and `turndown`; do not introduce a
+headless browser for the MVP.
+
+## Persistence Contract
+
+### Publication `SourceNode`
+
+Create or reuse one publication source keyed by normalized site origin:
+
+- `type: source`
+- `source_kind: publication`
+- title from `siteName`, falling back to hostname
+- canonical site origin in `url`
+- `platforms: ['website']`
+- one primary `website` profile
+- `related` includes ingested article IDs
+
+An existing source must be updated idempotently without replacing richer reviewed metadata.
+
+### Article `ResourceNode`
+
+Persist:
+
+- `type: resource`
+- `resource_type: article`
+- title from fetched metadata unless the operator supplied an override
+- `url` as canonical URL
+- `source_id` as the publication source
+- `description` from deterministic excerpt first, then the extraction summary when extraction
+  succeeds
+- tags containing `d:ingest`, deterministic auto-tags, manual tags, and Hermes provenance tags
+- `related` containing the originating inbox capture ID when applicable
+
+Extend `ResourceNodeSchema` only for article provenance that cannot be represented by existing base
+fields:
+
+- `requested_url`
+- `author`
+- `site_name`
+- `source_published_at`
+- `fetched_at`
+- `content_hash`
+- `content_truncated`
+
+Store the body as readable Markdown:
+
+```text
+# Article title
+
+[canonical source URL]
+author / published / fetched metadata when known
+
+## Article
+
+cleaned article content
+```
+
+Do not store raw HTML in the node body. Raw-response archival is outside this phase.
+
+## Extraction Boundary
+
+Generalize `extractKnowledgeFromTranscript` into a saved-node extraction primitive that accepts a
+node ID, node path, plain text, and manual tags. Keep the transcript-named export as a compatibility
+wrapper so YouTube and podcast behavior does not change.
+
+The generalized primitive must:
+
+- update summary/tags/LLM trace fields on either a transcript or resource
+- create `IdeaNode`s with `source_id` and `related` pointing to the saved source node
+- write extracted idea IDs back to the saved source node
+- return a source-neutral result shape while preserving the existing transcript result contract
+- remain best-effort after persistence
+
+Article-derived ideas become searchable vault evidence immediately. Promotion through the current
+canonical-idea/wiki workflow remains transcript-oriented and is not broadened in this phase; that
+requires a separate generic evidence-reference decision.
+
+## Phase 0 — Fixtures and Contracts
+
+- [ ] Add representative local HTML fixtures: semantic article, Open Graph-only metadata,
+      relative links, noisy navigation, malformed HTML, no readable article, redirect, oversized
+      body, and unsupported content type.
+- [ ] Add the `FetchedArticle` contract and typed fetch failure codes.
+- [ ] Add centralized article fetch limits and URL/network validation helpers.
+- [ ] Confirm the Readability/DOM/Markdown dependency stack against the fixtures.
+- [ ] Record the exact metadata precedence, canonical URL normalization, and truncation behavior in
+      tests.
+
+Exit criteria: article extraction and safety behavior are deterministic without live network calls.
+
+## Phase 1 — Bounded Fetch and Parse
+
+- [ ] Replace the placeholder `fetchArticle` implementation with bounded fetch, redirect
+      validation, streamed size enforcement, and content-type checks.
+- [ ] Extract title, byline, site, canonical URL, publication date, language, excerpt, readable
+      HTML, plain text, and normalized Markdown.
+- [ ] Resolve relative links and remove unsafe/non-content elements.
+- [ ] Add focused unit tests for successful parsing and every fetch/safety failure mode.
+- [ ] Keep all fetch tests fixture-backed; add at most one opt-in live smoke script outside CI.
+
+Exit criteria: one public article URL produces a bounded, typed, readable result or a useful typed
+failure.
+
+## Phase 2 — Save-First Article Pipeline
+
+- [ ] Replace the current article `createResourceNode` shortcut with a dedicated article pipeline.
+- [ ] Add canonical-URL deduplication and deterministic content hashing.
+- [ ] Create/reuse the publication `SourceNode`.
+- [ ] Save the article `ResourceNode` before extraction begins.
+- [ ] Return title, source ID, canonical URL, plain text, produced node IDs, reuse state, and
+      fetch/store stages in `IngestionResult`.
+- [ ] Add temp-vault tests for first ingest, duplicate reuse, source reuse, metadata persistence,
+      and no partial nodes after fetch failure.
+
+Exit criteria: article and publication nodes are durable and provenance-linked before any LLM call.
+
+## Phase 3 — Generalized Extraction and Skill
+
+- [ ] Add the source-neutral saved-node extraction primitive and retain
+      `extractKnowledgeFromTranscript` as a compatibility wrapper.
+- [ ] Add `packages/skills/src/ingest-article.ts` using `runSkill('ingest-article', ...)`.
+- [ ] Emit run events for fetch, parse, article save, extraction start, extraction success, and
+      extraction warning/failure.
+- [ ] Append the article, publication, and extracted idea IDs to the run's produced node IDs.
+- [ ] Preserve the saved article and completed run evidence when idea extraction fails.
+- [ ] Add skill tests for success, dedupe, `skipExtraction`, and extraction failure.
+- [ ] Verify YouTube and podcast extraction tests remain unchanged and passing.
+
+Exit criteria: article ingestion is durable, globally observable, and retryable after navigation.
+
+## Phase 4 — Server, Retry, and MCP
+
+- [ ] Add `ingestArticleBodySchema` with `url`, optional `title`, optional `tags`, optional
+      `skipExtraction`, and optional inbox provenance.
+- [ ] Add a thin `POST /api/ingest/article` route that calls the article skill.
+- [ ] Export `ingestArticle` through `@llaab/skills`.
+- [ ] Add `vault_ingest_article` to the MCP schema and server using the same authenticated API
+      boundary as other ingest tools.
+- [ ] Generalize `POST /api/runs/:id/retry` to dispatch `ingest-article`.
+- [ ] Ensure discard/run deletion handles article resources, publication sources, and extracted
+      ideas without deleting shared publication sources still referenced by other articles.
+- [ ] Add route, MCP, retry, and produced-node cleanup tests.
+
+Exit criteria: the API and MCP paths share one skill and one persistence contract.
+
+## Phase 5 — Ingest Form and Run Surfaces
+
+- [ ] Make `webpage` an ingestible source kind and add an article mutation hook.
+- [ ] Update detected copy, button labels, URL placeholder, queue behavior, and drop-submit behavior
+      for articles.
+- [ ] Generalize transcript-specific form state/copy to source/content language where article runs
+      share the UI.
+- [ ] Recognize `ingest-article` in `RunMonitor`, pipeline cards, run display helpers, retry controls,
+      and Runs table grouping.
+- [ ] Clear the URL field when the durable article run finishes, matching YouTube/podcast behavior.
+- [ ] Keep the existing `/ingest` page as the canonical UI; update the stale `/ingest/article`
+      navigation target rather than creating a duplicate form.
+- [ ] Add focused client tests for classification, submission, queueing, durable-run hydration, and
+      completed-form reset.
+
+Exit criteria: paste/drop of an article URL behaves like the existing durable ingest flows without
+calling it a transcript.
+
+## Phase 6 — Hermes Docs/Post Integration
+
+- [ ] Add `ingest_article` and `vault_ingest_article` to the Hermes route/tool contracts.
+- [ ] Keep unprefixed generic web links on `capture_web_link`.
+- [ ] For explicit `docs:` and `post:` URLs, first preserve the existing inbox capture, then start
+      article ingestion with that capture ID as provenance.
+- [ ] Relate the inbox capture, article resource, publication source, and run without duplicating
+      article content in the capture.
+- [ ] Return a short receipt using the fetched article title on success.
+- [ ] If fetch or parse fails, retain the inbox capture and mark/report the ingestion failure; never
+      drop the original link.
+- [ ] Add deterministic router, tool-call, CLI execution, receipt, and failure-retention tests.
+
+Exit criteria: explicit Telegram/Hermes article captures become searchable article resources while
+remaining auditable from the inbox.
+
+## Phase 7 — Validation and Graduation
+
+- [ ] Run focused tests and typechecks for `@llaab/schemas`, `@llaab/core`,
+      `@llaab/ingestion`, `@llaab/skills`, CLI/MCP, server ingest routes, and the client ingest form.
+- [ ] Run one real article from `/ingest` and confirm title, readable Markdown, publication source,
+      run stages, extracted ideas, search visibility, dedupe, retry, and discard behavior.
+- [ ] Run one real `docs:` or `post:` Telegram capture and confirm the inbox item is retained and
+      linked to the resulting article.
+- [ ] Confirm a blocked/private URL, PDF URL, oversized response, timeout, and unreadable page fail
+      with useful messages and no orphaned article nodes.
+- [ ] Trigger Rebuild & Reload App after server/package changes, then verify the durable run survives
+      navigation.
+- [ ] Run touched-file format/lint checks and `pnpm format:check` before branch handoff.
+- [ ] Rename this file to `DONE_ARTICLE_INGESTION.md`, move the roadmap item to Delivered, and update
+      `.agents/handoff.md` only after all acceptance checks pass.
+
+## Non-Goals
+
+- Crawling links or ingesting an entire site.
+- Scheduled refresh, follow, or change detection.
+- Browser automation for JavaScript-rendered pages.
+- Authenticated, cookie-backed, or paywalled retrieval.
+- PDF, Office, EPUB, image OCR, or attachment ingestion.
+- Raw HTML archival.
+- Automatic canonical-idea/wiki promotion from article-derived ideas.
+- RAG ranking, embeddings, or retrieval-index changes.
+- A second article-specific ingest page.
+
+## Acceptance Criteria
+
+- One explicit public article URL can be fetched safely and saved as readable Markdown.
+- Fetching is bounded by protocol, network target, redirect, timeout, MIME, and response-size rules.
+- Canonical duplicates reuse the existing article instead of creating another resource.
+- The article and publication source exist before extraction starts.
+- Extraction failure never removes or hides the saved article.
+- Runs are durable and globally visible; retry and discard preserve shared-node integrity.
+- `/ingest` supports article paste/drop/queue/reset without transcript-specific copy.
+- Explicit Hermes `docs:` / `post:` captures ingest articles while retaining inbox provenance.
+- Generic links remain capture-only.
+- No background processor, watcher, crawler, scheduler, or RAG dependency is introduced.
+
+## First Articles to ingest
+
+- [ ] **Choosing a Claude model and effort level in Claude Code**
+      https://claude.com/blog/claude-model-and-effort-level-in-claude-code?utm_content=inline_link&utm_source=it&utm_medium=email&utm_campaign=2026_Q3_RET_MKTG_Claude_Code_Newsletter_July_2026&utm_term=claude_code&utm_campaignId=19112267
+- [ ] **Steering Claude Code: when to use CLAUDE.md, skills, hooks, and subagents**
+      https://claude.com/blog/steering-claude-code-skills-hooks-rules-subagents-and-more?utm_content=inline_link&utm_source=it&utm_medium=email&utm_campaign=2026_Q3_RET_MKTG_Claude_Code_Newsletter_July_2026&utm_term=claude_code&utm_campaignId=19112267
+
+## References
+
+- [`ROADMAP.md`](./ROADMAP.md) — P0 owner and scope boundary.
+- [`DONE_PODCAST_INGEST.md`](./DONE_PODCAST_INGEST.md) — closest save-first ingest implementation
+  and validation pattern.
+- [`DONE_HERMES_DROPBOX.md`](./DONE_HERMES_DROPBOX.md) — current docs/post capture and receipt
+  contract.
+- [`DONE_SEARCH_RETRIEVAL_FOUNDATION.md`](./DONE_SEARCH_RETRIEVAL_FOUNDATION.md) — deterministic
+  search contract that article resources should immediately feed.
+- [`TODO_KNOWLEDGE_RETRIEVAL_CHAT.md`](./TODO_KNOWLEDGE_RETRIEVAL_CHAT.md) — parallel retrieval/RAG
+  work; article ingestion must not depend on it.
+- `ROADMAP.md#document-ingestion` — future upload/parser work; no detail plan exists yet.
+- [Process State Architecture](../../.github/instructions/project/process-state-architecture.instructions.md)
+  — durable run and shared-query requirements.
+- [Agent Execution Rules](../../.github/instructions/project/agent-execution.instructions.md) —
+  one-shot execution boundary.
