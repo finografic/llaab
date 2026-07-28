@@ -310,6 +310,54 @@ export function createMcpServer(): McpServer {
     },
   );
 
+  // ── Tool: trigger article ingestion ───────────────────────────────────────
+
+  const vaultIngestArticleSchema = z.object({
+    url: z.url().describe('Public article or blog post URL. HTML pages only — not PDFs.'),
+    title: z.string().trim().min(1).optional().describe('Optional title override.'),
+    tags: z.array(z.string().trim().min(1)).optional().describe('Optional vault tags.'),
+    skipExtraction: z.boolean().optional().describe('Skip post-ingest idea extraction.'),
+    inboxCaptureId: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe('Inbox capture that triggered this ingest, retained as provenance.'),
+  });
+
+  server.registerTool(
+    'vault_ingest_article',
+    {
+      description:
+        'Start the LLAAB article ingestion pipeline for one public article URL. Fetches the page ' +
+        'within strict safety limits, stores the readable article as a resource with its ' +
+        'publication source, then extracts ideas. Does not handle PDFs, paywalled, or ' +
+        'JavaScript-rendered pages.',
+      inputSchema: vaultIngestArticleSchema,
+    },
+    async (args: z.infer<typeof vaultIngestArticleSchema>) => {
+      const result = await postJsonViaApi('/api/ingest/article', {
+        url: args.url,
+        title: args.title,
+        tags: args.tags ?? INBOX_DEFAULT_TAGS,
+        skipExtraction: args.skipExtraction,
+        inboxCaptureId: args.inboxCaptureId,
+      });
+
+      if (!result.ok) {
+        return errorText(result.error);
+      }
+
+      const ingestResult = asRecord(result.data['result']);
+      const id = typeof ingestResult?.['id'] === 'string' ? ingestResult['id'] : undefined;
+      const articleTitle = typeof ingestResult?.['title'] === 'string' ? ingestResult['title'] : undefined;
+      const reused = ingestResult?.['reused'] === true ? ' (reused existing article)' : '';
+
+      if (articleTitle) return textContent(`Ingested article "${articleTitle}"${reused}`);
+      return textContent(id ? `Ingested article ${id}${reused}` : 'Ingested article');
+    },
+  );
+
   // ── Tool: pin npm package ─────────────────────────────────────────────────
 
   const vaultPinPackageSchema = z.object({

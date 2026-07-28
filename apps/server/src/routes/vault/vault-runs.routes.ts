@@ -1,7 +1,14 @@
 import { deleteNode, getNodeFilePath, listNodes, readNode } from '@llaab/core';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { DeleteRunsPreviewBody } from './vault.schema.js';
-import type { CanonicalIdeaNode, LabNode, RunNode, TranscriptNode, WikiDraftNode } from '@llaab/schemas';
+import type {
+  CanonicalIdeaNode,
+  LabNode,
+  ResourceNode,
+  RunNode,
+  TranscriptNode,
+  WikiDraftNode,
+} from '@llaab/schemas';
 
 import { deleteRunQuerySchema } from './vault.schema.js';
 
@@ -13,6 +20,7 @@ interface ProducedNodeDeleteContext {
   nodesById: Map<string, LabNode>;
   remainingRuns: RunNode[];
   transcripts: TranscriptNode[];
+  resources: ResourceNode[];
   canonicalIdeas: CanonicalIdeaNode[];
   wikiDrafts: WikiDraftNode[];
 }
@@ -24,6 +32,7 @@ function buildProducedNodeDeleteContext(allNodes: LabNode[], deletingRunIds: Set
       (node): node is RunNode => node.type === 'run' && !deletingRunIds.has(node.id),
     ),
     transcripts: allNodes.filter((node): node is TranscriptNode => node.type === 'transcript'),
+    resources: allNodes.filter((node): node is ResourceNode => node.type === 'resource'),
     canonicalIdeas: allNodes.filter((node): node is CanonicalIdeaNode => node.type === 'canonical-idea'),
     wikiDrafts: allNodes.filter((node): node is WikiDraftNode => node.type === 'wiki-draft'),
   } satisfies ProducedNodeDeleteContext;
@@ -63,6 +72,12 @@ function getProducedNodeRetentionReason(node: LabNode, context: ProducedNodeDele
   if (node.type === 'source') {
     const referencingTranscript = context.transcripts.find((transcript) => transcript.source_id === node.id);
     if (referencingTranscript) return `referenced by transcript "${referencingTranscript.title}"`;
+
+    // A publication source is shared by every article from that site, so discarding one article's
+    // run must not delete a source another article still points at.
+    const referencingResource = context.resources.find((resource) => resource.source_id === node.id);
+    if (referencingResource) return `referenced by resource "${referencingResource.title}"`;
+
     return null;
   }
 

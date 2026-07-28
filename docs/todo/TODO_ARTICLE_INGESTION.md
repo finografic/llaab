@@ -371,18 +371,41 @@ Notes:
 
 ## Phase 4 — Server, Retry, and MCP
 
-- [ ] Add `ingestArticleBodySchema` with `url`, optional `title`, optional `tags`, optional
+- [x] Add `ingestArticleBodySchema` with `url`, optional `title`, optional `tags`, optional
       `skipExtraction`, and optional inbox provenance.
-- [ ] Add a thin `POST /api/ingest/article` route that calls the article skill.
-- [ ] Export `ingestArticle` through `@llaab/skills`.
-- [ ] Add `vault_ingest_article` to the MCP schema and server using the same authenticated API
+- [x] Add a thin `POST /api/ingest/article` route that calls the article skill.
+- [x] Export `ingestArticle` through `@llaab/skills`.
+- [x] Add `vault_ingest_article` to the MCP schema and server using the same authenticated API
       boundary as other ingest tools.
-- [ ] Generalize `POST /api/runs/:id/retry` to dispatch `ingest-article`.
-- [ ] Ensure discard/run deletion handles article resources, publication sources, and extracted
+- [x] Generalize `POST /api/runs/:id/retry` to dispatch `ingest-article`.
+- [x] Ensure discard/run deletion handles article resources, publication sources, and extracted
       ideas without deleting shared publication sources still referenced by other articles.
-- [ ] Add route, MCP, retry, and produced-node cleanup tests.
+- [x] Add route, MCP, retry, and produced-node cleanup tests.
 
-Exit criteria: the API and MCP paths share one skill and one persistence contract.
+Exit criteria: the API and MCP paths share one skill and one persistence contract. **Met.** 572 tests
+pass repo-wide, all typechecks, lint, and format.
+
+Notes:
+
+- **Shared-source bug found and fixed.** `getProducedNodeRetentionReason` only checked transcripts
+  referencing a source. Article resources also carry `source_id`, so discarding one article's run
+  would have deleted a publication source that other articles still pointed at.
+- Retry dispatch is now a skill→function map rather than a two-branch ternary, so the error message
+  lists supported skills instead of hardcoding two names.
+- **Known conservative behavior, not introduced here:** retention is evaluated against a snapshot
+  taken before any deletion, so a source whose only article is deleted in the same batch is kept
+  rather than removed. YouTube and podcast runs (transcript + source) already behave this way. It
+  errs toward keeping data; changing it would alter existing behavior and belongs in its own change.
+  Covered by a test that documents the reason.
+
+Live verification after Rebuild & Reload (artifacts cleaned up afterwards):
+
+- real article ingested → correct title, byline `@claudeai`, site `Claude`, published date, canonical
+  URL, `content_hash` identical to the Phase 1 smoke run, publication source created and back-linked
+- same URL with `utm_source` → `reused: true`, no second node
+- invalid URL → 400 from Zod; `169.254.169.254` → `blocked_target`; a PDF → `unsupported_content_type`
+- run node durable with ordered events, decisions, `produced_node_ids`, and a retry-parseable
+  `input_summary`
 
 ## Phase 5 — Ingest Form and Run Surfaces
 

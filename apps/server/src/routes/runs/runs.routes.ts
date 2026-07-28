@@ -1,6 +1,6 @@
 import { getNodeFilePath, listNodes, updateNode } from '@llaab/core';
 import { formatIsoUtcSeconds } from '@llaab/schemas';
-import { ingestPodcast, ingestYouTube, reconcileStaleRun } from '@llaab/skills';
+import { ingestArticle, ingestPodcast, ingestYouTube, reconcileStaleRun } from '@llaab/skills';
 import type { AppCtx } from '../../types/app.types.js';
 import type { LabNode, RunMonitorItem, RunMonitorStep, RunNode } from '@llaab/schemas';
 
@@ -245,8 +245,18 @@ export const retry = {
     if (run.run_status !== 'failed') {
       return c.json({ error: 'Only failed runs can be retried.' }, 400);
     }
-    if (run.skill_id !== 'ingest-youtube' && run.skill_id !== 'ingest-podcast') {
-      return c.json({ error: 'Retry is only supported for ingest-youtube and ingest-podcast runs.' }, 400);
+    const retryIngestBySkill = {
+      'ingest-youtube': ingestYouTube,
+      'ingest-podcast': ingestPodcast,
+      'ingest-article': ingestArticle,
+    } as const;
+
+    const retryIngest = retryIngestBySkill[run.skill_id as keyof typeof retryIngestBySkill];
+    if (!retryIngest) {
+      return c.json(
+        { error: `Retry is only supported for ${Object.keys(retryIngestBySkill).join(', ')} runs.` },
+        400,
+      );
     }
 
     let input: { url?: string; title?: string; tags?: string[]; skipExtraction?: boolean };
@@ -259,7 +269,6 @@ export const retry = {
       return c.json({ error: 'The original run input is missing a url.' }, 400);
     }
 
-    const retryIngest = run.skill_id === 'ingest-podcast' ? ingestPodcast : ingestYouTube;
     const { record, result, extraction, extractionError } = await retryIngest({
       url: input.url,
       title: input.title,
