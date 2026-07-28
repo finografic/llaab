@@ -116,7 +116,7 @@ export function TtsPlayer({
 
   useEffect(() => {
     const handlePlaybackClaim = (event: Event) => {
-      const {detail} = (event as CustomEvent<TtsPlaybackClaimEventDetail>);
+      const { detail } = event as CustomEvent<TtsPlaybackClaimEventDetail>;
       if (detail.playerId !== playerIdRef.current) stopPlayback({ releaseClaim: false });
     };
 
@@ -328,6 +328,7 @@ export function TtsPlayer({
     if (status === 'playing') {
       void audioContextRef.current?.suspend().then(() => {
         if (activeTtsPlayerId === playerIdRef.current) setStatus('paused');
+        return undefined;
       });
       return;
     }
@@ -336,6 +337,7 @@ export function TtsPlayer({
       claimTtsPlayback(playerIdRef.current);
       void audioContextRef.current?.resume().then(() => {
         if (activeTtsPlayerId === playerIdRef.current) setStatus('playing');
+        return undefined;
       });
       return;
     }

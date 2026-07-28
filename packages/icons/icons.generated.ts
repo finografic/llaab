@@ -78,6 +78,8 @@ const ICONS = {
   LanguageIcon:                   Lucide.Languages,
   ListIcon:                       Lucide.List,
   ListChecksIcon:                 Lucide.ListChecks,
+  ListChevronsDownUpIcon:         Lucide.ListChevronsDownUp,
+  ListChevronsUpDownIcon:         Lucide.ListChevronsUpDown,
   LoaderIcon:                     Lucide.Loader,
   LockIcon:                       Lucide.Lock,
   MagnifyingGlassIcon:            Lucide.Search,

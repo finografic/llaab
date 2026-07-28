@@ -23,7 +23,7 @@ function getScrollParent(element: HTMLElement | null): HTMLElement | Window {
   let current = element?.parentElement ?? null;
 
   while (current) {
-    const overflowY = window.getComputedStyle(current).overflowY;
+    const { overflowY } = window.getComputedStyle(current);
     if (overflowY === 'auto' || overflowY === 'scroll') return current;
     current = current.parentElement;
   }
@@ -40,7 +40,7 @@ function annotateQuoteRuns(html: string) {
   template.innerHTML = html;
   let quoteRunOpen = false;
 
-  for (const element of [...template.content.children]) {
+  for (const element of template.content.children) {
     if (element.tagName.toLowerCase() !== 'p') continue;
 
     const text = element.textContent?.trim() ?? '';
@@ -109,7 +109,7 @@ export function VaultFileViewer({
     [path, fileContent],
   );
   const canRenderMarkdown = !showDiff && isMarkdownPath(path);
-  const enhancedSections = fileContent?.sections ?? [];
+  const enhancedSections = useMemo(() => fileContent?.sections ?? [], [fileContent?.sections]);
   const useEnhancedPresentation = showEnhancedMarkdown;
   const markdownClassName = [
     styles.markdownContent,
@@ -288,10 +288,7 @@ export function VaultFileViewer({
         />
       ) : null}
       {path && !showDiff && showRenderedMarkdown && fileContent?.html ? (
-        <article
-          className={markdownClassName}
-          dangerouslySetInnerHTML={{ __html: renderedHtml ?? '' }}
-        />
+        <article className={markdownClassName} dangerouslySetInnerHTML={{ __html: renderedHtml ?? '' }} />
       ) : null}
       {path && !showDiff && showEnhancedMarkdown && enhancedSections.length ? (
         <Row className={styles.enhancedLayout} gutterWidth={16}>
@@ -310,7 +307,9 @@ export function VaultFileViewer({
                     </div>
                     <article
                       className={markdownClassName}
-                      dangerouslySetInnerHTML={{ __html: enhancedSectionHtml.get(section.id) ?? section.html }}
+                      dangerouslySetInnerHTML={{
+                        __html: enhancedSectionHtml.get(section.id) ?? section.html,
+                      }}
                     />
                   </CardContent>
                 </Card>
@@ -327,7 +326,9 @@ export function VaultFileViewer({
                       <li key={section.id}>
                         <a
                           href={`#${section.id}`}
-                          className={activeSectionId === section.id ? styles.enhancedTocLinkActive : undefined}
+                          className={
+                            activeSectionId === section.id ? styles.enhancedTocLinkActive : undefined
+                          }
                           aria-current={activeSectionId === section.id ? 'location' : undefined}
                           onClick={() => handleTocClick(section.id)}
                         >

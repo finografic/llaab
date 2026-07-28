@@ -77,6 +77,8 @@ export const {
   LanguageIcon,
   ListIcon,
   ListChecksIcon,
+  ListChevronsDownUpIcon,
+  ListChevronsUpDownIcon,
   LoaderIcon,
   LockIcon,
   MagnifyingGlassIcon,

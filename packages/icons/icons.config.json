@@ -484,23 +484,31 @@
     "lucideName": "square-arrow-up"
   },
   {
-    "exportName": "SquareX",
-    "lucideName": "square-x"
+    "exportName": "ListChevronsDownUp",
+    "lucideName": "list-chevrons-down-up"
   },
   {
-    "exportName": "SquareCheck",
-    "lucideName": "square-check"
-  },
-  {
-    "exportName": "Rows2",
-    "lucideName": "rows-2"
+    "exportName": "ListChevronsUpDown",
+    "lucideName": "list-chevrons-up-down"
   },
   {
     "exportName": "Rows3",
     "lucideName": "rows-3"
   },
   {
+    "exportName": "Rows2",
+    "lucideName": "rows-2"
+  },
+  {
     "exportName": "Rows4",
     "lucideName": "rows-4"
+  },
+  {
+    "exportName": "SquareX",
+    "lucideName": "square-x"
+  },
+  {
+    "exportName": "SquareCheck",
+    "lucideName": "square-check"
   }
 ]

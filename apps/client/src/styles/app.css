@@ -270,28 +270,28 @@
    for unknown `d:*` tags: `utils/domain-tag-color.utils.ts` (TagList sets
    --tag-color inline). These selectors keep known domains working for pure
    data-tag markup without the util. */
-[data-tag='d:llm'] {
+[data-tag="d:llm"] {
   --tag-color: #3b82f6;
 }
-[data-tag='d:automation'] {
+[data-tag="d:automation"] {
   --tag-color: #8b5cf6;
 }
-[data-tag='d:ingest'] {
+[data-tag="d:ingest"] {
   --tag-color: #f59e0b;
 }
-[data-tag='d:schema'] {
+[data-tag="d:schema"] {
   --tag-color: #14b8a6;
 }
-[data-tag='d:infra'] {
+[data-tag="d:infra"] {
   --tag-color: #6b7280;
 }
-[data-tag='d:integration'] {
+[data-tag="d:integration"] {
   --tag-color: #f97316;
 }
-[data-tag='d:ui'] {
+[data-tag="d:ui"] {
   --tag-color: #ec4899;
 }
-[data-tag='d:meta'] {
+[data-tag="d:meta"] {
   --tag-color: #22c55e;
 }
 

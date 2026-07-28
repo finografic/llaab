@@ -63,7 +63,8 @@ export function NavMenu({ pathname }: NavMenuProps) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-6">
       <Link to="/" className={styles.brand} aria-current={pathname === '/' ? 'page' : undefined}>
-        LLAAB
+        <span aria-hidden="true">🌱</span>
+        <span className={styles.brandText}>LLAAB</span>
       </Link>
 
       {/* Desktop — Tailwind owns display toggling; do not set display in CSS modules (it overrides hidden). */}
@@ -77,6 +78,7 @@ export function NavMenu({ pathname }: NavMenuProps) {
               <NavigationMenuTrigger
                 className={cn(
                   navigationMenuTriggerStyle(),
+                  'h-7 py-0.5',
                   activeSectionId === section.id && 'bg-muted/60 text-foreground',
                 )}
                 // Radix opens on hover by default — prevent that so menus are click-only.

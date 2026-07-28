@@ -1,3 +1,5 @@
 {
-  "transcripts.authorFilter": []
+  "transcripts.authorFilter": [],
+  "transcripts.rowDensity": "condensed",
+  "wikis.rowDensity": "condensed"
 }

@@ -89,37 +89,37 @@
 }
 
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
+  --background: oklch(0.16 0.004 285.9); /* ~--bg #0d0d0f */
+  --foreground: oklch(0.985 0.001 286);
+  --card: oklch(0.228 0.008 285.8); /* ~--surface #1c1c20 */
+  --card-foreground: oklch(0.985 0.001 286);
+  --popover: oklch(0.228 0.008 285.8);
+  --popover-foreground: oklch(0.985 0.001 286);
   --primary: oklch(0.768 0.233 130.85);
   --primary-foreground: oklch(0.405 0.101 131.063);
-  --secondary: oklch(0.274 0.006 286.033);
+  --secondary: oklch(0.274 0.006 286.033); /* cool raised — was already cool */
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.268 0.007 34.298);
-  --accent-foreground: oklch(0.985 0.001 106.423);
+  --muted: oklch(0.274 0.006 286.033); /* was warm stone hue 34 — matches --secondary */
+  --muted-foreground: oklch(0.709 0.006 286);
+  --accent: oklch(0.274 0.006 286.033); /* shadcn fill token (not LLAAB lime) — cool */
+  --accent-foreground: oklch(0.985 0.001 286);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.553 0.013 58.071);
+  --ring: oklch(0.553 0.006 286);
   --chart-1: oklch(0.871 0.15 154.449);
   --chart-2: oklch(0.723 0.219 149.579);
   --chart-3: oklch(0.627 0.194 149.214);
   --chart-4: oklch(0.527 0.154 150.069);
   --chart-5: oklch(0.448 0.119 151.328);
-  --sidebar: oklch(0.228 0.008 285.8); /* ~--surface #1c1c20 — cool, was warm stone hue 56 */
-  --sidebar-foreground: oklch(0.985 0.001 106.423);
+  --sidebar: oklch(0.228 0.008 285.8); /* ~--surface */
+  --sidebar-foreground: oklch(0.985 0.001 286);
   --sidebar-primary: oklch(0.768 0.233 130.85);
   --sidebar-primary-foreground: oklch(0.274 0.072 132.109);
-  --sidebar-accent: oklch(0.263 0.011 285.6); /* ~--surface-raised #24242a */
-  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
+  --sidebar-accent: oklch(0.263 0.011 285.6); /* ~--surface-raised / --bg-secondary */
+  --sidebar-accent-foreground: oklch(0.985 0.001 286);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.553 0.013 58.071);
+  --sidebar-ring: oklch(0.553 0.006 286);
 }
 
 @layer base {

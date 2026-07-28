@@ -34,6 +34,11 @@
   min-width: 0;
 }
 
+/* Icon-button chrome insets the glyph ~10px; pull leading controls flush with subnav/sidebar text. */
+.secondaryLeading {
+  margin-left: -9px;
+}
+
 .secondaryTrailing {
   margin-left: auto;
 }

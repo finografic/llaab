@@ -2,13 +2,18 @@
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
+  gap: 0.35rem;
+  margin-left: -0.25rem;
   font-family: var(--font-mono);
-  font-size: var(--text-base);
+  font-size: var(--text-ui);
   font-weight: 700;
-  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent);
   text-decoration: none;
+}
+
+.brandText {
+  letter-spacing: -0.005em;
 }
 
 .brand:hover {
