@@ -81,7 +81,7 @@ GitHub counterpart. Both share pinned/search tabs and the Add New Registry drop-
 | Label               | Description                                          | Route               | Status     |
 | ------------------- | ---------------------------------------------------- | ------------------- | ---------- |
 | **Ingest YouTube**  | Fetch a transcript and store it as a vault node      | `/ingest`           | Live       |
-| **Ingest Article**  | Ingest a web article or blog post as a resource node | `/ingest/article`   | `[future]` |
+| **Ingest Article**  | Ingest a web article or blog post as a resource node | `/ingest`           | Live       |
 | **Ingest Document** | Ingest a local PDF or Office file via liteparse      | `/ingest/document`  | `[future]` |
 | **Re-extract**      | Re-run LLM extraction on an existing transcript      | `/pipeline/extract` | `[future]` |
 
@@ -90,8 +90,9 @@ GitHub counterpart. Both share pinned/search tabs and the Add New Registry drop-
 The glossary distinguishes **ingestion** (content moves in) from **extraction** (structure comes
 out). The current `/ingest` page already handles both phases sequentially, but as the pipeline
 matures, having a dedicated re-extraction surface makes sense — especially for batch re-extraction
-after model upgrades. The future ingestion types (article, document) align with the
-`@llamaindex/liteparse` item on the roadmap.
+after model upgrades. Article ingestion shipped and shares the `/ingest` page (see
+`docs/todo/DONE_ARTICLE_INGESTION.md`); document ingestion (PDF/Office via liteparse) is still
+future and tracked separately on the roadmap.
 
 ---
 
@@ -240,7 +241,6 @@ should have redirects.
 | —             | `/system/harness`      | New — harness inspector                 |
 | —             | `/vault/inbox`         | Done — Hermes inbox capture review      |
 | —             | `/vault/search`        | New — full-text vault search            |
-| —             | `/ingest/article`      | New — article ingestion                 |
 | —             | `/ingest/document`     | New — document ingestion (liteparse)    |
 | —             | `/pipeline/extract`    | New — batch re-extraction               |
 | —             | `/execute/skills`      | New — skill registry browser            |

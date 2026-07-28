@@ -9,6 +9,10 @@ observability, see [07 — Orchestration and adapters](07_ORCHESTRATION_AND_ADAP
 For **YouTube subscription status** (`youtube_subscribed` on `SourceNode`, Google OAuth setup, and
 refresh-token renewal, see [YouTube OAuth](/docs/integrations/youtube-oauth.md).
 
+The same save-first / extract-second boundary is reused, generalized, by
+[09 — Article Ingestion](09_ARTICLE_INGESTION.md) for public article URLs, which store an article
+`resource` node instead of a `transcript` node.
+
 ---
 
 ## Overview

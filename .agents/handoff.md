@@ -407,8 +407,8 @@ credentials redacted. Dedupe matches canonical URL **or** SHA-256 content hash. 
 through the source-neutral `extractKnowledgeFromNode`; because Zod strips unknown keys, it writes
 `description` for resources and `summary` for everything else. Explicit Hermes `docs:`/`post:` links
 route to `ingest_article` and write the inbox capture **before** ingesting, so a failed fetch never
-loses the operator's link; unprefixed links stay capture-only. Detail:
-`docs/todo/DONE_ARTICLE_INGESTION.md`.
+loses the operator's link; unprefixed links stay capture-only. Architecture reference:
+`docs/09_ARTICLE_INGESTION.md`; delivery record: `docs/todo/DONE_ARTICLE_INGESTION.md`.
 `/api/ingest/podcast` and `/api/ingest/article` must stay in server `LONG_RUNNING_PATHS` (`apps/server/src/index.ts`) —
 without it Bun's 10s idle-timeout kills the connection while a long `mlx_whisper` transcription
 keeps running server-side, so the client never sees the (eventually successful) response and the

@@ -190,6 +190,8 @@ await ingestYouTube({
 - **Vault output** defaults to `./vault` under the current working directory (override with `LLAAB_VAULT` if you use a custom vault root). In the standard checkout, `vault/` is a nested data repo; promoted stable artifacts live in parent-repo `knowledge/`.
 - **Duplicates:** the same YouTube `videoId` reuses the existing transcript node and skips re-fetching (see `docs/05_CONTROL_LAYER_AND_EXECUTION_MODEL.md`).
 
+Podcast episodes (Pocket Casts share links) and public article/blog URLs ingest the same way through `/ingest` or the equivalent `ingestPodcast()` / `ingestArticle()` skill calls — no extra `PATH` dependency like `yt-dlp` required for either. See `docs/guides/DOCUMENT_INGESTION.md` for how article ingestion is wired end to end (routes, fetch/parse pipeline, and the shape of the resulting node).
+
 ## Vault and Knowledge Repos
 
 LLAAB uses two Git repos in the standard local checkout:
