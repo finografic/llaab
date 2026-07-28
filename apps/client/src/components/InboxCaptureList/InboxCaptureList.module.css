@@ -286,35 +286,12 @@
 }
 
 .captureTag {
-  --capture-tag-color: var(--muted-foreground);
+  --capture-tag-color: var(--tag-color, var(--muted-foreground));
 
   border-color: color-mix(in oklab, var(--capture-tag-color) 30%, transparent);
   background: color-mix(in oklab, var(--capture-tag-color) 10%, transparent);
   color: var(--capture-tag-color);
   font-family: var(--font-mono);
-}
-
-.captureTag[data-tag="d:llm"] {
-  --capture-tag-color: var(--info-text);
-}
-
-.captureTag[data-tag="d:automation"],
-.captureTag[data-tag="d:ui"] {
-  --capture-tag-color: var(--consolidation-text);
-}
-
-.captureTag[data-tag="d:ingest"],
-.captureTag[data-tag="d:integration"] {
-  --capture-tag-color: var(--warning-text);
-}
-
-.captureTag[data-tag="d:schema"],
-.captureTag[data-tag="d:meta"] {
-  --capture-tag-color: var(--success-text);
-}
-
-.captureTag[data-tag="d:infra"] {
-  --capture-tag-color: var(--pending-text);
 }
 
 .platformBadge {

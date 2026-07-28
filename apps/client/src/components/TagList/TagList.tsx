@@ -1,5 +1,7 @@
 import type { ElementType } from 'react';
 
+import { domainTagStyle } from 'utils/domain-tag-color.utils';
+
 export interface TagListProps {
   tags: string[];
   size?: 'sm' | 'default';
@@ -9,7 +11,7 @@ export interface TagListProps {
   wrap?: boolean;
 }
 
-/** Shared vault tag chip — renders `<span class="tag" data-tag>` pills consuming `--tag-color` from app.css. */
+/** Shared vault tag chip — renders `<span class="tag" data-tag>` pills consuming `--tag-color`. */
 export function TagList({
   tags,
   size = 'default',
@@ -20,7 +22,12 @@ export function TagList({
   if (tags.length === 0) return null;
 
   const pills = tags.map((tag) => (
-    <span key={tag} className={size === 'sm' ? 'tag tag--sm' : 'tag'} data-tag={tag}>
+    <span
+      key={tag}
+      className={size === 'sm' ? 'tag tag--sm' : 'tag'}
+      data-tag={tag}
+      style={domainTagStyle(tag)}
+    >
       {tag}
     </span>
   ));

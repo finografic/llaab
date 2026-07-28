@@ -19,7 +19,7 @@
 
   /* --border comes from shadcn globals.css .dark block.
      --border-subtle is a stronger variant for structural dividers. */
-  --border-subtle: oklch(0.25 0.01 78);
+  --border-subtle: oklch(0.25 0.01 286);
   --border-focus: oklch(0.77 0.22 130);
 
   /* ── Text scale ───────────────────────────────────────────────────────────── */
@@ -266,29 +266,32 @@
 }
 
 /* Domain colors keyed by data-tag — any element (tag pill, filter button) can
-   carry data-tag and consume var(--tag-color). */
-[data-tag="d:llm"] {
+   carry data-tag and consume var(--tag-color). Canonical source + hash fallback
+   for unknown `d:*` tags: `utils/domain-tag-color.utils.ts` (TagList sets
+   --tag-color inline). These selectors keep known domains working for pure
+   data-tag markup without the util. */
+[data-tag='d:llm'] {
   --tag-color: #3b82f6;
 }
-[data-tag="d:automation"] {
+[data-tag='d:automation'] {
   --tag-color: #8b5cf6;
 }
-[data-tag="d:ingest"] {
+[data-tag='d:ingest'] {
   --tag-color: #f59e0b;
 }
-[data-tag="d:schema"] {
+[data-tag='d:schema'] {
   --tag-color: #14b8a6;
 }
-[data-tag="d:infra"] {
+[data-tag='d:infra'] {
   --tag-color: #6b7280;
 }
-[data-tag="d:integration"] {
+[data-tag='d:integration'] {
   --tag-color: #f97316;
 }
-[data-tag="d:ui"] {
+[data-tag='d:ui'] {
   --tag-color: #ec4899;
 }
-[data-tag="d:meta"] {
+[data-tag='d:meta'] {
   --tag-color: #22c55e;
 }
 

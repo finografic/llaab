@@ -1,9 +1,39 @@
+import { TagList } from 'components/TagList/TagList';
 import { useNavigate } from 'react-router-dom';
 import type { LabNode } from '@llaab/schemas';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { CellContext, ColumnDef } from '@tanstack/react-table';
+
+import { formatListDateNumeric } from 'utils/format-date.utils';
 
 import { FileCell, FileList } from '../FileList/FileList';
 import styles from './NodesFileList.module.css';
+
+// ─── Column cell renderers (module scope) ─────────────────────────────────────
+
+function renderNameCell({ row }: CellContext<LabNode, unknown>) {
+  return <FileCell icon={<NodeTypeIcon type={row.original.type} />} name={row.original.title} />;
+}
+
+function renderStatusCell({ getValue }: CellContext<LabNode, unknown>) {
+  const v = getValue() as string;
+  const cls = `status${v.charAt(0).toUpperCase()}${v.slice(1)}` as keyof typeof styles;
+  return <span className={`${styles.status} ${styles[cls] ?? ''}`}>{v}</span>;
+}
+
+function renderTagsCell({ getValue }: CellContext<LabNode, unknown>) {
+  const tags = getValue() as string[];
+  if (!tags.length) return null;
+  return <TagList tags={tags.slice(0, 3)} size="sm" className={styles.tagList} />;
+}
+
+function renderDateCell({ getValue }: CellContext<LabNode, unknown>) {
+  const createdAt = getValue() as string;
+  return (
+    <time className={styles.date} dateTime={createdAt}>
+      {formatListDateNumeric(createdAt)}
+    </time>
+  );
+}
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 
@@ -11,49 +41,28 @@ const COLUMNS: Array<ColumnDef<LabNode>> = [
   {
     accessorKey: 'title',
     header: 'Name',
-    cell: ({ row }) => (
-      <FileCell icon={<NodeTypeIcon type={row.original.type} />} name={row.original.title} />
-    ),
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    size: 90,
-    cell: ({ getValue }) => {
-      const v = getValue() as string;
-      const cls = `status${v.charAt(0).toUpperCase()}${v.slice(1)}` as keyof typeof styles;
-      return <span className={`${styles.status} ${styles[cls] ?? ''}`}>{v}</span>;
-    },
+    // size 150 (TanStack default) → FileList treats as flex-fill
+    cell: renderNameCell,
   },
   {
     accessorKey: 'tags',
     header: 'Tags',
-    size: 200,
+    // Share remaining width with Name; keeps Status/Date clustered on the right.
+    size: 150,
     enableSorting: false,
-    cell: ({ getValue }) => {
-      const tags = getValue() as string[];
-      if (!tags.length) return null;
-      return (
-        <span className={styles.tagList}>
-          {tags.slice(0, 3).map((t) => (
-            <span key={t} className={styles.tag}>
-              {t}
-            </span>
-          ))}
-        </span>
-      );
-    },
+    cell: renderTagsCell,
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    size: 100,
+    cell: renderStatusCell,
   },
   {
     accessorKey: 'created_at',
     header: 'Date',
-    size: 120,
-    cell: ({ getValue }) =>
-      new Date(getValue() as string).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      }),
+    size: 110,
+    cell: renderDateCell,
   },
 ];
 

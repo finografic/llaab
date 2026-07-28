@@ -60,18 +60,25 @@
   color: var(--text-faint);
 }
 .statusGrowing {
-  color: #ea580c;
-  background: #fff7ed;
-  border-color: #fed7aa;
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
 }
 .statusMature {
-  color: #16a34a;
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  color: var(--success-text);
+  background: var(--success-bg);
+  border-color: var(--success-border);
 }
 .statusArchived {
   color: var(--text-faint);
   opacity: 0.6;
+}
+
+.date {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* ─── Tag pills ───────────────────────────────────────────────────────────── */
@@ -80,20 +87,6 @@
   display: flex;
   gap: 4px;
   overflow: hidden;
-}
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 6px;
-  border-radius: 99px;
-  font-size: var(--text-xs);
-  font-family: var(--font-mono);
-  font-weight: 500;
-  white-space: nowrap;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  color: var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 /* ─── Type icon color tints ───────────────────────────────────────────────── */

@@ -28,6 +28,7 @@ import { getInboxListRowRenderer } from 'lib/inbox-capture-renderers';
 import type { ParsedInboxCapture } from 'lib/inbox-capture.utils';
 import { routeKindLabel } from 'lib/inbox-capture.utils';
 import { getInboxReviewState } from 'lib/inbox-review.utils';
+import { domainTagStyle } from 'utils/domain-tag-color.utils';
 import { formatCompactDateTime } from 'utils/format-date.utils';
 
 import { getInboxCaptureListPresentation } from './inbox-capture-list.utils';
@@ -245,7 +246,13 @@ function DefaultInboxCaptureListRow({
             ) : null}
             {presentation.language ? <Badge variant="outline">{presentation.language}</Badge> : null}
             {displayTags.map((tag) => (
-              <Badge key={tag} variant="outline" className={styles.captureTag} data-tag={tag}>
+              <Badge
+                key={tag}
+                variant="outline"
+                className={styles.captureTag}
+                data-tag={tag}
+                style={domainTagStyle(tag)}
+              >
                 {tag}
               </Badge>
             ))}

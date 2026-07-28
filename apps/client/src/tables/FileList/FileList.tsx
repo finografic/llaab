@@ -153,9 +153,9 @@ export function FileCell({ icon, name, meta }: { icon?: React.ReactNode; name: s
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** TanStack default column size is 150 — treat that sentinel as "fill remaining space". */
+/** TanStack default column size is 150 — treat that sentinel as "share remaining space". */
 function columnFlex(size: number): React.CSSProperties {
-  return size === 150 ? { flex: '1', minWidth: 0 } : { flex: `0 0 ${size}px` };
+  return size === 150 ? { flex: '1 1 0', minWidth: '8rem' } : { flex: `0 0 ${size}px`, maxWidth: size };
 }
 
 function SkeletonRows({ count }: { count: number }) {

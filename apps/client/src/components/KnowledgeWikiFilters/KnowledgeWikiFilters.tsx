@@ -20,6 +20,7 @@ import {
   DEFAULT_KNOWLEDGE_WIKI_FILTERS,
   WIKI_SORT_OPTIONS,
 } from 'lib/knowledge-wiki-filters';
+import { domainTagStyle } from 'utils/domain-tag-color.utils';
 
 import styles from './KnowledgeWikiFilters.module.css';
 
@@ -235,6 +236,7 @@ function FacetToggle({
       className={styles.facetButton}
       data-tag={tagValue}
       data-active={checked || undefined}
+      style={tagValue ? domainTagStyle(tagValue) : undefined}
       onClick={onCheckedChange}
     >
       <Checkbox checked={checked} aria-hidden tabIndex={-1} />

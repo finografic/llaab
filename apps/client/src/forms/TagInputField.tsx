@@ -3,20 +3,30 @@ import { Button } from 'components/ui/button';
 import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { LockIcon, X } from 'lucide-react';
+import type { CSSProperties } from 'react';
 
-const TAG_COLORS: Record<string, string> = {
-  'd:llm': 'oklch(0.65 0.18 220)',
-  'd:automation': 'oklch(0.65 0.18 290)',
-  'd:ingest': 'oklch(0.72 0.14 55)',
-  'd:schema': 'oklch(0.68 0.15 185)',
-  'd:infra': 'oklch(0.55 0.04 250)',
-  'd:integration': 'oklch(0.68 0.16 28)',
-  'd:ui': 'oklch(0.68 0.18 340)',
-  'd:meta': 'oklch(0.68 0.2 145)',
-};
+import { resolveDomainTagColor } from 'utils/domain-tag-color.utils';
 
-function tagColor(tag: string): string | null {
-  return TAG_COLORS[tag] ?? null;
+function tagChrome(tag: string, kind: 'locked' | 'editable'): CSSProperties {
+  const color = resolveDomainTagColor(tag);
+  if (color) {
+    return {
+      backgroundColor: kind === 'locked' ? `color-mix(in oklch, ${color} 15%, transparent)` : 'transparent',
+      borderColor: `color-mix(in oklch, ${color} ${kind === 'locked' ? 40 : 45}%, transparent)`,
+      color,
+    };
+  }
+  return kind === 'locked'
+    ? {
+        borderColor: 'var(--border)',
+        backgroundColor: 'var(--surface-raised)',
+        color: 'var(--text-muted)',
+      }
+    : {
+        borderColor: 'var(--border)',
+        backgroundColor: 'var(--surface-raised)',
+        color: 'var(--text)',
+      };
 }
 
 interface TagInputFieldProps {
@@ -63,66 +73,36 @@ export function TagInputField({
       <div className="flex flex-col gap-1.5">
         {allVisible && (
           <div className="flex flex-wrap gap-1.5">
-            {lockedTags.map((tag) => {
-              const color = tagColor(tag);
-              return (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className="h-7 gap-1.5 px-2.5 font-mono text-xs"
-                  style={
-                    color
-                      ? {
-                          backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)`,
-                          borderColor: `color-mix(in oklch, ${color} 40%, transparent)`,
-                          color,
-                        }
-                      : {
-                          borderColor: 'var(--border)',
-                          backgroundColor: 'var(--surface-raised)',
-                          color: 'var(--text-muted)',
-                        }
-                  }
+            {lockedTags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className="h-7 gap-1.5 px-2.5 font-mono text-xs"
+                style={tagChrome(tag, 'locked')}
+              >
+                <LockIcon size={9} aria-hidden />
+                <span>{tag}</span>
+              </Badge>
+            ))}
+            {value.map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className="h-7 gap-1.5 px-2.5 font-mono text-xs"
+                style={tagChrome(tag, 'editable')}
+              >
+                <span>{tag}</span>
+                <button
+                  type="button"
+                  className="inline-flex size-4 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45"
+                  aria-label={`Remove ${tag}`}
+                  onClick={() => onChange(value.filter((candidate) => candidate !== tag))}
+                  disabled={disabled}
                 >
-                  <LockIcon size={9} aria-hidden />
-                  <span>{tag}</span>
-                </Badge>
-              );
-            })}
-            {value.map((tag) => {
-              const color = tagColor(tag);
-              return (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className="h-7 gap-1.5 px-2.5 font-mono text-xs"
-                  style={
-                    color
-                      ? {
-                          backgroundColor: 'transparent',
-                          borderColor: `color-mix(in oklch, ${color} 45%, transparent)`,
-                          color,
-                        }
-                      : {
-                          borderColor: 'var(--border)',
-                          backgroundColor: 'var(--surface-raised)',
-                          color: 'var(--text)',
-                        }
-                  }
-                >
-                  <span>{tag}</span>
-                  <button
-                    type="button"
-                    className="inline-flex size-4 items-center justify-center rounded-full opacity-70 transition-opacity hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-45"
-                    aria-label={`Remove ${tag}`}
-                    onClick={() => onChange(value.filter((candidate) => candidate !== tag))}
-                    disabled={disabled}
-                  >
-                    <X size={10} aria-hidden />
-                  </button>
-                </Badge>
-              );
-            })}
+                  <X size={10} aria-hidden />
+                </button>
+              </Badge>
+            ))}
           </div>
         )}
 

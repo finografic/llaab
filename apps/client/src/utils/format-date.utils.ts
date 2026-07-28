@@ -32,6 +32,16 @@ export function formatDetailDateOnly(ts?: string): string {
   });
 }
 
+/** `dd-mm-yyyy` for compact table/list date columns. */
+export function formatListDateNumeric(ts?: string): string {
+  if (!ts) return '—';
+  const date = new Date(ts);
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
 /** Format duration in ms for run detail pages. Always in seconds, matching other run clocks in the app. */
 export function formatDurationMs(ms?: number): string {
   if (ms == null) return '—';
