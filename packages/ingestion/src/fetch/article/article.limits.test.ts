@@ -80,6 +80,17 @@ describe('articleFetchFailure', () => {
     expect(Object.keys(failure).sort()).toEqual(['code', 'message', 'ok', 'requestedUrl']);
   });
 
+  it('redacts credentials from URLs carried on a failure', () => {
+    const failure = articleFetchFailure('invalid_url', 'URLs containing credentials are rejected.', {
+      requestedUrl: 'https://user:hunter2@example.com/a',
+      finalUrl: 'https://user:hunter2@example.com/b',
+    });
+
+    expect(JSON.stringify(failure)).not.toContain('hunter2');
+    expect(failure.requestedUrl).toBe('https://example.com/a');
+    expect(failure.finalUrl).toBe('https://example.com/b');
+  });
+
   it('keeps the failure-code set closed', () => {
     expect([...ARTICLE_FETCH_FAILURE_CODES]).toEqual([
       'invalid_url',

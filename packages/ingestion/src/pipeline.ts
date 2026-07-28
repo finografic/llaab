@@ -11,7 +11,7 @@ import {
   resolveTrustedYouTubeChannelId,
 } from './enrich/match-podcast-youtube.js';
 import { llmExtractWithTrace, normalizeContentTags, normalizeDomainTags } from './extract/llm-extract.js';
-import { fetchArticle } from './fetch/article.js';
+import { fetchArticle } from './fetch/article/index.js';
 import { fetchPodcastEpisode } from './fetch/podcast.js';
 import { fetchRepo } from './fetch/repo.js';
 import { fetchYouTube, parseYouTubeUrl } from './fetch/youtube.js';
@@ -795,7 +795,12 @@ export async function runIngestionPipeline(input: IngestionInput): Promise<Inges
   }
 
   if (input.sourceType === 'article') {
-    return createResourceNode(input, await fetchArticle(input.url), 'article');
+    const fetched = await fetchArticle(input.url);
+    if (!fetched.ok) {
+      throw new Error(`Article fetch failed (${fetched.code}): ${fetched.message}`);
+    }
+    // Phase 2 replaces this shortcut with the save-first article pipeline.
+    return createResourceNode({ ...input, title: input.title ?? fetched.title }, fetched.markdown, 'article');
   }
 
   return createResourceNode(input, await fetchRepo(input.url), 'repo');

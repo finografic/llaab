@@ -286,16 +286,29 @@ Exit criteria: article extraction and safety behavior are deterministic without 
 
 ## Phase 1 — Bounded Fetch and Parse
 
-- [ ] Replace the placeholder `fetchArticle` implementation with bounded fetch, redirect
+- [x] Replace the placeholder `fetchArticle` implementation with bounded fetch, redirect
       validation, streamed size enforcement, and content-type checks.
-- [ ] Extract title, byline, site, canonical URL, publication date, language, excerpt, readable
+- [x] Extract title, byline, site, canonical URL, publication date, language, excerpt, readable
       HTML, plain text, and normalized Markdown.
-- [ ] Resolve relative links and remove unsafe/non-content elements.
-- [ ] Add focused unit tests for successful parsing and every fetch/safety failure mode.
-- [ ] Keep all fetch tests fixture-backed; add at most one opt-in live smoke script outside CI.
+- [x] Resolve relative links and remove unsafe/non-content elements.
+- [x] Add focused unit tests for successful parsing and every fetch/safety failure mode.
+- [x] Keep all fetch tests fixture-backed; add at most one opt-in live smoke script outside CI
+      (`smoke-fetch-article.ts`, run manually with a URL argument).
+- [x] Record metadata precedence and truncation behavior in tests (carried over from Phase 0).
 
 Exit criteria: one public article URL produces a bounded, typed, readable result or a useful typed
-failure.
+failure. **Met.** 114 tests pass in `@llaab/ingestion`.
+
+Notes:
+
+- A canonical link is only trusted when it is absolute and same-host as the response. A cross-host
+  canonical is a syndication/SEO artefact, so the response URL stays the identity.
+- Testing surfaced a leak: a rejected URL carrying credentials was echoed back on the failure and
+  would have reached run events. `articleFetchFailure` now redacts userinfo from every URL it stores.
+- The package targets Node without the DOM lib, so the parser types against `linkedom`'s document
+  type rather than browser globals.
+- `createResourceNode` still backs the article branch of `runIngestionPipeline` as an interim
+  shortcut, now fed real Markdown. Phase 2 replaces it. The repo branch is untouched.
 
 ## Phase 2 — Save-First Article Pipeline
 

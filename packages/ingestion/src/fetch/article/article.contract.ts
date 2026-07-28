@@ -55,6 +55,25 @@ export interface FetchedArticle {
 
 export type FetchArticleResult = ({ ok: true } & FetchedArticle) | ArticleFetchFailure;
 
+/**
+ * Strips any userinfo from a URL before it is stored on a failure.
+ *
+ * A rejected URL still travels into run events and operator logs, so a password embedded in the
+ * input must not survive the rejection that was triggered by its presence.
+ */
+export function redactUrlCredentials(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    if (!url.username && !url.password) return rawUrl;
+    url.username = '';
+    url.password = '';
+    return url.toString();
+  } catch {
+    // Unparseable input cannot contain structured userinfo to redact.
+    return rawUrl;
+  }
+}
+
 export function articleFetchFailure(
   code: ArticleFetchFailureCode,
   message: string,
@@ -64,8 +83,8 @@ export function articleFetchFailure(
     ok: false,
     code,
     message,
-    requestedUrl: context.requestedUrl,
-    ...(context.finalUrl ? { finalUrl: context.finalUrl } : {}),
+    requestedUrl: redactUrlCredentials(context.requestedUrl),
+    ...(context.finalUrl ? { finalUrl: redactUrlCredentials(context.finalUrl) } : {}),
     ...(context.httpStatus === undefined ? {} : { httpStatus: context.httpStatus }),
   };
 }
