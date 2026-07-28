@@ -18,9 +18,26 @@ export const ResourceTypeSchema = z.enum([
 export const ResourceNodeSchema = BaseNodeSchema.extend({
   type: z.literal('resource'),
   source_id: NodeIdSchema.optional(),
+  /** Canonical URL — durable identity used for article deduplication. */
   url: z.string().url().optional(),
   resource_type: ResourceTypeSchema.default('reference'),
   description: z.string().optional(),
+
+  // Article provenance. Set by article ingestion; absent on other resource kinds.
+  /** URL originally supplied by the operator, before redirects and canonicalization. */
+  requested_url: z.string().url().optional(),
+  author: z.string().optional(),
+  site_name: z.string().optional(),
+  /** Publication date declared by the page, as ISO 8601 UTC. */
+  source_published_at: z.string().optional(),
+  /** When LLAAB retrieved the content, as ISO 8601 UTC. */
+  fetched_at: z.string().optional(),
+  /** SHA-256 of the normalized article text — content identity independent of the URL. */
+  content_hash: z.string().optional(),
+  /** True when the stored body was capped at the maximum article length. */
+  content_truncated: z.boolean().optional(),
+  /** Idea nodes produced by extraction from this resource. */
+  extracted_idea_ids: z.array(NodeIdSchema).default([]),
 });
 
 export type ResourceNode = z.infer<typeof ResourceNodeSchema>;

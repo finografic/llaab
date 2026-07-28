@@ -21,6 +21,15 @@ export type { YouTubeSubscriptionStatus } from './fetch/youtube-subscription.js'
 export { checkYouTubeSubscription } from './fetch/youtube-subscription.js';
 export type { ExtractionResult, IngestionInput, IngestionResult, IngestionSourceType } from './pipeline.js';
 export { extractKnowledgeFromTranscript, runIngestionPipeline } from './pipeline.js';
+export type { ArticleIngestionInput, ArticleIngestionResult } from './article/create-article-nodes.js';
+export { ArticleFetchError, createArticleNodes } from './article/create-article-nodes.js';
+export type {
+  ArticleFetchFailure,
+  ArticleFetchFailureCode,
+  FetchArticleResult,
+  FetchedArticle,
+} from './fetch/article/index.js';
+export { fetchArticle, normalizeCanonicalUrl, publicationOrigin } from './fetch/article/index.js';
 export type { FetchedPodcastEpisode } from './fetch/podcast.js';
 export { fetchPodcastEpisode, isPocketCastsUrl } from './fetch/podcast.js';
 export type { TranscribedAudio, TranscribedSegment } from './transcribe/mlx-whisper.js';

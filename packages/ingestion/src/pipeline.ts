@@ -4,6 +4,7 @@ import type { ExtractionRunTrace } from './extract/llm-extract.js';
 import type { FetchedPodcastEpisode } from './fetch/podcast.js';
 import type { SourceNode, TranscriptNode, TranscriptSourceType } from '@llaab/schemas';
 
+import { createArticleNodes } from './article/create-article-nodes.js';
 import { applyKnownTranscriptReplacements } from './clean/transcript-replacements.js';
 import { cleanTranscript } from './clean/transcript.js';
 import {
@@ -11,7 +12,6 @@ import {
   resolveTrustedYouTubeChannelId,
 } from './enrich/match-podcast-youtube.js';
 import { llmExtractWithTrace, normalizeContentTags, normalizeDomainTags } from './extract/llm-extract.js';
-import { fetchArticle } from './fetch/article/index.js';
 import { fetchPodcastEpisode } from './fetch/podcast.js';
 import { fetchRepo } from './fetch/repo.js';
 import { fetchYouTube, parseYouTubeUrl } from './fetch/youtube.js';
@@ -94,6 +94,10 @@ export interface IngestionResult {
   runTrace?: ExtractionRunTrace;
   /** Plain text available for extraction. Deduped transcripts reuse the persisted transcript body. */
   plainText?: string;
+  /** Articles only: canonical URL used as durable identity. */
+  canonicalUrl?: string;
+  /** Articles only: SHA-256 of the normalized article text. */
+  contentHash?: string;
 }
 
 function completedStage(
@@ -785,6 +789,31 @@ export async function extractKnowledgeFromTranscript(
   return { transcriptId, summary: extracted.summary, ideaIds, ideas, llmMeta: extracted.llmMeta };
 }
 
+/** Adapts the save-first article pipeline onto the shared {@link IngestionResult} shape. */
+async function createArticleNode(input: IngestionInput): Promise<IngestionResult> {
+  const article = await createArticleNodes({
+    url: input.url,
+    ...(input.title ? { title: input.title } : {}),
+    ...(input.tags ? { tags: input.tags } : {}),
+  });
+
+  return {
+    id: article.id,
+    path: article.path,
+    type: 'resource',
+    title: article.title,
+    sourceId: article.sourceId,
+    sourceUrl: article.sourceUrl,
+    canonicalUrl: article.canonicalUrl,
+    contentHash: article.contentHash,
+    ...(article.author ? { author: article.author } : {}),
+    producedNodeIds: article.producedNodeIds,
+    reused: article.reused,
+    plainText: article.plainText,
+    runTrace: article.runTrace,
+  };
+}
+
 export async function runIngestionPipeline(input: IngestionInput): Promise<IngestionResult> {
   if (input.sourceType === 'youtube') {
     return createTranscriptNode(input);
@@ -795,12 +824,7 @@ export async function runIngestionPipeline(input: IngestionInput): Promise<Inges
   }
 
   if (input.sourceType === 'article') {
-    const fetched = await fetchArticle(input.url);
-    if (!fetched.ok) {
-      throw new Error(`Article fetch failed (${fetched.code}): ${fetched.message}`);
-    }
-    // Phase 2 replaces this shortcut with the save-first article pipeline.
-    return createResourceNode({ ...input, title: input.title ?? fetched.title }, fetched.markdown, 'article');
+    return createArticleNode(input);
   }
 
   return createResourceNode(input, await fetchRepo(input.url), 'repo');

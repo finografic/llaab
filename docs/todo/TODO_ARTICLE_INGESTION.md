@@ -315,15 +315,31 @@ Notes:
 - [ ] Replace the current article `createResourceNode` shortcut with a dedicated article pipeline.
       `createResourceNode` is shared with `sourceType: 'repo'`; leave the repo branch (and the
       `fetchRepo` placeholder) working exactly as-is rather than deleting the shared helper.
-- [ ] Add canonical-URL deduplication and deterministic content hashing.
-- [ ] Create/reuse the publication `SourceNode`.
-- [ ] Save the article `ResourceNode` before extraction begins.
-- [ ] Return title, source ID, canonical URL, plain text, produced node IDs, reuse state, and
+- [x] Add canonical-URL deduplication and deterministic content hashing.
+- [x] Create/reuse the publication `SourceNode`.
+- [x] Save the article `ResourceNode` before extraction begins.
+- [x] Return title, source ID, canonical URL, plain text, produced node IDs, reuse state, and
       fetch/store stages in `IngestionResult`.
-- [ ] Add temp-vault tests for first ingest, duplicate reuse, source reuse, metadata persistence,
-      and no partial nodes after fetch failure.
+- [x] Add tests for first ingest, duplicate reuse, source reuse, metadata persistence, and no
+      partial nodes after fetch failure.
 
 Exit criteria: article and publication nodes are durable and provenance-linked before any LLM call.
+**Met.** 174 tests pass across `@llaab/ingestion` and `@llaab/schemas`.
+
+Notes:
+
+- Tests mock `@llaab/core` rather than writing to a temp vault, matching the existing
+  `pipeline.test.ts` convention. The intent — no writes to the real vault — is satisfied either way,
+  and one convention beats two.
+- Dedupe matches on canonical URL **or** content hash, so an article that moves to a new URL is still
+  recognized.
+- The publication source is created first and the article second, because the article carries
+  `source_id`. The source's `related` list is then appended to, never rewritten, so reviewed metadata
+  on an existing source survives.
+- `@llaab/schemas` and `@llaab/core` are consumed through TypeScript project references, which
+  resolve via `dist`. Schema changes require `pnpm --filter @llaab/schemas build` before dependent
+  packages typecheck.
+- `createResourceNode` and the `repo` branch are untouched.
 
 ## Phase 3 — Generalized Extraction and Skill
 
