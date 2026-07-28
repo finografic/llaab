@@ -3,6 +3,7 @@ import { AppFooter } from 'components/AppFooter/AppFooter';
 import { AppHeader } from 'components/AppHeader/AppHeader';
 import { CanonicalIdeaConflictWatcher } from 'components/CanonicalIdeaConflictWatcher';
 import { RunMonitor } from 'components/RunMonitor';
+import { SectionSubnav } from 'components/SectionSubnav/SectionSubnav';
 import { AppSidebarLayout } from 'components/ui/app-sidebar-dual-layout';
 import { usePanelRef } from 'components/ui/resizable';
 import { TooltipProvider } from 'components/ui/tooltip';
@@ -107,6 +108,7 @@ export function AppLayout() {
   return (
     <div className={styles.appShell}>
       <AppHeader />
+      <SectionSubnav />
       <SecondaryActionBarContext.Provider value={secondaryActionBarValue}>
         <TooltipProvider>
           <AppSidebarLayout

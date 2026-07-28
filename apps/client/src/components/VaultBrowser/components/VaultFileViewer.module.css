@@ -62,7 +62,7 @@
 
 .enhancedCard {
   position: relative;
-  scroll-margin-top: calc(var(--header-h, 0px) + var(--space-6));
+  scroll-margin-top: calc(var(--header-h, 0px) + var(--section-subnav-h, 0px) + var(--space-6));
   overflow: hidden;
   border-color: var(--border-subtle);
   background: var(--surface);
