@@ -155,11 +155,19 @@ Write tools:
 - `vault_capture_idea`
 - `vault_capture_inbox`
 - `vault_ingest_youtube`
+- `vault_ingest_article`
 - `vault_pin_package`
 - `vault_pin_repository`
 - `vault_capture_todo`
 - `vault_capture_web_link`
 - `vault_capture_attachment`
+
+**Article routing.** Explicit `docs:` and `post:` prefixes route to `ingest_article`; an unprefixed
+link stays a `capture_web_link` and is never fetched. The executor writes the inbox capture **first**
+and then ingests with that capture id as provenance, so a failed fetch still leaves the operator's
+original link in the inbox — the receipt reads
+`❌ Failed article ingest (link kept in inbox): …`. Articles are HTML only; PDFs, paywalled, and
+JavaScript-rendered pages are rejected with a typed failure.
 
 The inbox write tools call existing LLAAB API endpoints with `LLAAB_API_KEY`. They do not expose
 terminal, browser, arbitrary file writes, or shell execution.

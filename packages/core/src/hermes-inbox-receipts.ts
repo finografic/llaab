@@ -22,6 +22,17 @@ export function createHermesInboxToolCall(
           tags: ['hermes', 'inbox'],
         },
       };
+    case 'ingest_article':
+      return {
+        name: 'vault_ingest_article',
+        arguments: {
+          url: stringPayload(route, 'url'),
+          tags: ['hermes', 'inbox'],
+          kind: route.kind,
+          source,
+          payload: route.payload,
+        },
+      };
     case 'pin_package':
     case 'pin_library':
       return {
@@ -106,6 +117,8 @@ export function createHermesInboxReceipt(
   switch (route.action) {
     case 'ingest_youtube':
       return { status: 'queued', text: withTarget('✅ Ingested YouTube video', target) };
+    case 'ingest_article':
+      return { status: 'saved', text: withTarget('✅ Ingested article', target) };
     case 'pin_package':
     case 'pin_library':
       return {
@@ -225,6 +238,9 @@ function failedReceiptText(route: HermesInboxRoute, error: string | undefined): 
   switch (route.action) {
     case 'ingest_youtube':
       return `❌ Failed YouTube ingest: ${detail}`;
+    // The inbox capture is written before ingestion is attempted, so a failure never loses the link.
+    case 'ingest_article':
+      return `❌ Failed article ingest (link kept in inbox): ${detail}`;
     case 'pin_package':
     case 'pin_library':
       return `❌ Failed npm package pin: ${detail}`;

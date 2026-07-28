@@ -82,10 +82,10 @@ describe('routeHermesInboxText', () => {
     });
   });
 
-  it('routes explicit docs and post prefixes as distinct web links', () => {
+  it('routes explicit docs and post prefixes to article ingestion', () => {
     expect(routeHermesInboxText('docs: https://ui.shadcn.com/docs/installation/vite')).toMatchObject({
       kind: 'docs_link',
-      action: 'capture_web_link',
+      action: 'ingest_article',
       payload: {
         url: 'https://ui.shadcn.com/docs/installation/vite',
         label: 'https://ui.shadcn.com/docs/installation/vite',
@@ -94,11 +94,29 @@ describe('routeHermesInboxText', () => {
 
     expect(routeHermesInboxText('post: https://example.com/tutorial')).toMatchObject({
       kind: 'post_link',
-      action: 'capture_web_link',
+      action: 'ingest_article',
       payload: {
         url: 'https://example.com/tutorial',
         label: 'https://example.com/tutorial',
       },
+    });
+  });
+
+  it('keeps an unprefixed link capture-only, so nothing is fetched without being asked', () => {
+    expect(routeHermesInboxText('https://example.com/some-article')).toMatchObject({
+      kind: 'web_link',
+      action: 'capture_web_link',
+    });
+  });
+
+  it('still falls back to a raw capture when a docs/post prefix carries no URL', () => {
+    expect(routeHermesInboxText('docs: shadcn vite setup')).toMatchObject({
+      kind: 'raw',
+      action: 'capture_raw',
+    });
+    expect(routeHermesInboxText('post: some thought')).toMatchObject({
+      kind: 'raw',
+      action: 'capture_raw',
     });
   });
 

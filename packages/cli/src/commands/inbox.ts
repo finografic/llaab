@@ -153,10 +153,15 @@ export const inboxCommand = defineCommand({
   },
 });
 
-async function executeInboxToolCall(toolCall: HermesInboxToolCall): Promise<HermesInboxExecutionResult> {
+/** Exported for tests: the single execution boundary every inbox route passes through. */
+export async function executeInboxToolCall(
+  toolCall: HermesInboxToolCall,
+): Promise<HermesInboxExecutionResult> {
   switch (toolCall.name) {
     case 'vault_ingest_youtube':
       return executeYouTubeIngest(toolCall);
+    case 'vault_ingest_article':
+      return executeArticleIngest(toolCall);
     case 'vault_pin_package':
     case 'vault_pin_library':
       return executePackagePin(toolCall);
@@ -190,6 +195,39 @@ async function executeYouTubeIngest(toolCall: HermesInboxToolCall): Promise<Herm
   const reused = ingestResult?.['reused'] === true ? ' (reused existing transcript)' : '';
 
   return { status: 'queued', target_id: id, target_label: id ? `${id}${reused}` : undefined };
+}
+
+/**
+ * Explicit `docs:` / `post:` links: preserve the inbox capture first, then ingest.
+ *
+ * Capture-before-ingest is the whole point — if the fetch fails, the operator's original link is
+ * already in the inbox and is never dropped.
+ */
+async function executeArticleIngest(toolCall: HermesInboxToolCall): Promise<HermesInboxExecutionResult> {
+  const url = stringArg(toolCall, 'url');
+  const capture = await executeIdeaCapture(toolCall);
+
+  if (capture.status === 'failed') {
+    return { status: 'failed', error: `inbox capture failed before ingest: ${capture.error ?? 'unknown'}` };
+  }
+
+  const result = await postJsonViaApi('/api/ingest/article', {
+    url,
+    tags: arrayArg(toolCall, 'tags') ?? INBOX_DEFAULT_TAGS,
+    ...(capture.target_id ? { inboxCaptureId: capture.target_id } : {}),
+  });
+
+  if (!result.ok) {
+    return { status: 'failed', error: result.error };
+  }
+
+  const ingestResult = asRecord(result.data['result']);
+  const id = typeof ingestResult?.['id'] === 'string' ? ingestResult['id'] : undefined;
+  const title = typeof ingestResult?.['title'] === 'string' ? ingestResult['title'] : undefined;
+  const reused = ingestResult?.['reused'] === true ? ' (reused existing article)' : '';
+  const label = title ?? id;
+
+  return { status: 'saved', target_id: id, target_label: label ? `${label}${reused}` : undefined };
 }
 
 async function executePackagePin(toolCall: HermesInboxToolCall): Promise<HermesInboxExecutionResult> {
@@ -330,6 +368,9 @@ function buildIdeaCapture(toolCall: HermesInboxToolCall): { title: string; body:
         tags: [...INBOX_DEFAULT_TAGS, 'inbox:todo'],
       };
     }
+    // An article ingest preserves the same inbox capture a plain link would have produced; the
+    // ingest itself then runs against that capture.
+    case 'vault_ingest_article':
     case 'vault_capture_web_link': {
       const url = stringArg(toolCall, 'url');
       const routeKind = stringArg(toolCall, 'kind') || 'web_link';

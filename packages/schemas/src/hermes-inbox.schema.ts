@@ -50,6 +50,8 @@ export const HermesInboxRouteKindSchema = z.enum([
 
 export const HermesInboxRouteActionSchema = z.enum([
   'ingest_youtube',
+  /** Explicit `docs:` / `post:` links: preserve the inbox capture, then ingest the article. */
+  'ingest_article',
   'pin_package',
   /**
    * @deprecated Use `pin_package`.
@@ -74,6 +76,7 @@ export const HermesInboxRouteSchema = z.object({
 export const HermesInboxToolNameSchema = z.enum([
   'vault_capture_inbox',
   'vault_ingest_youtube',
+  'vault_ingest_article',
   'vault_pin_package',
   /**
    * @deprecated Use `vault_pin_package`.

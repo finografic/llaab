@@ -145,6 +145,8 @@ export function routeHermesInboxText(rawText: string): HermesInboxRoute {
     };
   }
 
+  // `docs:` and `post:` are the operator explicitly asking for the article, not just the link, so
+  // they ingest. Unprefixed links stay capture-only — see the generic `web_link` route below.
   const docsText = stripPrefix(text, DOCS_PREFIX_RE);
   if (docsText) {
     const docsUrl = extractFirstUrl(docsText);
@@ -152,7 +154,7 @@ export function routeHermesInboxText(rawText: string): HermesInboxRoute {
       ? {
           kind: 'docs_link',
           confidence: 0.95,
-          action: 'capture_web_link',
+          action: 'ingest_article',
           payload: { url: docsUrl.href, label: docsText },
           reason: 'Message uses the docs: prefix.',
         }
@@ -166,7 +168,7 @@ export function routeHermesInboxText(rawText: string): HermesInboxRoute {
       ? {
           kind: 'post_link',
           confidence: 0.95,
-          action: 'capture_web_link',
+          action: 'ingest_article',
           payload: { url: postUrl.href, label: postText },
           reason: 'Message uses the post: prefix.',
         }

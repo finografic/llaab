@@ -186,11 +186,48 @@ describe('createHermesInboxReceipt', () => {
   });
 
   it('formats route-specific web link receipts', () => {
+    const genericRoute = routeHermesInboxText('https://example.com/some-article');
+
+    expect(createHermesInboxReceipt(genericRoute, { status: 'saved', target_id: 'idea.web-link' })).toEqual({
+      status: 'saved',
+      text: '✅ Saved link: idea.web-link',
+    });
+  });
+
+  it('reports a docs/post ingest using the fetched article title', () => {
     const docsRoute = routeHermesInboxText('docs: https://ui.shadcn.com/docs/installation/vite');
 
-    expect(createHermesInboxReceipt(docsRoute, { status: 'saved', target_id: 'idea.docs-link' })).toEqual({
+    expect(
+      createHermesInboxReceipt(docsRoute, {
+        status: 'saved',
+        target_id: 'vite-installation',
+        target_label: 'Vite Installation',
+      }),
+    ).toEqual({
       status: 'saved',
-      text: '✅ Saved docs link: idea.docs-link',
+      text: '✅ Ingested article: Vite Installation',
+    });
+  });
+
+  it('says the link was kept when an article ingest fails', () => {
+    const postRoute = routeHermesInboxText('post: https://example.com/tutorial');
+
+    expect(createHermesInboxReceipt(postRoute, { status: 'failed', error: 'not_readable' })).toEqual({
+      status: 'failed',
+      text: '❌ Failed article ingest (link kept in inbox): not_readable',
+    });
+  });
+
+  it('builds a vault_ingest_article tool call carrying the link and provenance', () => {
+    const docsRoute = routeHermesInboxText('docs: https://ui.shadcn.com/docs/installation/vite');
+
+    expect(createHermesInboxToolCall(docsRoute)).toMatchObject({
+      name: 'vault_ingest_article',
+      arguments: {
+        url: 'https://ui.shadcn.com/docs/installation/vite',
+        kind: 'docs_link',
+        tags: ['hermes', 'inbox'],
+      },
     });
   });
 });

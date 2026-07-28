@@ -455,19 +455,37 @@ Live verification (artifacts cleaned up afterwards):
 
 ## Phase 6 — Hermes Docs/Post Integration
 
-- [ ] Add `ingest_article` and `vault_ingest_article` to the Hermes route/tool contracts.
-- [ ] Keep unprefixed generic web links on `capture_web_link`.
-- [ ] For explicit `docs:` and `post:` URLs, first preserve the existing inbox capture, then start
+- [x] Add `ingest_article` and `vault_ingest_article` to the Hermes route/tool contracts.
+- [x] Keep unprefixed generic web links on `capture_web_link`.
+- [x] For explicit `docs:` and `post:` URLs, first preserve the existing inbox capture, then start
       article ingestion with that capture ID as provenance.
-- [ ] Relate the inbox capture, article resource, publication source, and run without duplicating
+- [x] Relate the inbox capture, article resource, publication source, and run without duplicating
       article content in the capture.
-- [ ] Return a short receipt using the fetched article title on success.
-- [ ] If fetch or parse fails, retain the inbox capture and mark/report the ingestion failure; never
+- [x] Return a short receipt using the fetched article title on success.
+- [x] If fetch or parse fails, retain the inbox capture and mark/report the ingestion failure; never
       drop the original link.
-- [ ] Add deterministic router, tool-call, CLI execution, receipt, and failure-retention tests.
+- [x] Add deterministic router, tool-call, CLI execution, receipt, and failure-retention tests.
 
 Exit criteria: explicit Telegram/Hermes article captures become searchable article resources while
-remaining auditable from the inbox.
+remaining auditable from the inbox. **Met.** 672 tests repo-wide, all typechecks, lint, format.
+
+Notes:
+
+- Capture-before-ingest is the load-bearing ordering: `executeArticleIngest` writes the inbox capture
+  first, then ingests with that capture id as `inboxCaptureId`. A failed fetch therefore cannot lose
+  the operator's link, and the receipt says so explicitly.
+- If the _capture itself_ fails, no ingest is attempted — there would be nothing to fall back to.
+- `executeInboxToolCall` is now exported so the CLI execution boundary is directly testable.
+- Two existing tests asserted the old capture-only behavior for `docs:`/`post:` and were updated to
+  the new contract, plus a new test pinning that unprefixed links stay capture-only.
+
+Live verification via `lab inbox` (artifacts cleaned up afterwards):
+
+- `docs: <article>` → `✅ Ingested article: Steering Claude Code: when to use CLAUDE.md, skills,
+hooks, and subagents`; the article's `related` points back at the inbox capture
+- `post: <unresolvable host>` → `❌ Failed article ingest (link kept in inbox): Could not resolve
+host …`, and the capture node was confirmed present on disk afterwards
+- unprefixed link → `capture_web_link` / `vault_capture_web_link`, no fetch attempted
 
 ## Phase 7 — Validation and Graduation
 
