@@ -19,8 +19,18 @@ export type { YouTubeDataApiChannelStats } from './fetch/youtube-data-api.js';
 export { fetchYouTubeDataApiChannelStats } from './fetch/youtube-data-api.js';
 export type { YouTubeSubscriptionStatus } from './fetch/youtube-subscription.js';
 export { checkYouTubeSubscription } from './fetch/youtube-subscription.js';
-export type { ExtractionResult, IngestionInput, IngestionResult, IngestionSourceType } from './pipeline.js';
-export { extractKnowledgeFromTranscript, runIngestionPipeline } from './pipeline.js';
+export type {
+  ExtractionResult,
+  IngestionInput,
+  IngestionResult,
+  IngestionSourceType,
+  SavedNodeExtractionResult,
+} from './pipeline.js';
+export {
+  extractKnowledgeFromNode,
+  extractKnowledgeFromTranscript,
+  runIngestionPipeline,
+} from './pipeline.js';
 export type { ArticleIngestionInput, ArticleIngestionResult } from './article/create-article-nodes.js';
 export { ArticleFetchError, createArticleNodes } from './article/create-article-nodes.js';
 export type {

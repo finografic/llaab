@@ -675,8 +675,9 @@ async function createPodcastTranscriptNode(input: IngestionInput): Promise<Inges
   };
 }
 
-export interface ExtractionResult {
-  transcriptId: string;
+/** Source-neutral result of extracting knowledge from an already-saved node. */
+export interface SavedNodeExtractionResult {
+  nodeId: string;
   summary: string;
   ideaIds: string[];
   ideas: Array<{ id: string; title: string }>;
@@ -689,22 +690,29 @@ export interface ExtractionResult {
   };
 }
 
+/** Transcript-shaped view of {@link SavedNodeExtractionResult}, kept for existing callers. */
+export interface ExtractionResult extends SavedNodeExtractionResult {
+  transcriptId: string;
+}
+
 /**
- * Run LLM knowledge extraction on an already-saved transcript. Updates the transcript's summary and creates
- * IdeaNodes for each extracted idea. Safe to call after ingest — transcript is already persisted regardless
- * of outcome.
+ * Run LLM knowledge extraction on an already-saved node — a transcript or an article resource.
+ *
+ * Updates the node's summary, tags, and LLM trace, then creates an IdeaNode per extracted idea and
+ * writes their ids back. Safe to call after ingest: the source node is already persisted regardless
+ * of outcome, so this stays best-effort.
  */
-export async function extractKnowledgeFromTranscript(
-  transcriptId: string,
-  transcriptPath: string,
+export async function extractKnowledgeFromNode(
+  nodeId: string,
+  nodePath: string,
   plainText: string,
   manualTags: string[] = [],
-): Promise<ExtractionResult> {
+): Promise<SavedNodeExtractionResult> {
   const extracted = await llmExtractWithTrace(plainText);
   const normalizedLlmTags = normalizeContentTags(extracted.tags);
   let transcriptTags: string[] = [];
 
-  await updateNode(transcriptPath, (node) => {
+  await updateNode(nodePath, (node) => {
     transcriptTags = [
       ...new Set([
         ...(node.tags ?? []),
@@ -716,7 +724,9 @@ export async function extractKnowledgeFromTranscript(
 
     return {
       ...node,
-      summary: extracted.summary,
+      // Resources carry their summary in `description`; every other node type uses `summary`.
+      // Writing the wrong key is silently dropped by the schema, so the branch is load-bearing.
+      ...(node.type === 'resource' ? { description: extracted.summary } : { summary: extracted.summary }),
       tags: transcriptTags,
       llm_model: extracted.llmMeta.model,
       llm_provider: extracted.llmMeta.provider,
@@ -746,8 +756,8 @@ export async function extractKnowledgeFromTranscript(
       ],
       extra: {
         origin: 'extracted',
-        source_id: transcriptId,
-        related: [transcriptId],
+        source_id: nodeId,
+        related: [nodeId],
         llm_model: extracted.llmMeta.model,
         llm_provider: extracted.llmMeta.provider,
         llm_duration_ms: extracted.llmMeta.durationMs,
@@ -776,7 +786,7 @@ export async function extractKnowledgeFromTranscript(
 
   const ideaIds = ideas.map((i) => i.id);
 
-  await updateNode(transcriptPath, (node) => ({
+  await updateNode(nodePath, (node) => ({
     ...node,
     extracted_idea_ids: ideaIds,
     llm_model: extracted.llmMeta.model,
@@ -786,7 +796,22 @@ export async function extractKnowledgeFromTranscript(
     llm_completion_tokens: extracted.llmMeta.completionTokens,
   }));
 
-  return { transcriptId, summary: extracted.summary, ideaIds, ideas, llmMeta: extracted.llmMeta };
+  return { nodeId, summary: extracted.summary, ideaIds, ideas, llmMeta: extracted.llmMeta };
+}
+
+/**
+ * Transcript-named wrapper kept so YouTube and podcast callers are unaffected by the generalization.
+ *
+ * @deprecated Prefer {@link extractKnowledgeFromNode} for new callers.
+ */
+export async function extractKnowledgeFromTranscript(
+  transcriptId: string,
+  transcriptPath: string,
+  plainText: string,
+  manualTags: string[] = [],
+): Promise<ExtractionResult> {
+  const result = await extractKnowledgeFromNode(transcriptId, transcriptPath, plainText, manualTags);
+  return { ...result, transcriptId: result.nodeId };
 }
 
 /** Adapts the save-first article pipeline onto the shared {@link IngestionResult} shape. */

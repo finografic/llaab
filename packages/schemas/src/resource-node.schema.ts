@@ -38,6 +38,13 @@ export const ResourceNodeSchema = BaseNodeSchema.extend({
   content_truncated: z.boolean().optional(),
   /** Idea nodes produced by extraction from this resource. */
   extracted_idea_ids: z.array(NodeIdSchema).default([]),
+
+  // Extraction trace. Resources use `description` as their summary field, so there is no `summary`.
+  llm_model: z.string().optional(),
+  llm_provider: z.string().optional(),
+  llm_duration_ms: z.number().int().nonnegative().optional(),
+  llm_prompt_tokens: z.number().int().nonnegative().optional(),
+  llm_completion_tokens: z.number().int().nonnegative().optional(),
 });
 
 export type ResourceNode = z.infer<typeof ResourceNodeSchema>;

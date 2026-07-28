@@ -24,7 +24,9 @@ function createTurndown(): TurndownService {
   });
 
   // Nothing that carries behaviour rather than meaning survives into a stored document.
-  service.remove(['script', 'style', 'noscript', 'iframe', 'form', 'button', 'svg']);
+  service.remove(['script', 'style', 'noscript', 'iframe', 'form', 'button']);
+  // `svg` lives in SVGElementTagNameMap, so it cannot go in the tag-name list above.
+  service.remove((node) => node.nodeName.toLowerCase() === 'svg');
 
   return service;
 }

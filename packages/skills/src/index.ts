@@ -5,6 +5,12 @@ export {
   type ExtractTranscriptIdeasOutput,
 } from './extract-transcript-ideas.js';
 export { ingestYouTube, type IngestYouTubeInput, type IngestYouTubeOutput } from './ingest-youtube.js';
+export {
+  describeArticleIngestError,
+  ingestArticle,
+  type IngestArticleInput,
+  type IngestArticleOutput,
+} from './ingest-article.js';
 export { ingestPodcast, type IngestPodcastInput, type IngestPodcastOutput } from './ingest-podcast.js';
 export { compileWikiDraft } from './wiki/compile-wiki-draft.js';
 export { linkWikiTopics } from './wiki/link-wiki-topics.js';

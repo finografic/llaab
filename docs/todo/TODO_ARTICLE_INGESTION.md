@@ -343,17 +343,31 @@ Notes:
 
 ## Phase 3 — Generalized Extraction and Skill
 
-- [ ] Add the source-neutral saved-node extraction primitive and retain
+- [x] Add the source-neutral saved-node extraction primitive (`extractKnowledgeFromNode`) and retain
       `extractKnowledgeFromTranscript` as a compatibility wrapper.
-- [ ] Add `packages/skills/src/ingest-article.ts` using `runSkill('ingest-article', ...)`.
-- [ ] Emit run events for fetch, parse, article save, extraction start, extraction success, and
+- [x] Add `packages/skills/src/ingest-article.ts` using `runSkill('ingest-article', ...)`.
+- [x] Emit run events for fetch, parse, article save, extraction start, extraction success, and
       extraction warning/failure.
-- [ ] Append the article, publication, and extracted idea IDs to the run's produced node IDs.
-- [ ] Preserve the saved article and completed run evidence when idea extraction fails.
-- [ ] Add skill tests for success, dedupe, `skipExtraction`, and extraction failure.
-- [ ] Verify YouTube and podcast extraction tests remain unchanged and passing.
+- [x] Append the article, publication, and extracted idea IDs to the run's produced node IDs.
+- [x] Preserve the saved article and completed run evidence when idea extraction fails.
+- [x] Add skill tests for success, dedupe, `skipExtraction`, and extraction failure.
+- [x] Verify YouTube and podcast extraction tests remain unchanged and passing.
 
 Exit criteria: article ingestion is durable, globally observable, and retryable after navigation.
+**Met** for the skill layer. Retry dispatch itself is Phase 4. Full repo green: 554 tests, all
+package typechecks, lint, and format.
+
+Notes:
+
+- **Zod strips unknown keys.** `ResourceNode` has no `summary` field, so the generalized primitive
+  writes `description` for resources and `summary` for everything else. Without that branch the
+  article summary would have been silently discarded on write — no error, just missing data.
+  `ResourceNode` also gained the `llm_*` trace fields for the same reason.
+- `ExtractionResult` now extends the source-neutral `SavedNodeExtractionResult` and keeps
+  `transcriptId`, so no existing caller changed.
+- `ingest-article` gets a 30-minute stale-run budget: a bounded 20s fetch plus one extraction pass.
+- Turndown's typings only accept HTML tag names, so `svg` is removed via a filter function. This only
+  surfaced in the client typecheck, which compiles this source with the DOM lib enabled.
 
 ## Phase 4 — Server, Retry, and MCP
 

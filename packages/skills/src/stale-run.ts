@@ -13,6 +13,8 @@ const SKILL_STALE_MS: Record<string, number> = {
   'ingest-youtube': 90 * 60 * 1000,
   // Local mlx-whisper transcription of a long episode can take a while on top of the fetch/RSS steps.
   'ingest-podcast': 120 * 60 * 1000,
+  // A bounded 20s fetch plus one extraction pass; nothing here should run long.
+  'ingest-article': 30 * 60 * 1000,
 };
 
 function parsePositiveMs(value: string | undefined): number | undefined {
