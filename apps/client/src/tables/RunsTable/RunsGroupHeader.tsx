@@ -35,6 +35,13 @@ export function RunsGroupHeader({ group, titleLimits }: RunGroupRowProps) {
   const primaryRun = group.runs[0];
   const authorSourceId = group.source?.id ?? (primaryRun ? extractRunSourceId(primaryRun) : undefined);
   const authorLabel = group.source?.title ?? (primaryRun ? extractRunAuthor(primaryRun) : undefined);
+  const authorSourceIcon = renderYouTubeSubscriptionIcon(group.source);
+  const authorNameClass = authorSourceIcon
+    ? styles.authorLink
+    : `${styles.authorLink} ${styles.authorNoIcon}`;
+  const authorPlainNameClass = authorSourceIcon
+    ? styles.authorName
+    : `${styles.authorName} ${styles.authorNoIcon}`;
 
   return (
     <>
@@ -117,17 +124,13 @@ export function RunsGroupHeader({ group, titleLimits }: RunGroupRowProps) {
         <TableCell style={{ maxWidth: AUTHOR_COLUMN_MAX_WIDTH }}>
           {authorLabel ? (
             <div className={styles.authorCell}>
-              {renderYouTubeSubscriptionIcon(group.source)}
+              {authorSourceIcon}
               {authorSourceId ? (
-                <Link
-                  to={`/vault/sources/${authorSourceId}`}
-                  className={styles.authorLink}
-                  title={authorLabel}
-                >
+                <Link to={`/vault/sources/${authorSourceId}`} className={authorNameClass} title={authorLabel}>
                   {authorLabel}
                 </Link>
               ) : (
-                <span className={styles.authorName} title={authorLabel}>
+                <span className={authorPlainNameClass} title={authorLabel}>
                   {authorLabel}
                 </span>
               )}

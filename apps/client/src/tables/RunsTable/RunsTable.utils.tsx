@@ -132,17 +132,20 @@ export function renderRunAuthorCell(run: RunNode, sourcesById: Map<string, Sourc
     return <span className={styles.muted}>—</span>;
   }
 
+  const sourceIcon = renderYouTubeSubscriptionIcon(source);
+  const nameClass = sourceIcon ? styles.authorLink : `${styles.authorLink} ${styles.authorNoIcon}`;
+  const plainNameClass = sourceIcon ? styles.authorName : `${styles.authorName} ${styles.authorNoIcon}`;
+
   return (
     <div className={styles.authorCell}>
-      {renderYouTubeSubscriptionIcon(source)}
-      {author &&
-        (sourceId ? (
-          <Link to={`/vault/sources/${sourceId}`} className={styles.authorLink}>
-            {author}
-          </Link>
-        ) : (
-          <span className={styles.authorName}>{author}</span>
-        ))}
+      {sourceIcon}
+      {sourceId ? (
+        <Link to={`/vault/sources/${sourceId}`} className={nameClass}>
+          {author}
+        </Link>
+      ) : (
+        <span className={plainNameClass}>{author}</span>
+      )}
     </div>
   );
 }

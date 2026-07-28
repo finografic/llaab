@@ -230,6 +230,11 @@ a.subjectTitle:hover {
   text-overflow: ellipsis;
 }
 
+/* Align author text with icon+name rows when there is no follow/source icon. */
+.authorNoIcon {
+  padding-left: 30px;
+}
+
 .authorLink:hover {
   color: var(--accent);
   text-decoration: underline;

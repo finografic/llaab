@@ -71,6 +71,7 @@ export const {
   FullscreenIcon,
   GitCommitVerticalIcon,
   GitPullRequestCreateArrowIcon,
+  GlobeIcon,
   GridIcon,
   HomeIcon,
   InboxIcon,

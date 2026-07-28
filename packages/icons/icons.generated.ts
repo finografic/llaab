@@ -72,6 +72,7 @@ const ICONS = {
   FullscreenIcon:                 Lucide.Fullscreen,
   GitCommitVerticalIcon:          Lucide.GitCommitVertical,
   GitPullRequestCreateArrowIcon:  Lucide.GitPullRequestCreateArrow,
+  GlobeIcon:                      Lucide.Globe,
   GridIcon:                       Lucide.Grid3x3,
   HomeIcon:                       Lucide.House,
   InboxIcon:                      Lucide.Inbox,

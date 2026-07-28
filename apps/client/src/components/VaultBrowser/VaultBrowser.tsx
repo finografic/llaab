@@ -11,7 +11,7 @@ import { VaultSidebar } from './components/VaultSidebar';
 export type { VaultNode } from './vault-browser.types';
 
 const VAULT_SIDEBAR_ID = 'vault-browser';
-const VAULT_SIDEBAR_MIN_WIDTH = '280px';
+const VAULT_SIDEBAR_MIN_WIDTH = '300px';
 const VAULT_SIDEBAR_WIDE_DEFAULT_WIDTH = '430px';
 const VAULT_SIDEBAR_WIDE_MAX_WIDTH = '580px';
 const VAULT_SIDEBAR_WIDE_BREAKPOINT = BREAKPOINTS['2xl'];

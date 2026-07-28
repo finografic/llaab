@@ -48,7 +48,7 @@ export function VaultSidebar({ tree, selectedPath, onSelect }: VaultSidebarProps
           </Tooltip>
         </div>
       </SidebarHeader>
-      <SidebarContent className="min-h-0 flex-1 overflow-hidden">
+      <SidebarContent className="min-h-0 flex-1 overflow-hidden pt-2">
         <VaultFileTree
           tree={tree}
           selectedPath={selectedPath}

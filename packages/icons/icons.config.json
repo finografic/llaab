@@ -518,5 +518,9 @@
   {
     "exportName": "CopyPlus",
     "lucideName": "copy-plus"
+  },
+  {
+    "exportName": "Globe",
+    "lucideName": "globe"
   }
 ]
