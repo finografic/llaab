@@ -8,6 +8,7 @@ import {
   matchesDomainFilter,
   parseDomainFilterParam,
   toggleDomainValue,
+  visibleTagsForList,
 } from './domain-filters';
 
 describe('domain-filters', () => {
@@ -52,5 +53,14 @@ describe('domain-filters', () => {
 
   it('labels unknown domains from slug', () => {
     expect(domainFacetLabel('d:foo-bar')).toBe('Foo Bar');
+  });
+
+  it('surfaces prioritized domain tags in compact list cells', () => {
+    const tags = ['d:ingest', 'hermes', 'inbox', 'd:integration'];
+    expect(visibleTagsForList(tags, { prioritize: ['d:integration'] })).toEqual([
+      'd:integration',
+      'd:ingest',
+      'hermes',
+    ]);
   });
 });

@@ -1,8 +1,10 @@
 import { TagList } from 'components/TagList/TagList';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { useNavigate } from 'react-router-dom';
 import type { LabNode } from '@llaab/schemas';
 import type { CellContext, ColumnDef } from '@tanstack/react-table';
 
+import { visibleTagsForList } from 'lib/domain-filters';
 import { formatListDateNumeric } from 'utils/format-date.utils';
 
 import { FileCell, FileList } from '../FileList/FileList';
@@ -20,10 +22,18 @@ function renderStatusCell({ getValue }: CellContext<LabNode, unknown>) {
   return <span className={`${styles.status} ${styles[cls] ?? ''}`}>{v}</span>;
 }
 
-function renderTagsCell({ getValue }: CellContext<LabNode, unknown>) {
-  const tags = getValue() as string[];
-  if (!tags.length) return null;
-  return <TagList tags={tags.slice(0, 3)} size="sm" className={styles.tagList} />;
+function makeRenderTagsCell(prioritizeDomains: readonly string[]) {
+  return function renderTagsCell({ getValue }: CellContext<LabNode, unknown>) {
+    const tags = getValue() as string[];
+    if (!tags.length) return null;
+    return (
+      <TagList
+        tags={visibleTagsForList(tags, { prioritize: prioritizeDomains })}
+        size="sm"
+        className={styles.tagList}
+      />
+    );
+  };
 }
 
 function renderDateCell({ getValue }: CellContext<LabNode, unknown>) {
@@ -35,48 +45,55 @@ function renderDateCell({ getValue }: CellContext<LabNode, unknown>) {
   );
 }
 
-// ─── Column definitions ───────────────────────────────────────────────────────
-
-const COLUMNS: Array<ColumnDef<LabNode>> = [
-  {
-    accessorKey: 'title',
-    header: 'Name',
-    // size 150 (TanStack default) → FileList treats as flex-fill
-    cell: renderNameCell,
-  },
-  {
-    accessorKey: 'tags',
-    header: 'Tags',
-    // Share remaining width with Name; keeps Status/Date clustered on the right.
-    size: 150,
-    enableSorting: false,
-    cell: renderTagsCell,
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    size: 100,
-    cell: renderStatusCell,
-  },
-  {
-    accessorKey: 'created_at',
-    header: 'Date',
-    size: 110,
-    cell: renderDateCell,
-  },
-];
+function makeColumns(prioritizeDomains: readonly string[]): Array<ColumnDef<LabNode>> {
+  return [
+    {
+      accessorKey: 'title',
+      header: 'Name',
+      // size 150 (TanStack default) → FileList treats as flex-fill
+      cell: renderNameCell,
+    },
+    {
+      accessorKey: 'tags',
+      header: 'Tags',
+      // Share remaining width with Name; keeps Status/Date clustered on the right.
+      size: 150,
+      enableSorting: false,
+      cell: makeRenderTagsCell(prioritizeDomains),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      size: 100,
+      cell: renderStatusCell,
+    },
+    {
+      accessorKey: 'created_at',
+      header: 'Date',
+      size: 110,
+      cell: renderDateCell,
+    },
+  ];
+}
 
 // ─── Type order + group rendering ────────────────────────────────────────────
 
 const TYPE_ORDER = ['idea', 'resource', 'prompt', 'skill', 'instruction'] as const;
 
-export interface NodesFileListProps {
-  nodes: LabNode[];
+function pluralTypeLabel(type: (typeof TYPE_ORDER)[number]): string {
+  return `${type}s`;
 }
 
-export function NodesFileList({ nodes }: NodesFileListProps) {
+export interface NodesFileListProps {
+  nodes: LabNode[];
+  /** Active domain filters — kept visible in the compact tags cell. */
+  prioritizeDomains?: readonly string[];
+}
+
+export function NodesFileList({ nodes, prioritizeDomains = [] }: NodesFileListProps) {
   const navigate = useNavigate();
   const byType = Object.groupBy(nodes, (n) => n.type);
+  const columns = makeColumns(prioritizeDomains);
 
   return (
     <div className={styles.root}>
@@ -84,22 +101,26 @@ export function NodesFileList({ nodes }: NodesFileListProps) {
         const group = byType[type];
         if (!group?.length) return null;
 
+        const label = pluralTypeLabel(type);
+
         return (
-          <section key={type} className={styles.group}>
-            <div className={styles.groupHeader}>
-              <span className={styles.groupType}>{type}</span>
+          <Collapsible key={type} defaultOpen className={styles.group}>
+            <CollapsibleTrigger className={styles.groupHeader}>
+              <span className={styles.groupType}>{label}</span>
               <span className={styles.groupCount}>{group.length}</span>
-            </div>
-            <FileList
-              data={group}
-              columns={COLUMNS}
-              getRowId={(row) => row.id}
-              onRowClick={(row) => {
-                void navigate(`/vault/nodes/${row.id}`);
-              }}
-              label={`${type} nodes`}
-            />
-          </section>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <FileList
+                data={group}
+                columns={columns}
+                getRowId={(row) => row.id}
+                onRowClick={(row) => {
+                  void navigate(`/vault/nodes/${row.id}`);
+                }}
+                label={`${label} nodes`}
+              />
+            </CollapsibleContent>
+          </Collapsible>
         );
       })}
     </div>

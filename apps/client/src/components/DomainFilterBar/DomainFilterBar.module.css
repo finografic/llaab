@@ -14,20 +14,21 @@
   width: 100%;
 }
 
+/* Fill remaining width beside the All/None column so facets can wrap. */
 .facetsCol {
+  flex: 1 1 0 !important;
+  max-width: none !important;
   min-width: 0;
-  flex: 1 1 auto;
+  width: auto !important;
 }
 
 .toggleAllCol {
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  align-self: center;
 }
 
 .grid {
   row-gap: var(--space-2);
-  /* Allow horizontal scroll on narrow viewports rather than wrapping the domain row. */
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .toggleAll {

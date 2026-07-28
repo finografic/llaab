@@ -51,6 +51,32 @@ export function toggleDomainValue(values: readonly string[], value: string): str
 }
 
 /**
+ * Pick tags for compact list cells (default 3).
+ * Prioritizes active domain filters, then other `d:*` tags, then the rest —
+ * so a domain filter match is never hidden behind hermes/inbox slices.
+ */
+export function visibleTagsForList(
+  tags: readonly string[],
+  options: { prioritize?: readonly string[]; limit?: number } = {},
+): string[] {
+  const limit = options.limit ?? 3;
+  if (tags.length <= limit) return [...tags];
+
+  const prioritize = new Set(options.prioritize ?? []);
+  const selected: string[] = [];
+  const domains: string[] = [];
+  const rest: string[] = [];
+
+  for (const tag of tags) {
+    if (prioritize.has(tag)) selected.push(tag);
+    else if (isDomainTag(tag)) domains.push(tag);
+    else rest.push(tag);
+  }
+
+  return [...selected, ...domains, ...rest].slice(0, limit);
+}
+
+/**
  * Build domain facet options from tag lists.
  * Known domains keep catalog labels; any other `d:*` present in data is included automatically.
  */

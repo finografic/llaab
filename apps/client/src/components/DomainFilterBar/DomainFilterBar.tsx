@@ -45,9 +45,9 @@ export function DomainFilterBar({
   return (
     <div className={cn(styles.root, className)}>
       <section className={styles.panel} aria-label={ariaLabel}>
-        <Row justify="space-between" align="center" gutterWidth={12} wrap="nowrap" className={styles.bar}>
-          <Col xs="content" className={styles.facetsCol}>
-            <Row gutterWidth={8} className={styles.grid} wrap="nowrap">
+        <Row align="center" gutterWidth={12} wrap="nowrap" className={styles.bar}>
+          <Col className={styles.facetsCol}>
+            <Row gutterWidth={8} wrap="wrap" className={styles.grid}>
               {options.map((option) => (
                 <Col key={option.value} xs="content">
                   <DomainFacetToggle

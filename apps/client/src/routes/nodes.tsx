@@ -88,7 +88,9 @@ export function NodesPage() {
       {!isLoading && nodes.length > 0 && filteredNodes.length === 0 ? (
         <p className="text-muted-foreground text-sm">No nodes match the current domain filters.</p>
       ) : null}
-      {!isLoading && filteredNodes.length > 0 ? <NodesFileList nodes={filteredNodes} /> : null}
+      {!isLoading && filteredNodes.length > 0 ? (
+        <NodesFileList nodes={filteredNodes} prioritizeDomains={selectedDomains} />
+      ) : null}
     </PageLayout>
   );
 }
