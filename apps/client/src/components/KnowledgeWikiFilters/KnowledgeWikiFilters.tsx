@@ -31,6 +31,8 @@ interface KnowledgeWikiFiltersProps {
   resultCount: number;
   totalCount: number;
   onChange: (next: KnowledgeWikiFiltersState) => void;
+  /** Optional control on the result-count row (e.g. density toggle). */
+  resultActions?: ReactNode;
 }
 
 export function KnowledgeWikiFilters({
@@ -39,6 +41,7 @@ export function KnowledgeWikiFilters({
   resultCount,
   totalCount,
   onChange,
+  resultActions,
 }: KnowledgeWikiFiltersProps) {
   const activeFilterCount = activeKnowledgeWikiFilterCount(filters);
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(filters.topicTags.length > 0);
@@ -188,10 +191,13 @@ export function KnowledgeWikiFilters({
 
       <ActiveFilterChips filters={filters} facets={facets} onChange={onChange} />
 
-      <p className={styles.resultCount}>
-        {resultCount} shown
-        {resultCount !== totalCount ? ` · ${totalCount} total` : null}
-      </p>
+      <div className={styles.resultCountRow}>
+        <p className={styles.resultCount}>
+          {resultCount} shown
+          {resultCount !== totalCount ? ` · ${totalCount} total` : null}
+        </p>
+        {resultActions ? <div className={styles.resultActions}>{resultActions}</div> : null}
+      </div>
     </div>
   );
 }

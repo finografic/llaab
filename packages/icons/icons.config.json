@@ -490,5 +490,17 @@
   {
     "exportName": "SquareCheck",
     "lucideName": "square-check"
+  },
+  {
+    "exportName": "Rows2",
+    "lucideName": "rows-2"
+  },
+  {
+    "exportName": "Rows3",
+    "lucideName": "rows-3"
+  },
+  {
+    "exportName": "Rows4",
+    "lucideName": "rows-4"
   }
 ]

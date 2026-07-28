@@ -1,11 +1,14 @@
 import { KnowledgeWikiFilters } from 'components/KnowledgeWikiFilters/KnowledgeWikiFilters';
 import { PageHero } from 'components/PageHero/PageHero';
+import { RowDensityToggle } from 'components/RowDensityToggle/RowDensityToggle';
 import { WikiListItem } from 'components/WikiListItem';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import { useKnowledgeWikis } from 'queries/knowledge';
+import { usePersistedUiState } from 'queries/ui-state';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import type { RowDensity } from 'components/RowDensityToggle/RowDensityToggle';
 
 import {
   buildKnowledgeWikiFacets,
@@ -22,6 +25,10 @@ export function KnowledgeWikisPage() {
   const filters = parseKnowledgeWikiFiltersFromSearchParams(searchParams);
   const facets = useMemo(() => buildKnowledgeWikiFacets(wikis), [wikis]);
   const filteredWikis = useMemo(() => filterKnowledgeWikis(wikis, filters), [wikis, filters]);
+  const { value: rowDensity, setValue: setRowDensity } = usePersistedUiState<RowDensity>(
+    'wikis.rowDensity',
+    'condensed',
+  );
 
   return (
     <PageLayout
@@ -45,6 +52,7 @@ export function KnowledgeWikisPage() {
           resultCount={filteredWikis.length}
           totalCount={wikis.length}
           onChange={(next) => setSearchParams(knowledgeWikiFiltersToSearchParams(next), { replace: true })}
+          resultActions={<RowDensityToggle value={rowDensity} onChange={setRowDensity} />}
         />
 
         {isLoading ? <p className="text-muted-foreground text-sm">Loading wikis…</p> : null}
@@ -56,7 +64,7 @@ export function KnowledgeWikisPage() {
           <p className="text-muted-foreground text-sm">No wikis match the current filters.</p>
         ) : null}
         {filteredWikis.map((wiki) => (
-          <WikiListItem key={wiki.id} wiki={wiki} />
+          <WikiListItem key={wiki.id} wiki={wiki} density={rowDensity} />
         ))}
       </PageList>
     </PageLayout>

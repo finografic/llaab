@@ -1,6 +1,7 @@
 import { BadgeCheckIcon, BookMarkedIcon } from '@llaab/icons';
 import { cn } from '@llaab/ui/lib/utils';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
+import { RowDensityToggle } from 'components/RowDensityToggle/RowDensityToggle';
 import { Col, Container, Row } from 'components/ui/grid';
 import {
   SidebarContent,
@@ -13,6 +14,7 @@ import { usePersistedUiState } from 'queries/ui-state';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { TranscriptNode } from '@llaab/schemas';
+import type { RowDensity } from 'components/RowDensityToggle/RowDensityToggle';
 import type { ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
 
 import { fmtListDateNumeric } from '../transcript-split.utils';
@@ -23,6 +25,7 @@ export interface TranscriptsSidebarProps {
   selectedId?: string;
   wikiCountsByTranscriptId?: ReadonlyMap<string, number>;
 }
+
 function transcriptAuthor(transcript: TranscriptNode): string | undefined {
   return transcript.author ?? transcript.source_type;
 }
@@ -38,6 +41,11 @@ export function TranscriptsSidebar({
     'transcripts.authorFilter',
     [],
   );
+  const { value: rowDensity, setValue: setRowDensity } = usePersistedUiState<RowDensity>(
+    'transcripts.rowDensity',
+    'condensed',
+  );
+  const isCondensed = rowDensity === 'condensed';
 
   const authorOptions = useMemo(() => {
     const authors = new Set<string>();
@@ -77,9 +85,12 @@ export function TranscriptsSidebar({
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground">
       <SidebarHeader className="gap-3.5 border-b p-4">
-        <div className="flex w-full items-center justify-between">
-          <div className="text-base font-medium text-foreground">Transcripts</div>
-          <span className="font-mono text-xs text-muted-foreground">{transcripts.length}</span>
+        <div className="flex w-full items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="text-base font-medium text-foreground">Transcripts</div>
+            <span className="section__count">{transcripts.length}</span>
+          </div>
+          <RowDensityToggle value={rowDensity} onChange={setRowDensity} />
         </div>
         <SidebarInput
           placeholder="Search transcripts…"
@@ -125,6 +136,15 @@ export function TranscriptsSidebar({
                   event.stopPropagation();
                 }
 
+                const authorNode =
+                  subtitle && authorHref ? (
+                    <Link to={authorHref} onClick={onAuthorClick} className="text-(--accent) hover:underline">
+                      {subtitle}
+                    </Link>
+                  ) : (
+                    <span className="text-foreground">{subtitle}</span>
+                  );
+
                 return (
                   <div
                     key={transcript.id}
@@ -142,30 +162,34 @@ export function TranscriptsSidebar({
                   >
                     <Container className="py-2">
                       <Row justify="space-between" className="px-3">
-                        <Col xs={8} className="text-base line-clamp-2 font-medium text-foreground py-1">
-                          {transcript.title}
-                        </Col>
-                        <Col xs={4} className="text-sm text-right py-2">
-                          {subtitle && authorHref ? (
-                            <Link
-                              to={authorHref}
-                              onClick={onAuthorClick}
-                              className="text-(--accent) hover:underline"
-                            >
-                              {subtitle}
-                            </Link>
-                          ) : (
-                            <span className="text-foreground">{subtitle}</span>
-                          )}
-                        </Col>
-
-                        {transcript.summary ? (
-                          <Col xs={12} className="pb-2">
-                            <span className="text-base line-clamp-2 whitespace-normal text-muted-foreground">
-                              {transcript.summary}
-                            </span>
-                          </Col>
-                        ) : null}
+                        {isCondensed ? (
+                          <>
+                            <Col xs={12} className="text-base line-clamp-2 font-medium text-foreground py-1">
+                              {transcript.title}
+                            </Col>
+                            {subtitle ? (
+                              <Col xs={12} className="pb-1 text-sm">
+                                {authorNode}
+                              </Col>
+                            ) : null}
+                          </>
+                        ) : (
+                          <>
+                            <Col xs={8} className="text-base line-clamp-2 font-medium text-foreground py-1">
+                              {transcript.title}
+                            </Col>
+                            <Col xs={4} className="text-sm text-right py-2">
+                              {authorNode}
+                            </Col>
+                            {transcript.summary ? (
+                              <Col xs={12} className="pb-2">
+                                <span className="text-base line-clamp-2 whitespace-normal text-muted-foreground">
+                                  {transcript.summary}
+                                </span>
+                              </Col>
+                            ) : null}
+                          </>
+                        )}
 
                         <Col
                           xs={6}
@@ -200,8 +224,8 @@ export function TranscriptsSidebar({
                         >
                           {fmtListDateNumeric(transcript.created_at)}
                         </Col>
-                        <Col xs={12} className="flex items-center justify-end pt-2">
-                          {hasLatency ? (
+                        {!isCondensed && hasLatency ? (
+                          <Col xs={12} className="flex items-center justify-end pt-2">
                             <ExtractionModelCard
                               variant="compact-bar"
                               model={transcript.llm_model}
@@ -211,8 +235,8 @@ export function TranscriptsSidebar({
                               durationMs={transcript.llm_duration_ms}
                               showTotalTokens={false}
                             />
-                          ) : null}
-                        </Col>
+                          </Col>
+                        ) : null}
                       </Row>
                     </Container>
                   </div>

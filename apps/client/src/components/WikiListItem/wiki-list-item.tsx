@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { KnowledgeWikiPage } from '@llaab/schemas';
+import type { RowDensity } from 'components/RowDensityToggle/RowDensityToggle';
 
 import { resolveWikiEvidenceMetrics } from 'lib/knowledge-wiki-filters';
 
@@ -34,168 +35,188 @@ function formatWikiListDateTime(timestamp: string): string {
   return `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
-export function WikiListItem({ wiki }: { wiki: KnowledgeWikiPage }) {
+function WikiDates({ wiki }: { wiki: KnowledgeWikiPage }) {
+  return (
+    <p className={styles.dates}>
+      <span>
+        <span className={styles.dateLabel}>updated:</span> {formatWikiListDateTime(wiki.updated_at)}
+      </span>
+      {wiki.reviewed_at ? (
+        <span>
+          <span className={styles.dateLabel}>reviewed:</span> {formatWikiListDateTime(wiki.reviewed_at)}
+        </span>
+      ) : null}
+    </p>
+  );
+}
+
+export function WikiListItem({
+  wiki,
+  density = 'condensed',
+}: {
+  wiki: KnowledgeWikiPage;
+  density?: RowDensity;
+}) {
+  const isCondensed = density === 'condensed';
   const qualityTone = qualityMetricTone(wiki.quality_score);
   const evidenceMetrics = resolveWikiEvidenceMetrics(wiki);
 
   return (
-    <article className={styles.wikiCard}>
+    <article className={styles.wikiCard} data-density={density}>
       <Row gutterWidth={12} align="stretch">
         <Col className={styles.contentCol}>
-          <Row gutterWidth={16} className={styles.bodyRow}>
-            {/* ====================================================================== */}
-
-            <Col xs={12} md={7} className={styles.summaryCol}>
-              <Link to={`/knowledge/wikis/${wiki.id}`} className={styles.title}>
-                {wiki.title}
-              </Link>
-            </Col>
-
-            <Col xs={12} md={5} className={styles.metricsSideCol}>
-              <p className={styles.dates}>
-                <span className={styles.dateLabel}>updated: </span> {formatWikiListDateTime(wiki.updated_at)}
-                {wiki.reviewed_at ? (
-                  <>
-                    <strong className="mr-20" />
-                    <span className={styles.dateLabel}>reviewed: </span>{' '}
-                    {formatWikiListDateTime(wiki.reviewed_at)}
-                  </>
-                ) : null}
-              </p>
-            </Col>
-
-            {/* ====================================================================== */}
-            <Col xs={12} md={7} className={styles.summaryCol}>
-              {/* <Link to={`/knowledge/wikis/${wiki.id}`} className={styles.title}>
-                {wiki.title}
-              </Link> */}
-              <p className={styles.summary}>{wiki.summary}</p>
-              {/* <p className={styles.dates}>
-                <span className={styles.dateLabel}>Updated</span> {formatWikiListDateTime(wiki.updated_at)}
-                {wiki.reviewed_at ? (
-                  <>
-                    {' · '}
-                    <span className={styles.dateLabel}>reviewed</span>{' '}
-                    {formatWikiListDateTime(wiki.reviewed_at)}
-                  </>
-                ) : null}
-              </p> */}
-              <TagList tags={wiki.tags} size="sm" className={styles.tagList} ariaLabel="Wiki topics" />
-            </Col>
-
-            <Col xs={12} md={5} className={styles.metricsSideCol}>
-              <div className={styles.metricsCol}>
-                <Row gutterWidth={8} className={styles.metricsGrid}>
-                  <Col xs={6}>
-                    <WikiMetricCard
-                      variant="compact"
-                      label="Quality"
-                      icon={<SparklesIcon aria-hidden="true" />}
-                      badge={wiki.quality_score != null ? `${wiki.quality_score}%` : '—'}
-                      badgeToneClassName={qualityTone}
-                    />
+          {isCondensed ? (
+            <Row gutterWidth={12} className={styles.bodyRow}>
+              <Col xs={12}>
+                <Row justify="space-between" align="flex-start" gutterWidth={12} className={styles.titleRow}>
+                  <Col className={styles.titleCol}>
+                    <Link to={`/knowledge/wikis/${wiki.id}`} className={styles.title}>
+                      {wiki.title}
+                    </Link>
                   </Col>
-                  <Col xs={6}>
-                    <WikiMetricCard
-                      variant="compact"
-                      label="Lifecycle"
-                      icon={<ActivityIcon aria-hidden="true" />}
-                      badge={wiki.status}
-                    />
-                  </Col>
-                  <Col xs={6}>
-                    <WikiMetricCard
-                      variant="compact"
-                      label="Verification"
-                      icon={<BookCheckIcon aria-hidden="true" />}
-                      badge={wiki.verification_status}
-                    />
-                  </Col>
-                  <Col xs={6}>
-                    <WikiMetricCard
-                      variant="compact"
-                      label="Revision"
-                      icon={<FileTextIcon aria-hidden="true" />}
-                      badge={wiki.revision}
-                    />
+                  <Col xs="content" className={styles.datesCol}>
+                    <WikiDates wiki={wiki} />
                   </Col>
                 </Row>
+              </Col>
+              <Col xs={12}>
+                <p className={styles.summary}>{wiki.summary}</p>
+              </Col>
+              <Col xs={12}>
+                <TagList tags={wiki.tags} size="sm" className={styles.tagList} ariaLabel="Wiki topics" />
+              </Col>
+            </Row>
+          ) : (
+            <Row gutterWidth={16} className={styles.bodyRow}>
+              <Col xs={12} md={7} className={styles.summaryCol}>
+                <Link to={`/knowledge/wikis/${wiki.id}`} className={styles.title}>
+                  {wiki.title}
+                </Link>
+              </Col>
 
-                <Row gutterWidth={8} className={styles.evidenceGrid}>
-                  <Col xs={6}>
-                    <Card size="sm" className={`${styles.evidenceCard} ring-0 py-0`}>
-                      <CardHeader className={styles.evidenceHeader}>
-                        <CardTitle className={styles.evidenceLabel}>
-                          <BookOpenIcon aria-hidden="true" />
-                          Knowledge Basis
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className={styles.evidenceStatList}>
-                          <div className={styles.evidenceStat}>
-                            <strong>{evidenceMetrics.unique_canonical_idea_count}</strong>
-                            <span>
-                              {pluralizeMetricLabel(evidenceMetrics.unique_canonical_idea_count, 'Idea')}
-                            </span>
+              <Col xs={12} md={5} className={styles.metricsSideCol}>
+                <WikiDates wiki={wiki} />
+              </Col>
+
+              <Col xs={12} md={7} className={styles.summaryCol}>
+                <p className={styles.summary}>{wiki.summary}</p>
+                <TagList tags={wiki.tags} size="sm" className={styles.tagList} ariaLabel="Wiki topics" />
+              </Col>
+
+              <Col xs={12} md={5} className={styles.metricsSideCol}>
+                <div className={styles.metricsCol}>
+                  <Row gutterWidth={8} className={styles.metricsGrid}>
+                    <Col xs={6}>
+                      <WikiMetricCard
+                        variant="compact"
+                        label="Quality"
+                        icon={<SparklesIcon aria-hidden="true" />}
+                        badge={wiki.quality_score != null ? `${wiki.quality_score}%` : '—'}
+                        badgeToneClassName={qualityTone}
+                      />
+                    </Col>
+                    <Col xs={6}>
+                      <WikiMetricCard
+                        variant="compact"
+                        label="Lifecycle"
+                        icon={<ActivityIcon aria-hidden="true" />}
+                        badge={wiki.status}
+                      />
+                    </Col>
+                    <Col xs={6}>
+                      <WikiMetricCard
+                        variant="compact"
+                        label="Verification"
+                        icon={<BookCheckIcon aria-hidden="true" />}
+                        badge={wiki.verification_status}
+                      />
+                    </Col>
+                    <Col xs={6}>
+                      <WikiMetricCard
+                        variant="compact"
+                        label="Revision"
+                        icon={<FileTextIcon aria-hidden="true" />}
+                        badge={wiki.revision}
+                      />
+                    </Col>
+                  </Row>
+
+                  <Row gutterWidth={8} className={styles.evidenceGrid}>
+                    <Col xs={6}>
+                      <Card size="sm" className={`${styles.evidenceCard} ring-0 py-0`}>
+                        <CardHeader className={styles.evidenceHeader}>
+                          <CardTitle className={styles.evidenceLabel}>
+                            <BookOpenIcon aria-hidden="true" />
+                            Knowledge Basis
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className={styles.evidenceStatList}>
+                            <div className={styles.evidenceStat}>
+                              <strong>{evidenceMetrics.unique_canonical_idea_count}</strong>
+                              <span>
+                                {pluralizeMetricLabel(evidenceMetrics.unique_canonical_idea_count, 'Idea')}
+                              </span>
+                            </div>
+                            <div className={styles.evidenceStat}>
+                              <strong>{evidenceMetrics.evidence_ref_count}</strong>
+                              <span>
+                                {pluralizeMetricLabel(evidenceMetrics.evidence_ref_count, 'Evidence ref')}
+                              </span>
+                            </div>
+                            <div className={styles.evidenceStat}>
+                              <strong>{evidenceMetrics.unique_transcript_count}</strong>
+                              <span>
+                                {pluralizeMetricLabel(evidenceMetrics.unique_transcript_count, 'Transcript')}
+                              </span>
+                            </div>
                           </div>
-                          <div className={styles.evidenceStat}>
-                            <strong>{evidenceMetrics.evidence_ref_count}</strong>
-                            <span>
-                              {pluralizeMetricLabel(evidenceMetrics.evidence_ref_count, 'Evidence ref')}
-                            </span>
+                        </CardContent>
+                      </Card>
+                    </Col>
+                    <Col xs={6}>
+                      <Card size="sm" className={`${styles.evidenceCard} ring-0 py-0`}>
+                        <CardHeader className={styles.evidenceHeader}>
+                          <CardTitle className={styles.evidenceLabel}>
+                            <NetworkIcon aria-hidden="true" />
+                            Source Diversity
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className={styles.evidenceStatList}>
+                            <div className={styles.evidenceStat}>
+                              <strong>{evidenceMetrics.independent_source_count}</strong>
+                              <span>
+                                {pluralizeMetricLabel(
+                                  evidenceMetrics.independent_source_count,
+                                  'Independent source',
+                                )}
+                              </span>
+                            </div>
+                            <div className={styles.evidenceStat}>
+                              <strong>{evidenceMetrics.unique_author_channel_count}</strong>
+                              <span>
+                                {pluralizeMetricLabel(evidenceMetrics.unique_author_channel_count, 'Channel')}
+                              </span>
+                            </div>
+                            <div className={styles.evidenceStat}>
+                              <strong>{evidenceMetrics.unique_source_node_count}</strong>
+                              <span>
+                                {pluralizeMetricLabel(
+                                  evidenceMetrics.unique_source_node_count,
+                                  'Source record',
+                                )}
+                              </span>
+                            </div>
                           </div>
-                          <div className={styles.evidenceStat}>
-                            <strong>{evidenceMetrics.unique_transcript_count}</strong>
-                            <span>
-                              {pluralizeMetricLabel(evidenceMetrics.unique_transcript_count, 'Transcript')}
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Col>
-                  <Col xs={6}>
-                    <Card size="sm" className={`${styles.evidenceCard} ring-0 py-0`}>
-                      <CardHeader className={styles.evidenceHeader}>
-                        <CardTitle className={styles.evidenceLabel}>
-                          <NetworkIcon aria-hidden="true" />
-                          Source Diversity
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className={styles.evidenceStatList}>
-                          <div className={styles.evidenceStat}>
-                            <strong>{evidenceMetrics.independent_source_count}</strong>
-                            <span>
-                              {pluralizeMetricLabel(
-                                evidenceMetrics.independent_source_count,
-                                'Independent source',
-                              )}
-                            </span>
-                          </div>
-                          <div className={styles.evidenceStat}>
-                            <strong>{evidenceMetrics.unique_author_channel_count}</strong>
-                            <span>
-                              {pluralizeMetricLabel(evidenceMetrics.unique_author_channel_count, 'Channel')}
-                            </span>
-                          </div>
-                          <div className={styles.evidenceStat}>
-                            <strong>{evidenceMetrics.unique_source_node_count}</strong>
-                            <span>
-                              {pluralizeMetricLabel(
-                                evidenceMetrics.unique_source_node_count,
-                                'Source record',
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Col>
-                </Row>
-              </div>
-            </Col>
-          </Row>
+                        </CardContent>
+                      </Card>
+                    </Col>
+                  </Row>
+                </div>
+              </Col>
+            </Row>
+          )}
         </Col>
 
         <Col xs="content" className={styles.deleteCol}>

@@ -27,6 +27,21 @@
   line-height: 1.35;
 }
 
+.titleRow {
+  width: 100%;
+}
+
+.titleCol {
+  flex: 1 1 0% !important;
+  max-width: none !important;
+  min-width: 0;
+}
+
+.datesCol {
+  flex-shrink: 0;
+  padding-top: 0.2rem;
+}
+
 /* ≤1280: Col md={6} → 50:50. >1280: exact 60:40. */
 @media (min-width: 1281px) {
   .summaryCol {
@@ -48,11 +63,19 @@
 }
 
 .dates {
-  margin: var(--space-2) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin: 0;
   color: var(--text-faint);
   font-size: var(--text-xs);
   line-height: 1.45;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.metricsSideCol .dates {
+  margin: var(--space-2) 0 0;
   padding-left: 0.8rem;
 }
 
