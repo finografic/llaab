@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Arrived After Three Hops</title>
+    <link rel="canonical" href="https://final.example.com/articles/after-three-hops" />
+    <meta property="og:site_name" content="Terminus" />
+  </head>
+  <body>
+    <article>
+      <h1>Arrived After Three Hops</h1>
+      <p>
+        Shortened and syndicated links are the ordinary way articles are shared, so the fetcher must treat a
+        chain of redirects as the expected case rather than an anomaly. What changes across hops is identity:
+        the URL the operator pasted is provenance, and the URL that finally served the document is the basis
+        for canonicalisation and for resolving relative references.
+      </p>
+      <p>
+        Recording both is what makes an ingested article auditable later. Someone reading the stored node six
+        months on can see where the link came from and where it actually went, without having to re-follow a
+        chain that may no longer exist.
+      </p>
+      <p>
+        The budget matters as much as the bookkeeping. A fixed maximum number of hops turns an unbounded loop
+        into a typed failure, and revalidating each target keeps the chain from being used to reach somewhere
+        the first check would have refused.
+      </p>
+    </article>
+  </body>
+</html>

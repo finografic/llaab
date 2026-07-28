@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <title>Broken Markup Still Has Words</title>
+  <body>
+    <div class=entry>
+      <h1>Broken Markup Still Has Words
+      <p>Parsers meet documents that no validator would accept, and refusing to read them is
+        rarely the right answer. Tag soup is the normal condition of the open web: unclosed
+        paragraphs, attributes without quotes, headings that never terminate, and elements nested in
+        orders the specification does not describe.
+      <p>A forgiving DOM implementation recovers a usable tree from nearly all of it. What matters
+        is that recovery is deterministic — the same bytes must produce the same tree and therefore
+        the same stored Markdown and the same content hash, run after run, or deduplication becomes
+        a coin flip.
+      <p>The failure that does deserve a typed error is the page with no article in it at all. A
+        navigation stub, a consent wall, or a client-rendered shell yields a handful of characters
+        and should be reported as unreadable rather than stored as though it were prose.
+    </div>
+  <body>
+</html>

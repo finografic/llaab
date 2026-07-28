@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Linking Notes Together</title>
+    <base href="https://notes.example.net/blog/" />
+  </head>
+  <body>
+    <article>
+      <h1>Linking Notes Together</h1>
+      <p>
+        A stored article that keeps relative links is a stored article that will eventually resolve against
+        the wrong origin. Rewriting them at parse time is cheaper than repairing them later, and it makes the
+        persisted Markdown independently useful — see
+        <a href="../reference/ids">the identifier reference</a>, the <a href="/glossary">glossary</a>, and the
+        <a href="deeper/nested-note">nested note</a> for the vocabulary this piece assumes.
+      </p>
+      <p>
+        Protocol-relative sources deserve the same treatment. An
+        <img src="//cdn.example.net/img/graph.png" alt="link graph" /> that silently follows the page protocol
+        is a small inconsistency on the live page and a broken reference in an archive. Resolve everything
+        against the final response URL, once, at the boundary, and the rest of the system can treat the stored
+        document as self-contained.
+      </p>
+      <p>
+        Anchors that point only at a fragment, like <a href="#footnotes">footnotes</a>, should stay relative
+        because they refer to the document itself rather than to another resource.
+      </p>
+    </article>
+  </body>
+</html>

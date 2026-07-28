@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <title>Bounded Fetching for Knowledge Systems — Signal Journal</title>
+    <link rel="canonical" href="https://signal.example.com/posts/bounded-fetching" />
+    <meta
+      name="description"
+      content="Why a knowledge system should treat every outbound fetch as untrusted."
+    />
+    <meta name="author" content="Dana Okonkwo" />
+    <meta property="og:site_name" content="Signal Journal" />
+    <meta property="og:title" content="Bounded Fetching for Knowledge Systems" />
+    <meta property="article:published_time" content="2026-05-14T09:30:00Z" />
+  </head>
+  <body>
+    <header>
+      <nav><a href="/">Home</a> <a href="/archive">Archive</a></nav>
+    </header>
+    <article>
+      <h1>Bounded Fetching for Knowledge Systems</h1>
+      <p class="byline">By Dana Okonkwo</p>
+      <p>
+        A knowledge system that reads the open web inherits every hazard of the open web. The fetcher is the
+        boundary, and a boundary that is not enforced in one place is not enforced at all. Every limit worth
+        having — protocol, target, redirect depth, timeout, media type, response size — belongs to a single
+        owning module with constants that tests can assert directly.
+      </p>
+      <h2>Why redirects deserve their own budget</h2>
+      <p>
+        Redirects are the most common way a safe-looking request becomes an unsafe one. The initial hostname
+        resolves to a public address, the operator sees a familiar domain, and three hops later the request
+        lands on a metadata endpoint inside the network. Revalidating only the first URL is the same as not
+        validating at all, so each hop is treated as a fresh request with a fresh resolution and a fresh
+        policy check.
+      </p>
+      <h2>Size limits are a streaming concern</h2>
+      <p>
+        A declared <code>Content-Length</code> is a claim, not a fact. The only reliable cap counts bytes as
+        they arrive and aborts the moment the budget is exhausted, which keeps a hostile or merely careless
+        server from exhausting memory on the reader's side.
+      </p>
+      <blockquote><p>Treat the network as adversarial and the parser as fallible.</p></blockquote>
+      <ul>
+        <li>Resolve immediately before connecting.</li>
+        <li>Refuse credentials embedded in URLs.</li>
+        <li>Return typed failures, never raw response bodies.</li>
+      </ul>
+    </article>
+    <footer><p>© 2026 Signal Journal</p></footer>
+  </body>
+</html>

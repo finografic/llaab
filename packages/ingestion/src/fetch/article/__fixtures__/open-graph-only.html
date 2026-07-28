@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta property="og:title" content="The Cost of an Unbounded Reader" />
+    <meta property="og:site_name" content="Meridian Review" />
+    <meta
+      property="og:url"
+      content="https://meridian.example.org/essays/unbounded-reader?utm_source=newsletter"
+    />
+    <meta
+      property="og:description"
+      content="An unbounded reader is a denial-of-service vector you built yourself."
+    />
+    <meta property="article:author" content="Priya Raghunathan" />
+    <meta property="article:published_time" content="2026-03-02" />
+  </head>
+  <body>
+    <div id="wrapper">
+      <div class="post-body">
+        <p>
+          An unbounded reader is a denial-of-service vector you built yourself. It is easy to miss because the
+          failure mode is not an error but a slow, quiet degradation: one oversized response, one server that
+          never closes the connection, one redirect loop that keeps a worker busy until something upstream
+          gives up first.
+        </p>
+        <p>
+          The remedy is unglamorous. Give the reader a byte budget and a time budget, enforce both while the
+          body is still streaming, and make the resulting failure a value the caller must handle rather than
+          an exception that propagates until someone catches it generically.
+        </p>
+        <p>
+          Metadata deserves the same discipline. A page that declares no title, no canonical URL, and no
+          publication date is not an error condition; it is the ordinary case. Precedence rules should be
+          written down, tested, and boring, so that the reader degrades to a hostname and a heading instead of
+          refusing to store anything at all.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -176,9 +176,22 @@ pnpm --filter @llaab/ingestion add @mozilla/readability linkedom turndown
 pnpm --filter @llaab/ingestion add -D @types/turndown
 ```
 
-`linkedom` is preferred over `jsdom` for startup cost and the absence of native bindings; if
-Readability proves incompatible with `linkedom`'s DOM surface against the Phase 0 fixtures, fall back
-to `jsdom` and record the reason here rather than silently swapping the stack.
+**Phase 0 spike outcome (2026-07-28): `linkedom` confirmed.** Both `linkedom` and `jsdom` were run
+against all eight fixtures with Readability; extracted text was byte-identical on every fixture that
+yields an article, and both returned `null` on the same two that do not. `linkedom` imported in ~72 ms
+versus ~419 ms and parsed a 97 KB document in ~6 ms versus ~40 ms, with no native bindings. `jsdom`
+was installed for the comparison and removed. Two findings fed back into the implementation:
+
+- Turndown must be configured with `bulletListMarker: '-'`; its default `*` does not match the
+  Markdown style used elsewhere in the vault.
+- Readability reads `document.baseURI` / `documentURI` to resolve relative references, and `linkedom`
+  does not derive them from a response. The parser must define both from `finalUrl` before parsing,
+  or every relative link is stored unresolved.
+
+An unclosed `<title>` is _not_ a parser deficiency to work around: title content is RCDATA, so a
+conforming parser (browsers, `jsdom`, and `linkedom` alike) treats the rest of the document as title
+text and reports an empty body. That page is a legitimate `not_readable` failure and has its own
+fixture.
 
 ## Persistence Contract
 
@@ -256,16 +269,20 @@ requires a separate generic evidence-reference decision.
 
 ## Phase 0 — Fixtures and Contracts
 
-- [ ] Add representative local HTML fixtures: semantic article, Open Graph-only metadata,
-      relative links, noisy navigation, malformed HTML, no readable article, redirect, oversized
-      body, and unsupported content type.
-- [ ] Add the `FetchedArticle` contract and typed fetch failure codes.
-- [ ] Add centralized article fetch limits and URL/network validation helpers.
-- [ ] Confirm the Readability/DOM/Markdown dependency stack against the fixtures.
-- [ ] Record the exact metadata precedence, canonical URL normalization, and truncation behavior in
-      tests.
+- [x] Add representative local HTML fixtures: semantic article, Open Graph-only metadata,
+      relative links, noisy navigation, malformed HTML, unterminated title, no readable article, and
+      redirect target. Oversized bodies and unsupported content types are response-level conditions
+      with no HTML to fixture; they are synthesized in the Phase 1 fetch tests.
+- [x] Add the `FetchedArticle` contract and typed fetch failure codes.
+- [x] Add centralized article fetch limits and URL/network validation helpers.
+- [x] Confirm the Readability/DOM/Markdown dependency stack against the fixtures.
+- [x] Record canonical URL normalization and the network-target policy in tests.
+- [ ] Record the exact metadata precedence and truncation behavior in tests — deferred to Phase 1,
+      where the parser that owns both actually exists. Phase 0 pinned the inputs those rules read.
 
 Exit criteria: article extraction and safety behavior are deterministic without live network calls.
+**Met.** 36 tests across `article.url.test.ts`, `article.limits.test.ts`, and
+`article.stack-spike.test.ts`; no network access, no vault writes.
 
 ## Phase 1 — Bounded Fetch and Parse
 

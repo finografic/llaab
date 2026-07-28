@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cutting Through Page Furniture | Ledger Weekly</title>
+    <link rel="canonical" href="https://ledger.example.com/2026/07/page-furniture/" />
+    <style>
+      .cookie-banner {
+        position: fixed;
+        bottom: 0;
+      }
+    </style>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'pageview', tracking: 'should-never-be-stored' });
+    </script>
+  </head>
+  <body>
+    <div class="cookie-banner">
+      <p>We use cookies to personalise content. Accept all cookies to continue.</p>
+      <form action="/consent" method="post"><button type="submit">Accept all</button></form>
+    </div>
+    <nav class="site-nav">
+      <a href="/">Home</a><a href="/markets">Markets</a><a href="/opinion">Opinion</a>
+      <a href="/subscribe">Subscribe now — 50% off your first year</a>
+    </nav>
+    <aside class="newsletter-signup">
+      <h3>Get Ledger Weekly in your inbox</h3>
+      <form><input type="email" placeholder="you@example.com" /><button>Sign up</button></form>
+    </aside>
+    <main>
+      <article>
+        <h1>Cutting Through Page Furniture</h1>
+        <p>
+          Most of a modern article page is not the article. Navigation, consent banners, newsletter prompts,
+          related-story rails, and analytics scaffolding routinely outweigh the prose by an order of
+          magnitude, and a naive text extraction stores all of it as though it were content.
+        </p>
+        <p>
+          Readability heuristics exist precisely because the structural signal is unreliable. Scoring
+          candidate containers by text density and link density recovers the main body far more often than any
+          hand-written selector list, and it degrades gracefully on pages that were never designed with
+          semantic markup in mind.
+        </p>
+        <p>
+          The parts that must be removed unconditionally are the ones that carry behaviour rather than
+          meaning: scripts, styles, forms, and embeds. Stripping them is not a heuristic — it is the
+          difference between storing a document and storing a program.
+        </p>
+      </article>
+    </main>
+    <div class="related-stories">
+      <h4>More from Ledger Weekly</h4>
+      <ul>
+        <li><a href="/a">A</a></li>
+        <li><a href="/b">B</a></li>
+        <li><a href="/c">C</a></li>
+      </ul>
+    </div>
+    <script src="https://analytics.example.com/tag.js"></script>
+  </body>
+</html>
