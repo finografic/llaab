@@ -121,7 +121,7 @@ export function NavMenu({ pathname }: NavMenuProps) {
             >
               {NAV_MENU_SECTIONS.map((section) => (
                 <AccordionItem key={section.id} value={section.id} className="border-border/60">
-                  <AccordionTrigger className="px-2 py-3 hover:no-underline">
+                  <AccordionTrigger className="px-2 py-3 text-base hover:no-underline">
                     {section.label}
                   </AccordionTrigger>
                   <AccordionContent className="pb-2">

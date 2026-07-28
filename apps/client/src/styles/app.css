@@ -6,9 +6,13 @@
   /* ── Layout surfaces ──────────────────────────────────────────────────────── */
   --bg: #0d0d0f;
   --bg-subtle: #151518;
-  --bg-secondary: #24201f;
+  /* Cool neutral (was warm #24201f) — raised step above --surface. */
+  --bg-secondary: var(--surface-raised);
   --surface: #1c1c20;
   --surface-raised: #24242a;
+  /* Sidebars (`bg-sidebar`) match secondary-actions / --surface. */
+  --sidebar: var(--surface);
+  --sidebar-accent: var(--surface-raised);
   --overlay: rgb(0 0 0 / 0.55);
 
   /* ── App border scale ─────────────────────────────────────────────────────── */

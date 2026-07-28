@@ -15,7 +15,7 @@ interface NavMenuListItemProps {
 function NavMenuItemContent({ item }: { item: NavMenuItem }) {
   return (
     <>
-      <div className="flex items-center gap-1.5 text-sm leading-none font-medium">
+      <div className="flex items-center gap-1.5 text-base leading-none font-medium">
         {item.label}
         {!item.live ? (
           <>

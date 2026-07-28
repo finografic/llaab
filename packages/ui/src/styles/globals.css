@@ -112,11 +112,11 @@
   --chart-3: oklch(0.627 0.194 149.214);
   --chart-4: oklch(0.527 0.154 150.069);
   --chart-5: oklch(0.448 0.119 151.328);
-  --sidebar: oklch(0.216 0.006 56.043);
+  --sidebar: oklch(0.228 0.008 285.8); /* ~--surface #1c1c20 — cool, was warm stone hue 56 */
   --sidebar-foreground: oklch(0.985 0.001 106.423);
   --sidebar-primary: oklch(0.768 0.233 130.85);
   --sidebar-primary-foreground: oklch(0.274 0.072 132.109);
-  --sidebar-accent: oklch(0.268 0.007 34.298);
+  --sidebar-accent: oklch(0.263 0.011 285.6); /* ~--surface-raised #24242a */
   --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.553 0.013 58.071);

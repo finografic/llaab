@@ -15,7 +15,6 @@
   justify-content: flex-end;
   border-color: var(--border-subtle);
   background: var(--surface);
-  background: var(--bg);
   padding: 0 var(--space-6);
 }
 
@@ -58,7 +57,7 @@
 .runMonitorSidebar {
   min-width: 0;
   overflow: hidden;
-  background: var(--bg-secondary);
+  background: var(--surface);
 }
 
 .pageContent {

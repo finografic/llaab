@@ -26,7 +26,7 @@ export function SectionSubnav() {
             if (!item.live) {
               return (
                 <li key={item.href}>
-                  <span className={styles.disabled} aria-disabled="true">
+                  <span className={cn(styles.disabled, 'text-base')} aria-disabled="true">
                     {item.label}
                     <LockIcon className={styles.lockIcon} aria-hidden="true" />
                     <span className="sr-only"> (coming soon)</span>
@@ -41,7 +41,7 @@ export function SectionSubnav() {
               <li key={item.href}>
                 <Link
                   to={item.href}
-                  className={cn(styles.link, active && styles.linkActive)}
+                  className={cn(styles.link, 'text-base', active && styles.linkActive)}
                   aria-current={active ? 'page' : undefined}
                 >
                   {item.label}
