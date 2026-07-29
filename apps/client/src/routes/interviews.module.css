@@ -1,0 +1,289 @@
+.setupStack,
+.summaryStack,
+.questionBody,
+.orderPanel,
+.missedList {
+  display: grid;
+  gap: 1rem;
+}
+
+.domainGrid {
+  row-gap: 0.75rem;
+}
+
+.domainCard {
+  width: 100%;
+  min-height: 11rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.domainCard:hover,
+.domainCard:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.domainCard[data-selected="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+.domainCardTop,
+.domainMeta,
+.questionTop,
+.badges,
+.cardTitle,
+.feedbackTitle,
+.summaryActions,
+.startRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.domainCardTop,
+.questionTop {
+  justify-content: space-between;
+}
+
+.domainLabel,
+.domainTitle,
+.domainDescription,
+.domainMeta {
+  display: block;
+}
+
+.domainLabel {
+  margin-bottom: 0.25rem;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.domainTitle {
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.domainDescription {
+  min-height: 4rem;
+  margin-top: 0.75rem;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.domainMeta {
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.control {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.switchControl {
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.startRow {
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.questionCard {
+  overflow: hidden;
+}
+
+.badges {
+  flex-wrap: wrap;
+}
+
+.stem {
+  max-width: 58rem;
+  font-size: clamp(1.35rem, 1.1rem + 0.6vw, 1.85rem);
+  line-height: 1.25;
+}
+
+.optionsGrid {
+  row-gap: 0.75rem;
+}
+
+.optionButton {
+  width: 100%;
+  min-height: 4.5rem;
+  justify-content: flex-start;
+  padding: 1rem;
+  white-space: normal;
+  text-align: left;
+}
+
+.optionButton[data-correct="true"] {
+  border-color: var(--success-border);
+  background: color-mix(in srgb, var(--success-text) 10%, var(--card));
+  color: var(--success-text);
+}
+
+.optionButton[data-wrong="true"] {
+  border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 10%, var(--card));
+  color: var(--destructive);
+}
+
+.optionIndex,
+.orderIndex {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.orderItem {
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.orderItem:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.orderControls {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.feedback {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--muted);
+}
+
+.feedbackTitle {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.sequenceBox {
+  height: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.sequenceBox h3 {
+  margin: 0 0 0.5rem;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.sequenceBox ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.summaryMetric {
+  height: 100%;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--muted);
+}
+
+.summaryMetric strong {
+  font-size: var(--text-xl);
+}
+
+.summaryMetric small {
+  color: var(--text-muted);
+}
+
+.summaryActions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.missedList h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.missedTitle {
+  font-size: var(--text-base);
+}
+
+.codeBlock {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--muted);
+}
+
+.codeBlock figcaption {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.codeBlock pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .questionTop,
+  .summaryActions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .optionButton {
+    min-height: 5.25rem;
+  }
+}

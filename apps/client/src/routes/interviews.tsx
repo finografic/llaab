@@ -1,0 +1,775 @@
+import { PageHero } from 'components/PageHero/PageHero';
+import { Badge } from 'components/ui/badge';
+import { Button } from 'components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from 'components/ui/card';
+import { Checkbox } from 'components/ui/checkbox';
+import { Col, Row } from 'components/ui/grid';
+import { Label } from 'components/ui/label';
+import { NativeSelect, NativeSelectOption } from 'components/ui/native-select';
+import { Switch } from 'components/ui/switch';
+import { PageLayout } from 'layouts/PageLayout/PageLayout';
+import { PageList } from 'layouts/PageList/PageList';
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CheckCircleIcon,
+  FlagIcon,
+  ListChecksIcon,
+  RotateCcwIcon,
+  XCircleIcon,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import type { KeyboardEvent } from 'react';
+
+import { INTERVIEW_DOMAIN_META, INTERVIEW_DOMAIN_STATS, INTERVIEW_QUESTIONS } from 'lib/interview-quiz-data';
+import {
+  createDefaultInterviewSessionConfig,
+  createInitialOrder,
+  createInterviewSessionQuestions,
+  ordersMatch,
+} from 'lib/interview-quiz-session';
+import type {
+  InterviewDifficultyFilter,
+  InterviewSectionFilter,
+  InterviewSessionConfig,
+  InterviewSessionCount,
+} from 'lib/interview-quiz-session';
+import {
+  addInterviewAttempt,
+  loadInterviewQuizStorage,
+  saveInterviewQuizStorage,
+  toggleInterviewFlag,
+} from 'lib/interview-quiz-storage';
+import type { InterviewQuizStorage } from 'lib/interview-quiz-storage';
+import { usePageTitle } from 'lib/use-page-title';
+
+import type {
+  InterviewDomainId,
+  InterviewMcqQuestion,
+  InterviewOrderQuestion,
+  InterviewQuestion,
+} from 'types/interview-quiz.types';
+
+import styles from './interviews.module.css';
+
+type InterviewStage = 'setup' | 'question' | 'summary';
+
+type InterviewAnswer =
+  | { type: 'mcq'; selectedOptionId: string; correct: boolean }
+  | { type: 'order'; submittedOrder: string[]; correct: boolean };
+
+const DEFAULT_SELECTED_DOMAINS: InterviewDomainId[] = ['testing', 'apis', 'platform'];
+
+function createInitialStorage(): InterviewQuizStorage {
+  return loadInterviewQuizStorage();
+}
+
+export function InterviewsPage() {
+  usePageTitle('Interviews');
+
+  const [storage, setStorage] = useState<InterviewQuizStorage>(createInitialStorage);
+  const [selectedDomains, setSelectedDomains] = useState<InterviewDomainId[]>(DEFAULT_SELECTED_DOMAINS);
+  const [config, setConfig] = useState<InterviewSessionConfig>(createDefaultInterviewSessionConfig);
+  const [stage, setStage] = useState<InterviewStage>('setup');
+  const [sessionQuestions, setSessionQuestions] = useState<InterviewQuestion[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answer, setAnswer] = useState<InterviewAnswer | null>(null);
+  const [sessionAnswers, setSessionAnswers] = useState<Record<string, InterviewAnswer>>({});
+  const [orderIds, setOrderIds] = useState<string[]>([]);
+  const flaggedIds = useMemo(() => new Set(storage.flaggedIds), [storage.flaggedIds]);
+  const currentQuestion = sessionQuestions[currentIndex];
+  const answeredCount = Object.keys(sessionAnswers).length;
+  const score = Object.values(sessionAnswers).filter((item) => item.correct).length;
+
+  useEffect(() => {
+    saveInterviewQuizStorage(storage);
+  }, [storage]);
+
+  useEffect(() => {
+    setOrderIds(currentQuestion ? createInitialOrder(currentQuestion) : []);
+  }, [currentQuestion]);
+
+  useEffect(() => {
+    if (stage !== 'question' || answer || !currentQuestion || currentQuestion.type !== 'mcq') return;
+    const mcqQuestion = currentQuestion;
+
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
+      const index = Number(event.key) - 1;
+      if (index < 0 || index > 3) return;
+
+      const option = mcqQuestion.options[index];
+      if (option) {
+        event.preventDefault();
+        submitMcq(mcqQuestion, option.id);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [answer, currentQuestion, stage]);
+
+  function updateStorage(updater: (current: InterviewQuizStorage) => InterviewQuizStorage) {
+    setStorage((current) => updater(current));
+  }
+
+  function toggleDomain(domain: InterviewDomainId, selected: boolean) {
+    setSelectedDomains((current) => {
+      if (selected) return current.includes(domain) ? current : [...current, domain];
+      return current.filter((item) => item !== domain);
+    });
+  }
+
+  function startSession(retryIds?: string[]) {
+    const questions = createInterviewSessionQuestions({
+      domains: selectedDomains,
+      config,
+      questions: INTERVIEW_QUESTIONS,
+      storage,
+      retryIds,
+    });
+
+    setSessionQuestions(questions);
+    setCurrentIndex(0);
+    setSessionAnswers({});
+    setAnswer(null);
+    setStage(questions.length > 0 ? 'question' : 'setup');
+  }
+
+  function submitMcq(question: InterviewMcqQuestion, selectedOptionId: string) {
+    const nextAnswer: InterviewAnswer = {
+      type: 'mcq',
+      selectedOptionId,
+      correct: selectedOptionId === question.correctOptionId,
+    };
+
+    recordAnswer(question, nextAnswer);
+  }
+
+  function submitOrder(question: InterviewOrderQuestion) {
+    const submittedOrder = orderIds.length > 0 ? orderIds : createInitialOrder(question);
+    const nextAnswer: InterviewAnswer = {
+      type: 'order',
+      submittedOrder,
+      correct: ordersMatch(submittedOrder, question.correctOrder),
+    };
+
+    recordAnswer(question, nextAnswer);
+  }
+
+  function recordAnswer(question: InterviewQuestion, nextAnswer: InterviewAnswer) {
+    setAnswer(nextAnswer);
+    setSessionAnswers((current) => ({ ...current, [question.id]: nextAnswer }));
+    updateStorage((current) =>
+      addInterviewAttempt(current, {
+        questionId: question.id,
+        domain: question.domain,
+        section: question.section,
+        correct: nextAnswer.correct,
+        selectedOptionId: nextAnswer.type === 'mcq' ? nextAnswer.selectedOptionId : undefined,
+        submittedOrder: nextAnswer.type === 'order' ? nextAnswer.submittedOrder : undefined,
+      }),
+    );
+  }
+
+  function moveOrderItem(itemId: string, direction: -1 | 1) {
+    setOrderIds((current) => {
+      const index = current.indexOf(itemId);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return current;
+
+      const next = [...current];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
+    });
+  }
+
+  function handleOrderKeyDown(event: KeyboardEvent<HTMLDivElement>, itemId: string) {
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveOrderItem(itemId, -1);
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveOrderItem(itemId, 1);
+    }
+  }
+
+  function goNext() {
+    if (currentIndex + 1 >= sessionQuestions.length) {
+      setStage('summary');
+      return;
+    }
+
+    setCurrentIndex((current) => current + 1);
+    setAnswer(null);
+  }
+
+  function retryMissed() {
+    const missedIds = Object.entries(sessionAnswers)
+      .filter(([, item]) => !item.correct)
+      .map(([id]) => id);
+    if (missedIds.length === 0) return;
+    startSession(missedIds);
+  }
+
+  return (
+    <PageLayout
+      hero={
+        <PageHero
+          eyebrow="Practice"
+          title="Interview Quiz"
+          description="VALD-focused rehearsal across the completed static question bank."
+          meta={
+            <>
+              {INTERVIEW_QUESTIONS.length} questions · {storage.attempts.length} attempts ·{' '}
+              {storage.flaggedIds.length} flagged
+            </>
+          }
+        />
+      }
+    >
+      <PageList width="wide">
+        {stage === 'setup' ? (
+          <SetupView
+            selectedDomains={selectedDomains}
+            config={config}
+            storage={storage}
+            onToggleDomain={toggleDomain}
+            onConfigChange={setConfig}
+            onStart={() => startSession()}
+          />
+        ) : null}
+
+        {stage === 'question' && currentQuestion ? (
+          <QuestionView
+            question={currentQuestion}
+            answer={answer}
+            currentIndex={currentIndex}
+            total={sessionQuestions.length}
+            orderIds={orderIds}
+            flagged={flaggedIds.has(currentQuestion.id)}
+            onSubmitMcq={submitMcq}
+            onSubmitOrder={submitOrder}
+            onMoveOrderItem={moveOrderItem}
+            onOrderKeyDown={handleOrderKeyDown}
+            onToggleFlag={() => updateStorage((current) => toggleInterviewFlag(current, currentQuestion.id))}
+            onNext={goNext}
+          />
+        ) : null}
+
+        {stage === 'summary' ? (
+          <SummaryView
+            questions={sessionQuestions}
+            answers={sessionAnswers}
+            score={score}
+            answeredCount={answeredCount}
+            storage={storage}
+            onRetryMissed={retryMissed}
+            onNewSession={() => {
+              setStage('setup');
+              setAnswer(null);
+            }}
+          />
+        ) : null}
+      </PageList>
+    </PageLayout>
+  );
+}
+
+function SetupView({
+  selectedDomains,
+  config,
+  storage,
+  onToggleDomain,
+  onConfigChange,
+  onStart,
+}: {
+  selectedDomains: InterviewDomainId[];
+  config: InterviewSessionConfig;
+  storage: InterviewQuizStorage;
+  onToggleDomain: (domain: InterviewDomainId, selected: boolean) => void;
+  onConfigChange: (config: InterviewSessionConfig) => void;
+  onStart: () => void;
+}) {
+  const selectedQuestionCount = INTERVIEW_QUESTIONS.filter((question) => {
+    if (!selectedDomains.includes(question.domain)) return false;
+    if (config.section !== 'both' && question.section !== config.section) return false;
+    if (config.difficulty !== 'all' && question.difficulty !== config.difficulty) return false;
+    return true;
+  }).length;
+
+  return (
+    <div className={styles.setupStack}>
+      <Row gutterWidth={12} className={styles.domainGrid}>
+        {INTERVIEW_DOMAIN_META.map((domain) => {
+          const stats = INTERVIEW_DOMAIN_STATS[domain.id];
+          const accuracy = storage.domainAccuracy[domain.id];
+          const selected = selectedDomains.includes(domain.id);
+
+          return (
+            <Col key={domain.id} xs={12} md={6} xl={3}>
+              <label className={styles.domainCard} data-selected={selected || undefined}>
+                <span className={styles.domainCardTop}>
+                  <span>
+                    <span className={styles.domainLabel}>{domain.label}</span>
+                    <span className={styles.domainTitle}>{domain.title}</span>
+                  </span>
+                  <Checkbox
+                    checked={selected}
+                    aria-label={`${domain.title} selected`}
+                    onCheckedChange={(checked) => onToggleDomain(domain.id, checked === true)}
+                  />
+                </span>
+                <span className={styles.domainDescription}>{domain.description}</span>
+                <span className={styles.domainMeta}>
+                  <Badge variant="secondary">{stats.total} questions</Badge>
+                  <Badge variant="outline">
+                    {accuracy && accuracy.attempts > 0
+                      ? `${Math.round((accuracy.correct / accuracy.attempts) * 100)}%`
+                      : 'new'}
+                  </Badge>
+                </span>
+              </label>
+            </Col>
+          );
+        })}
+      </Row>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className={styles.cardTitle}>
+            <ListChecksIcon aria-hidden />
+            Session
+          </CardTitle>
+          <CardDescription>{selectedQuestionCount} matching questions available.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Row gutterWidth={12} align="flex-end">
+            <Col xs={12} md={3}>
+              <Label htmlFor="interview-count">Questions</Label>
+              <NativeSelect
+                id="interview-count"
+                className={styles.control}
+                value={String(config.count)}
+                onChange={(event) =>
+                  onConfigChange({
+                    ...config,
+                    count: parseSessionCount(event.target.value),
+                  })
+                }
+              >
+                <NativeSelectOption value="5">5</NativeSelectOption>
+                <NativeSelectOption value="10">10</NativeSelectOption>
+                <NativeSelectOption value="20">20</NativeSelectOption>
+                <NativeSelectOption value="all">All</NativeSelectOption>
+              </NativeSelect>
+            </Col>
+            <Col xs={12} md={3}>
+              <Label htmlFor="interview-section">Section</Label>
+              <NativeSelect
+                id="interview-section"
+                className={styles.control}
+                value={config.section}
+                onChange={(event) =>
+                  onConfigChange({
+                    ...config,
+                    section: event.target.value as InterviewSectionFilter,
+                  })
+                }
+              >
+                <NativeSelectOption value="both">Both</NativeSelectOption>
+                <NativeSelectOption value="glossary">Glossary</NativeSelectOption>
+                <NativeSelectOption value="depth">Depth</NativeSelectOption>
+              </NativeSelect>
+            </Col>
+            <Col xs={12} md={3}>
+              <Label htmlFor="interview-difficulty">Difficulty</Label>
+              <NativeSelect
+                id="interview-difficulty"
+                className={styles.control}
+                value={String(config.difficulty)}
+                onChange={(event) =>
+                  onConfigChange({
+                    ...config,
+                    difficulty: parseDifficulty(event.target.value),
+                  })
+                }
+              >
+                <NativeSelectOption value="all">All</NativeSelectOption>
+                <NativeSelectOption value="1">1</NativeSelectOption>
+                <NativeSelectOption value="2">2</NativeSelectOption>
+                <NativeSelectOption value="3">3</NativeSelectOption>
+              </NativeSelect>
+            </Col>
+            <Col xs={12} md={3}>
+              <div className={styles.switchControl}>
+                <Label htmlFor="interview-auto-read">Auto-read</Label>
+                <Switch
+                  id="interview-auto-read"
+                  checked={config.autoRead}
+                  onCheckedChange={(autoRead) => onConfigChange({ ...config, autoRead })}
+                />
+              </div>
+            </Col>
+          </Row>
+
+          <div className={styles.startRow}>
+            <Button
+              type="button"
+              disabled={selectedDomains.length === 0 || selectedQuestionCount === 0}
+              onClick={onStart}
+            >
+              Start session
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function QuestionView({
+  question,
+  answer,
+  currentIndex,
+  total,
+  orderIds,
+  flagged,
+  onSubmitMcq,
+  onSubmitOrder,
+  onMoveOrderItem,
+  onOrderKeyDown,
+  onToggleFlag,
+  onNext,
+}: {
+  question: InterviewQuestion;
+  answer: InterviewAnswer | null;
+  currentIndex: number;
+  total: number;
+  orderIds: string[];
+  flagged: boolean;
+  onSubmitMcq: (question: InterviewMcqQuestion, selectedOptionId: string) => void;
+  onSubmitOrder: (question: InterviewOrderQuestion) => void;
+  onMoveOrderItem: (itemId: string, direction: -1 | 1) => void;
+  onOrderKeyDown: (event: KeyboardEvent<HTMLDivElement>, itemId: string) => void;
+  onToggleFlag: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <Card className={styles.questionCard}>
+      <CardHeader>
+        <div className={styles.questionTop}>
+          <div className={styles.badges}>
+            <Badge variant="secondary">
+              {currentIndex + 1} / {total}
+            </Badge>
+            <Badge variant="outline">{question.domain}</Badge>
+            <Badge variant="outline">{question.section}</Badge>
+            <Badge variant="outline">difficulty {question.difficulty}</Badge>
+          </div>
+          <Button type="button" size="sm" variant={flagged ? 'default' : 'outline'} onClick={onToggleFlag}>
+            <FlagIcon aria-hidden />
+            Flag
+          </Button>
+        </div>
+        <CardTitle className={styles.stem}>{question.stem}</CardTitle>
+      </CardHeader>
+      <CardContent className={styles.questionBody}>
+        {question.code ? <CodeBlock lang={question.code.lang} content={question.code.content} /> : null}
+
+        {question.type === 'mcq' ? (
+          <McqAnswerPanel question={question} answer={answer} onSubmit={onSubmitMcq} />
+        ) : (
+          <OrderAnswerPanel
+            question={question}
+            answer={answer}
+            orderIds={orderIds}
+            onSubmit={onSubmitOrder}
+            onMoveItem={onMoveOrderItem}
+            onItemKeyDown={onOrderKeyDown}
+          />
+        )}
+
+        {answer ? (
+          <Feedback question={question} answer={answer} onNext={onNext} isLast={currentIndex + 1 >= total} />
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function McqAnswerPanel({
+  question,
+  answer,
+  onSubmit,
+}: {
+  question: InterviewMcqQuestion;
+  answer: InterviewAnswer | null;
+  onSubmit: (question: InterviewMcqQuestion, selectedOptionId: string) => void;
+}) {
+  return (
+    <Row gutterWidth={10} className={styles.optionsGrid}>
+      {question.options.map((option, index) => {
+        const isSelected = answer?.type === 'mcq' && answer.selectedOptionId === option.id;
+        const isCorrect = option.id === question.correctOptionId;
+
+        return (
+          <Col key={option.id} xs={12} md={6}>
+            <Button
+              type="button"
+              variant="outline"
+              className={styles.optionButton}
+              data-selected={isSelected || undefined}
+              data-correct={answer && isCorrect ? true : undefined}
+              data-wrong={answer && isSelected && !isCorrect ? true : undefined}
+              disabled={answer != null}
+              onClick={() => onSubmit(question, option.id)}
+            >
+              <span className={styles.optionIndex}>{index + 1}</span>
+              <span>{option.text}</span>
+            </Button>
+          </Col>
+        );
+      })}
+    </Row>
+  );
+}
+
+function OrderAnswerPanel({
+  question,
+  answer,
+  orderIds,
+  onSubmit,
+  onMoveItem,
+  onItemKeyDown,
+}: {
+  question: InterviewOrderQuestion;
+  answer: InterviewAnswer | null;
+  orderIds: string[];
+  onSubmit: (question: InterviewOrderQuestion) => void;
+  onMoveItem: (itemId: string, direction: -1 | 1) => void;
+  onItemKeyDown: (event: KeyboardEvent<HTMLDivElement>, itemId: string) => void;
+}) {
+  const itemById = new Map(question.items.map((item) => [item.id, item]));
+
+  return (
+    <div className={styles.orderPanel}>
+      {orderIds.map((itemId, index) => {
+        const item = itemById.get(itemId);
+        if (!item) return null;
+
+        return (
+          <div
+            key={itemId}
+            tabIndex={answer ? -1 : 0}
+            className={styles.orderItem}
+            onKeyDown={(event) => onItemKeyDown(event, itemId)}
+          >
+            <span className={styles.orderIndex}>{index + 1}</span>
+            <span>{item.text}</span>
+            <span className={styles.orderControls}>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                disabled={answer != null || index === 0}
+                aria-label={`Move ${item.text} up`}
+                onClick={() => onMoveItem(itemId, -1)}
+              >
+                <ArrowUpIcon aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                disabled={answer != null || index === orderIds.length - 1}
+                aria-label={`Move ${item.text} down`}
+                onClick={() => onMoveItem(itemId, 1)}
+              >
+                <ArrowDownIcon aria-hidden />
+              </Button>
+            </span>
+          </div>
+        );
+      })}
+
+      <Button type="button" disabled={answer != null} onClick={() => onSubmit(question)}>
+        Check order
+      </Button>
+    </div>
+  );
+}
+
+function Feedback({
+  question,
+  answer,
+  onNext,
+  isLast,
+}: {
+  question: InterviewQuestion;
+  answer: InterviewAnswer;
+  onNext: () => void;
+  isLast: boolean;
+}) {
+  return (
+    <section className={styles.feedback} aria-live="polite">
+      <h2 className={styles.feedbackTitle}>
+        {answer.correct ? <CheckCircleIcon aria-hidden /> : <XCircleIcon aria-hidden />}
+        {answer.correct ? 'Correct' : 'Not quite'}
+      </h2>
+      {question.type === 'order' && answer.type === 'order' ? (
+        <OrderComparison question={question} submittedOrder={answer.submittedOrder} />
+      ) : null}
+      <p>{question.explanation}</p>
+      <Button type="button" onClick={onNext}>
+        {isLast ? 'Finish session' : 'Next question'}
+      </Button>
+    </section>
+  );
+}
+
+function OrderComparison({
+  question,
+  submittedOrder,
+}: {
+  question: InterviewOrderQuestion;
+  submittedOrder: string[];
+}) {
+  const itemById = new Map(question.items.map((item) => [item.id, item.text]));
+
+  return (
+    <Row gutterWidth={12}>
+      <Col xs={12} md={6}>
+        <div className={styles.sequenceBox}>
+          <h3>Your order</h3>
+          <ol>
+            {submittedOrder.map((id) => (
+              <li key={id}>{itemById.get(id)}</li>
+            ))}
+          </ol>
+        </div>
+      </Col>
+      <Col xs={12} md={6}>
+        <div className={styles.sequenceBox}>
+          <h3>Correct order</h3>
+          <ol>
+            {question.correctOrder.map((id) => (
+              <li key={id}>{itemById.get(id)}</li>
+            ))}
+          </ol>
+        </div>
+      </Col>
+    </Row>
+  );
+}
+
+function SummaryView({
+  questions,
+  answers,
+  score,
+  answeredCount,
+  storage,
+  onRetryMissed,
+  onNewSession,
+}: {
+  questions: InterviewQuestion[];
+  answers: Record<string, InterviewAnswer>;
+  score: number;
+  answeredCount: number;
+  storage: InterviewQuizStorage;
+  onRetryMissed: () => void;
+  onNewSession: () => void;
+}) {
+  const missedQuestions = questions.filter(
+    (question) => answers[question.id] && !answers[question.id].correct,
+  );
+  const domainBreakdown = INTERVIEW_DOMAIN_META.map((domain) => {
+    const domainQuestions = questions.filter((question) => question.domain === domain.id);
+    const correct = domainQuestions.filter((question) => answers[question.id]?.correct).length;
+    return { domain, total: domainQuestions.length, correct };
+  }).filter((item) => item.total > 0);
+
+  return (
+    <div className={styles.summaryStack}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Session summary</CardTitle>
+          <CardDescription>
+            {score} correct from {answeredCount} answered.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Row gutterWidth={12}>
+            {domainBreakdown.map(({ domain, total, correct }) => {
+              const lifetime = storage.domainAccuracy[domain.id];
+              return (
+                <Col key={domain.id} xs={12} md={6} xl={3}>
+                  <div className={styles.summaryMetric}>
+                    <span>{domain.title}</span>
+                    <strong>
+                      {correct} / {total}
+                    </strong>
+                    <small>
+                      {lifetime && lifetime.attempts > 0
+                        ? `${Math.round((lifetime.correct / lifetime.attempts) * 100)}% lifetime`
+                        : 'no lifetime attempts'}
+                    </small>
+                  </div>
+                </Col>
+              );
+            })}
+          </Row>
+          <div className={styles.summaryActions}>
+            <Button type="button" variant="outline" onClick={onNewSession}>
+              New session
+            </Button>
+            <Button type="button" disabled={missedQuestions.length === 0} onClick={onRetryMissed}>
+              <RotateCcwIcon aria-hidden />
+              Retry missed only
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {missedQuestions.length > 0 ? (
+        <section className={styles.missedList}>
+          <h2>Missed questions</h2>
+          {missedQuestions.map((question) => (
+            <Card key={question.id}>
+              <CardHeader>
+                <CardTitle className={styles.missedTitle}>{question.stem}</CardTitle>
+                <CardDescription>
+                  {question.domain} · {question.section} · difficulty {question.difficulty}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>{question.explanation}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function CodeBlock({ lang, content }: { lang: string; content: string }) {
+  return (
+    <figure className={styles.codeBlock}>
+      <figcaption>{lang}</figcaption>
+      <pre>
+        <code>{content}</code>
+      </pre>
+    </figure>
+  );
+}
+
+function parseSessionCount(value: string): InterviewSessionCount {
+  if (value === '5' || value === '10' || value === '20') return Number(value) as InterviewSessionCount;
+  return 'all';
+}
+
+function parseDifficulty(value: string): InterviewDifficultyFilter {
+  if (value === '1' || value === '2' || value === '3') return Number(value) as 1 | 2 | 3;
+  return 'all';
+}
