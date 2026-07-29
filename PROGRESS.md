@@ -1,7 +1,7 @@
 # Interview Quiz Module: progress
 
-Last updated: 2026-07-30T05:40:00+10:00
-Last worked by: Opus, via subagent
+Last updated: 2026-07-29T21:15:13+10:00
+Last worked by: GPT-5 Codex
 
 **Handoff note (2026-07-30):** Justin is pausing here to conserve Claude usage credits ahead of
 Friday's interview and moving the remaining work to GPT-5.5/Codex. Nothing was lost: every decision,
@@ -25,7 +25,7 @@ further quiz content.
 - [x] P1f Bank: frontend (OPUS) 34/34
 - [x] P1g Bank: vald (OPUS) 14/14
 - [x] P1h Bank: automation (OPUS) 34/34 (added after the fact; missing from the original phase table)
-- [ ] P2 Spoken fields (SONNET)
+- [x] P2 Spoken fields (SONNET)
 - [ ] P3 App UI and state (SONNET)
 - [ ] P4 kokoro-js integration (SONNET)
 - [ ] P5 Human review (JUSTIN)
@@ -57,6 +57,7 @@ further quiz content.
 
 ## Decisions made
 
+- **P2 Spoken fields, run at GPT-5 Codex.** Audited all eight JSON banks for stems and explanations containing code-backed prompts, all-caps acronyms, slashes, parentheses, arrows or backticks without a spoken-safe companion field. Added only the missing `stemSpoken` / `explanationSpoken` fields needed by that audit; did not regenerate questions or edit the markdown bank docs. Validation passed with `OK spoken field audit` and `bun scripts/validate-interview-bank.ts --all` returning `OK` for all eight domains.
 - **P1h `automation` exists because the phase table was wrong, not because scope grew.** `automation` is spec domain D2, one of the seven core domains in `INTERVIEW_QUIZ_APP_SPEC.md`, but it was accidentally omitted from the phase table in `BUILD_PHASES_AND_HANDOFF.md`, so P1a through P1g covered six core domains plus the `vald` bonus round and this one silently fell through. It was flagged under Open questions after P1f and Justin then confirmed it as one of the most important topics: the job description says verbatim "Automation of everything: Continuous Integration and Continuous Delivery, Infrastructure as code and automation tests", the theme recurs in the prep document, and it already came up in his first-round interview. Run at Opus at the same bar as `testing`, `apis` and `platform`, after the "pause point" rather than before it.
 - **P1h `automation`.** Exemplar E3 in the spec is itself an `automation` question, so it was included in the bank verbatim, matching the calls for E1 (`apis`), E2 (`testing`), E4 (`platform`), E5 (`cloud`) and E6 (`typescript`). Its id moved from the spec's `automation-007` to `automation-025` so ids stay sequential across the glossary and depth split; stem, items, `correctOrder`, `orderRationale` and `explanation` are verbatim, including its em-dash-free hyphenated "well-designed" and "End-to-end". A `stemSpoken` was added, because the original stem contains "CI/CD" and a slash must never reach kokoro.
 - **P1h `automation`.** 34 questions, split 11 glossary / 23 depth, 24 mcq / 10 order (70.6%), matching the `cloud` and `frontend` shape. Difficulty is 11 at level 1, 12 at level 2, 11 at level 3.
@@ -140,12 +141,11 @@ further quiz content.
 
 **The entire question-bank layer is done: 251 questions across 8 files, and every spec domain now has a bank.** All eight are written, validated and committed: `testing` (35), `apis` (35), `platform` (32), `typescript` (33), `cloud` (34), `frontend` (34), `automation` (34) and the `vald` bonus round (14). `bun scripts/validate-interview-bank.ts --all` prints `OK` for every one of them with zero errors. Every bank ran on Opus rather than Sonnet-plus-review, on Justin's explicit instruction to hold the banks at Opus before switching models for the app-build phases; `automation` was added last as P1h because it had been left out of the original phase table, and ran at the same bar as `testing`, `apis` and `platform`.
 
-**The build now switches to Sonnet** (or GPT if credits run out) for everything that remains. The banks were the part that needed a frontier model; the app is ordinary React work, exactly as spec section 5 says.
+**The build remains on Sonnet** (or GPT if credits run out) for everything that remains. The banks were the part that needed a frontier model; the app is ordinary React work, exactly as spec section 5 says.
 
 Remaining phases, in order:
 
-- **P2 Spoken fields** (Sonnet). **Verify what is actually still missing rather than assuming a full pass is needed.** Every bank already carries `stemSpoken` / `explanationSpoken` inline wherever the text mangles under TTS, added during its own generation phase, so most of this work is already done. P2 is an audit: sweep all eight JSON files for stems and explanations containing code, acronyms, slashes, parentheses, arrows or backticks that have no spoken variant, and fill only those gaps.
-- **P3 App UI and state** (Sonnet). Route `/interviews`; domain select, session config, question view, feedback and session summary per spec section 6; localStorage persistence for attempt history, per-domain accuracy and flagged ids. Reuse existing app conventions throughout (`PageLayout` + `PageHero`, `Row` / `Col` / `Container` for structural layout, shadcn primitives from `packages/ui`, React Router `Link`, TanStack Query only where it earns its place). Bank files load from `vault/interviews/VALD/questions/*.json`, not from `src/data/`.
+- **P3 App UI and state** (Sonnet). Route `/interviews`; domain select, session config, question view, feedback and session summary per spec section 6; localStorage persistence for attempt history, per-domain accuracy and flagged ids. Reuse existing app conventions throughout (`PageLayout` + `PageHero`, `Row` / `Col` / `Container` for structural layout, shadcn primitives from `packages/ui`, React Router `Link`, TanStack Query only where it earns its place). Bank files load from `vault/interviews/VALD/questions/*.json`, not from `src/data/`. Do not start P4 or wire TTS yet.
 - **P4 kokoro-js integration** (Sonnet). **Do not wire up kokoro-js from scratch.** A reusable `TtsPlayer` component already exists at `apps/client/src/components/TtsPlayer/` (`TtsPlayer.tsx`, `tts-player.worker.ts`, `tts-player.types.ts`, `tts-player.utils.ts`, exported via `index.ts`) and is already in use on the wiki detail page (`apps/client/src/routes/wiki-detail-page.tsx`) and transcript detail (`apps/client/src/components/TranscriptsSplitView/components/TranscriptDetail.tsx`). Per project memory it runs Kokoro with `dtype="fp32"` + `device="webgpu"` and handles model load/caching already. P4 should reuse this component against `stemSpoken ?? stem` and `explanationSpoken ?? explanation`, not reimplement kokoro loading.
 - **P5 Human review** (Justin).
 - **P6 Optional: spoken-answer mode** (Sonnet). Only after P3 works and the banks are reviewed.
