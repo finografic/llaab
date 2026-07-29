@@ -53,6 +53,10 @@
   gap: 0.5rem;
 }
 
+.cardTitle {
+  font-size: 1.1rem;
+}
+
 .domainCardTop,
 .questionTop {
   justify-content: space-between;
@@ -97,6 +101,19 @@
   margin-top: 0.5rem;
 }
 
+.control [data-slot="native-select"] {
+  height: 2.75rem;
+  padding-right: 2.25rem;
+  padding-left: 0.875rem;
+  font-size: var(--text-base);
+  font-weight: 500;
+}
+
+.control [data-slot="native-select-icon"] {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 .autoReadControl {
   min-height: 2.5rem;
   justify-content: flex-end;
@@ -109,6 +126,12 @@
 .startRow {
   justify-content: flex-end;
   margin-top: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .startRow {
+    margin-top: 0;
+  }
 }
 
 .questionCard {
@@ -170,6 +193,17 @@
 .optionText {
   font-size: var(--text-base);
   line-height: 1.25;
+}
+
+.inlineCode {
+  padding: 0.06em 0.28em;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  font-weight: 600;
 }
 
 .quizButton {

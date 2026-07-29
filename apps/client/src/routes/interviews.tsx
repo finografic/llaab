@@ -25,12 +25,6 @@ import type { KeyboardEvent } from 'react';
 
 import { api } from 'lib/api';
 import { INTERVIEW_DOMAIN_META, INTERVIEW_DOMAIN_STATS, INTERVIEW_QUESTIONS } from 'lib/interview-quiz-data';
-import {
-  createDefaultInterviewSessionConfig,
-  createInitialOrder,
-  createInterviewSessionQuestions,
-  ordersMatch,
-} from 'lib/interview-quiz-session';
 import type {
   InterviewDifficultyFilter,
   InterviewSectionFilter,
@@ -38,12 +32,18 @@ import type {
   InterviewSessionCount,
 } from 'lib/interview-quiz-session';
 import {
+  createDefaultInterviewSessionConfig,
+  createInitialOrder,
+  createInterviewSessionQuestions,
+  ordersMatch,
+} from 'lib/interview-quiz-session';
+import type { InterviewQuizStorage } from 'lib/interview-quiz-storage';
+import {
   addInterviewAttempt,
   loadInterviewQuizStorage,
   saveInterviewQuizStorage,
   toggleInterviewFlag,
 } from 'lib/interview-quiz-storage';
-import type { InterviewQuizStorage } from 'lib/interview-quiz-storage';
 import { usePageTitle } from 'lib/use-page-title';
 
 import type {
@@ -349,7 +349,7 @@ function SetupView({
         })}
       </Row>
 
-      <Card>
+      <Card className="py-5">
         <CardHeader>
           <CardTitle className={styles.cardTitle}>
             <ListChecksIcon aria-hidden />
@@ -359,74 +359,79 @@ function SetupView({
         </CardHeader>
         <CardContent>
           <Row gutterWidth={12} align="flex-end">
-            <Col xs={12} md={3}>
-              <Label htmlFor="interview-count">Questions</Label>
-              <NativeSelect
-                id="interview-count"
-                className={styles.control}
-                value={String(config.count)}
-                onChange={(event) =>
-                  onConfigChange({
-                    ...config,
-                    count: parseSessionCount(event.target.value),
-                  })
-                }
-              >
-                <NativeSelectOption value="5">5</NativeSelectOption>
-                <NativeSelectOption value="10">10</NativeSelectOption>
-                <NativeSelectOption value="20">20</NativeSelectOption>
-                <NativeSelectOption value="all">All</NativeSelectOption>
-              </NativeSelect>
+            <Col xs={12} lg={9}>
+              <Row gutterWidth={12}>
+                <Col xs={12} md={4}>
+                  <Label htmlFor="interview-count">Questions</Label>
+                  <NativeSelect
+                    id="interview-count"
+                    className={styles.control}
+                    value={String(config.count)}
+                    onChange={(event) =>
+                      onConfigChange({
+                        ...config,
+                        count: parseSessionCount(event.target.value),
+                      })
+                    }
+                  >
+                    <NativeSelectOption value="5">5</NativeSelectOption>
+                    <NativeSelectOption value="10">10</NativeSelectOption>
+                    <NativeSelectOption value="20">20</NativeSelectOption>
+                    <NativeSelectOption value="all">All</NativeSelectOption>
+                  </NativeSelect>
+                </Col>
+                <Col xs={12} md={4}>
+                  <Label htmlFor="interview-section">Section</Label>
+                  <NativeSelect
+                    id="interview-section"
+                    className={styles.control}
+                    value={config.section}
+                    onChange={(event) =>
+                      onConfigChange({
+                        ...config,
+                        section: event.target.value as InterviewSectionFilter,
+                      })
+                    }
+                  >
+                    <NativeSelectOption value="both">Both</NativeSelectOption>
+                    <NativeSelectOption value="glossary">Glossary</NativeSelectOption>
+                    <NativeSelectOption value="depth">Depth</NativeSelectOption>
+                  </NativeSelect>
+                </Col>
+                <Col xs={12} md={4}>
+                  <Label htmlFor="interview-difficulty">Difficulty</Label>
+                  <NativeSelect
+                    id="interview-difficulty"
+                    className={styles.control}
+                    value={String(config.difficulty)}
+                    onChange={(event) =>
+                      onConfigChange({
+                        ...config,
+                        difficulty: parseDifficulty(event.target.value),
+                      })
+                    }
+                  >
+                    <NativeSelectOption value="all">All</NativeSelectOption>
+                    <NativeSelectOption value="1">1</NativeSelectOption>
+                    <NativeSelectOption value="2">2</NativeSelectOption>
+                    <NativeSelectOption value="3">3</NativeSelectOption>
+                  </NativeSelect>
+                </Col>
+              </Row>
             </Col>
-            <Col xs={12} md={3}>
-              <Label htmlFor="interview-section">Section</Label>
-              <NativeSelect
-                id="interview-section"
-                className={styles.control}
-                value={config.section}
-                onChange={(event) =>
-                  onConfigChange({
-                    ...config,
-                    section: event.target.value as InterviewSectionFilter,
-                  })
-                }
-              >
-                <NativeSelectOption value="both">Both</NativeSelectOption>
-                <NativeSelectOption value="glossary">Glossary</NativeSelectOption>
-                <NativeSelectOption value="depth">Depth</NativeSelectOption>
-              </NativeSelect>
-            </Col>
-            <Col xs={12} md={3}>
-              <Label htmlFor="interview-difficulty">Difficulty</Label>
-              <NativeSelect
-                id="interview-difficulty"
-                className={styles.control}
-                value={String(config.difficulty)}
-                onChange={(event) =>
-                  onConfigChange({
-                    ...config,
-                    difficulty: parseDifficulty(event.target.value),
-                  })
-                }
-              >
-                <NativeSelectOption value="all">All</NativeSelectOption>
-                <NativeSelectOption value="1">1</NativeSelectOption>
-                <NativeSelectOption value="2">2</NativeSelectOption>
-                <NativeSelectOption value="3">3</NativeSelectOption>
-              </NativeSelect>
+            <Col xs={12} lg={3}>
+              <div className={styles.startRow}>
+                <Button
+                  type="button"
+                  className={styles.quizButton}
+                  disabled={selectedDomains.length === 0 || selectedQuestionCount === 0}
+                  onClick={onStart}
+                >
+                  Start session
+                </Button>
+              </div>
             </Col>
           </Row>
-
-          <div className={styles.startRow}>
-            <Button
-              type="button"
-              className={styles.quizButton}
-              disabled={selectedDomains.length === 0 || selectedQuestionCount === 0}
-              onClick={onStart}
-            >
-              Start session
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>
@@ -517,7 +522,7 @@ function QuestionView({
           </Button>
         </div>
         <div className={styles.stemRow}>
-          <CardTitle className={styles.stem}>{question.stem}</CardTitle>
+          <CardTitle className={styles.stem}>{renderInlineText(question.stem)}</CardTitle>
           <Button
             type="button"
             size="sm"
@@ -599,7 +604,7 @@ function McqAnswerPanel({
               onClick={() => onSubmit(question, option.id)}
             >
               <span className={styles.optionIndex}>{index + 1}</span>
-              <span className={styles.optionText}>{option.text}</span>
+              <span className={styles.optionText}>{renderInlineText(option.text)}</span>
             </Button>
           </Col>
         );
@@ -639,7 +644,7 @@ function OrderAnswerPanel({
             onKeyDown={(event) => onItemKeyDown(event, itemId)}
           >
             <span className={styles.orderIndex}>{index + 1}</span>
-            <span className={styles.optionText}>{item.text}</span>
+            <span className={styles.optionText}>{renderInlineText(item.text)}</span>
             <span className={styles.orderControls}>
               <Button
                 type="button"
@@ -704,7 +709,7 @@ function Feedback({
       {question.type === 'order' && answer.type === 'order' ? (
         <OrderComparison question={question} submittedOrder={answer.submittedOrder} />
       ) : null}
-      <p>{question.explanation}</p>
+      <p>{renderInlineText(question.explanation)}</p>
       <div className={styles.feedbackActions}>
         <Button type="button" className={styles.quizButton} onClick={onNext}>
           {isLast ? 'Finish session' : 'Next question'}
@@ -720,6 +725,63 @@ function getQuestionSpokenText(question: InterviewQuestion): string {
 
 function getExplanationSpokenText(question: InterviewQuestion): string {
   return question.explanationSpoken ?? question.explanation;
+}
+
+interface InlineTextPart {
+  code: boolean;
+  key: string;
+  text: string;
+}
+
+const INLINE_CODE_PATTERN =
+  /(`[^`]+`|\b(?:await\s+)?expect\(.*?\)\.to[A-Za-z_$][\w$]*\([^)]*\)|\b(?:[a-z]+[A-Za-z0-9]*[A-Z][A-Za-z0-9]*|[a-z_$][\w$]*\.[A-Za-z_$][\w$]*(?:\([^)]*\))?)(?:\.[A-Za-z_$][\w$]*(?:\([^)]*\))?)*)/g;
+
+function renderInlineText(text: string) {
+  return splitInlineCodeParts(text).map((part) =>
+    part.code ? (
+      <code key={part.key} className={styles.inlineCode}>
+        {part.text}
+      </code>
+    ) : (
+      part.text
+    ),
+  );
+}
+
+function splitInlineCodeParts(text: string): InlineTextPart[] {
+  const parts: InlineTextPart[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(INLINE_CODE_PATTERN)) {
+    const value = match[0];
+    const index = match.index ?? 0;
+    if (index > lastIndex) {
+      parts.push({
+        code: false,
+        key: `text-${lastIndex}-${index}`,
+        text: text.slice(lastIndex, index),
+      });
+    }
+    parts.push({
+      code: true,
+      key: `code-${index}-${index + value.length}`,
+      text: stripInlineCodeTicks(value),
+    });
+    lastIndex = index + value.length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({
+      code: false,
+      key: `text-${lastIndex}-${text.length}`,
+      text: text.slice(lastIndex),
+    });
+  }
+  return parts;
+}
+
+function stripInlineCodeTicks(value: string): string {
+  return value.startsWith('`') && value.endsWith('`') ? value.slice(1, -1) : value;
 }
 
 function OrderComparison({
@@ -836,7 +898,7 @@ function SummaryView({
           {missedQuestions.map((question) => (
             <Card key={question.id}>
               <CardHeader>
-                <CardTitle className={styles.missedTitle}>{question.stem}</CardTitle>
+                <CardTitle className={styles.missedTitle}>{renderInlineText(question.stem)}</CardTitle>
                 <CardDescription>
                   {question.domain} · {question.section} · difficulty {question.difficulty}
                 </CardDescription>
