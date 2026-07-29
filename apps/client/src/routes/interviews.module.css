@@ -14,6 +14,8 @@
 .domainCard {
   width: 100%;
   min-height: 11rem;
+  display: flex;
+  flex-direction: column;
   padding: 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -44,6 +46,7 @@
 .cardTitle,
 .feedbackTitle,
 .summaryActions,
+.autoReadControl,
 .startRow {
   display: flex;
   align-items: center;
@@ -71,7 +74,7 @@
 }
 
 .domainTitle {
-  font-size: var(--text-lg);
+  font-size: var(--text-2xl);
   font-weight: 700;
 }
 
@@ -79,13 +82,14 @@
   min-height: 4rem;
   margin-top: 0.75rem;
   color: var(--text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   line-height: 1.45;
 }
 
 .domainMeta {
   flex-wrap: wrap;
-  margin-top: 1rem;
+  margin-top: auto;
+  padding-top: 1rem;
 }
 
 .control {
@@ -93,12 +97,13 @@
   margin-top: 0.5rem;
 }
 
-.switchControl {
+.autoReadControl {
   min-height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: var(--text-base);
+  font-weight: 600;
 }
 
 .startRow {
@@ -114,10 +119,15 @@
   flex-wrap: wrap;
 }
 
+.questionBadge {
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
 .stem {
   max-width: 58rem;
   font-size: clamp(1.35rem, 1.1rem + 0.6vw, 1.85rem);
-  line-height: 1.25;
+  line-height: 1.5;
 }
 
 .stemRow,
@@ -128,11 +138,17 @@
   gap: 0.75rem;
 }
 
-.ttsControl {
-  margin-top: -0.25rem;
+.stemRow {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.hiddenTts {
+  display: none;
 }
 
 .optionsGrid {
+  margin-top: 1rem;
   row-gap: 0.75rem;
 }
 
@@ -140,9 +156,25 @@
   width: 100%;
   min-height: 4.5rem;
   justify-content: flex-start;
+  gap: 1rem;
   padding: 1rem;
+  border-color: color-mix(in srgb, var(--info-border, var(--accent)) 55%, var(--border));
+  background: color-mix(in srgb, var(--info-text, var(--accent)) 8%, var(--card));
+  color: color-mix(in srgb, var(--info-text, var(--accent)) 18%, var(--foreground));
+  font-weight: 600;
   white-space: normal;
   text-align: left;
+  opacity: 1;
+}
+
+.optionText {
+  font-size: var(--text-base);
+  line-height: 1.25;
+}
+
+.quizButton {
+  font-size: var(--text-base);
+  font-weight: 600;
 }
 
 .optionButton[data-correct="true"] {
@@ -159,8 +191,8 @@
 
 .optionIndex,
 .orderIndex {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -169,7 +201,22 @@
   background: var(--muted);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+}
+
+.optionIndex {
+  background: color-mix(in srgb, var(--info-text, var(--accent)) 20%, var(--card));
+  color: color-mix(in srgb, var(--info-text, var(--accent)) 30%, var(--foreground));
+}
+
+.optionButton[data-correct="true"] .optionIndex {
+  background: color-mix(in srgb, var(--success-border, var(--accent)) 50%, var(--card));
+  color: color-mix(in srgb, var(--success-text, var(--accent)) 15%, var(--foreground));
+}
+
+.optionButton[data-wrong="true"] .optionIndex {
+  background: color-mix(in srgb, var(--info-text, var(--accent)) 30%, var(--card));
+  color: color-mix(in srgb, var(--info-text, var(--accent)) 30%, var(--foreground));
 }
 
 .orderItem {
@@ -181,6 +228,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--card);
+  font-weight: 600;
 }
 
 .orderItem:focus-visible {
@@ -197,7 +245,7 @@
 .feedback {
   display: grid;
   gap: 0.75rem;
-  padding: 1rem;
+  padding: 1.25rem 1.5rem 1.25rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--muted);
@@ -205,8 +253,26 @@
 
 .feedbackTitle {
   margin: 0;
-  font-size: var(--text-base);
+  font-size: var(--text-xl);
   font-weight: 700;
+}
+
+.feedback p {
+  font-size: var(--text-lg);
+  line-height: 1.45;
+}
+
+.feedbackTitle[data-correct="true"] {
+  color: var(--success-text);
+}
+
+.feedbackTitle[data-wrong="true"] {
+  color: var(--destructive);
+}
+
+.feedbackActions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .sequenceBox {
@@ -284,8 +350,24 @@
   overflow-x: auto;
   padding: 0.85rem;
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  line-height: 1.45;
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+.highlightedCode :global(.shiki) {
+  margin: 0;
+  overflow-x: auto;
+  padding: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+.highlightedCode :global(.shiki) code {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: inherit;
 }
 
 @media (max-width: 640px) {

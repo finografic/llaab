@@ -23,12 +23,16 @@ export interface TtsPlayerProps {
   sentencePauseMs?: number;
   paragraphPauseMs?: number;
   estimatedDurationSeconds?: number;
-  autoPlay?: boolean;
   className?: string;
   /** Model precision. Default `fp32` (best quality with `webgpu`). */
   dtype?: TtsDtype;
   /** Inference device. Default `webgpu`. */
   device?: TtsDevice;
+}
+
+export interface TtsPlayerHandle {
+  playFromStart: () => void;
+  stop: () => void;
 }
 
 export type TtsPlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';

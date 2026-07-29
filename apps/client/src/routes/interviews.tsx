@@ -19,9 +19,11 @@ import {
   RotateCcwIcon,
   XCircleIcon,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { TtsPlayerHandle } from 'components/TtsPlayer';
 import type { KeyboardEvent } from 'react';
 
+import { api } from 'lib/api';
 import { INTERVIEW_DOMAIN_META, INTERVIEW_DOMAIN_STATS, INTERVIEW_QUESTIONS } from 'lib/interview-quiz-data';
 import {
   createDefaultInterviewSessionConfig,
@@ -213,6 +215,10 @@ export function InterviewsPage() {
     startSession(missedIds);
   }
 
+  function setAutoRead(autoRead: boolean) {
+    setConfig((current) => ({ ...current, autoRead }));
+  }
+
   return (
     <PageLayout
       hero={
@@ -220,6 +226,12 @@ export function InterviewsPage() {
           eyebrow="Practice"
           title="Interview Quiz"
           description="VALD-focused rehearsal across the completed static question bank."
+          right={
+            <div className={styles.autoReadControl}>
+              <Label htmlFor="interview-auto-read">Autoplay</Label>
+              <Switch id="interview-auto-read" checked={config.autoRead} onCheckedChange={setAutoRead} />
+            </div>
+          }
           meta={
             <>
               {INTERVIEW_QUESTIONS.length} questions · {storage.attempts.length} attempts ·{' '}
@@ -403,21 +415,12 @@ function SetupView({
                 <NativeSelectOption value="3">3</NativeSelectOption>
               </NativeSelect>
             </Col>
-            <Col xs={12} md={3}>
-              <div className={styles.switchControl}>
-                <Label htmlFor="interview-auto-read">Auto-read</Label>
-                <Switch
-                  id="interview-auto-read"
-                  checked={config.autoRead}
-                  onCheckedChange={(autoRead) => onConfigChange({ ...config, autoRead })}
-                />
-              </div>
-            </Col>
           </Row>
 
           <div className={styles.startRow}>
             <Button
               type="button"
+              className={styles.quizButton}
               disabled={selectedDomains.length === 0 || selectedQuestionCount === 0}
               onClick={onStart}
             >
@@ -459,31 +462,81 @@ function QuestionView({
   onToggleFlag: () => void;
   onNext: () => void;
 }) {
+  const questionTtsRef = useRef<TtsPlayerHandle>(null);
+  const feedbackTtsRef = useRef<TtsPlayerHandle>(null);
+  const questionSpokenText = getQuestionSpokenText(question);
+  const explanationSpokenText = getExplanationSpokenText(question);
+
+  useEffect(() => {
+    questionTtsRef.current?.stop();
+    feedbackTtsRef.current?.stop();
+
+    if (!autoRead || answer) return;
+
+    const timeoutId = window.setTimeout(() => {
+      questionTtsRef.current?.playFromStart();
+    }, 400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [answer, autoRead, question.id]);
+
+  useEffect(() => {
+    if (!autoRead || !answer) return;
+
+    questionTtsRef.current?.stop();
+    feedbackTtsRef.current?.playFromStart();
+  }, [answer, autoRead, question.id]);
+
   return (
     <Card className={styles.questionCard}>
       <CardHeader>
         <div className={styles.questionTop}>
           <div className={styles.badges}>
-            <Badge variant="secondary">
+            <Badge variant="secondary" className={styles.questionBadge}>
               {currentIndex + 1} / {total}
             </Badge>
-            <Badge variant="outline">{question.domain}</Badge>
-            <Badge variant="outline">{question.section}</Badge>
-            <Badge variant="outline">difficulty {question.difficulty}</Badge>
+            <Badge variant="outline" className={styles.questionBadge}>
+              {question.domain}
+            </Badge>
+            <Badge variant="outline" className={styles.questionBadge}>
+              {question.section}
+            </Badge>
+            <Badge variant="outline" className={styles.questionBadge}>
+              difficulty {question.difficulty}
+            </Badge>
           </div>
-          <Button type="button" size="sm" variant={flagged ? 'default' : 'outline'} onClick={onToggleFlag}>
+          <Button
+            type="button"
+            size="sm"
+            variant={flagged ? 'default' : 'outline'}
+            className={styles.quizButton}
+            onClick={onToggleFlag}
+          >
             <FlagIcon aria-hidden />
             Flag
           </Button>
         </div>
         <div className={styles.stemRow}>
           <CardTitle className={styles.stem}>{question.stem}</CardTitle>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className={styles.quizButton}
+            onClick={() => {
+              feedbackTtsRef.current?.stop();
+              questionTtsRef.current?.playFromStart();
+            }}
+          >
+            <RotateCcwIcon aria-hidden />
+            Replay
+          </Button>
           <TtsPlayer
-            key={`stem-${question.id}-${autoRead ? 'auto' : 'manual'}`}
+            ref={questionTtsRef}
+            key={`stem-${question.id}`}
             variant="compact"
-            text={getQuestionSpokenText(question)}
-            autoPlay={autoRead}
-            className={styles.ttsControl}
+            text={questionSpokenText}
+            className={styles.hiddenTts}
           />
         </div>
       </CardHeader>
@@ -504,14 +557,15 @@ function QuestionView({
         )}
 
         {answer ? (
-          <Feedback
-            question={question}
-            answer={answer}
-            autoRead={autoRead}
-            onNext={onNext}
-            isLast={currentIndex + 1 >= total}
-          />
+          <Feedback question={question} answer={answer} onNext={onNext} isLast={currentIndex + 1 >= total} />
         ) : null}
+        <TtsPlayer
+          ref={feedbackTtsRef}
+          key={`explanation-${question.id}`}
+          variant="compact"
+          text={explanationSpokenText}
+          className={styles.hiddenTts}
+        />
       </CardContent>
     </Card>
   );
@@ -537,7 +591,7 @@ function McqAnswerPanel({
             <Button
               type="button"
               variant="outline"
-              className={styles.optionButton}
+              className={`${styles.optionButton} ${styles.quizButton}`}
               data-selected={isSelected || undefined}
               data-correct={answer && isCorrect ? true : undefined}
               data-wrong={answer && isSelected && !isCorrect ? true : undefined}
@@ -545,7 +599,7 @@ function McqAnswerPanel({
               onClick={() => onSubmit(question, option.id)}
             >
               <span className={styles.optionIndex}>{index + 1}</span>
-              <span>{option.text}</span>
+              <span className={styles.optionText}>{option.text}</span>
             </Button>
           </Col>
         );
@@ -585,7 +639,7 @@ function OrderAnswerPanel({
             onKeyDown={(event) => onItemKeyDown(event, itemId)}
           >
             <span className={styles.orderIndex}>{index + 1}</span>
-            <span>{item.text}</span>
+            <span className={styles.optionText}>{item.text}</span>
             <span className={styles.orderControls}>
               <Button
                 type="button"
@@ -612,7 +666,12 @@ function OrderAnswerPanel({
         );
       })}
 
-      <Button type="button" disabled={answer != null} onClick={() => onSubmit(question)}>
+      <Button
+        type="button"
+        className={styles.quizButton}
+        disabled={answer != null}
+        onClick={() => onSubmit(question)}
+      >
         Check order
       </Button>
     </div>
@@ -624,36 +683,33 @@ function Feedback({
   answer,
   onNext,
   isLast,
-  autoRead,
 }: {
   question: InterviewQuestion;
   answer: InterviewAnswer;
   onNext: () => void;
   isLast: boolean;
-  autoRead: boolean;
 }) {
   return (
     <section className={styles.feedback} aria-live="polite">
       <div className={styles.feedbackHeader}>
-        <h2 className={styles.feedbackTitle}>
+        <h2
+          className={styles.feedbackTitle}
+          data-correct={answer.correct || undefined}
+          data-wrong={!answer.correct || undefined}
+        >
           {answer.correct ? <CheckCircleIcon aria-hidden /> : <XCircleIcon aria-hidden />}
           {answer.correct ? 'Correct' : 'Not quite'}
         </h2>
-        <TtsPlayer
-          key={`explanation-${question.id}-${autoRead ? 'auto' : 'manual'}`}
-          variant="compact"
-          text={getExplanationSpokenText(question)}
-          autoPlay={autoRead}
-          className={styles.ttsControl}
-        />
       </div>
       {question.type === 'order' && answer.type === 'order' ? (
         <OrderComparison question={question} submittedOrder={answer.submittedOrder} />
       ) : null}
       <p>{question.explanation}</p>
-      <Button type="button" onClick={onNext}>
-        {isLast ? 'Finish session' : 'Next question'}
-      </Button>
+      <div className={styles.feedbackActions}>
+        <Button type="button" className={styles.quizButton} onClick={onNext}>
+          {isLast ? 'Finish session' : 'Next question'}
+        </Button>
+      </div>
     </section>
   );
 }
@@ -758,10 +814,15 @@ function SummaryView({
             })}
           </Row>
           <div className={styles.summaryActions}>
-            <Button type="button" variant="outline" onClick={onNewSession}>
+            <Button type="button" variant="outline" className={styles.quizButton} onClick={onNewSession}>
               New session
             </Button>
-            <Button type="button" disabled={missedQuestions.length === 0} onClick={onRetryMissed}>
+            <Button
+              type="button"
+              className={styles.quizButton}
+              disabled={missedQuestions.length === 0}
+              onClick={onRetryMissed}
+            >
               <RotateCcwIcon aria-hidden />
               Retry missed only
             </Button>
@@ -792,14 +853,53 @@ function SummaryView({
 }
 
 function CodeBlock({ lang, content }: { lang: string; content: string }) {
+  const displayLang = normalizeDisplayLanguage(lang);
+  const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setHighlightedHtml(null);
+
+    async function highlightCode() {
+      try {
+        const res = await api.vault['code-highlight'].$post({
+          json: { code: content, language: displayLang },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setHighlightedHtml(data.html);
+      } catch {
+        if (!cancelled) setHighlightedHtml(null);
+      }
+    }
+
+    void highlightCode();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [content, displayLang]);
+
   return (
     <figure className={styles.codeBlock}>
-      <figcaption>{lang}</figcaption>
-      <pre>
-        <code>{content}</code>
-      </pre>
+      <figcaption>{displayLang}</figcaption>
+      {highlightedHtml ? (
+        <div className={styles.highlightedCode} dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
+      ) : (
+        <pre>
+          <code>{content}</code>
+        </pre>
+      )}
     </figure>
   );
+}
+
+function normalizeDisplayLanguage(language: string): string {
+  const normalized = language.trim().toLowerCase();
+  if (normalized === 'jsx' || normalized === 'javascriptreact') return 'tsx';
+  if (normalized === 'js') return 'javascript';
+  if (normalized === 'ts') return 'typescript';
+  return normalized || 'text';
 }
 
 function parseSessionCount(value: string): InterviewSessionCount {

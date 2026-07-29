@@ -1,9 +1,10 @@
 import { Button } from 'components/ui/button';
 import { PauseIcon, PlayIcon, SkipBackIcon, SkipForwardIcon } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type {
   TtsDevice,
   TtsDtype,
+  TtsPlayerHandle,
   TtsPlaybackStatus,
   TtsPlayerProps,
   TtsPlayerSection,
@@ -73,20 +74,22 @@ type TtsWorkerMessage =
   | { type: 'done'; runId: number }
   | { type: 'error'; runId: number; message: string };
 
-export function TtsPlayer({
-  text,
-  sections,
-  variant = 'full',
-  voice = DEFAULT_VOICE,
-  speed = DEFAULT_SPEED,
-  sentencePauseMs = DEFAULT_SENTENCE_PAUSE_MS,
-  paragraphPauseMs = DEFAULT_PARAGRAPH_PAUSE_MS,
-  estimatedDurationSeconds,
-  autoPlay = false,
-  className,
-  dtype = DEFAULT_DTYPE,
-  device = DEFAULT_DEVICE,
-}: TtsPlayerProps) {
+export const TtsPlayer = forwardRef<TtsPlayerHandle, TtsPlayerProps>(function TtsPlayer(
+  {
+    text,
+    sections,
+    variant = 'full',
+    voice = DEFAULT_VOICE,
+    speed = DEFAULT_SPEED,
+    sentencePauseMs = DEFAULT_SENTENCE_PAUSE_MS,
+    paragraphPauseMs = DEFAULT_PARAGRAPH_PAUSE_MS,
+    estimatedDurationSeconds,
+    className,
+    dtype = DEFAULT_DTYPE,
+    device = DEFAULT_DEVICE,
+  },
+  ref,
+) {
   const playableSections = useMemo(() => getPlayableSections(text, sections), [sections, text]);
   const [status, setStatus] = useState<TtsPlaybackStatus>('idle');
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -139,13 +142,16 @@ export function TtsPlayer({
     stopPlayback();
   }, [playableSections, dtype, device]);
 
-  useEffect(() => {
-    if (!autoPlay || !hasSections) return;
-
-    void startPlayback(0);
-    // Playback is ref-driven; this effect intentionally follows source text and autoplay state.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoPlay, hasSections, playableSections]);
+  useImperativeHandle(ref, () => ({
+    playFromStart: () => {
+      stopPlayback({ releaseClaim: false });
+      setCompletedAudioSeconds(0);
+      setCurrentAudioSeconds(0);
+      setSectionIndex(0);
+      void startPlayback(0);
+    },
+    stop: () => stopPlayback(),
+  }));
 
   function getWorker() {
     workerRef.current ??= new Worker(new URL('./tts-player.worker.ts', import.meta.url), {
@@ -433,4 +439,4 @@ export function TtsPlayer({
       ) : null}
     </div>
   );
-}
+});
