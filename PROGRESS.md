@@ -1,12 +1,12 @@
 # Interview Quiz Module: progress
 
-Last updated: 2026-07-29T23:05:00+10:00
+Last updated: 2026-07-30T00:40:00+10:00
 Last worked by: Opus, via subagent
 
 ## Status
 
 - [x] P0 Scaffold, types, validator (SONNET)
-- [ ] P1a Bank: testing (OPUS) 0/30
+- [x] P1a Bank: testing (OPUS) 35/35
 - [x] P1b Bank: apis (OPUS) 35/35
 - [x] P1c Bank: platform (OPUS) 32/32
 - [ ] P1d Bank: typescript (SONNET) 0/28
@@ -30,6 +30,8 @@ Last worked by: Opus, via subagent
 - `vault/interviews/VALD/bank/platform.md` — same 32 questions as a plain readable study doc
 - `vault/interviews/VALD/questions/apis.json` — 35 questions (12 glossary, 23 depth; 25 mcq, 10 order)
 - `vault/interviews/VALD/bank/apis.md` — same 35 questions as a plain readable study doc
+- `vault/interviews/VALD/questions/testing.json` — 35 questions (11 glossary, 24 depth; 25 mcq, 10 order; 10 code blocks)
+- `vault/interviews/VALD/bank/testing.md` — same 35 questions as a plain readable study doc
 
 ## Decisions made
 
@@ -46,10 +48,29 @@ Last worked by: Opus, via subagent
 - **P1b `apis`.** Two `code` blocks used (`apis-015` a TypeScript device-upload client, `apis-017` a JSON device response), both with `stemSpoken`. The domain benefits from code but most of its content is contract judgement rather than syntax, so code was used where it clarifies rather than sprayed across the bank. `explanationSpoken` is present wherever a field contains status codes read as digits, "idempotent", hyphenated header names, or acronyms; not blanket-applied.
 - **P1b `apis`.** One ordering question (`apis-029`, changes ranked by breaking risk) was cut from five items to four because the fifth ordering (making an optional request field required) could not be ranked against the others without arbitrariness, and the spec says to delete an arbitrary ordering rather than defend it.
 
+- **P1a `testing`.** Exemplar E2 in the spec is itself a `testing` question, so it was included in the bank rather than held out as format-only, matching the calls made for E4 in `platform` and E1 in `apis`. Its id moved from the spec's `testing-011` to `testing-012` so ids stay sequential across the glossary and depth split; stem, code, options, `distractorNotes` and `explanation` are verbatim. An `explanationSpoken` was added, because the exemplar's written explanation contains an inline code expression that must never reach kokoro.
+- **P1a `testing`.** 35 questions, the top of the 28 to 35 range, split 11 glossary / 24 depth. The Playwright half is treated as a teaching surface per spec section 1 D1, so it carries all 10 code blocks and the depth section runs slightly above the spec's soft 18 to 23 guide.
+- **P1a `testing`.** Every Playwright snippet was verified against the official Playwright documentation rather than written from memory, since this is a stated factual gap and a wrong snippet would be memorised as correct. Verified: `route.fulfill({ json })`; the setup-project `dependencies` pattern with `page.context().storageState({ path })` and `test.use({ storageState })`; `trace: 'on-first-retry'` plus `npx playwright show-trace`; `toHaveScreenshot` on both page and locator plus `--update-snapshots`. Nothing was left uncertain, so no snippet is flagged as doubtful.
+- **P1a `testing`.** One planned glossary question (a plain "what is a locator" definition) was cut, because `testing-014` already teaches locator laziness and re-resolution with code and a definitional duplicate would have pushed the bank past 35.
+- **P1a `testing`.** The markdown study doc is generated from the JSON rather than hand-written, so the two files cannot drift. Section headings and the `[x]` convention match `platform.md` and `apis.md`.
+
 ## Open questions for Justin
 
 - None blocking. Confirm `/interviews` as the route name when P3 starts, or say otherwise.
 
 ## Next action
 
-Run phase P1a (bank: `testing`) on Opus, same procedure as P1c and P1b. It is the last of the three Opus-priority phases (platform, then apis, then testing, per `BUILD_PHASES_AND_HANDOFF.md`). Read `.agents/INTERVIEW_QUIZ_APP_SPEC.md` section 1 (domain D1) and section 4 exemplars (E2 especially, which is a `testing` question with code) in full first. Generate 28-35 questions per the schema in section 2, writing rules in section 3. D1 has two halves: testing philosophy, and Playwright treated as a known gap where the bank should educate as well as test, with code snippets in stems and options wherever they help. Ingest only the three source docs in `vault/interviews/VALD/` (CV, prep doc, glossary), no web search except to verify a specific technical fact such as current Playwright API syntax. Write `vault/interviews/VALD/questions/testing.json` and `vault/interviews/VALD/bank/testing.md` (plain readable: question, options, correct answer, explanation, no app code needed to read it). Run `bun scripts/validate-interview-bank.ts testing` from repo root and fix every reported error before proceeding. Then update this file's Status/Files/Decisions and commit (bank files from the nested `vault/` repo, PROGRESS.md from the parent repo). Stop and report after it.
+**All three Opus-priority phases are now complete.** `platform` (32), `apis` (35) and `testing` (35) are written, validated and committed: 102 questions across the three domains that carry the most interview weight and that were hardest to get right without a frontier model.
+
+Per `BUILD_PHASES_AND_HANDOFF.md`, the remaining phases in order are:
+
+- **P1d Bank: `typescript`** (Sonnet, with an Opus review pass over the difficulty-3 items, where the distractors have to be genuinely tempting).
+- **P1e Bank: `cloud`** (Sonnet).
+- **P1f Bank: `frontend`** (Sonnet).
+- **P1g Bank: `vald`** (Sonnet; small, 10 to 15 flashcard items, all MCQ, all glossary).
+- **P2 Spoken fields** (Sonnet). Largely handled inline per domain already, since `platform`, `apis` and `testing` all carry `stemSpoken` / `explanationSpoken` wherever the text mangles under TTS. Verify what is actually left rather than assuming it is a full pass.
+- **P3 App UI and state** (Sonnet).
+- **P4 kokoro-js integration** (Sonnet).
+- **P5 Human review** (Justin).
+
+**A natural pause point exists here.** Three of the highest-value, hardest-to-verify banks are done, and every one of them is readable as plain markdown at `vault/interviews/VALD/bank/*.md` with no app, no build step and no network. If nothing else gets built before Friday, the material still works: open the markdown, read the stem, cover the answers. Per spec section 7, time spent saying answers out loud beats time spent building the tool that asks them.
