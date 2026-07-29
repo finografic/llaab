@@ -8,6 +8,7 @@
     "dev:refresh": "scripts/macos/dev-refresh.sh",
     "dev:clean:vault:recent:6h": "bun scripts/clean-recent-vault-activity.ts --hours 6 --yes",
     "dev:clean:vault:recent": "bun scripts/clean-recent-vault-activity.ts",
+    "validate:interview-bank": "bun scripts/validate-interview-bank.ts --all",
     "dev:daemon:restart": "launchctl kickstart -k gui/$(id -u)/com.llaab.server",
     "dev:reset": "run-s reset",
     "dev": "turbo dev",
