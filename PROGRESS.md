@@ -70,7 +70,7 @@ Per `BUILD_PHASES_AND_HANDOFF.md`, the remaining phases in order are:
 - **P1g Bank: `vald`** (Sonnet; small, 10 to 15 flashcard items, all MCQ, all glossary).
 - **P2 Spoken fields** (Sonnet). Largely handled inline per domain already, since `platform`, `apis` and `testing` all carry `stemSpoken` / `explanationSpoken` wherever the text mangles under TTS. Verify what is actually left rather than assuming it is a full pass.
 - **P3 App UI and state** (Sonnet).
-- **P4 kokoro-js integration** (Sonnet).
+- **P4 kokoro-js integration** (Sonnet). **Do not wire up kokoro-js from scratch.** A reusable `TtsPlayer` component already exists at `apps/client/src/components/TtsPlayer/` (`TtsPlayer.tsx`, `tts-player.worker.ts`, `tts-player.types.ts`, `tts-player.utils.ts`, exported via `index.ts`) and is already in use on the wiki detail page (`apps/client/src/routes/wiki-detail-page.tsx`) and transcript detail (`apps/client/src/components/TranscriptsSplitView/components/TranscriptDetail.tsx`). Per project memory it runs Kokoro with `dtype="fp32"` + `device="webgpu"` and handles model load/caching already. P4 should reuse this component against `stemSpoken ?? stem` and `explanationSpoken ?? explanation`, not reimplement kokoro loading.
 - **P5 Human review** (Justin).
 
 **A natural pause point exists here.** Three of the highest-value, hardest-to-verify banks are done, and every one of them is readable as plain markdown at `vault/interviews/VALD/bank/*.md` with no app, no build step and no network. If nothing else gets built before Friday, the material still works: open the markdown, read the stem, cover the answers. Per spec section 7, time spent saying answers out loud beats time spent building the tool that asks them.
