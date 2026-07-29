@@ -17,10 +17,12 @@ const VAULT_SIDEBAR_WIDE_MAX_WIDTH = '580px';
 const VAULT_SIDEBAR_WIDE_BREAKPOINT = BREAKPOINTS['2xl'];
 const PATH_SEARCH_PARAM = 'path';
 const VIEW_SEARCH_PARAM = 'view';
+const SPLIT_SEARCH_PARAM = 'split';
 const DIFF_VIEW = 'diff';
 const RENDER_VIEW = 'render';
 const ENHANCED_VIEW = 'enhanced';
 type MarkdownView = 'raw' | 'render' | 'enhanced';
+type SplitLevel = 'h1' | 'h2';
 
 function useWideVaultSidebar(): boolean {
   const [wide, setWide] = useState(false);
@@ -54,6 +56,8 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
   const showDiff = view === DIFF_VIEW;
   const showRenderedMarkdown = view === RENDER_VIEW;
   const showEnhancedMarkdown = view === ENHANCED_VIEW;
+  const splitParam = searchParams.get(SPLIT_SEARCH_PARAM);
+  const splitLevel: SplitLevel = splitParam === 'h2' ? 'h2' : 'h1';
 
   const setSelectedPath = useCallback(
     (path: string) => {
@@ -92,6 +96,24 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
     [setSearchParams],
   );
 
+  const setSplitLevel = useCallback(
+    (level: SplitLevel) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (level === 'h2') {
+            next.set(SPLIT_SEARCH_PARAM, 'h2');
+          } else {
+            next.delete(SPLIT_SEARCH_PARAM);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
   const sidebarContent = useMemo(
     () => <VaultSidebar tree={tree} selectedPath={selectedPath} onSelect={setSelectedPath} />,
     [tree, selectedPath, setSelectedPath],
@@ -117,7 +139,9 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
       showDiff={showDiff}
       showRenderedMarkdown={showRenderedMarkdown}
       showEnhancedMarkdown={showEnhancedMarkdown}
+      splitLevel={splitLevel}
       onMarkdownViewChange={setMarkdownView}
+      onSplitLevelChange={setSplitLevel}
     />
   );
 }

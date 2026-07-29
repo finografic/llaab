@@ -13,7 +13,10 @@ interface RawVaultMarkdownSection {
   markdown: string;
 }
 
+export type VaultMarkdownSplitLevel = 'h1' | 'h2';
+
 const H1_PATTERN = /^#(?!#)\s+(.+)$/gmu;
+const H2_PATTERN = /^##(?!#)\s+(.+)$/gmu;
 
 function normalizeSectionId(heading: string, index: number): string {
   const slug = heading
@@ -24,8 +27,9 @@ function normalizeSectionId(heading: string, index: number): string {
   return slug || `section-${index + 1}`;
 }
 
-function splitMarkdownByH1(markdown: string): RawVaultMarkdownSection[] {
-  const matches = [...markdown.matchAll(H1_PATTERN)];
+function splitMarkdownByHeading(markdown: string, level: VaultMarkdownSplitLevel): RawVaultMarkdownSection[] {
+  const pattern = level === 'h2' ? H2_PATTERN : H1_PATTERN;
+  const matches = [...markdown.matchAll(pattern)];
 
   if (matches.length === 0) {
     return [
@@ -68,8 +72,11 @@ function splitMarkdownByH1(markdown: string): RawVaultMarkdownSection[] {
   return sections;
 }
 
-export async function renderVaultMarkdownSections(markdown: string): Promise<VaultMarkdownSection[]> {
-  const sections = splitMarkdownByH1(markdown);
+export async function renderVaultMarkdownSections(
+  markdown: string,
+  level: VaultMarkdownSplitLevel = 'h1',
+): Promise<VaultMarkdownSection[]> {
+  const sections = splitMarkdownByHeading(markdown, level);
 
   return Promise.all(
     sections.map(async (section) => ({

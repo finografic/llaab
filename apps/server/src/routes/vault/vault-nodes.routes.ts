@@ -63,10 +63,11 @@ export const file = {
       const content = await readFile(resolved, 'utf-8');
       const extension = extname(resolved).toLowerCase();
       const renderMode = c.req.query('render');
+      const splitLevel = c.req.query('split') === 'h2' ? 'h2' : 'h1';
       const isMarkdown = extension === '.md' || extension === '.markdown';
       const html = renderMode === 'markdown' && isMarkdown ? await renderReadmeToHtml(content) : null;
       const sections =
-        renderMode === 'sections' && isMarkdown ? await renderVaultMarkdownSections(content) : [];
+        renderMode === 'sections' && isMarkdown ? await renderVaultMarkdownSections(content, splitLevel) : [];
       return c.json({ content, html, sections });
     } catch {
       return c.json({ error: 'File not found.' }, 404);

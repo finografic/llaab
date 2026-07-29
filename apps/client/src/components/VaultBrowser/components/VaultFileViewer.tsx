@@ -7,7 +7,7 @@ import { ToggleGroup, ToggleGroupItem } from 'components/ui/toggle-group';
 import { SquareArrowUpIcon } from 'lucide-react';
 import { useVaultFile, useVaultFileDiff } from 'queries/vault';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { VaultMarkdownRenderMode } from 'queries/vault';
+import type { VaultMarkdownRenderMode, VaultMarkdownSplitLevel } from 'queries/vault';
 
 import { PIERRE_DIFFS_THEME_STYLE } from 'constants/pierre-diffs-theme';
 
@@ -61,7 +61,9 @@ export interface VaultFileViewerProps {
   showDiff?: boolean;
   showRenderedMarkdown?: boolean;
   showEnhancedMarkdown?: boolean;
+  splitLevel?: VaultMarkdownSplitLevel;
   onMarkdownViewChange?: (mode: VaultMarkdownRenderMode) => void;
+  onSplitLevelChange?: (level: VaultMarkdownSplitLevel) => void;
 }
 
 function isMarkdownPath(path: string | null): boolean {
@@ -73,7 +75,9 @@ export function VaultFileViewer({
   showDiff = false,
   showRenderedMarkdown = false,
   showEnhancedMarkdown = false,
+  splitLevel = 'h1',
   onMarkdownViewChange,
+  onSplitLevelChange,
 }: VaultFileViewerProps) {
   const markdownView: VaultMarkdownRenderMode = showEnhancedMarkdown
     ? 'enhanced'
@@ -84,7 +88,7 @@ export function VaultFileViewer({
     data: fileContent,
     isLoading: fileLoading,
     error: fileError,
-  } = useVaultFile(path, !showDiff, isMarkdownPath(path) ? markdownView : 'raw');
+  } = useVaultFile(path, !showDiff, isMarkdownPath(path) ? markdownView : 'raw', splitLevel);
   const { data: patch, isLoading: diffLoading, error: diffError } = useVaultFileDiff(path, showDiff);
   const [highlightBold, setHighlightBold] = useState(false);
   const [italiciseQuotes, setItaliciseQuotes] = useState(false);
@@ -246,6 +250,19 @@ export function VaultFileViewer({
             <Col xs={6} className={styles.viewerToolbarRight}>
               {showEnhancedMarkdown ? (
                 <>
+                  <ToggleGroup
+                    type="single"
+                    size="sm"
+                    variant="outline"
+                    value={splitLevel}
+                    onValueChange={(value) => {
+                      if (value === 'h1' || value === 'h2') onSplitLevelChange?.(value);
+                    }}
+                    aria-label="Split markdown sections by"
+                  >
+                    <ToggleGroupItem value="h1">H1</ToggleGroupItem>
+                    <ToggleGroupItem value="h2">H2</ToggleGroupItem>
+                  </ToggleGroup>
                   <Toggle
                     size="sm"
                     variant="outline"

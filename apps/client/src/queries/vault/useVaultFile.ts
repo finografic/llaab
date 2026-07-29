@@ -18,11 +18,20 @@ export interface VaultMarkdownSection {
 }
 
 export type VaultMarkdownRenderMode = 'raw' | 'render' | 'enhanced';
+export type VaultMarkdownSplitLevel = 'h1' | 'h2';
 
-async function fetchVaultFile(path: string, renderMode: VaultMarkdownRenderMode): Promise<VaultFileContent> {
+async function fetchVaultFile(
+  path: string,
+  renderMode: VaultMarkdownRenderMode,
+  splitLevel?: VaultMarkdownSplitLevel,
+): Promise<VaultFileContent> {
   const render = renderMode === 'enhanced' ? 'sections' : renderMode === 'render' ? 'markdown' : undefined;
   const res = await api.vault.file.$get({
-    query: { path, ...(render ? { render } : {}) },
+    query: {
+      path,
+      ...(render ? { render } : {}),
+      ...(render === 'sections' ? { split: splitLevel ?? 'h1' } : {}),
+    },
   });
   const json = await res.json();
   if ('error' in json) throw new Error(json.error);
@@ -34,10 +43,11 @@ export function useVaultFile(
   path: string | null,
   enabled = true,
   renderMode: VaultMarkdownRenderMode = 'raw',
+  splitLevel: VaultMarkdownSplitLevel = 'h1',
 ) {
   return useQuery({
-    queryKey: QUERY_KEYS.vault.file(path ?? '', renderMode),
-    queryFn: () => fetchVaultFile(path as string, renderMode),
+    queryKey: QUERY_KEYS.vault.file(path ?? '', renderMode, splitLevel),
+    queryFn: () => fetchVaultFile(path as string, renderMode, splitLevel),
     enabled: enabled && path != null,
   });
 }
