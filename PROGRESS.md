@@ -3,6 +3,17 @@
 Last updated: 2026-07-30T05:40:00+10:00
 Last worked by: Opus, via subagent
 
+**Handoff note (2026-07-30):** Justin is pausing here to conserve Claude usage credits ahead of
+Friday's interview and moving the remaining work to GPT-5.5/Codex. Nothing was lost: every decision,
+deviation and the exact next step is written below for a reader with zero session context. Read
+this file plus `.agents/INTERVIEW_QUIZ_APP_SPEC.md` and `.agents/BUILD_PHASES_AND_HANDOFF.md` (all
+three are required, not optional) before doing anything, then execute only the phase named in
+"Next action" below. House-style rules that are easy to drift on across a model handoff: Australian
+and British spelling throughout (except "artifact", kept American — see the P1h decision below for
+why), zero em-dashes anywhere in generated content, MCQ options capped at 12 words, order items at
+10 words. Match the six worked exemplars in spec section 4 for tone and calibration if writing any
+further quiz content.
+
 ## Status
 
 - [x] P0 Scaffold, types, validator (SONNET)

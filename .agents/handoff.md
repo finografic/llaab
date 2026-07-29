@@ -771,6 +771,28 @@ unrelated. `turbo.json`'s `typecheck` task now `dependsOn: ["^build", "^typechec
 just `^typecheck`) so this can't recur — see `docs/todo/DONE_TS7_UPGRADE.md` for the full
 investigation.
 
+## Interview Quiz Module (in progress)
+
+New section for a static, offline interview-practice quiz, built for Justin's VALD Performance
+final interview (Fri 31 Jul 2026). Full spec and phase plan: `.agents/INTERVIEW_QUIZ_APP_SPEC.md` +
+`.agents/BUILD_PHASES_AND_HANDOFF.md`. Live status, decisions, and the next concrete step (written
+for a cold handoff, currently to GPT-5.5/Codex) live in `PROGRESS.md` at repo root — read that file
+first, it is the source of truth, not this summary.
+
+**Question-bank layer is complete.** All 7 spec domains plus the `vald` bonus round are generated,
+schema-validated, and committed: 251 questions across `testing`, `apis`, `platform`, `typescript`,
+`cloud`, `frontend`, `automation`, `vald`. Assets (generated JSON + a markdown study-doc twin per
+domain, plus the ingested VALD source docs) live under `vault/interviews/VALD/` — vault is the data
+layer, app code stays logic-only, a deliberate deviation from the spec's `src/data/` path. Schema
+types: `apps/client/src/types/interview-quiz.types.ts`. Validator: `bun scripts/validate-interview-bank.ts
+<domain>|--all` (`pnpm validate:interview-bank`).
+
+**Not yet built:** the app itself (route `/interviews`, chosen but not wired into the router;
+domain-select → session-config → question-view → feedback → summary flow per spec section 6;
+localStorage persistence). Read-aloud should reuse the existing `TtsPlayer` component
+(`apps/client/src/components/TtsPlayer/`, already used on wiki/transcript detail pages) rather than
+integrating kokoro-js from scratch.
+
 ## Open Questions
 
 - Tag origin tracking: separate `autoTags` / `manualTags` fields vs. post-hoc derivation?
