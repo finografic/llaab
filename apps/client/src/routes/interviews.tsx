@@ -1,4 +1,5 @@
 import { PageHero } from 'components/PageHero/PageHero';
+import { TtsPlayer } from 'components/TtsPlayer';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from 'components/ui/card';
@@ -248,6 +249,7 @@ export function InterviewsPage() {
             total={sessionQuestions.length}
             orderIds={orderIds}
             flagged={flaggedIds.has(currentQuestion.id)}
+            autoRead={config.autoRead}
             onSubmitMcq={submitMcq}
             onSubmitOrder={submitOrder}
             onMoveOrderItem={moveOrderItem}
@@ -435,6 +437,7 @@ function QuestionView({
   total,
   orderIds,
   flagged,
+  autoRead,
   onSubmitMcq,
   onSubmitOrder,
   onMoveOrderItem,
@@ -448,6 +451,7 @@ function QuestionView({
   total: number;
   orderIds: string[];
   flagged: boolean;
+  autoRead: boolean;
   onSubmitMcq: (question: InterviewMcqQuestion, selectedOptionId: string) => void;
   onSubmitOrder: (question: InterviewOrderQuestion) => void;
   onMoveOrderItem: (itemId: string, direction: -1 | 1) => void;
@@ -472,7 +476,16 @@ function QuestionView({
             Flag
           </Button>
         </div>
-        <CardTitle className={styles.stem}>{question.stem}</CardTitle>
+        <div className={styles.stemRow}>
+          <CardTitle className={styles.stem}>{question.stem}</CardTitle>
+          <TtsPlayer
+            key={`stem-${question.id}-${autoRead ? 'auto' : 'manual'}`}
+            variant="compact"
+            text={getQuestionSpokenText(question)}
+            autoPlay={autoRead}
+            className={styles.ttsControl}
+          />
+        </div>
       </CardHeader>
       <CardContent className={styles.questionBody}>
         {question.code ? <CodeBlock lang={question.code.lang} content={question.code.content} /> : null}
@@ -491,7 +504,13 @@ function QuestionView({
         )}
 
         {answer ? (
-          <Feedback question={question} answer={answer} onNext={onNext} isLast={currentIndex + 1 >= total} />
+          <Feedback
+            question={question}
+            answer={answer}
+            autoRead={autoRead}
+            onNext={onNext}
+            isLast={currentIndex + 1 >= total}
+          />
         ) : null}
       </CardContent>
     </Card>
@@ -605,18 +624,29 @@ function Feedback({
   answer,
   onNext,
   isLast,
+  autoRead,
 }: {
   question: InterviewQuestion;
   answer: InterviewAnswer;
   onNext: () => void;
   isLast: boolean;
+  autoRead: boolean;
 }) {
   return (
     <section className={styles.feedback} aria-live="polite">
-      <h2 className={styles.feedbackTitle}>
-        {answer.correct ? <CheckCircleIcon aria-hidden /> : <XCircleIcon aria-hidden />}
-        {answer.correct ? 'Correct' : 'Not quite'}
-      </h2>
+      <div className={styles.feedbackHeader}>
+        <h2 className={styles.feedbackTitle}>
+          {answer.correct ? <CheckCircleIcon aria-hidden /> : <XCircleIcon aria-hidden />}
+          {answer.correct ? 'Correct' : 'Not quite'}
+        </h2>
+        <TtsPlayer
+          key={`explanation-${question.id}-${autoRead ? 'auto' : 'manual'}`}
+          variant="compact"
+          text={getExplanationSpokenText(question)}
+          autoPlay={autoRead}
+          className={styles.ttsControl}
+        />
+      </div>
       {question.type === 'order' && answer.type === 'order' ? (
         <OrderComparison question={question} submittedOrder={answer.submittedOrder} />
       ) : null}
@@ -626,6 +656,14 @@ function Feedback({
       </Button>
     </section>
   );
+}
+
+function getQuestionSpokenText(question: InterviewQuestion): string {
+  return question.stemSpoken ?? question.stem;
+}
+
+function getExplanationSpokenText(question: InterviewQuestion): string {
+  return question.explanationSpoken ?? question.explanation;
 }
 
 function OrderComparison({

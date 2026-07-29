@@ -1,6 +1,6 @@
 # Interview Quiz Module: progress
 
-Last updated: 2026-07-29T21:29:44+10:00
+Last updated: 2026-07-29T21:44:26+10:00
 Last worked by: GPT-5 Codex
 
 **Handoff note (2026-07-30):** Justin is pausing here to conserve Claude usage credits ahead of
@@ -27,7 +27,7 @@ further quiz content.
 - [x] P1h Bank: automation (OPUS) 34/34 (added after the fact; missing from the original phase table)
 - [x] P2 Spoken fields (SONNET)
 - [x] P3 App UI and state (SONNET)
-- [ ] P4 kokoro-js integration (SONNET)
+- [x] P4 kokoro-js integration (SONNET)
 - [ ] P5 Human review (JUSTIN)
 - [ ] P6 Optional: spoken-answer mode (SONNET)
 
@@ -59,9 +59,13 @@ further quiz content.
 - `apps/client/src/lib/interview-quiz-storage.ts` — localStorage attempt, accuracy and flagged-id persistence
 - `apps/client/src/routes/interviews.tsx` — `/interviews` practice UI, state machine, feedback and summary
 - `apps/client/src/routes/interviews.module.css` — route styling for the practice UI
+- `apps/client/src/components/TtsPlayer/TtsPlayer.tsx`: reused shared TTS player with optional autoplay
+- `apps/client/src/components/TtsPlayer/tts-player.types.ts`: `autoPlay` prop for reusable playback
 
 ## Decisions made
 
+- **P4 kokoro-js integration, run at GPT-5 Codex.** Reused the existing shared `TtsPlayer` rather than wiring Kokoro from scratch. Added an optional `autoPlay` prop to the component, mounted compact controls beside question stems and feedback explanations, and fed it `stemSpoken ?? stem` and `explanationSpoken ?? explanation`. Auto-read starts playback only when enabled; manual replay remains available either way. Audio stays an enhancement and does not add a runtime question API or LLM call.
+- **P4 validation.** Focused `oxlint` and `oxfmt --check` passed for touched client files. `pnpm --dir apps/client build` passed, including the built `tts-player.worker` asset. Browser smoke-test on the production preview at `/interviews` passed after login context was available: auto-read began stem playback, and after answering the feedback explanation mounted a second shared `TtsPlayer`. `pnpm --dir apps/client typecheck` is still blocked by the pre-existing `VaultFileTree.tsx` handle errors unrelated to this phase.
 - **P3 App UI and state, run at GPT-5 Codex.** Added route `/interviews`, navigation under Knowledge, domain multi-select cards, session filters, MCQ and ordering question views, immediate feedback, flagging, session summary, retry-missed-only and localStorage persistence for attempts, per-domain accuracy and flagged ids. Question data loads statically from `vault/interviews/VALD/questions/*.json`; no runtime question API or LLM call was introduced. TTS was deliberately not wired in this phase; the auto-read config flag is present for P4 to connect to the existing reusable `TtsPlayer`.
 - **P3 validation.** Focused `oxlint` and `oxfmt --check` passed for touched client files. `pnpm --dir apps/client build` passed, proving the static vault JSON imports bundle. `pnpm --dir apps/client typecheck` is still blocked by pre-existing `VaultFileTree.tsx` handle errors unrelated to this phase. Browser smoke-test reached the app but redirected to `/login`, so the authenticated route could not be visually checked from this browser session.
 - **P2 Spoken fields, run at GPT-5 Codex.** Audited all eight JSON banks for stems and explanations containing code-backed prompts, all-caps acronyms, slashes, parentheses, arrows or backticks without a spoken-safe companion field. Added only the missing `stemSpoken` / `explanationSpoken` fields needed by that audit; did not regenerate questions or edit the markdown bank docs. Validation passed with `OK spoken field audit` and `bun scripts/validate-interview-bank.ts --all` returning `OK` for all eight domains.
@@ -152,8 +156,7 @@ further quiz content.
 
 Remaining phases, in order:
 
-- **P4 kokoro-js integration** (Sonnet). **Do not wire up kokoro-js from scratch.** A reusable `TtsPlayer` component already exists at `apps/client/src/components/TtsPlayer/` (`TtsPlayer.tsx`, `tts-player.worker.ts`, `tts-player.types.ts`, `tts-player.utils.ts`, exported via `index.ts`) and is already in use on the wiki detail page (`apps/client/src/routes/wiki-detail-page.tsx`) and transcript detail (`apps/client/src/components/TranscriptsSplitView/components/TranscriptDetail.tsx`). Per project memory it runs Kokoro with `dtype="fp32"` + `device="webgpu"` and handles model load/caching already. P4 should reuse this component against `stemSpoken ?? stem` on question mount/replay and `explanationSpoken ?? explanation` after answering when auto-read is enabled. Keep audio an enhancement, not a blocker, and do not reimplement kokoro loading.
-- **P5 Human review** (Justin).
+- **P5 Human review** (Justin). Review the app flow and the bank content before starting optional spoken-answer work.
 - **P6 Optional: spoken-answer mode** (Sonnet). Only after P3 works and the banks are reviewed.
 
 **This remains the pause point, and it is now complete rather than merely convenient.** The entire question-bank layer is done, validated and usable with zero app code: all 251 questions across all eight banks are readable as plain markdown at `vault/interviews/VALD/bank/*.md`, with no build step, no network and no model to load. Open the file, read the stem, cover the answers, say the answer out loud, scroll down. If nothing else gets built before Friday, the material still works exactly as intended. Per spec section 7, time spent saying answers out loud beats time spent building the tool that asks them.

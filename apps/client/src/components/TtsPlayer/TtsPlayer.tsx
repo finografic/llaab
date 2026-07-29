@@ -82,6 +82,7 @@ export function TtsPlayer({
   sentencePauseMs = DEFAULT_SENTENCE_PAUSE_MS,
   paragraphPauseMs = DEFAULT_PARAGRAPH_PAUSE_MS,
   estimatedDurationSeconds,
+  autoPlay = false,
   className,
   dtype = DEFAULT_DTYPE,
   device = DEFAULT_DEVICE,
@@ -137,6 +138,14 @@ export function TtsPlayer({
     setError('');
     stopPlayback();
   }, [playableSections, dtype, device]);
+
+  useEffect(() => {
+    if (!autoPlay || !hasSections) return;
+
+    void startPlayback(0);
+    // Playback is ref-driven; this effect intentionally follows source text and autoplay state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlay, hasSections, playableSections]);
 
   function getWorker() {
     workerRef.current ??= new Worker(new URL('./tts-player.worker.ts', import.meta.url), {

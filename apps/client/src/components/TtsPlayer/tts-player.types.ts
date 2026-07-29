@@ -23,6 +23,7 @@ export interface TtsPlayerProps {
   sentencePauseMs?: number;
   paragraphPauseMs?: number;
   estimatedDurationSeconds?: number;
+  autoPlay?: boolean;
   className?: string;
   /** Model precision. Default `fp32` (best quality with `webgpu`). */
   dtype?: TtsDtype;

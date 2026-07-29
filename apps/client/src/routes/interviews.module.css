@@ -120,6 +120,18 @@
   line-height: 1.25;
 }
 
+.stemRow,
+.feedbackHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ttsControl {
+  margin-top: -0.25rem;
+}
+
 .optionsGrid {
   row-gap: 0.75rem;
 }
@@ -278,6 +290,8 @@
 
 @media (max-width: 640px) {
   .questionTop,
+  .stemRow,
+  .feedbackHeader,
   .summaryActions {
     align-items: flex-start;
     flex-direction: column;
