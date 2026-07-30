@@ -787,11 +787,14 @@ layer, app code stays logic-only, a deliberate deviation from the spec's `src/da
 types: `apps/client/src/types/interview-quiz.types.ts`. Validator: `bun scripts/validate-interview-bank.ts
 <domain>|--all` (`pnpm validate:interview-bank`).
 
-**Not yet built:** the app itself (route `/interviews`, chosen but not wired into the router;
-domain-select → session-config → question-view → feedback → summary flow per spec section 6;
-localStorage persistence). Read-aloud should reuse the existing `TtsPlayer` component
-(`apps/client/src/components/TtsPlayer/`, already used on wiki/transcript detail pages) rather than
-integrating kokoro-js from scratch.
+**App is built and wired at `/interviews`:** domain-select → session-config → question-view →
+feedback → summary flow, localStorage persistence, read-aloud via the existing `TtsPlayer`
+component. Autoplay latency on Start/answer/Next was ~1-1.5s (cold synthesis on every question)
+until a preload architecture rework — see [`docs/components/tts-player.md`](../docs/components/tts-player.md)
+for the general pattern; the interview-specific wiring (session precompute + first-question
+preload on the setup screen, parallel explanation/next-question preload) is in
+`apps/client/src/routes/interviews.tsx`. Measured post-fix: 13-21ms click-to-audio, zero synthesis
+runs triggered by the click itself.
 
 ## Open Questions
 
