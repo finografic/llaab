@@ -14,7 +14,7 @@ import { createTtsSectionsFromText, formatTtsTime, normalizeTtsText } from './tt
 import styles from './TtsPlayer.module.css';
 
 const DEFAULT_VOICE: TtsPlayerProps['voice'] = 'bm_daniel';
-const DEFAULT_SPEED = 1;
+const DEFAULT_SPEED = 1.15;
 const DEFAULT_SENTENCE_PAUSE_MS = 0;
 const DEFAULT_PARAGRAPH_PAUSE_MS = 0;
 /** Best quality + speed on Apple Silicon / modern GPUs. */
@@ -29,6 +29,20 @@ let nextTtsPlayerId = 0;
 interface TtsPlaybackClaimEventDetail {
   playerId: string;
 }
+
+interface CachedAudioChunk {
+  order: number;
+  sectionIndex: number;
+  isLastInSection: boolean;
+  buffer: AudioBuffer;
+}
+
+interface AudioCacheEntry {
+  chunks?: CachedAudioChunk[];
+  promise?: Promise<CachedAudioChunk[]>;
+}
+
+const ttsAudioCache = new Map<string, AudioCacheEntry>();
 
 function createTtsPlayerId() {
   nextTtsPlayerId += 1;
@@ -102,6 +116,10 @@ export const TtsPlayer = forwardRef<TtsPlayerHandle, TtsPlayerProps>(function Tt
   const playbackRunRef = useRef(0);
   const workerRef = useRef<Worker | null>(null);
   const workerMessageCleanupRef = useRef<() => void>(() => {});
+  const preloadWorkerRef = useRef<Worker | null>(null);
+  const preloadMessageCleanupRef = useRef<() => void>(() => {});
+  const preloadRejectRef = useRef<((reason?: unknown) => void) | null>(null);
+  const preloadRunRef = useRef(0);
   const playbackQueueRef = useRef<Promise<void>>(Promise.resolve());
   const playerIdRef = useRef(createTtsPlayerId());
 
@@ -128,21 +146,26 @@ export const TtsPlayer = forwardRef<TtsPlayerHandle, TtsPlayerProps>(function Tt
 
     return () => {
       ttsPlaybackCoordinator.removeEventListener(TTS_PLAYBACK_CLAIM_EVENT, handlePlaybackClaim);
+      clearPreload();
       stopPlayback();
       void audioContextRef.current?.close();
     };
   }, []);
 
   useEffect(() => {
+    clearPreload();
     setStatus('idle');
     setSectionIndex(0);
     setCompletedAudioSeconds(0);
     setCurrentAudioSeconds(0);
     setError('');
     stopPlayback();
-  }, [playableSections, dtype, device]);
+  }, [playableSections, voice, speed, dtype, device]);
 
   useImperativeHandle(ref, () => ({
+    preload: () => {
+      void preloadAudio().catch(() => undefined);
+    },
     playFromStart: () => {
       stopPlayback({ releaseClaim: false });
       setCompletedAudioSeconds(0);
@@ -158,6 +181,13 @@ export const TtsPlayer = forwardRef<TtsPlayerHandle, TtsPlayerProps>(function Tt
       type: 'module',
     });
     return workerRef.current;
+  }
+
+  function getPreloadWorker() {
+    preloadWorkerRef.current ??= new Worker(new URL('./tts-player.worker.ts', import.meta.url), {
+      type: 'module',
+    });
+    return preloadWorkerRef.current;
   }
 
   function clearProgressTimer() {
@@ -196,9 +226,37 @@ export const TtsPlayer = forwardRef<TtsPlayerHandle, TtsPlayerProps>(function Tt
     if (releaseClaim) releaseTtsPlayback(playerIdRef.current);
   }
 
+  function clearPreload() {
+    preloadRunRef.current += 1;
+    preloadMessageCleanupRef.current();
+    preloadMessageCleanupRef.current = () => {};
+    preloadRejectRef.current?.(new Error('Text-to-speech preload cancelled.'));
+    preloadRejectRef.current = null;
+    preloadWorkerRef.current?.terminate();
+    preloadWorkerRef.current = null;
+  }
+
+  function createAudioCacheKey(startIndex: number) {
+    return JSON.stringify({
+      sections: playableSections.slice(startIndex).map((section) => ({
+        id: section.id,
+        text: section.text,
+      })),
+      voice,
+      speed,
+      dtype,
+      device,
+    });
+  }
+
   async function getAudioContext() {
     audioContextRef.current ??= new AudioContext();
     if (audioContextRef.current.state !== 'running') await audioContextRef.current.resume();
+    return audioContextRef.current;
+  }
+
+  function getDecodingAudioContext() {
+    audioContextRef.current ??= new AudioContext();
     return audioContextRef.current;
   }
 
@@ -240,6 +298,119 @@ export const TtsPlayer = forwardRef<TtsPlayerHandle, TtsPlayerProps>(function Tt
     await new Promise<void>((resolve) => window.setTimeout(resolve, delayMs));
   }
 
+  async function preloadAudio(startIndex = 0) {
+    if (!hasSections) return [];
+
+    const cacheKey = createAudioCacheKey(startIndex);
+    const cache = ttsAudioCache.get(cacheKey);
+    if (cache?.chunks) return cache.chunks;
+    if (cache?.promise) return await cache.promise;
+
+    clearPreload();
+    const runId = preloadRunRef.current + 1;
+    preloadRunRef.current = runId;
+    const chunks: CachedAudioChunk[] = [];
+    const decodePromises: Array<Promise<void>> = [];
+    let nextChunkOrder = 0;
+
+    const promise = new Promise<CachedAudioChunk[]>((resolve, reject) => {
+      preloadRejectRef.current = reject;
+      const worker = getPreloadWorker();
+
+      const handleWorkerMessage = (event: MessageEvent<TtsWorkerMessage>) => {
+        const message = event.data;
+        if (message.runId !== preloadRunRef.current) return;
+
+        if (message.type === 'audio') {
+          const order = nextChunkOrder;
+          nextChunkOrder += 1;
+          const decodePromise = getDecodingAudioContext()
+            .decodeAudioData(message.buffer.slice(0))
+            .then((buffer) => {
+              if (message.runId !== preloadRunRef.current) return;
+              chunks.push({
+                order,
+                sectionIndex: message.sectionIndex,
+                isLastInSection: message.isLastInSection,
+                buffer,
+              });
+            })
+            .catch(reject);
+          decodePromises.push(decodePromise);
+          return;
+        }
+
+        if (message.type === 'done') {
+          void Promise.all(decodePromises).then(() => {
+            preloadMessageCleanupRef.current();
+            preloadMessageCleanupRef.current = () => {};
+            preloadRejectRef.current = null;
+            preloadWorkerRef.current?.terminate();
+            preloadWorkerRef.current = null;
+            const sortedChunks = chunks.toSorted((a, b) => a.order - b.order);
+            ttsAudioCache.set(cacheKey, { chunks: sortedChunks });
+            resolve(sortedChunks);
+          }, reject);
+          return;
+        }
+
+        if (message.type === 'error') {
+          preloadMessageCleanupRef.current();
+          preloadMessageCleanupRef.current = () => {};
+          preloadRejectRef.current = null;
+          ttsAudioCache.delete(cacheKey);
+          reject(new Error(message.message));
+        }
+      };
+
+      worker.addEventListener('message', handleWorkerMessage);
+      preloadMessageCleanupRef.current = () => worker.removeEventListener('message', handleWorkerMessage);
+
+      worker.postMessage(
+        {
+          type: 'start',
+          runId,
+          sections: playableSections,
+          startIndex,
+          voice,
+          speed,
+          dtype,
+          device,
+        },
+        { transfer: [] },
+      );
+    });
+
+    ttsAudioCache.set(cacheKey, { promise });
+
+    return await promise.catch((err) => {
+      if (ttsAudioCache.get(cacheKey)?.promise === promise) ttsAudioCache.delete(cacheKey);
+      throw err;
+    });
+  }
+
+  async function playCachedChunks(chunks: CachedAudioChunk[], runId: number) {
+    for (const chunk of chunks) {
+      if (playbackRunRef.current !== runId) return;
+      setSectionIndex(chunk.sectionIndex);
+      setStatus('playing');
+      setError('');
+      await playDecodedBuffer(chunk.buffer, runId);
+      const pauseMs =
+        chunk.isLastInSection && chunk.sectionIndex < playableSections.length - 1
+          ? safeParagraphPauseMs
+          : safeSentencePauseMs;
+      await waitForPause(pauseMs, runId);
+    }
+
+    if (playbackRunRef.current !== runId) return;
+    setStatus('idle');
+    setSectionIndex(0);
+    setCompletedAudioSeconds(0);
+    setCurrentAudioSeconds(0);
+    releaseTtsPlayback(playerIdRef.current);
+  }
+
   async function startPlayback(startIndex = sectionIndex) {
     if (!hasSections) return;
     claimTtsPlayback(playerIdRef.current);
@@ -252,6 +423,16 @@ export const TtsPlayer = forwardRef<TtsPlayerHandle, TtsPlayerProps>(function Tt
 
     try {
       await getAudioContext();
+      const cacheKey = createAudioCacheKey(startIndex);
+      const cache = ttsAudioCache.get(cacheKey);
+
+      if (cache?.key === cacheKey && (cache.chunks || cache.promise)) {
+        const chunks = cache.chunks ?? (await cache.promise);
+        if (playbackRunRef.current !== runId) return;
+        await playCachedChunks(chunks, runId);
+        return;
+      }
+
       const worker = getWorker();
 
       workerMessageCleanupRef.current();

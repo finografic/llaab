@@ -84,6 +84,20 @@ export function toggleInterviewFlag(storage: InterviewQuizStorage, questionId: s
   if (flagged.has(questionId)) flagged.delete(questionId);
   else flagged.add(questionId);
 
+  return saveFlaggedIds(storage, flagged);
+}
+
+export function addInterviewPracticeFlag(
+  storage: InterviewQuizStorage,
+  questionId: string,
+): InterviewQuizStorage {
+  const flagged = new Set(storage.flaggedIds);
+  flagged.add(questionId);
+
+  return saveFlaggedIds(storage, flagged);
+}
+
+function saveFlaggedIds(storage: InterviewQuizStorage, flagged: Set<string>): InterviewQuizStorage {
   return {
     ...storage,
     flaggedIds: [...flagged].toSorted(),

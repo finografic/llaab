@@ -5,23 +5,23 @@ import { Button } from 'components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from 'components/ui/card';
 import { Checkbox } from 'components/ui/checkbox';
 import { Col, Row } from 'components/ui/grid';
+import { Input } from 'components/ui/input';
 import { Label } from 'components/ui/label';
 import { NativeSelect, NativeSelectOption } from 'components/ui/native-select';
 import { Switch } from 'components/ui/switch';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { PageList } from 'layouts/PageList/PageList';
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
   CheckCircleIcon,
   FlagIcon,
+  GripVerticalIcon,
   ListChecksIcon,
   RotateCcwIcon,
   XCircleIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TtsPlayerHandle } from 'components/TtsPlayer';
-import type { KeyboardEvent } from 'react';
+import type { DragEvent, KeyboardEvent } from 'react';
 
 import { api } from 'lib/api';
 import { INTERVIEW_DOMAIN_META, INTERVIEW_DOMAIN_STATS, INTERVIEW_QUESTIONS } from 'lib/interview-quiz-data';
@@ -34,12 +34,14 @@ import type {
 import {
   createDefaultInterviewSessionConfig,
   createInitialOrder,
+  createInterviewReplacementQuestion,
   createInterviewSessionQuestions,
   ordersMatch,
 } from 'lib/interview-quiz-session';
 import type { InterviewQuizStorage } from 'lib/interview-quiz-storage';
 import {
   addInterviewAttempt,
+  addInterviewPracticeFlag,
   loadInterviewQuizStorage,
   saveInterviewQuizStorage,
   toggleInterviewFlag,
@@ -59,12 +61,30 @@ type InterviewStage = 'setup' | 'question' | 'summary';
 
 type InterviewAnswer =
   | { type: 'mcq'; selectedOptionId: string; correct: boolean }
-  | { type: 'order'; submittedOrder: string[]; correct: boolean };
+  | { type: 'order'; submittedOrder: string[]; correct: boolean }
+  | { type: 'unknown'; correct: false };
 
 const DEFAULT_SELECTED_DOMAINS: InterviewDomainId[] = ['testing', 'apis', 'platform'];
+const MIN_SPEECH_RATE = 1.15;
+const MAX_SPEECH_RATE = MIN_SPEECH_RATE * 1.5;
+const AUTOPLAY_READ_DELAY_MS = 500;
 
 function createInitialStorage(): InterviewQuizStorage {
   return loadInterviewQuizStorage();
+}
+
+function clampSpeechRate(value: number) {
+  return Math.min(MAX_SPEECH_RATE, Math.max(MIN_SPEECH_RATE, value));
+}
+
+function moveItemByDirection(items: string[], itemId: string, direction: -1 | 1) {
+  const index = items.indexOf(itemId);
+  const nextIndex = index + direction;
+  if (index < 0 || nextIndex < 0 || nextIndex >= items.length) return items;
+
+  const next = [...items];
+  [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+  return next;
 }
 
 export function InterviewsPage() {
@@ -159,6 +179,31 @@ export function InterviewsPage() {
     recordAnswer(question, nextAnswer);
   }
 
+  function skipQuestion() {
+    const replacement = createInterviewReplacementQuestion({
+      domains: selectedDomains,
+      config,
+      questions: INTERVIEW_QUESTIONS,
+      storage,
+      excludeIds: sessionQuestions.map((question) => question.id),
+    });
+
+    if (!replacement) {
+      goNext();
+      return;
+    }
+
+    setSessionQuestions((current) =>
+      current.map((question, index) => (index === currentIndex ? replacement : question)),
+    );
+    setAnswer(null);
+  }
+
+  function markDontKnow(question: InterviewQuestion) {
+    recordAnswer(question, { type: 'unknown', correct: false });
+    updateStorage((current) => addInterviewPracticeFlag(current, question.id));
+  }
+
   function recordAnswer(question: InterviewQuestion, nextAnswer: InterviewAnswer) {
     setAnswer(nextAnswer);
     setSessionAnswers((current) => ({ ...current, [question.id]: nextAnswer }));
@@ -174,27 +219,23 @@ export function InterviewsPage() {
     );
   }
 
-  function moveOrderItem(itemId: string, direction: -1 | 1) {
+  function moveOrderItemTo(itemId: string, targetId: string) {
     setOrderIds((current) => {
-      const index = current.indexOf(itemId);
-      const nextIndex = index + direction;
-      if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return current;
+      const fromIndex = current.indexOf(itemId);
+      const targetIndex = current.indexOf(targetId);
+      if (fromIndex < 0 || targetIndex < 0 || fromIndex === targetIndex) return current;
 
       const next = [...current];
-      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      const [item] = next.splice(fromIndex, 1);
+      next.splice(targetIndex, 0, item);
       return next;
     });
   }
 
   function handleOrderKeyDown(event: KeyboardEvent<HTMLDivElement>, itemId: string) {
-    if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      moveOrderItem(itemId, -1);
-    }
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      moveOrderItem(itemId, 1);
-    }
+    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+    event.preventDefault();
+    setOrderIds((current) => moveItemByDirection(current, itemId, event.key === 'ArrowUp' ? -1 : 1));
   }
 
   function goNext() {
@@ -219,6 +260,15 @@ export function InterviewsPage() {
     setConfig((current) => ({ ...current, autoRead }));
   }
 
+  function setSpeechRate(value: string) {
+    const nextValue = Number(value);
+    if (!Number.isFinite(nextValue)) return;
+    setConfig((current) => ({
+      ...current,
+      speechRate: clampSpeechRate(nextValue),
+    }));
+  }
+
   return (
     <PageLayout
       hero={
@@ -230,62 +280,81 @@ export function InterviewsPage() {
             <div className={styles.autoReadControl}>
               <Label htmlFor="interview-auto-read">Autoplay</Label>
               <Switch id="interview-auto-read" checked={config.autoRead} onCheckedChange={setAutoRead} />
+              <Label htmlFor="interview-speech-rate">Rate</Label>
+              <Input
+                id="interview-speech-rate"
+                type="number"
+                min={MIN_SPEECH_RATE}
+                max={MAX_SPEECH_RATE}
+                step="0.05"
+                value={config.speechRate}
+                className={styles.speechRateInput}
+                onChange={(event) => setSpeechRate(event.target.value)}
+              />
             </div>
           }
           meta={
             <>
               {INTERVIEW_QUESTIONS.length} questions · {storage.attempts.length} attempts ·{' '}
-              {storage.flaggedIds.length} flagged
+              {storage.flaggedIds.length} for practice
             </>
           }
         />
       }
     >
-      <PageList width="wide">
-        {stage === 'setup' ? (
-          <SetupView
-            selectedDomains={selectedDomains}
-            config={config}
-            storage={storage}
-            onToggleDomain={toggleDomain}
-            onConfigChange={setConfig}
-            onStart={() => startSession()}
-          />
-        ) : null}
+      <div className={styles.mainShell}>
+        <PageList width="wide">
+          {stage === 'setup' ? (
+            <SetupView
+              selectedDomains={selectedDomains}
+              config={config}
+              storage={storage}
+              onToggleDomain={toggleDomain}
+              onConfigChange={setConfig}
+              onStart={() => startSession()}
+            />
+          ) : null}
 
-        {stage === 'question' && currentQuestion ? (
-          <QuestionView
-            question={currentQuestion}
-            answer={answer}
-            currentIndex={currentIndex}
-            total={sessionQuestions.length}
-            orderIds={orderIds}
-            flagged={flaggedIds.has(currentQuestion.id)}
-            autoRead={config.autoRead}
-            onSubmitMcq={submitMcq}
-            onSubmitOrder={submitOrder}
-            onMoveOrderItem={moveOrderItem}
-            onOrderKeyDown={handleOrderKeyDown}
-            onToggleFlag={() => updateStorage((current) => toggleInterviewFlag(current, currentQuestion.id))}
-            onNext={goNext}
-          />
-        ) : null}
+          {stage === 'question' && currentQuestion ? (
+            <QuestionView
+              question={currentQuestion}
+              answer={answer}
+              nextQuestion={sessionQuestions[currentIndex + 1] ?? null}
+              currentIndex={currentIndex}
+              total={sessionQuestions.length}
+              orderIds={orderIds}
+              flagged={flaggedIds.has(currentQuestion.id)}
+              autoRead={config.autoRead}
+              speechRate={config.speechRate}
+              onSubmitMcq={submitMcq}
+              onSubmitOrder={submitOrder}
+              onMoveOrderItemTo={moveOrderItemTo}
+              onOrderKeyDown={handleOrderKeyDown}
+              onToggleFlag={() =>
+                updateStorage((current) => toggleInterviewFlag(current, currentQuestion.id))
+              }
+              onSkip={skipQuestion}
+              onDontKnow={() => markDontKnow(currentQuestion)}
+              onNext={goNext}
+            />
+          ) : null}
 
-        {stage === 'summary' ? (
-          <SummaryView
-            questions={sessionQuestions}
-            answers={sessionAnswers}
-            score={score}
-            answeredCount={answeredCount}
-            storage={storage}
-            onRetryMissed={retryMissed}
-            onNewSession={() => {
-              setStage('setup');
-              setAnswer(null);
-            }}
-          />
-        ) : null}
-      </PageList>
+          {stage === 'summary' ? (
+            <SummaryView
+              questions={sessionQuestions}
+              answers={sessionAnswers}
+              score={score}
+              answeredCount={answeredCount}
+              storage={storage}
+              onRetryMissed={retryMissed}
+              onNewSession={() => {
+                setStage('setup');
+                setAnswer(null);
+              }}
+            />
+          ) : null}
+        </PageList>
+      </div>
     </PageLayout>
   );
 }
@@ -427,7 +496,7 @@ function SetupView({
                   disabled={selectedDomains.length === 0 || selectedQuestionCount === 0}
                   onClick={onStart}
                 >
-                  Start session
+                  START
                 </Button>
               </div>
             </Col>
@@ -441,36 +510,46 @@ function SetupView({
 function QuestionView({
   question,
   answer,
+  nextQuestion,
   currentIndex,
   total,
   orderIds,
   flagged,
   autoRead,
+  speechRate,
   onSubmitMcq,
   onSubmitOrder,
-  onMoveOrderItem,
+  onMoveOrderItemTo,
   onOrderKeyDown,
   onToggleFlag,
+  onSkip,
+  onDontKnow,
   onNext,
 }: {
   question: InterviewQuestion;
   answer: InterviewAnswer | null;
+  nextQuestion: InterviewQuestion | null;
   currentIndex: number;
   total: number;
   orderIds: string[];
   flagged: boolean;
   autoRead: boolean;
+  speechRate: number;
   onSubmitMcq: (question: InterviewMcqQuestion, selectedOptionId: string) => void;
   onSubmitOrder: (question: InterviewOrderQuestion) => void;
-  onMoveOrderItem: (itemId: string, direction: -1 | 1) => void;
+  onMoveOrderItemTo: (itemId: string, targetId: string) => void;
   onOrderKeyDown: (event: KeyboardEvent<HTMLDivElement>, itemId: string) => void;
   onToggleFlag: () => void;
+  onSkip: () => void;
+  onDontKnow: () => void;
   onNext: () => void;
 }) {
   const questionTtsRef = useRef<TtsPlayerHandle>(null);
   const feedbackTtsRef = useRef<TtsPlayerHandle>(null);
+  const nextQuestionTtsRef = useRef<TtsPlayerHandle>(null);
   const questionSpokenText = getQuestionSpokenText(question);
   const explanationSpokenText = getExplanationSpokenText(question);
+  const nextQuestionSpokenText = nextQuestion ? getQuestionSpokenText(nextQuestion) : '';
 
   useEffect(() => {
     questionTtsRef.current?.stop();
@@ -480,10 +559,33 @@ function QuestionView({
 
     const timeoutId = window.setTimeout(() => {
       questionTtsRef.current?.playFromStart();
-    }, 400);
+    }, AUTOPLAY_READ_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
   }, [answer, autoRead, question.id]);
+
+  useEffect(() => {
+    if (answer) return;
+
+    const timeoutId = window.setTimeout(
+      () => {
+        feedbackTtsRef.current?.preload();
+      },
+      autoRead ? AUTOPLAY_READ_DELAY_MS : 0,
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [answer, autoRead, explanationSpokenText, question.id, speechRate]);
+
+  useEffect(() => {
+    if (!nextQuestion || answer) return;
+
+    const timeoutId = window.setTimeout(() => {
+      nextQuestionTtsRef.current?.preload();
+    }, AUTOPLAY_READ_DELAY_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [answer, nextQuestion, nextQuestionSpokenText, speechRate]);
 
   useEffect(() => {
     if (!autoRead || !answer) return;
@@ -518,11 +620,11 @@ function QuestionView({
             onClick={onToggleFlag}
           >
             <FlagIcon aria-hidden />
-            Flag
+            Flag for practice
           </Button>
         </div>
         <div className={styles.stemRow}>
-          <CardTitle className={styles.stem}>{renderInlineText(question.stem)}</CardTitle>
+          <CardTitle className={styles.stem}>{renderStemText(question.stem)}</CardTitle>
           <Button
             type="button"
             size="sm"
@@ -541,6 +643,7 @@ function QuestionView({
             key={`stem-${question.id}`}
             variant="compact"
             text={questionSpokenText}
+            speed={speechRate}
             className={styles.hiddenTts}
           />
         </div>
@@ -556,11 +659,12 @@ function QuestionView({
             answer={answer}
             orderIds={orderIds}
             onSubmit={onSubmitOrder}
-            onMoveItem={onMoveOrderItem}
+            onMoveItemTo={onMoveOrderItemTo}
             onItemKeyDown={onOrderKeyDown}
           />
         )}
 
+        {!answer ? <QuestionFallbackActions onSkip={onSkip} onDontKnow={onDontKnow} /> : null}
         {answer ? (
           <Feedback question={question} answer={answer} onNext={onNext} isLast={currentIndex + 1 >= total} />
         ) : null}
@@ -569,8 +673,19 @@ function QuestionView({
           key={`explanation-${question.id}`}
           variant="compact"
           text={explanationSpokenText}
+          speed={speechRate}
           className={styles.hiddenTts}
         />
+        {nextQuestion ? (
+          <TtsPlayer
+            ref={nextQuestionTtsRef}
+            key={`next-stem-${nextQuestion.id}`}
+            variant="compact"
+            text={nextQuestionSpokenText}
+            speed={speechRate}
+            className={styles.hiddenTts}
+          />
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -618,17 +733,60 @@ function OrderAnswerPanel({
   answer,
   orderIds,
   onSubmit,
-  onMoveItem,
+  onMoveItemTo,
   onItemKeyDown,
 }: {
   question: InterviewOrderQuestion;
   answer: InterviewAnswer | null;
   orderIds: string[];
   onSubmit: (question: InterviewOrderQuestion) => void;
-  onMoveItem: (itemId: string, direction: -1 | 1) => void;
+  onMoveItemTo: (itemId: string, targetId: string) => void;
   onItemKeyDown: (event: KeyboardEvent<HTMLDivElement>, itemId: string) => void;
 }) {
   const itemById = new Map(question.items.map((item) => [item.id, item]));
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
+
+  function startDrag(event: DragEvent<HTMLDivElement>, itemId: string) {
+    if (answer) return;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', itemId);
+    setDraggingItemId(itemId);
+  }
+
+  function dragOver(event: DragEvent<HTMLDivElement>, itemId: string) {
+    if (answer || draggingItemId === itemId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDragOverItemId(itemId);
+  }
+
+  function dropItem(event: DragEvent<HTMLDivElement>, targetId: string) {
+    event.preventDefault();
+    const itemId = event.dataTransfer.getData('text/plain') || draggingItemId;
+    setDraggingItemId(null);
+    setDragOverItemId(null);
+    if (!itemId || itemId === targetId) return;
+    onMoveItemTo(itemId, targetId);
+  }
+
+  function endDrag() {
+    setDraggingItemId(null);
+    setDragOverItemId(null);
+  }
+
+  if (answer?.type === 'order') {
+    return (
+      <div className={styles.orderPanel}>
+        <OrderCorrections question={question} answer={answer} />
+        <div className={styles.orderActions}>
+          <Button type="button" className={styles.quizButton} disabled>
+            Check order
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.orderPanel}>
@@ -641,43 +799,50 @@ function OrderAnswerPanel({
             key={itemId}
             tabIndex={answer ? -1 : 0}
             className={styles.orderItem}
+            draggable={answer == null}
+            data-dragging={draggingItemId === itemId || undefined}
+            data-drag-over={dragOverItemId === itemId || undefined}
+            onDragStart={(event) => startDrag(event, itemId)}
+            onDragOver={(event) => dragOver(event, itemId)}
+            onDragLeave={() => setDragOverItemId((current) => (current === itemId ? null : current))}
+            onDrop={(event) => dropItem(event, itemId)}
+            onDragEnd={endDrag}
             onKeyDown={(event) => onItemKeyDown(event, itemId)}
           >
+            <GripVerticalIcon className={styles.dragHandle} aria-hidden />
             <span className={styles.orderIndex}>{index + 1}</span>
             <span className={styles.optionText}>{renderInlineText(item.text)}</span>
-            <span className={styles.orderControls}>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                disabled={answer != null || index === 0}
-                aria-label={`Move ${item.text} up`}
-                onClick={() => onMoveItem(itemId, -1)}
-              >
-                <ArrowUpIcon aria-hidden />
-              </Button>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                disabled={answer != null || index === orderIds.length - 1}
-                aria-label={`Move ${item.text} down`}
-                onClick={() => onMoveItem(itemId, 1)}
-              >
-                <ArrowDownIcon aria-hidden />
-              </Button>
-            </span>
           </div>
         );
       })}
 
+      <div className={styles.orderActions}>
+        <Button
+          type="button"
+          className={styles.quizButton}
+          disabled={answer != null}
+          onClick={() => onSubmit(question)}
+        >
+          Check order
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function QuestionFallbackActions({ onSkip, onDontKnow }: { onSkip: () => void; onDontKnow: () => void }) {
+  return (
+    <div className={styles.fallbackActions}>
+      <Button type="button" variant="secondary" className={styles.quizButton} onClick={onSkip}>
+        Skip
+      </Button>
       <Button
         type="button"
-        className={styles.quizButton}
-        disabled={answer != null}
-        onClick={() => onSubmit(question)}
+        variant="outline"
+        className={`${styles.quizButton} ${styles.dontKnowButton}`}
+        onClick={onDontKnow}
       >
-        Check order
+        Don't know
       </Button>
     </div>
   );
@@ -706,13 +871,10 @@ function Feedback({
           {answer.correct ? 'Correct' : 'Not quite'}
         </h2>
       </div>
-      {question.type === 'order' && answer.type === 'order' ? (
-        <OrderComparison question={question} submittedOrder={answer.submittedOrder} />
-      ) : null}
       <p>{renderInlineText(question.explanation)}</p>
       <div className={styles.feedbackActions}>
         <Button type="button" className={styles.quizButton} onClick={onNext}>
-          {isLast ? 'Finish session' : 'Next question'}
+          {isLast ? 'Finish session' : 'NEXT'}
         </Button>
       </div>
     </section>
@@ -735,6 +897,28 @@ interface InlineTextPart {
 
 const INLINE_CODE_PATTERN =
   /(`[^`]+`|\b(?:await\s+)?expect\(.*?\)\.to[A-Za-z_$][\w$]*\([^)]*\)|\b(?:[a-z]+[A-Za-z0-9]*[A-Z][A-Za-z0-9]*|[a-z_$][\w$]*\.[A-Za-z_$][\w$]*(?:\([^)]*\))?)(?:\.[A-Za-z_$][\w$]*(?:\([^)]*\))?)*)/g;
+
+const STEM_FOLLOW_UP_PATTERN =
+  /([.?])\s+(?=(?:What|Which|Why|How|When|Where|Who|Order|Choose|Select|Identify|Name)\b)/;
+
+function renderStemText(text: string) {
+  return splitStemLines(text).map((line, index) => (
+    <span key={`${index}-${line}`} className={styles.stemLine}>
+      {renderInlineText(line)}
+    </span>
+  ));
+}
+
+function splitStemLines(text: string): string[] {
+  const splitIndex = text.search(STEM_FOLLOW_UP_PATTERN);
+  if (splitIndex < 0) return [text];
+
+  const match = STEM_FOLLOW_UP_PATTERN.exec(text);
+  if (!match?.[0]) return [text];
+
+  const firstLineEnd = splitIndex + match[1].length;
+  return [text.slice(0, firstLineEnd).trim(), text.slice(firstLineEnd).trim()].filter(Boolean);
+}
 
 function renderInlineText(text: string) {
   return splitInlineCodeParts(text).map((part) =>
@@ -784,35 +968,46 @@ function stripInlineCodeTicks(value: string): string {
   return value.startsWith('`') && value.endsWith('`') ? value.slice(1, -1) : value;
 }
 
-function OrderComparison({
+function OrderCorrections({
   question,
-  submittedOrder,
+  answer,
 }: {
   question: InterviewOrderQuestion;
-  submittedOrder: string[];
+  answer: Extract<InterviewAnswer, { type: 'order' }>;
 }) {
   const itemById = new Map(question.items.map((item) => [item.id, item.text]));
 
   return (
-    <Row gutterWidth={12}>
-      <Col xs={12} md={6}>
-        <div className={styles.sequenceBox}>
-          <h3>Your order</h3>
-          <ol>
-            {submittedOrder.map((id) => (
-              <li key={id}>{itemById.get(id)}</li>
-            ))}
-          </ol>
+    <Row gutterWidth={10} className={styles.orderCorrectionGrid}>
+      <Col xs={12} lg={6}>
+        <div className={styles.orderCorrectionList}>
+          {answer.submittedOrder.map((id, index) => {
+            const isCorrect = question.correctOrder[index] === id;
+
+            return (
+              <div
+                key={id}
+                className={styles.orderCorrectionItem}
+                data-correct={isCorrect || undefined}
+                data-wrong={!isCorrect || undefined}
+              >
+                <GripVerticalIcon className={styles.dragHandle} aria-hidden />
+                <span className={styles.orderCorrectionMarker}>
+                  {isCorrect ? index + 1 : <XCircleIcon aria-hidden />}
+                </span>
+                <span className={styles.optionText}>{itemById.get(id)}</span>
+              </div>
+            );
+          })}
         </div>
       </Col>
-      <Col xs={12} md={6}>
-        <div className={styles.sequenceBox}>
-          <h3>Correct order</h3>
-          <ol>
-            {question.correctOrder.map((id) => (
-              <li key={id}>{itemById.get(id)}</li>
-            ))}
-          </ol>
+      <Col xs={12} lg={6}>
+        <div className={styles.orderCorrectionList}>
+          {question.correctOrder.map((id) => (
+            <div key={id} className={styles.orderCorrectionItem} data-correct>
+              <span className={styles.optionText}>{itemById.get(id)}</span>
+            </div>
+          ))}
         </div>
       </Col>
     </Row>

@@ -7,6 +7,16 @@
   gap: 1rem;
 }
 
+.mainShell {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.mainShell > [data-width] {
+  width: 100%;
+}
+
 .domainGrid {
   row-gap: 0.75rem;
 }
@@ -123,6 +133,12 @@
   font-weight: 600;
 }
 
+.speechRateInput {
+  width: 5rem;
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
 .startRow {
   justify-content: flex-end;
   margin-top: 1rem;
@@ -151,6 +167,10 @@
   max-width: 58rem;
   font-size: clamp(1.35rem, 1.1rem + 0.6vw, 1.85rem);
   line-height: 1.5;
+}
+
+.stemLine {
+  display: block;
 }
 
 .stemRow,
@@ -182,7 +202,7 @@
   gap: 1rem;
   padding: 1rem;
   border-color: color-mix(in srgb, var(--info-border, var(--accent)) 55%, var(--border));
-  background: color-mix(in srgb, var(--info-text, var(--accent)) 8%, var(--card));
+  background: color-mix(in srgb, var(--info-text, var(--accent)) 20%, var(--card));
   color: color-mix(in srgb, var(--info-text, var(--accent)) 18%, var(--foreground));
   font-weight: 600;
   white-space: normal;
@@ -192,6 +212,7 @@
 
 .optionText {
   font-size: var(--text-base);
+  font-size: 1rem;
   line-height: 1.25;
 }
 
@@ -209,6 +230,7 @@
 .quizButton {
   font-size: var(--text-base);
   font-weight: 600;
+  padding: 0.1rem 1.5rem 0.05rem 1.5rem;
 }
 
 .optionButton[data-correct="true"] {
@@ -235,11 +257,17 @@
   background: var(--muted);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
+  padding-top: 0.2rem;
 }
 
 .optionIndex {
   background: color-mix(in srgb, var(--info-text, var(--accent)) 20%, var(--card));
+  color: color-mix(in srgb, var(--info-text, var(--accent)) 30%, var(--foreground));
+}
+
+.optionButton .optionIndex {
+  background: color-mix(in srgb, var(--info-text, var(--color-black)) 10%, var(--card));
   color: color-mix(in srgb, var(--info-text, var(--accent)) 30%, var(--foreground));
 }
 
@@ -265,15 +293,35 @@
   font-weight: 600;
 }
 
+.orderItem[draggable="true"] {
+  cursor: grab;
+}
+
+.orderItem[data-dragging="true"] {
+  cursor: grabbing;
+  opacity: 0.55;
+}
+
+.orderItem[data-drag-over="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
 .orderItem:focus-visible {
   border-color: var(--accent);
   outline: none;
 }
 
-.orderControls {
+.dragHandle {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: 0 0 auto;
+  color: var(--text-muted);
+}
+
+.orderActions {
   display: flex;
-  gap: 0.25rem;
-  margin-left: auto;
+  justify-content: flex-end;
 }
 
 .feedback {
@@ -283,6 +331,24 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--muted);
+}
+
+.fallbackActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.dontKnowButton {
+  border-color: var(--warning-border);
+  background: color-mix(in srgb, var(--warning-text) 12%, var(--card));
+  color: var(--warning-text);
+}
+
+.dontKnowButton:hover {
+  background: color-mix(in srgb, var(--warning-text) 18%, var(--card));
+  color: var(--warning-text);
 }
 
 .feedbackTitle {
@@ -309,25 +375,56 @@
   justify-content: flex-end;
 }
 
-.sequenceBox {
-  height: 100%;
-  padding: 0.75rem;
+.orderCorrectionGrid {
+  row-gap: 0.75rem;
+}
+
+.orderCorrectionList {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.orderCorrectionItem {
+  min-height: 3.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 0.85rem;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--card);
+  font-size: var(--text-base);
+  font-weight: 600;
 }
 
-.sequenceBox h3 {
-  margin: 0 0 0.5rem;
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0;
+.orderCorrectionItem[data-correct="true"] {
+  border-color: var(--success-border);
+  background: color-mix(in srgb, var(--success-text) 10%, var(--card));
+  color: var(--success-text);
 }
 
-.sequenceBox ol {
-  margin: 0;
-  padding-left: 1.25rem;
+.orderCorrectionItem[data-wrong="true"] {
+  border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 10%, var(--card));
+  color: var(--destructive);
+}
+
+.orderCorrectionMarker {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 16%, var(--card));
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  padding-top: 0.2rem;
+}
+
+.orderCorrectionMarker svg {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 .summaryMetric {

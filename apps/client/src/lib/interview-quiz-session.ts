@@ -11,6 +11,7 @@ export interface InterviewSessionConfig {
   section: InterviewSectionFilter;
   difficulty: InterviewDifficultyFilter;
   autoRead: boolean;
+  speechRate: number;
 }
 
 export interface InterviewSelectionOptions {
@@ -21,11 +22,16 @@ export interface InterviewSelectionOptions {
   retryIds?: string[];
 }
 
+export interface InterviewReplacementOptions extends InterviewSelectionOptions {
+  excludeIds: string[];
+}
+
 const DEFAULT_CONFIG: InterviewSessionConfig = {
   count: 10,
   section: 'both',
   difficulty: 'all',
-  autoRead: false,
+  autoRead: true,
+  speechRate: 1.15,
 };
 
 export function createDefaultInterviewSessionConfig(): InterviewSessionConfig {
@@ -48,22 +54,64 @@ export function createInterviewSessionQuestions({
     if (retrySet.size > 0 && !retrySet.has(question.id)) return false;
     return true;
   });
-  const weighted = filtered.flatMap((question) => {
-    const attempts = attemptsByQuestion.get(question.id) ?? [];
-    const wasMissed = attempts.some((attempt) => !attempt.correct);
-    const weight = attempts.length === 0 ? 4 : wasMissed ? 3 : 1;
-    return Array.from({ length: weight }, () => question);
-  });
-  const pool = weighted.length > 0 ? weighted : filtered;
+  const flaggedIds = new Set(storage.flaggedIds);
   const selected = new Map<string, InterviewQuestion>();
   const targetCount = config.count === 'all' ? filtered.length : Math.min(config.count, filtered.length);
 
-  for (const question of shuffleArray(pool)) {
+  for (const question of createWeightedQuestionOrder(filtered, attemptsByQuestion, flaggedIds)) {
     if (selected.size >= targetCount) break;
     selected.set(question.id, question);
   }
 
   return [...selected.values()];
+}
+
+export function createInterviewReplacementQuestion({
+  domains,
+  config,
+  questions,
+  storage,
+  retryIds,
+  excludeIds,
+}: InterviewReplacementOptions): InterviewQuestion | null {
+  const excluded = new Set(excludeIds);
+  const replacement = createInterviewSessionQuestions({
+    domains,
+    config: { ...config, count: 'all' },
+    questions,
+    storage,
+    retryIds,
+  }).find((question) => !excluded.has(question.id));
+
+  return replacement ?? null;
+}
+
+function createWeightedQuestionOrder(
+  questions: InterviewQuestion[],
+  attemptsByQuestion: Map<string, InterviewQuizStorage['attempts']>,
+  flaggedIds: Set<string>,
+): InterviewQuestion[] {
+  return questions
+    .map((question) => {
+      const weight = getQuestionSelectionWeight(question, attemptsByQuestion, flaggedIds);
+      return {
+        question,
+        rank: -Math.log(Math.random()) / weight,
+      };
+    })
+    .toSorted((a, b) => a.rank - b.rank)
+    .map((item) => item.question);
+}
+
+function getQuestionSelectionWeight(
+  question: InterviewQuestion,
+  attemptsByQuestion: Map<string, InterviewQuizStorage['attempts']>,
+  flaggedIds: Set<string>,
+): number {
+  const attempts = attemptsByQuestion.get(question.id) ?? [];
+  const wasMissed = attempts.some((attempt) => !attempt.correct);
+  const baseWeight = attempts.length === 0 ? 4 : wasMissed ? 3 : 1;
+  return flaggedIds.has(question.id) ? baseWeight * 1.15 : baseWeight;
 }
 
 export function shuffleArray<T>(items: T[]): T[] {
