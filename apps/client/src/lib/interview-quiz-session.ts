@@ -63,7 +63,7 @@ export function createInterviewSessionQuestions({
     selected.set(question.id, question);
   }
 
-  return [...selected.values()];
+  return [...selected.values()].map(randomiseQuestionForDisplay);
 }
 
 export function createInterviewReplacementQuestion({
@@ -123,6 +123,37 @@ export function shuffleArray<T>(items: T[]): T[] {
   }
 
   return next;
+}
+
+function randomiseQuestionForDisplay(question: InterviewQuestion): InterviewQuestion {
+  if (question.type !== 'mcq') return question;
+
+  const options = shuffleArray(question.options);
+  const displayLabelByOptionId = new Map(
+    options.map((option, index) => [option.id, String.fromCharCode(65 + index)]),
+  );
+  const remapOptionReferences = (text: string) =>
+    text.replace(/\bOption\s+([a-d])\b/gi, (_, optionId: string) => {
+      const displayLabel = displayLabelByOptionId.get(optionId.toLowerCase());
+      return displayLabel ? `Option ${displayLabel}` : `Option ${optionId.toUpperCase()}`;
+    });
+
+  return {
+    ...question,
+    options,
+    explanation: remapOptionReferences(question.explanation),
+    explanationSpoken: question.explanationSpoken
+      ? remapOptionReferences(question.explanationSpoken)
+      : undefined,
+    distractorNotes: question.distractorNotes
+      ? Object.fromEntries(
+          Object.entries(question.distractorNotes).map(([optionId, note]) => [
+            optionId,
+            remapOptionReferences(note),
+          ]),
+        )
+      : undefined,
+  };
 }
 
 export function createInitialOrder(question: InterviewQuestion): string[] {

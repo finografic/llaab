@@ -45,8 +45,8 @@
 }
 
 .domainCard[data-selected="true"] {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+  border-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
+  background: color-mix(in srgb, var(--foreground) 5%, var(--card));
 }
 
 .domainCardTop,
@@ -74,8 +74,7 @@
 
 .domainLabel,
 .domainTitle,
-.domainDescription,
-.domainMeta {
+.domainDescription {
   display: block;
 }
 
@@ -102,8 +101,31 @@
 
 .domainMeta {
   flex-wrap: wrap;
+  justify-content: space-between;
   margin-top: auto;
   padding-top: 1rem;
+}
+
+.domainLifetime {
+  color: var(--text-muted);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.domainLifetime[data-score-tone="perfect"] {
+  color: var(--info-text);
+}
+
+.domainLifetime[data-score-tone="strong"] {
+  color: var(--success-text);
+}
+
+.domainLifetime[data-score-tone="solid"] {
+  color: var(--warning-text);
+}
+
+.domainLifetime[data-score-tone="drill"] {
+  color: var(--error-text, var(--destructive));
 }
 
 .control {
@@ -358,6 +380,22 @@
   font-weight: 700;
 }
 
+.feedbackTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.orderScore {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
 .feedbackBody {
   display: grid;
   gap: 0.8rem;
@@ -443,28 +481,88 @@
   height: 1.1rem;
 }
 
+.summaryMetricWrap {
+  display: grid;
+  gap: 0.55rem;
+}
+
 .summaryMetric {
   height: 100%;
   display: grid;
   gap: 0.25rem;
   padding: 0.85rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--summary-score-border, var(--border));
   border-radius: 8px;
-  background: var(--muted);
+  background: color-mix(in srgb, var(--summary-score-text, var(--foreground)) 8%, var(--muted));
+  color: var(--summary-score-text, var(--foreground));
+}
+
+.summaryMetric > span {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.summaryMetric > span + strong {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+}
+
+.summaryMetric[data-score-tone="perfect"] {
+  --summary-score-border: var(--info-border, var(--info-text));
+  --summary-score-text: var(--info-text);
+}
+
+.summaryMetric[data-score-tone="strong"] {
+  --summary-score-border: var(--success-border);
+  --summary-score-text: var(--success-text);
+}
+
+.summaryMetric[data-score-tone="solid"] {
+  --summary-score-border: var(--warning-border);
+  --summary-score-text: var(--warning-text);
+}
+
+.summaryMetric[data-score-tone="drill"] {
+  --summary-score-border: var(--destructive);
+  --summary-score-text: var(--error-text, var(--destructive));
+}
+
+.summaryTitle {
+  font-size: var(--text-2xl);
+  font-weight: 700;
 }
 
 .summaryMetric strong {
   font-size: var(--text-xl);
 }
 
-.summaryMetric small {
+.summaryLifetime {
+  margin-left: 1rem;
   color: var(--text-muted);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.summaryLifetime[data-score-tone="perfect"] {
+  color: var(--info-text);
+}
+
+.summaryLifetime[data-score-tone="strong"] {
+  color: var(--success-text);
+}
+
+.summaryLifetime[data-score-tone="solid"] {
+  color: var(--warning-text);
+}
+
+.summaryLifetime[data-score-tone="drill"] {
+  color: var(--error-text, var(--destructive));
 }
 
 .summaryActions {
   justify-content: flex-end;
   flex-wrap: wrap;
-  margin-top: 1rem;
+  margin-top: 2.5rem;
 }
 
 .missedList h2 {
@@ -474,6 +572,28 @@
 
 .missedTitle {
   font-size: var(--text-base);
+}
+
+.missedQuestionRow {
+  padding-block: 1rem;
+}
+
+.missedQuestionContent {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.missedActionCol {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.missedExplanation {
+  width: 100%;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--text-base);
+  line-height: 1.45;
 }
 
 .codeBlock {
@@ -521,7 +641,8 @@
   .questionTop,
   .stemRow,
   .feedbackHeader,
-  .summaryActions {
+  .summaryActions,
+  .missedActionCol {
     align-items: flex-start;
     flex-direction: column;
   }

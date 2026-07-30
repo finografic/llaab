@@ -36,7 +36,6 @@ import {
   createInitialOrder,
   createInterviewReplacementQuestion,
   createInterviewSessionQuestions,
-  ordersMatch,
 } from 'lib/interview-quiz-session';
 import type { InterviewQuizStorage } from 'lib/interview-quiz-storage';
 import {
@@ -60,14 +59,16 @@ import styles from './interviews.module.css';
 type InterviewStage = 'setup' | 'question' | 'summary';
 
 type InterviewAnswer =
-  | { type: 'mcq'; selectedOptionId: string; correct: boolean }
-  | { type: 'order'; submittedOrder: string[]; correct: boolean }
-  | { type: 'unknown'; correct: false };
+  | { type: 'mcq'; selectedOptionId: string; correct: boolean; score: number }
+  | { type: 'order'; submittedOrder: string[]; correct: boolean; score: number }
+  | { type: 'unknown'; correct: false; score: 0 };
+
+type ScoreTone = 'perfect' | 'strong' | 'solid' | 'drill';
 
 const DEFAULT_SELECTED_DOMAINS: InterviewDomainId[] = ['testing', 'apis', 'platform'];
 const MIN_SPEECH_RATE = 1.15;
 const MAX_SPEECH_RATE = MIN_SPEECH_RATE * 1.5;
-const AUTOPLAY_READ_DELAY_MS = 0;
+const AUTOPLAY_READ_DELAY_MS = 300;
 const MCQ_OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
 
 function createInitialStorage(): InterviewQuizStorage {
@@ -76,6 +77,50 @@ function createInitialStorage(): InterviewQuizStorage {
 
 function clampSpeechRate(value: number) {
   return Math.min(MAX_SPEECH_RATE, Math.max(MIN_SPEECH_RATE, value));
+}
+
+function getScoreTone(correct: number, total: number): ScoreTone {
+  if (total <= 0) return 'drill';
+  const percentage = correct / total;
+  if (percentage === 1) return 'perfect';
+  if (percentage >= 0.85) return 'strong';
+  if (percentage >= 0.65) return 'solid';
+  return 'drill';
+}
+
+function getRoundedPercentageTone(correct: number, total: number): ScoreTone {
+  if (total <= 0) return 'drill';
+  const percentage = Math.round((correct / total) * 100);
+  if (percentage === 100) return 'perfect';
+  if (percentage >= 85) return 'strong';
+  if (percentage >= 65) return 'solid';
+  return 'drill';
+}
+
+function calculateOrderScore(submittedOrder: string[], correctOrder: string[]): number {
+  if (correctOrder.length === 0) return 0;
+  const correctPositions = submittedOrder.filter((id, index) => correctOrder[index] === id).length;
+  return correctPositions / correctOrder.length;
+}
+
+function formatDecimalScore(score: number): string {
+  return score.toFixed(1);
+}
+
+function formatAggregateScore(score: number): string {
+  return Number.isInteger(score) ? String(score) : score.toFixed(1);
+}
+
+function getAnswerScore(answer: InterviewAnswer | undefined): number {
+  return typeof answer?.score === 'number' ? answer.score : answer?.correct ? 1 : 0;
+}
+
+function getDomainAccuracyPercentage(accuracy: { attempts: number; correct: number }): number {
+  return Math.round((accuracy.correct / accuracy.attempts) * 100);
+}
+
+function getDomainAccuracyLabel(accuracy: { attempts: number; correct: number } | undefined): string {
+  return accuracy && accuracy.attempts > 0 ? `${getDomainAccuracyPercentage(accuracy)}% lifetime` : 'new';
 }
 
 function moveItemByDirection(items: string[], itemId: string, direction: -1 | 1) {
@@ -103,7 +148,7 @@ export function InterviewsPage() {
   const flaggedIds = useMemo(() => new Set(storage.flaggedIds), [storage.flaggedIds]);
   const currentQuestion = sessionQuestions[currentIndex];
   const answeredCount = Object.keys(sessionAnswers).length;
-  const score = Object.values(sessionAnswers).filter((item) => item.correct).length;
+  const sessionScore = Object.values(sessionAnswers).reduce((total, item) => total + item.score, 0);
 
   useEffect(() => {
     saveInterviewQuizStorage(storage);
@@ -154,10 +199,12 @@ export function InterviewsPage() {
   }
 
   function submitMcq(question: InterviewMcqQuestion, selectedOptionId: string) {
+    const correct = selectedOptionId === question.correctOptionId;
     const nextAnswer: InterviewAnswer = {
       type: 'mcq',
       selectedOptionId,
-      correct: selectedOptionId === question.correctOptionId,
+      correct,
+      score: correct ? 1 : 0,
     };
 
     recordAnswer(question, nextAnswer);
@@ -165,10 +212,12 @@ export function InterviewsPage() {
 
   function submitOrder(question: InterviewOrderQuestion) {
     const submittedOrder = orderIds.length > 0 ? orderIds : createInitialOrder(question);
+    const orderScore = calculateOrderScore(submittedOrder, question.correctOrder);
     const nextAnswer: InterviewAnswer = {
       type: 'order',
       submittedOrder,
-      correct: ordersMatch(submittedOrder, question.correctOrder),
+      correct: orderScore === 1,
+      score: orderScore,
     };
 
     recordAnswer(question, nextAnswer);
@@ -195,7 +244,7 @@ export function InterviewsPage() {
   }
 
   function markDontKnow(question: InterviewQuestion) {
-    recordAnswer(question, { type: 'unknown', correct: false });
+    recordAnswer(question, { type: 'unknown', correct: false, score: 0 });
     updateStorage((current) => addInterviewPracticeFlag(current, question.id));
   }
 
@@ -208,6 +257,7 @@ export function InterviewsPage() {
         domain: question.domain,
         section: question.section,
         correct: nextAnswer.correct,
+        score: nextAnswer.score,
         selectedOptionId: nextAnswer.type === 'mcq' ? nextAnswer.selectedOptionId : undefined,
         submittedOrder: nextAnswer.type === 'order' ? nextAnswer.submittedOrder : undefined,
       }),
@@ -346,10 +396,13 @@ export function InterviewsPage() {
             <SummaryView
               questions={sessionQuestions}
               answers={sessionAnswers}
-              score={score}
+              score={sessionScore}
               answeredCount={answeredCount}
               storage={storage}
               onRetryMissed={retryMissed}
+              onToggleFlag={(questionId) =>
+                updateStorage((current) => toggleInterviewFlag(current, questionId))
+              }
               onNewSession={() => {
                 setStage('setup');
                 setAnswer(null);
@@ -413,6 +466,10 @@ function SetupView({
         {INTERVIEW_DOMAIN_META.map((domain) => {
           const stats = INTERVIEW_DOMAIN_STATS[domain.id];
           const accuracy = storage.domainAccuracy[domain.id];
+          const accuracyTone =
+            accuracy && accuracy.attempts > 0
+              ? getRoundedPercentageTone(accuracy.correct, accuracy.attempts)
+              : undefined;
           const selected = selectedDomains.includes(domain.id);
 
           return (
@@ -432,11 +489,9 @@ function SetupView({
                 <span className={styles.domainDescription}>{domain.description}</span>
                 <span className={styles.domainMeta}>
                   <Badge variant="secondary">{stats.total} questions</Badge>
-                  <Badge variant="outline">
-                    {accuracy && accuracy.attempts > 0
-                      ? `${Math.round((accuracy.correct / accuracy.attempts) * 100)}%`
-                      : 'new'}
-                  </Badge>
+                  <span className={styles.domainLifetime} data-score-tone={accuracyTone}>
+                    {getDomainAccuracyLabel(accuracy)}
+                  </span>
                 </span>
               </label>
             </Col>
@@ -882,14 +937,19 @@ function Feedback({
   return (
     <section className={styles.feedback} aria-live="polite">
       <div className={styles.feedbackHeader}>
-        <h2
-          className={styles.feedbackTitle}
-          data-correct={answer.correct || undefined}
-          data-wrong={!answer.correct || undefined}
-        >
-          {answer.correct ? <CheckCircleIcon aria-hidden /> : <XCircleIcon aria-hidden />}
-          {answer.correct ? 'Correct' : 'Not quite'}
-        </h2>
+        <div className={styles.feedbackTitleGroup}>
+          <h2
+            className={styles.feedbackTitle}
+            data-correct={answer.correct || undefined}
+            data-wrong={!answer.correct || undefined}
+          >
+            {answer.correct ? <CheckCircleIcon aria-hidden /> : <XCircleIcon aria-hidden />}
+            {answer.correct ? 'Correct' : 'Not quite'}
+          </h2>
+          {answer.type === 'order' ? (
+            <span className={styles.orderScore}>Score {formatDecimalScore(answer.score)}</span>
+          ) : null}
+        </div>
       </div>
       <FeedbackBody text={question.explanation} />
       <div className={styles.feedbackActions}>
@@ -1060,6 +1120,7 @@ function SummaryView({
   answeredCount,
   storage,
   onRetryMissed,
+  onToggleFlag,
   onNewSession,
 }: {
   questions: InterviewQuestion[];
@@ -1068,6 +1129,7 @@ function SummaryView({
   answeredCount: number;
   storage: InterviewQuizStorage;
   onRetryMissed: () => void;
+  onToggleFlag: (questionId: string) => void;
   onNewSession: () => void;
 }) {
   const missedQuestions = questions.filter(
@@ -1075,7 +1137,10 @@ function SummaryView({
   );
   const domainBreakdown = INTERVIEW_DOMAIN_META.map((domain) => {
     const domainQuestions = questions.filter((question) => question.domain === domain.id);
-    const correct = domainQuestions.filter((question) => answers[question.id]?.correct).length;
+    const correct = domainQuestions.reduce(
+      (total, question) => total + getAnswerScore(answers[question.id]),
+      0,
+    );
     return { domain, total: domainQuestions.length, correct };
   }).filter((item) => item.total > 0);
 
@@ -1083,27 +1148,34 @@ function SummaryView({
     <div className={styles.summaryStack}>
       <Card>
         <CardHeader>
-          <CardTitle>Session summary</CardTitle>
+          <CardTitle className={styles.summaryTitle}>Session Summary</CardTitle>
           <CardDescription>
-            {score} correct from {answeredCount} answered.
+            {formatAggregateScore(score)} correct from {answeredCount} answered.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Row gutterWidth={12}>
             {domainBreakdown.map(({ domain, total, correct }) => {
               const lifetime = storage.domainAccuracy[domain.id];
+              const lifetimeTone =
+                lifetime && lifetime.attempts > 0
+                  ? getRoundedPercentageTone(lifetime.correct, lifetime.attempts)
+                  : undefined;
               return (
                 <Col key={domain.id} xs={12} md={6} xl={3}>
-                  <div className={styles.summaryMetric}>
-                    <span>{domain.title}</span>
-                    <strong>
-                      {correct} / {total}
-                    </strong>
-                    <small>
+                  <div className={styles.summaryMetricWrap}>
+                    <div className={styles.summaryMetric} data-score-tone={getScoreTone(correct, total)}>
+                      <span>{domain.title}</span>
+                      <strong>
+                        {correct === total ? '🏆 ' : null}
+                        {formatAggregateScore(correct)} / {total}
+                      </strong>
+                    </div>
+                    <span className={styles.summaryLifetime} data-score-tone={lifetimeTone}>
                       {lifetime && lifetime.attempts > 0
-                        ? `${Math.round((lifetime.correct / lifetime.attempts) * 100)}% lifetime`
+                        ? getDomainAccuracyLabel(lifetime)
                         : 'no lifetime attempts'}
-                    </small>
+                    </span>
                   </div>
                 </Col>
               );
@@ -1129,19 +1201,40 @@ function SummaryView({
       {missedQuestions.length > 0 ? (
         <section className={styles.missedList}>
           <h2>Missed questions</h2>
-          {missedQuestions.map((question) => (
-            <Card key={question.id}>
-              <CardHeader>
-                <CardTitle className={styles.missedTitle}>{renderInlineText(question.stem)}</CardTitle>
-                <CardDescription>
-                  {question.domain} · {question.section} · difficulty {question.difficulty}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>{question.explanation}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {missedQuestions.map((question) => {
+            const flagged = storage.flaggedIds.includes(question.id);
+            return (
+              <Card key={question.id}>
+                <CardContent className={styles.missedQuestionRow}>
+                  <Row gutterWidth={12} align="center">
+                    <Col xs={12} lg={10}>
+                      <div className={styles.missedQuestionContent}>
+                        <CardTitle className={styles.missedTitle}>
+                          {renderInlineText(question.stem)}
+                        </CardTitle>
+                        <CardDescription>
+                          {question.domain} · {question.section} · difficulty {question.difficulty}
+                        </CardDescription>
+                        <p className={styles.missedExplanation}>{renderInlineText(question.explanation)}</p>
+                      </div>
+                    </Col>
+                    <Col xs={12} lg={2} className={styles.missedActionCol}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={flagged ? 'default' : 'outline'}
+                        className={styles.quizButton}
+                        onClick={() => onToggleFlag(question.id)}
+                      >
+                        <FlagIcon aria-hidden />
+                        Flag for practice
+                      </Button>
+                    </Col>
+                  </Row>
+                </CardContent>
+              </Card>
+            );
+          })}
         </section>
       ) : null}
     </div>

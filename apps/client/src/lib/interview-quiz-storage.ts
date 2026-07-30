@@ -6,6 +6,7 @@ export interface InterviewAttempt {
   domain: InterviewDomainId;
   section: InterviewSection;
   correct: boolean;
+  score?: number;
   answeredAt: string;
   selectedOptionId?: string;
   submittedOrder?: string[];
@@ -65,6 +66,7 @@ export function addInterviewAttempt(
     answeredAt: new Date().toISOString(),
   };
   const currentAccuracy = storage.domainAccuracy[attempt.domain] ?? { attempts: 0, correct: 0 };
+  const score = attempt.score ?? (attempt.correct ? 1 : 0);
 
   return {
     ...storage,
@@ -73,7 +75,7 @@ export function addInterviewAttempt(
       ...storage.domainAccuracy,
       [attempt.domain]: {
         attempts: currentAccuracy.attempts + 1,
-        correct: currentAccuracy.correct + (attempt.correct ? 1 : 0),
+        correct: currentAccuracy.correct + score,
       },
     },
   };

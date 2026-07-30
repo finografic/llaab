@@ -15,7 +15,7 @@ interface NavMenuListItemProps {
 function NavMenuItemContent({ item }: { item: NavMenuItem }) {
   return (
     <>
-      <div className="flex items-center gap-1.5 text-base leading-none font-medium">
+      <div className="flex items-center gap-1.5 text-base leading-none font-medium transition-colors group-hover:text-accent group-focus:text-accent">
         {item.label}
         {!item.live ? (
           <>
@@ -51,8 +51,8 @@ export function NavMenuListItem({ item, pathname, onNavigate }: NavMenuListItemP
         asChild
         active={active}
         className={cn(
-          'flex flex-col items-start gap-1 rounded-md p-3 leading-none no-underline outline-none transition-colors',
-          'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+          'group flex flex-col items-start gap-1 rounded-md p-3 leading-none no-underline outline-none transition-colors',
+          'hover:bg-[color-mix(in_oklab,var(--accent)_18%,var(--surface))] hover:text-foreground focus:bg-[color-mix(in_oklab,var(--accent)_18%,var(--surface))] focus:text-foreground',
           active && 'bg-accent/50',
         )}
       >
