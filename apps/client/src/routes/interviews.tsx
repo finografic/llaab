@@ -68,6 +68,7 @@ const DEFAULT_SELECTED_DOMAINS: InterviewDomainId[] = ['testing', 'apis', 'platf
 const MIN_SPEECH_RATE = 1.15;
 const MAX_SPEECH_RATE = MIN_SPEECH_RATE * 1.5;
 const AUTOPLAY_READ_DELAY_MS = 500;
+const MCQ_OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
 
 function createInitialStorage(): InterviewQuizStorage {
   return loadInterviewQuizStorage();
@@ -567,25 +568,15 @@ function QuestionView({
   useEffect(() => {
     if (answer) return;
 
-    const timeoutId = window.setTimeout(
-      () => {
-        feedbackTtsRef.current?.preload();
-      },
-      autoRead ? AUTOPLAY_READ_DELAY_MS : 0,
-    );
+    let cancelled = false;
+    void feedbackTtsRef.current?.preload().then(() => {
+      if (!cancelled) void nextQuestionTtsRef.current?.preload();
+    });
 
-    return () => window.clearTimeout(timeoutId);
-  }, [answer, autoRead, explanationSpokenText, question.id, speechRate]);
-
-  useEffect(() => {
-    if (!nextQuestion || answer) return;
-
-    const timeoutId = window.setTimeout(() => {
-      nextQuestionTtsRef.current?.preload();
-    }, AUTOPLAY_READ_DELAY_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [answer, nextQuestion, nextQuestionSpokenText, speechRate]);
+    return () => {
+      cancelled = true;
+    };
+  }, [answer, explanationSpokenText, nextQuestionSpokenText, question.id, speechRate]);
 
   useEffect(() => {
     if (!autoRead || !answer) return;
@@ -718,7 +709,7 @@ function McqAnswerPanel({
               disabled={answer != null}
               onClick={() => onSubmit(question, option.id)}
             >
-              <span className={styles.optionIndex}>{index + 1}</span>
+              <span className={styles.optionIndex}>{MCQ_OPTION_LABELS[index] ?? index + 1}</span>
               <span className={styles.optionText}>{renderInlineText(option.text)}</span>
             </Button>
           </Col>
@@ -871,13 +862,23 @@ function Feedback({
           {answer.correct ? 'Correct' : 'Not quite'}
         </h2>
       </div>
-      <p>{renderInlineText(question.explanation)}</p>
+      <FeedbackBody text={question.explanation} />
       <div className={styles.feedbackActions}>
         <Button type="button" className={styles.quizButton} onClick={onNext}>
           {isLast ? 'Finish session' : 'NEXT'}
         </Button>
       </div>
     </section>
+  );
+}
+
+function FeedbackBody({ text }: { text: string }) {
+  return (
+    <div className={styles.feedbackBody}>
+      {formatFeedbackParagraphs(text).map((paragraph) => (
+        <p key={paragraph}>{renderInlineText(paragraph)}</p>
+      ))}
+    </div>
   );
 }
 
@@ -918,6 +919,15 @@ function splitStemLines(text: string): string[] {
 
   const firstLineEnd = splitIndex + match[1].length;
   return [text.slice(0, firstLineEnd).trim(), text.slice(firstLineEnd).trim()].filter(Boolean);
+}
+
+function formatFeedbackParagraphs(text: string): string[] {
+  return text
+    .replace(/\bOption\s+([a-d])\b/g, (_, option: string) => `Option ${option.toUpperCase()}`)
+    .replace(/\s+(?=Option\s+[A-D]\b)/g, '\n\n')
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 }
 
 function renderInlineText(text: string) {

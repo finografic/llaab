@@ -163,8 +163,11 @@ export const TtsPlayer = forwardRef<TtsPlayerHandle, TtsPlayerProps>(function Tt
   }, [playableSections, voice, speed, dtype, device]);
 
   useImperativeHandle(ref, () => ({
-    preload: () => {
-      void preloadAudio().catch(() => undefined);
+    preload: async () => {
+      await preloadAudio().then(
+        () => undefined,
+        () => undefined,
+      );
     },
     playFromStart: () => {
       stopPlayback({ releaseClaim: false });
@@ -426,7 +429,7 @@ export const TtsPlayer = forwardRef<TtsPlayerHandle, TtsPlayerProps>(function Tt
       const cacheKey = createAudioCacheKey(startIndex);
       const cache = ttsAudioCache.get(cacheKey);
 
-      if (cache?.key === cacheKey && (cache.chunks || cache.promise)) {
+      if (cache?.chunks || cache?.promise) {
         const chunks = cache.chunks ?? (await cache.promise);
         if (playbackRunRef.current !== runId) return;
         await playCachedChunks(chunks, runId);

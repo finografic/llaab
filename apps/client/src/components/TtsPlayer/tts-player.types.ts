@@ -31,7 +31,7 @@ export interface TtsPlayerProps {
 }
 
 export interface TtsPlayerHandle {
-  preload: () => void;
+  preload: () => Promise<void>;
   playFromStart: () => void;
   stop: () => void;
 }

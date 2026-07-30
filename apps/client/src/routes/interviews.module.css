@@ -166,7 +166,7 @@
 .stem {
   max-width: 58rem;
   font-size: clamp(1.35rem, 1.1rem + 0.6vw, 1.85rem);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .stemLine {
@@ -357,7 +357,13 @@
   font-weight: 700;
 }
 
-.feedback p {
+.feedbackBody {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.feedbackBody p {
+  margin: 0;
   font-size: var(--text-lg);
   line-height: 1.45;
 }
