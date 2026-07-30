@@ -1,5 +1,5 @@
 import { PageHero } from 'components/PageHero/PageHero';
-import { TtsPlayer } from 'components/TtsPlayer';
+import { TtsPlayer, unlockTtsAudioPlayback } from 'components/TtsPlayer';
 import { Badge } from 'components/ui/badge';
 import { Button } from 'components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from 'components/ui/card';
@@ -67,7 +67,7 @@ type InterviewAnswer =
 const DEFAULT_SELECTED_DOMAINS: InterviewDomainId[] = ['testing', 'apis', 'platform'];
 const MIN_SPEECH_RATE = 1.15;
 const MAX_SPEECH_RATE = MIN_SPEECH_RATE * 1.5;
-const AUTOPLAY_READ_DELAY_MS = 500;
+const AUTOPLAY_READ_DELAY_MS = 0;
 const MCQ_OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
 
 function createInitialStorage(): InterviewQuizStorage {
@@ -143,15 +143,9 @@ export function InterviewsPage() {
     });
   }
 
-  function startSession(retryIds?: string[]) {
-    const questions = createInterviewSessionQuestions({
-      domains: selectedDomains,
-      config,
-      questions: INTERVIEW_QUESTIONS,
-      storage,
-      retryIds,
-    });
-
+  function startSession(questions: InterviewQuestion[]) {
+    // Runs inside the Start click so autoplay never pays a resume round-trip.
+    unlockTtsAudioPlayback();
     setSessionQuestions(questions);
     setCurrentIndex(0);
     setSessionAnswers({});
@@ -254,7 +248,15 @@ export function InterviewsPage() {
       .filter(([, item]) => !item.correct)
       .map(([id]) => id);
     if (missedIds.length === 0) return;
-    startSession(missedIds);
+    startSession(
+      createInterviewSessionQuestions({
+        domains: selectedDomains,
+        config,
+        questions: INTERVIEW_QUESTIONS,
+        storage,
+        retryIds: missedIds,
+      }),
+    );
   }
 
   function setAutoRead(autoRead: boolean) {
@@ -312,7 +314,7 @@ export function InterviewsPage() {
               storage={storage}
               onToggleDomain={toggleDomain}
               onConfigChange={setConfig}
-              onStart={() => startSession()}
+              onStart={startSession}
             />
           ) : null}
 
@@ -373,7 +375,7 @@ function SetupView({
   storage: InterviewQuizStorage;
   onToggleDomain: (domain: InterviewDomainId, selected: boolean) => void;
   onConfigChange: (config: InterviewSessionConfig) => void;
-  onStart: () => void;
+  onStart: (questions: InterviewQuestion[]) => void;
 }) {
   const selectedQuestionCount = INTERVIEW_QUESTIONS.filter((question) => {
     if (!selectedDomains.includes(question.domain)) return false;
@@ -381,6 +383,29 @@ function SetupView({
     if (config.difficulty !== 'all' && question.difficulty !== config.difficulty) return false;
     return true;
   }).length;
+
+  const { count, section, difficulty } = config;
+  // Selection is random, so it is memoized on selection inputs only — changing Autoplay or Rate
+  // must not re-roll the question set (and waste the preload) mid-configuration.
+  const pendingSessionQuestions = useMemo(
+    () =>
+      createInterviewSessionQuestions({
+        domains: selectedDomains,
+        config: { ...config, count, section, difficulty },
+        questions: INTERVIEW_QUESTIONS,
+        storage,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- speechRate/autoRead do not affect selection
+    [selectedDomains, count, section, difficulty, storage],
+  );
+  const pendingQuestion = pendingSessionQuestions[0] ?? null;
+  const pendingQuestionTtsRef = useRef<TtsPlayerHandle>(null);
+  const pendingQuestionSpokenText = pendingQuestion ? getQuestionSpokenText(pendingQuestion) : '';
+
+  useEffect(() => {
+    if (!pendingQuestion) return;
+    void pendingQuestionTtsRef.current?.preload();
+  }, [pendingQuestion, config.speechRate]);
 
   return (
     <div className={styles.setupStack}>
@@ -495,7 +520,7 @@ function SetupView({
                   type="button"
                   className={styles.quizButton}
                   disabled={selectedDomains.length === 0 || selectedQuestionCount === 0}
-                  onClick={onStart}
+                  onClick={() => onStart(pendingSessionQuestions)}
                 >
                   START
                 </Button>
@@ -504,6 +529,16 @@ function SetupView({
           </Row>
         </CardContent>
       </Card>
+      {pendingQuestion ? (
+        <TtsPlayer
+          ref={pendingQuestionTtsRef}
+          key={`pending-stem-${pendingQuestion.id}`}
+          variant="compact"
+          text={pendingQuestionSpokenText}
+          speed={config.speechRate}
+          className={styles.hiddenTts}
+        />
+      ) : null}
     </div>
   );
 }
@@ -568,14 +603,8 @@ function QuestionView({
   useEffect(() => {
     if (answer) return;
 
-    let cancelled = false;
-    void feedbackTtsRef.current?.preload().then(() => {
-      if (!cancelled) void nextQuestionTtsRef.current?.preload();
-    });
-
-    return () => {
-      cancelled = true;
-    };
+    void feedbackTtsRef.current?.preload();
+    void nextQuestionTtsRef.current?.preload();
   }, [answer, explanationSpokenText, nextQuestionSpokenText, question.id, speechRate]);
 
   useEffect(() => {

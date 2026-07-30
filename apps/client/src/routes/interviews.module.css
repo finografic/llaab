@@ -164,7 +164,8 @@
 }
 
 .stem {
-  max-width: 58rem;
+  flex: 1 1 auto;
+  max-width: none;
   font-size: clamp(1.35rem, 1.1rem + 0.6vw, 1.85rem);
   line-height: 1.4;
 }
