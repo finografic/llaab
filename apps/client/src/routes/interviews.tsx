@@ -902,8 +902,8 @@ const STEM_FOLLOW_UP_PATTERN =
   /([.?])\s+(?=(?:What|Which|Why|How|When|Where|Who|Order|Choose|Select|Identify|Name)\b)/;
 
 function renderStemText(text: string) {
-  return splitStemLines(text).map((line, index) => (
-    <span key={`${index}-${line}`} className={styles.stemLine}>
+  return splitStemLines(text).map((line) => (
+    <span key={line} className={styles.stemLine}>
       {renderInlineText(line)}
     </span>
   ));
@@ -980,7 +980,7 @@ function OrderCorrections({
   return (
     <Row gutterWidth={10} className={styles.orderCorrectionGrid}>
       <Col xs={12} lg={6}>
-        <div className={styles.orderCorrectionList}>
+        <div className={styles.submittedOrderCorrections}>
           {answer.submittedOrder.map((id, index) => {
             const isCorrect = question.correctOrder[index] === id;
 
@@ -1002,7 +1002,7 @@ function OrderCorrections({
         </div>
       </Col>
       <Col xs={12} lg={6}>
-        <div className={styles.orderCorrectionList}>
+        <div className={styles.correctOrderCorrections}>
           {question.correctOrder.map((id) => (
             <div key={id} className={styles.orderCorrectionItem} data-correct>
               <span className={styles.optionText}>{itemById.get(id)}</span>

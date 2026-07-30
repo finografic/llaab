@@ -379,7 +379,8 @@
   row-gap: 0.75rem;
 }
 
-.orderCorrectionList {
+.submittedOrderCorrections,
+.correctOrderCorrections {
   display: grid;
   gap: 0.5rem;
 }
@@ -400,6 +401,14 @@
   border-color: var(--success-border);
   background: color-mix(in srgb, var(--success-text) 10%, var(--card));
   color: var(--success-text);
+}
+
+.submittedOrderCorrections .orderCorrectionItem[data-correct="true"] {
+  background: var(--card);
+}
+
+.correctOrderCorrections .orderCorrectionItem {
+  padding-left: 1.5rem;
 }
 
 .orderCorrectionItem[data-wrong="true"] {
