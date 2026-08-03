@@ -229,7 +229,7 @@ export function VaultFileViewer({
       {path && canRenderMarkdown && !loading && !error ? (
         <div className={styles.viewerToolbar}>
           <Row gutterWidth={12} className={styles.viewerToolbarRow} align="center">
-            <Col xs={6} className={styles.viewerToolbarLeft}>
+            <Col xs={12} md={4} className={styles.viewerToolbarLeft}>
               <ToggleGroup
                 type="single"
                 size="sm"
@@ -247,22 +247,25 @@ export function VaultFileViewer({
                 <ToggleGroupItem value="enhanced">Enhanced</ToggleGroupItem>
               </ToggleGroup>
             </Col>
-            <Col xs={6} className={styles.viewerToolbarRight}>
+            <Col xs={12} md={8} className={styles.viewerToolbarRight}>
               {showEnhancedMarkdown ? (
                 <>
-                  <ToggleGroup
-                    type="single"
-                    size="sm"
-                    variant="outline"
-                    value={splitLevel}
-                    onValueChange={(value) => {
-                      if (value === 'h1' || value === 'h2') onSplitLevelChange?.(value);
-                    }}
-                    aria-label="Split markdown sections by"
-                  >
-                    <ToggleGroupItem value="h1">H1</ToggleGroupItem>
-                    <ToggleGroupItem value="h2">H2</ToggleGroupItem>
-                  </ToggleGroup>
+                  <div className={styles.splitControls}>
+                    <span className={styles.splitControlsLabel}>doc split:</span>
+                    <ToggleGroup
+                      type="single"
+                      size="sm"
+                      variant="outline"
+                      value={splitLevel}
+                      onValueChange={(value) => {
+                        if (value === 'h1' || value === 'h2') onSplitLevelChange?.(value);
+                      }}
+                      aria-label="Split markdown sections by"
+                    >
+                      <ToggleGroupItem value="h1">H1</ToggleGroupItem>
+                      <ToggleGroupItem value="h2">H2</ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
                   <Toggle
                     size="sm"
                     variant="outline"

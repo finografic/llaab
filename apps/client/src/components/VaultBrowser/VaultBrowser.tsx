@@ -57,7 +57,7 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
   const showRenderedMarkdown = view === RENDER_VIEW;
   const showEnhancedMarkdown = view === ENHANCED_VIEW;
   const splitParam = searchParams.get(SPLIT_SEARCH_PARAM);
-  const splitLevel: SplitLevel = splitParam === 'h2' ? 'h2' : 'h1';
+  const splitLevel: SplitLevel = splitParam === 'h1' ? 'h1' : 'h2';
 
   const setSelectedPath = useCallback(
     (path: string) => {
@@ -102,9 +102,9 @@ export function VaultBrowser({ tree }: VaultBrowserProps) {
         (prev) => {
           const next = new URLSearchParams(prev);
           if (level === 'h2') {
-            next.set(SPLIT_SEARCH_PARAM, 'h2');
-          } else {
             next.delete(SPLIT_SEARCH_PARAM);
+          } else {
+            next.set(SPLIT_SEARCH_PARAM, 'h1');
           }
           return next;
         },
