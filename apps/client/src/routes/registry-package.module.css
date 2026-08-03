@@ -1,17 +1,21 @@
 .layoutRow {
+  --registry-detail-sidebar-width: 340px;
+  --registry-detail-panel-gap: 32px;
+
   width: 100%;
+  column-gap: var(--registry-detail-panel-gap);
 }
 
 .readmeColumn {
   min-width: 0;
   overflow-x: hidden;
-  padding-right: 24px;
+  padding-right: 32px;
 }
 
 @media (min-width: 1024px) {
   .readmeColumn {
     flex: 1 1 0 !important;
-    max-width: calc(100% - 340px) !important;
+    max-width: calc(100% - var(--registry-detail-sidebar-width) - var(--registry-detail-panel-gap)) !important;
   }
 }
 
@@ -32,6 +36,10 @@
     border-left: none;
     padding-left: 0;
     margin-top: 0;
+  }
+
+  .sidebarContent {
+    margin-left: 0;
   }
 }
 
@@ -241,17 +249,23 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  flex: 0 0 340px;
-  min-width: 340px;
-  width: 340px;
-  gap: 18px;
+  flex: 0 0 var(--registry-detail-sidebar-width);
+  min-width: var(--registry-detail-sidebar-width);
+  width: var(--registry-detail-sidebar-width);
   position: sticky;
   top: 0;
   z-index: 1;
   height: fit-content;
   border-left: 1px solid var(--border-subtle);
-  padding: 8px 20px 24px 24px;
+  padding: 8px 20px 24px 32px;
   background: var(--bg);
+}
+
+.sidebarContent {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-left: 1rem;
 }
 
 .sidebarSection {

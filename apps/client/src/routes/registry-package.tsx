@@ -200,181 +200,189 @@ export function RegistryPackagePage() {
             </Col>
 
             <Col xs={12} md="content" className={styles.sidebar}>
-              {linkedRepoFullName && data.links.repository ? (
+              <div className={styles.sidebarContent}>
+                {linkedRepoFullName && data.links.repository ? (
+                  <div className={styles.sidebarSection}>
+                    <div className={styles.sidebarLabelRow}>
+                      <RegistrySidebarSectionLabel kind="repository" target={linkedRepoFullName}>
+                        Repository
+                      </RegistrySidebarSectionLabel>
+                      <RegistrySidebarPinButton kind="repository" target={linkedRepoFullName} />
+                    </div>
+                    <a
+                      href={data.links.repository}
+                      className={styles.sidebarLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {linkedRepoFullName}
+                    </a>
+                  </div>
+                ) : null}
+
                 <div className={styles.sidebarSection}>
                   <div className={styles.sidebarLabelRow}>
-                    <RegistrySidebarSectionLabel kind="repository" target={linkedRepoFullName}>
-                      Repository
+                    <RegistrySidebarSectionLabel kind="package" target={name}>
+                      Package
                     </RegistrySidebarSectionLabel>
-                    <RegistrySidebarPinButton kind="repository" target={linkedRepoFullName} />
+                    <RegistrySidebarPinButton kind="package" target={name} />
                   </div>
                   <a
-                    href={data.links.repository}
+                    href={`https://npmx.dev/package/${encodeURIComponent(name)}`}
                     className={styles.sidebarLink}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {linkedRepoFullName}
+                    npmx.dev/package/{name}
                   </a>
-                </div>
-              ) : null}
-
-              <div className={styles.sidebarSection}>
-                <div className={styles.sidebarLabelRow}>
-                  <RegistrySidebarSectionLabel kind="package" target={name}>
-                    Package
-                  </RegistrySidebarSectionLabel>
-                  <RegistrySidebarPinButton kind="package" target={name} />
-                </div>
-                <a
-                  href={`https://npmx.dev/package/${encodeURIComponent(name)}`}
-                  className={styles.sidebarLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  npmx.dev/package/{name}
-                </a>
-                <a
-                  href={data.links.npm}
-                  className={styles.sidebarLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  npmjs.com/package/{name}
-                </a>
-              </div>
-
-              {data.links.homepage && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Homepage</span>
                   <a
-                    href={data.links.homepage}
+                    href={data.links.npm}
                     className={styles.sidebarLink}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {data.links.homepage}
+                    npmjs.com/package/{name}
                   </a>
                 </div>
-              )}
 
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Version</span>
-                <span className={styles.sidebarValue}>{data.version}</span>
-              </div>
-
-              {data.date && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Last updated</span>
-                  <span className={styles.sidebarValue}>{formatDetailDateOnly(data.date)}</span>
-                </div>
-              )}
-
-              {data.weeklyDownloads != null && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Downloads</span>
-                  <div className={styles.sidebarValueRow}>
-                    <span className={styles.sidebarValue}>{fmtDownloads(data.weeklyDownloads)}</span>
-                    <DownloadsChange changePercent={data.weeklyDownloadsChangePercent} />
+                {data.links.homepage && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Homepage</span>
+                    <a
+                      href={data.links.homepage}
+                      className={styles.sidebarLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {data.links.homepage}
+                    </a>
                   </div>
-                </div>
-              )}
+                )}
 
-              {repoMeta ? (
                 <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Stars</span>
-                  <span className={styles.sidebarValue}>{fmtCount(repoMeta.stars)}</span>
+                  <span className={styles.sidebarLabel}>Version</span>
+                  <span className={styles.sidebarValue}>{data.version}</span>
                 </div>
-              ) : null}
 
-              {repoMeta ? (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Open Issues</span>
-                  <span className={styles.sidebarValue}>{fmtCount(repoMeta.openIssues)}</span>
-                </div>
-              ) : null}
+                {data.date && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Last updated</span>
+                    <span className={styles.sidebarValue}>{formatDetailDateOnly(data.date)}</span>
+                  </div>
+                )}
 
-              {data.license && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>License</span>
-                  <span className={styles.sidebarValue}>{data.license}</span>
-                </div>
-              )}
+                {data.weeklyDownloads != null && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Downloads</span>
+                    <div className={styles.sidebarValueRow}>
+                      <span className={styles.sidebarValue}>{fmtDownloads(data.weeklyDownloads)}</span>
+                      <DownloadsChange changePercent={data.weeklyDownloadsChangePercent} />
+                    </div>
+                  </div>
+                )}
 
-              <RegistryInstallStats
-                packageName={name}
-                version={data.version}
-                unpackedSize={data.unpackedSize}
-              />
+                {repoMeta ? (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Stars</span>
+                    <span className={styles.sidebarValue}>{fmtCount(repoMeta.stars)}</span>
+                  </div>
+                ) : null}
 
-              {data.keywords && data.keywords.length > 0 && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Tags</span>
-                  <div className={styles.tags}>
-                    {data.keywords.map((kw) => (
-                      <span key={kw} className={styles.tag}>
-                        {kw}
+                {repoMeta ? (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Open Issues</span>
+                    <span className={styles.sidebarValue}>{fmtCount(repoMeta.openIssues)}</span>
+                  </div>
+                ) : null}
+
+                {data.license && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>License</span>
+                    <span className={styles.sidebarValue}>{data.license}</span>
+                  </div>
+                )}
+
+                <RegistryInstallStats
+                  packageName={name}
+                  version={data.version}
+                  unpackedSize={data.unpackedSize}
+                />
+
+                {data.keywords && data.keywords.length > 0 && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Tags</span>
+                    <div className={styles.tags}>
+                      {data.keywords.map((kw) => (
+                        <span key={kw} className={styles.tag}>
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {resource ? (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Knowledge Resource</span>
+                    {resource.id ? (
+                      <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
+                        {resource.id}
+                      </Link>
+                    ) : (
+                      <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
+                    )}
+                  </div>
+                ) : null}
+
+                {data.maintainers && data.maintainers.length > 0 && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Maintainers</span>
+                    {data.maintainers.map((m) => (
+                      <span key={m.name ?? m.email} className={styles.sidebarValue}>
+                        {m.name ?? m.email}
                       </span>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
 
-              {resource ? (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
-                  {resource.id ? (
-                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
-                      {resource.id}
-                    </Link>
-                  ) : (
-                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
-                  )}
-                </div>
-              ) : null}
-
-              {data.maintainers && data.maintainers.length > 0 && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Maintainers</span>
-                  {data.maintainers.map((m) => (
-                    <span key={m.name ?? m.email} className={styles.sidebarValue}>
-                      {m.name ?? m.email}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {depCount > 0 && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Dependencies</span>
-                  <div className={styles.depList}>
-                    {Object.entries(data.dependencies).map(([dep, range]) => (
-                      <div key={dep} className={styles.depRow}>
-                        <Link to={`/registry/package/${encodeURIComponent(dep)}`} className={styles.depLink}>
-                          {dep}
-                        </Link>
-                        <span className={styles.depRange}>{range}</span>
-                      </div>
-                    ))}
+                {depCount > 0 && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Dependencies</span>
+                    <div className={styles.depList}>
+                      {Object.entries(data.dependencies).map(([dep, range]) => (
+                        <div key={dep} className={styles.depRow}>
+                          <Link
+                            to={`/registry/package/${encodeURIComponent(dep)}`}
+                            className={styles.depLink}
+                          >
+                            {dep}
+                          </Link>
+                          <span className={styles.depRange}>{range}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {peerDepCount > 0 && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Peer Dependencies</span>
-                  <div className={styles.depList}>
-                    {Object.entries(data.peerDependencies).map(([dep, range]) => (
-                      <div key={dep} className={styles.depRow}>
-                        <Link to={`/registry/package/${encodeURIComponent(dep)}`} className={styles.depLink}>
-                          {dep}
-                        </Link>
-                        <span className={styles.depRange}>{range}</span>
-                      </div>
-                    ))}
+                {peerDepCount > 0 && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Peer Dependencies</span>
+                    <div className={styles.depList}>
+                      {Object.entries(data.peerDependencies).map(([dep, range]) => (
+                        <div key={dep} className={styles.depRow}>
+                          <Link
+                            to={`/registry/package/${encodeURIComponent(dep)}`}
+                            className={styles.depLink}
+                          >
+                            {dep}
+                          </Link>
+                          <span className={styles.depRange}>{range}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </Col>
           </Row>
         )}

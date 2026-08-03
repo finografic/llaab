@@ -153,162 +153,164 @@ export function RegistryRepoPage() {
             </Col>
 
             <Col xs={12} md="content" className={styles.sidebar}>
-              <div className={styles.sidebarSection}>
-                <div className={styles.sidebarLabelRow}>
-                  <RegistrySidebarSectionLabel kind="repository" target={data.fullName}>
-                    Repository
-                  </RegistrySidebarSectionLabel>
-                  <RegistrySidebarPinButton kind="repository" target={data.fullName} />
-                </div>
-                <a
-                  href={data.htmlUrl}
-                  className={styles.sidebarLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {data.fullName}
-                </a>
-              </div>
-
-              {npmPackage ? (
+              <div className={styles.sidebarContent}>
                 <div className={styles.sidebarSection}>
                   <div className={styles.sidebarLabelRow}>
-                    <RegistrySidebarSectionLabel kind="package" target={npmPackage}>
-                      Package
+                    <RegistrySidebarSectionLabel kind="repository" target={data.fullName}>
+                      Repository
                     </RegistrySidebarSectionLabel>
-                    <RegistrySidebarPinButton kind="package" target={npmPackage} />
+                    <RegistrySidebarPinButton kind="repository" target={data.fullName} />
                   </div>
                   <a
-                    href={`https://npmx.dev/package/${encodeURIComponent(npmPackage)}`}
+                    href={data.htmlUrl}
                     className={styles.sidebarLink}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    npmx.dev/package/{npmPackage}
+                    {data.fullName}
                   </a>
+                </div>
+
+                {npmPackage ? (
+                  <div className={styles.sidebarSection}>
+                    <div className={styles.sidebarLabelRow}>
+                      <RegistrySidebarSectionLabel kind="package" target={npmPackage}>
+                        Package
+                      </RegistrySidebarSectionLabel>
+                      <RegistrySidebarPinButton kind="package" target={npmPackage} />
+                    </div>
+                    <a
+                      href={`https://npmx.dev/package/${encodeURIComponent(npmPackage)}`}
+                      className={styles.sidebarLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      npmx.dev/package/{npmPackage}
+                    </a>
+                    <a
+                      href={`https://www.npmjs.com/package/${encodeURIComponent(npmPackage)}`}
+                      className={styles.sidebarLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      npmjs.com/package/{npmPackage}
+                    </a>
+                  </div>
+                ) : null}
+
+                {data.homepage && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Homepage</span>
+                    <a
+                      href={data.homepage}
+                      className={styles.sidebarLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {data.homepage}
+                    </a>
+                  </div>
+                )}
+
+                {data.latestVersion && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Version</span>
+                    <span className={styles.sidebarValue}>{data.latestVersion}</span>
+                  </div>
+                )}
+
+                {data.pushedAt && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Last updated</span>
+                    <span className={styles.sidebarValue}>{formatDetailDateOnly(data.pushedAt)}</span>
+                  </div>
+                )}
+
+                {weeklyDownloads != null && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Downloads</span>
+                    <div className={styles.sidebarValueRow}>
+                      <span className={styles.sidebarValue}>{fmtDownloads(weeklyDownloads)}</span>
+                      <DownloadsChange changePercent={weeklyDownloadsChangePercent} />
+                    </div>
+                  </div>
+                )}
+
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Stars</span>
+                  <span className={styles.sidebarValue}>{fmtCount(data.stars)}</span>
+                </div>
+
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Open Issues</span>
+                  <span className={styles.sidebarValue}>{fmtCount(data.openIssues)}</span>
+                </div>
+
+                {data.license && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>License</span>
+                    <span className={styles.sidebarValue}>{data.license}</span>
+                  </div>
+                )}
+
+                {npmPackage ? (
+                  <RegistryInstallStats
+                    packageName={npmPackage}
+                    version={data.latestVersion?.replace(/^v/, '')}
+                  />
+                ) : null}
+
+                {data.languages.length > 0 && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Languages</span>
+                    <div className={styles.langList}>
+                      {data.languages.slice(0, 8).map((lang) => (
+                        <div key={lang.name} className={styles.langRow}>
+                          <span className={styles.langName}>{lang.name}</span>
+                          <span className={styles.langPercent}>{lang.percent}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {data.topics && data.topics.length > 0 && (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Tags</span>
+                    <div className={styles.tags}>
+                      {data.topics.map((topic) => (
+                        <span key={topic} className={styles.tag}>
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {resource ? (
+                  <div className={styles.sidebarSection}>
+                    <span className={styles.sidebarLabel}>Knowledge Resource</span>
+                    {resource.id ? (
+                      <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
+                        {resource.id}
+                      </Link>
+                    ) : (
+                      <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
+                    )}
+                  </div>
+                ) : null}
+
+                <div className={styles.sidebarSection}>
+                  <span className={styles.sidebarLabel}>Maintainer</span>
                   <a
-                    href={`https://www.npmjs.com/package/${encodeURIComponent(npmPackage)}`}
+                    href={`https://github.com/${encodeURIComponent(data.owner)}`}
                     className={styles.sidebarLink}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    npmjs.com/package/{npmPackage}
+                    {data.owner}
                   </a>
                 </div>
-              ) : null}
-
-              {data.homepage && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Homepage</span>
-                  <a
-                    href={data.homepage}
-                    className={styles.sidebarLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {data.homepage}
-                  </a>
-                </div>
-              )}
-
-              {data.latestVersion && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Version</span>
-                  <span className={styles.sidebarValue}>{data.latestVersion}</span>
-                </div>
-              )}
-
-              {data.pushedAt && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Last updated</span>
-                  <span className={styles.sidebarValue}>{formatDetailDateOnly(data.pushedAt)}</span>
-                </div>
-              )}
-
-              {weeklyDownloads != null && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Downloads</span>
-                  <div className={styles.sidebarValueRow}>
-                    <span className={styles.sidebarValue}>{fmtDownloads(weeklyDownloads)}</span>
-                    <DownloadsChange changePercent={weeklyDownloadsChangePercent} />
-                  </div>
-                </div>
-              )}
-
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Stars</span>
-                <span className={styles.sidebarValue}>{fmtCount(data.stars)}</span>
-              </div>
-
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Open Issues</span>
-                <span className={styles.sidebarValue}>{fmtCount(data.openIssues)}</span>
-              </div>
-
-              {data.license && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>License</span>
-                  <span className={styles.sidebarValue}>{data.license}</span>
-                </div>
-              )}
-
-              {npmPackage ? (
-                <RegistryInstallStats
-                  packageName={npmPackage}
-                  version={data.latestVersion?.replace(/^v/, '')}
-                />
-              ) : null}
-
-              {data.languages.length > 0 && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Languages</span>
-                  <div className={styles.langList}>
-                    {data.languages.slice(0, 8).map((lang) => (
-                      <div key={lang.name} className={styles.langRow}>
-                        <span className={styles.langName}>{lang.name}</span>
-                        <span className={styles.langPercent}>{lang.percent}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {data.topics && data.topics.length > 0 && (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Tags</span>
-                  <div className={styles.tags}>
-                    {data.topics.map((topic) => (
-                      <span key={topic} className={styles.tag}>
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {resource ? (
-                <div className={styles.sidebarSection}>
-                  <span className={styles.sidebarLabel}>Knowledge Resource</span>
-                  {resource.id ? (
-                    <Link to={`/vault/nodes/${resource.id}`} className={styles.sidebarLink}>
-                      {resource.id}
-                    </Link>
-                  ) : (
-                    <span className={styles.sidebarValue}>{resource.status.replace('_', ' ')}</span>
-                  )}
-                </div>
-              ) : null}
-
-              <div className={styles.sidebarSection}>
-                <span className={styles.sidebarLabel}>Maintainer</span>
-                <a
-                  href={`https://github.com/${encodeURIComponent(data.owner)}`}
-                  className={styles.sidebarLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {data.owner}
-                </a>
               </div>
             </Col>
           </Row>
