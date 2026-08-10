@@ -1,4 +1,4 @@
-export type InterviewDomainId =
+export type QuizDomainId =
   | 'testing'
   | 'automation'
   | 'cloud'
@@ -8,14 +8,14 @@ export type InterviewDomainId =
   | 'platform'
   | 'vald';
 
-export type InterviewSection = 'glossary' | 'depth';
-export type InterviewQuestionType = 'mcq' | 'order';
+export type QuizSection = 'glossary' | 'depth';
+export type QuizQuestionType = 'mcq' | 'order';
 
-export interface InterviewQuestionBase {
+export interface QuizQuestionBase {
   id: string;
-  domain: InterviewDomainId;
-  section: InterviewSection;
-  type: InterviewQuestionType;
+  domain: QuizDomainId;
+  section: QuizSection;
+  type: QuizQuestionType;
   difficulty: 1 | 2 | 3;
   stem: string;
   stemSpoken?: string;
@@ -28,18 +28,18 @@ export interface InterviewQuestionBase {
   tags: string[];
 }
 
-export interface InterviewMcqQuestion extends InterviewQuestionBase {
+export interface QuizMcqQuestion extends QuizQuestionBase {
   type: 'mcq';
   options: Array<{ id: string; text: string; code?: string }>;
   correctOptionId: string;
   distractorNotes?: Record<string, string>;
 }
 
-export interface InterviewOrderQuestion extends InterviewQuestionBase {
+export interface QuizOrderQuestion extends QuizQuestionBase {
   type: 'order';
   items: Array<{ id: string; text: string }>;
   correctOrder: string[];
   orderRationale: string;
 }
 
-export type InterviewQuestion = InterviewMcqQuestion | InterviewOrderQuestion;
+export type QuizQuestion = QuizMcqQuestion | QuizOrderQuestion;

@@ -1,22 +1,22 @@
-import type { InterviewDomainId, InterviewQuestion } from 'types/interview-quiz.types';
+import apisQuestions from 'vault/quiz/questions/apis.json';
+import automationQuestions from 'vault/quiz/questions/automation.json';
+import cloudQuestions from 'vault/quiz/questions/cloud.json';
+import frontendQuestions from 'vault/quiz/questions/frontend.json';
+import platformQuestions from 'vault/quiz/questions/platform.json';
+import testingQuestions from 'vault/quiz/questions/testing.json';
+import typescriptQuestions from 'vault/quiz/questions/typescript.json';
+import valdQuestions from 'vault/quiz/questions/vald.json';
 
-import apisQuestions from '../../../../vault/interviews/VALD/questions/apis.json';
-import automationQuestions from '../../../../vault/interviews/VALD/questions/automation.json';
-import cloudQuestions from '../../../../vault/interviews/VALD/questions/cloud.json';
-import frontendQuestions from '../../../../vault/interviews/VALD/questions/frontend.json';
-import platformQuestions from '../../../../vault/interviews/VALD/questions/platform.json';
-import testingQuestions from '../../../../vault/interviews/VALD/questions/testing.json';
-import typescriptQuestions from '../../../../vault/interviews/VALD/questions/typescript.json';
-import valdQuestions from '../../../../vault/interviews/VALD/questions/vald.json';
+import type { QuizDomainId, QuizQuestion } from 'types/quiz.types';
 
-export interface InterviewDomainMeta {
-  id: InterviewDomainId;
+export interface QuizDomainMeta {
+  id: QuizDomainId;
   title: string;
   label: string;
   description: string;
 }
 
-export interface InterviewDomainStats {
+export interface QuizDomainStats {
   total: number;
   glossary: number;
   depth: number;
@@ -24,7 +24,7 @@ export interface InterviewDomainStats {
   order: number;
 }
 
-export const INTERVIEW_DOMAIN_META: InterviewDomainMeta[] = [
+export const QUIZ_DOMAIN_META: QuizDomainMeta[] = [
   {
     id: 'testing',
     title: 'Testing',
@@ -75,24 +75,22 @@ export const INTERVIEW_DOMAIN_META: InterviewDomainMeta[] = [
   },
 ];
 
-export const INTERVIEW_QUESTIONS_BY_DOMAIN: Record<InterviewDomainId, InterviewQuestion[]> = {
-  testing: testingQuestions as InterviewQuestion[],
-  automation: automationQuestions as InterviewQuestion[],
-  cloud: cloudQuestions as InterviewQuestion[],
-  apis: apisQuestions as InterviewQuestion[],
-  typescript: typescriptQuestions as InterviewQuestion[],
-  frontend: frontendQuestions as InterviewQuestion[],
-  platform: platformQuestions as InterviewQuestion[],
-  vald: valdQuestions as InterviewQuestion[],
+export const QUIZ_QUESTIONS_BY_DOMAIN: Record<QuizDomainId, QuizQuestion[]> = {
+  testing: testingQuestions as QuizQuestion[],
+  automation: automationQuestions as QuizQuestion[],
+  cloud: cloudQuestions as QuizQuestion[],
+  apis: apisQuestions as QuizQuestion[],
+  typescript: typescriptQuestions as QuizQuestion[],
+  frontend: frontendQuestions as QuizQuestion[],
+  platform: platformQuestions as QuizQuestion[],
+  vald: valdQuestions as QuizQuestion[],
 };
 
-export const INTERVIEW_QUESTIONS = INTERVIEW_DOMAIN_META.flatMap(
-  ({ id }) => INTERVIEW_QUESTIONS_BY_DOMAIN[id],
-);
+export const QUIZ_QUESTIONS = QUIZ_DOMAIN_META.flatMap(({ id }) => QUIZ_QUESTIONS_BY_DOMAIN[id]);
 
-export const INTERVIEW_DOMAIN_STATS: Record<InterviewDomainId, InterviewDomainStats> = Object.fromEntries(
-  INTERVIEW_DOMAIN_META.map(({ id }) => {
-    const questions = INTERVIEW_QUESTIONS_BY_DOMAIN[id];
+export const QUIZ_DOMAIN_STATS: Record<QuizDomainId, QuizDomainStats> = Object.fromEntries(
+  QUIZ_DOMAIN_META.map(({ id }) => {
+    const questions = QUIZ_QUESTIONS_BY_DOMAIN[id];
 
     return [
       id,
@@ -105,4 +103,4 @@ export const INTERVIEW_DOMAIN_STATS: Record<InterviewDomainId, InterviewDomainSt
       },
     ];
   }),
-) as Record<InterviewDomainId, InterviewDomainStats>;
+) as Record<QuizDomainId, QuizDomainStats>;

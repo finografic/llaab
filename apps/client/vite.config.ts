@@ -48,6 +48,7 @@ export default defineConfig(({ mode }) => {
         { find: 'styles', replacement: path.resolve(clientRoot, 'src/styles') },
         { find: 'tables', replacement: path.resolve(clientRoot, 'src/tables') },
         { find: 'types', replacement: path.resolve(clientRoot, 'src/types') },
+        { find: /^vault\/(.*)/, replacement: `${path.resolve(repoRoot, 'vault')}/$1` },
       ],
     },
     server: {

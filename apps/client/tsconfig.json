@@ -20,7 +20,6 @@
       "hooks/*": ["../../packages/ui/src/hooks/*"],
       "ui/*": ["../../packages/ui/src/components/*"],
       "utils": ["../../packages/ui/src/lib/utils.ts"],
-      "utils/*": ["./src/utils/*"],
       "components/*": ["./src/components/*"],
       "constants/*": ["./src/constants/*"],
       "dialogs/*": ["./src/dialogs/*"],
@@ -33,7 +32,8 @@
       "tables/*": ["./src/tables/*"],
       "utils/*": ["./src/utils/*"],
       "queries/*": ["./src/queries/*"],
-      "types/*": ["./src/types/*"]
+      "types/*": ["./src/types/*"],
+      "vault/*": ["../../vault/*"]
     }
   },
   "include": ["src/**/*", "vite.config.ts", "index.html"]

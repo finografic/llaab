@@ -1,15 +1,15 @@
 #!/usr/bin/env bun
 /**
- * Validates vault/interviews/VALD/questions/<domain>.json against the schema
+ * Validates vault/quiz/questions/<domain>.json against the schema
  * and writing rules in .agents/INTERVIEW_QUIZ_APP_SPEC.md.
  *
- * Usage: bun scripts/validate-interview-bank.ts <domain>
- * bun scripts/validate-interview-bank.ts --all
+ * Usage: bun scripts/validate-quiz-bank.ts <domain>
+ * bun scripts/validate-quiz-bank.ts --all
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const QUESTIONS_DIR = join(import.meta.dir, '..', 'vault', 'interviews', 'VALD', 'questions');
+const QUESTIONS_DIR = join(import.meta.dir, '..', 'vault', 'quiz', 'questions');
 
 const DOMAINS = ['testing', 'automation', 'cloud', 'apis', 'typescript', 'frontend', 'platform', 'vald'];
 
@@ -47,8 +47,9 @@ function validateDomain(domain: string): string[] {
     if (seenIds.has(q.id)) errors.push(`${tag}: duplicate id`);
     seenIds.add(q.id);
 
-    if (q.domain !== domain)
-      {errors.push(`${tag}: domain field '${q.domain}' does not match file domain '${domain}'`);}
+    if (q.domain !== domain) {
+      errors.push(`${tag}: domain field '${q.domain}' does not match file domain '${domain}'`);
+    }
     if (!['glossary', 'depth'].includes(q.section)) errors.push(`${tag}: invalid section '${q.section}'`);
     if (![1, 2, 3].includes(q.difficulty)) errors.push(`${tag}: invalid difficulty '${q.difficulty}'`);
     if (!q.stem || typeof q.stem !== 'string') errors.push(`${tag}: missing stem`);
@@ -80,8 +81,8 @@ function validateDomain(domain: string): string[] {
       if (!Array.isArray(q.items) || q.items.length < 4 || q.items.length > 6) {
         errors.push(`${tag}: order must have 4 to 6 items`);
       } else {
-        const itemIds = q.items.map((i: any) => i.id).sort();
-        const orderIds = [...(q.correctOrder ?? [])].sort();
+        const itemIds = q.items.map((i: any) => i.id).sort((a: string, b: string) => a.localeCompare(b));
+        const orderIds = [...(q.correctOrder ?? [])].sort((a: string, b: string) => a.localeCompare(b));
         if (JSON.stringify(itemIds) !== JSON.stringify(orderIds)) {
           errors.push(`${tag}: correctOrder is not a permutation of items`);
         }
@@ -115,7 +116,7 @@ const targets = args.includes('--all')
   : args;
 
 if (targets.length === 0) {
-  console.error('Usage: bun scripts/validate-interview-bank.ts <domain> | --all');
+  console.error('Usage: bun scripts/validate-quiz-bank.ts <domain> | --all');
   process.exit(1);
 }
 

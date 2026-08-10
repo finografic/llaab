@@ -83,9 +83,9 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
     label: 'Knowledge',
     items: [
       {
-        label: 'Interviews',
-        description: 'Static VALD interview practice sessions and local progress',
-        href: '/interviews',
+        label: 'Knowledge Quiz',
+        description: 'Static VALD quiz practice sessions and local progress',
+        href: '/quiz',
         live: true,
       },
       {

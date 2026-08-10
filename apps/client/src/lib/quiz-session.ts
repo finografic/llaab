@@ -1,32 +1,32 @@
-import type { InterviewQuizStorage } from './interview-quiz-storage';
+import type { QuizStorage } from './quiz-storage';
 
-import type { InterviewDomainId, InterviewQuestion, InterviewSection } from 'types/interview-quiz.types';
+import type { QuizDomainId, QuizQuestion, QuizSection } from 'types/quiz.types';
 
-export type InterviewSessionCount = 5 | 10 | 20 | 'all';
-export type InterviewSectionFilter = InterviewSection | 'both';
-export type InterviewDifficultyFilter = 1 | 2 | 3 | 'all';
+export type QuizSessionCount = 5 | 10 | 20 | 'all';
+export type QuizSectionFilter = QuizSection | 'both';
+export type QuizDifficultyFilter = 1 | 2 | 3 | 'all';
 
-export interface InterviewSessionConfig {
-  count: InterviewSessionCount;
-  section: InterviewSectionFilter;
-  difficulty: InterviewDifficultyFilter;
+export interface QuizSessionConfig {
+  count: QuizSessionCount;
+  section: QuizSectionFilter;
+  difficulty: QuizDifficultyFilter;
   autoRead: boolean;
   speechRate: number;
 }
 
-export interface InterviewSelectionOptions {
-  domains: InterviewDomainId[];
-  config: InterviewSessionConfig;
-  questions: InterviewQuestion[];
-  storage: InterviewQuizStorage;
+export interface QuizSelectionOptions {
+  domains: QuizDomainId[];
+  config: QuizSessionConfig;
+  questions: QuizQuestion[];
+  storage: QuizStorage;
   retryIds?: string[];
 }
 
-export interface InterviewReplacementOptions extends InterviewSelectionOptions {
+export interface QuizReplacementOptions extends QuizSelectionOptions {
   excludeIds: string[];
 }
 
-const DEFAULT_CONFIG: InterviewSessionConfig = {
+const DEFAULT_CONFIG: QuizSessionConfig = {
   count: 10,
   section: 'both',
   difficulty: 'all',
@@ -34,17 +34,17 @@ const DEFAULT_CONFIG: InterviewSessionConfig = {
   speechRate: 1.15,
 };
 
-export function createDefaultInterviewSessionConfig(): InterviewSessionConfig {
+export function createDefaultQuizSessionConfig(): QuizSessionConfig {
   return DEFAULT_CONFIG;
 }
 
-export function createInterviewSessionQuestions({
+export function createQuizSessionQuestions({
   domains,
   config,
   questions,
   storage,
   retryIds,
-}: InterviewSelectionOptions): InterviewQuestion[] {
+}: QuizSelectionOptions): QuizQuestion[] {
   const retrySet = new Set(retryIds ?? []);
   const attemptsByQuestion = Map.groupBy(storage.attempts, (attempt) => attempt.questionId);
   const filtered = questions.filter((question) => {
@@ -55,7 +55,7 @@ export function createInterviewSessionQuestions({
     return true;
   });
   const flaggedIds = new Set(storage.flaggedIds);
-  const selected = new Map<string, InterviewQuestion>();
+  const selected = new Map<string, QuizQuestion>();
   const targetCount = config.count === 'all' ? filtered.length : Math.min(config.count, filtered.length);
 
   for (const question of createWeightedQuestionOrder(filtered, attemptsByQuestion, flaggedIds)) {
@@ -66,16 +66,16 @@ export function createInterviewSessionQuestions({
   return [...selected.values()].map(randomiseQuestionForDisplay);
 }
 
-export function createInterviewReplacementQuestion({
+export function createQuizReplacementQuestion({
   domains,
   config,
   questions,
   storage,
   retryIds,
   excludeIds,
-}: InterviewReplacementOptions): InterviewQuestion | null {
+}: QuizReplacementOptions): QuizQuestion | null {
   const excluded = new Set(excludeIds);
-  const replacement = createInterviewSessionQuestions({
+  const replacement = createQuizSessionQuestions({
     domains,
     config: { ...config, count: 'all' },
     questions,
@@ -87,10 +87,10 @@ export function createInterviewReplacementQuestion({
 }
 
 function createWeightedQuestionOrder(
-  questions: InterviewQuestion[],
-  attemptsByQuestion: Map<string, InterviewQuizStorage['attempts']>,
+  questions: QuizQuestion[],
+  attemptsByQuestion: Map<string, QuizStorage['attempts']>,
   flaggedIds: Set<string>,
-): InterviewQuestion[] {
+): QuizQuestion[] {
   return questions
     .map((question) => {
       const weight = getQuestionSelectionWeight(question, attemptsByQuestion, flaggedIds);
@@ -104,8 +104,8 @@ function createWeightedQuestionOrder(
 }
 
 function getQuestionSelectionWeight(
-  question: InterviewQuestion,
-  attemptsByQuestion: Map<string, InterviewQuizStorage['attempts']>,
+  question: QuizQuestion,
+  attemptsByQuestion: Map<string, QuizStorage['attempts']>,
   flaggedIds: Set<string>,
 ): number {
   const attempts = attemptsByQuestion.get(question.id) ?? [];
@@ -125,7 +125,7 @@ export function shuffleArray<T>(items: T[]): T[] {
   return next;
 }
 
-function randomiseQuestionForDisplay(question: InterviewQuestion): InterviewQuestion {
+function randomiseQuestionForDisplay(question: QuizQuestion): QuizQuestion {
   if (question.type !== 'mcq') return question;
 
   const options = shuffleArray(question.options);
@@ -156,7 +156,7 @@ function randomiseQuestionForDisplay(question: InterviewQuestion): InterviewQues
   };
 }
 
-export function createInitialOrder(question: InterviewQuestion): string[] {
+export function createInitialOrder(question: QuizQuestion): string[] {
   if (question.type !== 'order') return [];
 
   for (let attempt = 0; attempt < 10; attempt += 1) {

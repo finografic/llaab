@@ -10,9 +10,7 @@ import { appSessionLoader } from 'lib/auth-session';
 
 const HomePage = lazy(() => import('routes/root').then((module) => ({ default: module.HomePage })));
 const IngestPage = lazy(() => import('routes/ingest').then((module) => ({ default: module.IngestPage })));
-const InterviewsPage = lazy(() =>
-  import('routes/interviews').then((module) => ({ default: module.InterviewsPage })),
-);
+const QuizPage = lazy(() => import('routes/quiz').then((module) => ({ default: module.QuizPage })));
 const TerminalPage = lazy(() =>
   import('routes/terminal').then((module) => ({ default: module.TerminalPage })),
 );
@@ -144,9 +142,9 @@ export const router = createBrowserRouter([
         handle: { title: 'Ingest' } satisfies RouteHandle,
       },
       {
-        path: 'interviews',
-        element: lazyElement(InterviewsPage),
-        handle: { title: 'Interviews' } satisfies RouteHandle,
+        path: 'quiz',
+        element: lazyElement(QuizPage),
+        handle: { title: 'Knowledge Quiz' } satisfies RouteHandle,
       },
       {
         path: 'knowledge/wikis',

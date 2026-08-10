@@ -1,17 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { InterviewQuizStorage } from './interview-quiz-storage';
+import type { QuizStorage } from './quiz-storage';
 
-import type { InterviewMcqQuestion, InterviewOrderQuestion } from 'types/interview-quiz.types';
+import type { QuizMcqQuestion, QuizOrderQuestion } from 'types/quiz.types';
 
-import { createInitialOrder, createInterviewSessionQuestions, ordersMatch } from './interview-quiz-session';
+import { createInitialOrder, createQuizSessionQuestions, ordersMatch } from './quiz-session';
 
-const EMPTY_STORAGE: InterviewQuizStorage = {
+const EMPTY_STORAGE: QuizStorage = {
   attempts: [],
   flaggedIds: [],
   domainAccuracy: {},
 };
 
-const MCQ_QUESTION: InterviewMcqQuestion = {
+const MCQ_QUESTION: QuizMcqQuestion = {
   id: 'apis-001',
   domain: 'apis',
   section: 'depth',
@@ -33,7 +33,7 @@ const MCQ_QUESTION: InterviewMcqQuestion = {
   tags: [],
 };
 
-const ORDER_QUESTION: InterviewOrderQuestion = {
+const ORDER_QUESTION: QuizOrderQuestion = {
   id: 'apis-002',
   domain: 'apis',
   section: 'depth',
@@ -55,11 +55,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('interview quiz question randomisation', () => {
+describe('quiz quiz question randomisation', () => {
   it('shuffles MCQ options while preserving IDs and remapping displayed option references', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
 
-    const [question] = createInterviewSessionQuestions({
+    const [question] = createQuizSessionQuestions({
       domains: ['apis'],
       config: {
         count: 'all',

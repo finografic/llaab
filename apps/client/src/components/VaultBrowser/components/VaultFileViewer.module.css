@@ -13,7 +13,7 @@
 
 .viewerToolbar {
   border-bottom: 1px solid var(--border-subtle);
-  padding: var(--space-3) var(--space-6);
+  padding: var(--space-3) 0;
 }
 
 .viewerToolbarRow {
@@ -23,6 +23,7 @@
 .viewerToolbarLeft {
   display: flex;
   justify-content: flex-start;
+  padding-left: 0 !important;
 }
 
 .viewerToolbarRight {
@@ -30,6 +31,7 @@
   align-items: center;
   gap: var(--space-2);
   justify-content: flex-end;
+  padding-right: var(--space-2) !important;
 }
 
 .viewerToolbar :global([data-slot='toggle']),

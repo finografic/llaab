@@ -24,55 +24,50 @@ import type { TtsPlayerHandle } from 'components/TtsPlayer';
 import type { DragEvent, KeyboardEvent } from 'react';
 
 import { api } from 'lib/api';
-import { INTERVIEW_DOMAIN_META, INTERVIEW_DOMAIN_STATS, INTERVIEW_QUESTIONS } from 'lib/interview-quiz-data';
+import { QUIZ_DOMAIN_META, QUIZ_DOMAIN_STATS, QUIZ_QUESTIONS } from 'lib/quiz-data';
 import type {
-  InterviewDifficultyFilter,
-  InterviewSectionFilter,
-  InterviewSessionConfig,
-  InterviewSessionCount,
-} from 'lib/interview-quiz-session';
+  QuizDifficultyFilter,
+  QuizSectionFilter,
+  QuizSessionConfig,
+  QuizSessionCount,
+} from 'lib/quiz-session';
 import {
-  createDefaultInterviewSessionConfig,
+  createDefaultQuizSessionConfig,
   createInitialOrder,
-  createInterviewReplacementQuestion,
-  createInterviewSessionQuestions,
-} from 'lib/interview-quiz-session';
-import type { InterviewQuizStorage } from 'lib/interview-quiz-storage';
+  createQuizReplacementQuestion,
+  createQuizSessionQuestions,
+} from 'lib/quiz-session';
+import type { QuizStorage } from 'lib/quiz-storage';
 import {
-  addInterviewAttempt,
-  addInterviewPracticeFlag,
-  loadInterviewQuizStorage,
-  saveInterviewQuizStorage,
-  toggleInterviewFlag,
-} from 'lib/interview-quiz-storage';
+  addQuizAttempt,
+  addQuizPracticeFlag,
+  loadQuizStorage,
+  saveQuizStorage,
+  toggleQuizFlag,
+} from 'lib/quiz-storage';
 import { usePageTitle } from 'lib/use-page-title';
 
-import type {
-  InterviewDomainId,
-  InterviewMcqQuestion,
-  InterviewOrderQuestion,
-  InterviewQuestion,
-} from 'types/interview-quiz.types';
+import type { QuizDomainId, QuizMcqQuestion, QuizOrderQuestion, QuizQuestion } from 'types/quiz.types';
 
-import styles from './interviews.module.css';
+import styles from './quiz.module.css';
 
-type InterviewStage = 'setup' | 'question' | 'summary';
+type QuizStage = 'setup' | 'question' | 'summary';
 
-type InterviewAnswer =
+type QuizAnswer =
   | { type: 'mcq'; selectedOptionId: string; correct: boolean; score: number }
   | { type: 'order'; submittedOrder: string[]; correct: boolean; score: number }
   | { type: 'unknown'; correct: false; score: 0 };
 
 type ScoreTone = 'perfect' | 'strong' | 'solid' | 'drill';
 
-const DEFAULT_SELECTED_DOMAINS: InterviewDomainId[] = ['testing', 'apis', 'platform'];
+const DEFAULT_SELECTED_DOMAINS: QuizDomainId[] = ['testing', 'apis', 'platform'];
 const MIN_SPEECH_RATE = 1.15;
 const MAX_SPEECH_RATE = MIN_SPEECH_RATE * 1.5;
 const AUTOPLAY_READ_DELAY_MS = 300;
 const MCQ_OPTION_LABELS = ['A', 'B', 'C', 'D'] as const;
 
-function createInitialStorage(): InterviewQuizStorage {
-  return loadInterviewQuizStorage();
+function createInitialStorage(): QuizStorage {
+  return loadQuizStorage();
 }
 
 function clampSpeechRate(value: number) {
@@ -111,7 +106,7 @@ function formatAggregateScore(score: number): string {
   return Number.isInteger(score) ? String(score) : score.toFixed(1);
 }
 
-function getAnswerScore(answer: InterviewAnswer | undefined): number {
+function getAnswerScore(answer: QuizAnswer | undefined): number {
   return typeof answer?.score === 'number' ? answer.score : answer?.correct ? 1 : 0;
 }
 
@@ -133,17 +128,17 @@ function moveItemByDirection(items: string[], itemId: string, direction: -1 | 1)
   return next;
 }
 
-export function InterviewsPage() {
-  usePageTitle('Interviews');
+export function QuizPage() {
+  usePageTitle('Knowledge Quiz');
 
-  const [storage, setStorage] = useState<InterviewQuizStorage>(createInitialStorage);
-  const [selectedDomains, setSelectedDomains] = useState<InterviewDomainId[]>(DEFAULT_SELECTED_DOMAINS);
-  const [config, setConfig] = useState<InterviewSessionConfig>(createDefaultInterviewSessionConfig);
-  const [stage, setStage] = useState<InterviewStage>('setup');
-  const [sessionQuestions, setSessionQuestions] = useState<InterviewQuestion[]>([]);
+  const [storage, setStorage] = useState<QuizStorage>(createInitialStorage);
+  const [selectedDomains, setSelectedDomains] = useState<QuizDomainId[]>(DEFAULT_SELECTED_DOMAINS);
+  const [config, setConfig] = useState<QuizSessionConfig>(createDefaultQuizSessionConfig);
+  const [stage, setStage] = useState<QuizStage>('setup');
+  const [sessionQuestions, setSessionQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answer, setAnswer] = useState<InterviewAnswer | null>(null);
-  const [sessionAnswers, setSessionAnswers] = useState<Record<string, InterviewAnswer>>({});
+  const [answer, setAnswer] = useState<QuizAnswer | null>(null);
+  const [sessionAnswers, setSessionAnswers] = useState<Record<string, QuizAnswer>>({});
   const [orderIds, setOrderIds] = useState<string[]>([]);
   const flaggedIds = useMemo(() => new Set(storage.flaggedIds), [storage.flaggedIds]);
   const currentQuestion = sessionQuestions[currentIndex];
@@ -151,7 +146,7 @@ export function InterviewsPage() {
   const sessionScore = Object.values(sessionAnswers).reduce((total, item) => total + item.score, 0);
 
   useEffect(() => {
-    saveInterviewQuizStorage(storage);
+    saveQuizStorage(storage);
   }, [storage]);
 
   useEffect(() => {
@@ -177,18 +172,18 @@ export function InterviewsPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [answer, currentQuestion, stage]);
 
-  function updateStorage(updater: (current: InterviewQuizStorage) => InterviewQuizStorage) {
+  function updateStorage(updater: (current: QuizStorage) => QuizStorage) {
     setStorage((current) => updater(current));
   }
 
-  function toggleDomain(domain: InterviewDomainId, selected: boolean) {
+  function toggleDomain(domain: QuizDomainId, selected: boolean) {
     setSelectedDomains((current) => {
       if (selected) return current.includes(domain) ? current : [...current, domain];
       return current.filter((item) => item !== domain);
     });
   }
 
-  function startSession(questions: InterviewQuestion[]) {
+  function startSession(questions: QuizQuestion[]) {
     // Runs inside the Start click so autoplay never pays a resume round-trip.
     unlockTtsAudioPlayback();
     setSessionQuestions(questions);
@@ -198,9 +193,9 @@ export function InterviewsPage() {
     setStage(questions.length > 0 ? 'question' : 'setup');
   }
 
-  function submitMcq(question: InterviewMcqQuestion, selectedOptionId: string) {
+  function submitMcq(question: QuizMcqQuestion, selectedOptionId: string) {
     const correct = selectedOptionId === question.correctOptionId;
-    const nextAnswer: InterviewAnswer = {
+    const nextAnswer: QuizAnswer = {
       type: 'mcq',
       selectedOptionId,
       correct,
@@ -210,10 +205,10 @@ export function InterviewsPage() {
     recordAnswer(question, nextAnswer);
   }
 
-  function submitOrder(question: InterviewOrderQuestion) {
+  function submitOrder(question: QuizOrderQuestion) {
     const submittedOrder = orderIds.length > 0 ? orderIds : createInitialOrder(question);
     const orderScore = calculateOrderScore(submittedOrder, question.correctOrder);
-    const nextAnswer: InterviewAnswer = {
+    const nextAnswer: QuizAnswer = {
       type: 'order',
       submittedOrder,
       correct: orderScore === 1,
@@ -224,10 +219,10 @@ export function InterviewsPage() {
   }
 
   function skipQuestion() {
-    const replacement = createInterviewReplacementQuestion({
+    const replacement = createQuizReplacementQuestion({
       domains: selectedDomains,
       config,
-      questions: INTERVIEW_QUESTIONS,
+      questions: QUIZ_QUESTIONS,
       storage,
       excludeIds: sessionQuestions.map((question) => question.id),
     });
@@ -243,16 +238,16 @@ export function InterviewsPage() {
     setAnswer(null);
   }
 
-  function markDontKnow(question: InterviewQuestion) {
+  function markDontKnow(question: QuizQuestion) {
     recordAnswer(question, { type: 'unknown', correct: false, score: 0 });
-    updateStorage((current) => addInterviewPracticeFlag(current, question.id));
+    updateStorage((current) => addQuizPracticeFlag(current, question.id));
   }
 
-  function recordAnswer(question: InterviewQuestion, nextAnswer: InterviewAnswer) {
+  function recordAnswer(question: QuizQuestion, nextAnswer: QuizAnswer) {
     setAnswer(nextAnswer);
     setSessionAnswers((current) => ({ ...current, [question.id]: nextAnswer }));
     updateStorage((current) =>
-      addInterviewAttempt(current, {
+      addQuizAttempt(current, {
         questionId: question.id,
         domain: question.domain,
         section: question.section,
@@ -299,10 +294,10 @@ export function InterviewsPage() {
       .map(([id]) => id);
     if (missedIds.length === 0) return;
     startSession(
-      createInterviewSessionQuestions({
+      createQuizSessionQuestions({
         domains: selectedDomains,
         config,
-        questions: INTERVIEW_QUESTIONS,
+        questions: QUIZ_QUESTIONS,
         storage,
         retryIds: missedIds,
       }),
@@ -327,15 +322,15 @@ export function InterviewsPage() {
       hero={
         <PageHero
           eyebrow="Practice"
-          title="Interview Quiz"
+          title="Knowledge Quiz"
           description="VALD-focused rehearsal across the completed static question bank."
           right={
             <div className={styles.autoReadControl}>
-              <Label htmlFor="interview-auto-read">Autoplay</Label>
-              <Switch id="interview-auto-read" checked={config.autoRead} onCheckedChange={setAutoRead} />
-              <Label htmlFor="interview-speech-rate">Rate</Label>
+              <Label htmlFor="quiz-auto-read">Autoplay</Label>
+              <Switch id="quiz-auto-read" checked={config.autoRead} onCheckedChange={setAutoRead} />
+              <Label htmlFor="quiz-speech-rate">Rate</Label>
               <Input
-                id="interview-speech-rate"
+                id="quiz-speech-rate"
                 type="number"
                 min={MIN_SPEECH_RATE}
                 max={MAX_SPEECH_RATE}
@@ -348,7 +343,7 @@ export function InterviewsPage() {
           }
           meta={
             <>
-              {INTERVIEW_QUESTIONS.length} questions · {storage.attempts.length} attempts ·{' '}
+              {QUIZ_QUESTIONS.length} questions · {storage.attempts.length} attempts ·{' '}
               {storage.flaggedIds.length} for practice
             </>
           }
@@ -383,9 +378,7 @@ export function InterviewsPage() {
               onSubmitOrder={submitOrder}
               onMoveOrderItemTo={moveOrderItemTo}
               onOrderKeyDown={handleOrderKeyDown}
-              onToggleFlag={() =>
-                updateStorage((current) => toggleInterviewFlag(current, currentQuestion.id))
-              }
+              onToggleFlag={() => updateStorage((current) => toggleQuizFlag(current, currentQuestion.id))}
               onSkip={skipQuestion}
               onDontKnow={() => markDontKnow(currentQuestion)}
               onNext={goNext}
@@ -400,9 +393,7 @@ export function InterviewsPage() {
               answeredCount={answeredCount}
               storage={storage}
               onRetryMissed={retryMissed}
-              onToggleFlag={(questionId) =>
-                updateStorage((current) => toggleInterviewFlag(current, questionId))
-              }
+              onToggleFlag={(questionId) => updateStorage((current) => toggleQuizFlag(current, questionId))}
               onNewSession={() => {
                 setStage('setup');
                 setAnswer(null);
@@ -423,14 +414,14 @@ function SetupView({
   onConfigChange,
   onStart,
 }: {
-  selectedDomains: InterviewDomainId[];
-  config: InterviewSessionConfig;
-  storage: InterviewQuizStorage;
-  onToggleDomain: (domain: InterviewDomainId, selected: boolean) => void;
-  onConfigChange: (config: InterviewSessionConfig) => void;
-  onStart: (questions: InterviewQuestion[]) => void;
+  selectedDomains: QuizDomainId[];
+  config: QuizSessionConfig;
+  storage: QuizStorage;
+  onToggleDomain: (domain: QuizDomainId, selected: boolean) => void;
+  onConfigChange: (config: QuizSessionConfig) => void;
+  onStart: (questions: QuizQuestion[]) => void;
 }) {
-  const selectedQuestionCount = INTERVIEW_QUESTIONS.filter((question) => {
+  const selectedQuestionCount = QUIZ_QUESTIONS.filter((question) => {
     if (!selectedDomains.includes(question.domain)) return false;
     if (config.section !== 'both' && question.section !== config.section) return false;
     if (config.difficulty !== 'all' && question.difficulty !== config.difficulty) return false;
@@ -442,10 +433,10 @@ function SetupView({
   // must not re-roll the question set (and waste the preload) mid-configuration.
   const pendingSessionQuestions = useMemo(
     () =>
-      createInterviewSessionQuestions({
+      createQuizSessionQuestions({
         domains: selectedDomains,
         config: { ...config, count, section, difficulty },
-        questions: INTERVIEW_QUESTIONS,
+        questions: QUIZ_QUESTIONS,
         storage,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- speechRate/autoRead do not affect selection
@@ -463,8 +454,8 @@ function SetupView({
   return (
     <div className={styles.setupStack}>
       <Row gutterWidth={12} className={styles.domainGrid}>
-        {INTERVIEW_DOMAIN_META.map((domain) => {
-          const stats = INTERVIEW_DOMAIN_STATS[domain.id];
+        {QUIZ_DOMAIN_META.map((domain) => {
+          const stats = QUIZ_DOMAIN_STATS[domain.id];
           const accuracy = storage.domainAccuracy[domain.id];
           const accuracyTone =
             accuracy && accuracy.attempts > 0
@@ -512,9 +503,9 @@ function SetupView({
             <Col xs={12} lg={9}>
               <Row gutterWidth={12}>
                 <Col xs={12} md={4}>
-                  <Label htmlFor="interview-count">Questions</Label>
+                  <Label htmlFor="quiz-count">Questions</Label>
                   <NativeSelect
-                    id="interview-count"
+                    id="quiz-count"
                     className={styles.control}
                     value={String(config.count)}
                     onChange={(event) =>
@@ -531,15 +522,15 @@ function SetupView({
                   </NativeSelect>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Label htmlFor="interview-section">Section</Label>
+                  <Label htmlFor="quiz-section">Section</Label>
                   <NativeSelect
-                    id="interview-section"
+                    id="quiz-section"
                     className={styles.control}
                     value={config.section}
                     onChange={(event) =>
                       onConfigChange({
                         ...config,
-                        section: event.target.value as InterviewSectionFilter,
+                        section: event.target.value as QuizSectionFilter,
                       })
                     }
                   >
@@ -549,9 +540,9 @@ function SetupView({
                   </NativeSelect>
                 </Col>
                 <Col xs={12} md={4}>
-                  <Label htmlFor="interview-difficulty">Difficulty</Label>
+                  <Label htmlFor="quiz-difficulty">Difficulty</Label>
                   <NativeSelect
-                    id="interview-difficulty"
+                    id="quiz-difficulty"
                     className={styles.control}
                     value={String(config.difficulty)}
                     onChange={(event) =>
@@ -617,17 +608,17 @@ function QuestionView({
   onDontKnow,
   onNext,
 }: {
-  question: InterviewQuestion;
-  answer: InterviewAnswer | null;
-  nextQuestion: InterviewQuestion | null;
+  question: QuizQuestion;
+  answer: QuizAnswer | null;
+  nextQuestion: QuizQuestion | null;
   currentIndex: number;
   total: number;
   orderIds: string[];
   flagged: boolean;
   autoRead: boolean;
   speechRate: number;
-  onSubmitMcq: (question: InterviewMcqQuestion, selectedOptionId: string) => void;
-  onSubmitOrder: (question: InterviewOrderQuestion) => void;
+  onSubmitMcq: (question: QuizMcqQuestion, selectedOptionId: string) => void;
+  onSubmitOrder: (question: QuizOrderQuestion) => void;
   onMoveOrderItemTo: (itemId: string, targetId: string) => void;
   onOrderKeyDown: (event: KeyboardEvent<HTMLDivElement>, itemId: string) => void;
   onToggleFlag: () => void;
@@ -771,9 +762,9 @@ function McqAnswerPanel({
   answer,
   onSubmit,
 }: {
-  question: InterviewMcqQuestion;
-  answer: InterviewAnswer | null;
-  onSubmit: (question: InterviewMcqQuestion, selectedOptionId: string) => void;
+  question: QuizMcqQuestion;
+  answer: QuizAnswer | null;
+  onSubmit: (question: QuizMcqQuestion, selectedOptionId: string) => void;
 }) {
   return (
     <Row gutterWidth={10} className={styles.optionsGrid}>
@@ -811,10 +802,10 @@ function OrderAnswerPanel({
   onMoveItemTo,
   onItemKeyDown,
 }: {
-  question: InterviewOrderQuestion;
-  answer: InterviewAnswer | null;
+  question: QuizOrderQuestion;
+  answer: QuizAnswer | null;
   orderIds: string[];
-  onSubmit: (question: InterviewOrderQuestion) => void;
+  onSubmit: (question: QuizOrderQuestion) => void;
   onMoveItemTo: (itemId: string, targetId: string) => void;
   onItemKeyDown: (event: KeyboardEvent<HTMLDivElement>, itemId: string) => void;
 }) {
@@ -929,8 +920,8 @@ function Feedback({
   onNext,
   isLast,
 }: {
-  question: InterviewQuestion;
-  answer: InterviewAnswer;
+  question: QuizQuestion;
+  answer: QuizAnswer;
   onNext: () => void;
   isLast: boolean;
 }) {
@@ -971,11 +962,11 @@ function FeedbackBody({ text }: { text: string }) {
   );
 }
 
-function getQuestionSpokenText(question: InterviewQuestion): string {
+function getQuestionSpokenText(question: QuizQuestion): string {
   return question.stemSpoken ?? question.stem;
 }
 
-function getExplanationSpokenText(question: InterviewQuestion): string {
+function getExplanationSpokenText(question: QuizQuestion): string {
   return question.explanationSpoken ?? question.explanation;
 }
 
@@ -1071,8 +1062,8 @@ function OrderCorrections({
   question,
   answer,
 }: {
-  question: InterviewOrderQuestion;
-  answer: Extract<InterviewAnswer, { type: 'order' }>;
+  question: QuizOrderQuestion;
+  answer: Extract<QuizAnswer, { type: 'order' }>;
 }) {
   const itemById = new Map(question.items.map((item) => [item.id, item.text]));
 
@@ -1123,11 +1114,11 @@ function SummaryView({
   onToggleFlag,
   onNewSession,
 }: {
-  questions: InterviewQuestion[];
-  answers: Record<string, InterviewAnswer>;
+  questions: QuizQuestion[];
+  answers: Record<string, QuizAnswer>;
   score: number;
   answeredCount: number;
-  storage: InterviewQuizStorage;
+  storage: QuizStorage;
   onRetryMissed: () => void;
   onToggleFlag: (questionId: string) => void;
   onNewSession: () => void;
@@ -1135,7 +1126,7 @@ function SummaryView({
   const missedQuestions = questions.filter(
     (question) => answers[question.id] && !answers[question.id].correct,
   );
-  const domainBreakdown = INTERVIEW_DOMAIN_META.map((domain) => {
+  const domainBreakdown = QUIZ_DOMAIN_META.map((domain) => {
     const domainQuestions = questions.filter((question) => question.domain === domain.id);
     const correct = domainQuestions.reduce(
       (total, question) => total + getAnswerScore(answers[question.id]),
@@ -1291,12 +1282,12 @@ function normalizeDisplayLanguage(language: string): string {
   return normalized || 'text';
 }
 
-function parseSessionCount(value: string): InterviewSessionCount {
-  if (value === '5' || value === '10' || value === '20') return Number(value) as InterviewSessionCount;
+function parseSessionCount(value: string): QuizSessionCount {
+  if (value === '5' || value === '10' || value === '20') return Number(value) as QuizSessionCount;
   return 'all';
 }
 
-function parseDifficulty(value: string): InterviewDifficultyFilter {
+function parseDifficulty(value: string): QuizDifficultyFilter {
   if (value === '1' || value === '2' || value === '3') return Number(value) as 1 | 2 | 3;
   return 'all';
 }

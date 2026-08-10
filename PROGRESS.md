@@ -1,4 +1,4 @@
-# Interview Quiz Module: progress
+# Knowledge Quiz Module: progress
 
 Last updated: 2026-07-29T21:44:26+10:00
 Last worked by: GPT-5 Codex
@@ -33,42 +33,42 @@ further quiz content.
 
 ## Files written so far
 
-- `apps/client/src/types/interview-quiz.types.ts` — schema types from spec section 2
-- `scripts/validate-interview-bank.ts` — validator, run via `bun scripts/validate-interview-bank.ts <domain>|--all` or `pnpm validate:interview-bank`
-- `vault/interviews/VALD/CV_2026_CONTENT_FINAL_V5.md` — source doc (copied in)
-- `vault/interviews/VALD/VALD_Technical_Interview_Prep_V2.md` — source doc (copied in)
-- `vault/interviews/VALD/VALD_Glossary_V1.md` — source doc (copied in)
-- `vault/interviews/VALD/questions/platform.json` — 32 questions (11 glossary, 21 depth; 22 mcq, 10 order)
-- `vault/interviews/VALD/bank/platform.md` — same 32 questions as a plain readable study doc
-- `vault/interviews/VALD/questions/apis.json` — 35 questions (12 glossary, 23 depth; 25 mcq, 10 order)
-- `vault/interviews/VALD/bank/apis.md` — same 35 questions as a plain readable study doc
-- `vault/interviews/VALD/questions/testing.json` — 35 questions (11 glossary, 24 depth; 25 mcq, 10 order; 10 code blocks)
-- `vault/interviews/VALD/bank/testing.md` — same 35 questions as a plain readable study doc
-- `vault/interviews/VALD/questions/typescript.json` — 33 questions (11 glossary, 22 depth; 23 mcq, 10 order; 8 code blocks)
-- `vault/interviews/VALD/bank/typescript.md` — same 33 questions as a plain readable study doc
-- `vault/interviews/VALD/questions/vald.json` — 14 questions (14 glossary, 0 depth; 14 mcq, 0 order)
-- `vault/interviews/VALD/bank/vald.md` — same 14 questions as a plain readable study doc
-- `vault/interviews/VALD/questions/cloud.json` — 34 questions (11 glossary, 23 depth; 24 mcq, 10 order; 0 code blocks)
-- `vault/interviews/VALD/bank/cloud.md` — same 34 questions as a plain readable study doc
-- `vault/interviews/VALD/questions/frontend.json` — 34 questions (12 glossary, 22 depth; 24 mcq, 10 order; 5 code blocks)
-- `vault/interviews/VALD/bank/frontend.md` — same 34 questions as a plain readable study doc
-- `vault/interviews/VALD/questions/automation.json` — 34 questions (11 glossary, 23 depth; 24 mcq, 10 order; 3 code blocks)
-- `vault/interviews/VALD/bank/automation.md` — same 34 questions as a plain readable study doc
-- `apps/client/src/lib/interview-quiz-data.ts` — static vault question imports, domain metadata and counts
-- `apps/client/src/lib/interview-quiz-session.ts` — session selection, weighted shuffle and ordering helpers
-- `apps/client/src/lib/interview-quiz-storage.ts` — localStorage attempt, accuracy and flagged-id persistence
-- `apps/client/src/routes/interviews.tsx` — `/interviews` practice UI, state machine, feedback and summary
-- `apps/client/src/routes/interviews.module.css` — route styling for the practice UI
+- `apps/client/src/types/quiz.types.ts` — schema types from spec section 2
+- `scripts/validate-quiz-bank.ts` — validator, run via `bun scripts/validate-quiz-bank.ts <domain>|--all` or `pnpm validate:quiz-bank`
+- `vault/VALD/CV_2026_CONTENT_FINAL_V5.md` — source doc (copied in)
+- `vault/VALD/VALD_Technical_Interview_Prep_V2.md` — source doc (copied in)
+- `vault/VALD/VALD_Glossary_V1.md` — source doc (copied in)
+- `vault/quiz/questions/platform.json` — 32 questions (11 glossary, 21 depth; 22 mcq, 10 order)
+- `vault/quiz/bank/platform.md` — same 32 questions as a plain readable study doc
+- `vault/quiz/questions/apis.json` — 35 questions (12 glossary, 23 depth; 25 mcq, 10 order)
+- `vault/quiz/bank/apis.md` — same 35 questions as a plain readable study doc
+- `vault/quiz/questions/testing.json` — 35 questions (11 glossary, 24 depth; 25 mcq, 10 order; 10 code blocks)
+- `vault/quiz/bank/testing.md` — same 35 questions as a plain readable study doc
+- `vault/quiz/questions/typescript.json` — 33 questions (11 glossary, 22 depth; 23 mcq, 10 order; 8 code blocks)
+- `vault/quiz/bank/typescript.md` — same 33 questions as a plain readable study doc
+- `vault/quiz/questions/vald.json` — 14 questions (14 glossary, 0 depth; 14 mcq, 0 order)
+- `vault/quiz/bank/vald.md` — same 14 questions as a plain readable study doc
+- `vault/quiz/questions/cloud.json` — 34 questions (11 glossary, 23 depth; 24 mcq, 10 order; 0 code blocks)
+- `vault/quiz/bank/cloud.md` — same 34 questions as a plain readable study doc
+- `vault/quiz/questions/frontend.json` — 34 questions (12 glossary, 22 depth; 24 mcq, 10 order; 5 code blocks)
+- `vault/quiz/bank/frontend.md` — same 34 questions as a plain readable study doc
+- `vault/quiz/questions/automation.json` — 34 questions (11 glossary, 23 depth; 24 mcq, 10 order; 3 code blocks)
+- `vault/quiz/bank/automation.md` — same 34 questions as a plain readable study doc
+- `apps/client/src/lib/quiz-data.ts` — static vault question imports, domain metadata and counts
+- `apps/client/src/lib/quiz-session.ts` — session selection, weighted shuffle and ordering helpers
+- `apps/client/src/lib/quiz-storage.ts` — localStorage attempt, accuracy and flagged-id persistence
+- `apps/client/src/routes/quiz.tsx` — `/quiz` practice UI, state machine, feedback and summary
+- `apps/client/src/routes/quiz.module.css` — route styling for the practice UI
 - `apps/client/src/components/TtsPlayer/TtsPlayer.tsx`: reused shared TTS player with optional autoplay
 - `apps/client/src/components/TtsPlayer/tts-player.types.ts`: `autoPlay` prop for reusable playback
 
 ## Decisions made
 
 - **P4 kokoro-js integration, run at GPT-5 Codex.** Reused the existing shared `TtsPlayer` rather than wiring Kokoro from scratch. Added an optional `autoPlay` prop to the component, mounted compact controls beside question stems and feedback explanations, and fed it `stemSpoken ?? stem` and `explanationSpoken ?? explanation`. Auto-read starts playback only when enabled; manual replay remains available either way. Audio stays an enhancement and does not add a runtime question API or LLM call.
-- **P4 validation.** Focused `oxlint` and `oxfmt --check` passed for touched client files. `pnpm --dir apps/client build` passed, including the built `tts-player.worker` asset. Browser smoke-test on the production preview at `/interviews` passed after login context was available: auto-read began stem playback, and after answering the feedback explanation mounted a second shared `TtsPlayer`. `pnpm --dir apps/client typecheck` is still blocked by the pre-existing `VaultFileTree.tsx` handle errors unrelated to this phase.
-- **P3 App UI and state, run at GPT-5 Codex.** Added route `/interviews`, navigation under Knowledge, domain multi-select cards, session filters, MCQ and ordering question views, immediate feedback, flagging, session summary, retry-missed-only and localStorage persistence for attempts, per-domain accuracy and flagged ids. Question data loads statically from `vault/interviews/VALD/questions/*.json`; no runtime question API or LLM call was introduced. TTS was deliberately not wired in this phase; the auto-read config flag is present for P4 to connect to the existing reusable `TtsPlayer`.
+- **P4 validation.** Focused `oxlint` and `oxfmt --check` passed for touched client files. `pnpm --dir apps/client build` passed, including the built `tts-player.worker` asset. Browser smoke-test on the production preview at `/quiz` passed after login context was available: auto-read began stem playback, and after answering the feedback explanation mounted a second shared `TtsPlayer`. `pnpm --dir apps/client typecheck` is still blocked by the pre-existing `VaultFileTree.tsx` handle errors unrelated to this phase.
+- **P3 App UI and state, run at GPT-5 Codex.** Added route `/quiz`, navigation under Knowledge, domain multi-select cards, session filters, MCQ and ordering question views, immediate feedback, flagging, session summary, retry-missed-only and localStorage persistence for attempts, per-domain accuracy and flagged ids. Question data loads statically from `vault/quiz/questions/*.json`; no runtime question API or LLM call was introduced. TTS was deliberately not wired in this phase; the auto-read config flag is present for P4 to connect to the existing reusable `TtsPlayer`.
 - **P3 validation.** Focused `oxlint` and `oxfmt --check` passed for touched client files. `pnpm --dir apps/client build` passed, proving the static vault JSON imports bundle. `pnpm --dir apps/client typecheck` is still blocked by pre-existing `VaultFileTree.tsx` handle errors unrelated to this phase. Browser smoke-test reached the app but redirected to `/login`, so the authenticated route could not be visually checked from this browser session.
-- **P2 Spoken fields, run at GPT-5 Codex.** Audited all eight JSON banks for stems and explanations containing code-backed prompts, all-caps acronyms, slashes, parentheses, arrows or backticks without a spoken-safe companion field. Added only the missing `stemSpoken` / `explanationSpoken` fields needed by that audit; did not regenerate questions or edit the markdown bank docs. Validation passed with `OK spoken field audit` and `bun scripts/validate-interview-bank.ts --all` returning `OK` for all eight domains.
+- **P2 Spoken fields, run at GPT-5 Codex.** Audited all eight JSON banks for stems and explanations containing code-backed prompts, all-caps acronyms, slashes, parentheses, arrows or backticks without a spoken-safe companion field. Added only the missing `stemSpoken` / `explanationSpoken` fields needed by that audit; did not regenerate questions or edit the markdown bank docs. Validation passed with `OK spoken field audit` and `bun scripts/validate-quiz-bank.ts --all` returning `OK` for all eight domains.
 - **P1h `automation` exists because the phase table was wrong, not because scope grew.** `automation` is spec domain D2, one of the seven core domains in `INTERVIEW_QUIZ_APP_SPEC.md`, but it was accidentally omitted from the phase table in `BUILD_PHASES_AND_HANDOFF.md`, so P1a through P1g covered six core domains plus the `vald` bonus round and this one silently fell through. It was flagged under Open questions after P1f and Justin then confirmed it as one of the most important topics: the job description says verbatim "Automation of everything: Continuous Integration and Continuous Delivery, Infrastructure as code and automation tests", the theme recurs in the prep document, and it already came up in his first-round interview. Run at Opus at the same bar as `testing`, `apis` and `platform`, after the "pause point" rather than before it.
 - **P1h `automation`.** Exemplar E3 in the spec is itself an `automation` question, so it was included in the bank verbatim, matching the calls for E1 (`apis`), E2 (`testing`), E4 (`platform`), E5 (`cloud`) and E6 (`typescript`). Its id moved from the spec's `automation-007` to `automation-025` so ids stay sequential across the glossary and depth split; stem, items, `correctOrder`, `orderRationale` and `explanation` are verbatim, including its em-dash-free hyphenated "well-designed" and "End-to-end". A `stemSpoken` was added, because the original stem contains "CI/CD" and a slash must never reach kokoro.
 - **P1h `automation`.** 34 questions, split 11 glossary / 23 depth, 24 mcq / 10 order (70.6%), matching the `cloud` and `frontend` shape. Difficulty is 11 at level 1, 12 at level 2, 11 at level 3.
@@ -123,8 +123,8 @@ further quiz content.
 - **P1d `typescript`.** `typescript-031` (tightening compiler settings across a monorepo) is deliberately a `platform` crossover: the correct order is evidence, then codemod, then default, then enforcement. It rehearses the adoption sequence from `platform-012` in a TypeScript costume, which is the shape of question most likely to come up given the platform-squad framing.
 - **P1d `typescript`.** The markdown study doc is generated from the JSON rather than hand-written, so the two cannot drift. Headings and the `[x]` convention match `platform.md`, `apis.md` and `testing.md`.
 
-- **Path deviation from spec.** Spec section 5 says write to `src/data/questions/<domain>.json` and `docs/bank/<domain>.md` at repo root. Justin redirected: all quiz _assets_ (generated question bank JSON + markdown fallback docs) live under `vault/interviews/VALD/questions/<domain>.json` and `vault/interviews/VALD/bank/<domain>.md` instead — vault is LLAAB's existing data layer, app code stays logic-only. Validator and types already point at the vault path.
-- **Route decision (spec left open).** Chosen: `/interviews` (not `/knowledge/interviews`) since the material is not in `knowledge/`. Not yet wired into the router — deferred to P3.
+- **Path deviation from spec.** Spec section 5 says write to `src/data/questions/<domain>.json` and `docs/bank/<domain>.md` at repo root. Justin redirected: all quiz _assets_ (generated question bank JSON + markdown fallback docs) live under `vault/quiz/questions/<domain>.json` and `vault/quiz/bank/<domain>.md` instead — vault is LLAAB's existing data layer, app code stays logic-only. Validator and types already point at the vault path.
+- **Route decision (superseded).** The practice route is now `/quiz`.
 - Zod not added as a new `apps/client` dependency for the validator; it uses hand-written checks instead, since this is a one-off script rather than a runtime schema.
 - **P1c `platform`.** Exemplar E4 in the spec is itself a `platform` question, so it was included in the bank as `platform-012` rather than being held out as format-only. One word changed from the exemplar text: "skeptic" became "sceptic", because the Australian/British spelling rule is a hard constraint and mixed spellings inside one bank would read worse than diverging from the exemplar.
 - **P1c `platform`.** No `code` blocks used in this bank. `platform` is a philosophy and judgement domain; the exemplars that carry code (E2, E6) are `testing` and `typescript`. Spoken variants (`stemSpoken` / `explanationSpoken`) added only where the text actually mangles under TTS (the NX acronym, and three explanations with colons or dense clauses), not blanket-applied.
@@ -144,13 +144,13 @@ further quiz content.
 
 ## Open questions for Justin
 
-- None blocking. Confirm `/interviews` as the route name when P3 starts, or say otherwise.
+- None blocking.
 - ~~**`automation` (spec domain D2) has no bank and no phase.**~~ **Resolved.** Built as P1h at Opus, 34 questions. All eight spec domains now have banks.
 - **`vald` bank, worth a look before Friday.** The source documents never say what ForceDecks, NordBord, ForceFrame, DynaMo or SmartSpeed individually measure, so the bank cannot ask. If you want per-device flashcards ("NordBord measures eccentric hamstring strength" and so on), the facts have to come from you or from VALD's own site, and then they can be added as `vald-015` onward. They were deliberately not guessed.
 
 ## Next action
 
-**The entire question-bank layer is done: 251 questions across 8 files, and every spec domain now has a bank.** All eight are written, validated and committed: `testing` (35), `apis` (35), `platform` (32), `typescript` (33), `cloud` (34), `frontend` (34), `automation` (34) and the `vald` bonus round (14). `bun scripts/validate-interview-bank.ts --all` prints `OK` for every one of them with zero errors. Every bank ran on Opus rather than Sonnet-plus-review, on Justin's explicit instruction to hold the banks at Opus before switching models for the app-build phases; `automation` was added last as P1h because it had been left out of the original phase table, and ran at the same bar as `testing`, `apis` and `platform`.
+**The entire question-bank layer is done: 251 questions across 8 files, and every spec domain now has a bank.** All eight are written, validated and committed: `testing` (35), `apis` (35), `platform` (32), `typescript` (33), `cloud` (34), `frontend` (34), `automation` (34) and the `vald` bonus round (14). `bun scripts/validate-quiz-bank.ts --all` prints `OK` for every one of them with zero errors. Every bank ran on Opus rather than Sonnet-plus-review, on Justin's explicit instruction to hold the banks at Opus before switching models for the app-build phases; `automation` was added last as P1h because it had been left out of the original phase table, and ran at the same bar as `testing`, `apis` and `platform`.
 
 **The build remains on Sonnet** (or GPT if credits run out) for everything that remains. The banks were the part that needed a frontier model; the app is ordinary React work, exactly as spec section 5 says.
 
@@ -159,4 +159,4 @@ Remaining phases, in order:
 - **P5 Human review** (Justin). Review the app flow and the bank content before starting optional spoken-answer work.
 - **P6 Optional: spoken-answer mode** (Sonnet). Only after P3 works and the banks are reviewed.
 
-**This remains the pause point, and it is now complete rather than merely convenient.** The entire question-bank layer is done, validated and usable with zero app code: all 251 questions across all eight banks are readable as plain markdown at `vault/interviews/VALD/bank/*.md`, with no build step, no network and no model to load. Open the file, read the stem, cover the answers, say the answer out loud, scroll down. If nothing else gets built before Friday, the material still works exactly as intended. Per spec section 7, time spent saying answers out loud beats time spent building the tool that asks them.
+**This remains the pause point, and it is now complete rather than merely convenient.** The entire question-bank layer is done, validated and usable with zero app code: all 251 questions across all eight banks are readable as plain markdown at `vault/quiz/bank/*.md`, with no build step, no network and no model to load. Open the file, read the stem, cover the answers, say the answer out loud, scroll down. If nothing else gets built before Friday, the material still works exactly as intended. Per spec section 7, time spent saying answers out loud beats time spent building the tool that asks them.

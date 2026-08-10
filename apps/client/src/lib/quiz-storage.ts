@@ -1,10 +1,10 @@
-import type { InterviewDomainId, InterviewSection } from 'types/interview-quiz.types';
+import type { QuizDomainId, QuizSection } from 'types/quiz.types';
 
-export interface InterviewAttempt {
+export interface QuizAttempt {
   id: string;
   questionId: string;
-  domain: InterviewDomainId;
-  section: InterviewSection;
+  domain: QuizDomainId;
+  section: QuizSection;
   correct: boolean;
   score?: number;
   answeredAt: string;
@@ -12,33 +12,33 @@ export interface InterviewAttempt {
   submittedOrder?: string[];
 }
 
-export interface InterviewDomainAccuracy {
+export interface QuizDomainAccuracy {
   attempts: number;
   correct: number;
 }
 
-export interface InterviewQuizStorage {
-  attempts: InterviewAttempt[];
+export interface QuizStorage {
+  attempts: QuizAttempt[];
   flaggedIds: string[];
-  domainAccuracy: Partial<Record<InterviewDomainId, InterviewDomainAccuracy>>;
+  domainAccuracy: Partial<Record<QuizDomainId, QuizDomainAccuracy>>;
 }
 
-const STORAGE_KEY = 'llaab.interviewQuiz.v1';
+const STORAGE_KEY = 'llaab.quiz.v1';
 
-const EMPTY_STORAGE: InterviewQuizStorage = {
+const EMPTY_STORAGE: QuizStorage = {
   attempts: [],
   flaggedIds: [],
   domainAccuracy: {},
 };
 
-export function loadInterviewQuizStorage(): InterviewQuizStorage {
+export function loadQuizStorage(): QuizStorage {
   if (typeof window === 'undefined') return EMPTY_STORAGE;
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY_STORAGE;
 
-    const parsed = JSON.parse(raw) as Partial<InterviewQuizStorage>;
+    const parsed = JSON.parse(raw) as Partial<QuizStorage>;
 
     return {
       attempts: Array.isArray(parsed.attempts) ? parsed.attempts : [],
@@ -51,16 +51,16 @@ export function loadInterviewQuizStorage(): InterviewQuizStorage {
   }
 }
 
-export function saveInterviewQuizStorage(storage: InterviewQuizStorage): void {
+export function saveQuizStorage(storage: QuizStorage): void {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
 }
 
-export function addInterviewAttempt(
-  storage: InterviewQuizStorage,
-  attempt: Omit<InterviewAttempt, 'id' | 'answeredAt'>,
-): InterviewQuizStorage {
-  const nextAttempt: InterviewAttempt = {
+export function addQuizAttempt(
+  storage: QuizStorage,
+  attempt: Omit<QuizAttempt, 'id' | 'answeredAt'>,
+): QuizStorage {
+  const nextAttempt: QuizAttempt = {
     ...attempt,
     id: `${attempt.questionId}-${Date.now()}`,
     answeredAt: new Date().toISOString(),
@@ -81,7 +81,7 @@ export function addInterviewAttempt(
   };
 }
 
-export function toggleInterviewFlag(storage: InterviewQuizStorage, questionId: string): InterviewQuizStorage {
+export function toggleQuizFlag(storage: QuizStorage, questionId: string): QuizStorage {
   const flagged = new Set(storage.flaggedIds);
   if (flagged.has(questionId)) flagged.delete(questionId);
   else flagged.add(questionId);
@@ -89,17 +89,14 @@ export function toggleInterviewFlag(storage: InterviewQuizStorage, questionId: s
   return saveFlaggedIds(storage, flagged);
 }
 
-export function addInterviewPracticeFlag(
-  storage: InterviewQuizStorage,
-  questionId: string,
-): InterviewQuizStorage {
+export function addQuizPracticeFlag(storage: QuizStorage, questionId: string): QuizStorage {
   const flagged = new Set(storage.flaggedIds);
   flagged.add(questionId);
 
   return saveFlaggedIds(storage, flagged);
 }
 
-function saveFlaggedIds(storage: InterviewQuizStorage, flagged: Set<string>): InterviewQuizStorage {
+function saveFlaggedIds(storage: QuizStorage, flagged: Set<string>): QuizStorage {
   return {
     ...storage,
     flaggedIds: [...flagged].toSorted(),

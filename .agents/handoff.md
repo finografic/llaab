@@ -771,7 +771,7 @@ unrelated. `turbo.json`'s `typecheck` task now `dependsOn: ["^build", "^typechec
 just `^typecheck`) so this can't recur — see `docs/todo/DONE_TS7_UPGRADE.md` for the full
 investigation.
 
-## Interview Quiz Module (in progress)
+## Knowledge Quiz Module (in progress)
 
 New section for a static, offline interview-practice quiz, built for Justin's VALD Performance
 final interview (Fri 31 Jul 2026). Full spec and phase plan: `.agents/INTERVIEW_QUIZ_APP_SPEC.md` +
@@ -781,19 +781,20 @@ first, it is the source of truth, not this summary.
 
 **Question-bank layer is complete.** All 7 spec domains plus the `vald` bonus round are generated,
 schema-validated, and committed: 251 questions across `testing`, `apis`, `platform`, `typescript`,
-`cloud`, `frontend`, `automation`, `vald`. Assets (generated JSON + a markdown study-doc twin per
-domain, plus the ingested VALD source docs) live under `vault/interviews/VALD/` — vault is the data
-layer, app code stays logic-only, a deliberate deviation from the spec's `src/data/` path. Schema
-types: `apps/client/src/types/interview-quiz.types.ts`. Validator: `bun scripts/validate-interview-bank.ts
-<domain>|--all` (`pnpm validate:interview-bank`).
+`cloud`, `frontend`, `automation`, `vald`. Quiz assets (generated JSON + a markdown study-doc twin
+per domain) live under `vault/quiz/`; the ingested VALD source docs remain under
+`vault/VALD/` — vault is the data layer, app code stays logic-only, a deliberate
+deviation from the spec's `src/data/` path. Schema
+types: `apps/client/src/types/quiz.types.ts`. Validator: `bun scripts/validate-quiz-bank.ts
+<domain>|--all` (`pnpm validate:quiz-bank`).
 
-**App is built and wired at `/interviews`:** domain-select → session-config → question-view →
+**App is built and wired at `/quiz`:** domain-select → session-config → question-view →
 feedback → summary flow, localStorage persistence, read-aloud via the existing `TtsPlayer`
 component. Autoplay latency on Start/answer/Next was ~1-1.5s (cold synthesis on every question)
 until a preload architecture rework — see [`docs/components/tts-player.md`](../docs/components/tts-player.md)
-for the general pattern; the interview-specific wiring (session precompute + first-question
+for the general pattern; the quiz-specific wiring (session precompute + first-question
 preload on the setup screen, parallel explanation/next-question preload) is in
-`apps/client/src/routes/interviews.tsx`. Measured post-fix: 13-21ms click-to-audio, zero synthesis
+`apps/client/src/routes/quiz.tsx`. Measured post-fix: 13-21ms click-to-audio, zero synthesis
 runs triggered by the click itself.
 
 ## Open Questions
