@@ -73,6 +73,29 @@ export default {
       dependencies: ['hono', '@hono/*'],
       policy: 'sameRange',
     },
+    // MCP SDK
+    {
+      label: 'MCP SDK — same range',
+      dependencies: ['@modelcontextprotocol/sdk'],
+      policy: 'sameRange',
+    },
+    // picocolors — shared CLI styling primitive
+    {
+      label: 'picocolors — same range',
+      dependencies: ['picocolors'],
+      policy: 'sameRange',
+    },
+    // tsdown / vitest — shared build/test tooling
+    {
+      label: 'tsdown — same range',
+      dependencies: ['tsdown'],
+      policy: 'sameRange',
+    },
+    {
+      label: 'vitest — same range',
+      dependencies: ['vitest'],
+      policy: 'sameRange',
+    },
     // Tailwind ecosystem
     {
       label: 'Tailwind ecosystem — same range',
