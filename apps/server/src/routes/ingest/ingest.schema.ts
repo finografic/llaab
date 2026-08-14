@@ -28,3 +28,11 @@ export const ingestArticleBodySchema = z.object({
 });
 
 export type IngestArticleBody = z.infer<typeof ingestArticleBodySchema>;
+
+export const ingestObsidianWebClipBodySchema = z.object({
+  markdown: z.string().min(1, 'Paste Obsidian Web Clipper Markdown'),
+  tags: z.array(z.string()).optional(),
+  skipExtraction: z.boolean().optional(),
+});
+
+export type IngestObsidianWebClipBody = z.infer<typeof ingestObsidianWebClipBodySchema>;

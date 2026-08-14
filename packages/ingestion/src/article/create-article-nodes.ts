@@ -18,6 +18,9 @@ export interface ArticleIngestionInput {
   /** Operator override; when absent the fetched article title is used. */
   title?: string;
   tags?: string[];
+  /** Pre-parsed article content, used for trusted pasted web clips that must not be re-fetched. */
+  providedArticle?: FetchedArticle;
+  providedArticleTags?: string[];
   /** Inbox capture that triggered this ingest, related to the article for provenance. */
   inboxCaptureId?: string;
   fetchOptions?: FetchArticleOptions;
@@ -153,15 +156,28 @@ async function relateArticleToSource(sourceId: string, articleId: string): Promi
  * Returns before any extraction runs. Extraction is the caller's separate, best-effort step.
  */
 export async function createArticleNodes(input: ArticleIngestionInput): Promise<ArticleIngestionResult> {
-  const fetched = await fetchArticle(input.url, input.fetchOptions ?? {});
+  let fetched: FetchedArticle;
 
-  if (!fetched.ok) {
-    throw new ArticleFetchError(fetched.code, fetched.message, fetched.requestedUrl, fetched.finalUrl);
+  if (input.providedArticle) {
+    fetched = input.providedArticle;
+  } else {
+    const fetchedResult = await fetchArticle(input.url, input.fetchOptions ?? {});
+
+    if (!fetchedResult.ok) {
+      throw new ArticleFetchError(
+        fetchedResult.code,
+        fetchedResult.message,
+        fetchedResult.requestedUrl,
+        fetchedResult.finalUrl,
+      );
+    }
+
+    fetched = fetchedResult;
   }
 
   const stages: ExtractionRunTrace['stages'] = [
     completedStage(
-      'fetch:article',
+      input.providedArticle ? 'parse:obsidian-web-clip' : 'fetch:article',
       { url: input.url },
       {
         title: fetched.title,
@@ -181,7 +197,10 @@ export async function createArticleNodes(input: ArticleIngestionInput): Promise<
     stages.push(
       completedStage(
         'dedupe:article',
-        { canonicalUrl: fetched.canonicalUrl, contentHash: fetched.contentHash },
+        {
+          canonicalUrl: fetched.canonicalUrl,
+          contentHash: fetched.contentHash,
+        },
         { id: existing.id, path, reused: true },
       ),
     );
@@ -221,7 +240,14 @@ export async function createArticleNodes(input: ArticleIngestionInput): Promise<
     type: 'resource',
     title,
     body: articleBody(title, fetched, fetchedAt),
-    tags: [...new Set(['d:ingest', ...autoTag(title, fetched.plainText), ...(input.tags ?? [])])],
+    tags: [
+      ...new Set([
+        'd:ingest',
+        ...autoTag(title, fetched.plainText),
+        ...(input.providedArticleTags ?? []),
+        ...(input.tags ?? []),
+      ]),
+    ],
     extra: {
       resource_type: 'article',
       url: fetched.canonicalUrl,

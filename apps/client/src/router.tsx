@@ -147,6 +147,11 @@ export const router = createBrowserRouter([
         handle: { title: 'Ingest Web URL' } satisfies RouteHandle,
       },
       {
+        path: 'ingest/obsidian-web-clip',
+        element: lazyElement(IngestPage),
+        handle: { title: 'Ingest Obsidian Web Clip' } satisfies RouteHandle,
+      },
+      {
         path: 'quiz',
         element: lazyElement(QuizPage),
         handle: { title: 'Knowledge Quiz' } satisfies RouteHandle,

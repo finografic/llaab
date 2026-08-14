@@ -33,6 +33,8 @@ export {
 } from './pipeline.js';
 export type { ArticleIngestionInput, ArticleIngestionResult } from './article/create-article-nodes.js';
 export { ArticleFetchError, createArticleNodes } from './article/create-article-nodes.js';
+export type { ParsedObsidianWebClip } from './article/obsidian-web-clip.js';
+export { parseObsidianWebClip } from './article/obsidian-web-clip.js';
 export type {
   ArticleFetchFailure,
   ArticleFetchFailureCode,

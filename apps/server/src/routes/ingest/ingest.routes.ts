@@ -1,6 +1,11 @@
-import { ingestArticle, ingestPodcast, ingestYouTube } from '@llaab/skills';
+import { ingestArticle, ingestObsidianWebClip, ingestPodcast, ingestYouTube } from '@llaab/skills';
 import type { AppCtxJson } from '../../types/app.types.js';
-import type { IngestArticleBody, IngestPodcastBody, IngestYouTubeBody } from './ingest.schema.js';
+import type {
+  IngestArticleBody,
+  IngestObsidianWebClipBody,
+  IngestPodcastBody,
+  IngestYouTubeBody,
+} from './ingest.schema.js';
 
 export const youtube = {
   path: '/youtube' as const,
@@ -26,7 +31,11 @@ export const youtube = {
         reused: result.reused ?? false,
       },
       extraction: extraction
-        ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary, ideas: extraction.ideas }
+        ? {
+            ideaCount: extraction.ideaIds.length,
+            summary: extraction.summary,
+            ideas: extraction.ideas,
+          }
         : null,
       extractionError: extractionError ?? null,
     });
@@ -61,7 +70,48 @@ export const article = {
         reused: result.reused,
       },
       extraction: extraction
-        ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary, ideas: extraction.ideas }
+        ? {
+            ideaCount: extraction.ideaIds.length,
+            summary: extraction.summary,
+            ideas: extraction.ideas,
+          }
+        : null,
+      extractionError: extractionError ?? null,
+    });
+  },
+};
+
+export const obsidianWebClip = {
+  path: '/obsidian-web-clip' as const,
+  handler: async (c: AppCtxJson<IngestObsidianWebClipBody>) => {
+    const body = c.req.valid('json');
+    const { record, result, extraction, extractionError } = await ingestObsidianWebClip({
+      markdown: body.markdown,
+      tags: body.tags,
+      skipExtraction: body.skipExtraction,
+    });
+
+    if (record.status === 'failed') {
+      return c.json({ success: false as const, error: record.error ?? 'Ingestion failed.' }, 500);
+    }
+
+    return c.json({
+      success: true as const,
+      result: {
+        id: result.id,
+        path: result.path,
+        type: result.type,
+        title: result.title,
+        canonicalUrl: result.canonicalUrl,
+        sourceId: result.sourceId,
+        reused: result.reused,
+      },
+      extraction: extraction
+        ? {
+            ideaCount: extraction.ideaIds.length,
+            summary: extraction.summary,
+            ideas: extraction.ideas,
+          }
         : null,
       extractionError: extractionError ?? null,
     });
@@ -92,7 +142,11 @@ export const podcast = {
         reused: result.reused ?? false,
       },
       extraction: extraction
-        ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary, ideas: extraction.ideas }
+        ? {
+            ideaCount: extraction.ideaIds.length,
+            summary: extraction.summary,
+            ideas: extraction.ideas,
+          }
         : null,
       extractionError: extractionError ?? null,
     });

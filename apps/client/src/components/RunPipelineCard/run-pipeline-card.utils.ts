@@ -60,8 +60,8 @@ function stepStatusFromEvents(
 /**
  * High-level content + extraction steps for ingest monitor rows.
  *
- * Shared by `ingest-youtube`, `ingest-podcast`, and `ingest-article`; `noun` swaps the step copy and
- * the vault link family so an article run never reads as a transcript.
+ * Shared by ingest skills; `noun` swaps the step copy and the vault link family so an article run
+ * never reads as a transcript.
  */
 export function buildIngestMonitorSteps(
   run: RunMonitorItem,
@@ -70,7 +70,7 @@ export function buildIngestMonitorSteps(
   const isArticle = noun === 'Article';
   const linkPrefix = isArticle ? '/vault/resources/' : '/vault/transcripts/';
   const fetchPattern = isArticle
-    ? /fetching article|saved article/i
+    ? /fetching article|reading obsidian web clip|saved article/i
     : /fetching transcript|saved transcript/i;
   const savedPattern = isArticle ? /saved article/i : /saved transcript/i;
 
@@ -182,7 +182,7 @@ const STEP_TITLE_BY_STATUS: Record<string, Record<StepStatus, string>> = {
 };
 
 export function buildMonitorPipelineSteps(run: RunMonitorItem): RunPipelineStepData[] {
-  if (run.skill_id === 'ingest-article') {
+  if (run.skill_id === 'ingest-article' || run.skill_id === 'ingest-obsidian-web-clip') {
     return buildIngestMonitorSteps(run, 'Article');
   }
 

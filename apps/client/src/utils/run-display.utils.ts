@@ -6,7 +6,12 @@ function hasExtractionFailure(run: RunNode): boolean {
   return run.events.some((event) => event.message.toLowerCase().includes('extraction failed'));
 }
 
-export const INGEST_SKILL_IDS = ['ingest-youtube', 'ingest-podcast', 'ingest-article'] as const;
+export const INGEST_SKILL_IDS = [
+  'ingest-youtube',
+  'ingest-podcast',
+  'ingest-article',
+  'ingest-obsidian-web-clip',
+] as const;
 
 /** Skills whose extraction is kicked off by the client after the run is already persisted. */
 const CLIENT_EXTRACTED_SKILL_IDS = new Set(['ingest-youtube', 'ingest-podcast']);

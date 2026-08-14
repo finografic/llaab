@@ -9,6 +9,7 @@ vi.mock('@llaab/core', () => ({
 }));
 
 import { autoTag, createNode, listNodes, updateNode } from '@llaab/core';
+import type { FetchedArticle } from '../fetch/article/index.js';
 import type { LabNode } from '@llaab/schemas';
 
 import { readArticleFixture } from '../fetch/article/__fixtures__/index.js';
@@ -35,7 +36,12 @@ function fetchOptions(fetchImpl: typeof fetch = htmlFetch()) {
 
 /** Records created nodes and returns realistic ids so relations can be asserted. */
 function stubCreateNode() {
-  const created: Array<{ type: string; title: string; extra?: Record<string, unknown>; body?: string }> = [];
+  const created: Array<{
+    type: string;
+    title: string;
+    extra?: Record<string, unknown>;
+    body?: string;
+  }> = [];
 
   vi.mocked(createNode).mockImplementation(async (input) => {
     created.push({
@@ -45,7 +51,11 @@ function stubCreateNode() {
       ...(input.body ? { body: input.body } : {}),
     });
     const id = input.id ?? `${input.type}.${input.title.toLowerCase().replace(/[^a-z\d]+/g, '-')}`;
-    return { id, path: `/vault/${input.type}s/${input.type}.${id}.md`, node: {} as never };
+    return {
+      id,
+      path: `/vault/${input.type}s/${input.type}.${id}.md`,
+      node: {} as never,
+    };
   });
 
   return created;
@@ -76,13 +86,19 @@ describe('createArticleNodes — first ingest', () => {
   it('creates the publication source before the article and links them', async () => {
     const created = stubCreateNode();
 
-    const result = await createArticleNodes({ url: ARTICLE_URL, fetchOptions: fetchOptions() });
+    const result = await createArticleNodes({
+      url: ARTICLE_URL,
+      fetchOptions: fetchOptions(),
+    });
 
     expect(created.map((node) => node.type)).toEqual(['source', 'resource']);
     expect(created[0]).toMatchObject({
       type: 'source',
       title: 'Signal Journal',
-      extra: expect.objectContaining({ source_kind: 'publication', url: 'https://signal.example.com' }),
+      extra: expect.objectContaining({
+        source_kind: 'publication',
+        url: 'https://signal.example.com',
+      }),
     });
     expect(result.sourceId).toBe('signal-journal');
     expect(updateNode).toHaveBeenCalledWith('/vault/sources/source.signal-journal.md', expect.any(Function));
@@ -97,8 +113,14 @@ describe('createArticleNodes — first ingest', () => {
     const redirectingFetch = (async () => {
       hop += 1;
       return hop === 1
-        ? new Response(null, { status: 302, headers: { location: ARTICLE_URL } })
-        : new Response(articleHtml, { status: 200, headers: { 'content-type': 'text/html' } });
+        ? new Response(null, {
+            status: 302,
+            headers: { location: ARTICLE_URL },
+          })
+        : new Response(articleHtml, {
+            status: 200,
+            headers: { 'content-type': 'text/html' },
+          });
     }) as unknown as typeof fetch;
 
     await createArticleNodes({
@@ -123,7 +145,10 @@ describe('createArticleNodes — first ingest', () => {
   it('stores a readable Markdown body with a header and no raw HTML', async () => {
     const created = stubCreateNode();
 
-    await createArticleNodes({ url: ARTICLE_URL, fetchOptions: fetchOptions() });
+    await createArticleNodes({
+      url: ARTICLE_URL,
+      fetchOptions: fetchOptions(),
+    });
     const body = created[1]?.body ?? '';
 
     expect(body).toMatch(/^# Bounded Fetching for Knowledge Systems/);
@@ -136,7 +161,10 @@ describe('createArticleNodes — first ingest', () => {
   it('returns everything the run needs without having called an LLM', async () => {
     stubCreateNode();
 
-    const result = await createArticleNodes({ url: ARTICLE_URL, fetchOptions: fetchOptions() });
+    const result = await createArticleNodes({
+      url: ARTICLE_URL,
+      fetchOptions: fetchOptions(),
+    });
 
     expect(result).toMatchObject({
       type: 'resource',
@@ -180,6 +208,44 @@ describe('createArticleNodes — first ingest', () => {
 
     expect(created[1]?.extra).toMatchObject({ related: ['inbox.capture-123'] });
   });
+
+  it('uses provided article content without fetching the source URL', async () => {
+    const created = stubCreateNode();
+    const fetchImpl = vi.fn();
+    const providedArticle: FetchedArticle = {
+      requestedUrl: 'https://learn.microsoft.com/en-us/azure/well-architected/architect-role/fundamentals',
+      finalUrl: 'https://learn.microsoft.com/en-us/azure/well-architected/architect-role/fundamentals',
+      canonicalUrl: 'https://learn.microsoft.com/en-us/azure/well-architected/architect-role/fundamentals',
+      title: 'Solution Architect Responsibilities',
+      byline: 'ckittel',
+      siteName: 'learn.microsoft.com',
+      publishedAt: '2026-01-14T00:00:00.000Z',
+      excerpt: 'Architecture guidance.',
+      markdown: '## Solution Architect Responsibilities\n\nTranslate requirements into plans.',
+      plainText: 'Solution Architect Responsibilities Translate requirements into plans.',
+      contentHash: 'a'.repeat(64),
+      truncated: false,
+    };
+
+    const result = await createArticleNodes({
+      url: providedArticle.canonicalUrl,
+      providedArticle,
+      providedArticleTags: ['clippings'],
+      fetchOptions: fetchOptions(fetchImpl as unknown as typeof fetch),
+    });
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(result.runTrace.stages.map((stage) => stage.name)).toEqual([
+      'parse:obsidian-web-clip',
+      'store:source',
+      'store:article',
+    ]);
+    expect(created[1]?.extra).toMatchObject({
+      url: providedArticle.canonicalUrl,
+      source_published_at: '2026-01-14T00:00:00.000Z',
+    });
+    expect(created[1]?.body).toContain('Translate requirements into plans.');
+  });
 });
 
 describe('createArticleNodes — deduplication', () => {
@@ -189,7 +255,10 @@ describe('createArticleNodes — deduplication', () => {
     stubCreateNode();
     vi.mocked(listNodes).mockResolvedValue([resourceNode()]);
 
-    const result = await createArticleNodes({ url: ARTICLE_URL, fetchOptions: fetchOptions() });
+    const result = await createArticleNodes({
+      url: ARTICLE_URL,
+      fetchOptions: fetchOptions(),
+    });
 
     expect(result.reused).toBe(true);
     expect(result.id).toBe('resource.existing-article');
@@ -203,7 +272,10 @@ describe('createArticleNodes — deduplication', () => {
 
     // Learn the hash this fixture produces, then present a node stored under a different URL.
     vi.mocked(listNodes).mockResolvedValue([]);
-    const first = await createArticleNodes({ url: ARTICLE_URL, fetchOptions: fetchOptions() });
+    const first = await createArticleNodes({
+      url: ARTICLE_URL,
+      fetchOptions: fetchOptions(),
+    });
     vi.clearAllMocks();
 
     stubCreateNode();
@@ -214,7 +286,10 @@ describe('createArticleNodes — deduplication', () => {
       }),
     ]);
 
-    const second = await createArticleNodes({ url: ARTICLE_URL, fetchOptions: fetchOptions() });
+    const second = await createArticleNodes({
+      url: ARTICLE_URL,
+      fetchOptions: fetchOptions(),
+    });
 
     expect(second.reused).toBe(true);
     expect(createNode).not.toHaveBeenCalled();
@@ -226,7 +301,10 @@ describe('createArticleNodes — deduplication', () => {
       resourceNode({ resource_type: 'repo', id: 'resource.some-repo' }),
     ]);
 
-    const result = await createArticleNodes({ url: ARTICLE_URL, fetchOptions: fetchOptions() });
+    const result = await createArticleNodes({
+      url: ARTICLE_URL,
+      fetchOptions: fetchOptions(),
+    });
 
     expect(result.reused).toBe(false);
     expect(created.map((node) => node.type)).toEqual(['source', 'resource']);
@@ -260,7 +338,10 @@ describe('createArticleNodes — publication source reuse', () => {
         : [],
     );
 
-    const result = await createArticleNodes({ url: ARTICLE_URL, fetchOptions: fetchOptions() });
+    const result = await createArticleNodes({
+      url: ARTICLE_URL,
+      fetchOptions: fetchOptions(),
+    });
 
     expect(created.map((node) => node.type)).toEqual(['resource']);
     expect(result.sourceId).toBe('signal-journal');
@@ -279,7 +360,10 @@ describe('createArticleNodes — publication source reuse', () => {
       fetchOptions: fetchOptions(htmlFetch(html)),
     });
 
-    expect(created[0]).toMatchObject({ type: 'source', title: 'plain.example.com' });
+    expect(created[0]).toMatchObject({
+      type: 'source',
+      title: 'plain.example.com',
+    });
   });
 });
 
@@ -323,7 +407,10 @@ describe('createArticleNodes — failure', () => {
     stubCreateNode();
 
     await expect(
-      createArticleNodes({ url: 'http://127.0.0.1/admin', fetchOptions: fetchOptions() }),
+      createArticleNodes({
+        url: 'http://127.0.0.1/admin',
+        fetchOptions: fetchOptions(),
+      }),
     ).rejects.toBeInstanceOf(ArticleFetchError);
 
     expect(createNode).not.toHaveBeenCalled();

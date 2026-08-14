@@ -113,6 +113,12 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         live: true,
       },
       {
+        label: 'Ingest Obsidian Web Clip',
+        description: 'Ingest Markdown copied from the Obsidian Web Clipper',
+        href: '/ingest/obsidian-web-clip',
+        live: true,
+      },
+      {
         label: 'Ingest Document',
         description: 'Ingest a local PDF or Office file via liteparse',
         href: '/ingest/document',

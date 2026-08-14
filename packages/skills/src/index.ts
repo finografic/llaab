@@ -11,6 +11,11 @@ export {
   type IngestArticleInput,
   type IngestArticleOutput,
 } from './ingest-article.js';
+export {
+  ingestObsidianWebClip,
+  type IngestObsidianWebClipInput,
+  type IngestObsidianWebClipOutput,
+} from './ingest-obsidian-web-clip.js';
 export { ingestPodcast, type IngestPodcastInput, type IngestPodcastOutput } from './ingest-podcast.js';
 export { compileWikiDraft } from './wiki/compile-wiki-draft.js';
 export { linkWikiTopics } from './wiki/link-wiki-topics.js';

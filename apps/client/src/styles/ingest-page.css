@@ -90,6 +90,12 @@
   background: color-mix(in oklab, var(--accent) 8%, var(--surface));
 }
 
+.ingest-form__clip-input {
+  min-height: 10rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
 .field-hint {
   display: inline-block;
   margin-top: var(--space-2);

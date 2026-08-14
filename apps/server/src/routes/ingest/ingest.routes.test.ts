@@ -1,22 +1,29 @@
 import { describe, expect, it, vi } from 'vitest';
 
-const { ingestArticle } = vi.hoisted(() => ({ ingestArticle: vi.fn() }));
+const { ingestArticle, ingestObsidianWebClip } = vi.hoisted(() => ({
+  ingestArticle: vi.fn(),
+  ingestObsidianWebClip: vi.fn(),
+}));
 
 vi.mock('@llaab/skills', () => ({
   ingestArticle,
+  ingestObsidianWebClip,
   ingestPodcast: vi.fn(),
   ingestYouTube: vi.fn(),
 }));
 
 import type { AppCtxJson } from '../../types/app.types.js';
-import type { IngestArticleBody } from './ingest.schema.js';
+import type { IngestArticleBody, IngestObsidianWebClipBody } from './ingest.schema.js';
 
-import { article } from './ingest.routes.js';
-import { ingestArticleBodySchema } from './ingest.schema.js';
+import { article, obsidianWebClip } from './ingest.routes.js';
+import { ingestArticleBodySchema, ingestObsidianWebClipBodySchema } from './ingest.schema.js';
 
 /** Captures the status alongside the body so failure responses can be asserted. */
 function ctx(body: IngestArticleBody) {
-  const captured: { status: number; body: unknown } = { status: 200, body: undefined };
+  const captured: { status: number; body: unknown } = {
+    status: 200,
+    body: undefined,
+  };
 
   const c = {
     req: { valid: () => body },
@@ -26,6 +33,24 @@ function ctx(body: IngestArticleBody) {
       return payload;
     },
   } as unknown as AppCtxJson<IngestArticleBody>;
+
+  return { c, captured };
+}
+
+function clipCtx(body: IngestObsidianWebClipBody) {
+  const captured: { status: number; body: unknown } = {
+    status: 200,
+    body: undefined,
+  };
+
+  const c = {
+    req: { valid: () => body },
+    json: (payload: unknown, status?: number) => {
+      captured.body = payload;
+      captured.status = status ?? 200;
+      return payload;
+    },
+  } as unknown as AppCtxJson<IngestObsidianWebClipBody>;
 
   return { c, captured };
 }
@@ -77,6 +102,18 @@ describe('ingestArticleBodySchema', () => {
   });
 });
 
+describe('ingestObsidianWebClipBodySchema', () => {
+  it('requires Markdown clip content', () => {
+    expect(ingestObsidianWebClipBodySchema.safeParse({ markdown: '' }).success).toBe(false);
+    expect(ingestObsidianWebClipBodySchema.safeParse({}).success).toBe(false);
+    expect(
+      ingestObsidianWebClipBodySchema.safeParse({
+        markdown: '---\nsource: https://example.com\n---\nBody',
+      }).success,
+    ).toBe(true);
+  });
+});
+
 describe('POST /api/ingest/article', () => {
   it('is registered at /article', () => {
     expect(article.path).toBe('/article');
@@ -105,7 +142,9 @@ describe('POST /api/ingest/article', () => {
 
   it('returns the article identity, source, and extraction summary', async () => {
     ingestArticle.mockResolvedValue(skillOutput());
-    const { c, captured } = ctx({ url: 'https://signal.example.com/posts/bounded-fetching' });
+    const { c, captured } = ctx({
+      url: 'https://signal.example.com/posts/bounded-fetching',
+    });
 
     await article.handler(c);
 
@@ -121,16 +160,25 @@ describe('POST /api/ingest/article', () => {
         sourceId: 'signal-journal',
         reused: false,
       },
-      extraction: { ideaCount: 1, ideas: [{ id: 'idea.one', title: 'Idea One' }], summary: 'A summary.' },
+      extraction: {
+        ideaCount: 1,
+        ideas: [{ id: 'idea.one', title: 'Idea One' }],
+        summary: 'A summary.',
+      },
       extractionError: null,
     });
   });
 
   it('reports a saved article with a failed extraction as a success', async () => {
     ingestArticle.mockResolvedValue(
-      skillOutput({ extraction: undefined, extractionError: 'LLM unavailable' }),
+      skillOutput({
+        extraction: undefined,
+        extractionError: 'LLM unavailable',
+      }),
     );
-    const { c, captured } = ctx({ url: 'https://signal.example.com/posts/bounded-fetching' });
+    const { c, captured } = ctx({
+      url: 'https://signal.example.com/posts/bounded-fetching',
+    });
 
     await article.handler(c);
 
@@ -144,7 +192,13 @@ describe('POST /api/ingest/article', () => {
 
   it('returns 500 when the run failed', async () => {
     ingestArticle.mockResolvedValue(
-      skillOutput({ record: { runNodeId: 'run.article-1', status: 'failed', error: 'blocked_target' } }),
+      skillOutput({
+        record: {
+          runNodeId: 'run.article-1',
+          status: 'failed',
+          error: 'blocked_target',
+        },
+      }),
     );
     const { c, captured } = ctx({ url: 'http://127.0.0.1/admin' });
 
@@ -152,5 +206,50 @@ describe('POST /api/ingest/article', () => {
 
     expect(captured.status).toBe(500);
     expect(captured.body).toEqual({ success: false, error: 'blocked_target' });
+  });
+});
+
+describe('POST /api/ingest/obsidian-web-clip', () => {
+  it('is registered at /obsidian-web-clip', () => {
+    expect(obsidianWebClip.path).toBe('/obsidian-web-clip');
+  });
+
+  it('passes the Markdown clip through to the skill', async () => {
+    ingestObsidianWebClip.mockResolvedValue(skillOutput());
+    const markdown = '---\nsource: https://example.com/a\n---\nBody';
+    const { c } = clipCtx({
+      markdown,
+      tags: ['manual'],
+      skipExtraction: false,
+    });
+
+    await obsidianWebClip.handler(c);
+
+    expect(ingestObsidianWebClip).toHaveBeenCalledWith({
+      markdown,
+      tags: ['manual'],
+      skipExtraction: false,
+    });
+  });
+
+  it('returns the article identity, source, and extraction summary', async () => {
+    ingestObsidianWebClip.mockResolvedValue(skillOutput());
+    const { c, captured } = clipCtx({
+      markdown: '---\nsource: https://example.com/a\n---\nBody',
+    });
+
+    await obsidianWebClip.handler(c);
+
+    expect(captured.status).toBe(200);
+    expect(captured.body).toMatchObject({
+      success: true,
+      result: {
+        id: 'resource.bounded-fetching',
+        type: 'resource',
+        sourceId: 'signal-journal',
+      },
+      extraction: { ideaCount: 1 },
+      extractionError: null,
+    });
   });
 });

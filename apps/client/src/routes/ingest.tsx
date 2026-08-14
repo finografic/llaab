@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { PageHero } from 'components/PageHero/PageHero';
 import { Alert, AlertDescription, AlertTitle } from 'components/ui/alert';
 import { IngestForm } from 'forms/IngestForm/IngestForm';
+import { ObsidianWebClipForm } from 'forms/ObsidianWebClipForm/ObsidianWebClipForm';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { QUERY_KEYS, useVaultNodes } from 'queries/vault';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -35,8 +36,11 @@ interface IngestRunScope {
   heroDescription: string;
   formTitle: string;
   formDescription: string;
+  formKind: 'url' | 'obsidian-web-clip';
   skillIds: readonly string[];
 }
+
+const WEB_INGEST_SKILL_IDS = ['ingest-article', 'ingest-obsidian-web-clip'] as const;
 
 const MEDIA_RUN_SCOPE: IngestRunScope = {
   pageTitle: 'Ingest Media URL',
@@ -44,6 +48,7 @@ const MEDIA_RUN_SCOPE: IngestRunScope = {
     'Paste or drop a YouTube or Pocket Casts URL. The form will classify the source asset and adapt the ingest action when the URL is supported.',
   formTitle: 'Drop a YouTube or Pocket Casts URL to populate the source field',
   formDescription: 'Supports YouTube videos and Pocket Casts episodes.',
+  formKind: 'url',
   skillIds: ['ingest-youtube', 'ingest-podcast'],
 };
 
@@ -53,11 +58,24 @@ const ARTICLE_RUN_SCOPE: IngestRunScope = {
     'Paste or drop an article, post, tutorial, or web page URL. HTML pages only; local files are handled separately.',
   formTitle: 'Drop an article, post, tutorial, or web page URL to populate the source field',
   formDescription: 'Supports articles, posts, tutorials, and other standard HTML pages.',
-  skillIds: ['ingest-article'],
+  formKind: 'url',
+  skillIds: WEB_INGEST_SKILL_IDS,
+};
+
+const OBSIDIAN_WEB_CLIP_RUN_SCOPE: IngestRunScope = {
+  pageTitle: 'Ingest Obsidian Web Clip',
+  heroDescription:
+    'Paste Markdown copied from the Obsidian Web Clipper. The stored article uses the clipboard body and source URL without re-scraping the page.',
+  formTitle: 'Paste Obsidian Web Clipper Markdown to populate the source field',
+  formDescription: 'Uses the pasted Markdown body and frontmatter source URL; the page is not re-scraped.',
+  formKind: 'obsidian-web-clip',
+  skillIds: WEB_INGEST_SKILL_IDS,
 };
 
 function resolveIngestRunScope(pathname: string): IngestRunScope {
-  return pathname.startsWith('/ingest/articles') ? ARTICLE_RUN_SCOPE : MEDIA_RUN_SCOPE;
+  if (pathname.startsWith('/ingest/obsidian-web-clip')) return OBSIDIAN_WEB_CLIP_RUN_SCOPE;
+  if (pathname.startsWith('/ingest/articles')) return ARTICLE_RUN_SCOPE;
+  return MEDIA_RUN_SCOPE;
 }
 
 export function IngestPage() {
@@ -165,10 +183,14 @@ export function IngestPage() {
       }
     >
       <div className="ingest-page">
-        <IngestForm
-          dropzoneTitle={activeRunScope.formTitle}
-          idleDescription={activeRunScope.formDescription}
-        />
+        {activeRunScope.formKind === 'obsidian-web-clip' ? (
+          <ObsidianWebClipForm />
+        ) : (
+          <IngestForm
+            dropzoneTitle={activeRunScope.formTitle}
+            idleDescription={activeRunScope.formDescription}
+          />
+        )}
 
         {enrichIssueList.length > 0 ? (
           <div className="ingest-page__enrich-alerts">
