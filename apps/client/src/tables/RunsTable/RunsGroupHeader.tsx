@@ -21,10 +21,11 @@ const AUTHOR_COLUMN_MAX_WIDTH = '250px';
 export interface RunGroupRowProps {
   group: RunGroup;
   titleLimits?: DataTableColumnLimit;
+  dateMode: 'ingested' | 'published';
 }
 
 /** Grouped row for the Runs table: a parent summary row plus collapsible per-run child rows. */
-export function RunsGroupHeader({ group, titleLimits }: RunGroupRowProps) {
+export function RunsGroupHeader({ group, titleLimits, dateMode }: RunGroupRowProps) {
   const [expanded, setExpanded] = useState(false);
   const hasExtractingRun = useMemo(() => group.runs.some(isRunExtracting), [group.runs]);
   const displayTitle = titleLimits?.maxChars ? truncateChars(group.title, titleLimits.maxChars) : group.title;
@@ -42,6 +43,7 @@ export function RunsGroupHeader({ group, titleLimits }: RunGroupRowProps) {
   const authorPlainNameClass = authorSourceIcon
     ? styles.authorName
     : `${styles.authorName} ${styles.authorNoIcon}`;
+  const displayDate = dateMode === 'published' ? group.publishedAt : group.latestDate;
 
   return (
     <>
@@ -98,9 +100,9 @@ export function RunsGroupHeader({ group, titleLimits }: RunGroupRowProps) {
           </span>
         </TableCell>
         <TableCell>
-          {group.publishedAt ? (
-            <time className={styles.mono} dateTime={group.publishedAt}>
-              {fmtClickDate(group.publishedAt)}
+          {displayDate ? (
+            <time className={styles.mono} dateTime={displayDate}>
+              {fmtClickDate(displayDate)}
             </time>
           ) : (
             <span className={styles.muted}>—</span>

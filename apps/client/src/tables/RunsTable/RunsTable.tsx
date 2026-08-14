@@ -1,6 +1,7 @@
 import { resolveDataTableMaxWidth } from '@llaab/ui/lib/data-table-utils';
 import { Button } from 'components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from 'components/ui/toggle-group';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useRunMonitor, useRuns } from 'queries/runs';
 import { useMemo, useState } from 'react';
@@ -23,6 +24,12 @@ const ACTIVE_POLL_INTERVAL_MS = 2500;
 
 type SortDirection = 'asc' | 'desc';
 type SortColumn = 'title' | 'date' | 'author' | 'nodes' | 'latency';
+type DateMode = 'ingested' | 'published';
+
+const DATE_MODE_OPTIONS: Array<{ label: string; value: DateMode }> = [
+  { label: 'ingested', value: 'ingested' },
+  { label: 'published', value: 'published' },
+];
 
 interface SortState {
   column: SortColumn;
@@ -39,12 +46,28 @@ function compareNumbers(a: number, b: number, direction: SortDirection): number 
   return direction === 'asc' ? cmp : -cmp;
 }
 
-function compareGroups(a: RunGroup, b: RunGroup, sort: SortState): number {
+function groupDateValue(group: RunGroup, dateMode: DateMode): string | undefined {
+  return dateMode === 'published' ? group.publishedAt : group.latestDate;
+}
+
+function compareOptionalDates(
+  a: string | undefined,
+  b: string | undefined,
+  direction: SortDirection,
+): number {
+  if (a && !b) return -1;
+  if (!a && b) return 1;
+  if (!a && !b) return 0;
+  if (!a || !b) return 0;
+  return compareStrings(a, b, direction);
+}
+
+function compareGroups(a: RunGroup, b: RunGroup, sort: SortState, dateMode: DateMode): number {
   switch (sort.column) {
     case 'title':
       return compareStrings(a.title, b.title, sort.direction);
     case 'date':
-      return compareStrings(a.publishedAt ?? '', b.publishedAt ?? '', sort.direction);
+      return compareOptionalDates(groupDateValue(a, dateMode), groupDateValue(b, dateMode), sort.direction);
     case 'author':
       return compareStrings(a.source?.title ?? '', b.source?.title ?? '', sort.direction);
     case 'nodes':
@@ -107,6 +130,7 @@ export function RunsTable({
   columnLimits,
 }: RunsTableProps) {
   const [sort, setSort] = useState<SortState>({ column: 'date', direction: 'desc' });
+  const [dateMode, setDateMode] = useState<DateMode>('ingested');
   const { data: monitorData } = useRunMonitor();
   const monitorRunIds = useMemo(
     () => new Set([...(monitorData?.active ?? []), ...(monitorData?.recent ?? [])].map((run) => run.id)),
@@ -144,8 +168,8 @@ export function RunsTable({
     [runs, sourcesById, transcriptsById],
   );
   const sortedGroups = useMemo(
-    () => [...groups].toSorted((a, b) => compareGroups(a, b, sort)),
-    [groups, sort],
+    () => [...groups].toSorted((a, b) => compareGroups(a, b, sort, dateMode)),
+    [dateMode, groups, sort],
   );
 
   function handleSort(column: SortColumn) {
@@ -164,8 +188,35 @@ export function RunsTable({
     <div className={showHeading ? styles.withHeading : undefined}>
       {showHeading && (
         <div className={styles.heading}>
-          <h2 className={styles.headingTitle}>Runs</h2>
-          <span className={styles.headingCount}>{runs.length}</span>
+          <div className={styles.headingLabel}>
+            <h2 className={styles.headingTitle}>Runs</h2>
+            <span className={styles.headingCount}>{runs.length}</span>
+          </div>
+          <div className={styles.headingControls}>
+            <span className={styles.dateModeLabel}>date:</span>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              spacing={0}
+              value={dateMode}
+              onValueChange={(value) => {
+                if (value === 'ingested' || value === 'published') setDateMode(value);
+              }}
+              aria-label="Date column mode"
+            >
+              {DATE_MODE_OPTIONS.map((option) => (
+                <ToggleGroupItem
+                  key={option.value}
+                  value={option.value}
+                  className={styles.dateModeOption}
+                  aria-label={`Use ${option.label} date`}
+                >
+                  {option.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
         </div>
       )}
       <div className="overflow-x-auto rounded-md border">
@@ -200,7 +251,12 @@ export function RunsTable({
           <TableBody>
             {sortedGroups.length ? (
               sortedGroups.map((group) => (
-                <RunsGroupHeader key={group.key} group={group} titleLimits={titleLimits} />
+                <RunsGroupHeader
+                  key={group.key}
+                  group={group}
+                  titleLimits={titleLimits}
+                  dateMode={dateMode}
+                />
               ))
             ) : (
               <TableRow>
