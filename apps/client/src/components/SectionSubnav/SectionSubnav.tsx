@@ -82,7 +82,7 @@ export function SectionSubnav({
           {section.items.map((item) => {
             if (!item.live) {
               return (
-                <li key={item.href}>
+                <li key={`${item.href}:${item.label}`}>
                   <span className={cn(styles.disabled, 'text-base')} aria-disabled="true">
                     {item.label}
                     <LockIcon className={styles.lockIcon} aria-hidden="true" />
@@ -95,7 +95,7 @@ export function SectionSubnav({
             const active = activeHref === item.href;
 
             return (
-              <li key={item.href}>
+              <li key={`${item.href}:${item.label}`}>
                 <Link
                   to={item.href}
                   className={cn(styles.link, 'text-base', active && styles.linkActive)}

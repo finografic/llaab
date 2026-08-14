@@ -6,7 +6,7 @@ import { useRunMonitor, useRuns } from 'queries/runs';
 import { useMemo, useState } from 'react';
 import { RunsGroupHeader } from 'tables/RunsTable/RunsGroupHeader';
 import { buildSourcesById } from 'tables/RunsTable/RunsTable.utils';
-import type { SourceNode, TranscriptNode } from '@llaab/schemas';
+import type { RunNode, SourceNode, TranscriptNode } from '@llaab/schemas';
 import type { DataTableColumnLimit } from '@llaab/ui/lib/data-table-utils';
 import type { CSSProperties, ReactNode } from 'react';
 
@@ -62,6 +62,7 @@ export interface RunsTableProps {
   sources?: SourceNode[];
   transcripts?: TranscriptNode[];
   showHeading?: boolean;
+  skillIds?: readonly string[];
   /** Per-column truncation limits (e.g. title on the ingest page). */
   columnLimits?: Partial<Record<SortColumn, DataTableColumnLimit>>;
 }
@@ -102,6 +103,7 @@ export function RunsTable({
   sources = [],
   transcripts = [],
   showHeading = false,
+  skillIds,
   columnLimits,
 }: RunsTableProps) {
   const [sort, setSort] = useState<SortState>({ column: 'date', direction: 'desc' });
@@ -123,7 +125,15 @@ export function RunsTable({
     },
   });
 
-  const runs = useMemo(() => allRuns.filter(isIngestRun), [allRuns]);
+  const skillIdSet = useMemo(() => (skillIds ? new Set(skillIds) : null), [skillIds]);
+  const runs = useMemo(
+    () =>
+      allRuns.filter((run): run is RunNode => {
+        if (!isIngestRun(run)) return false;
+        return skillIdSet ? skillIdSet.has(run.skill_id ?? '') : true;
+      }),
+    [allRuns, skillIdSet],
+  );
   const sourcesById = useMemo(() => buildSourcesById(sources), [sources]);
   const transcriptsById = useMemo(
     () => new Map(transcripts.map((transcript) => [transcript.id, transcript])),

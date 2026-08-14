@@ -14,6 +14,7 @@ import {
 import type { RunDisplayStatus } from 'utils/run-display.utils';
 import { isPodcastSource, isYouTubeChannelSource } from 'utils/youtube-source.utils';
 
+import { RunDetailLink } from './RunDetailLink';
 import styles from './RunsTable.module.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -60,9 +61,9 @@ export function renderRunTitleCell({ row }: CellContext<RunNode, unknown>) {
   return (
     <div className={styles.cellTitle}>
       {subjectTitle && !subjectHref && <span className={styles.subjectTitle}>{subjectTitle}</span>}
-      <Link to={`/vault/runs/${run.id}`} className={styles.runLabel}>
+      <RunDetailLink run={run} className={styles.runLabel}>
         {run.title}
-      </Link>
+      </RunDetailLink>
       {subjectTitle && subjectHref && (
         <a href={subjectHref} className={styles.subjectTitle}>
           {subjectTitle}

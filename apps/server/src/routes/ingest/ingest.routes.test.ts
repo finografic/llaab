@@ -42,7 +42,11 @@ function skillOutput(overrides: Record<string, unknown> = {}) {
       sourceId: 'signal-journal',
       reused: false,
     },
-    extraction: { ideaIds: ['idea.one'], summary: 'A summary.' },
+    extraction: {
+      ideaIds: ['idea.one'],
+      ideas: [{ id: 'idea.one', title: 'Idea One' }],
+      summary: 'A summary.',
+    },
     extractionError: undefined,
     ...overrides,
   };
@@ -117,7 +121,7 @@ describe('POST /api/ingest/article', () => {
         sourceId: 'signal-journal',
         reused: false,
       },
-      extraction: { ideaCount: 1, summary: 'A summary.' },
+      extraction: { ideaCount: 1, ideas: [{ id: 'idea.one', title: 'Idea One' }], summary: 'A summary.' },
       extractionError: null,
     });
   });

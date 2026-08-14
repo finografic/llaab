@@ -329,6 +329,10 @@
   margin-top: var(--space-1);
 }
 
+.pipeline-card__tags {
+  margin-bottom: var(--space-4);
+}
+
 .pipeline-card__failure {
   display: flex;
   align-items: center;

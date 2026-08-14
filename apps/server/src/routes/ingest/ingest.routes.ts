@@ -25,7 +25,9 @@ export const youtube = {
         type: result.type,
         reused: result.reused ?? false,
       },
-      extraction: extraction ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary } : null,
+      extraction: extraction
+        ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary, ideas: extraction.ideas }
+        : null,
       extractionError: extractionError ?? null,
     });
   },
@@ -58,7 +60,9 @@ export const article = {
         sourceId: result.sourceId,
         reused: result.reused,
       },
-      extraction: extraction ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary } : null,
+      extraction: extraction
+        ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary, ideas: extraction.ideas }
+        : null,
       extractionError: extractionError ?? null,
     });
   },
@@ -87,7 +91,9 @@ export const podcast = {
         type: result.type,
         reused: result.reused ?? false,
       },
-      extraction: extraction ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary } : null,
+      extraction: extraction
+        ? { ideaCount: extraction.ideaIds.length, summary: extraction.summary, ideas: extraction.ideas }
+        : null,
       extractionError: extractionError ?? null,
     });
   },

@@ -38,6 +38,7 @@ export const QUERY_KEYS = {
         input.limit ?? '',
       ] as const,
     node: (id: string) => [...QUERY_KEYS.vault.all, 'node', id] as const,
+    run: (id: string) => [...QUERY_KEYS.vault.all, 'run', id] as const,
     tree: () => [...QUERY_KEYS.vault.all, 'tree'] as const,
     enrichedSource: (id: string) => [...QUERY_KEYS.vault.all, 'source', id, 'enriched'] as const,
     gitStatus: () => [...QUERY_KEYS.vault.all, 'git-status'] as const,
@@ -48,7 +49,7 @@ export { useVaultFile } from './useVaultFile';
 export type { VaultMarkdownRenderMode, VaultMarkdownSplitLevel } from './useVaultFile';
 export { useVaultFileDiff } from './useVaultFileDiff';
 export { useVaultClean } from './useVaultClean';
-export { useVaultNodes, useVaultNode } from './useVaultNodes';
+export { useVaultNodes, useVaultNode, useRunNode } from './useVaultNodes';
 export { useVaultSearch } from './useVaultSearch';
 export type { VaultSearchMatch, VaultSearchMatchField, VaultSearchResult } from './useVaultSearch';
 export { useUpdateVaultNode, useBatchUpdateVaultNodes } from './useUpdateVaultNode';

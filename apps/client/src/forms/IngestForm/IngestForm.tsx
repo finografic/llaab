@@ -42,6 +42,8 @@ import {
 
 export interface IngestFormProps {
   submitOnDrop?: boolean;
+  dropzoneTitle?: string;
+  idleDescription?: string;
 }
 
 const INGEST_SKILL_IDS = new Set(['ingest-youtube', 'ingest-podcast', 'ingest-article']);
@@ -82,7 +84,11 @@ function getRunInputUrl(run: RunMonitorItem): string | null {
   return parseRunInputSummary(run.raw_input_summary)?.url ?? null;
 }
 
-export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
+export function IngestForm({
+  submitOnDrop = true,
+  dropzoneTitle = 'Drop a browser URL or page link to populate the source field',
+  idleDescription = 'The form classifies the source asset and adapts the ingest action.',
+}: IngestFormProps) {
   const [lockedTags, setLockedTags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [isDropActive, setIsDropActive] = useState(false);
@@ -166,7 +172,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         : sourceKind,
   );
 
-  const dropzoneDesc = useMemo(() => sourceKindLabel(sourceKind), [sourceKind]);
+  const dropzoneDesc = useMemo(
+    () => (isIngestibleSourceKind(sourceKind) ? sourceKindLabel(sourceKind) : idleDescription),
+    [idleDescription, sourceKind],
+  );
 
   const processingUrl = currentQueueUrl ?? (activeIngestRun ? getRunInputUrl(activeIngestRun) : null);
   const trimmedUrl = urlValue.trim();
@@ -319,7 +328,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
         void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.runs.monitor() });
       }, 1000);
 
-      let json: Awaited<ReturnType<typeof ingestYoutube.mutateAsync>>;
+      let json:
+        | Awaited<ReturnType<typeof ingestYoutube.mutateAsync>>
+        | Awaited<ReturnType<typeof ingestPodcast.mutateAsync>>
+        | Awaited<ReturnType<typeof ingestArticle.mutateAsync>>;
       const itemKind = classifyUrl(trimmedUrl);
 
       try {
@@ -362,8 +374,10 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
 
       try {
         if (json.extraction) {
-          const ideas = await fetchExistingIdeas(transcriptId);
-          setExtractionPhase(ideas.length > 0 ? 'success' : 'extractable');
+          const ideas =
+            json.extraction.ideas ?? (itemKind === 'webpage' ? [] : await fetchExistingIdeas(transcriptId));
+          const ideaCount = Math.max(json.extraction.ideaCount, ideas.length);
+          setExtractionPhase(ideaCount > 0 ? 'success' : 'extractable');
           setExtractionIdeas(ideas);
           const nodeTags = await fetchNodeTags(transcriptId);
           setLockedTags(nodeTags);
@@ -630,9 +644,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="ingest-dropzone__title">
-        Drop a browser URL or page link to populate the source field
-      </div>
+      <div className="ingest-dropzone__title">{dropzoneTitle}</div>
       {isIngestibleSourceKind(sourceKind) ? (
         <div className="ingest-dropzone__desc ingest-dropzone__desc--youtube">
           <CheckIcon className="size-4 shrink-0 text-green-600 dark:text-green-400" aria-hidden />
@@ -652,7 +664,7 @@ export function IngestForm({ submitOnDrop = true }: IngestFormProps) {
                 type="url"
                 autoComplete="off"
                 spellCheck={false}
-                placeholder="YouTube, Pocket Casts, or article URL…"
+                placeholder="https://"
                 className={
                   isInputProcessing
                     ? 'ingest-form__url-input ingest-form__url-input--processing'

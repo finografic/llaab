@@ -13,7 +13,7 @@ export interface IngestYoutubeInput {
 export interface IngestYoutubeResult {
   success: boolean;
   result?: { id: string; path: string; reused?: boolean };
-  extraction?: { ideaCount: number; summary: string } | null;
+  extraction?: { ideaCount: number; ideas?: Array<{ id: string; title: string }>; summary: string } | null;
   extractionError?: string | null;
   error?: string;
 }

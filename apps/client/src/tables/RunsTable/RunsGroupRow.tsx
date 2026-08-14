@@ -4,13 +4,13 @@ import { ExtractionModelCard } from 'components/ExtractionModelCard';
 import { Spinner } from 'components/ui/spinner';
 import { TableCell, TableRow } from 'components/ui/table';
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
 import type { RunDisplayStatus } from 'utils/run-display.utils';
 import { getRunDisplayStatus, getRunElapsedDurationMs, isRunExtracting } from 'utils/run-display.utils';
 import type { RunGroup } from 'utils/run-grouping.utils';
 
+import { RunDetailLink } from './RunDetailLink';
 import styles from './RunsTable.module.css';
 import { STATUS_CLASS } from './RunsTable.utils';
 
@@ -79,9 +79,9 @@ export function RunsGroupRow({ group }: RunsGroupRowProps) {
             <TableCell className="pr-0">{renderRunStatusIcon(displayStatus)}</TableCell>
             <TableCell>
               <div className={styles.childRowTitle}>
-                <Link to={`/vault/runs/${run.id}`} className={`${styles.mono} ${styles.childRowId}`}>
+                <RunDetailLink run={run} className={`${styles.mono} ${styles.childRowId}`}>
                   {run.id}
-                </Link>
+                </RunDetailLink>
               </div>
             </TableCell>
             <TableCell className="text-center">

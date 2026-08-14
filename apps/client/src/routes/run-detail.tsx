@@ -3,9 +3,8 @@ import { ModelMetaCard } from 'components/ModelMetaCard/ModelMetaCard';
 import { PageHero } from 'components/PageHero/PageHero';
 import { PageDetail } from 'layouts/PageDetail/PageDetail';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
-import { useVaultNode } from 'queries/vault';
+import { useRunNode } from 'queries/vault';
 import { Navigate, useParams } from 'react-router-dom';
-import type { RunNode } from '@llaab/schemas';
 import type { JsonDataLinkRule } from 'components/JsonData/JsonData';
 
 import { usePageTitle } from 'lib/use-page-title';
@@ -23,8 +22,7 @@ const RUN_JSON_LINK_RULES = [
 
 export function RunDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: node, isLoading } = useVaultNode(id);
-  const run: RunNode | undefined = node?.type === 'run' ? node : undefined;
+  const { data: run, isLoading } = useRunNode(id);
 
   usePageTitle(run?.title ?? 'Run');
 

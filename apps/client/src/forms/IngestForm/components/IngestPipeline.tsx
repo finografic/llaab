@@ -141,7 +141,11 @@ export function IngestPipeline({
       nodeCount: extractionIdeas.length > 0 ? extractionIdeas.length : undefined,
       children: (
         <>
-          <TagList tags={lockedTags} size="sm" />
+          {lockedTags.length > 0 ? (
+            <div className="pipeline-card__tags">
+              <TagList tags={lockedTags} size="sm" />
+            </div>
+          ) : null}
           {(extractionPhase === 'success' || extractionPhase === 'existing') && extractionIdeas.length > 0 ? (
             <IdeaList ideas={extractionIdeas} />
           ) : null}

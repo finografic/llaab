@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { NAV_MENU_SECTIONS } from './nav-menu.config';
 import { getActiveNavItemHref, getActiveNavSectionId, isNavItemActive } from './nav-menu.utils';
 
 describe('getActiveNavSectionId', () => {
@@ -50,5 +51,14 @@ describe('getActiveNavItemHref', () => {
 
   it('returns null when nothing matches', () => {
     expect(getActiveNavItemHref('/llm', vaultHrefs)).toBeNull();
+  });
+});
+
+describe('NAV_MENU_SECTIONS', () => {
+  it('does not register duplicate live hrefs inside a section', () => {
+    for (const section of NAV_MENU_SECTIONS) {
+      const liveHrefs = section.items.filter((item) => item.live).map((item) => item.href);
+      expect(new Set(liveHrefs).size).toBe(liveHrefs.length);
+    }
   });
 });

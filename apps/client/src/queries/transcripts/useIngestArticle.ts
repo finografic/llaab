@@ -23,7 +23,7 @@ export interface IngestArticleResult {
     sourceId?: string;
     reused?: boolean;
   };
-  extraction?: { ideaCount: number; summary: string } | null;
+  extraction?: { ideaCount: number; ideas?: Array<{ id: string; title: string }>; summary: string } | null;
   extractionError?: string | null;
   error?: string;
 }

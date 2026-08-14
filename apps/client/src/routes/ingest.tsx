@@ -5,7 +5,7 @@ import { IngestForm } from 'forms/IngestForm/IngestForm';
 import { PageLayout } from 'layouts/PageLayout/PageLayout';
 import { QUERY_KEYS, useVaultNodes } from 'queries/vault';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { RunsTable } from 'tables/RunsTable/RunsTable';
 import type { LabNode, SourceNode, TranscriptNode } from '@llaab/schemas';
 
@@ -30,8 +30,40 @@ interface SourceEnrichIssue {
   subscriptionError?: string;
 }
 
+interface IngestRunScope {
+  pageTitle: string;
+  heroDescription: string;
+  formTitle: string;
+  formDescription: string;
+  skillIds: readonly string[];
+}
+
+const MEDIA_RUN_SCOPE: IngestRunScope = {
+  pageTitle: 'Ingest Media URL',
+  heroDescription:
+    'Paste or drop a YouTube or Pocket Casts URL. The form will classify the source asset and adapt the ingest action when the URL is supported.',
+  formTitle: 'Drop a YouTube or Pocket Casts URL to populate the source field',
+  formDescription: 'Supports YouTube videos and Pocket Casts episodes.',
+  skillIds: ['ingest-youtube', 'ingest-podcast'],
+};
+
+const ARTICLE_RUN_SCOPE: IngestRunScope = {
+  pageTitle: 'Ingest Web URL',
+  heroDescription:
+    'Paste or drop an article, post, tutorial, or web page URL. HTML pages only; local files are handled separately.',
+  formTitle: 'Drop an article, post, tutorial, or web page URL to populate the source field',
+  formDescription: 'Supports articles, posts, tutorials, and other standard HTML pages.',
+  skillIds: ['ingest-article'],
+};
+
+function resolveIngestRunScope(pathname: string): IngestRunScope {
+  return pathname.startsWith('/ingest/articles') ? ARTICLE_RUN_SCOPE : MEDIA_RUN_SCOPE;
+}
+
 export function IngestPage() {
-  usePageTitle('Ingest');
+  const { pathname } = useLocation();
+  const activeRunScope = resolveIngestRunScope(pathname);
+  usePageTitle(activeRunScope.pageTitle);
   const queryClient = useQueryClient();
   const refreshedSourceIds = useRef(new Set<string>());
   const [enrichIssues, setEnrichIssues] = useState<Record<string, SourceEnrichIssue>>({});
@@ -127,13 +159,16 @@ export function IngestPage() {
       hero={
         <PageHero
           eyebrow="Pipeline"
-          title="Ingest Source URL"
-          description="Paste or drop a browser URL. The form will classify the source asset and adapt the ingest action when the URL is supported."
+          title={activeRunScope.pageTitle}
+          description={activeRunScope.heroDescription}
         />
       }
     >
       <div className="ingest-page">
-        <IngestForm />
+        <IngestForm
+          dropzoneTitle={activeRunScope.formTitle}
+          idleDescription={activeRunScope.formDescription}
+        />
 
         {enrichIssueList.length > 0 ? (
           <div className="ingest-page__enrich-alerts">
@@ -162,6 +197,7 @@ export function IngestPage() {
           sources={sources}
           transcripts={transcripts}
           showHeading
+          skillIds={activeRunScope.skillIds}
           columnLimits={{ title: { maxWidth: '20rem', maxChars: 60 } }}
         />
       </div>

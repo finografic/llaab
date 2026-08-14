@@ -101,16 +101,15 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
     label: 'Pipeline',
     items: [
       {
-        label: 'Ingest YouTube',
-        description: 'Fetch a transcript and store it as a vault node',
+        label: 'Ingest Media URL',
+        description: 'Ingest a YouTube or podcast URL into the vault',
         href: '/ingest',
         live: true,
       },
       {
-        label: 'Ingest Article',
-        description: 'Ingest a web article or blog post as a resource node',
-        // Articles share the canonical /ingest form — there is no separate article page.
-        href: '/ingest',
+        label: 'Ingest Web URL',
+        description: 'Ingest an article, post, tutorial, or web page into the vault',
+        href: '/ingest/articles',
         live: true,
       },
       {

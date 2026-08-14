@@ -1,4 +1,4 @@
-import { deleteNode, getNodeFilePath, listNodes, readNode } from '@llaab/core';
+import { deleteNode, getNodeFilePath, listNodes, readNode, readNodeByType } from '@llaab/core';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { DeleteRunsPreviewBody } from './vault.schema.js';
 import type {
@@ -87,6 +87,20 @@ function getProducedNodeRetentionReason(node: LabNode, context: ProducedNodeDele
 // ---------------------------------------------------------------------------
 // Route handlers
 // ---------------------------------------------------------------------------
+
+export const runDetail = {
+  path: '/runs/:id' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+
+    try {
+      const run = await readNodeByType('run', id);
+      return c.json({ run });
+    } catch {
+      return c.json({ error: 'Run not found' }, 404);
+    }
+  },
+};
 
 export const deleteRun = {
   path: '/runs/:id' as const,

@@ -139,7 +139,12 @@ export const router = createBrowserRouter([
       {
         path: 'ingest',
         element: lazyElement(IngestPage),
-        handle: { title: 'Ingest' } satisfies RouteHandle,
+        handle: { title: 'Ingest Media URL' } satisfies RouteHandle,
+      },
+      {
+        path: 'ingest/articles',
+        element: lazyElement(IngestPage),
+        handle: { title: 'Ingest Web URL' } satisfies RouteHandle,
       },
       {
         path: 'quiz',

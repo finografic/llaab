@@ -108,6 +108,7 @@ export const vaultRouter = createRouter()
     routes.promoteCanonicalIdea.handler,
   )
   .delete(routes.discardTranscript.path, routes.discardTranscript.handler)
+  .get(routes.runDetail.path, routes.runDetail.handler)
   .delete(routes.deleteRun.path, zValidator('query', deleteRunQuerySchema), routes.deleteRun.handler)
   .post(
     routes.previewDeleteRuns.path,

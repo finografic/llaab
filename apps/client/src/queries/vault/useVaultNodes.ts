@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { LabNode, NodeStatus, NodeType } from '@llaab/schemas';
+import type { LabNode, NodeStatus, NodeType, RunNode } from '@llaab/schemas';
 
 import { api } from 'lib/api';
 
@@ -74,6 +74,23 @@ export function useVaultNode(id: string | undefined) {
         throw new Error(body.error ?? 'Node not found');
       }
       return body.node;
+    },
+    enabled: Boolean(id),
+  });
+}
+
+/** Fetch a single run by id without scanning every vault node. */
+export function useRunNode(id: string | undefined) {
+  return useQuery({
+    queryKey: QUERY_KEYS.vault.run(id ?? ''),
+    queryFn: async () => {
+      if (!id) throw new Error('Run id is required.');
+      const res = await api.vault.runs[':id'].$get({ param: { id } });
+      const body = (await res.json()) as { run?: RunNode; error?: string };
+      if (!res.ok || !body.run) {
+        throw new Error(body.error ?? 'Run not found');
+      }
+      return body.run;
     },
     enabled: Boolean(id),
   });
