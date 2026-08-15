@@ -16,8 +16,6 @@ import type { RunGroup } from 'utils/run-grouping.utils';
 import styles from './RunsTable.module.css';
 import { fmtClickDate, fmtDuration, renderYouTubeSubscriptionIcon } from './RunsTable.utils';
 
-const AUTHOR_COLUMN_MAX_WIDTH = '250px';
-
 export interface RunGroupRowProps {
   group: RunGroup;
   titleLimits?: DataTableColumnLimit;
@@ -108,7 +106,7 @@ export function RunsGroupHeader({ group, titleLimits, dateMode }: RunGroupRowPro
             <span className={styles.muted}>—</span>
           )}
         </TableCell>
-        <TableCell>
+        <TableCell className={styles.sourceColumn}>
           {group.url ? (
             <a
               href={group.url}
@@ -123,7 +121,7 @@ export function RunsGroupHeader({ group, titleLimits, dateMode }: RunGroupRowPro
             <span className={styles.muted}>—</span>
           )}
         </TableCell>
-        <TableCell style={{ maxWidth: AUTHOR_COLUMN_MAX_WIDTH }}>
+        <TableCell className={styles.authorColumn}>
           {authorLabel ? (
             <div className={styles.authorCell}>
               {authorSourceIcon}

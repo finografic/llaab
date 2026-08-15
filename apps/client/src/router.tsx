@@ -38,6 +38,12 @@ const NodesPage = lazy(() => import('routes/nodes').then((module) => ({ default:
 const NodeDetailPage = lazy(() =>
   import('routes/node-detail').then((module) => ({ default: module.NodeDetailPage })),
 );
+const ResourcesPage = lazy(() =>
+  import('routes/resources').then((module) => ({ default: module.ResourcesPage })),
+);
+const ResourceDetailPage = lazy(() =>
+  import('routes/resource-detail').then((module) => ({ default: module.ResourceDetailPage })),
+);
 const TranscriptsPage = lazy(() =>
   import('routes/transcripts').then((module) => ({ default: module.TranscriptsPage })),
 );
@@ -244,6 +250,16 @@ export const router = createBrowserRouter([
             path: 'nodes/:id',
             element: lazyElement(NodeDetailPage),
             handle: { title: 'Node' } satisfies RouteHandle,
+          },
+          {
+            path: 'resources',
+            element: lazyElement(ResourcesPage),
+            handle: { title: 'Articles', fullBleed: true } satisfies RouteHandle,
+          },
+          {
+            path: 'resources/:id',
+            element: lazyElement(ResourceDetailPage),
+            handle: { title: 'Article', fullBleed: true } satisfies RouteHandle,
           },
           {
             path: 'inbox',

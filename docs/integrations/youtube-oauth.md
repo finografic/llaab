@@ -107,6 +107,10 @@ between the form and runs table.
 
 ## Renew a broken refresh token
 
+Go to: https://developers.google.com/oauthplayground/
+
+![YouTube-Auth_01](./YouTube-Auth_01.png)
+
 Symptom: `invalid_grant` on token exchange, missing `youtube_subscribed` on new sources, amber
 **YouTube subscription check failed** alert on `/ingest`.
 

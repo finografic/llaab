@@ -8,7 +8,8 @@ import { api } from 'lib/api';
 import { QUERY_KEYS } from './index';
 
 export interface CreateWikiDraftInput {
-  transcriptId: string;
+  sourceId: string;
+  sourceType?: 'resource' | 'transcript';
   canonicalIdeaIds: string[];
 }
 
@@ -37,12 +38,20 @@ export interface CreateWikiDraftResult {
 }
 
 async function createWikiDraft(input: CreateWikiDraftInput): Promise<CreateWikiDraftResult> {
-  const response = await api.vault.transcripts[':id']['wiki-drafts'].$post({
-    param: { id: input.transcriptId },
-    json: {
-      canonical_idea_ids: input.canonicalIdeaIds,
-    },
-  });
+  const response =
+    input.sourceType === 'resource'
+      ? await fetch(`/api/vault/resources/${input.sourceId}/wiki-drafts`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ canonical_idea_ids: input.canonicalIdeaIds }),
+        })
+      : await api.vault.transcripts[':id']['wiki-drafts'].$post({
+          param: { id: input.sourceId },
+          json: {
+            canonical_idea_ids: input.canonicalIdeaIds,
+          },
+        });
   const result = (await response.json()) as CreateWikiDraftResult | { error?: string };
   if (!response.ok || !('success' in result) || !result.success) {
     throw new Error('error' in result ? (result.error ?? 'Wiki creation failed.') : 'Wiki creation failed.');
@@ -65,7 +74,7 @@ export function useCreateWikiDraft() {
     onSettled: (_result, _error, input) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.transcripts.all });
       void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.nodes('wiki-draft') });
-      void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.node(input.transcriptId) });
+      void queryClient.invalidateQueries({ queryKey: VAULT_KEYS.vault.node(input.sourceId) });
       void queryClient.invalidateQueries({ queryKey: RUN_KEYS.runs.monitor() });
       void queryClient.invalidateQueries({ queryKey: ['knowledge', 'wikis'] });
     },

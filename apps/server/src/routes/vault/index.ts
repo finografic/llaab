@@ -70,11 +70,18 @@ export const vaultRouter = createRouter()
   .post(routes.vaultGitReset.path, routes.vaultGitReset.handler)
   .get(routes.transcriptIdeas.path, routes.transcriptIdeas.handler)
   .post(routes.extractTranscript.path, routes.extractTranscript.handler)
+  .post(routes.extractResource.path, routes.extractResource.handler)
   .post(routes.consolidateTranscriptIdeas.path, routes.consolidateTranscriptIdeas.handler)
+  .post(routes.consolidateResourceIdeas.path, routes.consolidateResourceIdeas.handler)
   .post(
     routes.createWikiDraft.path,
     zValidator('json', createWikiDraftBodySchema),
     routes.createWikiDraft.handler,
+  )
+  .post(
+    routes.createResourceWikiDraft.path,
+    zValidator('json', createWikiDraftBodySchema),
+    routes.createResourceWikiDraft.handler,
   )
   .get(routes.listWikiDrafts.path, routes.listWikiDrafts.handler)
   .get(routes.wikiDraftDetail.path, routes.wikiDraftDetail.handler)

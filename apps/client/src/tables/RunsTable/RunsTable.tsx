@@ -1,4 +1,5 @@
 import { resolveDataTableMaxWidth } from '@llaab/ui/lib/data-table-utils';
+import { ListPagination, useListPagination } from 'components/ListPagination';
 import { Button } from 'components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from 'components/ui/toggle-group';
@@ -171,6 +172,19 @@ export function RunsTable({
     () => [...groups].toSorted((a, b) => compareGroups(a, b, sort, dateMode)),
     [dateMode, groups, sort],
   );
+  const paginationResetKey = `${sort.column}:${sort.direction}:${dateMode}:${skillIds?.join(',') ?? 'all'}`;
+  const {
+    page,
+    pageCount,
+    pageItems: pagedGroups,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = useListPagination({
+    items: sortedGroups,
+    storageKey: showHeading ? 'runs.ingest.pageSize' : 'runs.pageSize',
+    resetKey: paginationResetKey,
+  });
 
   function handleSort(column: SortColumn) {
     setSort((current) => ({
@@ -220,7 +234,17 @@ export function RunsTable({
         </div>
       )}
       <div className="overflow-x-auto rounded-md border">
-        <Table>
+        <Table className={styles.runsTable}>
+          <colgroup>
+            <col className={styles.toggleColumn} />
+            <col className={styles.titleColumn} />
+            <col className={styles.nodesColumn} />
+            <col className={styles.dateColumn} />
+            <col className={styles.sourceColumn} />
+            <col className={styles.authorColumn} />
+            <col className={styles.latencyColumn} />
+            <col className={styles.deleteColumn} />
+          </colgroup>
           <TableHeader>
             <TableRow>
               <TableHead className="w-0" />
@@ -238,8 +262,8 @@ export function RunsTable({
               <SortableHeader column="date" sort={sort} onSort={handleSort}>
                 Date
               </SortableHeader>
-              <TableHead>Source</TableHead>
-              <SortableHeader column="author" sort={sort} onSort={handleSort}>
+              <TableHead className={styles.sourceColumn}>Source</TableHead>
+              <SortableHeader column="author" sort={sort} onSort={handleSort} className={styles.authorColumn}>
                 Author
               </SortableHeader>
               <SortableHeader column="latency" sort={sort} onSort={handleSort} className="text-right pr-1">
@@ -249,8 +273,8 @@ export function RunsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedGroups.length ? (
-              sortedGroups.map((group) => (
+            {pagedGroups.length ? (
+              pagedGroups.map((group) => (
                 <RunsGroupHeader
                   key={group.key}
                   group={group}
@@ -268,6 +292,14 @@ export function RunsTable({
           </TableBody>
         </Table>
       </div>
+      <ListPagination
+        page={page}
+        pageCount={pageCount}
+        pageSize={pageSize}
+        totalItems={sortedGroups.length}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+      />
     </div>
   );
 }

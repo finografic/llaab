@@ -3,9 +3,9 @@ import { scoreConsolidationQuality } from '@llaab/schemas';
 import { useQueryClient } from '@tanstack/react-query';
 import { DeleteExtractedIdeaAction } from 'components/DeleteExtractedIdeaAction/DeleteExtractedIdeaAction';
 import { ExtractionModelCard } from 'components/ExtractionModelCard';
+import { ExtractionRunsSelector, SourceBodySection } from 'components/KnowledgeSourceDetail';
 import { CONSOLIDATION_SKILL_ID } from 'components/RunPipelineCard/RunPipelineCard';
 import { SplitTagList } from 'components/TagList/TagList';
-import { TtsPlayer } from 'components/TtsPlayer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,6 @@ import {
 import { Button } from 'components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from 'components/ui/collapsible';
 import { Col, Row } from 'components/ui/grid';
-import { RadioGroup, RadioGroupItem } from 'components/ui/radio-group';
 import { WikiDraftComposer } from 'components/WikiDraftComposer';
 import { HashIcon, SparklesIcon } from 'lucide-react';
 import { QUERY_KEYS as RUN_KEYS, useRunMonitor } from 'queries/runs';
@@ -83,16 +82,6 @@ function fmtRunDate(value?: string) {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function hasExtractionMeta(run: TranscriptExtractionRun) {
-  return Boolean(
-    run.model ||
-    run.provider ||
-    run.durationMs != null ||
-    run.promptTokens != null ||
-    run.completionTokens != null,
-  );
 }
 
 function formatTokenCount(value: number) {
@@ -536,53 +525,13 @@ export function TranscriptDetail({
         </dl>
       </section>
 
-      {extractionRuns.length > 1 ? (
-        <section className="section">
-          <h2 className="section__heading">
-            Extraction runs
-            <span className="section__count">{extractionRuns.length}</span>
-          </h2>
-          <RadioGroup
-            value={selectedRun?.id ?? selectedRunId}
-            onValueChange={setSelectedRunId}
-            className={styles.runSelector}
-          >
-            {extractionRuns.map((run) => {
-              const inputId = `transcript-run-${run.id}`;
-              return (
-                <label key={run.id} htmlFor={inputId} className={styles.runOption}>
-                  <Row justify="flex-start" align="center">
-                    <Col xs={1} className="flex justify-center">
-                      <RadioGroupItem id={inputId} value={run.id} className={styles.runOptionRadio} />
-                    </Col>
-                    <Col xs={11}>
-                      <span className={styles.runOptionBody}>
-                        <span className={styles.runOptionHeader}>
-                          <span className={styles.runOptionTitle}>
-                            {run.startedAt ? fmtListDateNumeric(run.startedAt) : 'Run'}
-                          </span>
-                          <span className={styles.runOptionCount}>{run.ideaIds.length} ideas</span>
-                        </span>
-                        {hasExtractionMeta(run) ? (
-                          <ExtractionModelCard
-                            variant="compact-bar"
-                            model={run.model}
-                            provider={run.provider}
-                            promptTokens={run.promptTokens}
-                            completionTokens={run.completionTokens}
-                            durationMs={run.durationMs}
-                            showTotalTokens={false}
-                          />
-                        ) : null}
-                      </span>
-                    </Col>
-                  </Row>
-                </label>
-              );
-            })}
-          </RadioGroup>
-        </section>
-      ) : null}
+      <ExtractionRunsSelector
+        runs={extractionRuns}
+        selectedRunId={selectedRun?.id ?? selectedRunId}
+        inputIdPrefix="transcript-run"
+        onSelectedRunIdChange={setSelectedRunId}
+        formatRunTitle={(run) => (run.startedAt ? fmtListDateNumeric(run.startedAt) : 'Run')}
+      />
 
       {hasModelMeta ? (
         <ExtractionModelCard
@@ -677,7 +626,7 @@ export function TranscriptDetail({
             ) : null}
           </div>
         </h2>
-        <WikiDraftComposer transcriptId={transcript.id} canonicalIdeas={canonicalIdeas} />
+        <WikiDraftComposer sourceId={transcript.id} canonicalIdeas={canonicalIdeas} />
         {coverageCounts ? (
           <div className={styles.coverageSummary}>
             <span>{coverageCounts.covered} covered</span>
@@ -883,34 +832,14 @@ export function TranscriptDetail({
         </Collapsible>
       </section>
 
-      {transcript.body ? (
-        <section className="section">
-          <Collapsible key={`${transcript.id}-body`} defaultOpen={false}>
-            <div className={styles.extractedIdeasHeader}>
-              <CollapsibleTrigger className={styles.extractedIdeasTrigger}>
-                <span className={styles.extractedIdeasHeadingLabel}>
-                  Transcript
-                  {transcriptDurationLabel ? (
-                    <span className="section__count">{transcriptDurationLabel}</span>
-                  ) : null}
-                </span>
-              </CollapsibleTrigger>
-              <TtsPlayer
-                variant="full"
-                text={transcript.body}
-                estimatedDurationSeconds={transcriptDurationSeconds ?? undefined}
-                // sentencePauseMs={0}
-                // paragraphPauseMs={0}
-                // dtype="fp32"
-                // device="webgpu"
-              />
-            </div>
-            <CollapsibleContent className={styles.extractedIdeasContent}>
-              <pre className={`body-pre ${styles.bodyPre}`}>{transcript.body}</pre>
-            </CollapsibleContent>
-          </Collapsible>
-        </section>
-      ) : null}
+      <SourceBodySection
+        sourceId={transcript.id}
+        title="Transcript"
+        body={transcript.body}
+        countLabel={transcriptDurationLabel}
+        estimatedDurationSeconds={transcriptDurationSeconds ?? undefined}
+        enableTts
+      />
 
       <AlertDialog open={showCleanConfirm} onOpenChange={setShowCleanConfirm}>
         <AlertDialogContent>

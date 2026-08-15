@@ -72,6 +72,60 @@ export const createWikiDraft = {
   },
 };
 
+export const createResourceWikiDraft = {
+  path: '/resources/:id/wiki-drafts' as const,
+  handler: async (c: AppCtxJson<CreateWikiDraftBody>) => {
+    const { id: transcriptId } = c.req.param() as { id: string };
+    const body = c.req.valid('json');
+
+    try {
+      const result = await createTranscriptWikis({ transcriptId, body });
+      if (!result.success) {
+        return c.json(
+          {
+            success: false,
+            error: result.warnings[0] ?? 'Wiki creation produced no resulting pages.',
+            runId: result.runId,
+            runIds: result.runIds,
+            draftIds: result.draftIds,
+            branches: result.branches,
+            warnings: result.warnings,
+          },
+          500,
+        );
+      }
+
+      return c.json(
+        {
+          success: true,
+          runId: result.runId,
+          runIds: result.runIds,
+          draftId: result.draftId,
+          draftIds: result.draftIds,
+          draftCount: result.draftCount,
+          wikiId: result.wikiId!,
+          wikiIds: result.wikiIds,
+          wikiCount: result.wikiCount,
+          wikis: result.wikis,
+          branches: result.branches,
+          qualityScore: result.qualityScore,
+          warnings: result.warnings,
+          producedNodeIds: result.draftIds,
+        },
+        201,
+      );
+    } catch (error) {
+      return c.json(
+        {
+          success: false,
+          error: error instanceof Error ? error.message : 'Wiki compilation failed.',
+        },
+        500,
+      );
+    }
+  },
+};
+
 export const listWikiDrafts = {
   path: '/wiki-drafts' as const,
   handler: async (c: AppCtx) => {

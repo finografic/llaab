@@ -7,7 +7,11 @@ export const CanonicalIdeaConfidenceSchema = z.enum(['low', 'medium', 'high']);
 
 export const CanonicalIdeaNodeSchema = BaseNodeSchema.extend({
   type: z.literal('canonical-idea'),
+  /** Legacy source pointer used by transcript-first wiki/consolidation code. */
   transcript_id: NodeIdSchema,
+  /** Preferred source pointer for non-transcript source nodes. */
+  source_node_id: NodeIdSchema.optional(),
+  source_node_type: z.enum(['transcript', 'resource']).optional(),
   /** May be empty after source candidate ideas are deleted; consolidate still writes ≥1. */
   source_candidate_idea_ids: z.array(NodeIdSchema).default([]),
   confidence: CanonicalIdeaConfidenceSchema.optional(),

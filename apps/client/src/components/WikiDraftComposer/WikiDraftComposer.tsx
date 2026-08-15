@@ -15,7 +15,8 @@ import { formatWikiCreationSuccessMessage, isActiveWikiCreationRun } from './wik
 import styles from './WikiDraftComposer.module.css';
 
 interface WikiDraftComposerProps {
-  transcriptId: string;
+  sourceId: string;
+  sourceType?: 'resource' | 'transcript';
   canonicalIdeas: CanonicalIdeaNode[];
 }
 
@@ -29,7 +30,11 @@ function ideaIdsKey(ideas: CanonicalIdeaNode[]): string {
   return ideas.map((idea) => idea.id).join('\0');
 }
 
-export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftComposerProps) {
+export function WikiDraftComposer({
+  sourceId,
+  sourceType = 'transcript',
+  canonicalIdeas,
+}: WikiDraftComposerProps) {
   const createDraft = useCreateWikiDraft();
   const { data: monitor } = useRunMonitor();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
@@ -40,9 +45,9 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
   const canonicalIdsKey = useMemo(() => ideaIdsKey(canonicalIdeas), [canonicalIdeas]);
   const activeRun = useMemo(
     () =>
-      monitor?.active.find((run) => isActiveWikiCreationRun(run, transcriptId)) ??
-      monitor?.recent.find((run) => isActiveWikiCreationRun(run, transcriptId)),
-    [monitor, transcriptId],
+      monitor?.active.find((run) => isActiveWikiCreationRun(run, sourceId)) ??
+      monitor?.recent.find((run) => isActiveWikiCreationRun(run, sourceId)),
+    [monitor, sourceId],
   );
   const busy = createDraft.isPending || activeRun != null;
   const activeRunStartedAt = activeRun?.started_at ? Date.parse(activeRun.started_at) : null;
@@ -74,7 +79,8 @@ export function WikiDraftComposer({ transcriptId, canonicalIdeas }: WikiDraftCom
     setStartedAt(heartbeatStore.getState().now);
     try {
       const result = await createDraft.mutateAsync({
-        transcriptId,
+        sourceId,
+        sourceType,
         canonicalIdeaIds: [...selectedIds],
       });
       if (!result.wikiId) {

@@ -91,9 +91,14 @@
 }
 
 .ingest-form__clip-input {
-  min-height: 10rem;
+  field-sizing: fixed;
+  height: 12rem;
+  min-height: 12rem;
+  max-height: 12rem;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
+  overflow-y: auto;
+  resize: none;
 }
 
 .field-hint {

@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { BaseNodeSchema } from './base-node.schema.js';
 import { NodeIdSchema } from './primitives.schema.js';
+import { TranscriptCanonicalCoverageSchema } from './transcript-node.schema.js';
 
 export const ResourceTypeSchema = z.enum([
   'tool',
@@ -38,6 +39,7 @@ export const ResourceNodeSchema = BaseNodeSchema.extend({
   content_truncated: z.boolean().optional(),
   /** Idea nodes produced by extraction from this resource. */
   extracted_idea_ids: z.array(NodeIdSchema).default([]),
+  canonical_coverage: TranscriptCanonicalCoverageSchema.optional(),
 
   // Extraction trace. Resources use `description` as their summary field, so there is no `summary`.
   llm_model: z.string().optional(),

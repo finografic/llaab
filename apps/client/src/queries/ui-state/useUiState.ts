@@ -7,6 +7,12 @@ interface UiStateResponse<T> {
   value: T | null;
 }
 
+interface UsePersistedUiStateReturn<T> {
+  value: T;
+  setValue: (value: T) => void;
+  isLoading: boolean;
+}
+
 function uiStateQueryKey(key: string) {
   return ['ui-state', key] as const;
 }
@@ -21,14 +27,7 @@ function uiStateQueryKey(key: string) {
  * through their own domain query hooks. This is purely "what did the user last pick in this
  * control."
  */
-export function usePersistedUiState<T>(
-  key: string,
-  defaultValue: T,
-): {
-  value: T;
-  setValue: (value: T) => void;
-  isLoading: boolean;
-} {
+export function usePersistedUiState<T>(key: string, defaultValue: T): UsePersistedUiStateReturn<T> {
   const queryClient = useQueryClient();
 
   const query = useQuery({

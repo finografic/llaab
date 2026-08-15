@@ -1,4 +1,5 @@
 import { createNode, deleteNode, getNodeFilePath, listNodes, readNode, updateNode } from '@llaab/core';
+import { extractKnowledgeFromNode } from '@llaab/ingestion';
 import { resolveLlmRoute, routeLlm } from '@llaab/llm';
 import {
   formatConsolidationQualityWarning,
@@ -6,7 +7,13 @@ import {
   formatIsoUtcSeconds,
   validateConsolidationQuality,
 } from '@llaab/schemas';
-import { appendRunEvent, extractTranscriptIdeas, runSkill, setRunLlmTrace } from '@llaab/skills';
+import {
+  appendProducedNodeIds,
+  appendRunEvent,
+  extractTranscriptIdeas,
+  runSkill,
+  setRunLlmTrace,
+} from '@llaab/skills';
 import { z } from 'zod';
 import type { AppCtx, AppCtxJson } from '../../types/app.types.js';
 import type { PromoteCanonicalIdeaBody, ResolveCanonicalIdeaConflictBody } from './vault.schema.js';
@@ -15,6 +22,7 @@ import type {
   CanonicalIdeaNode,
   ConsolidationQualityCanonical,
   IdeaNode,
+  ResourceNode,
   RunNode,
   TranscriptNode,
   WikiDraftNode,
@@ -171,8 +179,21 @@ interface CandidateIdeaPayload {
   tags: string[];
 }
 
+type ConsolidationSourceNode = TranscriptNode | ResourceNode;
+type ConsolidationSourceNodeType = ConsolidationSourceNode['type'];
+type ConsolidationSourceNodeWithCoverage = ConsolidationSourceNode & {
+  canonical_coverage?: TranscriptNode['canonical_coverage'];
+};
+
 export interface ConsolidateTranscriptIdeasOptions {
   transcriptId: string;
+  mode?: string;
+  autoRetry?: boolean;
+}
+
+interface ConsolidateSourceIdeasOptions {
+  sourceId: string;
+  sourceType: ConsolidationSourceNodeType;
   mode?: string;
   autoRetry?: boolean;
 }
@@ -582,18 +603,22 @@ Rules:
 }
 
 function buildCanonicalDraftInput(
-  transcript: TranscriptNode,
+  source: ConsolidationSourceNode,
   candidates: CandidateIdeaPayload[],
   stats: ConsolidationStats,
   target: ConsolidationTarget,
 ): string {
+  const summary = source.type === 'resource' ? source.description : source.summary;
   return JSON.stringify(
     {
-      transcript: {
-        id: transcript.id,
-        title: transcript.title,
-        summary: transcript.summary,
-        tags: transcript.tags,
+      source: {
+        id: source.id,
+        type: source.type,
+        title: source.title,
+        summary,
+        tags: source.tags,
+        url: source.type === 'resource' ? source.url : source.source_url,
+        source_published_at: source.source_published_at,
       },
       stats,
       target,
@@ -651,20 +676,79 @@ export const extractTranscript = {
   },
 };
 
-export async function consolidateTranscriptIdeasForTranscript(
-  options: ConsolidateTranscriptIdeasOptions,
-): Promise<ConsolidateTranscriptIdeasResult> {
-  const { transcriptId } = options;
-  const allNodes = await listNodes();
-  const transcript = allNodes.find((node) => node.id === transcriptId && node.type === 'transcript') as
-    | TranscriptNode
-    | undefined;
-  if (!transcript) throw new ConsolidateTranscriptIdeasError('Transcript not found', 404);
+export const extractResource = {
+  path: '/resources/:id/extract' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    const nodes = await listNodes({ type: 'resource' });
+    const resource = nodes.find((node) => node.id === id && node.type === 'resource') as
+      | ResourceNode
+      | undefined;
+    if (!resource) return c.json({ error: 'Resource not found' }, 404);
+    if (resource.resource_type !== 'article') return c.json({ error: 'Resource is not an article' }, 400);
+    if (!resource.body) return c.json({ error: 'Resource has no body' }, 400);
 
-  const previousCoverage = transcript.canonical_coverage;
+    const { record, result } = await runSkill(
+      'extract-resource-ideas',
+      async (_input, runNodeId) => {
+        const extraction = await extractKnowledgeFromNode(
+          resource.id,
+          getNodeFilePath('resource', resource.id),
+          resource.body,
+        );
+        await appendProducedNodeIds(runNodeId, extraction.ideaIds, {
+          completedAt: formatIsoUtcSeconds(new Date()),
+        });
+        await setRunLlmTrace(runNodeId, {
+          model: extraction.llmMeta.model,
+          provider: extraction.llmMeta.provider,
+          duration_ms: extraction.llmMeta.durationMs,
+          prompt_tokens: extraction.llmMeta.promptTokens,
+          completion_tokens: extraction.llmMeta.completionTokens,
+        });
+        await appendRunEvent(runNodeId, {
+          level: 'success',
+          message: `Extracted ${extraction.ideaIds.length} idea${extraction.ideaIds.length === 1 ? '' : 's'}`,
+          node_ids: extraction.ideaIds,
+        });
+        return { ...extraction, producedNodeIds: extraction.ideaIds };
+      },
+      { resource: { id: resource.id, title: resource.title } },
+    );
+
+    if (record.status === 'failed') {
+      return c.json(
+        {
+          success: false,
+          error: record.error ?? 'Extraction failed',
+          runId: record.runNodeId,
+        },
+        500,
+      );
+    }
+
+    return c.json({ success: true, runId: record.runNodeId, ...result });
+  },
+};
+
+function sourceLabel(sourceType: ConsolidationSourceNodeType): string {
+  return sourceType === 'resource' ? 'resource' : 'transcript';
+}
+
+async function consolidateIdeasForSource(
+  options: ConsolidateSourceIdeasOptions,
+): Promise<ConsolidateTranscriptIdeasResult> {
+  const { sourceId, sourceType } = options;
+  const allNodes = await listNodes();
+  const source = allNodes.find((node) => node.id === sourceId && node.type === sourceType) as
+    | ConsolidationSourceNodeWithCoverage
+    | undefined;
+  if (!source) throw new ConsolidateTranscriptIdeasError(`${sourceLabel(sourceType)} not found`, 404);
+
+  const previousCoverage = source.canonical_coverage;
 
   const runs = allNodes.filter(
-    (node): node is RunNode => node.type === 'run' && node.produced_node_ids.includes(transcript.id),
+    (node): node is RunNode => node.type === 'run' && node.produced_node_ids.includes(source.id),
   );
   const ideasById = new Map(
     allNodes.filter((node): node is IdeaNode => node.type === 'idea').map((idea) => [idea.id, idea]),
@@ -690,7 +774,10 @@ export async function consolidateTranscriptIdeasForTranscript(
 
   const candidates = [...candidatesById.values()];
   if (candidates.length === 0) {
-    throw new ConsolidateTranscriptIdeasError('No candidate ideas found for this transcript.', 400);
+    throw new ConsolidateTranscriptIdeasError(
+      `No candidate ideas found for this ${sourceLabel(sourceType)}.`,
+      400,
+    );
   }
 
   const mode = parseConsolidationMode(options.mode);
@@ -703,7 +790,7 @@ export async function consolidateTranscriptIdeasForTranscript(
     promptStyle === 'compact'
       ? buildCanonicalCompactSystemPrompt(target)
       : buildCanonicalDraftSystemPrompt(target);
-  const draftInput = buildCanonicalDraftInput(transcript, candidates, stats, target);
+  const draftInput = buildCanonicalDraftInput(source, candidates, stats, target);
 
   const { record, result: skillResult } = await runSkill(
     'consolidate-canonical-ideas',
@@ -769,12 +856,14 @@ export async function consolidateTranscriptIdeasForTranscript(
         const { tags, domains } = normalizeCanonicalTags(draft.tags, draft.domains, draft.title, draft.body);
         const created = await createNode({
           type: 'canonical-idea',
-          id: `canonical-${transcript.id}-${index + 1}-${timestamp}`,
+          id: `canonical-${source.id}-${index + 1}-${timestamp}`,
           title: draft.title,
           body: draft.body,
           tags: dedupeTags([...domains, ...tags]),
           extra: {
-            transcript_id: transcript.id,
+            transcript_id: source.id,
+            source_node_id: source.id,
+            source_node_type: source.type,
             source_candidate_idea_ids: sourceCandidateIdeaIds,
             confidence: draft.confidence,
             key_claims: draft.keyClaims,
@@ -825,10 +914,11 @@ export async function consolidateTranscriptIdeasForTranscript(
       // An existing canonical-idea set means this run produced a *second*, conflicting set —
       // leave the transcript's coverage pointed at the existing set until the client confirms
       // which one to keep, rather than silently piling sets up (the previous behavior).
-      const hasExistingSet = Boolean(previousCoverage?.canonical_idea_ids.length);
+      const hasExistingSet =
+        source.type === 'transcript' && Boolean(previousCoverage?.canonical_idea_ids.length);
       if (!hasExistingSet) {
-        await updateNode(getNodeFilePath('transcript', transcript.id), (current) => ({
-          ...(current as TranscriptNode),
+        await updateNode(getNodeFilePath(source.type, source.id), (current) => ({
+          ...(current as ConsolidationSourceNodeWithCoverage),
           canonical_coverage: newCoverage,
         }));
       }
@@ -873,7 +963,13 @@ export async function consolidateTranscriptIdeasForTranscript(
         pendingCoverage: hasExistingSet ? newCoverage : undefined,
       };
     },
-    { transcriptId: transcript.id, mode, candidateCount: candidates.length },
+    {
+      transcriptId: source.type === 'transcript' ? source.id : undefined,
+      sourceNodeId: source.id,
+      sourceNodeType: source.type,
+      mode,
+      candidateCount: candidates.length,
+    },
   );
 
   if (record.status === 'failed') {
@@ -883,6 +979,17 @@ export async function consolidateTranscriptIdeasForTranscript(
   return { success: true, ...skillResult };
 }
 
+export async function consolidateTranscriptIdeasForTranscript(
+  options: ConsolidateTranscriptIdeasOptions,
+): Promise<ConsolidateTranscriptIdeasResult> {
+  return consolidateIdeasForSource({
+    sourceId: options.transcriptId,
+    sourceType: 'transcript',
+    mode: options.mode,
+    autoRetry: options.autoRetry,
+  });
+}
+
 export const consolidateTranscriptIdeas = {
   path: '/transcripts/:id/consolidate' as const,
   handler: async (c: AppCtx) => {
@@ -890,6 +997,30 @@ export const consolidateTranscriptIdeas = {
     try {
       const result = await consolidateTranscriptIdeasForTranscript({
         transcriptId: id,
+        mode: c.req.query('mode'),
+        autoRetry: c.req.query('autoRetry') !== 'false',
+      });
+      return c.json(result);
+    } catch (err) {
+      if (err instanceof ConsolidateTranscriptIdeasError) {
+        return c.json({ success: false, error: err.message }, err.status);
+      }
+      return c.json(
+        { success: false, error: err instanceof Error ? err.message : 'Consolidation failed' },
+        500,
+      );
+    }
+  },
+};
+
+export const consolidateResourceIdeas = {
+  path: '/resources/:id/consolidate' as const,
+  handler: async (c: AppCtx) => {
+    const { id } = c.req.param();
+    try {
+      const result = await consolidateIdeasForSource({
+        sourceId: id,
+        sourceType: 'resource',
         mode: c.req.query('mode'),
         autoRetry: c.req.query('autoRetry') !== 'false',
       });

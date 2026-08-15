@@ -1,0 +1,1 @@
+export { ArticleResourcesSplitView } from './ArticleResourcesSplitView';

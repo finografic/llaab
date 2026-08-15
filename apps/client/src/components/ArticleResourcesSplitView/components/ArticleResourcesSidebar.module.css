@@ -1,0 +1,144 @@
+.shell {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--sidebar-border);
+  background: var(--sidebar);
+  color: var(--sidebar-foreground);
+}
+
+.header {
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--sidebar-border);
+  padding: var(--space-4);
+}
+
+.titleRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.titleGroup {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.filterButton {
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 2px var(--space-2);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.filterButton:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filterButtonActive {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+.empty {
+  padding: var(--space-4);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.card {
+  display: flex;
+  width: 100%;
+  cursor: pointer;
+  border-bottom: 1px solid var(--sidebar-border);
+  line-height: 1.25;
+}
+
+.card:hover {
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+
+.cardActive {
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+  box-shadow: inset 4px 0 0 0 var(--accent);
+}
+
+.cardTitle {
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-1);
+  font-size: var(--text-md);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.cardMeta {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.siteLink {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.siteLink:hover {
+  text-decoration: underline;
+}
+
+.description {
+  padding-bottom: var(--space-2);
+  font-size: var(--text-md);
+  color: var(--text-muted);
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.metricStrong {
+  font-weight: 600;
+  color: var(--consolidation-text);
+}
+
+.date {
+  align-self: center;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

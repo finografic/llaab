@@ -1,4 +1,5 @@
 import { KnowledgeWikiFilters } from 'components/KnowledgeWikiFilters/KnowledgeWikiFilters';
+import { ListPagination, useListPagination } from 'components/ListPagination';
 import { PageHero } from 'components/PageHero/PageHero';
 import { RowDensityToggle } from 'components/RowDensityToggle/RowDensityToggle';
 import { WikiListItem } from 'components/WikiListItem';
@@ -25,6 +26,19 @@ export function KnowledgeWikisPage() {
   const filters = parseKnowledgeWikiFiltersFromSearchParams(searchParams);
   const facets = useMemo(() => buildKnowledgeWikiFacets(wikis), [wikis]);
   const filteredWikis = useMemo(() => filterKnowledgeWikis(wikis, filters), [wikis, filters]);
+  const paginationResetKey = searchParams.toString();
+  const {
+    page,
+    pageCount,
+    pageItems: pagedWikis,
+    pageSize,
+    setPage,
+    setPageSize,
+  } = useListPagination({
+    items: filteredWikis,
+    storageKey: 'wikis.pageSize',
+    resetKey: paginationResetKey,
+  });
   const { value: rowDensity, setValue: setRowDensity } = usePersistedUiState<RowDensity>(
     'wikis.rowDensity',
     'condensed',
@@ -38,7 +52,8 @@ export function KnowledgeWikisPage() {
           title="Wikis"
           meta={
             <>
-              {filteredWikis.length} shown
+              {pagedWikis.length} shown
+              {filteredWikis.length !== pagedWikis.length ? ` · ${filteredWikis.length} matched` : null}
               {filteredWikis.length !== wikis.length ? ` · ${wikis.length} total` : null}
             </>
           }
@@ -63,9 +78,17 @@ export function KnowledgeWikisPage() {
         {!isLoading && !error && wikis.length > 0 && filteredWikis.length === 0 ? (
           <p className="text-muted-foreground text-sm">No wikis match the current filters.</p>
         ) : null}
-        {filteredWikis.map((wiki) => (
+        {pagedWikis.map((wiki) => (
           <WikiListItem key={wiki.id} wiki={wiki} density={rowDensity} />
         ))}
+        <ListPagination
+          page={page}
+          pageCount={pageCount}
+          pageSize={pageSize}
+          totalItems={filteredWikis.length}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
       </PageList>
     </PageLayout>
   );

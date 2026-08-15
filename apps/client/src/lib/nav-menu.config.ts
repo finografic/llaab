@@ -35,6 +35,12 @@ export const NAV_MENU_SECTIONS: NavMenuSection[] = [
         live: true,
       },
       {
+        label: 'Articles',
+        description: 'Ingested web articles, posts, tutorials, and clipped pages',
+        href: '/vault/resources',
+        live: true,
+      },
+      {
         label: 'Sources',
         description: 'Channels, repos, and other origin entities',
         href: '/vault/sources',

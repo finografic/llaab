@@ -69,6 +69,43 @@ a.subjectTitle:hover {
   opacity: 1;
 }
 
+.runsTable {
+  table-layout: fixed;
+}
+
+.toggleColumn {
+  width: 4rem;
+}
+
+.titleColumn {
+  width: auto;
+}
+
+.nodesColumn {
+  width: 5.25rem;
+}
+
+.dateColumn {
+  width: 7.5rem;
+}
+
+.sourceColumn {
+  width: 3.5rem;
+  min-width: 3.5rem;
+  max-width: 3.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  text-align: center;
+}
+
+.latencyColumn {
+  width: 6.25rem;
+}
+
+.deleteColumn {
+  width: 4.5rem;
+}
+
 .mono {
   font-family: var(--font-mono);
   white-space: nowrap;
@@ -239,6 +276,13 @@ a.subjectTitle:hover {
   align-items: center;
   gap: 0.66rem;
   min-width: 0;
+  max-width: 13rem;
+}
+
+.authorColumn {
+  width: 13rem;
+  min-width: 11rem;
+  max-width: 13rem;
 }
 
 .authorLink,
