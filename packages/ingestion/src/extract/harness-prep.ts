@@ -1,5 +1,13 @@
-import { createContext, createPipeline } from '@finografic/ai-harness';
-import type { HarnessStep } from '@finografic/ai-harness';
+import {
+  characterChunkStrategy,
+  chunkTextCandidate,
+  createCharacterHeuristicTokenCounter,
+  createContext,
+  createPipeline,
+  harnessEventsToControlStages,
+  prepareContextPack,
+} from '@finografic/ai-harness';
+import type { ContextCandidate, HarnessStep, TokenCount, TokenCounter } from '@finografic/ai-harness';
 import { ollamaGetModelContextLength } from '@llaab/llm';
 import type { ControlContext, ControlStage } from '@llaab/control';
 
@@ -9,15 +17,19 @@ export const EXTRACTION_OUTPUT_TOKEN_RESERVE = 1_024;
 export const EXTRACTION_CHUNK_OVERLAP_TOKENS = 128;
 export const EXTRACTION_MAX_INPUT_TOKENS = DEFAULT_MODEL_CONTEXT_TOKENS - EXTRACTION_OUTPUT_TOKEN_RESERVE;
 
+const EXTRACTION_CONTEXT_POLICY_ID = 'llaab-extraction-v1';
+const EXTRACTION_INPUT_CANDIDATE_ID = 'extraction-input';
+
 interface ExtractionPreparationSeed {
+  contextLimitTokens: number;
+  maxInputTokens: number;
   model: string;
   originalText: string;
+  tokenCounter: TokenCounter<string>;
 }
 
 interface TokenCountedExtractionInput extends ExtractionPreparationSeed {
-  estimatedTokens: number;
-  maxInputTokens: number;
-  stages: ControlStage[];
+  inputTokenCount: TokenCount;
 }
 
 export interface PreparedExtractionChunk {
@@ -37,137 +49,143 @@ interface ContextualExtractionInput extends ChunkedExtractionInput {
   context: ControlContext;
 }
 
-export interface PreparedExtractionInput {
+interface PreparedExtractionPipelineOutput {
   chunks: PreparedExtractionChunk[];
   context: ControlContext;
+  contextLimitTokens: number;
   estimatedInputTokens: number;
-  harnessBudgetSteps: number;
+  inputTokenCount: TokenCount;
   maxInputTokens: number;
   model: string;
   preparedText: string;
-  stages: ControlStage[];
   wasChunked: boolean;
   wasTruncated: boolean;
 }
 
+export interface PreparedExtractionInput extends PreparedExtractionPipelineOutput {
+  harnessBudgetSteps: number;
+  stages: ControlStage[];
+}
+
 export interface PrepareExtractionInputParams {
+  contextLimitTokens?: number;
   cwd: string;
   input: string;
   model: string;
+  tokenCounter?: TokenCounter<string>;
 }
 
-function estimateTokens(text: string): number {
-  // TODO: Graduate this approximation to @finografic/ai-harness when countTokens lands.
-  return Math.ceil(text.length / APPROX_CHARS_PER_TOKEN);
-}
+const fallbackTokenCounter = createCharacterHeuristicTokenCounter({
+  charactersPerToken: APPROX_CHARS_PER_TOKEN,
+  name: 'llaab-character-heuristic',
+  version: '1',
+});
 
-/**
- * Resolves the extraction input token budget from the model's real context window (via
- * `ollama show`), falling back to `DEFAULT_MODEL_CONTEXT_TOKENS` when the model is unknown or
- * Ollama is unavailable (e.g. remote/Anthropic models).
- */
-async function maxInputTokensForModel(model: string): Promise<number> {
-  const contextLength = await ollamaGetModelContextLength(model);
-  const total = contextLength ?? DEFAULT_MODEL_CONTEXT_TOKENS;
-  return Math.max(total - EXTRACTION_OUTPUT_TOKEN_RESERVE, APPROX_CHARS_PER_TOKEN);
-}
-
-function chunkText(text: string, maxInputTokens: number): PreparedExtractionChunk[] {
-  const maxChars = maxInputTokens * APPROX_CHARS_PER_TOKEN;
-  const overlapChars = EXTRACTION_CHUNK_OVERLAP_TOKENS * APPROX_CHARS_PER_TOKEN;
-  const strideChars = maxChars - overlapChars;
-  if (strideChars <= 0) {
-    throw new Error('Extraction chunk overlap must be smaller than the chunk size');
+async function resolveContextLimitTokens(model: string, suppliedLimit?: number): Promise<number> {
+  if (suppliedLimit !== undefined) {
+    if (!Number.isInteger(suppliedLimit) || suppliedLimit <= EXTRACTION_OUTPUT_TOKEN_RESERVE) {
+      throw new RangeError(
+        `contextLimitTokens must be an integer greater than ${EXTRACTION_OUTPUT_TOKEN_RESERVE}`,
+      );
+    }
+    return suppliedLimit;
   }
 
-  const chunks: PreparedExtractionChunk[] = [];
-  let startChar = 0;
-  while (startChar < text.length) {
-    const endChar = Math.min(startChar + maxChars, text.length);
-    const chunk = text.slice(startChar, endChar);
-    chunks.push({
-      endChar,
-      estimatedTokens: estimateTokens(chunk),
-      index: chunks.length,
-      startChar,
-      text: chunk,
-    });
+  return (await ollamaGetModelContextLength(model)) ?? DEFAULT_MODEL_CONTEXT_TOKENS;
+}
 
-    if (endChar === text.length) break;
-    startChar += strideChars;
-  }
+function createExtractionCandidate(text: string): ContextCandidate<string> {
+  return {
+    category: 'extraction-input',
+    content: text,
+    id: EXTRACTION_INPUT_CANDIDATE_ID,
+    relevance: 1,
+    source: {
+      id: EXTRACTION_INPUT_CANDIDATE_ID,
+      kind: 'extraction-input',
+      sensitivity: 'internal',
+      trust: 'trusted',
+    },
+  };
+}
 
-  return chunks;
+function resolveChunkDimensions(
+  text: string,
+  inputTokens: number,
+  maxInputTokens: number,
+): { maxCharacters: number; overlapCharacters: number } {
+  const observedCharactersPerToken = inputTokens > 0 ? text.length / inputTokens : APPROX_CHARS_PER_TOKEN;
+  const maxCharacters = Math.max(1, Math.floor(maxInputTokens * observedCharactersPerToken));
+  const requestedOverlap = Math.floor(EXTRACTION_CHUNK_OVERLAP_TOKENS * observedCharactersPerToken);
+
+  return {
+    maxCharacters,
+    overlapCharacters: Math.min(requestedOverlap, Math.max(0, maxCharacters - 1)),
+  };
 }
 
 const countExtractionTokensStep: HarnessStep<ExtractionPreparationSeed, TokenCountedExtractionInput> = {
   name: 'count-extraction-tokens',
   async run(input) {
-    const estimatedTokens = estimateTokens(input.originalText);
-    const maxInputTokens = await maxInputTokensForModel(input.model);
-
     return {
       ...input,
-      estimatedTokens,
-      maxInputTokens,
-      stages: [
-        {
-          name: 'harness:count-extraction-tokens',
-          status: 'completed',
-          input: {
-            inputLength: input.originalText.length,
-            model: input.model,
-          },
-          output: {
-            approximation: true,
-            charsPerToken: APPROX_CHARS_PER_TOKEN,
-            estimatedTokens,
-            maxInputTokens,
-          },
-        },
-      ],
+      inputTokenCount: await input.tokenCounter.count(input.originalText),
     };
   },
 };
 
-const chunkIfNeededStep: HarnessStep<TokenCountedExtractionInput, ChunkedExtractionInput> = {
-  name: 'chunk-if-needed',
+const chunkAndPackContextStep: HarnessStep<TokenCountedExtractionInput, ChunkedExtractionInput> = {
+  name: 'chunk-and-pack-context',
   async run(input) {
-    const chunks =
-      input.estimatedTokens <= input.maxInputTokens
-        ? [
-            {
-              endChar: input.originalText.length,
-              estimatedTokens: input.estimatedTokens,
-              index: 0,
-              startChar: 0,
-              text: input.originalText,
-            },
-          ]
-        : chunkText(input.originalText, input.maxInputTokens);
-    const wasChunked = chunks.length > 1;
+    const candidate = createExtractionCandidate(input.originalText);
+    const dimensions = resolveChunkDimensions(
+      input.originalText,
+      input.inputTokenCount.count,
+      input.maxInputTokens,
+    );
+    const candidates =
+      input.inputTokenCount.count <= input.maxInputTokens
+        ? [candidate]
+        : chunkTextCandidate(candidate, {
+            ...dimensions,
+            strategy: characterChunkStrategy,
+          });
+    const packedCandidates = await Promise.all(
+      candidates.map(async (chunkCandidate) => {
+        const contextPack = await prepareContextPack({
+          budget: {
+            maxTokens: input.contextLimitTokens,
+            reservedOutputTokens: EXTRACTION_OUTPUT_TOKEN_RESERVE,
+          },
+          candidates: [chunkCandidate],
+          policyId: EXTRACTION_CONTEXT_POLICY_ID,
+          tokenCounter: input.tokenCounter,
+        });
+        const packedCandidate = contextPack.candidates[0];
+        if (!packedCandidate) {
+          throw new Error(
+            `Extraction chunk exceeds the ${contextPack.budget.usableInputTokens}-token input budget`,
+          );
+        }
+        return packedCandidate;
+      }),
+    );
+    const strideCharacters = dimensions.maxCharacters - dimensions.overlapCharacters;
+    const chunks = packedCandidates.map((packedCandidate, index): PreparedExtractionChunk => {
+      const startChar = candidates.length === 1 ? 0 : index * strideCharacters;
+      return {
+        endChar: startChar + packedCandidate.content.length,
+        estimatedTokens: packedCandidate.cost.tokens.count,
+        index,
+        startChar,
+        text: packedCandidate.content,
+      };
+    });
 
     return {
       ...input,
       chunks,
-      stages: [
-        ...input.stages,
-        {
-          name: 'harness:chunk-if-needed',
-          status: 'completed',
-          input: {
-            estimatedTokens: input.estimatedTokens,
-            maxInputTokens: input.maxInputTokens,
-            overlapTokens: EXTRACTION_CHUNK_OVERLAP_TOKENS,
-          },
-          output: {
-            chunkCount: chunks.length,
-            chunked: wasChunked,
-            maxChunkTokens: Math.max(...chunks.map((chunk) => chunk.estimatedTokens)),
-          },
-        },
-      ],
-      wasChunked,
+      wasChunked: chunks.length > 1,
     };
   },
 };
@@ -179,8 +197,11 @@ const buildExtractionContextStep: HarnessStep<ChunkedExtractionInput, Contextual
       instructions: 'Return structured extracted knowledge as JSON.',
       data: {
         chunkCount: input.chunks.length,
-        estimatedInputTokens: input.estimatedTokens,
+        contextLimitTokens: input.contextLimitTokens,
+        estimatedInputTokens: input.inputTokenCount.count,
         model: input.model,
+        tokenCountMethod: input.inputTokenCount.method,
+        tokenCounter: input.inputTokenCount.counter,
       },
       constraints: ['summary must be non-empty', 'output must be valid JSON'],
     };
@@ -188,58 +209,27 @@ const buildExtractionContextStep: HarnessStep<ChunkedExtractionInput, Contextual
     return {
       ...input,
       context,
-      stages: [
-        ...input.stages,
-        {
-          name: 'harness:build-extraction-context',
-          status: 'completed',
-          input: {
-            chunkCount: input.chunks.length,
-            chunked: input.wasChunked,
-          },
-          output: {
-            constraintCount: context.constraints?.length ?? 0,
-            hasInstructions: context.instructions != null,
-          },
-        },
-      ],
     };
   },
 };
 
-const validateBudgetStep: HarnessStep<ContextualExtractionInput, PreparedExtractionInput> = {
+const validateBudgetStep: HarnessStep<ContextualExtractionInput, PreparedExtractionPipelineOutput> = {
   name: 'validate-budget',
   async run(input) {
-    const maxChunkTokens = Math.max(...input.chunks.map((chunk) => chunk.estimatedTokens));
+    const maxChunkTokens = Math.max(0, ...input.chunks.map((chunk) => chunk.estimatedTokens));
     if (maxChunkTokens > input.maxInputTokens) {
-      throw new Error(
-        `Extraction chunk exceeds budget: ${maxChunkTokens} estimated tokens > ${input.maxInputTokens}`,
-      );
+      throw new Error(`Extraction chunk exceeds budget: ${maxChunkTokens} tokens > ${input.maxInputTokens}`);
     }
 
     return {
       chunks: input.chunks,
       context: input.context,
-      estimatedInputTokens: input.estimatedTokens,
-      harnessBudgetSteps: 0,
+      contextLimitTokens: input.contextLimitTokens,
+      estimatedInputTokens: input.inputTokenCount.count,
+      inputTokenCount: input.inputTokenCount,
       maxInputTokens: input.maxInputTokens,
       model: input.model,
       preparedText: input.chunks.map((chunk) => chunk.text).join('\n\n'),
-      stages: [
-        ...input.stages,
-        {
-          name: 'harness:validate-budget',
-          status: 'completed',
-          input: {
-            chunkCount: input.chunks.length,
-            maxChunkTokens,
-            maxInputTokens: input.maxInputTokens,
-          },
-          output: {
-            valid: true,
-          },
-        },
-      ],
       wasChunked: input.wasChunked,
       wasTruncated: false,
     };
@@ -247,25 +237,32 @@ const validateBudgetStep: HarnessStep<ContextualExtractionInput, PreparedExtract
 };
 
 const extractionPreparationPipeline = createPipeline({
-  steps: [countExtractionTokensStep, chunkIfNeededStep, buildExtractionContextStep, validateBudgetStep],
+  steps: [countExtractionTokensStep, chunkAndPackContextStep, buildExtractionContextStep, validateBudgetStep],
 });
 
 export async function prepareExtractionInput({
+  contextLimitTokens: suppliedContextLimitTokens,
   cwd,
   input,
   model,
+  tokenCounter = fallbackTokenCounter,
 }: PrepareExtractionInputParams): Promise<PreparedExtractionInput> {
+  const contextLimitTokens = await resolveContextLimitTokens(model, suppliedContextLimitTokens);
   const harnessContext = createContext({ cwd });
-  const prepared = (await extractionPreparationPipeline.run(
+  const prepared = await extractionPreparationPipeline.run(
     {
+      contextLimitTokens,
+      maxInputTokens: contextLimitTokens - EXTRACTION_OUTPUT_TOKEN_RESERVE,
       model,
       originalText: input,
+      tokenCounter,
     },
     harnessContext,
-  )) as PreparedExtractionInput;
+  );
 
   return {
     ...prepared,
     harnessBudgetSteps: harnessContext.budget.steps,
+    stages: harnessEventsToControlStages(harnessContext.events),
   };
 }
