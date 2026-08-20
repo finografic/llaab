@@ -17,4 +17,4 @@ minimumReleaseAgeExclude:
   - '@ai-sdk/gateway@4.0.28'
   - ai@7.0.37
   - '@finografic/ai-harness@0.1.1 || 0.2.0'
-  - '@finografic/project-scripts@1.6.1'
+  - '@finografic/project-scripts@1.6.1 || 2.0.1'
