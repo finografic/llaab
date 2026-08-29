@@ -1,45 +1,27 @@
 /**
- * Tailwind CSS v4 default breakpoint scale (px).
+ * Breakpoint scale for the UI package.
  *
- * @see https://tailwindcss.com/docs/responsive-design
+ * The numbers, media query strings and unit converters live in
+ * `@finografic/core/viewport`, so one source of truth serves every repo and can generate
+ * Tailwind's `@theme` block rather than being kept in step with it by hand. They are
+ * re-exported here so existing call sites keep working unchanged.
+ *
+ * `minVisibleTableCellClass` deliberately stays local. Tailwind only emits classes it
+ * finds by scanning source files, and it does not scan `node_modules` without an explicit
+ * `@source` directive — so these class literals have to live inside the repo.
  */
-export type ScreenClass = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
-export const BREAKPOINTS: Record<ScreenClass, number> = {
-  'xs': 0,
-  'sm': 640,
-  'md': 768,
-  'lg': 1024,
-  'xl': 1280,
-  '2xl': 1536,
-} as const;
+import type { ScreenClass } from '@finografic/core/viewport';
 
-/** Breakpoint values excluding xs (0), useful for iteration. */
-export const BREAKPOINT_VALUES = Object.values(BREAKPOINTS).slice(1);
+export type { ScreenClass } from '@finografic/core/viewport';
 
-/** Min-width media query conditions (no `@media` wrapper). */
-export const QUERIES_MIN: Record<ScreenClass, string> = {
-  'xs': '(min-width: 0px)',
-  'sm': `(min-width: ${BREAKPOINTS.sm}px)`,
-  'md': `(min-width: ${BREAKPOINTS.md}px)`,
-  'lg': `(min-width: ${BREAKPOINTS.lg}px)`,
-  'xl': `(min-width: ${BREAKPOINTS.xl}px)`,
-  '2xl': `(min-width: ${BREAKPOINTS['2xl']}px)`,
-} as const;
-
-/** Max-width media query conditions (no `@media` wrapper). xs omitted — use base styles below sm. */
-export const QUERIES_MAX: Omit<Record<ScreenClass, string>, 'xs'> = {
-  'sm': `(max-width: ${BREAKPOINTS.sm}px)`,
-  'md': `(max-width: ${BREAKPOINTS.md}px)`,
-  'lg': `(max-width: ${BREAKPOINTS.lg}px)`,
-  'xl': `(max-width: ${BREAKPOINTS.xl}px)`,
-  '2xl': `(max-width: ${BREAKPOINTS['2xl']}px)`,
-} as const;
-
-export const MEDIA_QUERIES = {
-  min: QUERIES_MIN,
-  max: QUERIES_MAX,
-} as const;
+export {
+  BREAKPOINT_VALUES,
+  BREAKPOINTS,
+  MEDIA_QUERIES,
+  QUERIES_MAX,
+  QUERIES_MIN,
+} from '@finografic/core/viewport';
 
 /** Tailwind class literals — must be complete strings so the compiler detects them. */
 const MIN_VISIBLE_TABLE_CELL_CLASS = {

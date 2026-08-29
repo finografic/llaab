@@ -455,6 +455,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.5.0
         version: 1.6.0(@date-fns/tz@1.5.0)(@types/react@19.2.17)(date-fns@4.4.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@finografic/core':
+        specifier: ^0.17.0
+        version: 0.17.0
       '@fontsource-variable/dm-sans':
         specifier: ^5.3.0
         version: 5.3.0
@@ -1101,6 +1104,10 @@ packages:
 
   '@finografic/ai-harness@0.2.0':
     resolution: {integrity: sha512-SC7CihNK1Aw+0lgrAnG+ffsurqJvAUKBNm/p2tjSfGZs/hhTReoRMnRNpYP4gNQQE9JRPTfdzUAEXJZM9avCuw==, tarball: https://npm.pkg.github.com/download/@finografic/ai-harness/0.2.0/b2a36e6719c83022a1a4a74b2b0895a38f9339ab}
+
+  '@finografic/core@0.17.0':
+    resolution: {integrity: sha512-mi+6OR9eSrJ+Vn2ZMj2zM6ngj9sa3oYUDLmr+7EPyAvDqqLLSO1agygFRtKGrk9RyllU9S4IZsFC6pBTpGWaJg==, tarball: https://npm.pkg.github.com/download/@finografic/core/0.17.0/d012bc74d5addc5916a9b552bc3d3d7519bfec24}
+    engines: {node: '>=24.19.0'}
 
   '@finografic/icons@1.19.2':
     resolution: {integrity: sha512-yWwglSlTqCjWdeNBeNVTelIOfpF0c8OpoS+c9e2IaZIl5wj/+FjrX3bcze2MaTpDxtH/Br1CN0NJDRo2YTlzsQ==, tarball: https://npm.pkg.github.com/download/@finografic/icons/1.19.2/aeb3a0530f17133de14cdebe86f315286e3ba57f}
@@ -5365,6 +5372,9 @@ packages:
   lodash-es@4.18.1:
     resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
 
+  lodash@4.17.21:
+    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+
   log-symbols@6.0.0:
     resolution: {integrity: sha512-i24m8rpwhmPIS4zscNzK6MSEhk0DUWa/8iYQWxhffV8jkI4Phvs3F+quL5xvS0gdQR0FyTCMMH33Y78dDTzzIw==}
     engines: {node: '>=18'}
@@ -7666,6 +7676,12 @@ snapshots:
     optional: true
 
   '@finografic/ai-harness@0.2.0': {}
+
+  '@finografic/core@0.17.0':
+    dependencies:
+      jsonc-parser: 3.3.1
+      lodash: 4.17.21
+      type-fest: 5.8.0
 
   '@finografic/icons@1.19.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
@@ -11420,6 +11436,8 @@ snapshots:
       path-exists: 3.0.0
 
   lodash-es@4.18.1: {}
+
+  lodash@4.17.21: {}
 
   log-symbols@6.0.0:
     dependencies:
