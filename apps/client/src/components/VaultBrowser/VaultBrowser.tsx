@@ -1,9 +1,8 @@
+import { BREAKPOINTS } from '@finografic/core/viewport';
 import { useAppLeftSidebar } from 'layouts/AppLayout/AppLeftSidebarContext';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { VaultNode } from './vault-browser.types';
-
-import { BREAKPOINTS } from 'lib/viewport';
 
 import { VaultFileViewer } from './components/VaultFileViewer';
 import { VaultSidebar } from './components/VaultSidebar';

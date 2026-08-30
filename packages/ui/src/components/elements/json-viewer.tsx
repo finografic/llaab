@@ -94,11 +94,18 @@ function JsonNode({
     matchesSearch(value, searchQuery) ||
     (keyName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
-  React.useEffect(() => {
+  // Expand a matching node when the search term changes. Adjusting state during render is
+  // React's documented alternative to a synchronising effect: it re-renders before anything
+  // is painted, where an effect would paint the stale tree first and then paint again.
+  // Behaviour matches the effect it replaces — expanding is sticky, so the node can still be
+  // collapsed by hand while the same search is active.
+  const [previousSearchQuery, setPreviousSearchQuery] = React.useState(searchQuery);
+  if (searchQuery !== previousSearchQuery) {
+    setPreviousSearchQuery(searchQuery);
     if (searchQuery && isExpandable && matchesSearch(value, searchQuery)) {
       setIsCollapsed(false);
     }
-  }, [searchQuery, isExpandable, value]);
+  }
 
   const handleToggle = React.useCallback(() => {
     setIsCollapsed((prev) => !prev);

@@ -5,8 +5,7 @@ import type { DataTableColumnAlign, DataTableColumnDef } from '../lib/data-table
 import type { Column, ColumnDef, Cell, TableOptions } from '@tanstack/react-table';
 import type { CSSProperties, ReactNode } from 'react';
 
-import { minVisibleTableCellClass } from '../lib/breakpoints';
-import { resolveDataTableMaxWidth, truncateChars } from '../lib/data-table-utils';
+import { minVisibleTableCellClass, resolveDataTableMaxWidth, truncateChars } from '../lib/data-table-utils';
 import { cn } from '../lib/utils';
 import { Button } from './button';
 import { Pagination, PaginationContent, PaginationItem } from './pagination';
@@ -191,7 +190,7 @@ export function DataTable<TData, TValue = unknown>({
   });
   const rowCount = table.getPrePaginationRowModel().rows.length;
   const page = table.getState().pagination.pageIndex + 1;
-  const {pageSize} = table.getState().pagination;
+  const { pageSize } = table.getState().pagination;
   const pageCount = Math.max(1, table.getPageCount());
   const pageStart = rowCount === 0 ? 0 : table.getState().pagination.pageIndex * pageSize + 1;
   const pageEnd = Math.min(page * pageSize, rowCount);
