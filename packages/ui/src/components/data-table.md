@@ -73,8 +73,12 @@ const columns: DataTableColumns<RunNode> = [
 <DataTable columns={columns} data={runs} options={{ getSortedRowModel: getSortedRowModel() }} />;
 ```
 
-Other TanStack row models (filtering, pagination, row selection, …) are enabled the same way —
-pass them through `options` along with their corresponding `state` and `on*Change` handlers.
+Other TanStack row models (filtering, row selection, …) are enabled the same way — pass them
+through `options` along with their corresponding `state` and `on*Change` handlers.
+
+Pagination is **not** one of them: it is built in. `DataTable` always mounts
+`getPaginationRowModel()` and renders its own controls below the table — a page-size picker
+(25 / 50 / 100), page buttons, and an `x-y of n` count. It is hidden when there are no rows.
 
 ## Typing `columns` and `data` for reuse
 
@@ -95,13 +99,15 @@ export const runColumns: DataTableColumns<RunNode> = [
 
 - `emptyMessage` — string shown in place of rows when `data` is empty (defaults to `'No results.'`).
 - `options` — `Partial<TableOptions<TData>>` merged into `useReactTable`'s config; use it for
-  sorting/filtering/pagination row models, `state`, and the matching `on*Change` callbacks.
+  sorting and filtering row models, `state`, and the matching `on*Change` callbacks. Pagination
+  is already wired up — see above.
 
 ## Responsive columns (`minVisible`)
 
 Each column may set `minVisible` to a Tailwind breakpoint name. The column is hidden below that
 width and shown from the breakpoint up (mobile-first). Values match Tailwind defaults via
-`BREAKPOINTS` in `@llaab/ui/lib/breakpoints`:
+`BREAKPOINTS` in `@finografic/core/viewport`, the same source that generates Tailwind's
+`@theme` block:
 
 `xs` · `sm` (640px) · `md` (768px) · `lg` (1024px) · `xl` (1280px) · `2xl` (1536px)
 
