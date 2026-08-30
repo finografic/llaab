@@ -135,8 +135,8 @@ importers:
         specifier: ^1.2.1
         version: 1.2.1
       lucide-react:
-        specifier: ^1.17.0
-        version: 1.24.0(react@19.2.7)
+        specifier: ^1.35.0
+        version: 1.37.0(react@19.2.7)
       radix-ui:
         specifier: ^1.4.3
         version: 1.6.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -341,11 +341,11 @@ importers:
   packages/icons:
     dependencies:
       '@finografic/icons':
-        specifier: ^1.19.2
-        version: 1.19.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^1.21.0
+        version: 1.21.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       lucide-react:
-        specifier: ^1.17.0
-        version: 1.24.0(react@19.2.7)
+        specifier: ^1.35.0
+        version: 1.37.0(react@19.2.7)
       react:
         specifier: ^19.2.6
         version: 19.2.7
@@ -498,8 +498,8 @@ importers:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       lucide-react:
-        specifier: ^1.17.0
-        version: 1.24.0(react@19.2.7)
+        specifier: ^1.35.0
+        version: 1.37.0(react@19.2.7)
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -1116,8 +1116,8 @@ packages:
     engines: {node: '>=24.19.0'}
     hasBin: true
 
-  '@finografic/icons@1.19.2':
-    resolution: {integrity: sha512-yWwglSlTqCjWdeNBeNVTelIOfpF0c8OpoS+c9e2IaZIl5wj/+FjrX3bcze2MaTpDxtH/Br1CN0NJDRo2YTlzsQ==, tarball: https://npm.pkg.github.com/download/@finografic/icons/1.19.2/aeb3a0530f17133de14cdebe86f315286e3ba57f}
+  '@finografic/icons@1.21.0':
+    resolution: {integrity: sha512-iRqitjS/lBfvq0zbeeO5N9n5xF+/i0VweunUSmFdj7wEbXvXQAyo+r22QO5w5tPxbNnxviDgiH059clnbjeI4Q==, tarball: https://npm.pkg.github.com/download/@finografic/icons/1.21.0/d44d45f31bbf80b60c983b632aa66ea8f6a36298}
     hasBin: true
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -5084,6 +5084,11 @@ packages:
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  lucide-react@1.37.0:
+    resolution: {integrity: sha512-LPsB4rD1TD6wZu1djKOf9vUnS1jTNaHbolXebXDgiTdb6jeA1agIJhJsIybCmjKmQClcOaal1o1OaiYahEftyQ==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -7336,7 +7341,7 @@ snapshots:
       lodash: 4.17.21
       type-fest: 5.8.0
 
-  '@finografic/icons@1.19.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@finografic/icons@1.21.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       lucide-react: 1.24.0(react@19.2.7)
       react: 19.2.7
@@ -7354,7 +7359,7 @@ snapshots:
       date-fns: 4.4.0
       embla-carousel-react: 8.6.0(react@19.2.7)
       input-otp: 1.4.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      lucide-react: 1.24.0(react@19.2.7)
+      lucide-react: 1.37.0(react@19.2.7)
       next-themes: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       radix-ui: 1.6.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react: 19.2.7
@@ -10919,6 +10924,10 @@ snapshots:
   lru_map@0.4.1: {}
 
   lucide-react@1.24.0(react@19.2.7):
+    dependencies:
+      react: 19.2.7
+
+  lucide-react@1.37.0(react@19.2.7):
     dependencies:
       react: 19.2.7
 
