@@ -13,10 +13,7 @@ allowBuilds:
   protobufjs: true
 
 minimumReleaseAgeExclude:
+  - '@finografic/*'
   - '@ai-sdk/anthropic@4.0.19'
   - '@ai-sdk/gateway@4.0.28'
   - ai@7.0.37
-  - '@finografic/ai-harness@0.1.1 || 0.2.0'
-  - '@finografic/project-scripts@1.6.1 || 2.0.1'
-  - '@finografic/core@0.17.0 || 0.18.0'
-  - '@finografic/react@0.13.0 || 0.13.1'
