@@ -5,6 +5,7 @@
 @import "@fontsource-variable/dm-sans";
 @import "@fontsource-variable/libre-baskerville";
 @import "../components/grid/grid.css";
+@import "./breakpoints.generated.css";
 
 @custom-variant dark (&:is(.dark *));
 @source "../../../apps/**/*.{ts,tsx}";

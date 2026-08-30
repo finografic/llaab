@@ -456,8 +456,11 @@ importers:
         specifier: ^1.5.0
         version: 1.6.0(@date-fns/tz@1.5.0)(@types/react@19.2.17)(date-fns@4.4.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@finografic/core':
-        specifier: ^0.17.0
-        version: 0.17.0
+        specifier: ^0.18.0
+        version: 0.18.0
+      '@finografic/react':
+        specifier: ^0.13.1
+        version: 0.13.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@fontsource-variable/dm-sans':
         specifier: ^5.3.0
         version: 5.3.0
@@ -1105,9 +1108,10 @@ packages:
   '@finografic/ai-harness@0.2.0':
     resolution: {integrity: sha512-SC7CihNK1Aw+0lgrAnG+ffsurqJvAUKBNm/p2tjSfGZs/hhTReoRMnRNpYP4gNQQE9JRPTfdzUAEXJZM9avCuw==, tarball: https://npm.pkg.github.com/download/@finografic/ai-harness/0.2.0/b2a36e6719c83022a1a4a74b2b0895a38f9339ab}
 
-  '@finografic/core@0.17.0':
-    resolution: {integrity: sha512-mi+6OR9eSrJ+Vn2ZMj2zM6ngj9sa3oYUDLmr+7EPyAvDqqLLSO1agygFRtKGrk9RyllU9S4IZsFC6pBTpGWaJg==, tarball: https://npm.pkg.github.com/download/@finografic/core/0.17.0/d012bc74d5addc5916a9b552bc3d3d7519bfec24}
+  '@finografic/core@0.18.0':
+    resolution: {integrity: sha512-dV7ufyiKMzMbs6qi8XUmJGmGSByo3H1d4PssEJ6BHxMCT0m5OofJYo78Eckvcy2a55qtGmRFgRn36mCd9gQyFQ==, tarball: https://npm.pkg.github.com/download/@finografic/core/0.18.0/7e207b7120cc3cc78933e659dcb87928aeac0f76}
     engines: {node: '>=24.19.0'}
+    hasBin: true
 
   '@finografic/icons@1.19.2':
     resolution: {integrity: sha512-yWwglSlTqCjWdeNBeNVTelIOfpF0c8OpoS+c9e2IaZIl5wj/+FjrX3bcze2MaTpDxtH/Br1CN0NJDRo2YTlzsQ==, tarball: https://npm.pkg.github.com/download/@finografic/icons/1.19.2/aeb3a0530f17133de14cdebe86f315286e3ba57f}
@@ -1156,6 +1160,13 @@ packages:
     hasBin: true
     peerDependencies:
       tsx: ^4.0.0
+
+  '@finografic/react@0.13.1':
+    resolution: {integrity: sha512-INKTBvVgrr12KIAHRDKI4slhQCFVYG3StIru48t8YM4WpveUdfCfAUKrnEx20/IYhrsrvF+vVeSM/BE3arS2ew==, tarball: https://npm.pkg.github.com/download/@finografic/react/0.13.1/22ff46b80ce68f35e6c6771705e7b5e9129b3410}
+    engines: {node: '>=24.19.0'}
+    peerDependencies:
+      react: ^19
+      react-dom: ^19
 
   '@finografic/zustand-context-creator@1.2.0':
     resolution: {integrity: sha512-wajrymXL8SDts6YwD60v9BCJbrgkcOmRyXxXO1RAZ/ml1zOEngNfOTbbpSRINOVEkKRGL/XK4LqWIzClkZjChA==, tarball: https://npm.pkg.github.com/download/@finografic/zustand-context-creator/1.2.0/0139bbcf438d368b36d2dc246c5a5dab4487c1a4}
@@ -7677,7 +7688,7 @@ snapshots:
 
   '@finografic/ai-harness@0.2.0': {}
 
-  '@finografic/core@0.17.0':
+  '@finografic/core@0.18.0':
     dependencies:
       jsonc-parser: 3.3.1
       lodash: 4.17.21
@@ -7775,6 +7786,12 @@ snapshots:
       picocolors: 1.1.1
       tsx: 4.23.0
       yaml: 2.9.0
+
+  '@finografic/react@0.13.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+    dependencies:
+      '@finografic/core': 0.18.0
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
 
   '@finografic/zustand-context-creator@1.2.0(react@19.2.7)(zustand@5.0.14(@types/react@19.2.17)(immer@11.1.11)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7)))':
     dependencies:
