@@ -1,6 +1,6 @@
 'use client';
 
-import { useIsMobile } from 'hooks/useIsMobile';
+import { useIsMobile } from '@llaab/ui/hooks/useIsMobile';
 import * as React from 'react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from 'ui/resizable';
 import { SidebarInset, SidebarProvider } from 'ui/sidebar';

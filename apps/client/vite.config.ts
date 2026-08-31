@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
         { find: '@llaab/ui', replacement: path.resolve(repoRoot, 'packages/ui/src') },
         { find: /^utils\/(.*)/, replacement: `${path.resolve(clientRoot, 'src/utils')}/$1` },
         { find: 'utils', replacement: path.resolve(repoRoot, 'packages/ui/src/lib/utils.ts') },
-        { find: /^hooks\/(.*)/, replacement: `${path.resolve(repoRoot, 'packages/ui/src/hooks')}/$1` },
+        { find: /^hooks\/(.*)/, replacement: `${path.resolve(clientRoot, 'src/hooks')}/$1` },
         { find: /^ui\/(.*)/, replacement: `${path.resolve(repoRoot, 'packages/ui/src/components')}/$1` },
         {
           find: /^components\/ui\/(.*)/,

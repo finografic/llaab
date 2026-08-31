@@ -1,5 +1,5 @@
+import { useIsMobile } from '@llaab/ui/hooks/useIsMobile';
 import { cva } from 'class-variance-authority';
-import { useIsMobile } from 'hooks/useIsMobile';
 import { PanelLeftIcon } from 'lucide-react';
 import { Slot } from 'radix-ui';
 import * as React from 'react';
