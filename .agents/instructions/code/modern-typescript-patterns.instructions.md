@@ -1,3 +1,8 @@
+---
+applyTo: '**/*.{ts,tsx}'
+description: Modern TypeScript features worth preferring when they add clear value.
+---
+
 # Modern TypeScript Patterns
 
 ## Purpose

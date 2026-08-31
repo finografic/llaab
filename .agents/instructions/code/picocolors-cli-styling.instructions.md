@@ -1,3 +1,8 @@
+---
+applyTo: '**/*.{ts,tsx}'
+description: Terminal colour conventions for CLI output using picocolors.
+---
+
 # Picocolors — CLI terminal styling
 
 ## Purpose

@@ -1,3 +1,8 @@
+---
+applyTo: '**'
+description: Commit format and release policy. Read before any commit, push, tag, or release action.
+---
+
 # Git Policy
 
 ## Commits

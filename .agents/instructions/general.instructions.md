@@ -1,3 +1,8 @@
+---
+applyTo: '**'
+description: Baseline development rules — code quality, control flow, error handling, markdown conventions.
+---
+
 # General Development Rules
 
 These rules guide code suggestions and refactors. Apply them consistently across the project.

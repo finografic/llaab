@@ -1,3 +1,8 @@
+---
+applyTo: '**/*.{ts,tsx,js,jsx,mjs,cjs}'
+description: Oxlint and oxfmt behaviour — what the formatter fixes automatically and must not be hand-tuned.
+---
+
 # Linting & Code Style Rules
 
 ## Import Sorting
@@ -16,7 +21,7 @@ pnpm lint:fix -- path/to/file.tsx
 pnpm lint:fix -- "src/**/*.tsx"
 ```
 
-## oxfmt (formatting)
+## oxfmt (lint & format)
 
 **Check vs write:**
 

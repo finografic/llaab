@@ -1,0 +1,84 @@
+{
+  "entriesByRecipe": {
+    "check-recent-transcripts-consolidation": [
+      {
+        "id": "check-recent-transcripts-consolidation-2026-08-31T20-00-01-193Z",
+        "recipeId": "check-recent-transcripts-consolidation",
+        "title": "Check recent transcript consolidation (7d) run",
+        "status": "completed",
+        "startedAt": "2026-08-31T20:00:01.193Z",
+        "completedAt": "2026-08-31T20:00:02.329Z",
+        "durationMs": 1136,
+        "result": {
+          "recipeId": "check-recent-transcripts-consolidation",
+          "checked": 2,
+          "pending": 0,
+          "consolidated": 0,
+          "skipped": 2,
+          "failed": 0,
+          "producedNodeIds": [],
+          "results": []
+        }
+      },
+      {
+        "id": "check-recent-transcripts-consolidation-2026-08-31T14-00-00-928Z",
+        "recipeId": "check-recent-transcripts-consolidation",
+        "title": "Check recent transcript consolidation (7d) run",
+        "status": "completed",
+        "startedAt": "2026-08-31T14:00:00.928Z",
+        "completedAt": "2026-08-31T14:00:02.588Z",
+        "durationMs": 1660,
+        "result": {
+          "recipeId": "check-recent-transcripts-consolidation",
+          "checked": 2,
+          "pending": 0,
+          "consolidated": 0,
+          "skipped": 2,
+          "failed": 0,
+          "producedNodeIds": [],
+          "results": []
+        }
+      }
+    ],
+    "check-transcripts-consolidation": [
+      {
+        "id": "check-transcripts-consolidation-2026-08-31T20-10-01-021Z",
+        "recipeId": "check-transcripts-consolidation",
+        "title": "Check transcript consolidation run",
+        "status": "completed",
+        "startedAt": "2026-08-31T20:10:01.021Z",
+        "completedAt": "2026-08-31T20:10:02.105Z",
+        "durationMs": 1084,
+        "result": {
+          "recipeId": "check-transcripts-consolidation",
+          "checked": 48,
+          "pending": 0,
+          "consolidated": 0,
+          "skipped": 48,
+          "failed": 0,
+          "producedNodeIds": [],
+          "results": []
+        }
+      },
+      {
+        "id": "check-transcripts-consolidation-2026-08-31T14-10-01-294Z",
+        "recipeId": "check-transcripts-consolidation",
+        "title": "Check transcript consolidation run",
+        "status": "completed",
+        "startedAt": "2026-08-31T14:10:01.294Z",
+        "completedAt": "2026-08-31T14:10:02.433Z",
+        "durationMs": 1139,
+        "result": {
+          "recipeId": "check-transcripts-consolidation",
+          "checked": 48,
+          "pending": 0,
+          "consolidated": 0,
+          "skipped": 48,
+          "failed": 0,
+          "producedNodeIds": [],
+          "results": []
+        }
+      }
+    ]
+  }
+}

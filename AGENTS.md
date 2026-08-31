@@ -17,6 +17,70 @@ Reference: [`docs/process/PROJECT_MEMORY_MODEL.md`](./docs/process/PROJECT_MEMOR
 
 ---
 
+## Roadmap and Planning Docs
+
+- Check `ROADMAP.md` before proposing new initiatives.
+- Use `ROADMAP.md#next` for small follow-ups and manual validation.
+- Keep detailed plans in `docs/todo/TODO_*.md`; graduate completed plans to `DONE_*.md`.
+- Follow `.agents/instructions/documentation/todo-done-docs.instructions.md`.
+
+---
+
+## Rules — Project-Specific
+
+## Rules — Global
+
+Rules are canonical in `.agents/instructions/` — see `README.md` there for folder structure.
+Shared across Claude Code, Cursor, and GitHub Copilot.
+
+**General**
+
+- General baseline: `.agents/instructions/general.instructions.md`
+
+**Code**
+
+- TypeScript patterns: `.agents/instructions/code/typescript-patterns.instructions.md`
+- Modern TS patterns: `.agents/instructions/code/modern-typescript-patterns.instructions.md`
+- Oxlint & style: `.agents/instructions/code/linting-code-style.instructions.md`
+- Provider/context patterns: `.agents/instructions/code/provider-context-patterns.instructions.md`
+- Picocolors CLI styling: `.agents/instructions/code/picocolors-cli-styling.instructions.md`
+
+**Naming**
+
+- File naming: `.agents/instructions/naming/file-naming.instructions.md`
+- Variable naming: `.agents/instructions/naming/variable-naming.instructions.md`
+
+**Documentation**
+
+- Documentation: `.agents/instructions/documentation/documentation.instructions.md`
+- README standards: `.agents/instructions/documentation/readme-standards.instructions.md`
+- Agent-facing markdown: `.agents/instructions/documentation/agent-facing-markdown.instructions.md`
+- Feature design specs: `.agents/instructions/documentation/feature-design-specs.instructions.md`
+- TODO/DONE docs: `.agents/instructions/documentation/todo-done-docs.instructions.md`
+
+**Git**
+
+- Git policy: `.agents/instructions/git/git-policy.instructions.md`
+
+---
+
+## Rules — Markdown Tables
+
+- Padded pipes: one space on each side of every `|`, including the separator row.
+- **Do NOT manually align column widths or pad cells to equal width.** `oxfmt` (run automatically
+  by lint-staged on commit and by `pnpm format:fix`) fixes table alignment automatically. Spending
+  tokens counting characters and iterating on spacing is wasted effort — write the content, let the
+  formatter handle alignment.
+
+---
+
+## Git Policy
+
+- Do not include `Co-Authored-By` lines in commit messages.
+- `.agents/instructions/git/git-policy.instructions.md` (see Commits and Releases sections)
+
+---
+
 ## Vault and Knowledge Repos
 
 LLAAB uses a two-repo local layout:
@@ -56,7 +120,7 @@ contracts, or related hooks/events, follow [`docs/agents/RUNTIME_AGENTS.md`](./d
 Short rule:
 
 ```text
-AGENTS.md / .github/instructions/ = external agents working on LLAAB
+AGENTS.md / .agents/instructions/ = external agents working on LLAAB
 docs/agents/                   = runtime-agent architecture and implementation rules
 knowledge/agents/              = promoted runtime agent definitions
 knowledge/skills/              = promoted runtime/development skills
@@ -67,18 +131,15 @@ vault/                         = drafts, captures, generated candidates, traces
 
 ## Agent execution efficiency
 
-Prefer the smallest complete implementation and validation loop appropriate to the task.
+Prefer the smallest complete implementation and validation loop for the task. Aim for one orientation pass, one coherent edit pass, and one focused validation pass; further loops need a concrete failure or newly discovered dependency.
 
-For localized feature work, target one orientation pass, one coherent edit pass, and one focused validation pass. Additional loops must be justified by a concrete failure or newly discovered dependency.
-
-Avoid side quests. Do not broaden the task into adjacent refactors, repository cleanup, environment repair, architectural generalization, or unrelated warning resolution unless required to complete or validate the requested change.
+Avoid side quests: do not broaden into adjacent refactors, cleanup, environment repair, or unrelated warning fixes unless required to complete or validate the requested change.
 
 ### Before editing
 
-- Perform one focused orientation pass over the owning route, service, storage primitive, client query/mutation, and directly affected UI.
-- Read applicable repository instructions before implementing so project conventions are not discovered during final linting.
-- Do not broadly inspect adjacent subsystems unless the initial pass reveals a concrete dependency.
-- Once the owning surfaces are identified, begin implementation rather than continuing exploratory reads.
+- Orient on the owning module, its direct callers/callees, and affected tests — not adjacent subsystems.
+- Read applicable repository instructions before implementing.
+- Once owning surfaces are identified, start implementing.
 
 ### Implementation scope
 
@@ -128,17 +189,6 @@ Do not restart or refresh running applications unless required to verify runtime
 
 ---
 
-## Roadmap and Planning Docs
-
-- Check `ROADMAP.md` before proposing new initiatives.
-- Use `ROADMAP.md#next` for small follow-ups and manual validation.
-- Keep detailed plans in `docs/todo/TODO_*.md`; graduate completed plans to `DONE_*.md`.
-- Follow `.github/instructions/documentation/todo-done-docs.instructions.md`.
-
----
-
-## Rules — Project-Specific
-
 ## LLAAB-specific implementation conventions
 
 - Structural horizontal and vertical layouts must use the local `Row` and `Col` components rather than ad hoc Tailwind flex containers.
@@ -147,84 +197,33 @@ Do not restart or refresh running applications unless required to verify runtime
 - Query mutations must invalidate only the directly affected query families unless graph-wide data has changed.
 - Destructive knowledge actions require explicit confirmation and must preserve referential integrity.
 
-Project-specific rules live in `.github/instructions/project/**/*.instructions.md`.
+Project-specific rules live in `.agents/instructions/project/**/*.instructions.md`.
 
 - **Rebuild & Reload (agents):** After changing `apps/server/**`, server-consumed `packages/**`, or root `.env` values the running process reads at start, agents **must** trigger SwiftBar’s **Rebuild & Reload App** path before asking the user to verify in the browser — do not leave reload to the user. Run `mkdir -p "$HOME/Library/Logs/llaab" && ./scripts/macos/dev-refresh.sh` (same as the menu item). If that fails, fall back to `./scripts/macos/llaab-service.sh stop-server && … start-server` (and client if needed). Cursor always-on rule: `.cursor/rules/dev-refresh.mdc`.
 - Do not reference `@workspace/*` — all imports and deps must use published package names.
-- **Agent Execution:** `.github/instructions/project/agent-execution.instructions.md`
+- **Agent Execution:** `.agents/instructions/project/agent-execution.instructions.md`
   — No always-on background processes, file watchers, or polling loops. All automation
   uses the one-shot processor pattern (explicit trigger → run → exit). LLAAB does not
   own a scheduler. This rule is non-negotiable.
-- **Process State Architecture:** `.github/instructions/project/process-state-architecture.instructions.md`
+- **Process State Architecture:** `.agents/instructions/project/process-state-architecture.instructions.md`
   — Any process worth showing live status for must be durable (a `RunNode` from the moment it
   starts) and globally observable (status derived from shared query state, never page-local
   mutation state). Complements, does not relax, Agent Execution above.
-- **Runtime Agents:** `.github/instructions/project/runtime-agents.instructions.md`
+- **Runtime Agents:** `.agents/instructions/project/runtime-agents.instructions.md`
   — External agent files instruct tools working on LLAAB; runtime agent files define agents LLAAB
   runs. Use `docs/agents/RUNTIME_AGENTS.md` for locations and lifecycle boundaries.
-- **Components:** `.github/instructions/project/components-shadcn.instructions.md`
+- **Components:** `.agents/instructions/project/components-shadcn.instructions.md`
   — shadcn/ui first; canonical component location; install procedure; token usage.
-- **Section count badges:** `.github/instructions/project/section-count-badges.instructions.md`
+- **Section count badges:** `.agents/instructions/project/section-count-badges.instructions.md`
   — heading/sidebar title counts sit immediately right of the title (`.section__count`); never
   far-right opposite the title. Actions may stay far-right on the same row.
-- **Component file organization:** `.github/instructions/project/component-file-organization.instructions.md`
+- **Component file organization:** `.agents/instructions/project/component-file-organization.instructions.md`
   — folder-per-component shape for splitting up large component files; what to extract
   and where (types/utils/sub-components/shared constants); reference implementation.
 - **Grid layout (mandatory):** `.cursor/rules/grid-layout.mdc` — use `Row` / `Col` / `Container`
   from `components/ui/grid` for **all structural layout blocks** (page, card, row, section splits);
   do not use Tailwind `flex` / `grid` / `grid-cols-*` for column structure. Docs:
   [`docs/components/grid.md`](./docs/components/grid.md).
-
-## Rules — Global
-
-Rules are canonical in `.github/instructions/` — see `README.md` there for folder structure.
-Shared across Claude Code, Cursor, and GitHub Copilot.
-
-**General**
-
-- General baseline: `.github/instructions/general.instructions.md`
-
-**Code**
-
-- TypeScript patterns: `.github/instructions/code/typescript-patterns.instructions.md`
-- Modern TS patterns: `.github/instructions/code/modern-typescript-patterns.instructions.md`
-- Oxlint & style: `.github/instructions/code/linting-code-style.instructions.md`
-- Provider/context patterns: `.github/instructions/code/provider-context-patterns.instructions.md`
-- Picocolors CLI styling: `.github/instructions/code/picocolors-cli-styling.instructions.md`
-
-**Naming**
-
-- File naming: `.github/instructions/naming/file-naming.instructions.md`
-- Variable naming: `.github/instructions/naming/variable-naming.instructions.md`
-
-**Documentation**
-
-- Documentation: `.github/instructions/documentation/documentation.instructions.md`
-- README standards: `.github/instructions/documentation/readme-standards.instructions.md`
-- Agent-facing markdown: `.github/instructions/documentation/agent-facing-markdown.instructions.md`
-- Feature design specs: `.github/instructions/documentation/feature-design-specs.instructions.md`
-- TODO/DONE docs: `.github/instructions/documentation/todo-done-docs.instructions.md`
-
-**Git**
-
-- Git policy: `.github/instructions/git/git-policy.instructions.md`
-
----
-
-## Rules — Markdown Tables
-
-- Padded pipes: one space on each side of every `|`, including the separator row.
-- **Do NOT manually align column widths or pad cells to equal width.** `oxfmt` (run automatically
-  by lint-staged on commit and by `pnpm format:fix`) fixes table alignment automatically. Spending
-  tokens counting characters and iterating on spacing is wasted effort — write the content, let the
-  formatter handle alignment.
-
----
-
-## Git Policy
-
-- Do not include `Co-Authored-By` lines in commit messages.
-- `.github/instructions/git/git-policy.instructions.md` (see Commits and Releases sections)
 
 ### Upstream Sync Before Work
 
@@ -240,7 +239,7 @@ Shared across Claude Code, Cursor, and GitHub Copilot.
 
 ## Rules — Components
 
-Full detail: `.github/instructions/project/components-shadcn.instructions.md`
+Full detail: `.agents/instructions/project/components-shadcn.instructions.md`
 
 **shadcn/ui first — always.** Before writing any custom component, icon, or layout
 primitive, check whether shadcn or Lucide already covers it. If they do, use them.
@@ -270,15 +269,44 @@ Hand-rolling what shadcn provides is not permitted.
 
 ---
 
+## lean-ctx
+
+lean-ctx is active — the MCP tools replace native equivalents.
+Full rules: LEAN-CTX.md (open on demand — do not auto-load).
+<!-- /lean-ctx -->
+
+### Scope
+
+- Reuse established patterns before adding abstractions.
+- Do not generalize one-use helpers unless reuse is immediate and obvious.
+- Preserve unrelated uncommitted files and pre-existing warnings.
+
+### Validation
+
+Use progressive validation and stop once the change is proven:
+
+1. Narrowest relevant test or test file
+2. Typecheck for directly affected packages
+3. Format/lint on touched files when supported
+4. Broader repo checks only when shared exports change, focused checks cannot prove correctness, a failure requires them, or the user asks
+
+### Tool use and failures
+
+- Batch related reads/searches and coherent edits; avoid repeating the same command through different wrappers.
+- Progress updates at phase boundaries only (orientation / implementation / validation).
+- Distinguish failures caused by this change from pre-existing ones; fix unrelated failures only when they block validation, and report them in the summary.
+
+---
+
 ## Learned User Preferences
 
-- Ingest page: `IngestForm` URL input is monospace with green processing highlight on the active URL (no duplicate queue current-URL card); YouTube-detected hint uses `CheckIcon` + pipeline-complete green. `IngestPipeline` and app-wide `RunMonitor` share `RunPipelineCard`—grey collapsible RUN shell with `AiChainOfThought` steps (blue active / green complete / orange warning); monitor adds activity log and `ExtractionModelCard` metrics in the card body. RunMonitor sidebar: status icon left of title (same check / blue spinner / red X as Runs table); dismiss X between latency and chevron (not only when expanded); entry width should flex with sidebar space (same approach as empty “No recent runs”), not a fixed px max. ACTIVE/RECENT headings use `section__count` badges beside titles; empty state is `--text-sm` / `--text-faint`; only pending/running runs auto-expand (`defaultOpen` on active only)—failed and completed start collapsed. **Title counts:** any heading/sidebar title count uses `.section__count` immediately right of the title text (never `justify-between` far-right)—see `.github/instructions/project/section-count-badges.instructions.md`.
+- Ingest page: `IngestForm` URL input is monospace with green processing highlight on the active URL (no duplicate queue current-URL card); YouTube-detected hint uses `CheckIcon` + pipeline-complete green. `IngestPipeline` and app-wide `RunMonitor` share `RunPipelineCard`—grey collapsible RUN shell with `AiChainOfThought` steps (blue active / green complete / orange warning); monitor adds activity log and `ExtractionModelCard` metrics in the card body. RunMonitor sidebar: status icon left of title (same check / blue spinner / red X as Runs table); dismiss X between latency and chevron (not only when expanded); entry width should flex with sidebar space (same approach as empty “No recent runs”), not a fixed px max. ACTIVE/RECENT headings use `section__count` badges beside titles; empty state is `--text-sm` / `--text-faint`; only pending/running runs auto-expand (`defaultOpen` on active only)—failed and completed start collapsed. **Title counts:** any heading/sidebar title count uses `.section__count` immediately right of the title text (never `justify-between` far-right)—see `.agents/instructions/project/section-count-badges.instructions.md`.
 - **Client pages & controls:** `AppLayout` pages use canonical `PageLayout` + `<PageHero>` (optional `right` slot for hero actions); home dashboard uses `BalancedGrid` + `balanced-grid.utils.ts` (prefers even row fills). In-app nav via React Router `Link` / `useNavigate` (native `<a>` external only). Dialogs in `apps/client/src/dialogs/`. CSS Modules import as `styles` (not shorthand). Shared `Label` with `--text-muted`. Global inputs (`white/33` / `black/33`), buttons (`font-semibold`), drop zones (accent on drag only), tabs (`variant="line"`, `text-base`, wider triggers). Semantic outline controls use `--*-dim` / `--*-border-dim` tokens. **Accordion vs Collapsible (`packages/ui`):** both canonize left `ChevronRightIcon` disclosure at source (`›` collapsed / `⌄` expanded via 90° rotate)—do not hand-roll trailing chevrons; Accordion = multi-section, Collapsible = single panel.
 - **`/terminal` page:** WebSocket at `/terminal/ws`; route handle `{ fillHeight: true }` with `PageLayout fillHeight` for contained scrolling. Accordion sidebar actions are label-only monospace (no green code); detail panel under command input shows label + accent-green mono command—align text to section icons via list padding, not negative margins (scroll areas clip horizontal bleed). Command input uses `InputGroup` left-slot dim-grey X clear. **Output:** / **Recent:** labels use `font-weight: 600` with colon suffix. Shell session + connected badges sit on the **Output:** row (right-aligned after mode toggles)—no separate status row.
 - **SwiftBar** (`scripts/macos/llaab-swiftbar.15s.sh`): keep the menu minimal—no overlapping refresh/restart items. **Rebuild & Reload App** (`dev-refresh.sh`) rebuilds workspace packages (incl. `@llaab/llm`) and restarts server+client; agents must run it after package/server/`.env` changes (see Rules — Project-Specific and `.cursor/rules/dev-refresh.mdc`)—do not leave reload to the user. Script creates `~/Library/Logs/llaab` before logging. **Restart All** bounces launchd without a build; **Repair All** is break-glass (deps, caches, full restart). Order: Open links → separator → Rebuild & Reload App → separator → per-service status → Start/Stop/Restart All grouped → Repair/Tail log.
 - **`/llm` page:** shared `llm-card-grid.module.css` responsive grid (`minmax(min(100%, 700px), 1fr)`; page ~1600px max) for model cards and task-routing cards (tier + select on one row). **OpenCode** uses **fuchsia** provider tokens in `ai-model-info.tsx`; routing/model labels `Provider: model` with provider text zinc-500. Model cards: no redundant `AiModelInfoMeta` footer; availability badges `translate-x-[10px]`. Inline loader in `PageHero` meta while `/api/llm/status` loads.
 - Vault entity **detail** routes wrap body content in `PageDetail`; vault **list** routes use `PageList`—except `/vault/transcripts` (+ `/:id`), which share `TranscriptsSplitView` (sidebar split; index auto-navigates to latest transcript by `created_at`). `/vault` file tree (`VaultFileTree`) starts all sections collapsed (`initialExpansion: 'closed'`); `?path=` navigation still expands ancestors; sidebar default width **300px**; node-count badge immediately right of the “Vault” title; expand/collapse-all icon toggle (VSCode-like; no border, hover background only); ~4px padding between sidebar header and Pierre tree. Sidebar transcript cards: **condensed by default** (shared density-toggle pattern with the wiki list); titles always white (including selected); active card uses a 4px left accent-green indicator (inset shadow or transparent peer borders—no layout shift), not a green fill or full border; date left / `{n} ideas` right (font-weight 600 always; purple `--consolidation-text` + `BadgeCheckIcon` only when consolidated, else muted grey); author in accent green as an internal `Link` to the author page (stop card navigation)—when no author icon (non-followable), shift the author name ~30px right; description body slightly larger than default. Extraction runs table: `dd-MM-YYYY` dates, no total-tokens `#` prefix, provider before model. Canonical Ideas bar: count badge, bold `--consolidation-text` quality score, and Consolidate on one row; Consolidate uses `TimerIcon` + `useElapsedMs` (heartbeat, freezes on settle). Canonical idea cards: dim-purple 4px left border only (no purple fill/full border; square top-left/bottom-left corners); first metadata row is confidence • sources (purple) left / date generated (grey) right. Transcript body and Extracted Ideas both use `Collapsible` (Extracted Ideas: expanded by default when not consolidated, collapsed when consolidated). Create-wiki-draft checkboxes use dim purple (not accent green) and should be checked when consolidation finishes. Transcript heading shows a YouTube-style duration badge (`mm:ss` under 1h, `h:mm:ss` at/over 1h) from the last `<!-- t:… -->` body marker—omit when none. Set route handle `{ fullBleed: true }` on transcript routes for full-height split views. **Transcript TTS (`TtsPlayer`):** prefer Kokoro `dtype="fp32"` + `device="webgpu"` (best quality/latency); with that combo keep normal `.` splits (no `fullStopChar` replacements). Inter-chunk delay includes next-chunk synthesis/load latency—coarser blank-line/paragraph chunking can help if gaps remain. When skipping transcript metadata / `## Transcript`, still speak `#` titles. Also mount on knowledge wiki content cards (top-right inside the content card).
-- **Sticky app header:** `AppHeader` is sticky on all pages (`--header-h`). Right icon actions (after optional `actions` slot): Ingest → `/ingest`, Transcripts (`VoicemailIcon`) → `/vault/transcripts`, LLM, Inbox (`InboxIcon`) → `/vault/inbox`, Icons. **Section subnav** (`SectionSubnav`, reserved `--section-subnav-h`) sits just below the main nav and always lists the current parent section’s sub-items as internal links; reserve height so layout does not jump when the parent changes; disabled/locked items render disabled with a lock icon like the megamenu dropdown. Active link: accent green + 2px inset bottom box-shadow (not border—keeps bar height stable when empty); link height fills the subnav so the shadow sits on the bar’s bottom edge; horizontal padding `0 0.5rem` on items (not the strip ends); dim non-active subnav items slightly. Bump font size on main nav, subnav, and megamenu dropdowns together—do not stack an extra size on subnav via inheritance. Prefer `--surface` (not warm `--secondary`) for subnav and sidebar backgrounds app-wide—user disfavours warm `--secondary`; keep `--surface`/`--secondary` distinct rather than aliasing. Secondary tools (sidebar toggle, Clean Vault, Vault Git, Run Monitor) live inline in `SectionSubnav` (leading left / trailing right)—no separate secondary-actions row. Sidebars must use `AppSidebarLayout` with `position="inline"`—never shadcn fixed `inset-y-0` sidebars under the app header (they overlap the nav). See `.github/instructions/project/components-shadcn.instructions.md` § Sidebars. Layout-level shadcn toasts: status icon in a small left column (left-aligned); message in a second column that fills remaining width (left-aligned)—same two-column layout for all toast statuses.
+- **Sticky app header:** `AppHeader` is sticky on all pages (`--header-h`). Right icon actions (after optional `actions` slot): Ingest → `/ingest`, Transcripts (`VoicemailIcon`) → `/vault/transcripts`, LLM, Inbox (`InboxIcon`) → `/vault/inbox`, Icons. **Section subnav** (`SectionSubnav`, reserved `--section-subnav-h`) sits just below the main nav and always lists the current parent section’s sub-items as internal links; reserve height so layout does not jump when the parent changes; disabled/locked items render disabled with a lock icon like the megamenu dropdown. Active link: accent green + 2px inset bottom box-shadow (not border—keeps bar height stable when empty); link height fills the subnav so the shadow sits on the bar’s bottom edge; horizontal padding `0 0.5rem` on items (not the strip ends); dim non-active subnav items slightly. Bump font size on main nav, subnav, and megamenu dropdowns together—do not stack an extra size on subnav via inheritance. Prefer `--surface` (not warm `--secondary`) for subnav and sidebar backgrounds app-wide—user disfavours warm `--secondary`; keep `--surface`/`--secondary` distinct rather than aliasing. Secondary tools (sidebar toggle, Clean Vault, Vault Git, Run Monitor) live inline in `SectionSubnav` (leading left / trailing right)—no separate secondary-actions row. Sidebars must use `AppSidebarLayout` with `position="inline"`—never shadcn fixed `inset-y-0` sidebars under the app header (they overlap the nav). See `.agents/instructions/project/components-shadcn.instructions.md` § Sidebars. Layout-level shadcn toasts: status icon in a small left column (left-aligned); message in a second column that fills remaining width (left-aligned)—same two-column layout for all toast statuses.
 - Vault node list pages should use shadcn `DataTable` via wrappers in `apps/client/src/tables/`; avoid one-off HTML tables for node lists. `DataTableColumnDef` supports optional per-column `maxWidth` and `maxChars` for truncation. In `*Table.tsx` wrappers, define column cell renderers at module scope with explicit `CellContext<T, unknown>` typing—copy `SourcesTable`/`TranscriptsTable` as templates; do not nest renderers inside `useMemo`. `/vault/nodes` Ideas and Resources sections are collapsible (plural labels), expanded by default. Shared reusable domain filter bar (nodes + wikis): URL-backed domain filters; all/none toggle far right (dim grey); on narrow widths wrap filters in the left column with the toggle in a right column (no horizontal scrollbar). Domain tag pills must use the universal automatic domain color map everywhere (future domain pills included).
 - Ingest `RunsTable`: grouped rows collapsed by default; child rows align to parent columns (not a single `colSpan`); dedicated sortable **Published** column (YouTube publish date, `dd-MM-YYYY`; blank on child rows); **Nodes** column between Title and Date (`totalNodes` = sum of `produced_node_ids.length` per group); purple `BadgeCheckIcon` beside Nodes when `group.isConsolidated` (canonical ideas consolidated). Child rows use two `ExtractionModelCard`s in one space-between cell—provider+model left under Date; tokens+latency right-aligned with parent Latency. Latency **values** (not header) shifted left ~`1.5rem`. Run status: completed = green `CheckCircleIcon` (aligned with RunsGroupHeader numeric badges—not a text badge); extracting = blue spinner only (no badge); failed = red X icon. Optional `columnLimits` prop—ingest page caps title at ~`20rem` / maxChars 60. YouTube channels use shared `renderYouTubeSubscriptionIcon()`—green `UserCheckIcon` when `youtube_subscribed === true`, grey `UserXIcon` for `false` or unknown. External subject links at 0.66 opacity, hover 1.0. `/ingest` surfaces background enrich failures via alerts between form and table—never swallow enrich errors. `/crons`: install toggle is **installed** / **not installed** (crontab line present); show separate health (`ok` / `stale` / `failing` / `never_ran`)—never treat install alone as “enabled/working”.
 - Vault file diff viewer (`/vault?path=…&view=diff`) uses `@pierre/diffs` with theme overrides in `apps/client/src/constants/pierre-diffs-theme.ts`—Pierre Dark add/delete accent overrides, not semantic `--success-text`/`--error-text`; no per-line saturate/brightness filters. Dim the whole `.viewerFile` at `opacity: 0.7`; do not per-token `color-mix`/`brightness` (pierre-dark sets per-span colors; partial targeting looks patchy).
@@ -309,9 +337,3 @@ Hand-rolling what shadcn provides is not permitted.
 - **lean-ctx (not graphify):** graphify is removed—do not invoke graphify tools/rules. Never copy lean-ctx tool-output footers into source/CSS (`--- lean-ctx: … ---`, `--- Cross-Source Hints ---` break Vite/oxc/PostCSS). Require lean-ctx **≥ 3.9.5** (redirect markers stay out of temp files). Lock `~/.config/lean-ctx/config.toml`: `savings_footer=never`, `bypass_hints=off`, `recovery_hints=off`, `[code_health] inject_context=false`. Repo `.lean-ctx/overlays.json` should ignore `knowledge/` and package `dist` outputs so they do not inflate context. Repo safety nets: `.cursor/hooks.json` `afterFileEdit` + `scripts/strip-lean-ctx-markers.py` (also in lint-staged).
 
 <!-- lean-ctx -->
-
-## lean-ctx
-
-lean-ctx is active — the MCP tools replace native equivalents.
-Full rules: LEAN-CTX.md (open on demand — do not auto-load).
-<!-- /lean-ctx -->

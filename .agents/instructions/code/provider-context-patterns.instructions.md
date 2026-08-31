@@ -1,3 +1,8 @@
+---
+applyTo: '**/*.{ts,tsx}'
+description: React provider and context file structure. Read before adding or changing a provider.
+---
+
 # Provider & Context Patterns
 
 ## Structure (3 files)

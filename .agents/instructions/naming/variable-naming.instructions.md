@@ -1,3 +1,8 @@
+---
+applyTo: '**/*.{ts,tsx,js,jsx,mjs,cjs}'
+description: Variable and identifier naming rules, including the no-abbreviation policy.
+---
+
 # Variable Naming Conventions
 
 ## General Rule

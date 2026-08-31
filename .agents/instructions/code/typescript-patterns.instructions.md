@@ -1,3 +1,8 @@
+---
+applyTo: '**/*.{ts,tsx}'
+description: TypeScript parameter, typing, and structure conventions. Read before writing or refactoring TypeScript.
+---
+
 # TypeScript Patterns & Best Practices
 
 ## Parameters

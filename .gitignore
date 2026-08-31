@@ -15,11 +15,17 @@ build/
 .agents/*
 !.agents/
 !.agents/handoff.md
+!.agents/instructions/
+!.agents/instructions/**
+!.agents/skills/
+!.agents/skills/**
 .codex/
 .claude/*
 !.claude/settings.json
 !.claude/commands/
 !.claude/commands/**
+!.claude/skills/
+!.claude/skills/**
 .worktrees/
 
 # IDE
@@ -32,9 +38,6 @@ build/
 *.swp
 *.swo
 
-# lean-ctx local state
-.lean-ctx/
-
 # Docs
 docs/drafts/
 
@@ -46,8 +49,6 @@ pids
 *.pid
 *.seed
 *.pid.lock
-configs/cron-history.json
-configs/cloud-model-catalog.json
 
 # Cache
 .cache/
@@ -87,6 +88,9 @@ html/
 cookies.txt
 cookies_*.txt
 
+# Graphify
+graphify-out/
+
 # Archives
 *.tar
 *.tar.gz
@@ -102,6 +106,10 @@ Desktop.ini
 
 # Security
 deps-xscan-report.json
+
+# Project-specific
+# lean-ctx local state
+.lean-ctx/
 
 # Vault scratch
 /vault/

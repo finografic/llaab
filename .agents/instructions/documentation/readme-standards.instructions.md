@@ -1,3 +1,8 @@
+---
+applyTo: '**/*.md'
+description: README structure and required sections.
+---
+
 # README Standards
 
 ## Generated vs Manual Sections
